@@ -112,6 +112,8 @@
         #bottom-nav.nav-compact button { padding: 0.5rem 0.7rem; min-width: 0; }
         #bottom-nav.nav-compact button span { max-height: 0; opacity: 0; margin-top: -2px; }
         #bottom-nav.nav-compact button > div { gap: 0; }
+        /* 탭 전환 시 메뉴 크기를 순간적으로 확정(애니메이션 끔)하여 인디케이터 위치 오차 방지 */
+        #bottom-nav.no-nav-anim, #bottom-nav.no-nav-anim button, #bottom-nav.no-nav-anim button span { transition: none !important; }
         
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -1918,16 +1920,26 @@
             const btns = [
                 null, // 음악 메뉴 삭제됨 (인덱스 유지)
                 document.getElementById('nav-more'),
-                document.getElementById('nav-home'), 
-                document.getElementById('nav-calendar'), 
+                document.getElementById('nav-home'),
+                document.getElementById('nav-calendar'),
                 document.getElementById('nav-meeting')
             ];
-            
+
+            // 탭 전환 시 메뉴를 즉시 펼친 상태로 확정한 뒤(애니메이션 끔) 인디케이터를 정확한 위치로 부드럽게 이동
+            const navEl = document.getElementById('bottom-nav');
+            if (navEl) {
+                if (window._navTrackRAF) { cancelAnimationFrame(window._navTrackRAF); window._navTrackRAF = null; }
+                navEl.classList.add('no-nav-anim');
+                navEl.classList.remove('nav-compact');
+                window.navCompact = false;
+                void navEl.offsetWidth; // 레이아웃 강제 반영
+            }
             if(btns[index] && ind) {
                 ind.classList.add('nav-transition');
                 ind.style.width = `${btns[index].offsetWidth}px`;
                 ind.style.transform = `translateX(${btns[index].offsetLeft - 6}px)`;
             }
+            if (navEl) requestAnimationFrame(() => navEl.classList.remove('no-nav-anim'));
 
             // [수정] 탭 활성화/비활성화 색상 처리 로직 추가 (자동 반전 믹스블렌드 적용)
             btns.forEach((btn, i) => {
@@ -1959,7 +1971,7 @@
             });
         };
 
-        // 활성 탭에 맞춰 인디케이터 위치/너비 재계산 (메뉴 축소 시 사용)
+        // 활성 탭에 맞춰 인디케이터 위치/너비 재계산
         window.updateNavIndicator = function() {
             const ind = document.getElementById('nav-indicator');
             const btns = [null, document.getElementById('nav-more'), document.getElementById('nav-home'), document.getElementById('nav-calendar'), document.getElementById('nav-meeting')];
@@ -1970,20 +1982,49 @@
             }
         };
 
-        // 홈 화면을 아래로 스크롤하면 하단 메뉴를 축소 (라벨 숨김), 위로 올리면 복원
-        (function initNavShrink() {
-            const homeScreen = document.getElementById('home-screen');
-            const nav = document.getElementById('bottom-nav');
-            if (!homeScreen || !nav) return;
-            let compact = false;
-            homeScreen.addEventListener('scroll', () => {
-                const shouldCompact = homeScreen.scrollTop > 24;
-                if (shouldCompact !== compact) {
-                    compact = shouldCompact;
-                    nav.classList.toggle('nav-compact', compact);
-                    window.updateNavIndicator();
+        // 메뉴 크기 변경(축소/복원·탭 전환) 애니메이션 동안 인디케이터가 활성 버튼을 정확히 따라가도록 매 프레임 추적
+        window._navTrackRAF = null;
+        window.animateNavIndicator = function(duration) {
+            duration = duration || 600;
+            const ind = document.getElementById('nav-indicator');
+            if (ind) ind.classList.remove('nav-transition'); // 자체 트랜지션 끄고 버튼 레이아웃을 그대로 추적
+            if (window._navTrackRAF) cancelAnimationFrame(window._navTrackRAF);
+            const start = performance.now();
+            const tick = (now) => {
+                window.updateNavIndicator();
+                if (now - start < duration) {
+                    window._navTrackRAF = requestAnimationFrame(tick);
+                } else {
+                    window._navTrackRAF = null;
+                    if (ind) ind.classList.add('nav-transition'); // 탭 전환 등 일반 상황을 위해 복원
                 }
-            }, { passive: true });
+            };
+            window._navTrackRAF = requestAnimationFrame(tick);
+        };
+
+        // 화면을 아래로 스크롤하면 하단 메뉴를 축소(라벨 숨김), 위로 올리면 복원
+        window.navCompact = false;
+        window.setNavCompact = function(compact) {
+            if (compact === window.navCompact) return;
+            window.navCompact = compact;
+            const nav = document.getElementById('bottom-nav');
+            if (!nav) return;
+            nav.classList.toggle('nav-compact', compact);
+            window.animateNavIndicator();
+        };
+
+        (function initNavShrink() {
+            const containers = [
+                document.getElementById('home-screen'),
+                document.querySelector('#more-screen > .overflow-y-auto'),
+                document.querySelector('#schedule-screen > .overflow-y-auto'),
+                document.querySelector('#meeting-screen > .overflow-y-auto')
+            ].filter(Boolean);
+            containers.forEach(c => {
+                c.addEventListener('scroll', () => {
+                    window.setNavCompact(c.scrollTop > 24);
+                }, { passive: true });
+            });
         })();
 
         window.onload = () => {
