@@ -114,6 +114,52 @@
         #bottom-nav.nav-compact button > div { gap: 0; }
         /* 탭 전환 시 메뉴 크기를 순간적으로 확정(애니메이션 끔)하여 인디케이터 위치 오차 방지 */
         #bottom-nav.no-nav-anim, #bottom-nav.no-nav-anim button, #bottom-nav.no-nav-anim button span { transition: none !important; }
+
+        /* === Apple Liquid Glass (iOS 26 느낌) === */
+        .liquid-glass {
+            position: relative;
+            background: rgba(255, 255, 255, 0.07);
+            -webkit-backdrop-filter: blur(22px) saturate(180%) brightness(1.12) contrast(1.05);
+            backdrop-filter: blur(22px) saturate(180%) brightness(1.12) contrast(1.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow:
+                0 10px 36px rgba(0, 0, 0, 0.5),               /* 바닥 그림자(깊이) */
+                inset 0 1px 1px rgba(255, 255, 255, 0.55),    /* 윗면 안쪽 광택 */
+                inset 0 -1px 1px rgba(255, 255, 255, 0.10),   /* 아랫면 은은한 반사 */
+                inset 0 0 22px rgba(255, 255, 255, 0.06);     /* 내부 글로우(유리 두께감) */
+        }
+        /* 표면 스페큘러 하이라이트(윗면 유리 광택) */
+        .liquid-glass::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0.30) 0%,
+                rgba(255, 255, 255, 0.06) 16%,
+                rgba(255, 255, 255, 0) 45%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        /* 가장자리 굴절광(rim light) - 위/아래 모서리에 빛이 맺히는 효과 */
+        .liquid-glass::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0.65) 0%,
+                rgba(255, 255, 255, 0.08) 35%,
+                rgba(255, 255, 255, 0) 55%,
+                rgba(255, 255, 255, 0.22) 100%);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            z-index: 2;
+        }
         
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -805,7 +851,7 @@
 
     <!-- 하단 플로팅 메뉴 -->
     <nav id="bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-auto touch-pan-x select-none cursor-grab active:cursor-grabbing">
-        <div class="flex items-center bg-white/10 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.45),inset_0_-1px_1px_rgba(255,255,255,0.12)] border border-white/20 rounded-full p-1.5 gap-1 relative">
+        <div class="liquid-glass flex items-center rounded-full p-1.5 gap-1 relative">
             <div id="nav-indicator" class="absolute top-1 bottom-1 bg-white/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full backdrop-blur-[2px] border border-white/20 z-0 nav-transition" style="left: 6px; width: 64px;"></div>
             
             <!-- 일정 메뉴 -->
@@ -1911,14 +1957,12 @@
                 document.getElementById('nav-meeting')
             ];
 
-            // 탭 전환 시 메뉴를 즉시 펼친 상태로 확정한 뒤(애니메이션 끔) 인디케이터를 정확한 위치로 부드럽게 이동
+            // 탭 전환 시 현재 메뉴 크기(축소/펼침) 상태를 그대로 유지한 채 인디케이터만 정확한 위치로 이동
             const navEl = document.getElementById('bottom-nav');
             if (navEl) {
                 if (window._navTrackRAF) { cancelAnimationFrame(window._navTrackRAF); window._navTrackRAF = null; }
                 navEl.classList.add('no-nav-anim');
-                navEl.classList.remove('nav-compact');
-                window.navCompact = false;
-                void navEl.offsetWidth; // 레이아웃 강제 반영
+                void navEl.offsetWidth; // 레이아웃 강제 반영 (현재 상태 기준)
             }
             if(btns[index] && ind) {
                 ind.classList.add('nav-transition');
