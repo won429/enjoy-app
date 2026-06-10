@@ -198,6 +198,17 @@
             color: white;
             box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
         }
+
+        /* 공지사항 가로 자동 스크롤(마퀴) - 긴 글자도 다 보이게 */
+        .notice-marquee {
+            padding-left: 100%;
+            animation: notice-scroll 14s linear infinite;
+            will-change: transform;
+        }
+        @keyframes notice-scroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
     </style>
 </head>
 <body class="w-full h-[100dvh] flex flex-col overflow-hidden bg-black" ontouchstart="">
@@ -724,61 +735,55 @@
 
         <div class="flex-1 overflow-y-auto scrollbar-hide px-5 pt-3 w-full max-w-md mx-auto">
 
-            <!-- 공용 계좌 잔액 (히어로 카드) -->
-            <div class="relative overflow-hidden bg-gradient-to-br from-[#1E1E20] to-[#151517] border border-white/10 rounded-[26px] p-5 mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
-                <div class="flex items-center gap-2 mb-2.5">
-                    <div class="w-7 h-7 rounded-[10px] bg-[#3182F6]/15 flex items-center justify-center text-[#3182F6] text-[13px] shrink-0"><i class="fa-solid fa-piggy-bank"></i></div>
+            <!-- 공용 계좌 잔액 (색 없이 깔끔하게) -->
+            <div class="px-1 pb-6">
+                <div class="flex items-center gap-1.5 mb-2">
+                    <i class="fa-solid fa-piggy-bank text-[#3182F6] text-[13px]"></i>
                     <span class="text-[13px] font-semibold text-gray-400">엔조이 공용 계좌</span>
                 </div>
-                <h3 id="total-balance" class="text-[34px] font-bold text-white tracking-tight leading-none">448,999<span class="text-[22px] font-bold text-white ml-1">원</span></h3>
+                <h3 id="total-balance" class="text-[36px] font-bold text-white tracking-tight leading-none">448,999<span class="text-[22px] font-bold text-white ml-1">원</span></h3>
             </div>
 
-            <!-- 현황 요약 -->
-            <div class="grid grid-cols-2 gap-3 mb-5 items-start">
+            <!-- 공지사항 배너 (가로 자동 스크롤) -->
+            <div id="meeting-notice-banner" class="hidden mb-6">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-bullhorn text-[#3182F6] text-[12px] shrink-0"></i>
+                    <div class="flex-1 overflow-hidden whitespace-nowrap">
+                        <span id="meeting-notice-text" class="notice-marquee inline-block text-[13.5px] text-gray-300 font-medium tracking-tight"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 현황 요약 (박스/색 없이 얇은 구분선만) -->
+            <div class="grid grid-cols-2 gap-x-5 mb-7">
                 <!-- 부과금 및 유예 -->
-                <div class="bg-white/5 border border-white/10 rounded-[22px] p-4 flex flex-col min-h-[140px]">
-                    <div class="flex items-center gap-1.5 mb-2.5">
+                <div class="flex flex-col min-h-[120px]">
+                    <div class="flex items-center gap-1.5 mb-3">
                         <i class="fa-solid fa-triangle-exclamation text-[#F04452] text-[12px]"></i>
-                        <h3 class="text-[12px] font-bold text-gray-300 tracking-tight">부과금 · 유예</h3>
+                        <h3 class="text-[12px] font-bold text-gray-400 tracking-tight">부과금 · 유예</h3>
                     </div>
                     <div id="penalty-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full flex-1"></div>
                 </div>
                 <!-- 면제권 -->
-                <div class="bg-white/5 border border-white/10 rounded-[22px] p-4 flex flex-col min-h-[140px]">
-                    <div class="flex items-center gap-1.5 mb-2.5">
+                <div class="flex flex-col min-h-[120px] border-l border-white/5 pl-5">
+                    <div class="flex items-center gap-1.5 mb-3">
                         <i class="fa-solid fa-ticket-simple text-[#3182F6] text-[12px]"></i>
-                        <h3 class="text-[12px] font-bold text-gray-300 tracking-tight">면제권 보유</h3>
+                        <h3 class="text-[12px] font-bold text-gray-400 tracking-tight">면제권 보유</h3>
                     </div>
                     <div id="ticket-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full flex-1"></div>
                 </div>
             </div>
 
-            <!-- 공지사항 배너 -->
-            <div id="meeting-notice-banner" class="hidden mb-5">
-                <div class="bg-white/5 border border-white/10 px-4 py-3 rounded-[18px] flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-full bg-[#3182F6]/15 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-bullhorn text-[#3182F6] text-[11px]"></i>
-                    </div>
-                    <div class="flex-1 overflow-hidden">
-                        <p id="meeting-notice-text" class="text-[13.5px] text-gray-200 font-medium truncate tracking-tight"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 납부 내역 -->
-            <div class="pb-28">
-                <div class="flex justify-between items-center mb-3 px-1">
-                    <div class="flex flex-col gap-0.5">
-                        <span class="text-[10px] font-bold text-[#3182F6] tracking-widest uppercase ml-0.5">Payment</span>
-                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-none">납부 내역</h3>
-                    </div>
-                    <div class="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full p-1">
-                        <button onclick="window.haptic(); window.changeDuesMonth(-1)" class="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 active:scale-90 transition-all"><i class="fa-solid fa-chevron-left text-[12px]"></i></button>
-                        <span id="dues-month-title" class="text-[13px] font-bold text-white min-w-[78px] text-center tabular-nums">2026년 1월</span>
-                        <button onclick="window.haptic(); window.changeDuesMonth(1)" class="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 active:scale-90 transition-all"><i class="fa-solid fa-chevron-right text-[12px]"></i></button>
+            <!-- 납부 내역 (얇은 구분선 + 무테두리 미니멀 리스트) -->
+            <div class="pb-28 border-t border-white/5 pt-5">
+                <div class="flex justify-between items-end mb-3 px-1">
+                    <h3 class="text-[18px] font-bold text-white tracking-tight">납부 내역</h3>
+                    <div class="flex items-center gap-3">
+                        <button onclick="window.haptic(); window.changeDuesMonth(-1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>
+                        <span id="dues-month-title" class="text-[15px] font-bold text-white min-w-[78px] text-center tabular-nums">2026년 1월</span>
+                        <button onclick="window.haptic(); window.changeDuesMonth(1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-right text-[14px]"></i></button>
                     </div>
                 </div>
-                <!-- 무테두리 미니멀 리스트 -->
                 <div id="dues-list" class="flex flex-col px-1"></div>
             </div>
         </div>
