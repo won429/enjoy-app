@@ -161,16 +161,16 @@
             z-index: 2;
         }
 
-        /* === 더보기 팝오버 모션 === */
+        /* === 더보기 팝오버 모션 (더보기 버튼 지점에서 빨려 나오고/들어감) === */
         @keyframes more-pop-in {
-            0%   { opacity: 0; transform: scale(0.35) translateY(24px); }
-            55%  { opacity: 1; transform: scale(1.06) translateY(-4px); }
-            72%  { transform: scale(0.98) translateY(1px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
+            0%   { opacity: 0; transform: scale(0.12); }
+            55%  { opacity: 1; transform: scale(1.05); }
+            72%  { transform: scale(0.985); }
+            100% { opacity: 1; transform: scale(1); }
         }
         @keyframes more-pop-out {
-            0%   { opacity: 1; transform: scale(1) translateY(0); }
-            100% { opacity: 0; transform: scale(0.4) translateY(20px); }
+            0%   { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.12); }
         }
         @keyframes more-item-in {
             0%   { opacity: 0; transform: translateY(10px) scale(0.92); }
@@ -1214,6 +1214,18 @@
 
         // 더보기 팝오버 (하단 메뉴 더보기 자리에서 통 튀어나오는 메뉴)
         window.morePopoverOpen = false;
+        // 팝오버가 더보기 버튼 지점에서 빨려 나오/들어가도록 transform-origin을 버튼 위치에 맞춤
+        // (메뉴 축소 상태에 따라 버튼 위치/크기가 바뀌어도 자동으로 따라감)
+        window.setMorePopoverOrigin = function() {
+            const btn = document.getElementById('nav-more');
+            const panel = document.getElementById('more-popover-panel');
+            if (!btn || !panel) return;
+            const b = btn.getBoundingClientRect();
+            const p = panel.getBoundingClientRect();
+            const originX = (b.left + b.width / 2) - p.left; // 패널 기준 버튼 중심 X
+            const originY = p.height;                        // 패널 아래쪽(버튼에 가장 가까운 변)
+            panel.style.transformOrigin = `${originX}px ${originY}px`;
+        };
         window.openMorePopover = function() {
             const pop = document.getElementById('more-popover');
             const panel = document.getElementById('more-popover-panel');
@@ -1221,7 +1233,10 @@
             if (!pop || !panel) return;
             pop.classList.remove('hidden');
             if (backdrop) backdrop.classList.remove('hidden');
-            // 패널 스프링 등장
+            // 레이아웃 반영 후 더보기 버튼 위치 기준으로 origin 설정
+            void panel.offsetWidth;
+            window.setMorePopoverOrigin();
+            // 패널 스프링 등장 (버튼 지점에서 빨려 나옴)
             panel.style.animation = 'none';
             void panel.offsetWidth;
             panel.style.animation = 'more-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
@@ -1239,11 +1254,13 @@
             const backdrop = document.getElementById('more-popover-backdrop');
             if (!pop || pop.classList.contains('hidden')) return;
             if (backdrop) backdrop.classList.add('hidden');
-            if (panel) panel.style.animation = 'more-pop-out 0.2s cubic-bezier(0.4, 0, 1, 1) forwards';
+            // 닫힐 때도 현재 더보기 버튼 위치 기준으로 빨려 들어가게 origin 재설정
+            window.setMorePopoverOrigin();
+            if (panel) panel.style.animation = 'more-pop-out 0.24s cubic-bezier(0.4, 0, 1, 1) forwards';
             setTimeout(() => {
                 pop.classList.add('hidden');
                 if (panel) panel.style.animation = '';
-            }, 190);
+            }, 230);
             window.morePopoverOpen = false;
         };
         window.toggleMorePopover = function() {
