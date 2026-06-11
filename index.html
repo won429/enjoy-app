@@ -221,6 +221,18 @@
             100% { transform: translateX(-100%); }
         }
 
+        /* 홈 상단 '오늘의 엔조이' 캐릭터 모션 (걸어 나와서 인사) */
+        #enjoy-char { display: inline-block; transform-origin: 50% 90%; }
+        @keyframes enjoy-walk-in {
+            0%   { opacity: 0; transform: translateX(-46px) rotate(-12deg) scale(0.8); }
+            55%  { opacity: 1; }
+            100% { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
+        }
+        @keyframes enjoy-bob {
+            0%, 100% { transform: translateY(0) rotate(-4deg); }
+            50%      { transform: translateY(-3px) rotate(4deg); }
+        }
+
         /* =========================================================
            라이트 모드 (기기 설정이 라이트면 자동 적용)
            - 전역으로 텍스트/표면을 밝게 전환(누락 방지)
@@ -359,9 +371,22 @@
             </style>
 
             <!-- 페이지 타이틀 -->
-            <div class="px-1 mb-5 mt-1">
+            <div class="px-1 mb-4 mt-1">
                 <p class="text-[12px] font-bold text-[#3182F6] tracking-widest uppercase mb-0.5">ENJOY</p>
                 <h2 class="text-[28px] font-black text-white tracking-tight leading-tight">오늘의 엔조이<span class="text-[#3182F6]">.</span></h2>
+            </div>
+
+            <!-- 오늘의 엔조이 캐릭터 안내 (날짜/모임비/오늘 일정/다음 정기모임) -->
+            <div id="enjoy-today-card" class="mb-7 -mt-0.5 fade-in-up delay-100">
+                <div class="relative overflow-hidden rounded-[22px] bg-white/5 border border-white/10 p-4 flex items-start gap-3.5 shadow-[0_6px_20px_rgba(0,0,0,0.25)]">
+                    <div class="shrink-0 w-[50px] h-[52px] flex items-end justify-center">
+                        <span id="enjoy-char" class="text-[40px] leading-none select-none" style="font-family:'TossFaceFontMac','Apple Color Emoji',sans-serif; animation: enjoy-walk-in 0.9s cubic-bezier(0.34,1.56,0.64,1) both, enjoy-bob 1.8s ease-in-out 1s infinite;">🐹</span>
+                    </div>
+                    <div class="flex-1 min-w-0 pt-0.5">
+                        <div id="enjoy-today-date" class="text-[15px] font-extrabold text-white tracking-tight leading-tight mb-2">오늘도 반가워요!</div>
+                        <div id="enjoy-today-lines" class="flex flex-col gap-1.5"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="flex flex-col gap-9">
@@ -771,7 +796,7 @@
             <div class="relative z-10 flex flex-col gap-0.5">
                 <!-- 위치 공유 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.location.href='map.html'" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-amber-500/20 flex items-center justify-center text-amber-400 text-[15px] shrink-0"><i class="fa-solid fa-map-location-dot"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-amber-500/25 flex items-center justify-center text-amber-500 text-[15px] shrink-0"><i class="fa-solid fa-map-location-dot"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">위치 공유</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">실시간 위치 확인</div>
@@ -779,7 +804,7 @@
                 </button>
                 <!-- 여행 기록 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(confirm('새로운 버전인 우리의 발자취가 있음에도 불구하고 들어가시겠습니까?')) window.goToTravel();" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-[15px] shrink-0"><i class="fa-solid fa-plane-departure"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-emerald-500/25 flex items-center justify-center text-emerald-500 text-[15px] shrink-0"><i class="fa-solid fa-plane-departure"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">여행 기록</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">지난 추억 떠올리기</div>
@@ -787,7 +812,7 @@
                 </button>
                 <!-- 지하철 도착 정보 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('https://won429.github.io/Test/')" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-[15px] shrink-0"><i class="fa-solid fa-train-subway"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-cyan-500/25 flex items-center justify-center text-cyan-500 text-[15px] shrink-0"><i class="fa-solid fa-train-subway"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5">
                             <span class="text-[14px] font-bold text-white leading-tight">지하철 도착 정보</span>
@@ -798,7 +823,7 @@
                 </button>
                 <!-- 복불복 게임 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.playGame()" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-red-500/20 flex items-center justify-center text-red-400 text-[15px] shrink-0"><i class="fa-solid fa-dice"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-red-500/25 flex items-center justify-center text-red-500 text-[15px] shrink-0"><i class="fa-solid fa-dice"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">복불복 게임</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">오늘 엔조이의 운명은?</div>
@@ -807,7 +832,7 @@
                 <div class="h-px bg-white/10 my-1 mx-2"></div>
                 <!-- 새로운 기능 준비 중 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.showSecretModal()" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-gray-600/25 flex items-center justify-center text-gray-400 text-[15px] shrink-0"><i class="fa-solid fa-gift"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-gray-500/30 flex items-center justify-center text-gray-500 text-[15px] shrink-0"><i class="fa-solid fa-gift"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">새로운 기능 준비 중</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">어떤 서비스가 추가될까요?</div>
@@ -1087,9 +1112,93 @@
             if (!window.meetingData.exemptions) {
                 window.meetingData.exemptions = { '류짱': 1, '성원제': 1, '전시기': 1 };
             }
-            const balanceEl = document.getElementById('total-balance'); 
-            if (balanceEl) balanceEl.innerHTML = (data.totalBalance || 0).toLocaleString() + '<span class="text-[22px] font-bold text-white ml-1">원</span>'; 
-            window.renderDues(window.currentDuesMonth, window.currentDuesYear); 
+            const balanceEl = document.getElementById('total-balance');
+            if (balanceEl) balanceEl.innerHTML = (data.totalBalance || 0).toLocaleString() + '<span class="text-[22px] font-bold text-white ml-1">원</span>';
+            window.renderDues(window.currentDuesMonth, window.currentDuesYear);
+            try { window.renderEnjoyToday(); } catch (e) {}
+        };
+
+        // 홈 상단: '오늘의 엔조이' 캐릭터가 알려주는 오늘 안내
+        // (오늘 날짜 / 이번 달 모임비 / 오늘의 일정 / 다음 정기모임)
+        window.renderEnjoyToday = function() {
+            const dateEl = document.getElementById('enjoy-today-date');
+            const linesEl = document.getElementById('enjoy-today-lines');
+            if (!dateEl || !linesEl) return;
+
+            const now = new Date();
+            const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+            const dayNames = ['일','월','화','수','목','금','토'];
+            const pad = (n) => String(n).padStart(2, '0');
+            const todayKey = `${y}-${pad(m)}-${pad(d)}`;
+            const todayMidnight = new Date(y, m - 1, d);
+
+            dateEl.innerHTML = `오늘은 <span class="text-[#3182F6]">${m}월 ${d}일 (${dayNames[now.getDay()]})</span>이에요!`;
+
+            const lines = [];
+
+            // 1) 이번 달 모임비
+            try {
+                const hist = window.calculateMemberHistory();
+                const monthKey = `${y}-${m}`;
+                const members = ['홍박사','류짱','오스틴','전시기','이진누','성원제'];
+                const unpaid = members.filter(n => {
+                    const h = hist[n] && hist[n][monthKey];
+                    if (!h) return false;
+                    if (h.status === 'deferred') return false; // 유예는 독촉 대상에서 제외
+                    return !(h.status === 'paid' && h.amount >= h.totalOwed);
+                });
+                if (unpaid.length === 0) {
+                    lines.push({ icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비, 모두 납부 완료예요! 👏' });
+                } else {
+                    const who = unpaid.length <= 3 ? unpaid.join(', ') : `${unpaid.slice(0, 3).join(', ')} 외 ${unpaid.length - 3}명`;
+                    lines.push({ icon: 'fa-piggy-bank', color: 'text-[#F04452]', text: `이번 달 모임비 아직이에요! (${who}) 잊지 말고 내요 💰` });
+                }
+            } catch (e) {}
+
+            // 2) 오늘의 일정 (납부일/주년/개인 점 표시는 제외)
+            try {
+                const evtsToday = window.getMergedEvents(y, m)[todayKey] || [];
+                const skip = ['personal_dot', 'anniv', 'dues'];
+                const titles = evtsToday.filter(e => !skip.includes(e.type)).map(e => e.title);
+                if (titles.length > 0) {
+                    const txt = titles.length <= 2 ? titles.join(', ') : `${titles.slice(0, 2).join(', ')} 외 ${titles.length - 2}개`;
+                    lines.push({ icon: 'fa-calendar-day', color: 'text-[#3182F6]', text: `오늘은 "${txt}" 일정이 있어요!` });
+                } else {
+                    lines.push({ icon: 'fa-mug-hot', color: 'text-amber-400', text: '오늘은 특별한 일정이 없어요. 여유로운 하루 되세요 🍃' });
+                }
+            } catch (e) {}
+
+            // 3) 다음 정기모임 (앞으로 13개월 내에서 가장 가까운 정기모임 탐색)
+            try {
+                let next = null;
+                for (let off = 0; off < 13 && !next; off++) {
+                    const dt = new Date(y, (m - 1) + off, 1);
+                    const yy = dt.getFullYear(), mm = dt.getMonth() + 1;
+                    const evts = window.getMergedEvents(yy, mm);
+                    const keys = Object.keys(evts).filter(k => (evts[k] || []).some(e => e.type === 'meet')).sort();
+                    for (const k of keys) {
+                        const [ky, km, kd] = k.split('-').map(Number);
+                        const kdate = new Date(ky, km - 1, kd);
+                        if (kdate >= todayMidnight) {
+                            const ev = evts[k].find(e => e.type === 'meet');
+                            next = { km, kd, title: ev.title, isToday: k === todayKey };
+                            break;
+                        }
+                    }
+                }
+                if (next) {
+                    const when = next.isToday ? '바로 오늘' : `${next.km}월 ${next.kd}일`;
+                    lines.push({ icon: 'fa-suitcase-rolling', color: 'text-purple-400', text: `다음 정기모임은 ${when}! "${next.title}"` });
+                } else {
+                    lines.push({ icon: 'fa-suitcase-rolling', color: 'text-gray-400', text: '아직 잡힌 정기모임이 없어요.' });
+                }
+            } catch (e) {}
+
+            linesEl.innerHTML = lines.map(l => `
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid ${l.icon} ${l.color} text-[11px] w-3.5 text-center mt-[3px] shrink-0"></i>
+                    <span class="text-[12.5px] font-medium text-gray-300 leading-snug break-keep">${l.text}</span>
+                </div>`).join('');
         };
         
         window.openAddScheduleModal = () => { 
@@ -2127,6 +2236,7 @@
                 var h = document.getElementById('home-screen'); if (h) h.classList.remove('hidden');
             }
             try { window.renderCalendar(window.viewYear, window.viewMonth); } catch (e) { console.warn(e); }
+            try { window.renderEnjoyToday(); } catch (e) {}
             try { initBannerScrollListener(); } catch (e) {}
             try { window.startAutoBanner(); } catch (e) {}
         }
@@ -2247,10 +2357,11 @@
 
                     unsubSchedule = onSnapshot(doc(window.meetingDb, ...window.SCHEDULE_PATH), (docSnap) => {
                         if (docSnap.exists()) { 
-                            window.dynamicEvents = docSnap.data(); 
+                            window.dynamicEvents = docSnap.data();
                             if (typeof window.renderCalendar === 'function') {
-                                window.renderCalendar(window.viewYear, window.viewMonth); 
+                                window.renderCalendar(window.viewYear, window.viewMonth);
                             }
+                            try { window.renderEnjoyToday(); } catch (e) {}
                         } else { 
                             window.dynamicEvents = {};
                         }
