@@ -1170,13 +1170,18 @@
                 el.style.animation = `more-item-in 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.09 + i * 0.045}s both`;
             });
             // 배경 밝기에 따라 팝오버 글자색 자동 보정 (항목마다 따로)
-            try {
-                if (window.detectBgLight) {
+            // 패널 등장 애니메이션(버튼 지점에서 빨려 나오는 스케일) 동안에는 항목들의
+            // 실제 위치가 어긋나 뒷배경 측정이 틀어진다. 레이아웃이 안정된 뒤(애니메이션
+            // 종료 후) 항목별로 그 뒤 배경 밝기를 따로 측정해 가독성을 보정한다.
+            const applyPopContrast = () => {
+                try {
+                    if (!window.detectBgLight || !window.morePopoverOpen) return;
                     panel.querySelectorAll('[data-pop-item]').forEach(it => {
                         it.classList.toggle('item-on-light', window.detectBgLight(it));
                     });
-                }
-            } catch (e) {}
+                } catch (e) {}
+            };
+            setTimeout(applyPopContrast, 520);
             window.morePopoverOpen = true;
         };
         window.closeMorePopover = function() {
@@ -1645,7 +1650,7 @@
                 const badge = m.isLeader ? `<span class="bg-[#2C2C2E] text-gray-400 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1.5 inline-flex items-center justify-center leading-none">회장</span>` : '';
 
                 list.innerHTML += `
-                <div class="flex flex-col py-3.5 px-2 -mx-2 rounded-2xl active:bg-[#1C1C1E] transition-colors cursor-pointer">
+                <div class="flex flex-col py-3.5 px-2 -mx-2 rounded-2xl">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3.5">
                             <div class="w-[42px] h-[42px] rounded-full ${c.bg} flex items-center justify-center text-[16px] ${c.text} shrink-0">
@@ -2076,7 +2081,7 @@
                         if (nav.contains(el) || (pop && pop.contains(el)) || el.id === 'app-loader' || el.id === 'more-popover' || el.id === 'more-popover-backdrop') continue;
                         if (el.tagName === 'IMG') {
                             const b = imgBrightness(el);
-                            if (b != null) return b > 150;
+                            if (b != null) return b > 190;
                             continue;
                         }
                         const bg = getComputedStyle(el).backgroundColor;
@@ -2084,7 +2089,7 @@
                         if (m) {
                             const p = m[1].split(',').map(s => parseFloat(s));
                             const a = p[3] === undefined ? 1 : p[3];
-                            if (a > 0.5) return (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) > 150;
+                            if (a > 0.5) return (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) > 190;
                         }
                     }
                 } catch (e) {}
