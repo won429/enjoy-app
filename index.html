@@ -121,21 +121,20 @@
         /* 탭 전환 시 메뉴 크기를 순간적으로 확정(애니메이션 끔)하여 인디케이터 위치 오차 방지 */
         #bottom-nav.no-nav-anim, #bottom-nav.no-nav-anim button, #bottom-nav.no-nav-anim button span { transition: none !important; }
 
-        /* 뒷배경이 밝을 때 하단 메뉴 글자/아이콘을 어둡게 전환 (가독성 자동 보정) */
+        /* 뒷배경이 밝을 때 하단 메뉴 글자/아이콘을 어둡게 전환 (버튼별 개별 보정) */
         #bottom-nav button i, #bottom-nav button span { transition: color 0.3s ease; }
-        #bottom-nav.nav-on-light .text-white { color: #141414 !important; }
-        #bottom-nav.nav-on-light .text-gray-300 { color: rgba(20, 20, 20, 0.55) !important; }
+        #bottom-nav button.btn-on-light .text-white { color: #141414 !important; }
+        #bottom-nav button.btn-on-light .text-gray-300 { color: rgba(20, 20, 20, 0.6) !important; }
         #bottom-nav.nav-on-light #nav-indicator {
             background-color: rgba(0, 0, 0, 0.12) !important;
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
             border-color: rgba(0, 0, 0, 0.06) !important;
         }
-        /* 더보기 팝오버: 밝은 배경 위에서 글자색 자동 보정 */
+        /* 더보기 팝오버: 밝은 배경 위에서 글자색 자동 보정 (항목별 개별) */
         #more-popover-panel [data-pop-item] .text-white,
-        #more-popover-panel [data-pop-item] div, #more-popover-panel [data-pop-item] span { transition: color 0.3s ease; }
-        #more-popover-panel.pop-on-light .text-white { color: #141414 !important; }
-        #more-popover-panel.pop-on-light .text-\[\#8B95A1\] { color: #6b7280 !important; }
-        #more-popover-panel.pop-on-light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.10) !important; }
+        #more-popover-panel [data-pop-item] span { transition: color 0.3s ease; }
+        #more-popover-panel [data-pop-item].item-on-light .text-white { color: #141414 !important; }
+        #more-popover-panel [data-pop-item].item-on-light .text-\[\#8B95A1\] { color: #6b7280 !important; }
 
         /* === Liquid Glass (색 없는 투명 유리 / 뒷배경 그대로 비침) === */
         .liquid-glass {
@@ -224,41 +223,47 @@
 
         /* =========================================================
            라이트 모드 (기기 설정이 라이트면 자동 적용)
-           - 홈 카드(이미지+흰 글씨)는 그대로 유지
-           - 페이지/화면 배경, 제목, 일정·모임통장·모달을 밝게 전환
-           - 하단 메뉴 글자색은 JS(nav-on-light)로 자동 보정됨
+           - 전역으로 텍스트/표면을 밝게 전환(누락 방지)
+           - 단, 홈 카드(이미지 위 흰 글씨)·하단 메뉴·더보기 팝오버는
+             별도로 보호하여 JS 자동 보정/흰색 유지
         ========================================================= */
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
 
-            /* 일정 / 모임통장 화면 */
+            /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
             #schedule-screen header, #meeting-screen header { background-color: rgba(242, 242, 247, 0.9) !important; }
-            #schedule-screen .text-white, #meeting-screen .text-white { color: #141414 !important; }
-            #schedule-screen .text-gray-300, #schedule-screen .text-gray-400, #schedule-screen .text-gray-500, #schedule-screen .text-gray-600,
-            #meeting-screen .text-gray-300, #meeting-screen .text-gray-400, #meeting-screen .text-gray-500,
-            #schedule-screen .text-\[\#8B95A1\], #meeting-screen .text-\[\#8B95A1\] { color: #6B7280 !important; }
-            #schedule-screen .bg-white\/5, #meeting-screen .bg-white\/5 { background-color: rgba(0, 0, 0, 0.04) !important; }
-            #schedule-screen .border-white\/5, #schedule-screen .border-white\/10,
-            #meeting-screen .border-white\/5, #meeting-screen .border-white\/10 { border-color: rgba(0, 0, 0, 0.08) !important; }
+            #app-loader { background-color: #F2F2F7 !important; }
 
-            /* 일정: 선택한 날(흰 원) → 어두운 원 */
-            #calendar-grid .bg-white { background-color: #141414 !important; box-shadow: 0 2px 12px rgba(0,0,0,0.2) !important; }
-            #calendar-grid .text-black { color: #FFFFFF !important; }
+            /* 전역 텍스트 → 어둡게 */
+            .text-white, [class*="text-white/"] { color: #141414 !important; }
+            .text-gray-200, .text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600,
+            .text-\[\#8B95A1\], .text-\[\#A1A1A6\], .text-\[\#D1D1D6\] { color: #5E6470 !important; }
 
-            /* 홈: 페이지/섹션 제목만 어둡게 (카드 내부 흰 글씨는 유지) */
-            #apple-tv-banner > div > h2,
-            #apple-tv-banner section > div:first-child h3 { color: #141414 !important; }
-
-            /* 모달 (다크 패널 → 라이트) */
+            /* 전역 표면/테두리 → 라이트 */
             .bg-\[\#1C1C1E\] { background-color: #FFFFFF !important; }
             .bg-\[\#2C2C2E\] { background-color: #E9E9EB !important; }
-            #schedule-modal .text-white, #schedule-modal .text-gray-300, #schedule-modal .text-gray-400 { color: #141414 !important; }
-            #schedule-modal .border-white\/5, #schedule-modal .border-white\/10 { border-color: rgba(0, 0, 0, 0.10) !important; }
+            .bg-white\/5 { background-color: rgba(0, 0, 0, 0.04) !important; }
+            .bg-white\/10 { background-color: rgba(0, 0, 0, 0.06) !important; }
+            .border-white\/5 { border-color: rgba(0, 0, 0, 0.07) !important; }
+            .border-white\/10 { border-color: rgba(0, 0, 0, 0.10) !important; }
+            .border-white\/15, .border-white\/20 { border-color: rgba(0, 0, 0, 0.12) !important; }
 
-            /* 앱 로더 */
-            #app-loader { background-color: #F2F2F7 !important; }
-            #app-loader .text-gray-400 { color: #6B7280 !important; }
+            /* 보호 ① 홈 카드 이미지 위 글씨는 흰색 유지 */
+            #apple-tv-banner .bg-black .text-white,
+            #apple-tv-banner .bg-black [class*="text-white/"] { color: #FFFFFF !important; }
+
+            /* 보호 ② 하단 메뉴 (JS가 버튼별로 보정 → 기본은 흰색) */
+            #bottom-nav button .text-white { color: #FFFFFF !important; }
+            #bottom-nav button .text-gray-300 { color: rgba(255, 255, 255, 0.7) !important; }
+
+            /* 보호 ③ 더보기 팝오버 (JS가 항목별로 보정 → 기본은 흰색) */
+            #more-popover-panel .text-white { color: #FFFFFF !important; }
+            #more-popover-panel .text-\[\#8B95A1\] { color: rgba(255, 255, 255, 0.6) !important; }
+
+            /* 일정: 선택한 날(흰 원) → 어두운 원 */
+            #calendar-grid .bg-white { background-color: #141414 !important; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important; }
+            #calendar-grid .text-black { color: #FFFFFF !important; }
         }
     </style>
 </head>
@@ -1164,8 +1169,14 @@
                 void el.offsetWidth;
                 el.style.animation = `more-item-in 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.09 + i * 0.045}s both`;
             });
-            // 배경 밝기에 따라 팝오버 글자색 자동 보정
-            try { panel.classList.toggle('pop-on-light', window.detectBgLight ? window.detectBgLight(panel) : false); } catch (e) {}
+            // 배경 밝기에 따라 팝오버 글자색 자동 보정 (항목마다 따로)
+            try {
+                if (window.detectBgLight) {
+                    panel.querySelectorAll('[data-pop-item]').forEach(it => {
+                        it.classList.toggle('item-on-light', window.detectBgLight(it));
+                    });
+                }
+            } catch (e) {}
             window.morePopoverOpen = true;
         };
         window.closeMorePopover = function() {
@@ -2083,7 +2094,13 @@
             let ticking = false;
             function update() {
                 ticking = false;
-                nav.classList.toggle('nav-on-light', detectLight());
+                // 버튼(부분)마다 그 뒤 배경 밝기를 따로 측정해 개별로 색 보정
+                const btns = nav.querySelectorAll('button');
+                btns.forEach(b => { try { b.classList.toggle('btn-on-light', detectLight(b)); } catch (e) {} });
+                // 활성 인디케이터는 활성 버튼 위치 기준으로 보정
+                const map = [null, 'nav-more', 'nav-home', 'nav-calendar', 'nav-meeting'];
+                const activeBtn = document.getElementById(map[window.activeTabIndex] || 'nav-home');
+                nav.classList.toggle('nav-on-light', activeBtn ? detectLight(activeBtn) : false);
             }
             function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
 
