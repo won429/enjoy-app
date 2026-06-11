@@ -140,16 +140,28 @@
         .liquid-glass {
             position: relative;
             isolation: isolate;
-            /* 옅은 대각선 광택을 주어 어두운(검은) 배경 위에서도 유리 질감이 보이게 함 */
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.11) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            /* 자체 프로스트 막 + 대각선 광택: 뒤가 검은 화면(일정 등)이어도 유리처럼 보이게 */
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.10) 46%, rgba(255, 255, 255, 0.18) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.22);
             box-shadow:
                 0 18px 52px rgba(0, 0, 0, 0.35),
-                0 6px 16px rgba(0, 0, 0, 0.22);
+                0 6px 16px rgba(0, 0, 0, 0.22),
+                inset 0 1px 1px rgba(255, 255, 255, 0.30);
             /* 굴절은 불가하니 블러·채도를 최대로 끌어올려 유리 질감 */
-            -webkit-backdrop-filter: blur(22px) saturate(1.9) brightness(1.06);
-            backdrop-filter: blur(22px) saturate(1.9) brightness(1.06);
+            -webkit-backdrop-filter: blur(26px) saturate(1.8) brightness(1.08);
+            backdrop-filter: blur(26px) saturate(1.8) brightness(1.08);
             overflow: hidden;
+        }
+        /* 상단 하이라이트 (유리 윗면 반사) - 배경과 무관하게 항상 유리 느낌 */
+        .liquid-glass::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 45%;
+            border-radius: inherit;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+            pointer-events: none;
+            z-index: 0;
         }
         /* 안쪽 내부 테두리 (이중 림 - 유리 두께/엣지 표현, 균일) */
         .liquid-glass::after {
@@ -376,15 +388,47 @@
                 <h2 class="text-[28px] font-black text-white tracking-tight leading-tight">오늘의 엔조이<span class="text-[#3182F6]">.</span></h2>
             </div>
 
-            <!-- 오늘의 엔조이 캐릭터 안내 (날짜/모임비/오늘 일정/다음 정기모임) -->
+            <!-- 오늘의 엔조이: 마스코트가 알려주는 오늘 (날짜/모임비/오늘 일정/다음 정기모임) -->
             <div id="enjoy-today-card" class="mb-7 -mt-0.5 fade-in-up delay-100">
-                <div class="relative overflow-hidden rounded-[22px] bg-white/5 border border-white/10 p-4 flex items-start gap-3.5 shadow-[0_6px_20px_rgba(0,0,0,0.25)]">
-                    <div class="shrink-0 w-[50px] h-[52px] flex items-end justify-center">
-                        <span id="enjoy-char" class="text-[40px] leading-none select-none" style="font-family:'TossFaceFontMac','Apple Color Emoji',sans-serif; animation: enjoy-walk-in 0.9s cubic-bezier(0.34,1.56,0.64,1) both, enjoy-bob 1.8s ease-in-out 1s infinite;">🐹</span>
-                    </div>
-                    <div class="flex-1 min-w-0 pt-0.5">
-                        <div id="enjoy-today-date" class="text-[15px] font-extrabold text-white tracking-tight leading-tight mb-2">오늘도 반가워요!</div>
-                        <div id="enjoy-today-lines" class="flex flex-col gap-1.5"></div>
+                <div class="relative overflow-hidden rounded-[26px] bg-white/5 border border-white/10 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
+                    <!-- 은은한 배경 글로우 -->
+                    <div class="absolute -top-12 -right-10 w-44 h-44 bg-[#3182F6]/20 rounded-full blur-[46px] pointer-events-none"></div>
+                    <div class="absolute -bottom-14 -left-10 w-44 h-44 bg-teal-400/15 rounded-full blur-[46px] pointer-events-none"></div>
+
+                    <div class="relative flex items-stretch gap-3">
+                        <!-- 마스코트 (왼쪽에서 걸어 나옴) -->
+                        <div class="shrink-0 w-[72px] flex items-end justify-center">
+                            <svg id="enjoy-mascot" viewBox="0 0 96 100" class="w-[68px] h-[71px]" style="animation: enjoy-walk-in 0.9s cubic-bezier(0.34,1.56,0.64,1) both, enjoy-bob 1.9s ease-in-out 1s infinite; transform-origin: 50% 92%;">
+                                <ellipse cx="48" cy="95" rx="24" ry="4.5" fill="#000000" opacity="0.15"/>
+                                <ellipse cx="35" cy="90" rx="8" ry="5.5" fill="#E6B484"/>
+                                <ellipse cx="61" cy="90" rx="8" ry="5.5" fill="#E6B484"/>
+                                <circle cx="22" cy="26" r="11" fill="#E6B484"/>
+                                <circle cx="74" cy="26" r="11" fill="#E6B484"/>
+                                <circle cx="22" cy="26" r="6" fill="#FBE0C4"/>
+                                <circle cx="74" cy="26" r="6" fill="#FBE0C4"/>
+                                <ellipse cx="48" cy="54" rx="34" ry="33" fill="#F2CFA3"/>
+                                <ellipse cx="48" cy="62" rx="23" ry="20" fill="#FCEEDC"/>
+                                <circle cx="32" cy="74" r="6.5" fill="#E6B484"/>
+                                <circle cx="64" cy="74" r="6.5" fill="#E6B484"/>
+                                <circle cx="28" cy="62" r="6.5" fill="#F6A6A0" opacity="0.7"/>
+                                <circle cx="68" cy="62" r="6.5" fill="#F6A6A0" opacity="0.7"/>
+                                <circle cx="37" cy="54" r="6" fill="#3A2A20"/>
+                                <circle cx="59" cy="54" r="6" fill="#3A2A20"/>
+                                <circle cx="39" cy="52" r="2" fill="#FFFFFF"/>
+                                <circle cx="61" cy="52" r="2" fill="#FFFFFF"/>
+                                <ellipse cx="48" cy="62" rx="2.8" ry="2.1" fill="#5E4435"/>
+                                <path d="M48 64 q-5 5 -8.5 1.5" stroke="#5E4435" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+                                <path d="M48 64 q5 5 8.5 1.5" stroke="#5E4435" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <!-- 말풍선 -->
+                        <div class="flex-1 min-w-0 flex flex-col justify-center">
+                            <div class="relative bg-white/10 border border-white/10 rounded-2xl rounded-bl-md px-3.5 py-3">
+                                <div class="absolute -left-[7px] bottom-3 w-3.5 h-3.5 bg-white/10 border-l border-b border-white/10 rotate-45"></div>
+                                <div id="enjoy-today-date" class="relative text-[15.5px] font-extrabold text-white tracking-tight leading-snug mb-2.5">오늘도 반가워요!</div>
+                                <div id="enjoy-today-lines" class="relative flex flex-col gap-2"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -796,7 +840,7 @@
             <div class="relative z-10 flex flex-col gap-0.5">
                 <!-- 위치 공유 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.location.href='map.html'" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-amber-500/25 flex items-center justify-center text-amber-500 text-[15px] shrink-0"><i class="fa-solid fa-map-location-dot"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(245,158,11,0.4)]"><i class="fa-solid fa-map-location-dot"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">위치 공유</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">실시간 위치 확인</div>
@@ -804,7 +848,7 @@
                 </button>
                 <!-- 여행 기록 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(confirm('새로운 버전인 우리의 발자취가 있음에도 불구하고 들어가시겠습니까?')) window.goToTravel();" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-emerald-500/25 flex items-center justify-center text-emerald-500 text-[15px] shrink-0"><i class="fa-solid fa-plane-departure"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(16,185,129,0.4)]"><i class="fa-solid fa-plane-departure"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">여행 기록</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">지난 추억 떠올리기</div>
@@ -812,7 +856,7 @@
                 </button>
                 <!-- 지하철 도착 정보 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('https://won429.github.io/Test/')" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-cyan-500/25 flex items-center justify-center text-cyan-500 text-[15px] shrink-0"><i class="fa-solid fa-train-subway"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(6,182,212,0.4)]"><i class="fa-solid fa-train-subway"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5">
                             <span class="text-[14px] font-bold text-white leading-tight">지하철 도착 정보</span>
@@ -823,7 +867,7 @@
                 </button>
                 <!-- 복불복 게임 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.playGame()" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-red-500/25 flex items-center justify-center text-red-500 text-[15px] shrink-0"><i class="fa-solid fa-dice"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-rose-400 to-red-500 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(244,68,82,0.4)]"><i class="fa-solid fa-dice"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">복불복 게임</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">오늘 엔조이의 운명은?</div>
@@ -832,7 +876,7 @@
                 <div class="h-px bg-white/10 my-1 mx-2"></div>
                 <!-- 새로운 기능 준비 중 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.showSecretModal()" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-gray-500/30 flex items-center justify-center text-gray-500 text-[15px] shrink-0"><i class="fa-solid fa-gift"></i></div>
+                    <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(99,102,241,0.4)]"><i class="fa-solid fa-gift"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">새로운 기능 준비 중</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">어떤 서비스가 추가될까요?</div>
@@ -1148,10 +1192,10 @@
                     return !(h.status === 'paid' && h.amount >= h.totalOwed);
                 });
                 if (unpaid.length === 0) {
-                    lines.push({ icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비, 모두 납부 완료예요! 👏' });
+                    lines.push({ icon: 'fa-circle-check', color: 'text-emerald-400', chip: 'bg-emerald-500/15', text: '이번 달 모임비, 모두 납부 완료예요! 👏' });
                 } else {
                     const who = unpaid.length <= 3 ? unpaid.join(', ') : `${unpaid.slice(0, 3).join(', ')} 외 ${unpaid.length - 3}명`;
-                    lines.push({ icon: 'fa-piggy-bank', color: 'text-[#F04452]', text: `이번 달 모임비 아직이에요! (${who}) 잊지 말고 내요 💰` });
+                    lines.push({ icon: 'fa-piggy-bank', color: 'text-[#F04452]', chip: 'bg-[#F04452]/15', text: `이번 달 모임비 아직이에요! (${who}) 잊지 말고 내요 💰` });
                 }
             } catch (e) {}
 
@@ -1162,9 +1206,9 @@
                 const titles = evtsToday.filter(e => !skip.includes(e.type)).map(e => e.title);
                 if (titles.length > 0) {
                     const txt = titles.length <= 2 ? titles.join(', ') : `${titles.slice(0, 2).join(', ')} 외 ${titles.length - 2}개`;
-                    lines.push({ icon: 'fa-calendar-day', color: 'text-[#3182F6]', text: `오늘은 "${txt}" 일정이 있어요!` });
+                    lines.push({ icon: 'fa-calendar-day', color: 'text-[#3182F6]', chip: 'bg-[#3182F6]/15', text: `오늘은 "${txt}" 일정이 있어요!` });
                 } else {
-                    lines.push({ icon: 'fa-mug-hot', color: 'text-amber-400', text: '오늘은 특별한 일정이 없어요. 여유로운 하루 되세요 🍃' });
+                    lines.push({ icon: 'fa-mug-hot', color: 'text-amber-400', chip: 'bg-amber-500/15', text: '오늘은 특별한 일정이 없어요. 여유로운 하루 되세요 🍃' });
                 }
             } catch (e) {}
 
@@ -1188,16 +1232,18 @@
                 }
                 if (next) {
                     const when = next.isToday ? '바로 오늘' : `${next.km}월 ${next.kd}일`;
-                    lines.push({ icon: 'fa-suitcase-rolling', color: 'text-purple-400', text: `다음 정기모임은 ${when}! "${next.title}"` });
+                    lines.push({ icon: 'fa-suitcase-rolling', color: 'text-purple-400', chip: 'bg-purple-500/15', text: `다음 정기모임은 ${when}! "${next.title}"` });
                 } else {
-                    lines.push({ icon: 'fa-suitcase-rolling', color: 'text-gray-400', text: '아직 잡힌 정기모임이 없어요.' });
+                    lines.push({ icon: 'fa-suitcase-rolling', color: 'text-gray-400', chip: 'bg-gray-500/20', text: '아직 잡힌 정기모임이 없어요.' });
                 }
             } catch (e) {}
 
             linesEl.innerHTML = lines.map(l => `
-                <div class="flex items-start gap-2">
-                    <i class="fa-solid ${l.icon} ${l.color} text-[11px] w-3.5 text-center mt-[3px] shrink-0"></i>
-                    <span class="text-[12.5px] font-medium text-gray-300 leading-snug break-keep">${l.text}</span>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-[26px] h-[26px] rounded-[9px] ${l.chip} flex items-center justify-center shrink-0">
+                        <i class="fa-solid ${l.icon} ${l.color} text-[12px]"></i>
+                    </div>
+                    <span class="flex-1 text-[12.5px] font-semibold text-gray-200 leading-snug break-keep">${l.text}</span>
                 </div>`).join('');
         };
         
