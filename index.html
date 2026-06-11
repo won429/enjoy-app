@@ -115,50 +115,50 @@
         /* 탭 전환 시 메뉴 크기를 순간적으로 확정(애니메이션 끔)하여 인디케이터 위치 오차 방지 */
         #bottom-nav.no-nav-anim, #bottom-nav.no-nav-anim button, #bottom-nav.no-nav-anim button span { transition: none !important; }
 
-        /* === Apple Liquid Glass (iOS 26 느낌) === */
+        /* === Liquid Glass (업로드 가이드 스펙 적용 / 다크 토큰) === */
         .liquid-glass {
             position: relative;
-            background: rgba(255, 255, 255, 0.03);
-            -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.18);
-            backdrop-filter: blur(28px) saturate(200%) brightness(1.18);
-            border: none;
+            isolation: isolate;
+            background: linear-gradient(135deg, rgba(31, 41, 59, 0.76), rgba(24, 31, 46, 0.42));
+            border: 1px solid rgba(255, 255, 255, 0.16);
             box-shadow:
-                0 16px 40px rgba(0, 0, 0, 0.55),              /* 깊은 바닥 그림자 */
-                0 2px 8px rgba(0, 0, 0, 0.35),                /* 근접 그림자 */
-                inset 0 1px 1px rgba(255, 255, 255, 0.18),    /* 윗면 미세 광택 */
-                inset 0 -12px 24px -14px rgba(0, 0, 0, 0.5);  /* 바닥쪽 유리 두께 음영 */
+                0 18px 52px rgba(0, 0, 0, 0.38),
+                0 6px 16px rgba(0, 0, 0, 0.26);
+            -webkit-backdrop-filter: blur(24px) saturate(1.6);
+            backdrop-filter: blur(24px) saturate(1.6);
+            overflow: hidden;
         }
-        /* 곡면 스페큘러 하이라이트 (평면 그라데이션이 아닌 렌즈처럼 휜 광택) */
+        /* 대각 시트 + 좌상단 radial 하이라이트 (콘텐츠 뒤) */
         .liquid-glass::before {
             content: "";
             position: absolute;
             inset: 0;
+            z-index: -1;
             border-radius: inherit;
             background:
-                radial-gradient(140% 90% at 50% -25%, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.05) 40%, transparent 58%),
-                radial-gradient(120% 100% at 50% 135%, rgba(255, 255, 255, 0.10) 0%, transparent 45%);
+                linear-gradient(135deg, rgba(255, 255, 255, 0.30), transparent 42%),
+                radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.30), transparent 34%);
             pointer-events: none;
-            z-index: 1;
         }
-        /* 비대칭 림 라이트 - 실제 유리처럼 좌상단·우하단에 빛이 강하게 맺힘 */
+        /* 안쪽 내부 테두리 (이중 림 - 유리 두께/엣지 표현) */
         .liquid-glass::after {
             content: "";
             position: absolute;
-            inset: 0;
+            inset: 1px;
             border-radius: inherit;
-            padding: 1.2px;
-            background: linear-gradient(115deg,
-                rgba(255, 255, 255, 0.55) 0%,
-                rgba(255, 255, 255, 0.14) 25%,
-                rgba(255, 255, 255, 0.03) 47%,
-                rgba(255, 255, 255, 0.10) 68%,
-                rgba(255, 255, 255, 0.48) 100%);
-            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-            -webkit-mask-composite: xor;
-            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-            mask-composite: exclude;
+            border: 1px solid rgba(255, 255, 255, 0.10);
             pointer-events: none;
-            z-index: 2;
+        }
+        /* 가이드 권장: 투명도/백드롭 미지원·감소 설정 대응 폴백 */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .liquid-glass { background: rgba(28, 33, 46, 0.92); }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            .liquid-glass {
+                -webkit-backdrop-filter: none !important;
+                backdrop-filter: none !important;
+                background: rgba(28, 33, 46, 0.94);
+            }
         }
 
         /* === 더보기 팝오버 모션 (더보기 버튼 지점에서 빨려 나오고/들어감) === */
