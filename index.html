@@ -136,41 +136,19 @@
         #more-popover-panel [data-pop-item].item-on-light .text-white { color: #141414 !important; }
         #more-popover-panel [data-pop-item].item-on-light .text-\[\#8B95A1\] { color: #1f2937 !important; }
 
-        /* === Liquid Glass (색 없는 투명 유리 / 뒷배경 그대로 비침) === */
+        /* === Liquid Glass (색 없는 완전 투명 유리 / 뒷배경 그대로 비침) === */
         .liquid-glass {
             position: relative;
             isolation: isolate;
-            /* 자체 프로스트 막 + 대각선 광택: 뒤가 검은 화면(일정 등)이어도 유리처럼 보이게 */
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.10) 46%, rgba(255, 255, 255, 0.18) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.22);
+            /* 색·흰막 일절 없음. 오직 블러로만 뒷배경이 그대로 비침 (진짜 유리) */
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.12);
             box-shadow:
                 0 18px 52px rgba(0, 0, 0, 0.35),
-                0 6px 16px rgba(0, 0, 0, 0.22),
-                inset 0 1px 1px rgba(255, 255, 255, 0.30);
-            /* 굴절은 불가하니 블러·채도를 최대로 끌어올려 유리 질감 */
-            -webkit-backdrop-filter: blur(26px) saturate(1.8) brightness(1.08);
-            backdrop-filter: blur(26px) saturate(1.8) brightness(1.08);
+                0 6px 16px rgba(0, 0, 0, 0.22);
+            -webkit-backdrop-filter: blur(20px) saturate(1.6);
+            backdrop-filter: blur(20px) saturate(1.6);
             overflow: hidden;
-        }
-        /* 상단 하이라이트 (유리 윗면 반사) - 배경과 무관하게 항상 유리 느낌 */
-        .liquid-glass::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 45%;
-            border-radius: inherit;
-            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
-            pointer-events: none;
-            z-index: 0;
-        }
-        /* 안쪽 내부 테두리 (이중 림 - 유리 두께/엣지 표현, 균일) */
-        .liquid-glass::after {
-            content: "";
-            position: absolute;
-            inset: 1px;
-            border-radius: inherit;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            pointer-events: none;
         }
         /* 가이드 권장: 투명도/백드롭 미지원·감소 설정 대응 폴백 (무채색) */
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -233,16 +211,20 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* 홈 상단 '오늘의 엔조이' 캐릭터 모션 (걸어 나와서 인사) */
-        #enjoy-char { display: inline-block; transform-origin: 50% 90%; }
+        /* 홈 상단 '오늘의 엔조이' 마스코트 모션 (걸어 나와서 인사) */
         @keyframes enjoy-walk-in {
-            0%   { opacity: 0; transform: translateX(-46px) rotate(-12deg) scale(0.8); }
+            0%   { opacity: 0; transform: translateX(-46px) rotate(-10deg) scale(0.82); }
             55%  { opacity: 1; }
             100% { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
         }
         @keyframes enjoy-bob {
-            0%, 100% { transform: translateY(0) rotate(-4deg); }
-            50%      { transform: translateY(-3px) rotate(4deg); }
+            0%, 100% { transform: translateY(0) rotate(-3deg); }
+            50%      { transform: translateY(-4px) rotate(3deg); }
+        }
+        /* 말풍선 메시지 교체 시 팝 */
+        @keyframes enjoy-bubble-pop {
+            0%   { opacity: 0.3; transform: translateY(3px) scale(0.97); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         /* =========================================================
@@ -388,47 +370,18 @@
                 <h2 class="text-[28px] font-black text-white tracking-tight leading-tight">오늘의 엔조이<span class="text-[#3182F6]">.</span></h2>
             </div>
 
-            <!-- 오늘의 엔조이: 마스코트가 알려주는 오늘 (날짜/모임비/오늘 일정/다음 정기모임) -->
-            <div id="enjoy-today-card" class="mb-7 -mt-0.5 fade-in-up delay-100">
-                <div class="relative overflow-hidden rounded-[26px] bg-white/5 border border-white/10 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
-                    <!-- 은은한 배경 글로우 -->
-                    <div class="absolute -top-12 -right-10 w-44 h-44 bg-[#3182F6]/20 rounded-full blur-[46px] pointer-events-none"></div>
-                    <div class="absolute -bottom-14 -left-10 w-44 h-44 bg-teal-400/15 rounded-full blur-[46px] pointer-events-none"></div>
-
-                    <div class="relative flex items-stretch gap-3">
-                        <!-- 마스코트 (왼쪽에서 걸어 나옴) -->
-                        <div class="shrink-0 w-[72px] flex items-end justify-center">
-                            <svg id="enjoy-mascot" viewBox="0 0 96 100" class="w-[68px] h-[71px]" style="animation: enjoy-walk-in 0.9s cubic-bezier(0.34,1.56,0.64,1) both, enjoy-bob 1.9s ease-in-out 1s infinite; transform-origin: 50% 92%;">
-                                <ellipse cx="48" cy="95" rx="24" ry="4.5" fill="#000000" opacity="0.15"/>
-                                <ellipse cx="35" cy="90" rx="8" ry="5.5" fill="#E6B484"/>
-                                <ellipse cx="61" cy="90" rx="8" ry="5.5" fill="#E6B484"/>
-                                <circle cx="22" cy="26" r="11" fill="#E6B484"/>
-                                <circle cx="74" cy="26" r="11" fill="#E6B484"/>
-                                <circle cx="22" cy="26" r="6" fill="#FBE0C4"/>
-                                <circle cx="74" cy="26" r="6" fill="#FBE0C4"/>
-                                <ellipse cx="48" cy="54" rx="34" ry="33" fill="#F2CFA3"/>
-                                <ellipse cx="48" cy="62" rx="23" ry="20" fill="#FCEEDC"/>
-                                <circle cx="32" cy="74" r="6.5" fill="#E6B484"/>
-                                <circle cx="64" cy="74" r="6.5" fill="#E6B484"/>
-                                <circle cx="28" cy="62" r="6.5" fill="#F6A6A0" opacity="0.7"/>
-                                <circle cx="68" cy="62" r="6.5" fill="#F6A6A0" opacity="0.7"/>
-                                <circle cx="37" cy="54" r="6" fill="#3A2A20"/>
-                                <circle cx="59" cy="54" r="6" fill="#3A2A20"/>
-                                <circle cx="39" cy="52" r="2" fill="#FFFFFF"/>
-                                <circle cx="61" cy="52" r="2" fill="#FFFFFF"/>
-                                <ellipse cx="48" cy="62" rx="2.8" ry="2.1" fill="#5E4435"/>
-                                <path d="M48 64 q-5 5 -8.5 1.5" stroke="#5E4435" stroke-width="1.7" fill="none" stroke-linecap="round"/>
-                                <path d="M48 64 q5 5 8.5 1.5" stroke="#5E4435" stroke-width="1.7" fill="none" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                        <!-- 말풍선 -->
-                        <div class="flex-1 min-w-0 flex flex-col justify-center">
-                            <div class="relative bg-white/10 border border-white/10 rounded-2xl rounded-bl-md px-3.5 py-3">
-                                <div class="absolute -left-[7px] bottom-3 w-3.5 h-3.5 bg-white/10 border-l border-b border-white/10 rotate-45"></div>
-                                <div id="enjoy-today-date" class="relative text-[15.5px] font-extrabold text-white tracking-tight leading-snug mb-2.5">오늘도 반가워요!</div>
-                                <div id="enjoy-today-lines" class="relative flex flex-col gap-2"></div>
-                            </div>
-                        </div>
+            <!-- 오늘의 엔조이: 마스코트 + 말풍선 (카드 없이, 안내말은 주기적으로 한 가지씩) -->
+            <div id="enjoy-today" class="mb-8 -mt-0.5 flex items-end gap-1.5 fade-in-up delay-100">
+                <img id="enjoy-mascot" alt="엔조이 마스코트"
+                     src="https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FsqTQP%2FbtsFbsCngYr%2FAAAAAAAAAAAAAAAAAAAAAJ36OJYCIb2qah52HPjNvKQ4o4lCgwVdW0xAXM-R6sWQ%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DH4TfqKuqlN0IdOBJ6Jely5AO0gE%253D"
+                     class="shrink-0 w-[84px] h-[84px] object-contain select-none pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.25)]"
+                     style="animation: enjoy-walk-in 0.9s cubic-bezier(0.34,1.56,0.64,1) both, enjoy-bob 2s ease-in-out 1s infinite; transform-origin: 50% 92%;"
+                     onerror="this.style.display='none'">
+                <div class="flex-1 min-w-0 mb-3">
+                    <div id="enjoy-bubble" class="relative inline-flex items-center gap-2 max-w-full bg-white/10 border border-white/10 rounded-[24px] pl-3.5 pr-4 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.18)]">
+                        <span class="absolute -left-[6px] bottom-4 w-3 h-3 bg-white/10 border-l border-b border-white/10 rotate-45"></span>
+                        <i id="enjoy-bubble-icon" class="fa-solid fa-calendar-day text-[#3182F6] text-[12px] shrink-0"></i>
+                        <span id="enjoy-bubble-text" class="text-[13px] font-bold text-white leading-snug break-keep">오늘도 반가워요!</span>
                     </div>
                 </div>
             </div>
@@ -1162,12 +1115,11 @@
             try { window.renderEnjoyToday(); } catch (e) {}
         };
 
-        // 홈 상단: '오늘의 엔조이' 캐릭터가 알려주는 오늘 안내
-        // (오늘 날짜 / 이번 달 모임비 / 오늘의 일정 / 다음 정기모임)
+        // 홈 상단: 마스코트 말풍선에 띄울 '오늘의 엔조이' 안내말 목록 구성
+        // (오늘 날짜 / 이번 달 모임비 / 오늘의 일정 / 다음 정기모임) → 한 가지씩 주기적으로 교체
         window.renderEnjoyToday = function() {
-            const dateEl = document.getElementById('enjoy-today-date');
-            const linesEl = document.getElementById('enjoy-today-lines');
-            if (!dateEl || !linesEl) return;
+            const bubble = document.getElementById('enjoy-bubble');
+            if (!bubble) return;
 
             const now = new Date();
             const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
@@ -1176,9 +1128,10 @@
             const todayKey = `${y}-${pad(m)}-${pad(d)}`;
             const todayMidnight = new Date(y, m - 1, d);
 
-            dateEl.innerHTML = `오늘은 <span class="text-[#3182F6]">${m}월 ${d}일 (${dayNames[now.getDay()]})</span>이에요!`;
+            const msgs = [];
 
-            const lines = [];
+            // 0) 인사 + 오늘 날짜
+            msgs.push({ icon: 'fa-calendar-day', color: 'text-[#3182F6]', text: `오늘은 ${m}월 ${d}일 (${dayNames[now.getDay()]})이에요!` });
 
             // 1) 이번 달 모임비
             try {
@@ -1192,10 +1145,10 @@
                     return !(h.status === 'paid' && h.amount >= h.totalOwed);
                 });
                 if (unpaid.length === 0) {
-                    lines.push({ icon: 'fa-circle-check', color: 'text-emerald-400', chip: 'bg-emerald-500/15', text: '이번 달 모임비, 모두 납부 완료예요! 👏' });
+                    msgs.push({ icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비, 모두 납부 완료예요! 👏' });
                 } else {
                     const who = unpaid.length <= 3 ? unpaid.join(', ') : `${unpaid.slice(0, 3).join(', ')} 외 ${unpaid.length - 3}명`;
-                    lines.push({ icon: 'fa-piggy-bank', color: 'text-[#F04452]', chip: 'bg-[#F04452]/15', text: `이번 달 모임비 아직이에요! (${who}) 잊지 말고 내요 💰` });
+                    msgs.push({ icon: 'fa-piggy-bank', color: 'text-[#F04452]', text: `이번 달 모임비 아직이에요! ${who} 잊지 말고 내요 💰` });
                 }
             } catch (e) {}
 
@@ -1206,9 +1159,9 @@
                 const titles = evtsToday.filter(e => !skip.includes(e.type)).map(e => e.title);
                 if (titles.length > 0) {
                     const txt = titles.length <= 2 ? titles.join(', ') : `${titles.slice(0, 2).join(', ')} 외 ${titles.length - 2}개`;
-                    lines.push({ icon: 'fa-calendar-day', color: 'text-[#3182F6]', chip: 'bg-[#3182F6]/15', text: `오늘은 "${txt}" 일정이 있어요!` });
+                    msgs.push({ icon: 'fa-calendar-check', color: 'text-[#3182F6]', text: `오늘은 "${txt}" 일정이 있어요!` });
                 } else {
-                    lines.push({ icon: 'fa-mug-hot', color: 'text-amber-400', chip: 'bg-amber-500/15', text: '오늘은 특별한 일정이 없어요. 여유로운 하루 되세요 🍃' });
+                    msgs.push({ icon: 'fa-mug-hot', color: 'text-amber-400', text: '오늘은 일정이 없어요. 여유로운 하루 되세요 🍃' });
                 }
             } catch (e) {}
 
@@ -1232,19 +1185,39 @@
                 }
                 if (next) {
                     const when = next.isToday ? '바로 오늘' : `${next.km}월 ${next.kd}일`;
-                    lines.push({ icon: 'fa-suitcase-rolling', color: 'text-purple-400', chip: 'bg-purple-500/15', text: `다음 정기모임은 ${when}! "${next.title}"` });
+                    msgs.push({ icon: 'fa-suitcase-rolling', color: 'text-purple-400', text: `다음 정기모임은 ${when}! "${next.title}"` });
                 } else {
-                    lines.push({ icon: 'fa-suitcase-rolling', color: 'text-gray-400', chip: 'bg-gray-500/20', text: '아직 잡힌 정기모임이 없어요.' });
+                    msgs.push({ icon: 'fa-suitcase-rolling', color: 'text-purple-400', text: '아직 잡힌 정기모임이 없어요.' });
                 }
             } catch (e) {}
 
-            linesEl.innerHTML = lines.map(l => `
-                <div class="flex items-center gap-2.5">
-                    <div class="w-[26px] h-[26px] rounded-[9px] ${l.chip} flex items-center justify-center shrink-0">
-                        <i class="fa-solid ${l.icon} ${l.color} text-[12px]"></i>
-                    </div>
-                    <span class="flex-1 text-[12.5px] font-semibold text-gray-200 leading-snug break-keep">${l.text}</span>
-                </div>`).join('');
+            window.enjoyMessages = msgs;
+            window.enjoyMsgIndex = 0;
+            window.showEnjoyMessage(0);
+
+            // 주기적으로 한 가지씩 교체 (중복 타이머 방지)
+            if (window.enjoyMsgTimer) clearInterval(window.enjoyMsgTimer);
+            if (msgs.length > 1) {
+                window.enjoyMsgTimer = setInterval(() => {
+                    if (!window.enjoyMessages || window.enjoyMessages.length === 0) return;
+                    window.enjoyMsgIndex = (window.enjoyMsgIndex + 1) % window.enjoyMessages.length;
+                    window.showEnjoyMessage(window.enjoyMsgIndex);
+                }, 3800);
+            }
+        };
+
+        // 말풍선에 한 가지 안내말을 표시 (아이콘/색/문구 교체 + 팝 모션)
+        window.showEnjoyMessage = function(i) {
+            const bubble = document.getElementById('enjoy-bubble');
+            const textEl = document.getElementById('enjoy-bubble-text');
+            const iconEl = document.getElementById('enjoy-bubble-icon');
+            const msg = (window.enjoyMessages || [])[i];
+            if (!bubble || !textEl || !iconEl || !msg) return;
+            textEl.textContent = msg.text;
+            iconEl.className = `fa-solid ${msg.icon} ${msg.color} text-[12px] shrink-0`;
+            bubble.style.animation = 'none';
+            void bubble.offsetWidth;
+            bubble.style.animation = 'enjoy-bubble-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
         };
         
         window.openAddScheduleModal = () => { 
