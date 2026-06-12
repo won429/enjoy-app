@@ -2299,9 +2299,10 @@
                     for (const el of els) {
                         if (nav.contains(el) || (pop && pop.contains(el)) || el.id === 'app-loader' || el.id === 'more-popover' || el.id === 'more-popover-backdrop') continue;
                         if (el.tagName === 'IMG') {
-                            const b = imgBrightness(el);
-                            if (b != null) return b > 205;
-                            continue;
+                            // 홈 배너 이미지들은 위에 어두운 그라데이션이 덮여 있어 실제로는 어두운 배경이다.
+                            // 이미지 위에서는 항상 어두운 배경으로 간주 → 밝은(흰) 글자.
+                            // (이미지 평균밝기/로딩 타이밍에 의존하지 않으므로 첫 로딩부터 즉시 올바르게 전환)
+                            return false;
                         }
                         const bg = getComputedStyle(el).backgroundColor;
                         const m = bg && bg.match(/rgba?\(([^)]+)\)/);
