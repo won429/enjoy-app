@@ -195,6 +195,21 @@
         #story-cam-video, #story-preview-img, #story-preview-video,
         #story-viewer-img, #story-viewer-video { -webkit-user-drag: none; }
 
+        /* 핀치 제스처가 브라우저 기본 동작에 막히지 않고 JS로 전달되도록 */
+        #story-viewer, #story-viewer *, #story-preview, #story-preview * { touch-action: none; }
+        #story-cam-video { touch-action: none; }
+
+        /* 카메라 줌 다이얼(슬라이더) — 아이폰 카메라 느낌 */
+        .story-zoom-range { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px;
+            background: rgba(255,255,255,0.35); outline: none; }
+        .story-zoom-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 26px; height: 26px;
+            border-radius: 9999px; background: #fff; border: 3px solid rgba(0,0,0,0.15);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4); cursor: pointer; }
+        .story-zoom-range::-moz-range-thumb { width: 26px; height: 26px; border-radius: 9999px; background: #fff;
+            border: 3px solid rgba(0,0,0,0.15); box-shadow: 0 2px 6px rgba(0,0,0,0.4); cursor: pointer; }
+        .story-zoom-chip { background: rgba(0,0,0,0.45); color: #fff; }
+        .story-zoom-chip.on { background: #fff; color: #141414; }
+
         /* 공지사항 롤링 애니메이션 수정: 무한 루프 구현 */
         @keyframes marquee {
             0% { transform: translateX(0); }
@@ -308,6 +323,17 @@
             /* 일정: 선택한 날(흰 원) → 어두운 원 */
             #calendar-grid .bg-white { background-color: #141414 !important; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important; }
             #calendar-grid .text-black { color: #FFFFFF !important; }
+
+            /* 엔조이 스토리 전체화면(카메라/미리보기/뷰어)은 항상 검은 배경 → 글자/아이콘 흰색 유지 */
+            #story-camera .text-white, #story-camera [class*="text-white/"],
+            #story-preview .text-white, #story-preview [class*="text-white/"],
+            #story-viewer .text-white, #story-viewer [class*="text-white/"] { color: #FFFFFF !important; }
+            #story-camera .bg-white, #story-preview .bg-white, #story-viewer .bg-white { background-color: #FFFFFF !important; }
+            #story-camera .text-black, #story-preview .text-black, #story-viewer .text-black { color: #141414 !important; }
+            /* 홈 스토리 트레이: 라이트 모드에서 잘 보이도록 보정 */
+            #story-tray .border-white\/30 { border-color: rgba(0, 0, 0, 0.28) !important; }
+            #story-tray .bg-white\/5 { background-color: rgba(0, 0, 0, 0.05) !important; }
+            #story-tray .text-white\/85, #story-tray [class*="text-white/"] { color: #141414 !important; }
         }
     </style>
 </head>
@@ -979,6 +1005,16 @@
 
         <!-- 하단 셔터 -->
         <div class="relative z-10 mt-auto pb-safe-area">
+            <!-- 줌 다이얼 (아이폰 카메라 느낌) -->
+            <div class="px-8 mb-3 flex items-center justify-center gap-2">
+                <button id="story-zoom-1" onclick="window.haptic(); window.EnjoyStory.setZoom(1)" class="story-zoom-chip on text-[12px] font-bold w-9 h-9 rounded-full active:scale-90 transition-transform">1x</button>
+                <button id="story-zoom-2" onclick="window.haptic(); window.EnjoyStory.setZoom(2)" class="story-zoom-chip text-[12px] font-bold w-9 h-9 rounded-full active:scale-90 transition-transform">2x</button>
+                <button id="story-zoom-3" onclick="window.haptic(); window.EnjoyStory.setZoom(3)" class="story-zoom-chip text-[12px] font-bold w-9 h-9 rounded-full active:scale-90 transition-transform">3x</button>
+            </div>
+            <div class="px-10 mb-4 flex items-center gap-3">
+                <span id="story-zoom-label" class="text-white text-[12px] font-bold w-10 text-center drop-shadow">1.0x</span>
+                <input id="story-zoom" type="range" min="1" max="4" step="0.1" value="1" class="flex-1 story-zoom-range" oninput="window.EnjoyStory.setZoom(parseFloat(this.value))">
+            </div>
             <p id="story-cam-hint" class="text-white/80 text-[13px] font-medium mb-5 text-center drop-shadow">탭하면 사진 · 길게 누르면 영상 (최대 5초)</p>
             <div class="relative flex items-center justify-center mb-7">
                 <button onclick="window.haptic(); window.EnjoyStory.pickGallery()" class="absolute left-8 w-12 h-12 rounded-2xl bg-black/45 backdrop-blur-sm text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-regular fa-images text-xl"></i></button>
@@ -1005,6 +1041,7 @@
         <video id="story-preview-video" class="hidden absolute inset-0 w-full h-full object-contain bg-black" playsinline autoplay loop></video>
         <div class="relative z-10 flex items-center justify-between pt-safe px-5 pt-4">
             <button onclick="window.haptic(); window.EnjoyStory.retake()" class="px-4 h-10 rounded-full bg-black/45 backdrop-blur-sm text-white text-[13px] font-bold flex items-center gap-2 active:scale-95 transition-transform"><i class="fa-solid fa-rotate-left"></i>다시</button>
+            <button onclick="window.haptic(); window.EnjoyStory.savePreview()" class="px-4 h-10 rounded-full bg-black/45 backdrop-blur-sm text-white text-[13px] font-bold flex items-center gap-2 active:scale-95 transition-transform"><i class="fa-solid fa-download"></i>저장</button>
         </div>
         <div class="relative z-10 mt-auto px-5 pb-8 pb-safe-area">
             <button onclick="window.haptic(); window.EnjoyStory.post()" class="w-full bg-white text-black font-bold py-4 rounded-full active:scale-95 transition-transform shadow-[0_0_24px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane text-[14px]"></i>스토리에 올리기</button>
@@ -1031,6 +1068,7 @@
                         <span id="story-viewer-time" class="text-white/70 text-[12px] font-medium"></span>
                     </div>
                     <div class="flex items-center gap-1.5 pointer-events-auto">
+                        <button onclick="window.haptic(); window.EnjoyStory.saveCurrent()" class="w-9 h-9 rounded-full bg-black/35 text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-download text-[13px]"></i></button>
                         <button onclick="window.haptic(); window.EnjoyStory.deleteCurrent()" class="w-9 h-9 rounded-full bg-black/35 text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-trash text-[13px]"></i></button>
                         <button onclick="window.haptic(); window.EnjoyStory.closeViewer()" class="w-9 h-9 rounded-full bg-black/35 text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-xmark text-lg"></i></button>
                     </div>
@@ -1053,6 +1091,8 @@
         let pending = null;                // { type, blob, thumb }
         let camStream = null, facing = 'environment';
         let mediaRec = null, recChunks = [], recording = false, recTimer = null, holdTimer = null, didRecord = false;
+        let camZoom = 1; const MAX_ZOOM = 4;            // 카메라 줌 (다이얼/핀치)
+        let recCanvas = null, recRAF = 0, recThumbSrc = null; // 디지털 줌 영상 녹화 파이프라인
         let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
         let viewerZoom = null, previewZoom = null; // 확대/축소 컨트롤러
 
@@ -1168,9 +1208,37 @@
             }
             const vid = $('story-cam-video');
             vid.srcObject = camStream;
-            vid.style.transform = (facing === 'user') ? 'scaleX(-1)' : 'none';
             try { await vid.play(); } catch (e) {}
+            setZoom(1); // 줌 초기화 + 미러 반영
             return true;
+        }
+        /* ---------- 카메라 줌 (다이얼 + 핀치, 아이폰 카메라 느낌) ---------- */
+        function videoTrack() { return camStream && camStream.getVideoTracks ? camStream.getVideoTracks()[0] : null; }
+        function zoomCaps() {
+            const t = videoTrack();
+            if (!t || !t.getCapabilities) return null;
+            try { const c = t.getCapabilities(); return (c && c.zoom) ? c.zoom : null; } catch (e) { return null; }
+        }
+        function setZoom(z) {
+            camZoom = Math.max(1, Math.min(MAX_ZOOM, z || 1));
+            const vid = $('story-cam-video');
+            const caps = zoomCaps();
+            if (caps) { // 하드웨어 줌 지원
+                const val = caps.min + (caps.max - caps.min) * ((camZoom - 1) / (MAX_ZOOM - 1));
+                try { videoTrack().applyConstraints({ advanced: [{ zoom: val }] }); } catch (e) {}
+                if (vid) vid.style.transform = (facing === 'user') ? 'scaleX(-1)' : 'none';
+            } else {     // 디지털 줌 (CSS 확대 + 촬영 시 중앙 크롭)
+                if (vid) vid.style.transform = ((facing === 'user') ? 'scaleX(-1) ' : '') + 'scale(' + camZoom + ')';
+            }
+            updateZoomUI();
+        }
+        function updateZoomUI() {
+            const lbl = $('story-zoom-label'), sl = $('story-zoom');
+            if (lbl) lbl.textContent = camZoom.toFixed(1) + 'x';
+            if (sl && Math.abs(parseFloat(sl.value) - camZoom) > 0.001) sl.value = camZoom;
+            [['story-zoom-1', 1], ['story-zoom-2', 2], ['story-zoom-3', 3]].forEach(([id, n]) => {
+                const b = $(id); if (b) b.classList.toggle('on', Math.abs(camZoom - n) < 0.05);
+            });
         }
         function stopStream() {
             if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
@@ -1198,12 +1266,14 @@
             const v = $('story-cam-video');
             const vw = v.videoWidth, vh = v.videoHeight;
             if (!vw) return;
-            const scale = Math.min(1, PHOTO_MAX / Math.max(vw, vh));
-            const cw = Math.round(vw * scale), ch = Math.round(vh * scale);
+            const z = zoomCaps() ? 1 : camZoom;          // 하드웨어 줌이면 프레임이 이미 확대됨
+            const sw = vw / z, sh = vh / z, sx = (vw - sw) / 2, sy = (vh - sh) / 2; // 디지털 줌: 중앙 크롭
+            const scale = Math.min(1, PHOTO_MAX / Math.max(sw, sh));
+            const cw = Math.round(sw * scale), ch = Math.round(sh * scale);
             const c = $('story-cam-canvas'); c.width = cw; c.height = ch;
             const ctx = c.getContext('2d');
             if (facing === 'user') { ctx.translate(cw, 0); ctx.scale(-1, 1); } // 셀카 좌우반전 보정
-            ctx.drawImage(v, 0, 0, cw, ch);
+            ctx.drawImage(v, sx, sy, sw, sh, 0, 0, cw, ch);
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             const thumb = makeThumb(c, cw, ch);
             c.toBlob((b) => { if (!b) return; pending = { type: 'image', blob: b, thumb }; showPreview(); }, 'image/jpeg', PHOTO_Q);
@@ -1218,21 +1288,45 @@
         function startRec() {
             if (!camStream) return;
             recChunks = [];
+            recCanvas = null; recThumbSrc = $('story-cam-video');
+            let recStream = camStream;
+            const digital = !zoomCaps() && camZoom > 1.01;
+            if (digital) {
+                // 디지털 줌은 트랙에 적용되지 않으므로, 캔버스로 중앙 크롭하여 720p로 녹화
+                const v = $('story-cam-video');
+                const vw = v.videoWidth, vh = v.videoHeight;
+                const sw = vw / camZoom, sh = vh / camZoom, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+                const scale = Math.min(1, 1280 / Math.max(sw, sh));
+                recCanvas = document.createElement('canvas');
+                recCanvas.width = Math.round(sw * scale); recCanvas.height = Math.round(sh * scale);
+                const cx = recCanvas.getContext('2d');
+                const draw = () => { if (!recording) return; cx.drawImage(v, sx, sy, sw, sh, 0, 0, recCanvas.width, recCanvas.height); recRAF = requestAnimationFrame(draw); };
+                try {
+                    const cs = recCanvas.captureStream(30);
+                    const at = camStream.getAudioTracks()[0]; if (at) cs.addTrack(at);
+                    recStream = cs; recThumbSrc = recCanvas;
+                    recDrawStart = draw;
+                } catch (e) { recCanvas = null; recStream = camStream; recThumbSrc = v; }
+            }
             const mime = pickMime();
-            try { mediaRec = new MediaRecorder(camStream, mime ? { mimeType: mime, videoBitsPerSecond: 2500000 } : undefined); }
-            catch (e) { try { mediaRec = new MediaRecorder(camStream); } catch (e2) { return; } }
+            try { mediaRec = new MediaRecorder(recStream, mime ? { mimeType: mime, videoBitsPerSecond: 2500000 } : undefined); }
+            catch (e) { try { mediaRec = new MediaRecorder(recStream); } catch (e2) { return; } }
             mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
             mediaRec.onstop = () => {
-                const v = $('story-cam-video');
-                const thumb = makeThumb(v, v.videoWidth, v.videoHeight);
+                if (recRAF) { cancelAnimationFrame(recRAF); recRAF = 0; }
+                const src = recThumbSrc || $('story-cam-video');
+                const thumb = makeThumb(src, src.videoWidth || src.width, src.videoHeight || src.height);
                 const blob = new Blob(recChunks, { type: (recChunks[0] && recChunks[0].type) || 'video/webm' });
+                recCanvas = null;
                 if (blob.size) { pending = { type: 'video', blob, thumb }; showPreview(); }
             };
             try { mediaRec.start(); } catch (e) { return; }
             recording = true;
+            if (recDrawStart) { recRAF = requestAnimationFrame(recDrawStart); recDrawStart = null; }
             startRing();
             recTimer = setTimeout(stopRec, VIDEO_MAX_MS);
         }
+        let recDrawStart = null;
         function stopRec() {
             clearTimeout(recTimer);
             if (mediaRec && mediaRec.state !== 'inactive') { try { mediaRec.stop(); } catch (e) {} }
@@ -1460,6 +1554,45 @@
             showSegment(viewerIdx);
         }
 
+        /* ---------- 폰에 저장 (다운로드 / 공유시트) ---------- */
+        async function saveMedia(blob, type) {
+            if (!blob) return;
+            const ext = (type === 'video') ? ((blob.type || '').indexOf('mp4') >= 0 ? 'mp4' : 'webm') : 'jpg';
+            const fname = 'enjoy_' + Date.now() + '.' + ext;
+            try {
+                const file = new File([blob], fname, { type: blob.type || (type === 'video' ? 'video/mp4' : 'image/jpeg') });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file] }); // iOS: 공유시트 → '이미지/비디오 저장'
+                    return;
+                }
+            } catch (e) { if (e && e.name === 'AbortError') return; }
+            // 폴백: 다운로드 링크
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = fname;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }
+        function savePreview() { if (pending) saveMedia(pending.blob, pending.type); }
+        function saveCurrent() { const s = stories[viewerIdx]; if (s) saveMedia(s.blob, s.type); }
+
+        /* ---------- 카메라 핀치 줌 ---------- */
+        function wireCameraZoom() {
+            const area = $('story-cam-video');
+            if (!area || area.dataset.zwired) return; area.dataset.zwired = '1';
+            let pinching = false, startDist = 0, startZoom = 1;
+            const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+            area.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) { pinching = true; startDist = dist(e.touches); startZoom = camZoom; e.preventDefault(); }
+            }, { passive: false });
+            area.addEventListener('touchmove', (e) => {
+                if (pinching && e.touches.length === 2) { setZoom(startZoom * dist(e.touches) / startDist); e.preventDefault(); }
+            }, { passive: false });
+            const end = (e) => { if (pinching && e.touches.length < 2) pinching = false; };
+            area.addEventListener('touchend', end);
+            area.addEventListener('touchcancel', end);
+        }
+
         /* ---------- 핀치 확대/축소 (두 손가락 줌 + 한 손가락 이동) ---------- */
         function attachPinchZoom(container, getMedia, hooks) {
             hooks = hooks || {};
@@ -1516,6 +1649,7 @@
         function init() {
             wireShutter();
             wireFallback();
+            wireCameraZoom();
             // 확대/축소: 뷰어는 줌 시작 시 자동 넘김 일시정지, 원래 크기로 돌아오면 재생 재개
             viewerZoom = attachPinchZoom($('story-viewer'),
                 () => $('story-viewer-img').classList.contains('hidden') ? $('story-viewer-video') : $('story-viewer-img'),
@@ -1536,6 +1670,7 @@
         else init();
 
         window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post, pickGallery,
+                              setZoom, savePreview, saveCurrent,
                               openViewer, prev, next, closeViewer, deleteCurrent };
     })();
     </script>
