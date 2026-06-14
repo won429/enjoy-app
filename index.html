@@ -394,18 +394,7 @@
                 <p id="assistant-sub" class="text-[14px] font-medium text-gray-400 leading-snug mb-5">엔조이 비서가 오늘을 안내해 드릴게요.</p>
 
                 <div class="flex flex-col gap-3.5">
-                    <!-- 1. 마스코트 왼쪽 -->
-                    <div class="flex items-center gap-1.5">
-                        <img alt="엔조이 마스코트" src="https://github.com/won429/enjoy-app/blob/main/image-6.png?raw=true"
-                             class="shrink-0 w-[100px] h-[100px] object-contain select-none pointer-events-none drop-shadow-[0_8px_14px_rgba(0,0,0,0.25)]" onerror="this.style.display='none'">
-                        <div class="assistant-bubble tail-left relative flex-1 min-w-0 px-4 py-3.5">
-                            <div class="flex items-start gap-2.5">
-                                <i id="asst-icon-1" class="fa-solid fa-calendar-day text-[#3182F6] text-[15px] mt-[2px] shrink-0"></i>
-                                <p id="asst-text-1" class="text-[14.5px] font-semibold text-white leading-snug break-keep">오늘도 반가워요!</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- 2. 마스코트 오른쪽 -->
+                    <!-- 1. 마스코트 오른쪽 -->
                     <div class="flex items-center gap-1.5">
                         <div class="assistant-bubble tail-right relative flex-1 min-w-0 px-4 py-3.5">
                             <div class="flex items-start gap-2.5">
@@ -431,7 +420,18 @@
             </div>
 
             <div class="flex flex-col gap-9">
-                
+
+                <!-- 0. 엔조이 스토리 (인스타그램 스토리 / 24시간 후 자동 삭제 · 기기 로컬에만 저장) -->
+                <section>
+                    <div class="px-1 mb-2.5">
+                        <p class="text-[11px] font-bold text-fuchsia-400 tracking-widest uppercase">ENJOY STORY</p>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이 스토리</h3>
+                    </div>
+                    <div id="story-tray" class="flex gap-3.5 overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch;">
+                        <!-- 스토리 항목은 JS(EnjoyStory)가 채웁니다 -->
+                    </div>
+                </section>
+
                 <!-- 1. 출장엔조이 3화 -->
                 <section>
                     <div class="px-1 mb-2.5">
@@ -951,6 +951,502 @@
         </div>
     </div>
 
+    <!-- ===================== 엔조이 스토리 (인스타그램 스토리형) ===================== -->
+    <!-- 카메라 (사진: 탭 / 영상: 길게 눌러 최대 5초, 720p) -->
+    <div id="story-camera" class="hidden fixed inset-0 z-[150] bg-black flex-col">
+        <video id="story-cam-video" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover bg-black"></video>
+        <canvas id="story-cam-canvas" class="hidden"></canvas>
+
+        <!-- 상단 컨트롤 -->
+        <div class="relative z-10 flex items-center justify-between pt-safe px-5 pt-4">
+            <button onclick="window.haptic(); window.EnjoyStory.closeCamera()" class="w-10 h-10 rounded-full bg-black/45 backdrop-blur-sm text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <button onclick="window.haptic(); window.EnjoyStory.flipCamera()" class="w-10 h-10 rounded-full bg-black/45 backdrop-blur-sm text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-camera-rotate text-lg"></i></button>
+        </div>
+
+        <!-- 하단 셔터 -->
+        <div class="relative z-10 mt-auto pb-safe-area">
+            <p id="story-cam-hint" class="text-white/80 text-[13px] font-medium mb-5 text-center drop-shadow">탭하면 사진 · 길게 누르면 영상 (최대 5초)</p>
+            <div class="flex items-center justify-center mb-7">
+                <button id="story-shutter" class="relative w-[80px] h-[80px] flex items-center justify-center active:scale-95 transition-transform" style="touch-action:none; -webkit-touch-callout:none;">
+                    <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="4"></circle>
+                        <circle id="story-rec-ring" cx="40" cy="40" r="36" fill="none" stroke="#F04452" stroke-width="6" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"></circle>
+                    </svg>
+                    <div id="story-shutter-dot" class="w-[62px] h-[62px] rounded-full bg-white transition-all duration-200"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- getUserMedia 미지원 기기용 숨김 입력 (폴백) -->
+        <input id="story-file-photo" type="file" accept="image/*" capture="environment" class="hidden">
+        <input id="story-file-video" type="file" accept="video/*" capture="environment" class="hidden">
+    </div>
+
+    <!-- 촬영 미리보기 (올리기 / 다시) -->
+    <div id="story-preview" class="hidden fixed inset-0 z-[151] bg-black flex-col">
+        <img id="story-preview-img" class="hidden absolute inset-0 w-full h-full object-contain bg-black">
+        <video id="story-preview-video" class="hidden absolute inset-0 w-full h-full object-contain bg-black" playsinline autoplay loop></video>
+        <div class="relative z-10 flex items-center justify-between pt-safe px-5 pt-4">
+            <button onclick="window.haptic(); window.EnjoyStory.retake()" class="px-4 h-10 rounded-full bg-black/45 backdrop-blur-sm text-white text-[13px] font-bold flex items-center gap-2 active:scale-95 transition-transform"><i class="fa-solid fa-rotate-left"></i>다시</button>
+        </div>
+        <div class="relative z-10 mt-auto px-5 pb-8 pb-safe-area">
+            <button onclick="window.haptic(); window.EnjoyStory.post()" class="w-full bg-white text-black font-bold py-4 rounded-full active:scale-95 transition-transform shadow-[0_0_24px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane text-[14px]"></i>스토리에 올리기</button>
+        </div>
+    </div>
+
+    <!-- 스토리 뷰어 (전체화면, 진행바, 탭 이동) -->
+    <div id="story-viewer" class="hidden fixed inset-0 z-[152] bg-black flex-col select-none">
+        <img id="story-viewer-img" class="hidden absolute inset-0 w-full h-full object-contain bg-black">
+        <video id="story-viewer-video" class="hidden absolute inset-0 w-full h-full object-contain bg-black" playsinline></video>
+
+        <!-- 탭 이동 영역 (좌: 이전 / 우: 다음) -->
+        <div class="absolute inset-y-0 left-0 w-[35%] z-10" onclick="window.EnjoyStory.prev()"></div>
+        <div class="absolute inset-y-0 right-0 w-[35%] z-10" onclick="window.EnjoyStory.next()"></div>
+
+        <!-- 상단 그라데이션 + 진행바 + 닫기 -->
+        <div class="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+            <div class="pt-safe px-3 pt-2.5 pb-6">
+                <div id="story-viewer-bars" class="flex gap-1 mb-2.5"></div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 pointer-events-none">
+                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-400 flex items-center justify-center text-white text-[11px] font-black">E</div>
+                        <span class="text-white text-[13px] font-bold drop-shadow">내 스토리</span>
+                        <span id="story-viewer-time" class="text-white/70 text-[12px] font-medium"></span>
+                    </div>
+                    <div class="flex items-center gap-1.5 pointer-events-auto">
+                        <button onclick="window.haptic(); window.EnjoyStory.deleteCurrent()" class="w-9 h-9 rounded-full bg-black/35 text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-trash text-[13px]"></i></button>
+                        <button onclick="window.haptic(); window.EnjoyStory.closeViewer()" class="w-9 h-9 rounded-full bg-black/35 text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-xmark text-lg"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* 엔조이 스토리: 사진/영상 촬영 → 기기 로컬(IndexedDB)에만 저장 → 24시간 후 완전 자동 삭제.
+       Firebase 등 서버에는 전송/저장하지 않습니다. */
+    (function () {
+        const STORY_TTL   = 24 * 60 * 60 * 1000; // 24시간
+        const VIDEO_MAX_MS = 5000;               // 영상 최대 5초
+        const PHOTO_MAX    = 1080;               // 사진 최대 변(일반화질)
+        const PHOTO_Q      = 0.7;                // 사진 압축 품질
+        const DB_NAME = 'enjoyStoryDB', STORE = 'stories';
+
+        let stories = [];                  // createdAt 오름차순(과거→최신)
+        let pending = null;                // { type, blob, thumb }
+        let camStream = null, facing = 'environment';
+        let mediaRec = null, recChunks = [], recording = false, recTimer = null, holdTimer = null, didRecord = false;
+        let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
+
+        const $ = (id) => document.getElementById(id);
+        const openOverlay  = (el) => { el.classList.remove('hidden'); el.classList.add('flex'); };
+        const closeOverlay = (el) => { el.classList.add('hidden'); el.classList.remove('flex'); };
+        const mShow = (el) => el.classList.remove('hidden');
+        const mHide = (el) => el.classList.add('hidden');
+
+        /* ---------- IndexedDB ---------- */
+        function db() {
+            return new Promise((res, rej) => {
+                const r = indexedDB.open(DB_NAME, 1);
+                r.onupgradeneeded = () => {
+                    const d = r.result;
+                    if (!d.objectStoreNames.contains(STORE)) {
+                        const s = d.createObjectStore(STORE, { keyPath: 'id' });
+                        s.createIndex('createdAt', 'createdAt');
+                    }
+                };
+                r.onsuccess = () => res(r.result);
+                r.onerror = () => rej(r.error);
+            });
+        }
+        async function allStories() {
+            const d = await db();
+            return new Promise((res, rej) => {
+                const r = d.transaction(STORE, 'readonly').objectStore(STORE).getAll();
+                r.onsuccess = () => res(r.result || []);
+                r.onerror = () => rej(r.error);
+            });
+        }
+        async function putStory(p) {
+            const d = await db();
+            const rec = { id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                          type: p.type, blob: p.blob, thumb: p.thumb, createdAt: Date.now() };
+            return new Promise((res, rej) => {
+                const r = d.transaction(STORE, 'readwrite').objectStore(STORE).add(rec);
+                r.onsuccess = () => res(); r.onerror = () => rej(r.error);
+            });
+        }
+        async function removeStory(id) {
+            const d = await db();
+            return new Promise((res, rej) => {
+                const r = d.transaction(STORE, 'readwrite').objectStore(STORE).delete(id);
+                r.onsuccess = () => res(); r.onerror = () => rej(r.error);
+            });
+        }
+        async function purgeExpired() {
+            const now = Date.now();
+            const all = await allStories();
+            for (const s of all) if (now - s.createdAt >= STORY_TTL) await removeStory(s.id);
+        }
+
+        /* ---------- 목록 새로고침 / 트레이 렌더 ---------- */
+        async function refresh() {
+            try { await purgeExpired(); } catch (e) {}
+            try { stories = (await allStories()).sort((a, b) => a.createdAt - b.createdAt); }
+            catch (e) { stories = []; }
+            renderTray();
+            scheduleNextPurge();
+        }
+        function scheduleNextPurge() {
+            clearTimeout(purgeTimer);
+            if (!stories.length) return;
+            const ms = (stories[0].createdAt + STORY_TTL) - Date.now() + 800;
+            purgeTimer = setTimeout(refresh, Math.max(1000, Math.min(ms, 2147483000)));
+        }
+        function renderTray() {
+            const tray = $('story-tray');
+            if (!tray) return;
+            let html = `
+                <button onclick="window.haptic(); window.EnjoyStory.openCamera()" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">
+                    <div class="w-[64px] h-[64px] rounded-full border-2 border-dashed border-white/30 flex items-center justify-center bg-white/5"><i class="fa-solid fa-plus text-white/85 text-[20px]"></i></div>
+                    <span class="text-[11px] text-gray-400 font-medium w-full text-center truncate">스토리 추가</span>
+                </button>`;
+            if (stories.length) {
+                const latest = stories[stories.length - 1];
+                html += `
+                <button onclick="window.haptic(); window.EnjoyStory.openViewer(0)" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">
+                    <div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)">
+                        <div class="w-full h-full rounded-full p-[2px] bg-black">
+                            <img src="${latest.thumb}" class="w-full h-full object-cover rounded-full" alt="내 스토리">
+                        </div>
+                    </div>
+                    <span class="text-[11px] text-white font-semibold w-full text-center truncate">내 스토리</span>
+                </button>`;
+            }
+            tray.innerHTML = html;
+        }
+
+        /* ---------- 썸네일 / 사진 압축 ---------- */
+        function makeThumb(src, sw, sh) {
+            const max = 150, scale = Math.min(1, max / Math.max(sw || max, sh || max));
+            const c = document.createElement('canvas');
+            c.width = Math.max(1, Math.round((sw || max) * scale));
+            c.height = Math.max(1, Math.round((sh || max) * scale));
+            try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); } catch (e) {}
+            return c.toDataURL('image/jpeg', 0.6);
+        }
+
+        /* ---------- 카메라 ---------- */
+        async function startCamera() {
+            stopStream();
+            const v = { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } };
+            try { camStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: v }); }
+            catch (e) {
+                try { camStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: v }); }
+                catch (e2) {
+                    try { camStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true }); }
+                    catch (e3) { return false; }
+                }
+            }
+            const vid = $('story-cam-video');
+            vid.srcObject = camStream;
+            vid.style.transform = (facing === 'user') ? 'scaleX(-1)' : 'none';
+            try { await vid.play(); } catch (e) {}
+            return true;
+        }
+        function stopStream() {
+            if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+        }
+        async function openCamera() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                openOverlay($('story-camera'));
+                const ok = await startCamera();
+                if (!ok) { closeOverlay($('story-camera')); fallbackPick(); }
+            } else {
+                fallbackPick();
+            }
+        }
+        function closeCamera() {
+            if (recording) stopRec();
+            stopStream();
+            closeOverlay($('story-camera'));
+        }
+        async function flipCamera() {
+            facing = (facing === 'user') ? 'environment' : 'user';
+            await startCamera();
+        }
+
+        function takePhoto() {
+            const v = $('story-cam-video');
+            const vw = v.videoWidth, vh = v.videoHeight;
+            if (!vw) return;
+            const scale = Math.min(1, PHOTO_MAX / Math.max(vw, vh));
+            const cw = Math.round(vw * scale), ch = Math.round(vh * scale);
+            const c = $('story-cam-canvas'); c.width = cw; c.height = ch;
+            const ctx = c.getContext('2d');
+            if (facing === 'user') { ctx.translate(cw, 0); ctx.scale(-1, 1); } // 셀카 좌우반전 보정
+            ctx.drawImage(v, 0, 0, cw, ch);
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            const thumb = makeThumb(c, cw, ch);
+            c.toBlob((b) => { if (!b) return; pending = { type: 'image', blob: b, thumb }; showPreview(); }, 'image/jpeg', PHOTO_Q);
+        }
+
+        function pickMime() {
+            const list = ['video/mp4;codecs=h264,aac', 'video/mp4', 'video/webm;codecs=vp9,opus',
+                          'video/webm;codecs=vp8,opus', 'video/webm'];
+            for (const m of list) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} }
+            return '';
+        }
+        function startRec() {
+            if (!camStream) return;
+            recChunks = [];
+            const mime = pickMime();
+            try { mediaRec = new MediaRecorder(camStream, mime ? { mimeType: mime, videoBitsPerSecond: 2500000 } : undefined); }
+            catch (e) { try { mediaRec = new MediaRecorder(camStream); } catch (e2) { return; } }
+            mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
+            mediaRec.onstop = () => {
+                const v = $('story-cam-video');
+                const thumb = makeThumb(v, v.videoWidth, v.videoHeight);
+                const blob = new Blob(recChunks, { type: (recChunks[0] && recChunks[0].type) || 'video/webm' });
+                if (blob.size) { pending = { type: 'video', blob, thumb }; showPreview(); }
+            };
+            try { mediaRec.start(); } catch (e) { return; }
+            recording = true;
+            startRing();
+            recTimer = setTimeout(stopRec, VIDEO_MAX_MS);
+        }
+        function stopRec() {
+            clearTimeout(recTimer);
+            if (mediaRec && mediaRec.state !== 'inactive') { try { mediaRec.stop(); } catch (e) {} }
+            recording = false; resetRing();
+        }
+        function startRing() {
+            const ring = $('story-rec-ring'), dot = $('story-shutter-dot');
+            ring.style.transition = 'none'; ring.style.strokeDashoffset = '226.2';
+            void ring.getBoundingClientRect();
+            requestAnimationFrame(() => {
+                ring.style.transition = 'stroke-dashoffset ' + VIDEO_MAX_MS + 'ms linear';
+                ring.style.strokeDashoffset = '0';
+            });
+            dot.style.width = '34px'; dot.style.height = '34px'; dot.style.borderRadius = '10px'; dot.style.background = '#F04452';
+        }
+        function resetRing() {
+            const ring = $('story-rec-ring'), dot = $('story-shutter-dot');
+            ring.style.transition = 'none'; ring.style.strokeDashoffset = '226.2';
+            dot.style.width = '62px'; dot.style.height = '62px'; dot.style.borderRadius = '9999px'; dot.style.background = '#fff';
+        }
+
+        /* 셔터: 탭 = 사진, 길게 = 영상 */
+        function wireShutter() {
+            const sh = $('story-shutter');
+            if (!sh || sh.dataset.wired) return; sh.dataset.wired = '1';
+            const down = (e) => {
+                if (e.cancelable) e.preventDefault();
+                try { sh.setPointerCapture(e.pointerId); } catch (er) {}
+                didRecord = false;
+                holdTimer = setTimeout(() => { didRecord = true; window.haptic(); startRec(); }, 260);
+            };
+            const up = (e) => {
+                if (e && e.cancelable) e.preventDefault();
+                if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+                if (recording) stopRec();
+                else if (!didRecord) takePhoto();
+            };
+            sh.addEventListener('pointerdown', down);
+            sh.addEventListener('pointerup', up);
+            sh.addEventListener('pointercancel', up);
+        }
+
+        /* ---------- 폴백 (getUserMedia 미지원) ---------- */
+        function fallbackPick() {
+            const ph = $('story-file-photo'), vi = $('story-file-video');
+            const choice = confirm('사진을 촬영하려면 [확인], 영상을 촬영하려면 [취소]를 누르세요.');
+            (choice ? ph : vi).click();
+        }
+        function wireFallback() {
+            const ph = $('story-file-photo'), vi = $('story-file-video');
+            if (ph) ph.onchange = async () => { const f = ph.files[0]; ph.value = ''; if (f) await compressPhotoFile(f); };
+            if (vi) vi.onchange = async () => { const f = vi.files[0]; vi.value = ''; if (f) await compressVideoFile(f); };
+        }
+        function compressPhotoFile(file) {
+            return new Promise((res) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    const scale = Math.min(1, PHOTO_MAX / Math.max(img.width, img.height));
+                    const cw = Math.round(img.width * scale), ch = Math.round(img.height * scale);
+                    const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+                    c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+                    URL.revokeObjectURL(url);
+                    const thumb = makeThumb(c, cw, ch);
+                    c.toBlob((b) => { pending = { type: 'image', blob: b || file, thumb }; showPreview(); res(); }, 'image/jpeg', PHOTO_Q);
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); res(); };
+                img.src = url;
+            });
+        }
+        // 폴백 영상: 캔버스로 720p·최대 5초로 재인코딩(오디오 없음, 최선의 노력)
+        function compressVideoFile(file) {
+            return new Promise((res) => {
+                const url = URL.createObjectURL(file);
+                const v = document.createElement('video');
+                v.muted = true; v.playsInline = true; v.src = url;
+                v.onloadedmetadata = () => {
+                    const scale = Math.min(1, 720 / Math.min(v.videoWidth, v.videoHeight));
+                    const cw = Math.round(v.videoWidth * scale), ch = Math.round(v.videoHeight * scale);
+                    const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+                    const ctx = c.getContext('2d');
+                    let rec, chunks = [];
+                    try {
+                        const stream = c.captureStream(30);
+                        const mime = pickMime();
+                        rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2500000 } : undefined);
+                    } catch (e) {
+                        // 재인코딩 불가 → 원본 그대로 저장
+                        URL.revokeObjectURL(url);
+                        const thumb = makeThumb(v, v.videoWidth, v.videoHeight);
+                        pending = { type: 'video', blob: file, thumb }; showPreview(); res(); return;
+                    }
+                    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+                    rec.onstop = () => {
+                        URL.revokeObjectURL(url);
+                        const thumb = makeThumb(c, cw, ch);
+                        const blob = new Blob(chunks, { type: (chunks[0] && chunks[0].type) || 'video/webm' });
+                        pending = { type: 'video', blob: blob.size ? blob : file, thumb }; showPreview(); res();
+                    };
+                    rec.start();
+                    const stopAt = Math.min(VIDEO_MAX_MS / 1000, v.duration || VIDEO_MAX_MS / 1000);
+                    const draw = () => {
+                        if (v.currentTime >= stopAt || v.ended) { try { rec.stop(); } catch (e) {} v.pause(); return; }
+                        ctx.drawImage(v, 0, 0, cw, ch);
+                        requestAnimationFrame(draw);
+                    };
+                    v.onplay = () => requestAnimationFrame(draw);
+                    v.play().catch(() => { try { rec.stop(); } catch (e) {} });
+                };
+                v.onerror = () => { URL.revokeObjectURL(url); res(); };
+            });
+        }
+
+        /* ---------- 미리보기 ---------- */
+        function showPreview() {
+            if (!pending) return;
+            const pv = $('story-preview'), img = $('story-preview-img'), vid = $('story-preview-video');
+            if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
+            prevUrl = URL.createObjectURL(pending.blob);
+            if (pending.type === 'image') {
+                vid.pause(); vid.removeAttribute('src'); mHide(vid);
+                img.src = prevUrl; mShow(img);
+            } else {
+                mHide(img); img.removeAttribute('src');
+                vid.src = prevUrl; mShow(vid); vid.play().catch(() => {});
+            }
+            openOverlay(pv);
+        }
+        function retake() {
+            const pv = $('story-preview'), vid = $('story-preview-video');
+            vid.pause();
+            if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
+            pending = null;
+            closeOverlay(pv);
+            // 카메라는 그대로 열려 있음 → 바로 재촬영
+        }
+        async function post() {
+            if (!pending) return;
+            try { await putStory(pending); } catch (e) { alert('저장에 실패했어요. 저장 공간을 확인해 주세요.'); return; }
+            const pv = $('story-preview'), vid = $('story-preview-video');
+            vid.pause();
+            if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
+            pending = null;
+            closeOverlay(pv);
+            closeCamera();
+            await refresh();
+        }
+
+        /* ---------- 뷰어 ---------- */
+        function buildBars() {
+            const bars = $('story-viewer-bars');
+            bars.innerHTML = stories.map(() =>
+                '<div class="flex-1 h-[2.5px] bg-white/30 rounded-full overflow-hidden"><div class="story-bar-fill h-full bg-white rounded-full" style="width:0%"></div></div>'
+            ).join('');
+        }
+        function openViewer(start) {
+            if (!stories.length) return;
+            openOverlay($('story-viewer'));
+            buildBars();
+            showSegment(start || 0);
+        }
+        function showSegment(idx) {
+            clearTimeout(viewerTimer);
+            if (idx < 0) idx = 0;
+            if (idx > stories.length - 1) { closeViewer(); return; }
+            viewerIdx = idx;
+            const s = stories[idx];
+            const fills = $('story-viewer-bars').querySelectorAll('.story-bar-fill');
+            fills.forEach((f, i) => { f.style.transition = 'none'; f.style.width = i < idx ? '100%' : '0%'; });
+            const fill = fills[idx];
+            const img = $('story-viewer-img'), vid = $('story-viewer-video'), tl = $('story-viewer-time');
+            if (viewerUrl) { URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
+            viewerUrl = URL.createObjectURL(s.blob);
+            const ago = Math.max(0, Math.floor((Date.now() - s.createdAt) / 60000));
+            tl.textContent = ago < 1 ? '방금' : (ago < 60 ? ago + '분 전' : Math.floor(ago / 60) + '시간 전');
+
+            if (s.type === 'image') {
+                vid.pause(); vid.onended = null; vid.removeAttribute('src'); mHide(vid);
+                img.src = viewerUrl; mShow(img);
+                if (fill) requestAnimationFrame(() => { fill.style.transition = 'width ' + VIDEO_MAX_MS + 'ms linear'; fill.style.width = '100%'; });
+                viewerTimer = setTimeout(next, VIDEO_MAX_MS);
+            } else {
+                mHide(img); img.removeAttribute('src');
+                vid.src = viewerUrl; mShow(vid); vid.currentTime = 0; vid.play().catch(() => {});
+                const anim = () => {
+                    if (!fill) return;
+                    const dur = (vid.duration && isFinite(vid.duration)) ? vid.duration * 1000 : VIDEO_MAX_MS;
+                    fill.style.transition = 'none'; fill.style.width = '0%';
+                    requestAnimationFrame(() => { fill.style.transition = 'width ' + dur + 'ms linear'; fill.style.width = '100%'; });
+                };
+                vid.onloadedmetadata = anim;
+                if (vid.readyState >= 1) anim();
+                vid.onended = next;
+            }
+        }
+        function next() { (viewerIdx < stories.length - 1) ? showSegment(viewerIdx + 1) : closeViewer(); }
+        function prev() { showSegment(viewerIdx > 0 ? viewerIdx - 1 : 0); }
+        function closeViewer() {
+            clearTimeout(viewerTimer);
+            const vid = $('story-viewer-video');
+            vid.pause(); vid.onended = null; vid.removeAttribute('src');
+            if (viewerUrl) { URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
+            closeOverlay($('story-viewer'));
+        }
+        async function deleteCurrent() {
+            const s = stories[viewerIdx];
+            if (!s) return;
+            if (!confirm('이 스토리를 삭제할까요?')) return;
+            clearTimeout(viewerTimer);
+            try { await removeStory(s.id); } catch (e) {}
+            await refresh();
+            if (!stories.length) { closeViewer(); return; }
+            if (viewerIdx > stories.length - 1) viewerIdx = stories.length - 1;
+            buildBars();
+            showSegment(viewerIdx);
+        }
+
+        /* ---------- 초기화 ---------- */
+        function init() {
+            wireShutter();
+            wireFallback();
+            refresh();
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
+
+        window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post,
+                              openViewer, prev, next, closeViewer, deleteCurrent };
+    })();
+    </script>
+
     <!-- UI Logic Scripts -->
     <script>
         // Global Variables
@@ -1213,9 +1709,6 @@
             else                          { greeting = '고요한 밤이에요';   sub = '엔조이 비서가 오늘을 돌아봐 드릴게요.'; }
             setTxt('assistant-greeting', greeting);
             setTxt('assistant-sub', sub);
-
-            // 1) 오늘 날짜 (왼쪽 마스코트)
-            setMsg(1, { icon: 'fa-calendar-day', color: 'text-[#3182F6]', text: `오늘은 ${m}월 ${d}일 ${dow}요일이에요.` });
 
             // 2) 이번 달 모임비 (오른쪽 마스코트)
             try {
