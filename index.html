@@ -181,6 +181,20 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* 엔조이 스토리: 길게 누를 때 복사/선택 커서·콜아웃 방지 */
+        #story-camera, #story-camera *,
+        #story-preview, #story-preview *,
+        #story-viewer, #story-viewer * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+        }
+        #story-shutter { -webkit-tap-highlight-color: transparent; }
+        #story-cam-video, #story-preview-img, #story-preview-video,
+        #story-viewer-img, #story-viewer-video { -webkit-user-drag: none; }
+
         /* 공지사항 롤링 애니메이션 수정: 무한 루프 구현 */
         @keyframes marquee {
             0% { transform: translateX(0); }
@@ -966,7 +980,8 @@
         <!-- 하단 셔터 -->
         <div class="relative z-10 mt-auto pb-safe-area">
             <p id="story-cam-hint" class="text-white/80 text-[13px] font-medium mb-5 text-center drop-shadow">탭하면 사진 · 길게 누르면 영상 (최대 5초)</p>
-            <div class="flex items-center justify-center mb-7">
+            <div class="relative flex items-center justify-center mb-7">
+                <button onclick="window.haptic(); window.EnjoyStory.pickGallery()" class="absolute left-8 w-12 h-12 rounded-2xl bg-black/45 backdrop-blur-sm text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-regular fa-images text-xl"></i></button>
                 <button id="story-shutter" class="relative w-[80px] h-[80px] flex items-center justify-center active:scale-95 transition-transform" style="touch-action:none; -webkit-touch-callout:none;">
                     <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
                         <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="4"></circle>
@@ -977,6 +992,8 @@
             </div>
         </div>
 
+        <!-- 갤러리에서 선택 (촬영 아님) -->
+        <input id="story-file-gallery" type="file" accept="image/*,video/*" class="hidden">
         <!-- getUserMedia 미지원 기기용 숨김 입력 (폴백) -->
         <input id="story-file-photo" type="file" accept="image/*" capture="environment" class="hidden">
         <input id="story-file-video" type="file" accept="video/*" capture="environment" class="hidden">
@@ -1037,6 +1054,7 @@
         let camStream = null, facing = 'environment';
         let mediaRec = null, recChunks = [], recording = false, recTimer = null, holdTimer = null, didRecord = false;
         let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
+        let viewerZoom = null, previewZoom = null; // 확대/축소 컨트롤러
 
         const $ = (id) => document.getElementById(id);
         const openOverlay  = (el) => { el.classList.remove('hidden'); el.classList.add('flex'); };
@@ -1264,10 +1282,17 @@
             (choice ? ph : vi).click();
         }
         function wireFallback() {
-            const ph = $('story-file-photo'), vi = $('story-file-video');
+            const ph = $('story-file-photo'), vi = $('story-file-video'), ga = $('story-file-gallery');
             if (ph) ph.onchange = async () => { const f = ph.files[0]; ph.value = ''; if (f) await compressPhotoFile(f); };
             if (vi) vi.onchange = async () => { const f = vi.files[0]; vi.value = ''; if (f) await compressVideoFile(f); };
+            if (ga) ga.onchange = async () => {
+                const f = ga.files[0]; ga.value = ''; if (!f) return;
+                if ((f.type || '').indexOf('video') === 0) await compressVideoFile(f); // 갤러리 영상도 720p·5초로
+                else await compressPhotoFile(f);                                       // 갤러리 사진은 일반화질 압축
+            };
         }
+        // 갤러리(앨범)에서 사진/영상 선택 — 촬영이 아니라 기존 미디어 불러오기
+        function pickGallery() { const g = $('story-file-gallery'); if (g) g.click(); }
         function compressPhotoFile(file) {
             return new Promise((res) => {
                 const url = URL.createObjectURL(file);
@@ -1332,6 +1357,7 @@
         function showPreview() {
             if (!pending) return;
             const pv = $('story-preview'), img = $('story-preview-img'), vid = $('story-preview-video');
+            if (previewZoom) previewZoom.reset();
             if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
             prevUrl = URL.createObjectURL(pending.blob);
             if (pending.type === 'image') {
@@ -1381,6 +1407,7 @@
             if (idx < 0) idx = 0;
             if (idx > stories.length - 1) { closeViewer(); return; }
             viewerIdx = idx;
+            if (viewerZoom) viewerZoom.reset();
             const s = stories[idx];
             const fills = $('story-viewer-bars').querySelectorAll('.story-bar-fill');
             fills.forEach((f, i) => { f.style.transition = 'none'; f.style.width = i < idx ? '100%' : '0%'; });
@@ -1414,6 +1441,7 @@
         function prev() { showSegment(viewerIdx > 0 ? viewerIdx - 1 : 0); }
         function closeViewer() {
             clearTimeout(viewerTimer);
+            if (viewerZoom) viewerZoom.reset();
             const vid = $('story-viewer-video');
             vid.pause(); vid.onended = null; vid.removeAttribute('src');
             if (viewerUrl) { URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
@@ -1432,17 +1460,82 @@
             showSegment(viewerIdx);
         }
 
+        /* ---------- 핀치 확대/축소 (두 손가락 줌 + 한 손가락 이동) ---------- */
+        function attachPinchZoom(container, getMedia, hooks) {
+            hooks = hooks || {};
+            let scale = 1, tx = 0, ty = 0, startDist = 0, startScale = 1, panX = 0, panY = 0, sx = 0, sy = 0, mode = null;
+            const apply = (anim) => {
+                const el = getMedia(); if (!el) return;
+                el.style.transformOrigin = 'center center';
+                el.style.transition = anim ? 'transform .2s ease' : 'none';
+                el.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+            };
+            const reset = (anim, silent) => {
+                scale = 1; tx = 0; ty = 0; mode = null; apply(anim);
+                if (!silent && hooks.onReset) hooks.onReset();
+            };
+            const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+            const clamp = () => {
+                const maxX = container.clientWidth * (scale - 1) / 2;
+                const maxY = container.clientHeight * (scale - 1) / 2;
+                tx = Math.max(-maxX, Math.min(maxX, tx));
+                ty = Math.max(-maxY, Math.min(maxY, ty));
+            };
+            container.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    if (scale <= 1.02 && hooks.onZoomStart) hooks.onZoomStart();
+                    mode = 'pinch'; startDist = dist(e.touches); startScale = scale; e.preventDefault();
+                } else if (e.touches.length === 1 && scale > 1.02) {
+                    mode = 'pan'; sx = e.touches[0].clientX; sy = e.touches[0].clientY; panX = tx; panY = ty; e.preventDefault();
+                } else { mode = null; }
+            }, { passive: false });
+            container.addEventListener('touchmove', (e) => {
+                if (mode === 'pinch' && e.touches.length === 2) {
+                    scale = Math.max(1, Math.min(4, startScale * dist(e.touches) / startDist));
+                    clamp(); apply(false); e.preventDefault();
+                } else if (mode === 'pan' && e.touches.length === 1) {
+                    tx = panX + (e.touches[0].clientX - sx); ty = panY + (e.touches[0].clientY - sy);
+                    clamp(); apply(false); e.preventDefault();
+                }
+            }, { passive: false });
+            const onEnd = (e) => {
+                if (mode === 'pinch' && e.touches.length < 2) {
+                    if (scale <= 1.05) { reset(true); }
+                    else if (e.touches.length === 1) { mode = 'pan'; sx = e.touches[0].clientX; sy = e.touches[0].clientY; panX = tx; panY = ty; }
+                    else { mode = null; }
+                } else if (mode === 'pan' && e.touches.length === 0) {
+                    if (scale <= 1.05) reset(true); else mode = null;
+                }
+            };
+            container.addEventListener('touchend', onEnd, { passive: false });
+            container.addEventListener('touchcancel', onEnd, { passive: false });
+            return { reset: () => reset(false, true), isZoomed: () => scale > 1.02 };
+        }
+
         /* ---------- 초기화 ---------- */
         function init() {
             wireShutter();
             wireFallback();
+            // 확대/축소: 뷰어는 줌 시작 시 자동 넘김 일시정지, 원래 크기로 돌아오면 재생 재개
+            viewerZoom = attachPinchZoom($('story-viewer'),
+                () => $('story-viewer-img').classList.contains('hidden') ? $('story-viewer-video') : $('story-viewer-img'),
+                {
+                    onZoomStart: () => { clearTimeout(viewerTimer); const v = $('story-viewer-video'); if (!v.classList.contains('hidden')) v.pause(); },
+                    onReset: () => { if (!$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx); }
+                });
+            previewZoom = attachPinchZoom($('story-preview'),
+                () => $('story-preview-img').classList.contains('hidden') ? $('story-preview-video') : $('story-preview-img'), {});
+            // 길게 누를 때 복사/선택 메뉴(컨텍스트 메뉴) 방지
+            ['story-camera', 'story-preview', 'story-viewer'].forEach((id) => {
+                const el = $(id); if (el) el.addEventListener('contextmenu', (e) => e.preventDefault());
+            });
             refresh();
             document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
         }
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
         else init();
 
-        window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post,
+        window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post, pickGallery,
                               openViewer, prev, next, closeViewer, deleteCurrent };
     })();
     </script>
