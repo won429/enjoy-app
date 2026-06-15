@@ -281,8 +281,49 @@
            - 단, 홈 카드(이미지 위 흰 글씨)·하단 메뉴·더보기 팝오버는
              별도로 보호하여 JS 자동 보정/흰색 유지
         ========================================================= */
+        /* ===== 로그인 화면 / 로그인 유도 팝업 (기본=다크) ===== */
+        #login-screen { background: #000; }
+        #login-screen .lg-greet { font-size: 21px; font-weight: 800; color: #3182F6; margin-bottom: 24px; letter-spacing: -0.01em; }
+        #login-screen .lg-greet i { margin-left: 4px; }
+        #login-screen .lg-title { font-size: 28px; font-weight: 800; line-height: 1.32; letter-spacing: -0.02em; color: #fff; }
+        #login-screen .lg-sub { font-size: 14.5px; font-weight: 500; line-height: 1.6; margin-top: 14px; color: rgba(255,255,255,0.5); }
+        #login-screen .lg-status { font-size: 12px; margin-top: 14px; min-height: 16px; color: rgba(255,255,255,0.4); }
+        #login-screen .lg-guest { display: block; width: fit-content; margin: 16px auto 0; font-size: 14px; font-weight: 600; padding: 9px 18px; color: rgba(255,255,255,0.55);
+            text-decoration: underline; text-underline-offset: 3px; background: transparent; transition: opacity .15s, transform .15s; }
+        #login-screen .lg-guest:active { opacity: 0.6; transform: scale(0.97); }
+        /* 안내 카드 */
+        #login-screen .lg-cards { margin-top: 40px; display: flex; flex-direction: column; gap: 16px; }
+        #login-screen .lg-card { background: #1c1c1e; border-radius: 22px; padding: 26px 24px; text-align: left; }
+        #login-screen .lg-card-ic { font-size: 26px; color: #3182F6; margin-bottom: 16px; }
+        #login-screen .lg-card h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: #fff; line-height: 1.35; }
+        #login-screen .lg-card p { font-size: 14px; font-weight: 500; line-height: 1.62; margin-top: 9px; color: rgba(255,255,255,0.55); }
+        .lg-google { width: 100%; margin-top: 36px; background: #fff; color: #141414; font-weight: 700; font-size: 15px;
+            padding: 15px 0; border-radius: 9999px; display: flex; align-items: center; justify-content: center; gap: 12px;
+            border: 1px solid transparent; box-shadow: 0 6px 22px rgba(0,0,0,0.35); transition: transform .15s; cursor: pointer; }
+        .lg-google:active { transform: scale(0.96); }
+        #login-prompt { background: rgba(0,0,0,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+        #login-prompt .lp-card { background: #1c1c1e; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        #login-prompt .lp-title { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        #login-prompt .lp-desc { font-size: 13.5px; font-weight: 500; line-height: 1.55; margin-top: 8px; color: rgba(255,255,255,0.6); }
+        #login-prompt .lp-cancel { margin-top: 10px; width: 100%; padding: 12px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
+            background: transparent; transition: opacity .15s; }
+        #login-prompt .lp-cancel:active { opacity: 0.6; }
+
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
+
+            /* 로그인 화면/팝업 라이트 모드 */
+            #login-screen { background: #F2F2F7; }
+            #login-screen .lg-title { color: #1d1d1f; }
+            #login-screen .lg-sub, #login-screen .lg-guest, #login-screen .lg-status { color: #6e6e73; }
+            #login-screen .lg-card { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+            #login-screen .lg-card h3 { color: #1d1d1f; }
+            #login-screen .lg-card p { color: #6e6e73; }
+            .lg-google { background: #fff; color: #141414; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 6px 22px rgba(0,0,0,0.10); }
+            #login-prompt { background: rgba(0,0,0,0.35); }
+            #login-prompt .lp-card { background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+            #login-prompt .lp-title { color: #141414; }
+            #login-prompt .lp-desc, #login-prompt .lp-cancel { color: #8B95A1; }
 
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
@@ -353,7 +394,73 @@
                 setTimeout(function () { l.style.display = 'none'; }, 400);
             }
         }, 2000);
+        // 안전장치: 인증 확인이 지연되면 로그인 버튼을 노출(스피너 무한 회전 방지)
+        setTimeout(function () {
+            var ls = document.getElementById('login-screen');
+            var lc = document.getElementById('login-checking');
+            var lf = document.getElementById('login-content');
+            if (ls && ls.style.display !== 'none' && lc && lc.style.display !== 'none') {
+                lc.style.display = 'none';
+                if (lf) { lf.classList.remove('hidden'); lf.style.display = 'block'; }
+            }
+        }, 3500);
     </script>
+
+    <!-- [New] 로그인 화면 — 엔조이 계정 로그인 전에는 서비스 이용 불가 (기본 표시) -->
+    <div id="login-screen" class="fixed inset-0 z-[300] overflow-y-auto scrollbar-hide">
+        <!-- 로그인 상태 확인 중 스피너 -->
+        <div id="login-checking" class="absolute inset-0 flex items-center justify-center">
+            <i class="fa-solid fa-circle-notch fa-spin text-3xl" style="color:#3182F6"></i>
+        </div>
+        <!-- 미로그인 시 노출되는 로그인 안내 -->
+        <div id="login-content" class="hidden w-full max-w-md mx-auto px-7 pt-16 pb-16">
+            <!-- 인사말 + 히어로 -->
+            <div class="text-center">
+                <p class="lg-greet">반가워요 <i class="fa-solid fa-hand"></i></p>
+                <h1 class="lg-title">엔조이의 모든 서비스에<br>사용하는 계정이에요</h1>
+                <p class="lg-sub">하나의 엔조이 계정으로 우리 모임의 모든 기능을<br>함께 즐길 수 있어요. 시작하려면 로그인하세요.</p>
+            </div>
+            <!-- 로그인 버튼 -->
+            <button id="login-google-btn" class="lg-google" onclick="window.haptic && window.haptic(); window.enjoyLogin && window.enjoyLogin()">
+                <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                엔조이 계정(구글)으로 로그인
+            </button>
+            <button class="lg-guest" onclick="window.haptic && window.haptic(); window.enjoyGuest && window.enjoyGuest()">로그인 없이 둘러보기</button>
+            <p id="login-status" class="lg-status text-center"></p>
+
+            <!-- 안내 카드 -->
+            <div class="lg-cards">
+                <div class="lg-card">
+                    <div class="lg-card-ic"><i class="fa-solid fa-sliders"></i></div>
+                    <h3>내가 관리하는 우리 모임</h3>
+                    <p>일정, 모임통장, 스토리를 한곳에서 직접 관리하고 멤버들과 함께 나눠요.</p>
+                </div>
+                <div class="lg-card">
+                    <div class="lg-card-ic"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3>비공개로 안전하게</h3>
+                    <p>로그인한 멤버만 데이터를 보고 기록할 수 있어, 우리끼리 안전하게 추억을 남겨요.</p>
+                </div>
+                <div class="lg-card">
+                    <div class="lg-card-ic"><i class="fa-regular fa-comments"></i></div>
+                    <h3>엔조이 계정이란 무엇인가요?</h3>
+                    <p>엔조이 계정은 스토리, 일정, 모임통장, 위치 공유, 여행 기록 등 엔조이의 모든 서비스에 사용하는 계정이에요.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [New] 로그인 유도 팝업 — 둘러보기 중 기능 사용 시 노출 -->
+    <div id="login-prompt" class="hidden fixed inset-0 z-[280] flex items-center justify-center px-8" onclick="window.hideLoginPrompt && window.hideLoginPrompt(event)">
+        <div class="lp-card w-full max-w-[300px] rounded-[26px] p-7 text-center" onclick="event.stopPropagation()">
+            <h3 class="lp-title">로그인이 필요해요</h3>
+            <p class="lp-desc">이 기능은 엔조이 계정으로<br>로그인한 뒤에 이용할 수 있어요</p>
+            <button class="lg-google" onclick="window.haptic && window.haptic(); window.hideLoginPrompt && window.hideLoginPrompt(); window.enjoyLogin && window.enjoyLogin();">
+                <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                엔조이 계정(구글)으로 로그인
+            </button>
+            <button class="lp-cancel" onclick="window.haptic && window.haptic(); window.hideLoginPrompt && window.hideLoginPrompt();">다음에 할게요</button>
+        </div>
+    </div>
 
     <!-- 메인 컨텐츠 (홈 화면) -->
     <main id="home-screen" class="flex-1 overflow-y-auto scrollbar-hide px-5 pb-24 w-full max-w-md mx-auto relative min-h-full">
@@ -887,7 +994,7 @@
         <div id="more-popover-panel" class="liquid-glass ml-auto w-[252px] origin-bottom-right rounded-[26px] p-2.5 pointer-events-auto">
             <div class="relative z-10 flex flex-col gap-0.5">
                 <!-- 위치 공유 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.location.href='map.html'" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(!window.requireLogin || window.requireLogin()) window.location.href='map.html';" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
                     <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(245,158,11,0.4)]"><i class="fa-solid fa-map-location-dot"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">위치 공유</div>
@@ -928,6 +1035,14 @@
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">새로운 기능 준비 중</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">어떤 서비스가 추가될까요?</div>
+                    </div>
+                </button>
+                <!-- 로그아웃 -->
+                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(confirm('로그아웃 하시겠어요?')) window.enjoyLogout && window.enjoyLogout();" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                    <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(107,114,128,0.4)]"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[14px] font-bold text-white leading-tight">로그아웃</div>
+                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5" id="more-account-email">계정에서 나가기</div>
                     </div>
                 </button>
             </div>
@@ -1227,12 +1342,17 @@
         async function startCamera() {
             stopStream();
             const v = { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } };
-            try { camStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: v }); }
+            const gum = (c) => navigator.mediaDevices.getUserMedia(c);
+            // 영상 녹화에 소리가 함께 담기도록 가능한 한 오디오(마이크)를 유지한다.
+            try { camStream = await gum({ audio: true, video: v }); }                       // 영상 + 소리(기본)
             catch (e) {
-                try { camStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: v }); }
+                try { camStream = await gum({ audio: true, video: { facingMode: facing } }); } // 해상도 제약 완화(소리 유지)
                 catch (e2) {
-                    try { camStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true }); }
-                    catch (e3) { return false; }
+                    try { camStream = await gum({ audio: true, video: true }); }              // 아무 카메라나(소리 유지)
+                    catch (e3) {
+                        try { camStream = await gum({ audio: false, video: v }); }            // 최후: 소리 없이 영상만
+                        catch (e4) { try { camStream = await gum({ audio: false, video: true }); } catch (e5) { return false; } }
+                    }
                 }
             }
             const vid = $('story-cam-video');
@@ -1764,8 +1884,9 @@
             ['story-camera', 'story-preview', 'story-viewer'].forEach((id) => {
                 const el = $(id); if (el) el.addEventListener('contextmenu', (e) => e.preventDefault());
             });
-            // 모두와 공유되는 스토리: Firebase 실시간 구독
-            ensureFirebase().then((ok) => { if (ok) subscribeStories(); else renderTray(); });
+            // 모두와 공유되는 스토리: Firebase 실시간 구독 (먼저 트레이를 그려 둘러보기에서도 보이게)
+            renderTray();
+            ensureFirebase().then((ok) => { if (ok) subscribeStories(); });
             setInterval(pruneLocal, 30000); // 24시간 지난 스토리 화면에서 정리
             document.addEventListener('visibilitychange', () => { if (!document.hidden) pruneLocal(); });
         }
@@ -3204,10 +3325,47 @@
 
     </script>
 
+    <!-- [New] 둘러보기(체험) 모드: 로그인 전 기능 사용 차단 + 로그인 유도 -->
+    <script>
+    (function () {
+        function isAuthed() { return !!window.meetingAuthed; }
+        function showLoginPrompt() {
+            var el = document.getElementById('login-prompt');
+            if (el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+        }
+        function hideLoginPrompt() {
+            var el = document.getElementById('login-prompt');
+            if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+        }
+        window.showLoginPrompt = showLoginPrompt;
+        window.hideLoginPrompt = hideLoginPrompt;
+        // 로그인돼 있으면 통과(true), 아니면 로그인 유도 후 차단(false)
+        window.requireLogin = function () { if (isAuthed()) return true; showLoginPrompt(); return false; };
+
+        // 지정한 함수를 감싸서, 미로그인 상태면 실행을 막고 로그인 유도 팝업을 띄운다.
+        function gateFn(obj, name) {
+            var orig = obj[name];
+            if (typeof orig !== 'function' || orig.__gated) return;
+            var wrapped = function () { if (!isAuthed()) { showLoginPrompt(); return; } return orig.apply(this, arguments); };
+            wrapped.__gated = true; obj[name] = wrapped;
+        }
+        function applyGates() {
+            // 외부 서비스(브이로그·여행·지하철·유튜브) / 여행기록 / 게임 / 비밀기능
+            // + 일정 추가·수정·삭제 (일정/모임통장 화면 자체는 둘러보기로 구경 가능)
+            ['openBrowser', 'goToTravel', 'playGame', 'showSecretModal',
+             'openAddScheduleModal', 'openEditScheduleModal', 'saveScheduleToFirebase', 'deleteSchedule'].forEach(function (n) { gateFn(window, n); });
+            // 스토리(카메라/뷰어)
+            if (window.EnjoyStory) { ['openCamera', 'openViewer'].forEach(function (n) { gateFn(window.EnjoyStory, n); }); }
+        }
+        applyGates();
+        window.addEventListener('load', function () { setTimeout(applyGates, 200); });
+    })();
+    </script>
+
     <!-- Firebase Module -->
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global functions for firebase interaction
@@ -3255,23 +3413,52 @@
                 const meetingApp = getOrInitializeApp(meetingConfig, 'meetingApp');
                 const meetingAuth = getAuth(meetingApp);
                 window.meetingDb = getFirestore(meetingApp);
-                
-                // [수정] Firestore 에러 방지를 위해 인증(Auth) 완료 후 리스너 등록
-                try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        try {
-                            await signInWithCustomToken(meetingAuth, __initial_auth_token);
-                        } catch (e) {
-                            await signInAnonymously(meetingAuth);
-                        }
-                    } else {
-                        await signInAnonymously(meetingAuth);
-                    }
-                } catch (authErr) {
-                    console.error("Auth error:", authErr);
-                }
 
-                // [수정] Firestore Internal Assertion 에러를 방지하기 위해 
+                // 로그인 화면 제어 헬퍼
+                const loginScreen   = document.getElementById('login-screen');
+                const loginChecking = document.getElementById('login-checking');
+                const loginContent  = document.getElementById('login-content');
+                const loginStatus   = document.getElementById('login-status');
+                const showLoginForm = () => {
+                    if (loginScreen)   { loginScreen.style.display = 'block'; }
+                    if (loginChecking) loginChecking.style.display = 'none';
+                    if (loginContent)  { loginContent.classList.remove('hidden'); loginContent.style.display = 'block'; }
+                    // 미로그인 상태에서는 데이터 로더를 숨긴다(스피너 무한 회전 방지)
+                    const ld = document.getElementById('app-loader');
+                    if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
+                };
+                const hideLogin = () => { if (loginScreen) loginScreen.style.display = 'none'; };
+
+                // 로그인 지속(브라우저 닫아도 유지) — 실패해도 무시
+                try { await setPersistence(meetingAuth, browserLocalPersistence); } catch (e) {}
+
+                // 구글 로그인/로그아웃 전역 함수
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                window.enjoyLogin = async function () {
+                    if (loginStatus) loginStatus.textContent = '로그인 창을 여는 중…';
+                    try {
+                        await signInWithPopup(meetingAuth, provider);
+                    } catch (e) {
+                        // 팝업 차단/모바일 인앱 브라우저 → 리다이렉트 방식으로 폴백
+                        if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/operation-not-supported-in-this-environment' || e.code === 'auth/popup-closed-by-user')) {
+                            try { await signInWithRedirect(meetingAuth, provider); return; } catch (e2) { e = e2; }
+                        }
+                        if (loginStatus) loginStatus.textContent = '로그인에 실패했어요. 다시 시도해 주세요.';
+                        console.error('Login error:', e);
+                    }
+                };
+                window.enjoyLogout = async function () {
+                    try { await signOut(meetingAuth); } catch (e) {}
+                    location.reload();
+                };
+                // 로그인 없이 둘러보기(체험 모드) — 구경만 가능, 기능 사용 시 로그인 유도
+                window.enjoyGuest = function () { window.isGuest = true; hideLogin(); };
+
+                // 리다이렉트 로그인 결과 처리(모바일 폴백 후 복귀)
+                try { await getRedirectResult(meetingAuth); } catch (e) { console.warn('redirect result', e); }
+
+                // [수정] Firestore Internal Assertion 에러를 방지하기 위해
                 // 기존 스트림 구독을 정리(unsubscribe)한 후 새로 구독하도록 수정했습니다.
                 let unsubMeeting = null;
                 let unsubSchedule = null;
@@ -3279,8 +3466,16 @@
                 onAuthStateChanged(meetingAuth, (user) => {
                     if (unsubMeeting) { unsubMeeting(); unsubMeeting = null; }
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
-                    
-                    if (!user) return;
+
+                    // 구글 계정으로 로그인하지 않았으면 앱을 막고 로그인 화면을 띄운다.
+                    if (!user || user.isAnonymous) {
+                        window.meetingAuthed = false;
+                        showLoginForm();
+                        return;
+                    }
+                    hideLogin();
+                    const emailEl = document.getElementById('more-account-email');
+                    if (emailEl && user.email) emailEl.textContent = user.email;
                     window.meetingAuthed = true; // 엔조이 스토리 구독 신호
 
                     let isMeetingLoaded = false;
