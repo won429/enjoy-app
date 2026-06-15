@@ -301,13 +301,19 @@
             padding: 15px 0; border-radius: 9999px; display: flex; align-items: center; justify-content: center; gap: 12px;
             border: 1px solid transparent; box-shadow: 0 6px 22px rgba(0,0,0,0.35); transition: transform .15s; cursor: pointer; }
         .lg-google:active { transform: scale(0.96); }
-        #login-prompt { background: rgba(0,0,0,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-        #login-prompt .lp-card { background: #1c1c1e; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-        #login-prompt .lp-title { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-        #login-prompt .lp-desc { font-size: 13.5px; font-weight: 500; line-height: 1.55; margin-top: 8px; color: rgba(255,255,255,0.6); }
-        #login-prompt .lp-cancel { margin-top: 10px; width: 100%; padding: 12px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
+        #login-prompt, #profile-modal { background: rgba(0,0,0,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+        #login-prompt .lp-card, #profile-modal .lp-card { background: #1c1c1e; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        #login-prompt .lp-title, #profile-modal .lp-title { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        #login-prompt .lp-desc, #profile-modal .lp-desc { font-size: 13.5px; font-weight: 500; line-height: 1.55; margin-top: 8px; color: rgba(255,255,255,0.6); }
+        #login-prompt .lp-cancel, #profile-modal .lp-cancel { margin-top: 10px; width: 100%; padding: 12px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
             background: transparent; transition: opacity .15s; }
-        #login-prompt .lp-cancel:active { opacity: 0.6; }
+        #login-prompt .lp-cancel:active, #profile-modal .lp-cancel:active { opacity: 0.6; }
+        /* 프로필 이름 선택 버튼 */
+        .pf-opt { padding: 14px 0; border-radius: 16px; font-size: 15px; font-weight: 700; color: #fff; background: rgba(255,255,255,0.08);
+            border: 1.5px solid transparent; transition: transform .12s, background .12s, border-color .12s; }
+        .pf-opt:active { transform: scale(0.96); }
+        .pf-opt.taken { opacity: 0.38; }
+        .pf-opt.sel { border-color: #3182F6; background: rgba(49,130,246,0.18); color: #3182F6; }
 
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
@@ -320,10 +326,12 @@
             #login-screen .lg-card h3 { color: #1d1d1f; }
             #login-screen .lg-card p { color: #6e6e73; }
             .lg-google { background: #fff; color: #141414; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 6px 22px rgba(0,0,0,0.10); }
-            #login-prompt { background: rgba(0,0,0,0.35); }
-            #login-prompt .lp-card { background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
-            #login-prompt .lp-title { color: #141414; }
-            #login-prompt .lp-desc, #login-prompt .lp-cancel { color: #8B95A1; }
+            #login-prompt, #profile-modal { background: rgba(0,0,0,0.35); }
+            #login-prompt .lp-card, #profile-modal .lp-card { background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+            #login-prompt .lp-title, #profile-modal .lp-title { color: #141414; }
+            #login-prompt .lp-desc, #login-prompt .lp-cancel, #profile-modal .lp-desc, #profile-modal .lp-cancel { color: #8B95A1; }
+            .pf-opt { background: rgba(0,0,0,0.05); color: #141414; }
+            .pf-opt.sel { background: rgba(49,130,246,0.12); color: #3182F6; }
 
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
@@ -462,6 +470,17 @@
         </div>
     </div>
 
+    <!-- [New] 프로필 이름 선택 모달 — 로그인 후 1회 (스토리 표시 이름) -->
+    <div id="profile-modal" class="hidden fixed inset-0 z-[290] flex items-center justify-center px-8">
+        <div class="lp-card w-full max-w-[330px] rounded-[26px] p-7 text-center" onclick="event.stopPropagation()">
+            <h3 class="lp-title">프로필 이름을 선택해주세요</h3>
+            <p class="lp-desc">스토리에 표시될 내 이름이에요</p>
+            <div id="profile-options" class="grid grid-cols-2 gap-2.5 mt-5"></div>
+            <p id="profile-status" class="lp-desc" style="margin-top:14px;min-height:16px;"></p>
+            <button class="lp-cancel" onclick="window.haptic && window.haptic(); window.enjoySkipProfile && window.enjoySkipProfile();">나중에 할게요</button>
+        </div>
+    </div>
+
     <!-- 메인 컨텐츠 (홈 화면) -->
     <main id="home-screen" class="flex-1 overflow-y-auto scrollbar-hide px-5 pb-24 w-full max-w-md mx-auto relative min-h-full">
         
@@ -576,6 +595,17 @@
                     </div>
                     <div id="story-tray" class="flex gap-3.5 overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch;">
                         <!-- 스토리 항목은 JS(EnjoyStory)가 채웁니다 -->
+                    </div>
+                </section>
+
+                <!-- 0-1. 엔조이 현재현황 (인스타 활동 상태처럼 현재 접속/활동 중인 멤버 표시) -->
+                <section>
+                    <div class="px-1 mb-2.5">
+                        <p class="text-[11px] font-bold text-emerald-400 tracking-widest uppercase">LIVE NOW</p>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이 현재현황</h3>
+                    </div>
+                    <div id="presence-list" class="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch;">
+                        <p class="text-gray-500 text-[13px] px-1 py-3">로그인하면 멤버들의 현재 상태를 볼 수 있어요</p>
                     </div>
                 </section>
 
@@ -1179,8 +1209,8 @@
                 <div id="story-viewer-bars" class="flex gap-1 mb-2.5"></div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 pointer-events-none">
-                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-400 flex items-center justify-center text-white text-[11px] font-black">E</div>
-                        <span class="text-white text-[13px] font-bold drop-shadow">내 스토리</span>
+                        <div id="story-viewer-avatar" class="w-7 h-7 rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-400 flex items-center justify-center text-white text-[11px] font-black">E</div>
+                        <span id="story-viewer-author" class="text-white text-[13px] font-bold drop-shadow">엔조이 스토리</span>
                         <span id="story-viewer-time" class="text-white/70 text-[12px] font-medium"></span>
                     </div>
                     <div class="flex items-center gap-1.5 pointer-events-auto">
@@ -1294,6 +1324,8 @@
             await window.fsSetDoc(window.fsDoc('stories', id), {
                 type: p.type, url: data.secure_url, publicId: data.public_id || '',
                 resourceType: data.resource_type || rt, thumb: p.thumb, ready: true, createdAt,
+                author: window.enjoyProfileName || '미가입',   // 올린 사람의 프로필 이름
+                authorUid: (window.enjoyUser && window.enjoyUser.uid) || '',
                 expireAt: window.fsTimestampFromMillis(createdAt + STORY_TTL)
             });
         }
@@ -1723,6 +1755,10 @@
             const img = $('story-viewer-img'), vid = $('story-viewer-video'), tl = $('story-viewer-time'), ld = $('story-viewer-loading');
             const ago = Math.max(0, Math.floor((Date.now() - s.createdAt) / 60000));
             tl.textContent = ago < 1 ? '방금' : (ago < 60 ? ago + '분 전' : Math.floor(ago / 60) + '시간 전');
+            // 올린 사람(프로필 이름) 표시
+            const author = s.author || '엔조이 스토리';
+            const au = $('story-viewer-author'); if (au) au.textContent = author;
+            const av = $('story-viewer-avatar'); if (av) av.textContent = (s.author && s.author !== '미가입') ? s.author.slice(0, 1) : 'E';
 
             const token = ++segToken;
             vid.pause(); vid.onended = null; vid.onloadedmetadata = null; vid.oncanplay = null; vid.onerror = null; vid.removeAttribute('src'); mHide(vid);
@@ -3362,6 +3398,145 @@
     })();
     </script>
 
+    <!-- [New] 엔조이 멤버: 프로필 이름(스토리 표시용) + 현재현황(활동 상태) -->
+    <script>
+    (function () {
+        const MEMBERS = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+        const ACTIVE_MS = 90 * 1000;     // 활동 중 판정(마지막 활동 90초 이내)
+        const BEAT_MS = 40 * 1000;       // 하트비트 주기
+        const $ = (id) => document.getElementById(id);
+        let beatTimer = null, membersUnsub = null, started = false, lastMembers = [], decayTimer = null;
+
+        function fbReady() { return !!(window.meetingDb && window.fsOnSnapshot && window.fsSetDoc && window.meetingAuthed && window.enjoyUser); }
+
+        async function beat() {
+            if (!fbReady()) return;
+            const u = window.enjoyUser;
+            try {
+                await window.fsSetDoc(window.fsDoc('members', u.uid),
+                    { lastActive: Date.now(), email: u.email || '', photoURL: u.photoURL || '' },
+                    { merge: true });
+            } catch (e) {}
+        }
+
+        async function loadMyName() {
+            try {
+                const d = await window.getDoc(window.fsDoc('members', window.enjoyUser.uid));
+                return d.exists() ? (d.data().name || null) : null;
+            } catch (e) { return null; }
+        }
+
+        async function takenNames() {
+            const taken = {};
+            try {
+                const snap = await window.fsGetDocs(window.fsCol('members'));
+                snap.forEach(d => { const v = d.data() || {}; if (v.name && d.id !== window.enjoyUser.uid) taken[v.name] = true; });
+            } catch (e) {}
+            return taken;
+        }
+
+        let selectedName = null;
+        async function openProfileModal() {
+            const box = $('profile-options'); if (!box) return;
+            selectedName = null;
+            const taken = await takenNames();
+            box.innerHTML = MEMBERS.map(n => {
+                const isTaken = !!taken[n];
+                return '<button class="pf-opt' + (isTaken ? ' taken' : '') + '" ' + (isTaken ? 'disabled' : '') + ' data-name="' + n + '">' + n + (isTaken ? ' <small>사용 중</small>' : '') + '</button>';
+            }).join('');
+            box.querySelectorAll('.pf-opt').forEach(b => {
+                if (b.disabled) return;
+                b.addEventListener('click', () => {
+                    if (window.haptic) window.haptic();
+                    selectedName = b.dataset.name;
+                    box.querySelectorAll('.pf-opt').forEach(x => x.classList.remove('sel'));
+                    b.classList.add('sel');
+                    saveProfile();
+                });
+            });
+            const st = $('profile-status'); if (st) st.textContent = '';
+            const m = $('profile-modal'); if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+        }
+        function closeProfileModal() { const m = $('profile-modal'); if (m) { m.classList.add('hidden'); m.classList.remove('flex'); } }
+
+        async function saveProfile() {
+            if (!selectedName || !fbReady()) return;
+            const st = $('profile-status'); if (st) st.textContent = '저장 중…';
+            const taken = await takenNames();
+            if (taken[selectedName]) { if (st) st.textContent = '앗, 방금 다른 분이 선택했어요. 다른 이름을 골라주세요.'; openProfileModal(); return; }
+            try {
+                await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid),
+                    { name: selectedName, lastActive: Date.now(), email: window.enjoyUser.email || '', photoURL: window.enjoyUser.photoURL || '' },
+                    { merge: true });
+                window.enjoyProfileName = selectedName;
+                closeProfileModal();
+            } catch (e) { if (st) st.textContent = '저장에 실패했어요. 다시 시도해 주세요.'; }
+        }
+        window.enjoySkipProfile = function () { closeProfileModal(); };
+        // 더보기 등에서 프로필을 다시 고르고 싶을 때 사용 가능
+        window.enjoyOpenProfile = function () { if (fbReady()) openProfileModal(); };
+
+        function agoText(ms) {
+            const m = Math.floor(ms / 60000);
+            if (m < 1) return '방금';
+            if (m < 60) return m + '분 전';
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + '시간 전';
+            return Math.floor(h / 24) + '일 전';
+        }
+        function renderPresence(arr) {
+            const wrap = $('presence-list'); if (!wrap) return;
+            const now = Date.now();
+            arr.forEach(m => m._active = (now - (m.lastActive || 0) < ACTIVE_MS));
+            arr.sort((a, b) => (b._active - a._active) || ((b.lastActive || 0) - (a.lastActive || 0)));
+            const list = arr.slice(0, 6);
+            if (!list.length) { wrap.innerHTML = '<p class="text-gray-500 text-[13px] px-1 py-3">아직 활동한 멤버가 없어요</p>'; return; }
+            wrap.innerHTML = list.map(m => {
+                const name = m.name || '미가입';
+                const active = m._active;
+                const status = active ? '활동 중' : agoText(now - (m.lastActive || 0));
+                const initial = (m.name ? m.name.slice(0, 1) : '?');
+                const avatar = m.photoURL
+                    ? '<img src="' + m.photoURL + '" class="w-[58px] h-[58px] rounded-full object-cover ' + (active ? '' : 'opacity-50 grayscale') + '" referrerpolicy="no-referrer">'
+                    : '<div class="w-[58px] h-[58px] rounded-full flex items-center justify-center text-white text-[18px] font-bold bg-gradient-to-br from-fuchsia-500 to-amber-400 ' + (active ? '' : 'opacity-50') + '">' + initial + '</div>';
+                const dot = active ? '<span class="absolute bottom-0 right-0 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 border-black"></span>' : '';
+                const nameCls = active ? 'text-white' : 'text-gray-500';
+                const stCls = active ? 'text-emerald-400' : 'text-gray-600';
+                return '<div class="shrink-0 flex flex-col items-center gap-1.5 w-[64px]">' +
+                            '<div class="relative">' + avatar + dot + '</div>' +
+                            '<span class="text-[11px] font-semibold ' + nameCls + ' w-full text-center truncate">' + name + '</span>' +
+                            '<span class="text-[10px] ' + stCls + ' -mt-1 w-full text-center truncate">' + status + '</span>' +
+                        '</div>';
+            }).join('');
+        }
+        function subscribeMembers() {
+            if (membersUnsub) return;
+            try {
+                membersUnsub = window.fsOnSnapshot(window.fsCol('members'), (snap) => {
+                    const arr = []; snap.forEach(d => { const v = d.data() || {}; v.uid = d.id; arr.push(v); });
+                    lastMembers = arr; renderPresence(arr.slice());
+                }, () => {});
+            } catch (e) {}
+            // 시간 경과(활동→비활동)를 반영하기 위해 주기적으로 다시 그린다.
+            if (!decayTimer) decayTimer = setInterval(() => { if (lastMembers.length) renderPresence(lastMembers.slice()); }, 30000);
+        }
+
+        async function start() {
+            if (started || !fbReady()) return; started = true;
+            await beat();
+            beatTimer = setInterval(beat, BEAT_MS);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
+            window.addEventListener('focus', beat);
+            subscribeMembers();
+            const myName = await loadMyName();
+            window.enjoyProfileName = myName;
+            if (!myName) openProfileModal();
+        }
+        window.enjoyOnLogin = start;
+        if (window.enjoyUser) start();   // 모듈이 먼저 로그인 처리한 경우 대비
+    })();
+    </script>
+
     <!-- Firebase Module -->
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -3470,6 +3645,7 @@
                     // 구글 계정으로 로그인하지 않았으면 앱을 막고 로그인 화면을 띄운다.
                     if (!user || user.isAnonymous) {
                         window.meetingAuthed = false;
+                        window.enjoyUser = null;
                         showLoginForm();
                         return;
                     }
@@ -3477,6 +3653,9 @@
                     const emailEl = document.getElementById('more-account-email');
                     if (emailEl && user.email) emailEl.textContent = user.email;
                     window.meetingAuthed = true; // 엔조이 스토리 구독 신호
+                    // 현재 로그인 사용자 정보 공개 + 멤버/현재현황 시스템 시작
+                    window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
+                    if (typeof window.enjoyOnLogin === 'function') { try { window.enjoyOnLogin(); } catch (e) {} }
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
