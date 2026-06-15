@@ -1005,15 +1005,15 @@
 
         <!-- 하단 셔터 -->
         <div class="relative z-10 mt-auto pb-safe-area">
-            <!-- 줌 다이얼 (아이폰 카메라 느낌) -->
-            <div class="px-8 mb-3 flex items-center justify-center gap-2">
-                <button id="story-zoom-1" onclick="window.haptic(); window.EnjoyStory.setZoom(1)" class="story-zoom-chip on text-[12px] font-bold w-9 h-9 rounded-full active:scale-90 transition-transform">1x</button>
-                <button id="story-zoom-2" onclick="window.haptic(); window.EnjoyStory.setZoom(2)" class="story-zoom-chip text-[12px] font-bold w-9 h-9 rounded-full active:scale-90 transition-transform">2x</button>
-                <button id="story-zoom-3" onclick="window.haptic(); window.EnjoyStory.setZoom(3)" class="story-zoom-chip text-[12px] font-bold w-9 h-9 rounded-full active:scale-90 transition-transform">3x</button>
-            </div>
-            <div class="px-10 mb-4 flex items-center gap-3">
-                <span id="story-zoom-label" class="text-white text-[12px] font-bold w-10 text-center drop-shadow">1.0x</span>
-                <input id="story-zoom" type="range" min="1" max="4" step="0.1" value="1" class="flex-1 story-zoom-range" oninput="window.EnjoyStory.setZoom(parseFloat(this.value))">
+            <!-- 줌 다이얼 (아이폰 카메라식 눈금 다이얼: 드래그/핀치로 확대·축소) -->
+            <div id="story-dial-wrap" class="relative z-10 mb-4 select-none" style="touch-action:none;">
+                <div class="text-center mb-1"><span id="story-zoom-label" class="text-[#FFD60A] text-[15px] font-extrabold drop-shadow">1.0x</span></div>
+                <div class="absolute left-1/2 -translate-x-1/2 z-20 pointer-events-none" style="top:24px;">
+                    <div class="mx-auto" style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #FFD60A;"></div>
+                </div>
+                <div id="story-dial" class="relative h-[44px]" style="overflow:hidden; touch-action:none; cursor:grab; -webkit-mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent); mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);">
+                    <div id="story-dial-track" class="absolute top-0 h-full will-change-transform" style="left:50%;"></div>
+                </div>
             </div>
             <p id="story-cam-hint" class="text-white/80 text-[13px] font-medium mb-5 text-center drop-shadow">탭하면 사진 · 길게 누르면 영상 (최대 5초)</p>
             <div class="relative flex items-center justify-center mb-7">
@@ -1044,7 +1044,7 @@
             <button onclick="window.haptic(); window.EnjoyStory.savePreview()" class="px-4 h-10 rounded-full bg-black/45 backdrop-blur-sm text-white text-[13px] font-bold flex items-center gap-2 active:scale-95 transition-transform"><i class="fa-solid fa-download"></i>저장</button>
         </div>
         <div class="relative z-10 mt-auto px-5 pb-8 pb-safe-area">
-            <button onclick="window.haptic(); window.EnjoyStory.post()" class="w-full bg-white text-black font-bold py-4 rounded-full active:scale-95 transition-transform shadow-[0_0_24px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane text-[14px]"></i>스토리에 올리기</button>
+            <button id="story-post-btn" onclick="window.haptic(); window.EnjoyStory.post()" class="w-full bg-white text-black font-bold py-4 rounded-full active:scale-95 transition-transform shadow-[0_0_24px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane text-[14px]"></i>스토리에 올리기</button>
         </div>
     </div>
 
@@ -1052,6 +1052,7 @@
     <div id="story-viewer" class="hidden fixed inset-0 z-[152] bg-black flex-col select-none">
         <img id="story-viewer-img" class="hidden absolute inset-0 w-full h-full object-contain bg-black">
         <video id="story-viewer-video" class="hidden absolute inset-0 w-full h-full object-contain bg-black" playsinline></video>
+        <div id="story-viewer-loading" class="hidden absolute inset-0 z-[5] flex items-center justify-center pointer-events-none"><i class="fa-solid fa-circle-notch fa-spin text-white/80 text-2xl"></i></div>
 
         <!-- 탭 이동 영역 (좌: 이전 / 우: 다음) -->
         <div class="absolute inset-y-0 left-0 w-[35%] z-10" onclick="window.EnjoyStory.prev()"></div>
@@ -1091,7 +1092,8 @@
         let pending = null;                // { type, blob, thumb }
         let camStream = null, facing = 'environment';
         let mediaRec = null, recChunks = [], recording = false, recTimer = null, holdTimer = null, didRecord = false;
-        let camZoom = 1; const MAX_ZOOM = 4;            // 카메라 줌 (다이얼/핀치)
+        let camZoom = 1; const MAX_ZOOM = 8;            // 카메라 줌 (다이얼/핀치, 1x~8x)
+        const DIAL_PX = 92;                              // 줌 다이얼 log2 1단위당 픽셀
         let recCanvas = null, recRAF = 0, recThumbSrc = null; // 디지털 줌 영상 녹화 파이프라인
         let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
         let viewerZoom = null, previewZoom = null; // 확대/축소 컨트롤러
@@ -1102,64 +1104,91 @@
         const mShow = (el) => el.classList.remove('hidden');
         const mHide = (el) => el.classList.add('hidden');
 
-        /* ---------- IndexedDB ---------- */
-        function db() {
-            return new Promise((res, rej) => {
-                const r = indexedDB.open(DB_NAME, 1);
-                r.onupgradeneeded = () => {
-                    const d = r.result;
-                    if (!d.objectStoreNames.contains(STORE)) {
-                        const s = d.createObjectStore(STORE, { keyPath: 'id' });
-                        s.createIndex('createdAt', 'createdAt');
-                    }
-                };
-                r.onsuccess = () => res(r.result);
-                r.onerror = () => rej(r.error);
-            });
+        /* ---------- 공유 저장소 (Cloudinary 미디어 + Firestore 색인) ----------
+           미디어 파일은 Cloudinary(무료 25GB)에 업로드, 공유용 메타데이터/URL만 Firestore에.
+           24시간 뒤: Firestore TTL로 색인 삭제(앱에서 사라짐). Cloudinary 원본은 무료 용량이
+           넉넉하며, 완전 삭제하려면 Cloudinary 자동정리 또는 주기적 정리 필요(아래 안내 참고). */
+        // ▼▼▼ Cloudinary 설정: 본인 값으로 채워주세요 ▼▼▼
+        const CLOUD_NAME = 'dpnljgudv';      // 예: 'dxxxxxx' (Cloudinary 대시보드의 Cloud name)
+        const UPLOAD_PRESET = 'stories_unsigned';   // 예: 'enjoy_stories' (Unsigned 업로드 프리셋 이름)
+        // ▲▲▲ 두 값을 채우기 전엔 업로드 시 안내 메시지가 뜹니다 ▲▲▲
+
+        let storiesUnsub = null; const cleaning = {};
+        function fbReady() { return !!(window.meetingDb && window.fsOnSnapshot && window.fsSetDoc && window.meetingAuthed); }
+        async function ensureFirebase() {
+            for (let i = 0; i < 150 && !fbReady(); i++) await new Promise(r => setTimeout(r, 100));
+            return fbReady();
         }
-        async function allStories() {
-            const d = await db();
-            return new Promise((res, rej) => {
-                const r = d.transaction(STORE, 'readonly').objectStore(STORE).getAll();
-                r.onsuccess = () => res(r.result || []);
-                r.onerror = () => rej(r.error);
+        function pruneLocal() {
+            const now = Date.now(), before = stories.length;
+            stories = stories.filter(v => now - (v.createdAt || 0) < STORY_TTL);
+            if (stories.length !== before) {
+                renderTray();
+                if (!$('story-viewer').classList.contains('hidden')) {
+                    if (!stories.length) closeViewer();
+                    else { if (viewerIdx > stories.length - 1) viewerIdx = stories.length - 1; buildBars(); }
+                }
+            }
+        }
+        function applySnapshot(arr) {
+            const now = Date.now(), live = [];
+            arr.forEach(v => {
+                if (now - (v.createdAt || 0) < STORY_TTL) live.push(v);
+                else cleanupExpired(v);
             });
+            stories = live.sort((a, b) => a.createdAt - b.createdAt);
+            renderTray();
+            if (!$('story-viewer').classList.contains('hidden')) {
+                if (!stories.length) { closeViewer(); return; }
+                // 보는 중에는 개수가 바뀐 경우에만 진행바를 다시 구성(진행 중 끊김 방지)
+                if (stories.length !== $('story-viewer-bars').children.length) {
+                    if (viewerIdx > stories.length - 1) viewerIdx = stories.length - 1;
+                    buildBars(); showSegment(viewerIdx);
+                }
+            }
+        }
+        function subscribeStories() {
+            if (!fbReady()) return;
+            try {
+                const q = window.fsQuery(window.fsCol('stories'), window.fsOrderBy('createdAt', 'asc'));
+                storiesUnsub = window.fsOnSnapshot(q, (snap) => {
+                    const arr = []; snap.forEach(d => { const v = d.data() || {}; v._id = d.id; if (v.ready) arr.push(v); });
+                    applySnapshot(arr);
+                }, (err) => { console.warn('stories snapshot', err); });
+            } catch (e) { console.warn('subscribeStories', e); }
         }
         async function putStory(p) {
-            const d = await db();
-            const rec = { id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-                          type: p.type, blob: p.blob, thumb: p.thumb, createdAt: Date.now() };
-            return new Promise((res, rej) => {
-                const r = d.transaction(STORE, 'readwrite').objectStore(STORE).add(rec);
-                r.onsuccess = () => res(); r.onerror = () => rej(r.error);
+            if (!CLOUD_NAME || !UPLOAD_PRESET) throw new Error('Cloudinary 설정(CLOUD_NAME / UPLOAD_PRESET)을 코드 상단에 먼저 입력해 주세요.');
+            if (!fbReady()) throw new Error('서버 연결을 기다리는 중이에요. 잠시 후 다시 시도해 주세요.');
+            const rt = (p.type === 'video') ? 'video' : 'image';
+            // 1) Cloudinary 업로드 (비서명/Unsigned)
+            const ext = (rt === 'video') ? (((p.blob.type || '').indexOf('mp4') >= 0) ? 'mp4' : 'webm') : 'jpg';
+            const fd = new FormData();
+            fd.append('file', p.blob, 'story.' + ext);
+            fd.append('upload_preset', UPLOAD_PRESET);
+            fd.append('folder', 'enjoy_stories');
+            const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/' + rt + '/upload', { method: 'POST', body: fd });
+            if (!res.ok) {
+                let msg = ''; try { msg = (await res.json()).error.message || ''; } catch (e) {}
+                throw new Error('Cloudinary 업로드 실패 (' + res.status + ') ' + msg);
+            }
+            const data = await res.json();
+            // 2) Firestore에 공유 색인(메타+URL)만 기록 — 용량 거의 0
+            const id = 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+            const createdAt = Date.now();
+            await window.fsSetDoc(window.fsDoc('stories', id), {
+                type: p.type, url: data.secure_url, publicId: data.public_id || '',
+                resourceType: data.resource_type || rt, thumb: p.thumb, ready: true, createdAt,
+                expireAt: window.fsTimestampFromMillis(createdAt + STORY_TTL)
             });
         }
-        async function removeStory(id) {
-            const d = await db();
-            return new Promise((res, rej) => {
-                const r = d.transaction(STORE, 'readwrite').objectStore(STORE).delete(id);
-                r.onsuccess = () => res(); r.onerror = () => rej(r.error);
-            });
+        async function removeStory(s) {
+            // Firestore 색인만 삭제(앱에서 사라짐). Cloudinary 원본 삭제는 API 시크릿 필요 → 서버/자동정리 권장.
+            try { if (s && s._id) await window.fsDeleteDoc(window.fsDoc('stories', s._id)); } catch (e) {}
         }
-        async function purgeExpired() {
-            const now = Date.now();
-            const all = await allStories();
-            for (const s of all) if (now - s.createdAt >= STORY_TTL) await removeStory(s.id);
-        }
-
-        /* ---------- 목록 새로고침 / 트레이 렌더 ---------- */
-        async function refresh() {
-            try { await purgeExpired(); } catch (e) {}
-            try { stories = (await allStories()).sort((a, b) => a.createdAt - b.createdAt); }
-            catch (e) { stories = []; }
-            renderTray();
-            scheduleNextPurge();
-        }
-        function scheduleNextPurge() {
-            clearTimeout(purgeTimer);
-            if (!stories.length) return;
-            const ms = (stories[0].createdAt + STORY_TTL) - Date.now() + 800;
-            purgeTimer = setTimeout(refresh, Math.max(1000, Math.min(ms, 2147483000)));
+        function cleanupExpired(v) {
+            if (!v || !v._id || cleaning[v._id]) return;
+            cleaning[v._id] = 1; removeStory(v).catch(() => {});
         }
         function renderTray() {
             const tray = $('story-tray');
@@ -1175,10 +1204,10 @@
                 <button onclick="window.haptic(); window.EnjoyStory.openViewer(0)" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">
                     <div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)">
                         <div class="w-full h-full rounded-full p-[2px] bg-black">
-                            <img src="${latest.thumb}" class="w-full h-full object-cover rounded-full" alt="내 스토리">
+                            <img src="${latest.thumb}" class="w-full h-full object-cover rounded-full" alt="스토리">
                         </div>
                     </div>
-                    <span class="text-[11px] text-white font-semibold w-full text-center truncate">내 스토리</span>
+                    <span class="text-[11px] text-white font-semibold w-full text-center truncate">모두의 스토리</span>
                 </button>`;
             }
             tray.innerHTML = html;
@@ -1233,12 +1262,67 @@
             updateZoomUI();
         }
         function updateZoomUI() {
-            const lbl = $('story-zoom-label'), sl = $('story-zoom');
+            const lbl = $('story-zoom-label');
             if (lbl) lbl.textContent = camZoom.toFixed(1) + 'x';
-            if (sl && Math.abs(parseFloat(sl.value) - camZoom) > 0.001) sl.value = camZoom;
-            [['story-zoom-1', 1], ['story-zoom-2', 2], ['story-zoom-3', 3]].forEach(([id, n]) => {
-                const b = $(id); if (b) b.classList.toggle('on', Math.abs(camZoom - n) < 0.05);
+            updateDialPosition();
+        }
+        function updateDialPosition() {
+            const track = $('story-dial-track'); if (!track) return;
+            track.style.transform = 'translateX(' + (-Math.log2(camZoom) * DIAL_PX) + 'px)';
+            track.querySelectorAll('[data-major]').forEach((lb) => {
+                const on = Math.abs(parseFloat(lb.dataset.major) - camZoom) < 0.06;
+                lb.style.color = on ? '#FFD60A' : '#fff';
             });
+        }
+        function buildDial() {
+            const track = $('story-dial-track'); if (!track || track.dataset.built) return;
+            track.dataset.built = '1';
+            const stops = { 0: '1×', 1: '2×', 2: '4×', 3: '8×' };
+            for (let i = 0; i <= 30; i++) {
+                const t = i / 10;                       // log2 값 0~3
+                const x = Math.round(t * DIAL_PX);
+                const isMajor = Math.abs(t - Math.round(t)) < 0.001 && stops[Math.round(t)];
+                const tick = document.createElement('div');
+                tick.style.cssText = 'position:absolute;bottom:6px;left:' + x + 'px;transform:translateX(-50%);width:2px;border-radius:2px;' +
+                    'height:' + (isMajor ? 17 : 9) + 'px;background:' + (isMajor ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)') + ';';
+                track.appendChild(tick);
+                if (isMajor) {
+                    const lb = document.createElement('div');
+                    lb.textContent = stops[Math.round(t)];
+                    lb.dataset.major = Math.pow(2, Math.round(t));
+                    lb.style.cssText = 'position:absolute;top:0;left:' + x + 'px;transform:translateX(-50%);font-size:12px;font-weight:800;color:#fff;';
+                    track.appendChild(lb);
+                }
+            }
+            updateDialPosition();
+        }
+        function wireDial() {
+            const el = $('story-dial'); if (!el || el.dataset.w) return; el.dataset.w = '1';
+            let dragging = false, startX = 0, startP = 0;
+            const getX = (e) => e.touches ? e.touches[0].clientX : e.clientX;
+            const down = (e) => { dragging = true; startX = getX(e); startP = Math.log2(camZoom); if (e.cancelable) e.preventDefault(); };
+            const move = (e) => {
+                if (!dragging) return;
+                const dp = (startX - getX(e)) / DIAL_PX;          // 왼쪽으로 끌면 확대
+                setZoom(Math.pow(2, Math.min(3, Math.max(0, startP + dp))));
+                if (e.cancelable) e.preventDefault();
+            };
+            const up = () => { dragging = false; };
+            el.addEventListener('touchstart', down, { passive: false });
+            el.addEventListener('touchmove', move, { passive: false });
+            el.addEventListener('touchend', up); el.addEventListener('touchcancel', up);
+            el.addEventListener('mousedown', down);
+            window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+        }
+        // 화면에 보이는 미리보기(object-cover) 영역 그대로 잘라내기 + 디지털 줌
+        function coverCrop(vw, vh, z) {
+            const el = $('story-cam-video');
+            const boxW = el.clientWidth || window.innerWidth, boxH = el.clientHeight || window.innerHeight;
+            const boxA = boxW / boxH, vidA = vw / vh;
+            let cw, ch;
+            if (vidA > boxA) { ch = vh; cw = vh * boxA; } else { cw = vw; ch = vw / boxA; }
+            cw /= z; ch /= z;
+            return { sx: (vw - cw) / 2, sy: (vh - ch) / 2, sw: cw, sh: ch };
         }
         function stopStream() {
             if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
@@ -1267,7 +1351,7 @@
             const vw = v.videoWidth, vh = v.videoHeight;
             if (!vw) return;
             const z = zoomCaps() ? 1 : camZoom;          // 하드웨어 줌이면 프레임이 이미 확대됨
-            const sw = vw / z, sh = vh / z, sx = (vw - sw) / 2, sy = (vh - sh) / 2; // 디지털 줌: 중앙 크롭
+            const { sx, sy, sw, sh } = coverCrop(vw, vh, z); // 미리보기와 동일한 프레이밍으로 촬영
             const scale = Math.min(1, PHOTO_MAX / Math.max(sw, sh));
             const cw = Math.round(sw * scale), ch = Math.round(sh * scale);
             const c = $('story-cam-canvas'); c.width = cw; c.height = ch;
@@ -1292,10 +1376,10 @@
             let recStream = camStream;
             const digital = !zoomCaps() && camZoom > 1.01;
             if (digital) {
-                // 디지털 줌은 트랙에 적용되지 않으므로, 캔버스로 중앙 크롭하여 720p로 녹화
+                // 디지털 줌은 트랙에 적용되지 않으므로, 캔버스로 미리보기와 동일 프레이밍 크롭하여 720p로 녹화
                 const v = $('story-cam-video');
                 const vw = v.videoWidth, vh = v.videoHeight;
-                const sw = vw / camZoom, sh = vh / camZoom, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+                const { sx, sy, sw, sh } = coverCrop(vw, vh, camZoom);
                 const scale = Math.min(1, 1280 / Math.max(sw, sh));
                 recCanvas = document.createElement('canvas');
                 recCanvas.width = Math.round(sw * scale); recCanvas.height = Math.round(sh * scale);
@@ -1309,7 +1393,7 @@
                 } catch (e) { recCanvas = null; recStream = camStream; recThumbSrc = v; }
             }
             const mime = pickMime();
-            try { mediaRec = new MediaRecorder(recStream, mime ? { mimeType: mime, videoBitsPerSecond: 2500000 } : undefined); }
+            try { mediaRec = new MediaRecorder(recStream, mime ? { mimeType: mime, videoBitsPerSecond: 2000000 } : undefined); }
             catch (e) { try { mediaRec = new MediaRecorder(recStream); } catch (e2) { return; } }
             mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
             mediaRec.onstop = () => {
@@ -1419,7 +1503,7 @@
                     try {
                         const stream = c.captureStream(30);
                         const mime = pickMime();
-                        rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2500000 } : undefined);
+                        rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2000000 } : undefined);
                     } catch (e) {
                         // 재인코딩 불가 → 원본 그대로 저장
                         URL.revokeObjectURL(url);
@@ -1471,16 +1555,23 @@
             closeOverlay(pv);
             // 카메라는 그대로 열려 있음 → 바로 재촬영
         }
+        let posting = false;
         async function post() {
-            if (!pending) return;
-            try { await putStory(pending); } catch (e) { alert('저장에 실패했어요. 저장 공간을 확인해 주세요.'); return; }
+            if (!pending || posting) return;
+            posting = true;
+            const btn = $('story-post-btn'); const old = btn ? btn.innerHTML : '';
+            if (btn) { btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 올리는 중...'; btn.style.opacity = '0.7'; }
+            try { await putStory(pending); }
+            catch (e) { if (btn) { btn.innerHTML = old; btn.style.opacity = '1'; } posting = false; alert('업로드에 실패했어요: ' + ((e && e.message) || e)); return; }
             const pv = $('story-preview'), vid = $('story-preview-video');
             vid.pause();
             if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
             pending = null;
+            if (btn) { btn.innerHTML = old; btn.style.opacity = '1'; }
+            posting = false;
             closeOverlay(pv);
             closeCamera();
-            await refresh();
+            // 업로드되면 onSnapshot이 트레이/뷰어를 자동 갱신합니다.
         }
 
         /* ---------- 뷰어 ---------- */
@@ -1496,6 +1587,7 @@
             buildBars();
             showSegment(start || 0);
         }
+        let segToken = 0;
         function showSegment(idx) {
             clearTimeout(viewerTimer);
             if (idx < 0) idx = 0;
@@ -1506,29 +1598,29 @@
             const fills = $('story-viewer-bars').querySelectorAll('.story-bar-fill');
             fills.forEach((f, i) => { f.style.transition = 'none'; f.style.width = i < idx ? '100%' : '0%'; });
             const fill = fills[idx];
-            const img = $('story-viewer-img'), vid = $('story-viewer-video'), tl = $('story-viewer-time');
-            if (viewerUrl) { URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
-            viewerUrl = URL.createObjectURL(s.blob);
+            const img = $('story-viewer-img'), vid = $('story-viewer-video'), tl = $('story-viewer-time'), ld = $('story-viewer-loading');
             const ago = Math.max(0, Math.floor((Date.now() - s.createdAt) / 60000));
             tl.textContent = ago < 1 ? '방금' : (ago < 60 ? ago + '분 전' : Math.floor(ago / 60) + '시간 전');
 
+            const token = ++segToken;
+            vid.pause(); vid.onended = null; vid.onloadedmetadata = null; vid.oncanplay = null; vid.onerror = null; vid.removeAttribute('src'); mHide(vid);
+            mHide(img); img.onload = null; img.onerror = null; img.removeAttribute('src');
+            if (ld) mShow(ld);
+            const url = s.url;
+            if (!url) { if (ld) mHide(ld); viewerTimer = setTimeout(next, 1200); return; }
+
+            const startBar = (ms) => { if (!fill) return; fill.style.transition = 'none'; fill.style.width = '0%'; requestAnimationFrame(() => { fill.style.transition = 'width ' + ms + 'ms linear'; fill.style.width = '100%'; }); };
+
             if (s.type === 'image') {
-                vid.pause(); vid.onended = null; vid.removeAttribute('src'); mHide(vid);
-                img.src = viewerUrl; mShow(img);
-                if (fill) requestAnimationFrame(() => { fill.style.transition = 'width ' + VIDEO_MAX_MS + 'ms linear'; fill.style.width = '100%'; });
-                viewerTimer = setTimeout(next, VIDEO_MAX_MS);
+                img.onload = () => { if (token !== segToken) return; if (ld) mHide(ld); startBar(VIDEO_MAX_MS); viewerTimer = setTimeout(next, VIDEO_MAX_MS); };
+                img.onerror = () => { if (token !== segToken) return; if (ld) mHide(ld); viewerTimer = setTimeout(next, 1200); };
+                img.src = url; mShow(img);
             } else {
-                mHide(img); img.removeAttribute('src');
-                vid.src = viewerUrl; mShow(vid); vid.currentTime = 0; vid.play().catch(() => {});
-                const anim = () => {
-                    if (!fill) return;
-                    const dur = (vid.duration && isFinite(vid.duration)) ? vid.duration * 1000 : VIDEO_MAX_MS;
-                    fill.style.transition = 'none'; fill.style.width = '0%';
-                    requestAnimationFrame(() => { fill.style.transition = 'width ' + dur + 'ms linear'; fill.style.width = '100%'; });
-                };
-                vid.onloadedmetadata = anim;
-                if (vid.readyState >= 1) anim();
+                vid.oncanplay = () => { if (token !== segToken) return; if (ld) mHide(ld); };
+                vid.onloadedmetadata = () => { if (token !== segToken) return; startBar((vid.duration && isFinite(vid.duration)) ? vid.duration * 1000 : VIDEO_MAX_MS); };
+                vid.onerror = () => { if (token !== segToken) return; if (ld) mHide(ld); viewerTimer = setTimeout(next, 1200); };
                 vid.onended = next;
+                vid.src = url; mShow(vid); vid.currentTime = 0; vid.play().catch(() => {});
             }
         }
         function next() { (viewerIdx < stories.length - 1) ? showSegment(viewerIdx + 1) : closeViewer(); }
@@ -1544,10 +1636,11 @@
         async function deleteCurrent() {
             const s = stories[viewerIdx];
             if (!s) return;
-            if (!confirm('이 스토리를 삭제할까요?')) return;
+            if (!confirm('이 스토리를 모두에게서 삭제할까요?')) return;
             clearTimeout(viewerTimer);
-            try { await removeStory(s.id); } catch (e) {}
-            await refresh();
+            stories.splice(viewerIdx, 1);   // 로컬 즉시 반영 (onSnapshot이 곧 동기화)
+            removeStory(s);                  // 서버(Storage+Firestore)에서 삭제
+            renderTray();
             if (!stories.length) { closeViewer(); return; }
             if (viewerIdx > stories.length - 1) viewerIdx = stories.length - 1;
             buildBars();
@@ -1574,7 +1667,11 @@
             setTimeout(() => URL.revokeObjectURL(url), 5000);
         }
         function savePreview() { if (pending) saveMedia(pending.blob, pending.type); }
-        function saveCurrent() { const s = stories[viewerIdx]; if (s) saveMedia(s.blob, s.type); }
+        async function saveCurrent() {
+            const s = stories[viewerIdx]; if (!s || !s.url) return;
+            try { const r = await fetch(s.url); const b = await r.blob(); await saveMedia(b, s.type); }
+            catch (e) { window.open(s.url, '_blank'); } // CORS 등 실패 시 새 탭으로 열어 저장
+        }
 
         /* ---------- 카메라 핀치 줌 ---------- */
         function wireCameraZoom() {
@@ -1650,6 +1747,8 @@
             wireShutter();
             wireFallback();
             wireCameraZoom();
+            buildDial();
+            wireDial();
             // 확대/축소: 뷰어는 줌 시작 시 자동 넘김 일시정지, 원래 크기로 돌아오면 재생 재개
             viewerZoom = attachPinchZoom($('story-viewer'),
                 () => $('story-viewer-img').classList.contains('hidden') ? $('story-viewer-video') : $('story-viewer-img'),
@@ -1663,8 +1762,10 @@
             ['story-camera', 'story-preview', 'story-viewer'].forEach((id) => {
                 const el = $(id); if (el) el.addEventListener('contextmenu', (e) => e.preventDefault());
             });
-            refresh();
-            document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+            // 모두와 공유되는 스토리: Firebase 실시간 구독
+            ensureFirebase().then((ok) => { if (ok) subscribeStories(); else renderTray(); });
+            setInterval(pruneLocal, 30000); // 24시간 지난 스토리 화면에서 정리
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) pruneLocal(); });
         }
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
         else init();
@@ -3105,10 +3206,10 @@
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, getDoc, addDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global functions for firebase interaction
-        window.getDoc = getDoc; 
+        window.getDoc = getDoc;
         window.doc = doc;
         window.setDoc = setDoc;
         window.addDoc = addDoc;
@@ -3118,6 +3219,16 @@
         window.limit = limit;
         window.getDocs = getDocs;
         window.arrayUnion = arrayUnion;
+        // 엔조이 스토리(모두 공유)용 헬퍼 — Storage 없이 Firestore에만 저장(무료 요금제 OK)
+        window.fsOnSnapshot = onSnapshot;
+        window.fsTimestampFromMillis = (ms) => Timestamp.fromMillis(ms);
+        window.fsDoc = (...p) => doc(window.meetingDb, ...p);
+        window.fsCol = (...p) => collection(window.meetingDb, ...p);
+        window.fsSetDoc = setDoc;
+        window.fsGetDocs = getDocs;
+        window.fsDeleteDoc = deleteDoc;
+        window.fsQuery = query;
+        window.fsOrderBy = orderBy;
         
         window.MEETING_PATH = ['meeting_account', 'dues_status'];
         window.SCHEDULE_PATH = ['meeting_account', 'schedules'];
@@ -3168,6 +3279,7 @@
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
                     
                     if (!user) return;
+                    window.meetingAuthed = true; // 엔조이 스토리 구독 신호
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
