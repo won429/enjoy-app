@@ -317,6 +317,9 @@
         .pf-submit { width: 100%; margin-top: 14px; padding: 15px 0; border-radius: 9999px; font-size: 15px; font-weight: 700;
             color: #fff; background: #3182F6; transition: transform .15s, opacity .15s; }
         .pf-submit:active { transform: scale(0.96); opacity: 0.92; }
+        /* 스토리 원 링 간격/배지 테두리: 페이지 배경색과 동일하게(테두리 안 보이게) */
+        .enjoy-page-bg { background-color: #000; }
+        .enjoy-page-border { border-color: #000 !important; }
 
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
@@ -335,6 +338,8 @@
             #login-prompt .lp-desc, #login-prompt .lp-cancel, #profile-modal .lp-desc, #profile-modal .lp-cancel { color: #8B95A1; }
             .pf-input { background: rgba(0,0,0,0.04); color: #141414; border-color: rgba(0,0,0,0.10); }
             .pf-input::placeholder { color: rgba(0,0,0,0.3); }
+            .enjoy-page-bg { background-color: #F2F2F7; }
+            .enjoy-page-border { border-color: #F2F2F7 !important; }
 
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
@@ -476,12 +481,13 @@
     <!-- [New] 프로필 이름 입력 모달 — 로그인 후 필수 1회 (한 번 정하면 영구) -->
     <div id="profile-modal" class="hidden fixed inset-0 z-[290] flex items-center justify-center px-8">
         <div class="lp-card w-full max-w-[330px] rounded-[26px] p-7 text-center" onclick="event.stopPropagation()">
-            <h3 class="lp-title">프로필 이름을 입력해주세요</h3>
-            <p class="lp-desc">스토리에 표시될 내 이름이에요.<br><b>한 번 정하면 바꿀 수 없어요.</b></p>
+            <h3 class="lp-title" id="profile-title">프로필 이름을 입력해주세요</h3>
+            <p class="lp-desc" id="profile-desc">스토리에 표시될 내 이름이에요.<br><b>한 번 정하면 바꿀 수 없어요.</b></p>
             <input id="profile-input" type="text" class="pf-input" placeholder="이름 입력" autocomplete="off" autocapitalize="off" spellcheck="false"
                    onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.enjoySubmitProfile && window.enjoySubmitProfile(); }">
             <p id="profile-status" class="pf-status"></p>
             <button id="profile-submit" class="pf-submit" onclick="window.haptic && window.haptic(); window.enjoySubmitProfile && window.enjoySubmitProfile();">입력 완료</button>
+            <button id="profile-cancel" class="lp-cancel hidden" onclick="window.haptic && window.haptic(); window.enjoyCloseProfile && window.enjoyCloseProfile();">취소</button>
         </div>
     </div>
 
@@ -1068,9 +1074,25 @@
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">계정에서 나가기</div>
                     </div>
                 </button>
+                <!-- 프로필 이름 변경 (성원제 전용) -->
+                <button id="more-rename" data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.enjoyOpenRename && window.enjoyOpenRename();" class="hidden w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                    <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(49,130,246,0.4)]"><i class="fa-solid fa-pen"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[14px] font-bold text-white leading-tight">프로필 이름 변경</div>
+                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">표시 이름 바꾸기</div>
+                    </div>
+                </button>
+                <!-- 탈퇴 -->
+                <button id="more-withdraw" data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(confirm('정말 탈퇴하시겠어요?\n계정과 프로필 연결이 해제되고, 다시 로그인하면 프로필을 새로 입력해야 해요.')) window.enjoyWithdraw && window.enjoyWithdraw();" class="hidden w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                    <div class="w-9 h-9 rounded-[12px] bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center text-[#FFFFFF] text-[15px] shrink-0 shadow-[0_2px_8px_rgba(244,68,82,0.4)]"><i class="fa-solid fa-user-xmark"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[14px] font-bold text-white leading-tight">탈퇴</div>
+                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">계정·프로필 연결 해제</div>
+                    </div>
+                </button>
                 <!-- 내 프로필 정보 -->
                 <div class="h-px bg-white/10 my-1 mx-2"></div>
-                <div id="more-profile" class="flex items-center gap-3 p-2.5">
+                <div id="more-profile" data-pop-item class="flex items-center gap-3 p-2.5">
                     <div id="more-profile-avatar" class="w-9 h-9 rounded-full bg-gray-500/30 overflow-hidden shrink-0"></div>
                     <div class="flex-1 min-w-0">
                         <div id="more-profile-name" class="text-[14px] font-bold text-white leading-tight truncate">미가입</div>
@@ -3453,14 +3475,30 @@
             return taken;
         }
 
-        /* ----- 프로필 이름 입력(필수·영구·중복불가) ----- */
-        function openProfileModal() {
-            const inp = $('profile-input'); if (inp) inp.value = '';
-            const st = $('profile-status'); if (st) st.textContent = '';
+        /* ----- 프로필 이름 입력(필수·영구·중복불가) / 변경(성원제 전용) ----- */
+        let renameMode = false;
+        function openProfileModal(isRename) {
+            renameMode = !!isRename;
+            const t = $('profile-title'), d = $('profile-desc'), c = $('profile-cancel'), inp = $('profile-input'), st = $('profile-status');
+            if (t) t.textContent = isRename ? '프로필 이름 변경' : '프로필 이름을 입력해주세요';
+            if (d) d.innerHTML = isRename ? '새 이름을 입력해주세요. (이미 쓰는 이름은 불가)' : '스토리에 표시될 내 이름이에요.<br><b>한 번 정하면 바꿀 수 없어요.</b>';
+            if (c) c.classList.toggle('hidden', !isRename);     // 변경 모드에서만 취소 가능
+            if (inp) inp.value = isRename ? (window.enjoyProfileName || '') : '';
+            if (st) st.textContent = '';
             const m = $('profile-modal'); if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
             setTimeout(() => { if (inp) inp.focus(); }, 100);
         }
         function closeProfileModal() { const m = $('profile-modal'); if (m) { m.classList.add('hidden'); m.classList.remove('flex'); } }
+        // 성원제만 이름 변경 가능
+        window.enjoyOpenRename = function () { if (fbReady() && window.enjoyProfileName === '성원제') openProfileModal(true); };
+        window.enjoyCloseProfile = function () { if (renameMode) closeProfileModal(); };  // 최초 입력은 필수(못 닫음), 변경만 취소 허용
+        // 탈퇴: 멤버 문서(이름·프로필) 삭제 후 로그아웃 → 재로그인 시 프로필 재입력
+        window.enjoyWithdraw = async function () {
+            if (!fbReady()) return;
+            try { await window.fsDeleteDoc(window.fsDoc('members', window.enjoyUser.uid)); } catch (e) {}
+            window.enjoyProfileName = null;
+            if (window.enjoyLogout) window.enjoyLogout(); else location.reload();
+        };
 
         window.enjoySubmitProfile = async function () {
             const inp = $('profile-input'), st = $('profile-status'); if (!inp || !fbReady()) return;
@@ -3493,6 +3531,9 @@
             }
             if (nm) nm.textContent = name || '미가입';
             if (em) em.textContent = u.email || '';
+            const rn = $('more-rename'), wd = $('more-withdraw');
+            if (rn) rn.classList.toggle('hidden', name !== '성원제');   // 성원제만 이름 변경
+            if (wd) wd.classList.toggle('hidden', false);              // 로그인 사용자는 탈퇴 가능
         }
 
         /* ----- 스토리 트레이: 기존 스토리 모습 + 6명 멤버 항상 표시 + 활동 상태 ----- */
@@ -3541,11 +3582,11 @@
                 else if (photo) inner = '<img src="' + photo + '" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer">';
                 else inner = '<div class="w-full h-full rounded-full ' + col.solid + (registered ? '' : ' opacity-30') + '"></div>';
 
-                // 스토리 있으면 알록달록 링, 없으면 옅은 테두리
+                // 스토리 있으면 알록달록 링(간격은 페이지색=거의 안 보임), 없으면 옅은 테두리
                 const circle = hasStory
-                    ? '<div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[2px] bg-black">' + inner + '</div></div>'
+                    ? '<div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[1.5px] enjoy-page-bg">' + inner + '</div></div>'
                     : '<div class="w-[64px] h-[64px] rounded-full p-[2px] bg-white/10"><div class="w-full h-full rounded-full overflow-hidden">' + inner + '</div></div>';
-                const dot = active ? '<span class="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 border-black"></span>' : '';
+                const dot = active ? '<span class="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 enjoy-page-border"></span>' : '';
                 const sub = registered
                     ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-1 w-full text-center truncate">' + (active ? '활동 중' : agoText(now - (mem.lastActive || 0))) + '</span>'
                     : '<span class="text-[10px] text-gray-500 -mt-1 w-full text-center truncate">미가입자</span>';
@@ -3584,7 +3625,7 @@
             window.enjoyProfileName = myName;
             updateProfileCard();
             renderMembers();
-            if (!myName) openProfileModal();   // 이름 없으면 필수 입력
+            if (!myName) openProfileModal(false);   // 이름 없으면 필수 입력
         }
         window.enjoyOnLogin = start;
         if (window.enjoyUser) start();   // 모듈이 먼저 로그인 처리한 경우 대비
