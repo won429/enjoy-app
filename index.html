@@ -1071,7 +1071,7 @@
                 <!-- 내 프로필 정보 -->
                 <div class="h-px bg-white/10 my-1 mx-2"></div>
                 <div id="more-profile" class="flex items-center gap-3 p-2.5">
-                    <div id="more-profile-avatar" class="w-9 h-9 rounded-full bg-gray-500/20 text-gray-400 flex items-center justify-center text-[15px] font-bold shrink-0">?</div>
+                    <div id="more-profile-avatar" class="w-9 h-9 rounded-full bg-gray-500/30 overflow-hidden shrink-0"></div>
                     <div class="flex-1 min-w-0">
                         <div id="more-profile-name" class="text-[14px] font-bold text-white leading-tight truncate">미가입</div>
                         <div id="more-profile-email" class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5 truncate">-</div>
@@ -1759,9 +1759,10 @@
             const au = $('story-viewer-author'); if (au) au.textContent = author;
             const av = $('story-viewer-avatar');
             if (av) {
+                const photo = (window.enjoyMemberPhoto && s.authorUid) ? window.enjoyMemberPhoto(s.authorUid) : '';
                 const col = (window.enjoyMemberColor && s.author) ? window.enjoyMemberColor(s.author) : null;
-                av.textContent = (s.author && s.author !== '미가입') ? s.author.slice(0, 1) : 'E';
-                if (col) av.className = 'w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-black ' + col.bg + ' ' + col.text;
+                if (photo) { av.className = 'w-7 h-7 rounded-full overflow-hidden'; av.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover" referrerpolicy="no-referrer">'; }
+                else { av.innerHTML = ''; av.className = 'w-7 h-7 rounded-full ' + (col ? col.solid : 'bg-gray-500'); }
             }
 
             const token = ++segToken;
@@ -3407,17 +3408,18 @@
     <script>
     (function () {
         const MEMBERS = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
-        // 모임통장과 통일된 멤버 프로필 색상
+        // 모임통장과 통일된 멤버 프로필 색상 (solid = 사진/스토리 없을 때 단색 원)
         const MEMBER_COLORS = {
-            '홍박사': { bg: 'bg-blue-500/20',   text: 'text-blue-400',   char: '홍' },
-            '류짱':   { bg: 'bg-purple-500/20', text: 'text-purple-400', char: '류' },
-            '오스틴': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', char: '오' },
-            '전시기': { bg: 'bg-orange-500/20', text: 'text-orange-400', char: '전' },
-            '이진누': { bg: 'bg-indigo-500/20', text: 'text-indigo-400', char: '이' },
-            '성원제': { bg: 'bg-pink-500/20',   text: 'text-pink-400',   char: '성' }
+            '홍박사': { bg: 'bg-blue-500/20',   text: 'text-blue-400',   solid: 'bg-blue-500',   char: '홍' },
+            '류짱':   { bg: 'bg-purple-500/20', text: 'text-purple-400', solid: 'bg-purple-500', char: '류' },
+            '오스틴': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', solid: 'bg-emerald-500', char: '오' },
+            '전시기': { bg: 'bg-orange-500/20', text: 'text-orange-400', solid: 'bg-orange-500', char: '전' },
+            '이진누': { bg: 'bg-indigo-500/20', text: 'text-indigo-400', solid: 'bg-indigo-500', char: '이' },
+            '성원제': { bg: 'bg-pink-500/20',   text: 'text-pink-400',   solid: 'bg-pink-500',   char: '성' }
         };
-        const DEFAULT_COLOR = { bg: 'bg-gray-500/20', text: 'text-gray-400', char: '?' };
+        const DEFAULT_COLOR = { bg: 'bg-gray-500/20', text: 'text-gray-400', solid: 'bg-gray-500', char: '?' };
         window.enjoyMemberColor = (name) => (name && MEMBER_COLORS[name]) ? MEMBER_COLORS[name] : DEFAULT_COLOR;
+        window.enjoyMemberPhoto = (uid) => { const m = lastMembers.find(x => x.uid === uid); return (m && m.photoURL) || ''; };
 
         const ACTIVE_MS = 90 * 1000;     // 활동 중 판정(마지막 활동 90초 이내)
         const BEAT_MS = 40 * 1000;       // 하트비트 주기
@@ -3479,18 +3481,21 @@
             } catch (e) { if (st) st.textContent = '저장에 실패했어요. 다시 시도해 주세요.'; }
         };
 
-        /* ----- 더보기: 내 프로필 카드 ----- */
+        /* ----- 더보기: 내 프로필 카드 (원형 사진/단색, 글자 없음) ----- */
         function updateProfileCard() {
             const u = window.enjoyUser; if (!u) return;
             const av = $('more-profile-avatar'), nm = $('more-profile-name'), em = $('more-profile-email');
             const name = window.enjoyProfileName;
             const col = window.enjoyMemberColor(name);
-            if (av) { av.className = 'w-9 h-9 rounded-full flex items-center justify-center text-[15px] font-bold shrink-0 ' + col.bg + ' ' + col.text; av.textContent = name ? name.slice(0, 1) : '미'; }
+            if (av) {
+                if (u.photoURL) { av.className = 'w-9 h-9 rounded-full overflow-hidden shrink-0'; av.innerHTML = '<img src="' + u.photoURL + '" class="w-full h-full object-cover" referrerpolicy="no-referrer">'; }
+                else { av.className = 'w-9 h-9 rounded-full shrink-0 ' + col.solid; av.innerHTML = ''; }
+            }
             if (nm) nm.textContent = name || '미가입';
             if (em) em.textContent = u.email || '';
         }
 
-        /* ----- 통합 트레이: 멤버별 스토리 링 + 활동 상태 ----- */
+        /* ----- 스토리 트레이: 기존 스토리 모습 + 6명 멤버 항상 표시 + 활동 상태 ----- */
         function agoText(ms) {
             const m = Math.floor(ms / 60000);
             if (m < 1) return '방금';
@@ -3501,44 +3506,58 @@
         }
         function renderMembers() {
             const wrap = $('story-tray'); if (!wrap) return;
-            if (!window.enjoyUser) { wrap.innerHTML = '<p class="text-gray-500 text-[13px] px-1 py-3">로그인하면 멤버들의 스토리와 현재 상태를 볼 수 있어요</p>'; return; }
             const now = Date.now();
-            const myUid = window.enjoyUser.uid;
             const stories = window.enjoyStories || [];
-            const hasStory = {};   // uid → true
-            stories.forEach(s => { if (s.authorUid) hasStory[s.authorUid] = true; });
+            // 이름 → 멤버 문서(가입자)
+            const byName = {}; lastMembers.forEach(m => { if (m.name) byName[m.name] = m; });
+            // 이름 → 최신 스토리(썸네일/uid)
+            const storyByName = {};
+            stories.forEach(s => {
+                if (!s.author) return;
+                const e = storyByName[s.author] || (storyByName[s.author] = { uid: s.authorUid || '', thumb: '', t: -1 });
+                if ((s.createdAt || 0) >= e.t) { e.t = s.createdAt || 0; e.thumb = s.thumb || e.thumb; if (s.authorUid) e.uid = s.authorUid; }
+            });
 
-            const list = lastMembers.slice();
-            list.forEach(m => { m._active = (now - (m.lastActive || 0) < ACTIVE_MS); m._me = (m.uid === myUid); m._story = !!hasStory[m.uid]; });
-            // 정렬: 나 먼저 → 스토리 있는 사람 → 활동 중 → 최근활동순
-            list.sort((a, b) => (b._me - a._me) || (b._story - a._story) || (b._active - a._active) || ((b.lastActive || 0) - (a.lastActive || 0)));
+            // 맨 앞: 스토리 추가 버튼 (기존 모습 그대로)
+            let html = '<button onclick="window.haptic && window.haptic(); window.EnjoyStory.openCamera()" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">' +
+                    '<div class="w-[64px] h-[64px] rounded-full border-2 border-dashed border-white/30 flex items-center justify-center bg-white/5"><i class="fa-solid fa-plus text-white/85 text-[20px]"></i></div>' +
+                    '<span class="text-[11px] text-gray-400 font-medium w-full text-center truncate">스토리 추가</span>' +
+                    '<span class="text-[10px] -mt-1">&nbsp;</span>' +
+                '</button>';
 
-            wrap.innerHTML = list.slice(0, 6).map(m => {
-                const name = m.name || '미가입';
-                const col = window.enjoyMemberColor(m.name);
-                const active = m._active, me = m._me, story = m._story;
-                const avatarInner = '<div class="w-full h-full rounded-full flex items-center justify-center text-[20px] font-bold ' + col.bg + ' ' + col.text + '">' + (m.name ? m.name.slice(0, 1) : '?') + '</div>';
+            // 멤버 6명 항상 고정 표시
+            html += MEMBERS.map(name => {
+                const mem = byName[name];                 // 가입자면 존재
+                const registered = !!mem;
+                const active = registered && (now - (mem.lastActive || 0) < ACTIVE_MS);
+                const col = window.enjoyMemberColor(name);
+                const st = storyByName[name];
+                const hasStory = !!(st && st.uid);
+                const photo = registered ? (mem.photoURL || '') : '';
+
+                // 원 안: 스토리 썸네일 > 구글 사진 > 단색 원 (글자 없음)
+                let inner;
+                if (hasStory && st.thumb) inner = '<img src="' + st.thumb + '" class="w-full h-full object-cover rounded-full">';
+                else if (photo) inner = '<img src="' + photo + '" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer">';
+                else inner = '<div class="w-full h-full rounded-full ' + col.solid + (registered ? '' : ' opacity-30') + '"></div>';
+
                 // 스토리 있으면 알록달록 링, 없으면 옅은 테두리
-                const ring = story
-                    ? '<div class="w-[66px] h-[66px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[2px] bg-black">' + avatarInner + '</div></div>'
-                    : '<div class="w-[66px] h-[66px] rounded-full p-[2px] ' + (active ? 'bg-white/15' : 'bg-white/5') + '"><div class="w-full h-full rounded-full p-[1px] bg-black ' + (active ? '' : 'opacity-70') + '">' + avatarInner + '</div></div>';
-                // 우하단 배지: 내 타일엔 '+', 남은 활동 중이면 초록 점
-                const badge = me
-                    ? '<button onclick="event.stopPropagation(); window.haptic && window.haptic(); window.EnjoyStory.openCamera()" class="absolute -bottom-0.5 -right-0.5 w-[22px] h-[22px] rounded-full bg-[#3182F6] border-2 border-black flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-plus text-white text-[10px]"></i></button>'
-                    : (active ? '<span class="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 border-black"></span>' : '');
-                // 탭: 스토리 있으면 그 사람 스토리 보기 / 내 타일은 없으면 카메라
-                const onclick = story
-                    ? "window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid('" + m.uid + "')"
-                    : (me ? "window.haptic && window.haptic(); window.EnjoyStory.openCamera()" : "");
-                const sub = m.name
-                    ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-0.5 w-full text-center truncate">' + (active ? '활동 중' : agoText(now - (m.lastActive || 0))) + '</span>'
-                    : '<span class="text-[10px] text-gray-500 -mt-0.5 w-full text-center truncate">미가입자</span>';
-                return '<div onclick="' + onclick + '" class="shrink-0 flex flex-col items-center gap-1.5 w-[70px] active:scale-95 transition-transform cursor-pointer">' +
-                            '<div class="relative">' + ring + badge + '</div>' +
-                            '<span class="text-[11px] font-semibold ' + (me ? 'text-[#3182F6]' : 'text-white') + ' w-full text-center truncate">' + (me ? '나' : name) + '</span>' +
+                const circle = hasStory
+                    ? '<div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[2px] bg-black">' + inner + '</div></div>'
+                    : '<div class="w-[64px] h-[64px] rounded-full p-[2px] bg-white/10"><div class="w-full h-full rounded-full overflow-hidden">' + inner + '</div></div>';
+                const dot = active ? '<span class="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 border-black"></span>' : '';
+                const sub = registered
+                    ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-1 w-full text-center truncate">' + (active ? '활동 중' : agoText(now - (mem.lastActive || 0))) + '</span>'
+                    : '<span class="text-[10px] text-gray-500 -mt-1 w-full text-center truncate">미가입자</span>';
+                const onclick = hasStory ? "window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid('" + st.uid + "')" : "";
+                return '<div onclick="' + onclick + '" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] ' + (hasStory ? 'active:scale-95 transition-transform cursor-pointer' : '') + '">' +
+                            '<div class="relative">' + circle + dot + '</div>' +
+                            '<span class="text-[11px] font-semibold ' + (registered ? 'text-white' : 'text-gray-500') + ' w-full text-center truncate">' + name + '</span>' +
                             sub +
                         '</div>';
             }).join('');
+
+            wrap.innerHTML = html;
         }
         window.enjoyRenderMembers = renderMembers;
 
