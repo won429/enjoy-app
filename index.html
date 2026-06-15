@@ -1092,7 +1092,7 @@
         let pending = null;                // { type, blob, thumb }
         let camStream = null, facing = 'environment';
         let mediaRec = null, recChunks = [], recording = false, recTimer = null, holdTimer = null, didRecord = false;
-        let camZoom = 1; const MAX_ZOOM = 8;            // 카메라 줌 (다이얼/핀치, 1x~8x)
+        let camZoom = 1; const ZOOM_MIN = 0.5, MAX_ZOOM = 4;   // 다이얼 0.5x~4x (기본 1x). 네이티브 화각=0.5x
         const DIAL_PX = 92;                              // 줌 다이얼 log2 1단위당 픽셀
         let recCanvas = null, recRAF = 0, recThumbSrc = null; // 디지털 줌 영상 녹화 파이프라인
         let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
@@ -1241,54 +1241,49 @@
             setZoom(1); // 줌 초기화 + 미러 반영
             return true;
         }
-        /* ---------- 카메라 줌 (다이얼 + 핀치, 아이폰 카메라 느낌) ---------- */
-        function videoTrack() { return camStream && camStream.getVideoTracks ? camStream.getVideoTracks()[0] : null; }
-        function zoomCaps() {
-            const t = videoTrack();
-            if (!t || !t.getCapabilities) return null;
-            try { const c = t.getCapabilities(); return (c && c.zoom) ? c.zoom : null; } catch (e) { return null; }
+        /* ---------- 카메라 줌 (다이얼 + 핀치) ----------
+           기기의 기본(네이티브) 화각이 매우 넓어(0.5배처럼 보임) → 이를 0.5x로 두고,
+           디지털 크롭으로 1x/2x/4x를 만든다. cssScale = camZoom / 0.5 (0.5→1배율, 1→2배 크롭 …) */
+        function camScale() { return camZoom / ZOOM_MIN; }   // 실제 디지털 확대율(1~8)
+        function applyPreviewZoom() {
+            const vid = $('story-cam-video'); if (!vid) return;
+            vid.style.transform = ((facing === 'user') ? 'scaleX(-1) ' : '') + 'scale(' + camScale() + ')';
         }
         function setZoom(z) {
-            camZoom = Math.max(1, Math.min(MAX_ZOOM, z || 1));
-            const vid = $('story-cam-video');
-            const caps = zoomCaps();
-            if (caps) { // 하드웨어 줌 지원
-                const val = caps.min + (caps.max - caps.min) * ((camZoom - 1) / (MAX_ZOOM - 1));
-                try { videoTrack().applyConstraints({ advanced: [{ zoom: val }] }); } catch (e) {}
-                if (vid) vid.style.transform = (facing === 'user') ? 'scaleX(-1)' : 'none';
-            } else {     // 디지털 줌 (CSS 확대 + 촬영 시 중앙 크롭)
-                if (vid) vid.style.transform = ((facing === 'user') ? 'scaleX(-1) ' : '') + 'scale(' + camZoom + ')';
-            }
+            camZoom = Math.max(ZOOM_MIN, Math.min(MAX_ZOOM, z || ZOOM_MIN));
+            applyPreviewZoom();
             updateZoomUI();
         }
         function updateZoomUI() {
             const lbl = $('story-zoom-label');
-            if (lbl) lbl.textContent = camZoom.toFixed(1) + 'x';
+            if (lbl) lbl.textContent = (camZoom < 1 ? camZoom.toFixed(1) : (Math.abs(camZoom - Math.round(camZoom)) < 0.05 ? String(Math.round(camZoom)) : camZoom.toFixed(1))) + 'x';
             updateDialPosition();
         }
         function updateDialPosition() {
             const track = $('story-dial-track'); if (!track) return;
-            track.style.transform = 'translateX(' + (-Math.log2(camZoom) * DIAL_PX) + 'px)';
+            // 0.5x(log2=-1)가 왼쪽 끝(0px) 기준 → translate = -(log2(zoom)+1)*DIAL_PX
+            track.style.transform = 'translateX(' + (-(Math.log2(camZoom) + 1) * DIAL_PX) + 'px)';
             track.querySelectorAll('[data-major]').forEach((lb) => {
-                const on = Math.abs(parseFloat(lb.dataset.major) - camZoom) < 0.06;
+                const on = Math.abs(parseFloat(lb.dataset.major) - camZoom) < 0.04;
                 lb.style.color = on ? '#FFD60A' : '#fff';
             });
         }
         function buildDial() {
             const track = $('story-dial-track'); if (!track || track.dataset.built) return;
             track.dataset.built = '1';
-            const stops = { 0: '1×', 1: '2×', 2: '4×', 3: '8×' };
-            for (let i = 0; i <= 30; i++) {
-                const t = i / 10;                       // log2 값 0~3
-                const x = Math.round(t * DIAL_PX);
-                const isMajor = Math.abs(t - Math.round(t)) < 0.001 && stops[Math.round(t)];
+            const stops = { '-1': '0.5×', '0': '1×', '1': '2×', '2': '4×' }; // log2 위치 → 라벨
+            for (let i = -10; i <= 20; i++) {
+                const t = i / 10;                         // log2 값 -1 ~ 2 (0.5x~4x)
+                const x = Math.round((t + 1) * DIAL_PX);  // 0.5x를 0px 기준으로
+                const key = (Math.abs(t - Math.round(t)) < 0.001) ? String(Math.round(t)) : null;
+                const isMajor = key && stops[key];
                 const tick = document.createElement('div');
                 tick.style.cssText = 'position:absolute;bottom:6px;left:' + x + 'px;transform:translateX(-50%);width:2px;border-radius:2px;' +
                     'height:' + (isMajor ? 17 : 9) + 'px;background:' + (isMajor ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)') + ';';
                 track.appendChild(tick);
                 if (isMajor) {
                     const lb = document.createElement('div');
-                    lb.textContent = stops[Math.round(t)];
+                    lb.textContent = stops[key];
                     lb.dataset.major = Math.pow(2, Math.round(t));
                     lb.style.cssText = 'position:absolute;top:0;left:' + x + 'px;transform:translateX(-50%);font-size:12px;font-weight:800;color:#fff;';
                     track.appendChild(lb);
@@ -1304,7 +1299,7 @@
             const move = (e) => {
                 if (!dragging) return;
                 const dp = (startX - getX(e)) / DIAL_PX;          // 왼쪽으로 끌면 확대
-                setZoom(Math.pow(2, Math.min(3, Math.max(0, startP + dp))));
+                setZoom(Math.pow(2, Math.min(2, Math.max(-1, startP + dp))));  // log2 범위 -1~2 (0.5x~4x)
                 if (e.cancelable) e.preventDefault();
             };
             const up = () => { dragging = false; };
@@ -1350,8 +1345,7 @@
             const v = $('story-cam-video');
             const vw = v.videoWidth, vh = v.videoHeight;
             if (!vw) return;
-            const z = zoomCaps() ? 1 : camZoom;          // 하드웨어 줌이면 프레임이 이미 확대됨
-            const { sx, sy, sw, sh } = coverCrop(vw, vh, z); // 미리보기와 동일한 프레이밍으로 촬영
+            const { sx, sy, sw, sh } = coverCrop(vw, vh, camScale()); // 미리보기와 동일한 프레이밍으로 촬영
             const scale = Math.min(1, PHOTO_MAX / Math.max(sw, sh));
             const cw = Math.round(sw * scale), ch = Math.round(sh * scale);
             const c = $('story-cam-canvas'); c.width = cw; c.height = ch;
@@ -1369,17 +1363,18 @@
             for (const m of list) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} }
             return '';
         }
+        // MediaRecorder를 못 쓰는 기기 → 기기 기본 카메라로 영상 촬영(폴백)
         function startRec() {
-            if (!camStream) return;
+            if (!camStream || !window.MediaRecorder) { recStartFailed(); return false; }
             recChunks = [];
             recCanvas = null; recThumbSrc = $('story-cam-video');
             let recStream = camStream;
-            const digital = !zoomCaps() && camZoom > 1.01;
+            const digital = camScale() > 1.01;   // 0.5x(네이티브) 초과면 디지털 크롭 녹화
             if (digital) {
-                // 디지털 줌은 트랙에 적용되지 않으므로, 캔버스로 미리보기와 동일 프레이밍 크롭하여 720p로 녹화
+                // 캔버스로 미리보기와 동일 프레이밍 크롭하여 720p로 녹화
                 const v = $('story-cam-video');
                 const vw = v.videoWidth, vh = v.videoHeight;
-                const { sx, sy, sw, sh } = coverCrop(vw, vh, camZoom);
+                const { sx, sy, sw, sh } = coverCrop(vw, vh, camScale());
                 const scale = Math.min(1, 1280 / Math.max(sw, sh));
                 recCanvas = document.createElement('canvas');
                 recCanvas.width = Math.round(sw * scale); recCanvas.height = Math.round(sh * scale);
@@ -1390,30 +1385,36 @@
                     const at = camStream.getAudioTracks()[0]; if (at) cs.addTrack(at);
                     recStream = cs; recThumbSrc = recCanvas;
                     recDrawStart = draw;
-                } catch (e) { recCanvas = null; recStream = camStream; recThumbSrc = v; }
+                } catch (e) { recCanvas = null; recStream = camStream; recThumbSrc = v; } // captureStream 미지원(예: 일부 iOS) → 직접 녹화
             }
             const mime = pickMime();
             try { mediaRec = new MediaRecorder(recStream, mime ? { mimeType: mime, videoBitsPerSecond: 2000000 } : undefined); }
-            catch (e) { try { mediaRec = new MediaRecorder(recStream); } catch (e2) { return; } }
+            catch (e) { try { mediaRec = new MediaRecorder(recStream); } catch (e2) { recStartFailed(); return false; } }
             mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
             mediaRec.onstop = () => {
                 if (recRAF) { cancelAnimationFrame(recRAF); recRAF = 0; }
                 const src = recThumbSrc || $('story-cam-video');
-                const thumb = makeThumb(src, src.videoWidth || src.width, src.videoHeight || src.height);
-                const blob = new Blob(recChunks, { type: (recChunks[0] && recChunks[0].type) || 'video/webm' });
+                let thumb = ''; try { thumb = makeThumb(src, src.videoWidth || src.width, src.videoHeight || src.height); } catch (e) {}
+                const blob = new Blob(recChunks, { type: (recChunks[0] && recChunks[0].type) || (mime || 'video/webm') });
                 recCanvas = null;
-                if (blob.size) { pending = { type: 'video', blob, thumb }; showPreview(); }
+                if (blob.size > 1000) { pending = { type: 'video', blob, thumb }; showPreview(); }
+                else { alert('영상이 너무 짧게 찍혔어요. 셔터를 1초 이상 길게 눌러 주세요.'); } // 빈 녹화 방지
             };
-            try { mediaRec.start(); } catch (e) { return; }
+            try { mediaRec.start(250); } catch (e) { recStartFailed(); return false; } // timeslice=250ms로 데이터 확보
             recording = true;
             if (recDrawStart) { recRAF = requestAnimationFrame(recDrawStart); recDrawStart = null; }
             startRing();
             recTimer = setTimeout(stopRec, VIDEO_MAX_MS);
+            return true;
         }
         let recDrawStart = null;
+        function recStartFailed() {
+            recording = false; resetRing();
+            const vi = $('story-file-video'); if (vi) vi.click();  // 기기 기본 카메라로 폴백
+        }
         function stopRec() {
             clearTimeout(recTimer);
-            if (mediaRec && mediaRec.state !== 'inactive') { try { mediaRec.stop(); } catch (e) {} }
+            if (mediaRec && mediaRec.state !== 'inactive') { try { mediaRec.requestData(); } catch (e) {} try { mediaRec.stop(); } catch (e) {} }
             recording = false; resetRing();
         }
         function startRing() {
