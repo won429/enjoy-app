@@ -326,6 +326,21 @@
         .enjoy-page-bg { background-color: #000; }
         .enjoy-page-border { border-color: #000 !important; }
 
+        /* 화면 하단 카피라이트 (홈/일정/모임통장 공통) */
+        .app-copyright { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: -0.01em;
+            color: rgba(255,255,255,0.30); padding: 8px 0 4px; }
+
+        /* 일정 추가 모달의 날짜 입력칸이 카드 밖으로 삐져나오는 문제 방지 (iOS WebKit) */
+        #schedule-modal input[type="date"] { -webkit-appearance: none; appearance: none;
+            min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
+
+        /* 일정 화면 전용 하단 서브 메뉴 */
+        #schedule-subnav { display: none; }
+        #schedule-subnav button { transition: color .15s ease, background-color .15s ease, transform .12s ease; }
+        #schedule-subnav .text-sub, #schedule-subnav .ic-sub { color: rgba(255,255,255,0.6); }
+        #schedule-subnav button.sub-on .text-sub, #schedule-subnav button.sub-on .ic-sub { color: #fff !important; }
+        #schedule-subnav button.sub-on { background: rgba(255,255,255,0.16); }
+
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
 
@@ -397,6 +412,17 @@
             #story-tray .border-white\/30 { border-color: rgba(0, 0, 0, 0.28) !important; }
             #story-tray .bg-white\/5 { background-color: rgba(0, 0, 0, 0.05) !important; }
             #story-tray .text-white\/85, #story-tray [class*="text-white/"] { color: #141414 !important; }
+
+            /* 라이트 모드에서 안 보이던 글자 보정 (모달 제목 등 .text-main) */
+            .text-main { color: #141414 !important; }
+
+            /* 화면 하단 카피라이트 */
+            .app-copyright { color: #9b95a8; }
+
+            /* 일정 화면 서브 메뉴: 비활성 글자 어둡게 / 활성 강조 */
+            #schedule-subnav .text-sub, #schedule-subnav .ic-sub { color: rgba(20,20,20,0.55) !important; }
+            #schedule-subnav button.sub-on .text-sub, #schedule-subnav button.sub-on .ic-sub { color: #141414 !important; }
+            #schedule-subnav button.sub-on { background: rgba(0,0,0,0.10) !important; }
         }
     </style>
 </head>
@@ -858,13 +884,15 @@
 
 
         <div class="pb-8"></div>
+        <p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
+        <div class="pb-4"></div>
     </main>
 
     <!-- 더보기 화면은 하단 메뉴 팝오버(#more-popover)로 대체됨 -->
 
     <!-- 📅 일정 화면 -->
     <div id="schedule-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-30 flex-col overflow-hidden bg-black">
-        <header class="flex-none pt-safe px-5 pb-3 bg-black/80 backdrop-blur-md z-10 sticky top-0">
+        <header id="sched-cal-header" class="flex-none pt-safe px-5 pb-3 bg-black/80 backdrop-blur-md z-10 sticky top-0">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
                     <h2 id="cal-title" class="text-[24px] font-black text-white tracking-tight tabular-nums">2026년 6월</h2>
@@ -880,7 +908,17 @@
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto">
+        <!-- 스케줄/커뮤니티 탭용 공통 헤더 -->
+        <header id="sched-generic-header" class="hidden flex-none pt-safe px-5 pb-3 bg-black/80 backdrop-blur-md z-10 sticky top-0">
+            <div class="flex items-center justify-between">
+                <h2 id="sched-generic-title" class="text-[24px] font-black text-white tracking-tight">스케줄</h2>
+                <button id="sched-generic-action" onclick="window.haptic && window.haptic(); window.schedGenericAction && window.schedGenericAction()" class="hidden w-9 h-9 rounded-full bg-white text-black flex items-center justify-center active:scale-90 transition-transform shadow-[0_4px_14px_rgba(255,255,255,0.15)]"><i class="fa-solid fa-plus text-[13px]"></i></button>
+            </div>
+            <p id="sched-generic-sub" class="text-[13px] text-gray-400 font-medium mt-1"></p>
+        </header>
+
+        <!-- 일정(달력) 패널 -->
+        <div id="sched-panel-calendar" class="flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto">
             <!-- 달력 (박스 없는 미니멀) -->
             <div class="mb-1">
                 <div class="grid grid-cols-7 text-center pb-2.5">
@@ -896,11 +934,18 @@
             </div>
 
             <!-- 선택한 날짜의 일정 (얇은 구분선 + 타임라인 리스트) -->
-            <div class="pb-28 pt-5 mt-4 border-t border-white/5">
+            <div class="pt-5 mt-4 border-t border-white/5">
                 <h3 class="text-[17px] font-bold text-white tracking-tight mb-1 px-1" id="selected-date-title">이달의 일정</h3>
                 <div id="event-list" class="divide-y divide-white/5 px-1"></div>
             </div>
+            <div class="pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
         </div>
+
+        <!-- 스케줄(가능/불가능) 패널 -->
+        <div id="sched-panel-availability" class="hidden flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
+
+        <!-- 커뮤니티(여행 일정 공유) 패널 -->
+        <div id="sched-panel-community" class="hidden flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
     </div>
 
     <!-- 💰 모임통장 화면 -->
@@ -973,6 +1018,7 @@
                     <div id="expense-list" class="flex flex-col px-1"></div>
                 </div>
             </div>
+            <div class="pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
         </div>
     </div>
 
@@ -1031,6 +1077,40 @@
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
                     <i class="fa-solid fa-ellipsis text-base text-gray-300 group-hover:text-white transition-colors"></i>
                     <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">더보기</span>
+                </div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 일정 화면 전용 하단 서브 메뉴 (뒤로 · 일정 · 스케줄 · 커뮤니티) -->
+    <nav id="schedule-subnav" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-auto select-none">
+        <div class="liquid-glass flex items-center rounded-full p-1.5 gap-1 relative">
+            <!-- 뒤로가기 → 홈 -->
+            <button onclick="window.haptic && window.haptic(); window.goHome()" class="relative w-[60px] py-2 rounded-full active:scale-95 transition-transform">
+                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                    <i class="fa-solid fa-chevron-left text-base ic-sub"></i>
+                    <span class="text-[10px] font-medium text-sub whitespace-nowrap">뒤로</span>
+                </div>
+            </button>
+            <!-- 일정(달력) -->
+            <button id="subnav-calendar" onclick="window.haptic && window.haptic(); window.switchScheduleSub('calendar')" class="relative w-[60px] py-2 rounded-full active:scale-95 transition-transform">
+                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                    <i class="fa-regular fa-calendar-check text-base ic-sub"></i>
+                    <span class="text-[10px] font-medium text-sub whitespace-nowrap">일정</span>
+                </div>
+            </button>
+            <!-- 스케줄(가능/불가능) -->
+            <button id="subnav-availability" onclick="window.haptic && window.haptic(); window.switchScheduleSub('availability')" class="relative w-[60px] py-2 rounded-full active:scale-95 transition-transform">
+                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                    <i class="fa-regular fa-calendar-days text-base ic-sub"></i>
+                    <span class="text-[10px] font-medium text-sub whitespace-nowrap">스케줄</span>
+                </div>
+            </button>
+            <!-- 커뮤니티(여행 일정 공유) -->
+            <button id="subnav-community" onclick="window.haptic && window.haptic(); window.switchScheduleSub('community')" class="relative w-[60px] py-2 rounded-full active:scale-95 transition-transform">
+                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                    <i class="fa-solid fa-compass text-base ic-sub"></i>
+                    <span class="text-[10px] font-medium text-sub whitespace-nowrap">커뮤니티</span>
                 </div>
             </button>
         </div>
@@ -2092,6 +2172,18 @@
             m.classList.add('flex');
         };
 
+        // 공용 안내 모달 (제목/내용/아이콘)
+        window.showCommonModal = (title, descHtml, iconClass, iconColorClass) => {
+            const m = document.getElementById('common-modal');
+            if (!m) return;
+            document.getElementById('modal-title').innerText = title || '';
+            document.getElementById('modal-desc').innerHTML = descHtml || '';
+            document.getElementById('modal-icon').className = (iconClass || 'fa-solid fa-circle-info') + ' ' + (iconColorClass || 'text-gray-400');
+            document.getElementById('modal-icon-bg').className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl bg-[#2C2C2E]';
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        };
+
         window.showDuesModal = () => {
             const m = document.getElementById('common-modal');
             document.getElementById('modal-title').innerText = '모임비 개편 안내';
@@ -2447,6 +2539,173 @@
         window.goHome = () => { window.closeMorePopover(); window.activeTabIndex = 2; window.updateTabUI(2); }
         window.goSchedule = () => { window.closeMorePopover(); window.activeTabIndex = 3; window.updateTabUI(3); }
         window.goMeeting = () => { window.closeMorePopover(); window.activeTabIndex = 4; window.updateTabUI(4); }
+
+        /* ===== 일정 화면 서브 탭 (일정 / 스케줄 / 커뮤니티) ===== */
+        window._schedSub = 'calendar';
+        window.switchScheduleSub = function (tab) {
+            window._schedSub = tab;
+            const panels = { calendar: 'sched-panel-calendar', availability: 'sched-panel-availability', community: 'sched-panel-community' };
+            Object.values(panels).forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hidden'); });
+            const cur = document.getElementById(panels[tab]); if (cur) cur.classList.remove('hidden');
+
+            const calH = document.getElementById('sched-cal-header');
+            const genH = document.getElementById('sched-generic-header');
+            const genT = document.getElementById('sched-generic-title');
+            const genS = document.getElementById('sched-generic-sub');
+            const genA = document.getElementById('sched-generic-action');
+
+            if (tab === 'calendar') {
+                if (calH) calH.classList.remove('hidden');
+                if (genH) genH.classList.add('hidden');
+                window.renderCalendar(window.viewYear, window.viewMonth);
+            } else {
+                if (calH) calH.classList.add('hidden');
+                if (genH) genH.classList.remove('hidden');
+                if (tab === 'availability') {
+                    if (genT) genT.textContent = '스케줄';
+                    if (genS) genS.textContent = '각자 가능한 날을 모아봤어요.';
+                    if (genA) genA.classList.remove('hidden');
+                    try { window.renderAvailability(); } catch (e) {}
+                } else if (tab === 'community') {
+                    if (genT) genT.textContent = '커뮤니티';
+                    if (genS) genS.textContent = '멤버들의 여행 일정을 공유해요.';
+                    if (genA) genA.classList.remove('hidden');
+                    try { window.renderCommunity(); } catch (e) {}
+                }
+            }
+
+            // 서브 메뉴 활성 표시
+            const map = { calendar: 'subnav-calendar', availability: 'subnav-availability', community: 'subnav-community' };
+            Object.values(map).forEach(id => { const b = document.getElementById(id); if (b) b.classList.remove('sub-on'); });
+            const on = document.getElementById(map[tab]); if (on) on.classList.add('sub-on');
+        };
+
+        // 스케줄/커뮤니티 헤더의 + 버튼 (편집 기능은 추후)
+        window.schedGenericAction = function () {
+            const isCommunity = window._schedSub === 'community';
+            window.showCommonModal && window.showCommonModal(
+                isCommunity ? '커뮤니티 글쓰기' : '내 가능 시간 등록',
+                '곧 직접 등록할 수 있어요. 편집 기능을 준비 중입니다. 🙌',
+                'fa-solid fa-screwdriver-wrench', 'text-[#3182F6]');
+        };
+
+        /* ===== 스케줄(가능/불가능) 렌더 — 월 달력형 + 멤버 목록형 (샘플/표시 전용) ===== */
+        window._availYear = new Date().getFullYear();
+        window._availMonth = new Date().getMonth();   // 0-11
+        window.changeAvailMonth = function (delta) {
+            window._availMonth += delta;
+            if (window._availMonth < 0) { window._availMonth = 11; window._availYear--; }
+            if (window._availMonth > 11) { window._availMonth = 0; window._availYear++; }
+            window.renderAvailability();
+        };
+        // 멤버별 가능 요일 패턴(샘플) — 로그인 프로필이 등록되면 이 자리에 실제 데이터가 들어갑니다.
+        function availMembers() {
+            return (window.ENJOY_MEMBERS || ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사']);
+        }
+        // 날짜별 가능 여부(샘플): 멤버 이름 + 날짜로 결정되는 의사난수
+        function sampleAvail(name, y, m, d) {
+            const s = (name.charCodeAt(0) + name.charCodeAt(name.length - 1) + (m + 1) * 7 + d * 13) % 10;
+            const dow = new Date(y, m, d).getDay();
+            if (dow === 0 || dow === 6) return s < 8;   // 주말은 대체로 가능
+            return s < 4;                                // 평일은 가끔 가능
+        }
+        window.renderAvailability = function () {
+            const wrap = document.getElementById('sched-panel-availability');
+            if (!wrap) return;
+            const y = window._availYear, m = window._availMonth;
+            const members = availMembers();
+            const colorOf = window.enjoyMemberColor || (() => ({ solid: 'bg-gray-500' }));
+            const first = new Date(y, m, 1).getDay();
+            const days = new Date(y, m + 1, 0).getDate();
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            // 월 헤더 + 달력 그리드
+            let html = '<div class="flex items-center justify-center gap-3 mb-3 pt-1">' +
+                '<button onclick="window.haptic && window.haptic(); window.changeAvailMonth(-1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>' +
+                '<span class="text-[15px] font-bold text-white min-w-[110px] text-center tabular-nums">' + y + '년 ' + (m + 1) + '월</span>' +
+                '<button onclick="window.haptic && window.haptic(); window.changeAvailMonth(1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-right text-[14px]"></i></button>' +
+                '</div>';
+            html += '<div class="grid grid-cols-7 text-center pb-2">' +
+                ['일', '월', '화', '수', '목', '금', '토'].map((w, i) =>
+                    '<div class="text-[11px] font-bold ' + (i === 0 ? 'text-red-400/80' : i === 6 ? 'text-blue-400/80' : 'text-gray-500') + '">' + w + '</div>').join('') +
+                '</div>';
+            html += '<div class="grid grid-cols-7 gap-y-1.5 text-center">';
+            for (let i = 0; i < first; i++) html += '<div></div>';
+            for (let d = 1; d <= days; d++) {
+                const cnt = members.reduce((a, n) => a + (sampleAvail(n, y, m, d) ? 1 : 0), 0);
+                const ratio = cnt / members.length;
+                // 가능 인원이 많을수록 진한 파란 점
+                const dot = cnt === 0 ? 'bg-white/10'
+                    : ratio >= 0.8 ? 'bg-[#3182F6]'
+                        : ratio >= 0.5 ? 'bg-[#3182F6]/60'
+                            : 'bg-[#3182F6]/30';
+                html += '<div class="flex flex-col items-center gap-1 py-1">' +
+                    '<span class="text-[13px] font-semibold text-white tabular-nums">' + d + '</span>' +
+                    '<span class="w-5 h-5 rounded-full ' + dot + ' flex items-center justify-center text-[9px] font-bold text-white">' + (cnt || '') + '</span>' +
+                    '</div>';
+            }
+            html += '</div>';
+            html += '<p class="text-[11px] text-gray-500 text-center mt-3">숫자는 그 날 가능한 멤버 수예요 · 직접 등록은 곧 추가돼요</p>';
+
+            // 멤버별 목록형
+            html += '<div class="mt-7 pt-5 border-t border-white/5">' +
+                '<h3 class="text-[15px] font-bold text-white mb-3 px-1">멤버별 가능 현황</h3>' +
+                '<div class="flex flex-col gap-2.5">';
+            members.forEach(name => {
+                let avail = 0; for (let d = 1; d <= days; d++) if (sampleAvail(name, y, m, d)) avail++;
+                const col = colorOf(name);
+                html += '<div class="flex items-center gap-3 px-1 py-2">' +
+                    '<div class="w-9 h-9 rounded-full shrink-0 ' + (col.solid || 'bg-gray-500') + '"></div>' +
+                    '<div class="flex-1 min-w-0">' +
+                    '<div class="text-[14px] font-bold text-white leading-tight">' + name + '</div>' +
+                    '<div class="text-[12px] text-gray-400 leading-tight mt-0.5">이번 달 ' + avail + '일 가능</div>' +
+                    '</div>' +
+                    '<span class="text-[12px] font-bold text-[#3182F6]">' + Math.round(avail / days * 100) + '%</span>' +
+                    '</div>';
+            });
+            html += '</div></div>';
+            html += '<div class="pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
+            wrap.innerHTML = html;
+        };
+
+        /* ===== 커뮤니티(여행 일정 공유) 렌더 — 샘플 피드/표시 전용 ===== */
+        window.renderCommunity = function () {
+            const wrap = document.getElementById('sched-panel-community');
+            if (!wrap) return;
+            const colorOf = window.enjoyMemberColor || (() => ({ solid: 'bg-gray-500' }));
+            const posts = [
+                { author: '오스틴', when: '2일 전', title: '제주도 2박 3일 뚜벅이 여행', dates: '7월 18일 ~ 7월 20일', place: '제주',
+                  days: ['1일차 · 공항 → 애월 카페거리 → 한담해변', '2일차 · 우도 자전거 → 성산일출봉', '3일차 · 동문시장 → 흑돼지'], likes: 12, comments: 4 },
+                { author: '류짱', when: '5일 전', title: '부산 먹방 원정대', dates: '8월 2일 ~ 8월 3일', place: '부산',
+                  days: ['1일차 · 광안리 → 해운대 → 돼지국밥', '2일차 · 감천문화마을 → 자갈치시장'], likes: 9, comments: 2 },
+                { author: '전시기', when: '1주 전', title: '강릉 바다 보며 멍때리기', dates: '9월 14일 ~ 9월 15일', place: '강릉',
+                  days: ['1일차 · 안목해변 커피거리 → 경포호', '2일차 · 정동진 → 주문진 회센터'], likes: 7, comments: 1 }
+            ];
+            let html = '';
+            posts.forEach(p => {
+                const col = colorOf(p.author);
+                html += '<div class="bg-[#1C1C1E] rounded-3xl p-5 mb-4 border border-white/5">' +
+                    '<div class="flex items-center gap-3 mb-3">' +
+                    '<div class="w-9 h-9 rounded-full shrink-0 ' + (col.solid || 'bg-gray-500') + '"></div>' +
+                    '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-white leading-tight">' + p.author + '</div>' +
+                    '<div class="text-[11px] text-gray-400 leading-tight mt-0.5">' + p.when + '</div></div>' +
+                    '<span class="text-[11px] font-bold text-[#3182F6] bg-[#3182F6]/15 px-2 py-1 rounded-full">' + p.place + '</span>' +
+                    '</div>' +
+                    '<h3 class="text-[17px] font-bold text-white tracking-tight leading-snug">' + p.title + '</h3>' +
+                    '<div class="flex items-center gap-1.5 text-[12px] text-gray-400 font-medium mt-1.5 mb-3">' +
+                    '<i class="fa-regular fa-calendar text-[11px]"></i>' + p.dates + '</div>' +
+                    '<div class="flex flex-col gap-1.5 bg-white/5 rounded-2xl p-3.5">' +
+                    p.days.map(d => '<div class="flex items-start gap-2 text-[12.5px] text-gray-300 leading-snug"><i class="fa-solid fa-location-dot text-[#3182F6] text-[10px] mt-1 shrink-0"></i><span>' + d + '</span></div>').join('') +
+                    '</div>' +
+                    '<div class="flex items-center gap-4 mt-3.5 text-[12px] text-gray-400 font-medium">' +
+                    '<span><i class="fa-regular fa-heart mr-1"></i>' + p.likes + '</span>' +
+                    '<span><i class="fa-regular fa-comment mr-1"></i>' + p.comments + '</span>' +
+                    '</div>' +
+                    '</div>';
+            });
+            html += '<div class="pt-2 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
+            wrap.innerHTML = html;
+        };
 
         // 더보기 팝오버 (하단 메뉴 더보기 자리에서 통 튀어나오는 메뉴)
         window.morePopoverOpen = false;
@@ -3243,16 +3502,29 @@
                 home.classList.remove('hidden');
                 initBannerScrollListener();
             }
-            else if(index===3) { 
-                sched.classList.remove('hidden'); 
-                sched.classList.add('flex'); 
-                window.renderCalendar(window.viewYear, window.viewMonth); 
+            else if(index===3) {
+                sched.classList.remove('hidden');
+                sched.classList.add('flex');
+                // 일정 화면에서는 기존 하단 메뉴를 접고 전용 서브 메뉴를 띄운다.
+                if (window.switchScheduleSub) window.switchScheduleSub(window._schedSub || 'calendar');
+                else window.renderCalendar(window.viewYear, window.viewMonth);
             }
             else if(index===4) {
                 meet.classList.remove('hidden');
                 meet.classList.add('flex');
                 window.renderDues(window.currentDuesMonth, window.currentDuesYear);
                 try { window.renderExpenses(); } catch (e) {}
+            }
+
+            // 일정 화면(3)일 때만 전용 서브 메뉴 노출, 그 외에는 기존 하단 메뉴 노출
+            const mainNav = document.getElementById('bottom-nav');
+            const subNav = document.getElementById('schedule-subnav');
+            if (index === 3) {
+                if (mainNav) mainNav.style.display = 'none';
+                if (subNav) subNav.style.display = 'block';
+            } else {
+                if (subNav) subNav.style.display = 'none';
+                if (mainNav) mainNav.style.display = '';
             }
 
             const ind = document.getElementById('nav-indicator');
