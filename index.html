@@ -336,10 +336,12 @@
 
         /* 하단 메뉴 ↔ 일정 화면 서브 메뉴 전환: 좌측 기준으로 스르륵 줄어들며 접히고, 좌→우로 펼쳐지는 모션 */
         #bottom-nav > .liquid-glass, #schedule-subnav > .liquid-glass {
-            transition: opacity .25s ease, transform .42s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform .46s cubic-bezier(0.22, 1, 0.36, 1), opacity .3s ease, filter .32s ease;
             transform-origin: left center;
         }
-        .liquid-glass.nav-collapsed { opacity: 0; transform: scaleX(0); pointer-events: none; }
+        .liquid-glass.nav-collapsed { opacity: 0; transform: scaleX(0.34); filter: blur(7px); pointer-events: none; }
+        /* 접힌(숨겨진) 메뉴 래퍼는 클릭을 가로채지 않게 (탭 씹힘 방지) */
+        #bottom-nav:has(> .liquid-glass.nav-collapsed), #schedule-subnav:has(> .liquid-glass.nav-collapsed) { pointer-events: none; }
 
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
@@ -1076,7 +1078,7 @@
     </nav>
 
     <!-- 일정 화면 전용 하단 서브 메뉴 (뒤로 · 일정 · 스케줄 · 커뮤니티) — 기존 메뉴와 동일한 디자인 -->
-    <nav id="schedule-subnav" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-auto select-none">
+    <nav id="schedule-subnav" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-auto select-none pointer-events-none">
         <div class="liquid-glass nav-collapsed flex items-center rounded-full p-1.5 gap-1 relative">
             <div id="subnav-indicator" class="absolute top-1 bottom-1 bg-white/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full backdrop-blur-[2px] border border-white/20 z-0 nav-transition" style="left: 6px; width: 64px; opacity: 0;"></div>
             <!-- 뒤로가기 → 홈 -->
@@ -2587,13 +2589,20 @@
 
         // 기존 하단 메뉴 ↔ 일정 서브 메뉴 전환 (안쪽 글래스 패널 페이드/슬라이드)
         window.setActiveNav = function (which) {
-            const mainInner = document.querySelector('#bottom-nav > .liquid-glass');
-            const subInner = document.querySelector('#schedule-subnav > .liquid-glass');
+            const mainNav = document.getElementById('bottom-nav');
+            const subNav = document.getElementById('schedule-subnav');
+            const mainInner = mainNav && mainNav.querySelector('.liquid-glass');
+            const subInner = subNav && subNav.querySelector('.liquid-glass');
             const enter = which === 'sub' ? subInner : mainInner;
             const leave = which === 'sub' ? mainInner : subInner;
+            const enterNav = which === 'sub' ? subNav : mainNav;
+            const leaveNav = which === 'sub' ? mainNav : subNav;
+            // 접힌 메뉴는 화면 위에 겹쳐 클릭을 가로채므로, 래퍼 자체의 클릭을 꺼준다 (탭 씹힘 방지)
+            if (leaveNav) leaveNav.style.pointerEvents = 'none';
+            if (enterNav) enterNav.style.pointerEvents = 'auto';
             // 기존 메뉴가 먼저 접히고(즉시), 새 메뉴는 살짝 늦게 펼쳐진다.
             if (leave) { leave.style.transitionDelay = '0s'; leave.classList.add('nav-collapsed'); }
-            if (enter) { enter.style.transitionDelay = '0.18s'; enter.classList.remove('nav-collapsed'); }
+            if (enter) { enter.style.transitionDelay = '0.12s'; enter.classList.remove('nav-collapsed'); }
             if (which === 'sub') {
                 requestAnimationFrame(() => { if (window.updateSubnavActive) window.updateSubnavActive(window._schedSub || 'calendar'); });
             }
