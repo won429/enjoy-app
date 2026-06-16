@@ -104,25 +104,25 @@
         .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); } 
 
         /* 하단 메뉴 인디케이터 애니메이션 */
-        #nav-indicator { will-change: transform, width; }
+        #nav-indicator, #subnav-indicator { will-change: transform, width; }
         .nav-transition { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        
+
         /* 하단 메뉴 컨테이너 애니메이션 */
         #bottom-nav { transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
         /* 하단 메뉴 버튼 애니메이션: 다이나믹 아일랜드 */
-        #bottom-nav button { transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center; }
+        #bottom-nav button, #schedule-subnav button { transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center; }
 
         /* 스크롤 시 하단 메뉴 축소 (가운데 정렬 유지, 라벨 숨김) */
-        #bottom-nav button span { transition: max-height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, margin 0.4s ease; max-height: 16px; overflow: hidden; }
-        #bottom-nav.nav-compact button { width: 46px; padding: 0.5rem 0; }
-        #bottom-nav.nav-compact button span { max-height: 0; opacity: 0; margin-top: -2px; }
-        #bottom-nav.nav-compact button > div { gap: 0; }
+        #bottom-nav button span, #schedule-subnav button span { transition: max-height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, margin 0.4s ease; max-height: 16px; overflow: hidden; }
+        #bottom-nav.nav-compact button, #schedule-subnav.nav-compact button { width: 46px; padding: 0.5rem 0; }
+        #bottom-nav.nav-compact button span, #schedule-subnav.nav-compact button span { max-height: 0; opacity: 0; margin-top: -2px; }
+        #bottom-nav.nav-compact button > div, #schedule-subnav.nav-compact button > div { gap: 0; }
         /* 탭 전환 시 메뉴 크기를 순간적으로 확정(애니메이션 끔)하여 인디케이터 위치 오차 방지 */
         #bottom-nav.no-nav-anim, #bottom-nav.no-nav-anim button, #bottom-nav.no-nav-anim button span { transition: none !important; }
 
         /* 뒷배경이 밝을 때 하단 메뉴 글자/아이콘을 어둡게 전환 (버튼별 개별 보정) */
-        #bottom-nav button i, #bottom-nav button span { transition: color 0.12s ease; }
+        #bottom-nav button i, #bottom-nav button span, #schedule-subnav button i, #schedule-subnav button span { transition: color 0.12s ease; }
         #bottom-nav button.btn-on-light .text-white { color: #141414 !important; }
         #bottom-nav button.btn-on-light .text-gray-300 { color: rgba(20, 20, 20, 0.82) !important; }
         #bottom-nav.nav-on-light #nav-indicator {
@@ -334,12 +334,12 @@
         #schedule-modal input[type="date"] { -webkit-appearance: none; appearance: none;
             min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
 
-        /* 하단 메뉴 ↔ 일정 화면 서브 메뉴 전환: 옆으로 스르륵 접혔다 펼쳐지는 모션 */
+        /* 하단 메뉴 ↔ 일정 화면 서브 메뉴 전환: 좌측 기준으로 스르륵 줄어들며 접히고, 좌→우로 펼쳐지는 모션 */
         #bottom-nav > .liquid-glass, #schedule-subnav > .liquid-glass {
-            transition: opacity .25s ease, transform .4s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-origin: center center;
+            transition: opacity .25s ease, transform .42s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: left center;
         }
-        .liquid-glass.nav-collapsed { opacity: 0; transform: scaleX(0.05); pointer-events: none; }
+        .liquid-glass.nav-collapsed { opacity: 0; transform: scaleX(0); pointer-events: none; }
 
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
@@ -2579,6 +2579,8 @@
                 }
             }
 
+            // 보여줄 패널의 스크롤 위치에 맞춰 서브 메뉴 축소 상태 동기화
+            if (window.setSubnavCompact) window.setSubnavCompact((cur && cur.scrollTop > 24) || false);
             // 서브 메뉴 활성 표시 (기존 하단 메뉴와 동일한 방식: 인디케이터 이동 + 흰색/볼드)
             if (window.updateSubnavActive) window.updateSubnavActive(tab);
         };
@@ -3714,17 +3716,44 @@
             window.animateNavIndicator();
         };
 
+        // 일정 화면 서브 메뉴도 동일하게: 아래로 스크롤하면 가운데 정렬된 채 축소
+        window.subnavCompact = false;
+        window._subnavTrackRAF = null;
+        window.animateSubnavIndicator = function (duration) {
+            duration = duration || 600;
+            const ind = document.getElementById('subnav-indicator');
+            if (ind) ind.classList.remove('nav-transition');
+            if (window._subnavTrackRAF) cancelAnimationFrame(window._subnavTrackRAF);
+            const start = performance.now();
+            const tick = (now) => {
+                if (window.updateSubnavActive) window.updateSubnavActive(window._schedSub || 'calendar');
+                if (now - start < duration) window._subnavTrackRAF = requestAnimationFrame(tick);
+                else { window._subnavTrackRAF = null; if (ind) ind.classList.add('nav-transition'); }
+            };
+            window._subnavTrackRAF = requestAnimationFrame(tick);
+        };
+        window.setSubnavCompact = function (compact) {
+            if (compact === window.subnavCompact) return;
+            window.subnavCompact = compact;
+            const nav = document.getElementById('schedule-subnav');
+            if (!nav) return;
+            nav.classList.toggle('nav-compact', compact);
+            window.animateSubnavIndicator();
+        };
+
         (function initNavShrink() {
-            const containers = [
+            // 기존 하단 메뉴: 홈/더보기/모임통장 스크롤에 반응
+            [
                 document.getElementById('home-screen'),
                 document.querySelector('#more-screen > .overflow-y-auto'),
-                document.querySelector('#schedule-screen > .overflow-y-auto'),
                 document.querySelector('#meeting-screen > .overflow-y-auto')
-            ].filter(Boolean);
-            containers.forEach(c => {
-                c.addEventListener('scroll', () => {
-                    window.setNavCompact(c.scrollTop > 24);
-                }, { passive: true });
+            ].filter(Boolean).forEach(c => {
+                c.addEventListener('scroll', () => { window.setNavCompact(c.scrollTop > 24); }, { passive: true });
+            });
+            // 일정 화면 서브 메뉴: 일정/스케줄/커뮤니티 패널 스크롤에 반응
+            ['sched-panel-calendar', 'sched-panel-availability', 'sched-panel-community'].forEach(id => {
+                const c = document.getElementById(id); if (!c) return;
+                c.addEventListener('scroll', () => { window.setSubnavCompact(c.scrollTop > 24); }, { passive: true });
             });
         })();
 
