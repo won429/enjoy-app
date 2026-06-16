@@ -334,12 +334,12 @@
         #schedule-modal input[type="date"] { -webkit-appearance: none; appearance: none;
             min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
 
-        /* 하단 메뉴 ↔ 일정 화면 서브 메뉴 전환 모션 (안쪽 글래스 패널을 페이드/슬라이드) */
+        /* 하단 메뉴 ↔ 일정 화면 서브 메뉴 전환: 옆으로 스르륵 접혔다 펼쳐지는 모션 */
         #bottom-nav > .liquid-glass, #schedule-subnav > .liquid-glass {
-            transition: opacity .28s ease, transform .42s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transform-origin: center bottom;
+            transition: opacity .25s ease, transform .4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center center;
         }
-        .liquid-glass.nav-collapsed { opacity: 0; transform: translateY(26px) scale(0.92); pointer-events: none; }
+        .liquid-glass.nav-collapsed { opacity: 0; transform: scaleX(0.05); pointer-events: none; }
 
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
@@ -2587,14 +2587,13 @@
         window.setActiveNav = function (which) {
             const mainInner = document.querySelector('#bottom-nav > .liquid-glass');
             const subInner = document.querySelector('#schedule-subnav > .liquid-glass');
+            const enter = which === 'sub' ? subInner : mainInner;
+            const leave = which === 'sub' ? mainInner : subInner;
+            // 기존 메뉴가 먼저 접히고(즉시), 새 메뉴는 살짝 늦게 펼쳐진다.
+            if (leave) { leave.style.transitionDelay = '0s'; leave.classList.add('nav-collapsed'); }
+            if (enter) { enter.style.transitionDelay = '0.18s'; enter.classList.remove('nav-collapsed'); }
             if (which === 'sub') {
-                if (mainInner) mainInner.classList.add('nav-collapsed');
-                if (subInner) subInner.classList.remove('nav-collapsed');
-                // 서브 메뉴가 보이는 다음 프레임에 인디케이터 위치 보정
                 requestAnimationFrame(() => { if (window.updateSubnavActive) window.updateSubnavActive(window._schedSub || 'calendar'); });
-            } else {
-                if (subInner) subInner.classList.add('nav-collapsed');
-                if (mainInner) mainInner.classList.remove('nav-collapsed');
             }
         };
 
@@ -2623,45 +2622,32 @@
                 'fa-solid fa-screwdriver-wrench', 'text-[#3182F6]');
         };
 
-        /* ===== 스케줄(가능/불가능) — 실제 사용 가능 (월 달력 + 멤버 목록 + 날짜별 상세) =====
-           저장 위치: 멤버는 members/{uid}.avail (파이어베이스, 공유) / 게스트·스페셜은 localStorage (본인만) */
+        /* ===== 스케줄(가능/불가능) — 실제 사용 가능 (월 달력 + 멤버 6명 목록 + 날짜별 상세) =====
+           명단: 항상 엔조이 멤버 6명을 표시. 가입(로그인)한 멤버는 이름+가능여부, 아직 가입 안 한
+           멤버는 '미가입자'로 표시. 데이터는 이미 구독 중인 members 컬렉션(lastMembers)에서 즉시 읽음(빠름). */
         window._availYear = new Date().getFullYear();
         window._availMonth = new Date().getMonth();   // 0-11
-        window._availMine = null;                      // { 'YYYY-MM-DD': 'yes'|'no' }
-        window._availLoaded = false;
+        window._availMine = null;                      // 본인(멤버) 가능여부 로컬 미러 { 'YYYY-MM-DD': 'yes'|'no' }
 
         function availKey(y, m, d) { return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
-        function loadMyAvailLocal() { try { window._availMine = JSON.parse(localStorage.getItem('enjoy_avail') || '{}') || {}; } catch (e) { window._availMine = {}; } }
-        function saveMyAvailLocal() { try { localStorage.setItem('enjoy_avail', JSON.stringify(window._availMine || {})); } catch (e) {} }
 
-        async function availInit() {
-            if (window.enjoySync && window.meetingDb && window.enjoyUser) {
-                try {
-                    const d = await window.getDoc(window.fsDoc('members', window.enjoyUser.uid));
-                    window._availMine = (d.exists() && d.data().avail) ? d.data().avail : {};
-                } catch (e) { window._availMine = {}; }
-            } else {
-                loadMyAvailLocal();
-            }
-            window._availLoaded = true;
-        }
-
-        // 명단: 멤버(가입자)는 이름으로, 본인이 미가입(게스트/스페셜)이면 '미가입자'로 표시
+        // 명단 = 멤버 6명 고정. 가입자는 이름/사진/가능여부, 미가입자는 '미가입자'
         function availRoster() {
-            const out = [];
-            if (window.enjoySync) {
-                const joined = (window.enjoyJoinedMembers && window.enjoyJoinedMembers()) || [];
-                joined.forEach(m => out.push({
-                    uid: m.uid, name: m.name, photoURL: m.photoURL || '', days: m.avail || {}, isGuest: false,
-                    isMe: !!(window.enjoyUser && m.uid === window.enjoyUser.uid)
-                }));
-                // 내 최신 입력이 스냅샷보다 빠를 수 있어 본인 행은 로컬 미러로 보정
-                const me = out.find(p => p.isMe);
-                if (me && window._availMine) me.days = window._availMine;
-            } else {
-                out.push({ uid: 'me', name: '미가입자', photoURL: '', days: window._availMine || {}, isGuest: true, isMe: true });
-            }
-            return out;
+            const names = window.ENJOY_MEMBERS || ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+            const joined = (window.enjoyJoinedMembers && window.enjoyJoinedMembers()) || [];  // [{uid,name,photoURL,avail}]
+            const byName = {}; joined.forEach(m => { if (m.name) byName[m.name] = m; });
+            const myUid = window.enjoyUser && window.enjoyUser.uid;
+            return names.map(name => {
+                const doc = byName[name];
+                const isJoined = !!doc;
+                const isMe = !!(doc && myUid && doc.uid === myUid);
+                let days = (doc && doc.avail) || {};
+                if (isMe) {
+                    if (window._availMine === null) window._availMine = Object.assign({}, days);  // 최초 1회 본인 데이터 미러
+                    days = window._availMine;
+                }
+                return { name, joined: isJoined, isMe, days, photoURL: (doc && doc.photoURL) || '' };
+            });
         }
 
         window.changeAvailMonth = function (delta) {
@@ -2673,9 +2659,9 @@
 
         window.renderAvailability = function () {
             const wrap = document.getElementById('sched-panel-availability'); if (!wrap) return;
-            if (!window._availLoaded) { wrap.innerHTML = '<div class="py-16 text-center text-gray-500 text-sm">불러오는 중…</div>'; availInit().then(() => window.renderAvailability()); return; }
             const y = window._availYear, m = window._availMonth;
             const roster = availRoster();
+            const joinedCnt = roster.filter(p => p.joined).length;
             const first = new Date(y, m, 1).getDay();
             const days = new Date(y, m + 1, 0).getDate();
             const t = new Date(); const todayKey = availKey(t.getFullYear(), t.getMonth(), t.getDate());
@@ -2692,7 +2678,7 @@
             for (let d = 1; d <= days; d++) {
                 const k = availKey(y, m, d);
                 let yes = 0; roster.forEach(p => { if (p.days[k] === 'yes') yes++; });
-                const ratio = roster.length ? yes / roster.length : 0;
+                const ratio = joinedCnt ? yes / joinedCnt : 0;
                 const dot = yes === 0 ? 'bg-white/10 text-gray-500'
                     : ratio >= 0.66 ? 'bg-[#3182F6] text-white'
                         : ratio >= 0.34 ? 'bg-[#3182F6]/60 text-white'
@@ -2708,47 +2694,58 @@
             html += '<p class="text-[11px] text-gray-500 text-center mt-3">날짜를 누르면 누가 되고 안 되는지 볼 수 있어요 · 숫자=가능 인원</p>';
 
             html += '<div class="mt-7 pt-5 border-t border-white/5"><h3 class="text-[15px] font-bold text-white mb-3 px-1">멤버별 가능 현황</h3><div class="flex flex-col gap-2.5">';
-            if (!roster.length) html += '<p class="text-[13px] text-gray-500 px-1 py-4 text-center">아직 등록한 사람이 없어요. 날짜를 눌러 등록해보세요.</p>';
             roster.forEach(p => {
                 let yesCnt = 0; for (let d = 1; d <= days; d++) if (p.days[availKey(y, m, d)] === 'yes') yesCnt++;
-                const col = (window.enjoyMemberColor && !p.isGuest) ? window.enjoyMemberColor(p.name) : { solid: 'bg-gray-500' };
+                const col = window.enjoyMemberColor ? window.enjoyMemberColor(p.name) : { solid: 'bg-gray-500' };
                 const avatar = p.photoURL
                     ? '<img src="' + p.photoURL + '" class="w-9 h-9 rounded-full object-cover shrink-0" referrerpolicy="no-referrer">'
-                    : '<div class="w-9 h-9 rounded-full shrink-0 ' + (col.solid || 'bg-gray-500') + (p.isGuest ? ' opacity-40' : '') + '"></div>';
+                    : '<div class="w-9 h-9 rounded-full shrink-0 ' + (col.solid || 'bg-gray-500') + (p.joined ? '' : ' opacity-30') + '"></div>';
+                const sub = p.joined
+                    ? '이번 달 ' + yesCnt + '일 가능'
+                    : '<span class="text-gray-500">미가입자</span>';
                 html += '<div class="flex items-center gap-3 px-1 py-2">' + avatar +
-                    '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-white leading-tight">' + (p.name || '미가입자') + (p.isMe ? ' <span class="text-[11px] text-[#3182F6]">(나)</span>' : '') + '</div>' +
-                    '<div class="text-[12px] text-gray-400 leading-tight mt-0.5">이번 달 ' + yesCnt + '일 가능</div></div></div>';
+                    '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold ' + (p.joined ? 'text-white' : 'text-gray-400') + ' leading-tight">' + p.name + (p.isMe ? ' <span class="text-[11px] text-[#3182F6]">(나)</span>' : '') + '</div>' +
+                    '<div class="text-[12px] text-gray-400 leading-tight mt-0.5">' + sub + '</div></div></div>';
             });
             html += '</div></div>';
             html += '<div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
             wrap.innerHTML = html;
         };
 
-        // 날짜별 상세: 누가 가능/불가/미정인지 + 내 가능 여부 등록
+        // 날짜별 상세: 누가 가능/불가/미정인지 + (멤버면) 내 가능 여부 등록
         window.openAvailDetail = function (dateKey) {
             const modal = document.getElementById('avail-detail'); if (!modal) return;
             const parts = dateKey.split('-').map(Number);
             const dow = ['일', '월', '화', '수', '목', '금', '토'][new Date(parts[0], parts[1] - 1, parts[2]).getDay()];
             document.getElementById('avail-detail-title').textContent = parts[1] + '월 ' + parts[2] + '일 (' + dow + ')';
             const roster = availRoster();
-            const yesL = [], noL = [], unL = [];
-            roster.forEach(p => { const s = p.days[dateKey]; if (s === 'yes') yesL.push(p); else if (s === 'no') noL.push(p); else unL.push(p); });
+            const joined = roster.filter(p => p.joined);
+            const notJoined = roster.filter(p => !p.joined);
+            const yesL = joined.filter(p => p.days[dateKey] === 'yes');
+            const noL = joined.filter(p => p.days[dateKey] === 'no');
+            const unL = joined.filter(p => !p.days[dateKey]);
             const mine = (window._availMine || {})[dateKey] || null;
             const chip = (p) => {
-                const col = (window.enjoyMemberColor && !p.isGuest) ? window.enjoyMemberColor(p.name) : { solid: 'bg-gray-500' };
+                const col = window.enjoyMemberColor ? window.enjoyMemberColor(p.name) : { solid: 'bg-gray-500' };
                 const av = p.photoURL
                     ? '<img src="' + p.photoURL + '" class="w-6 h-6 rounded-full object-cover" referrerpolicy="no-referrer">'
-                    : '<div class="w-6 h-6 rounded-full ' + (col.solid || 'bg-gray-500') + (p.isGuest ? ' opacity-40' : '') + '"></div>';
-                return '<div class="flex items-center gap-2 py-1">' + av + '<span class="text-[13px] text-white">' + (p.name || '미가입자') + (p.isMe ? ' (나)' : '') + '</span></div>';
+                    : '<div class="w-6 h-6 rounded-full ' + (col.solid || 'bg-gray-500') + (p.joined ? '' : ' opacity-30') + '"></div>';
+                return '<div class="flex items-center gap-2 py-1">' + av + '<span class="text-[13px] ' + (p.joined ? 'text-white' : 'text-gray-400') + '">' + p.name + (p.isMe ? ' (나)' : '') + '</span></div>';
             };
             const sec = (label, color, list) => '<div class="mb-3"><div class="text-[12px] font-bold ' + color + ' mb-1">' + label + ' ' + list.length + '</div>' +
                 (list.length ? list.map(chip).join('') : '<div class="text-[12px] text-gray-500 py-1">없음</div>') + '</div>';
-            let body = '<div class="bg-white/5 rounded-2xl p-3 mb-4"><div class="text-[12px] text-gray-400 font-bold mb-2">내 가능 여부</div><div class="flex gap-2">' +
-                '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',\'yes\')" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (mine === 'yes' ? 'bg-[#3182F6] text-white' : 'bg-white/10 text-gray-300') + '">가능</button>' +
-                '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',\'no\')" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (mine === 'no' ? 'bg-[#F04452] text-white' : 'bg-white/10 text-gray-300') + '">불가</button>' +
-                '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',null)" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (!mine ? 'bg-white/20 text-white' : 'bg-white/10 text-gray-300') + '">미정</button>' +
-                '</div></div>';
+            let body = '';
+            if (window.enjoySync && window.enjoyUser) {
+                body += '<div class="bg-white/5 rounded-2xl p-3 mb-4"><div class="text-[12px] text-gray-400 font-bold mb-2">내 가능 여부</div><div class="flex gap-2">' +
+                    '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',\'yes\')" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (mine === 'yes' ? 'bg-[#3182F6] text-white' : 'bg-white/10 text-gray-300') + '">가능</button>' +
+                    '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',\'no\')" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (mine === 'no' ? 'bg-[#F04452] text-white' : 'bg-white/10 text-gray-300') + '">불가</button>' +
+                    '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',null)" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (!mine ? 'bg-white/20 text-white' : 'bg-white/10 text-gray-300') + '">미정</button>' +
+                    '</div></div>';
+            } else {
+                body += '<div class="bg-white/5 rounded-2xl p-3 mb-4 text-[12px] text-gray-400 text-center">엔조이 멤버 계정으로 로그인하면 내 가능 여부를 등록할 수 있어요.</div>';
+            }
             body += sec('가능', 'text-[#3182F6]', yesL) + sec('불가', 'text-[#F04452]', noL) + sec('미정', 'text-gray-400', unL);
+            if (notJoined.length) body += sec('미가입', 'text-gray-500', notJoined);
             document.getElementById('avail-detail-body').innerHTML = body;
             modal.classList.remove('hidden'); modal.classList.add('flex');
         };
@@ -2758,16 +2755,13 @@
             if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
         };
         window.setMyAvail = async function (dateKey, status) {
+            if (!(window.enjoySync && window.meetingDb && window.enjoyUser)) return;  // 멤버만 등록
             window._availMine = window._availMine || {};
             if (status === null) delete window._availMine[dateKey];
             else window._availMine[dateKey] = status;
-            if (window.enjoySync && window.meetingDb && window.enjoyUser) {
-                try {
-                    await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid), { avail: window._availMine }, { merge: true });
-                } catch (e) {}
-            } else {
-                saveMyAvailLocal();
-            }
+            try {
+                await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid), { avail: window._availMine }, { merge: true });
+            } catch (e) {}
             const modal = document.getElementById('avail-detail');
             if (modal && !modal.classList.contains('hidden')) window.openAvailDetail(dateKey);
             window.renderAvailability();
