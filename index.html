@@ -334,12 +334,12 @@
         #schedule-modal input[type="date"] { -webkit-appearance: none; appearance: none;
             min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
 
-        /* 일정 화면 전용 하단 서브 메뉴 */
-        #schedule-subnav { display: none; }
-        #schedule-subnav button { transition: color .15s ease, background-color .15s ease, transform .12s ease; }
-        #schedule-subnav .text-sub, #schedule-subnav .ic-sub { color: rgba(255,255,255,0.6); }
-        #schedule-subnav button.sub-on .text-sub, #schedule-subnav button.sub-on .ic-sub { color: #fff !important; }
-        #schedule-subnav button.sub-on { background: rgba(255,255,255,0.16); }
+        /* 하단 메뉴 ↔ 일정 화면 서브 메뉴 전환 모션 (안쪽 글래스 패널을 페이드/슬라이드) */
+        #bottom-nav > .liquid-glass, #schedule-subnav > .liquid-glass {
+            transition: opacity .28s ease, transform .42s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center bottom;
+        }
+        .liquid-glass.nav-collapsed { opacity: 0; transform: translateY(26px) scale(0.92); pointer-events: none; }
 
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
@@ -418,11 +418,6 @@
 
             /* 화면 하단 카피라이트 */
             .app-copyright { color: #9b95a8; }
-
-            /* 일정 화면 서브 메뉴: 비활성 글자 어둡게 / 활성 강조 */
-            #schedule-subnav .text-sub, #schedule-subnav .ic-sub { color: rgba(20,20,20,0.55) !important; }
-            #schedule-subnav button.sub-on .text-sub, #schedule-subnav button.sub-on .ic-sub { color: #141414 !important; }
-            #schedule-subnav button.sub-on { background: rgba(0,0,0,0.10) !important; }
         }
     </style>
 </head>
@@ -537,7 +532,7 @@
     </div>
 
     <!-- 메인 컨텐츠 (홈 화면) -->
-    <main id="home-screen" class="flex-1 overflow-y-auto scrollbar-hide px-5 pb-24 w-full max-w-md mx-auto relative min-h-full">
+    <main id="home-screen" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pb-24 w-full max-w-md mx-auto relative min-h-full">
         
         <!-- 카드 나열 (배너/슬라이더 제거, 각 항목을 사진 카드로 세로 나열) -->
         <div id="apple-tv-banner" class="fade-in-up delay-100 mt-4 mb-6 relative">
@@ -883,9 +878,7 @@
         </div>
 
 
-        <div class="pb-8"></div>
-        <p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
-        <div class="pb-4"></div>
+        <div class="mt-auto pt-8 pb-4"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
     </main>
 
     <!-- 더보기 화면은 하단 메뉴 팝오버(#more-popover)로 대체됨 -->
@@ -918,7 +911,7 @@
         </header>
 
         <!-- 일정(달력) 패널 -->
-        <div id="sched-panel-calendar" class="flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto">
+        <div id="sched-panel-calendar" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto">
             <!-- 달력 (박스 없는 미니멀) -->
             <div class="mb-1">
                 <div class="grid grid-cols-7 text-center pb-2.5">
@@ -938,14 +931,14 @@
                 <h3 class="text-[17px] font-bold text-white tracking-tight mb-1 px-1" id="selected-date-title">이달의 일정</h3>
                 <div id="event-list" class="divide-y divide-white/5 px-1"></div>
             </div>
-            <div class="pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
+            <div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
         </div>
 
         <!-- 스케줄(가능/불가능) 패널 -->
-        <div id="sched-panel-availability" class="hidden flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
+        <div id="sched-panel-availability" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
 
         <!-- 커뮤니티(여행 일정 공유) 패널 -->
-        <div id="sched-panel-community" class="hidden flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
+        <div id="sched-panel-community" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
     </div>
 
     <!-- 💰 모임통장 화면 -->
@@ -954,7 +947,7 @@
             <h2 class="text-[22px] font-bold text-white tracking-tight">모임통장</h2>
         </header>
 
-        <div class="flex-1 overflow-y-auto scrollbar-hide px-5 pt-3 w-full max-w-md mx-auto">
+        <div class="flex flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-3 w-full max-w-md mx-auto">
 
             <!-- 공용 계좌 잔액 (색 없이 깔끔하게) -->
             <div class="px-1 pb-6">
@@ -996,7 +989,7 @@
             </div>
 
             <!-- 납부 내역 / 사용 내역 (탭으로 전환) -->
-            <div class="pb-28 border-t border-white/5 pt-5">
+            <div class="border-t border-white/5 pt-5">
                 <!-- 탭 -->
                 <div class="flex gap-1 bg-white/5 p-1 rounded-2xl mb-4">
                     <button id="mtab-dues" onclick="window.haptic(); window.switchMeetingTab('dues')" class="meeting-tab mtab-active flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors"><i class="fa-solid fa-coins mr-1.5 text-[11px]"></i>납부 내역</button>
@@ -1018,7 +1011,7 @@
                     <div id="expense-list" class="flex flex-col px-1"></div>
                 </div>
             </div>
-            <div class="pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
+            <div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
         </div>
     </div>
 
@@ -1082,35 +1075,36 @@
         </div>
     </nav>
 
-    <!-- 일정 화면 전용 하단 서브 메뉴 (뒤로 · 일정 · 스케줄 · 커뮤니티) -->
+    <!-- 일정 화면 전용 하단 서브 메뉴 (뒤로 · 일정 · 스케줄 · 커뮤니티) — 기존 메뉴와 동일한 디자인 -->
     <nav id="schedule-subnav" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-auto select-none">
-        <div class="liquid-glass flex items-center rounded-full p-1.5 gap-1 relative">
+        <div class="liquid-glass nav-collapsed flex items-center rounded-full p-1.5 gap-1 relative">
+            <div id="subnav-indicator" class="absolute top-1 bottom-1 bg-white/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full backdrop-blur-[2px] border border-white/20 z-0 nav-transition" style="left: 6px; width: 64px; opacity: 0;"></div>
             <!-- 뒤로가기 → 홈 -->
-            <button onclick="window.haptic && window.haptic(); window.goHome()" class="relative w-[60px] py-2 rounded-full active:scale-95 transition-transform">
+            <button onclick="window.haptic && window.haptic(); window.goHome()" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                    <i class="fa-solid fa-chevron-left text-base ic-sub"></i>
-                    <span class="text-[10px] font-medium text-sub whitespace-nowrap">뒤로</span>
+                    <i class="fa-solid fa-chevron-left text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">뒤로</span>
                 </div>
             </button>
             <!-- 일정(달력) -->
-            <button id="subnav-calendar" onclick="window.haptic && window.haptic(); window.switchScheduleSub('calendar')" class="relative w-[60px] py-2 rounded-full active:scale-95 transition-transform">
+            <button id="subnav-calendar" onclick="window.haptic && window.haptic(); window.switchScheduleSub('calendar')" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                    <i class="fa-regular fa-calendar-check text-base ic-sub"></i>
-                    <span class="text-[10px] font-medium text-sub whitespace-nowrap">일정</span>
+                    <i class="fa-regular fa-calendar-check text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">일정</span>
                 </div>
             </button>
             <!-- 스케줄(가능/불가능) -->
-            <button id="subnav-availability" onclick="window.haptic && window.haptic(); window.switchScheduleSub('availability')" class="relative w-[60px] py-2 rounded-full active:scale-95 transition-transform">
+            <button id="subnav-availability" onclick="window.haptic && window.haptic(); window.switchScheduleSub('availability')" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                    <i class="fa-regular fa-calendar-days text-base ic-sub"></i>
-                    <span class="text-[10px] font-medium text-sub whitespace-nowrap">스케줄</span>
+                    <i class="fa-regular fa-calendar-days text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">스케줄</span>
                 </div>
             </button>
             <!-- 커뮤니티(여행 일정 공유) -->
-            <button id="subnav-community" onclick="window.haptic && window.haptic(); window.switchScheduleSub('community')" class="relative w-[60px] py-2 rounded-full active:scale-95 transition-transform">
+            <button id="subnav-community" onclick="window.haptic && window.haptic(); window.switchScheduleSub('community')" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                    <i class="fa-solid fa-compass text-base ic-sub"></i>
-                    <span class="text-[10px] font-medium text-sub whitespace-nowrap">커뮤니티</span>
+                    <i class="fa-solid fa-compass text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">커뮤니티</span>
                 </div>
             </button>
         </div>
@@ -1256,6 +1250,17 @@
             <h3 class="text-lg font-bold text-main mb-2" id="modal-title">제목</h3>
             <p class="text-[#A1A1A6] text-sm mb-6 leading-relaxed break-keep" id="modal-desc">내용</p>
             <button onclick="window.haptic(); window.closeModal('common-modal')" class="w-full bg-[#3182F6] text-white font-bold py-3.5 rounded-xl hover:bg-blue-600 transition-colors shadow-md shadow-blue-500/20 active:scale-95">확인</button>
+        </div>
+    </div>
+
+    <!-- 스케줄: 날짜별 가능/불가 상세 -->
+    <div id="avail-detail" class="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm hidden items-end justify-center" onclick="window.closeAvailDetail(event)">
+        <div class="bg-[#1C1C1E] w-full max-w-md rounded-t-3xl p-6 pb-10 border-t border-white/10 shadow-2xl max-h-[80vh] overflow-y-auto scrollbar-hide" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="avail-detail-title" class="text-lg font-bold text-main">날짜</h3>
+                <button onclick="window.haptic && window.haptic(); window.closeAvailDetail()" class="text-gray-500 hover:text-gray-300 active:scale-90"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div id="avail-detail-body"></div>
         </div>
     </div>
 
@@ -2545,8 +2550,8 @@
         window.switchScheduleSub = function (tab) {
             window._schedSub = tab;
             const panels = { calendar: 'sched-panel-calendar', availability: 'sched-panel-availability', community: 'sched-panel-community' };
-            Object.values(panels).forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hidden'); });
-            const cur = document.getElementById(panels[tab]); if (cur) cur.classList.remove('hidden');
+            Object.values(panels).forEach(id => { const e = document.getElementById(id); if (e) { e.classList.add('hidden'); e.classList.remove('flex'); } });
+            const cur = document.getElementById(panels[tab]); if (cur) { cur.classList.remove('hidden'); cur.classList.add('flex'); }
 
             const calH = document.getElementById('sched-cal-header');
             const genH = document.getElementById('sched-generic-header');
@@ -2563,8 +2568,8 @@
                 if (genH) genH.classList.remove('hidden');
                 if (tab === 'availability') {
                     if (genT) genT.textContent = '스케줄';
-                    if (genS) genS.textContent = '각자 가능한 날을 모아봤어요.';
-                    if (genA) genA.classList.remove('hidden');
+                    if (genS) genS.textContent = '날짜를 눌러 가능/불가를 등록해요.';
+                    if (genA) genA.classList.add('hidden');
                     try { window.renderAvailability(); } catch (e) {}
                 } else if (tab === 'community') {
                     if (genT) genT.textContent = '커뮤니티';
@@ -2574,98 +2579,198 @@
                 }
             }
 
-            // 서브 메뉴 활성 표시
-            const map = { calendar: 'subnav-calendar', availability: 'subnav-availability', community: 'subnav-community' };
-            Object.values(map).forEach(id => { const b = document.getElementById(id); if (b) b.classList.remove('sub-on'); });
-            const on = document.getElementById(map[tab]); if (on) on.classList.add('sub-on');
+            // 서브 메뉴 활성 표시 (기존 하단 메뉴와 동일한 방식: 인디케이터 이동 + 흰색/볼드)
+            if (window.updateSubnavActive) window.updateSubnavActive(tab);
         };
 
-        // 스케줄/커뮤니티 헤더의 + 버튼 (편집 기능은 추후)
+        // 기존 하단 메뉴 ↔ 일정 서브 메뉴 전환 (안쪽 글래스 패널 페이드/슬라이드)
+        window.setActiveNav = function (which) {
+            const mainInner = document.querySelector('#bottom-nav > .liquid-glass');
+            const subInner = document.querySelector('#schedule-subnav > .liquid-glass');
+            if (which === 'sub') {
+                if (mainInner) mainInner.classList.add('nav-collapsed');
+                if (subInner) subInner.classList.remove('nav-collapsed');
+                // 서브 메뉴가 보이는 다음 프레임에 인디케이터 위치 보정
+                requestAnimationFrame(() => { if (window.updateSubnavActive) window.updateSubnavActive(window._schedSub || 'calendar'); });
+            } else {
+                if (subInner) subInner.classList.add('nav-collapsed');
+                if (mainInner) mainInner.classList.remove('nav-collapsed');
+            }
+        };
+
+        // 서브 메뉴 활성 탭 표시 (인디케이터 + 글자색)
+        window.updateSubnavActive = function (tab) {
+            const map = { calendar: 'subnav-calendar', availability: 'subnav-availability', community: 'subnav-community' };
+            Object.keys(map).forEach(key => {
+                const b = document.getElementById(map[key]); if (!b) return;
+                const icon = b.querySelector('i'), label = b.querySelector('span');
+                const active = (key === tab);
+                if (icon) { icon.classList.toggle('text-white', active); icon.classList.toggle('text-gray-300', !active); }
+                if (label) {
+                    label.classList.toggle('text-white', active); label.classList.toggle('font-bold', active);
+                    label.classList.toggle('text-gray-300', !active); label.classList.toggle('font-medium', !active);
+                }
+            });
+            const ind = document.getElementById('subnav-indicator'); const btn = document.getElementById(map[tab]);
+            if (ind && btn) { ind.style.opacity = '1'; ind.style.width = btn.offsetWidth + 'px'; ind.style.transform = 'translateX(' + (btn.offsetLeft - 6) + 'px)'; }
+        };
+
+        // 커뮤니티 헤더의 + 버튼 (글쓰기 편집 기능은 추후)
         window.schedGenericAction = function () {
-            const isCommunity = window._schedSub === 'community';
             window.showCommonModal && window.showCommonModal(
-                isCommunity ? '커뮤니티 글쓰기' : '내 가능 시간 등록',
-                '곧 직접 등록할 수 있어요. 편집 기능을 준비 중입니다. 🙌',
+                '커뮤니티 글쓰기',
+                '여행 일정 공유 글쓰기는 곧 추가돼요. 편집 기능을 준비 중입니다. 🙌',
                 'fa-solid fa-screwdriver-wrench', 'text-[#3182F6]');
         };
 
-        /* ===== 스케줄(가능/불가능) 렌더 — 월 달력형 + 멤버 목록형 (샘플/표시 전용) ===== */
+        /* ===== 스케줄(가능/불가능) — 실제 사용 가능 (월 달력 + 멤버 목록 + 날짜별 상세) =====
+           저장 위치: 멤버는 members/{uid}.avail (파이어베이스, 공유) / 게스트·스페셜은 localStorage (본인만) */
         window._availYear = new Date().getFullYear();
         window._availMonth = new Date().getMonth();   // 0-11
+        window._availMine = null;                      // { 'YYYY-MM-DD': 'yes'|'no' }
+        window._availLoaded = false;
+
+        function availKey(y, m, d) { return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+        function loadMyAvailLocal() { try { window._availMine = JSON.parse(localStorage.getItem('enjoy_avail') || '{}') || {}; } catch (e) { window._availMine = {}; } }
+        function saveMyAvailLocal() { try { localStorage.setItem('enjoy_avail', JSON.stringify(window._availMine || {})); } catch (e) {} }
+
+        async function availInit() {
+            if (window.enjoySync && window.meetingDb && window.enjoyUser) {
+                try {
+                    const d = await window.getDoc(window.fsDoc('members', window.enjoyUser.uid));
+                    window._availMine = (d.exists() && d.data().avail) ? d.data().avail : {};
+                } catch (e) { window._availMine = {}; }
+            } else {
+                loadMyAvailLocal();
+            }
+            window._availLoaded = true;
+        }
+
+        // 명단: 멤버(가입자)는 이름으로, 본인이 미가입(게스트/스페셜)이면 '미가입자'로 표시
+        function availRoster() {
+            const out = [];
+            if (window.enjoySync) {
+                const joined = (window.enjoyJoinedMembers && window.enjoyJoinedMembers()) || [];
+                joined.forEach(m => out.push({
+                    uid: m.uid, name: m.name, photoURL: m.photoURL || '', days: m.avail || {}, isGuest: false,
+                    isMe: !!(window.enjoyUser && m.uid === window.enjoyUser.uid)
+                }));
+                // 내 최신 입력이 스냅샷보다 빠를 수 있어 본인 행은 로컬 미러로 보정
+                const me = out.find(p => p.isMe);
+                if (me && window._availMine) me.days = window._availMine;
+            } else {
+                out.push({ uid: 'me', name: '미가입자', photoURL: '', days: window._availMine || {}, isGuest: true, isMe: true });
+            }
+            return out;
+        }
+
         window.changeAvailMonth = function (delta) {
             window._availMonth += delta;
             if (window._availMonth < 0) { window._availMonth = 11; window._availYear--; }
             if (window._availMonth > 11) { window._availMonth = 0; window._availYear++; }
             window.renderAvailability();
         };
-        // 멤버별 가능 요일 패턴(샘플) — 로그인 프로필이 등록되면 이 자리에 실제 데이터가 들어갑니다.
-        function availMembers() {
-            return (window.ENJOY_MEMBERS || ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사']);
-        }
-        // 날짜별 가능 여부(샘플): 멤버 이름 + 날짜로 결정되는 의사난수
-        function sampleAvail(name, y, m, d) {
-            const s = (name.charCodeAt(0) + name.charCodeAt(name.length - 1) + (m + 1) * 7 + d * 13) % 10;
-            const dow = new Date(y, m, d).getDay();
-            if (dow === 0 || dow === 6) return s < 8;   // 주말은 대체로 가능
-            return s < 4;                                // 평일은 가끔 가능
-        }
+
         window.renderAvailability = function () {
-            const wrap = document.getElementById('sched-panel-availability');
-            if (!wrap) return;
+            const wrap = document.getElementById('sched-panel-availability'); if (!wrap) return;
+            if (!window._availLoaded) { wrap.innerHTML = '<div class="py-16 text-center text-gray-500 text-sm">불러오는 중…</div>'; availInit().then(() => window.renderAvailability()); return; }
             const y = window._availYear, m = window._availMonth;
-            const members = availMembers();
-            const colorOf = window.enjoyMemberColor || (() => ({ solid: 'bg-gray-500' }));
+            const roster = availRoster();
             const first = new Date(y, m, 1).getDay();
             const days = new Date(y, m + 1, 0).getDate();
-            const todayStr = new Date().toISOString().split('T')[0];
+            const t = new Date(); const todayKey = availKey(t.getFullYear(), t.getMonth(), t.getDate());
 
-            // 월 헤더 + 달력 그리드
             let html = '<div class="flex items-center justify-center gap-3 mb-3 pt-1">' +
-                '<button onclick="window.haptic && window.haptic(); window.changeAvailMonth(-1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>' +
+                '<button onclick="window.haptic&&window.haptic(); window.changeAvailMonth(-1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>' +
                 '<span class="text-[15px] font-bold text-white min-w-[110px] text-center tabular-nums">' + y + '년 ' + (m + 1) + '월</span>' +
-                '<button onclick="window.haptic && window.haptic(); window.changeAvailMonth(1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-right text-[14px]"></i></button>' +
+                '<button onclick="window.haptic&&window.haptic(); window.changeAvailMonth(1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-right text-[14px]"></i></button>' +
                 '</div>';
             html += '<div class="grid grid-cols-7 text-center pb-2">' +
-                ['일', '월', '화', '수', '목', '금', '토'].map((w, i) =>
-                    '<div class="text-[11px] font-bold ' + (i === 0 ? 'text-red-400/80' : i === 6 ? 'text-blue-400/80' : 'text-gray-500') + '">' + w + '</div>').join('') +
-                '</div>';
-            html += '<div class="grid grid-cols-7 gap-y-1.5 text-center">';
+                ['일', '월', '화', '수', '목', '금', '토'].map((w, i) => '<div class="text-[11px] font-bold ' + (i === 0 ? 'text-red-400/80' : i === 6 ? 'text-blue-400/80' : 'text-gray-500') + '">' + w + '</div>').join('') + '</div>';
+            html += '<div class="grid grid-cols-7 gap-y-1 text-center">';
             for (let i = 0; i < first; i++) html += '<div></div>';
             for (let d = 1; d <= days; d++) {
-                const cnt = members.reduce((a, n) => a + (sampleAvail(n, y, m, d) ? 1 : 0), 0);
-                const ratio = cnt / members.length;
-                // 가능 인원이 많을수록 진한 파란 점
-                const dot = cnt === 0 ? 'bg-white/10'
-                    : ratio >= 0.8 ? 'bg-[#3182F6]'
-                        : ratio >= 0.5 ? 'bg-[#3182F6]/60'
-                            : 'bg-[#3182F6]/30';
-                html += '<div class="flex flex-col items-center gap-1 py-1">' +
-                    '<span class="text-[13px] font-semibold text-white tabular-nums">' + d + '</span>' +
-                    '<span class="w-5 h-5 rounded-full ' + dot + ' flex items-center justify-center text-[9px] font-bold text-white">' + (cnt || '') + '</span>' +
-                    '</div>';
+                const k = availKey(y, m, d);
+                let yes = 0; roster.forEach(p => { if (p.days[k] === 'yes') yes++; });
+                const ratio = roster.length ? yes / roster.length : 0;
+                const dot = yes === 0 ? 'bg-white/10 text-gray-500'
+                    : ratio >= 0.66 ? 'bg-[#3182F6] text-white'
+                        : ratio >= 0.34 ? 'bg-[#3182F6]/60 text-white'
+                            : 'bg-[#3182F6]/30 text-white';
+                const mine = (window._availMine || {})[k];
+                const ring = mine === 'yes' ? ' ring-2 ring-[#3182F6]' : mine === 'no' ? ' ring-2 ring-[#F04452]' : '';
+                html += '<button onclick="window.haptic&&window.haptic(); window.openAvailDetail(\'' + k + '\')" class="flex flex-col items-center gap-1 py-1 active:scale-90 transition-transform">' +
+                    '<span class="text-[13px] font-semibold ' + (k === todayKey ? 'text-[#3182F6]' : 'text-white') + ' tabular-nums">' + d + '</span>' +
+                    '<span class="w-6 h-6 rounded-full ' + dot + ring + ' flex items-center justify-center text-[10px] font-bold">' + (yes || '') + '</span>' +
+                    '</button>';
             }
             html += '</div>';
-            html += '<p class="text-[11px] text-gray-500 text-center mt-3">숫자는 그 날 가능한 멤버 수예요 · 직접 등록은 곧 추가돼요</p>';
+            html += '<p class="text-[11px] text-gray-500 text-center mt-3">날짜를 누르면 누가 되고 안 되는지 볼 수 있어요 · 숫자=가능 인원</p>';
 
-            // 멤버별 목록형
-            html += '<div class="mt-7 pt-5 border-t border-white/5">' +
-                '<h3 class="text-[15px] font-bold text-white mb-3 px-1">멤버별 가능 현황</h3>' +
-                '<div class="flex flex-col gap-2.5">';
-            members.forEach(name => {
-                let avail = 0; for (let d = 1; d <= days; d++) if (sampleAvail(name, y, m, d)) avail++;
-                const col = colorOf(name);
-                html += '<div class="flex items-center gap-3 px-1 py-2">' +
-                    '<div class="w-9 h-9 rounded-full shrink-0 ' + (col.solid || 'bg-gray-500') + '"></div>' +
-                    '<div class="flex-1 min-w-0">' +
-                    '<div class="text-[14px] font-bold text-white leading-tight">' + name + '</div>' +
-                    '<div class="text-[12px] text-gray-400 leading-tight mt-0.5">이번 달 ' + avail + '일 가능</div>' +
-                    '</div>' +
-                    '<span class="text-[12px] font-bold text-[#3182F6]">' + Math.round(avail / days * 100) + '%</span>' +
-                    '</div>';
+            html += '<div class="mt-7 pt-5 border-t border-white/5"><h3 class="text-[15px] font-bold text-white mb-3 px-1">멤버별 가능 현황</h3><div class="flex flex-col gap-2.5">';
+            if (!roster.length) html += '<p class="text-[13px] text-gray-500 px-1 py-4 text-center">아직 등록한 사람이 없어요. 날짜를 눌러 등록해보세요.</p>';
+            roster.forEach(p => {
+                let yesCnt = 0; for (let d = 1; d <= days; d++) if (p.days[availKey(y, m, d)] === 'yes') yesCnt++;
+                const col = (window.enjoyMemberColor && !p.isGuest) ? window.enjoyMemberColor(p.name) : { solid: 'bg-gray-500' };
+                const avatar = p.photoURL
+                    ? '<img src="' + p.photoURL + '" class="w-9 h-9 rounded-full object-cover shrink-0" referrerpolicy="no-referrer">'
+                    : '<div class="w-9 h-9 rounded-full shrink-0 ' + (col.solid || 'bg-gray-500') + (p.isGuest ? ' opacity-40' : '') + '"></div>';
+                html += '<div class="flex items-center gap-3 px-1 py-2">' + avatar +
+                    '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-white leading-tight">' + (p.name || '미가입자') + (p.isMe ? ' <span class="text-[11px] text-[#3182F6]">(나)</span>' : '') + '</div>' +
+                    '<div class="text-[12px] text-gray-400 leading-tight mt-0.5">이번 달 ' + yesCnt + '일 가능</div></div></div>';
             });
             html += '</div></div>';
-            html += '<div class="pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
+            html += '<div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
             wrap.innerHTML = html;
+        };
+
+        // 날짜별 상세: 누가 가능/불가/미정인지 + 내 가능 여부 등록
+        window.openAvailDetail = function (dateKey) {
+            const modal = document.getElementById('avail-detail'); if (!modal) return;
+            const parts = dateKey.split('-').map(Number);
+            const dow = ['일', '월', '화', '수', '목', '금', '토'][new Date(parts[0], parts[1] - 1, parts[2]).getDay()];
+            document.getElementById('avail-detail-title').textContent = parts[1] + '월 ' + parts[2] + '일 (' + dow + ')';
+            const roster = availRoster();
+            const yesL = [], noL = [], unL = [];
+            roster.forEach(p => { const s = p.days[dateKey]; if (s === 'yes') yesL.push(p); else if (s === 'no') noL.push(p); else unL.push(p); });
+            const mine = (window._availMine || {})[dateKey] || null;
+            const chip = (p) => {
+                const col = (window.enjoyMemberColor && !p.isGuest) ? window.enjoyMemberColor(p.name) : { solid: 'bg-gray-500' };
+                const av = p.photoURL
+                    ? '<img src="' + p.photoURL + '" class="w-6 h-6 rounded-full object-cover" referrerpolicy="no-referrer">'
+                    : '<div class="w-6 h-6 rounded-full ' + (col.solid || 'bg-gray-500') + (p.isGuest ? ' opacity-40' : '') + '"></div>';
+                return '<div class="flex items-center gap-2 py-1">' + av + '<span class="text-[13px] text-white">' + (p.name || '미가입자') + (p.isMe ? ' (나)' : '') + '</span></div>';
+            };
+            const sec = (label, color, list) => '<div class="mb-3"><div class="text-[12px] font-bold ' + color + ' mb-1">' + label + ' ' + list.length + '</div>' +
+                (list.length ? list.map(chip).join('') : '<div class="text-[12px] text-gray-500 py-1">없음</div>') + '</div>';
+            let body = '<div class="bg-white/5 rounded-2xl p-3 mb-4"><div class="text-[12px] text-gray-400 font-bold mb-2">내 가능 여부</div><div class="flex gap-2">' +
+                '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',\'yes\')" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (mine === 'yes' ? 'bg-[#3182F6] text-white' : 'bg-white/10 text-gray-300') + '">가능</button>' +
+                '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',\'no\')" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (mine === 'no' ? 'bg-[#F04452] text-white' : 'bg-white/10 text-gray-300') + '">불가</button>' +
+                '<button onclick="window.haptic&&window.haptic(); window.setMyAvail(\'' + dateKey + '\',null)" class="flex-1 py-2.5 rounded-xl text-[13px] font-bold ' + (!mine ? 'bg-white/20 text-white' : 'bg-white/10 text-gray-300') + '">미정</button>' +
+                '</div></div>';
+            body += sec('가능', 'text-[#3182F6]', yesL) + sec('불가', 'text-[#F04452]', noL) + sec('미정', 'text-gray-400', unL);
+            document.getElementById('avail-detail-body').innerHTML = body;
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        };
+        window.closeAvailDetail = function (e) {
+            if (e && e.currentTarget && e.target !== e.currentTarget) return;
+            const modal = document.getElementById('avail-detail');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        };
+        window.setMyAvail = async function (dateKey, status) {
+            window._availMine = window._availMine || {};
+            if (status === null) delete window._availMine[dateKey];
+            else window._availMine[dateKey] = status;
+            if (window.enjoySync && window.meetingDb && window.enjoyUser) {
+                try {
+                    await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid), { avail: window._availMine }, { merge: true });
+                } catch (e) {}
+            } else {
+                saveMyAvailLocal();
+            }
+            const modal = document.getElementById('avail-detail');
+            if (modal && !modal.classList.contains('hidden')) window.openAvailDetail(dateKey);
+            window.renderAvailability();
         };
 
         /* ===== 커뮤니티(여행 일정 공유) 렌더 — 샘플 피드/표시 전용 ===== */
@@ -2703,7 +2808,7 @@
                     '</div>' +
                     '</div>';
             });
-            html += '<div class="pt-2 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
+            html += '<div class="mt-auto pt-2 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
             wrap.innerHTML = html;
         };
 
@@ -3516,16 +3621,8 @@
                 try { window.renderExpenses(); } catch (e) {}
             }
 
-            // 일정 화면(3)일 때만 전용 서브 메뉴 노출, 그 외에는 기존 하단 메뉴 노출
-            const mainNav = document.getElementById('bottom-nav');
-            const subNav = document.getElementById('schedule-subnav');
-            if (index === 3) {
-                if (mainNav) mainNav.style.display = 'none';
-                if (subNav) subNav.style.display = 'block';
-            } else {
-                if (subNav) subNav.style.display = 'none';
-                if (mainNav) mainNav.style.display = '';
-            }
+            // 일정 화면(3)일 때만 전용 서브 메뉴 노출(모션), 그 외에는 기존 하단 메뉴 노출
+            if (window.setActiveNav) window.setActiveNav(index === 3 ? 'sub' : 'main');
 
             const ind = document.getElementById('nav-indicator');
             const btns = [
@@ -4041,11 +4138,18 @@
                 membersUnsub = window.fsOnSnapshot(window.fsCol('members'), (snap) => {
                     const arr = []; snap.forEach(d => { const v = d.data() || {}; v.uid = d.id; arr.push(v); });
                     lastMembers = arr; renderMembers(); updateProfileCard();
+                    // 스케줄 탭이 열려 있으면 멤버 가능여부 변경을 즉시 반영
+                    try { if (window._schedSub === 'availability' && window.renderAvailability) window.renderAvailability(); } catch (e) {}
                 }, () => {});
             } catch (e) {}
             // 시간 경과(활동→비활동)를 반영하기 위해 주기적으로 다시 그린다.
             if (!decayTimer) decayTimer = setInterval(() => { if (lastMembers.length) renderMembers(); }, 30000);
         }
+
+        // 스케줄(가능여부)용: 가입 멤버 목록 + 각자 등록한 avail
+        window.enjoyJoinedMembers = function () {
+            return (lastMembers || []).filter(m => m && m.name).map(m => ({ uid: m.uid, name: m.name, photoURL: m.photoURL || '', avail: m.avail || {} }));
+        };
 
         // 정식 멤버 전용 서비스 시작 (활동 하트비트 + 멤버/일정/모임통장/스토리 파이어베이스 동기화)
         function startMemberSync() {
