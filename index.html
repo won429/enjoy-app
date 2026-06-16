@@ -448,6 +448,16 @@
                 엔조이 계정(구글)으로 로그인
             </button>
             <button class="lg-guest" onclick="window.haptic && window.haptic(); window.enjoyGuest && window.enjoyGuest()">로그인 없이 둘러보기</button>
+
+            <!-- 광고 (카카오 애드핏) -->
+            <div class="lg-ad">
+                <ins class="kakao_ad_area" style="display:none;"
+                    data-ad-unit="DAN-uEbYtdHZNXbnKtgT"
+                    data-ad-width="320"
+                    data-ad-height="50"></ins>
+                <script type="text/javascript" src="//t1.kakaocdn.net/kas/static/ba.min.js" async></script>
+            </div>
+
             <p id="login-status" class="lg-status text-center"></p>
 
             <!-- 안내 카드 -->
@@ -467,15 +477,6 @@
                     <h3>엔조이 계정이란 무엇인가요?</h3>
                     <p>엔조이 계정은 스토리, 일정, 모임통장, 위치 공유, 여행 기록 등 엔조이의 모든 서비스에 사용하는 계정이에요.</p>
                 </div>
-            </div>
-
-            <!-- 광고 (카카오 애드핏) -->
-            <div class="lg-ad">
-                <ins class="kakao_ad_area" style="display:none;"
-                    data-ad-unit="DAN-uEbYtdHZNXbnKtgT"
-                    data-ad-width="320"
-                    data-ad-height="50"></ins>
-                <script type="text/javascript" src="//t1.kakaocdn.net/kas/static/ba.min.js" async></script>
             </div>
 
             <!-- 하단 카피라이트 -->
@@ -1348,7 +1349,42 @@
                 }, (err) => { console.warn('stories snapshot', err); });
             } catch (e) { console.warn('subscribeStories', e); }
         }
+        // [임시] 게스트/스페셜용 로컬 스토리 저장소 (파이어베이스/Cloudinary 미사용)
+        const LS_STORIES = 'enjoy_local_stories';
+        function blobToDataURL(b) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
+        function saveLocalStories() {
+            try {
+                const now = Date.now();
+                const keep = stories.filter(v => v._local && now - (v.createdAt || 0) < STORY_TTL);
+                localStorage.setItem(LS_STORIES, JSON.stringify(keep));
+            } catch (e) {}
+        }
+        function loadLocalStories() {
+            try {
+                const arr = JSON.parse(localStorage.getItem(LS_STORIES) || '[]') || [];
+                const now = Date.now();
+                stories = arr.filter(v => now - (v.createdAt || 0) < STORY_TTL).sort((a, b) => a.createdAt - b.createdAt);
+            } catch (e) { stories = []; }
+            renderTray();
+        }
+        async function putStoryLocal(p) {
+            const url = await blobToDataURL(p.blob);
+            const createdAt = Date.now();
+            stories.push({
+                type: p.type, url, thumb: p.thumb, ready: true, createdAt,
+                author: window.enjoyProfileName || '나',
+                authorUid: (window.enjoyUser && window.enjoyUser.uid) || 'local',
+                _id: 'loc_' + createdAt + '_' + Math.random().toString(36).slice(2, 6), _local: true
+            });
+            stories.sort((a, b) => a.createdAt - b.createdAt);
+            saveLocalStories();
+            renderTray();
+        }
+        window.enjoyLoadLocalStories = loadLocalStories;
+        window.enjoySubscribeStories = subscribeStories;
+
         async function putStory(p) {
+            if (!window.enjoySync) return putStoryLocal(p);   // 본인 기기에만 저장
             if (!CLOUD_NAME || !UPLOAD_PRESET) throw new Error('Cloudinary 설정(CLOUD_NAME / UPLOAD_PRESET)을 코드 상단에 먼저 입력해 주세요.');
             if (!fbReady()) throw new Error('서버 연결을 기다리는 중이에요. 잠시 후 다시 시도해 주세요.');
             const rt = (p.type === 'video') ? 'video' : 'image';
@@ -1376,6 +1412,8 @@
             });
         }
         async function removeStory(s) {
+            // [임시] 로컬 스토리는 기기 저장소만 갱신 (deleteCurrent가 stories 배열에서 이미 제거함)
+            if (!window.enjoySync || (s && s._local)) { saveLocalStories(); return; }
             // Firestore 색인만 삭제(앱에서 사라짐). Cloudinary 원본 삭제는 API 시크릿 필요 → 서버/자동정리 권장.
             try { if (s && s._id) await window.fsDeleteDoc(window.fsDoc('stories', s._id)); } catch (e) {}
         }
@@ -1966,9 +2004,9 @@
             ['story-camera', 'story-preview', 'story-viewer'].forEach((id) => {
                 const el = $(id); if (el) el.addEventListener('contextmenu', (e) => e.preventDefault());
             });
-            // 모두와 공유되는 스토리: Firebase 실시간 구독 (먼저 트레이를 그려 둘러보기에서도 보이게)
+            // 스토리 트레이 먼저 그림. 멤버는 enjoySubscribeStories()로 Firebase 구독,
+            // 게스트/스페셜은 enjoyLoadLocalStories()로 본인 기기 스토리 로드(로그인 흐름에서 호출).
             renderTray();
-            ensureFirebase().then((ok) => { if (ok) subscribeStories(); });
             setInterval(pruneLocal, 30000); // 24시간 지난 스토리 화면에서 정리
             document.addEventListener('visibilitychange', () => { if (!document.hidden) pruneLocal(); });
         }
@@ -2064,10 +2102,11 @@
             m.classList.add('flex');
         };
         
-        window.saveScheduleToFirebase = async function() { 
-            if (!window.meetingDb) { alert('DB 연결 확인 중...'); return; } 
-            
-            const category = document.getElementById('add-sch-category').value; 
+        window.saveScheduleToFirebase = async function() {
+            // 멤버(동기화 모드)일 때만 DB 연결 필요. 게스트/스페셜은 로컬 저장이므로 통과.
+            if (window.enjoySync && !window.meetingDb) { alert('DB 연결 확인 중...'); return; }
+
+            const category = document.getElementById('add-sch-category').value;
             const startDateStr = document.getElementById('add-sch-start-date').value; 
             let endDateStr = document.getElementById('add-sch-end-date').value; 
             const time = document.getElementById('add-sch-time').value || '하루 종일'; 
@@ -2080,9 +2119,30 @@
             if (!endDateStr) endDateStr = startDateStr;
             if (endDateStr < startDateStr) { alert('종료일이 시작일보다 빠를 수 없습니다.'); return; }
 
-            const newEvent = { type: category, title: title, time: time }; 
-            
-            try { 
+            const newEvent = { type: category, title: title, time: time };
+
+            // [임시] 게스트/스페셜 → 파이어베이스 대신 본인 기기(localStorage)에 저장
+            if (!window.enjoySync) {
+                const data = window.dynamicEvents || {};
+                if (isEdit) {
+                    const oldList = data[editKey];
+                    if (oldList) { oldList.splice(editIdx, 1); if (oldList.length === 0) delete data[editKey]; else data[editKey] = oldList; }
+                }
+                const ls = new Date(startDateStr), le = new Date(endDateStr);
+                for (let d = new Date(ls); d <= le; d.setDate(d.getDate() + 1)) {
+                    const dateKey = d.toISOString().split('T')[0];
+                    const list = data[dateKey] || []; list.push(newEvent); data[dateKey] = list;
+                }
+                window.dynamicEvents = data;
+                window.enjoySaveLocalSchedule && window.enjoySaveLocalSchedule();
+                if (typeof window.renderCalendar === 'function') window.renderCalendar(window.viewYear, window.viewMonth);
+                try { window.renderEnjoyToday(); } catch (e) {}
+                alert(isEdit ? '수정되었습니다!' : '등록되었습니다!');
+                window.closeModal('schedule-modal');
+                return;
+            }
+
+            try {
                 const docRef = window.doc(window.meetingDb, ...window.SCHEDULE_PATH);
                 const docSnap = await window.getDoc(docRef);
                 let data = docSnap.exists() ? docSnap.data() : {};
@@ -2120,11 +2180,28 @@
         window.deleteSchedule = async function() { 
             if(!confirm('정말 삭제하시겠습니까?')) return; 
             
-            const dateKey = document.getElementById('sch-edit-date-key').value; 
-            const index = document.getElementById('sch-edit-index').value; 
-            
-            try { 
-                const docSnap = await window.getDoc(window.doc(window.meetingDb, ...window.SCHEDULE_PATH)); 
+            const dateKey = document.getElementById('sch-edit-date-key').value;
+            const index = document.getElementById('sch-edit-index').value;
+
+            // [임시] 게스트/스페셜 → 본인 기기(localStorage)에서 삭제
+            if (!window.enjoySync) {
+                const data = window.dynamicEvents || {};
+                const list = data[dateKey];
+                if (list) {
+                    list.splice(index, 1);
+                    if (list.length === 0) delete data[dateKey]; else data[dateKey] = list;
+                    window.dynamicEvents = data;
+                    window.enjoySaveLocalSchedule && window.enjoySaveLocalSchedule();
+                    if (typeof window.renderCalendar === 'function') window.renderCalendar(window.viewYear, window.viewMonth);
+                    try { window.renderEnjoyToday(); } catch (e) {}
+                    alert('삭제되었습니다.');
+                    window.closeModal('schedule-modal');
+                }
+                return;
+            }
+
+            try {
+                const docSnap = await window.getDoc(window.doc(window.meetingDb, ...window.SCHEDULE_PATH));
                 if(docSnap.exists()) { 
                     const data = docSnap.data(); 
                     const list = data[dateKey]; 
@@ -3410,7 +3487,9 @@
     <!-- [New] 둘러보기(체험) 모드: 로그인 전 기능 사용 차단 + 로그인 유도 -->
     <script>
     (function () {
-        function isAuthed() { return !!window.meetingAuthed; }
+        // [임시·광고심사용] 둘러보기/스페셜 사용자도 모든 기능을 쓸 수 있게 잠금 해제.
+        // (데이터는 파이어베이스가 아닌 본인 기기에 저장 — enjoySync 분기로 처리)
+        function isAuthed() { return true; }
         function showLoginPrompt() {
             var el = document.getElementById('login-prompt');
             if (el) { el.classList.remove('hidden'); el.classList.add('flex'); }
@@ -3444,10 +3523,45 @@
     })();
     </script>
 
+    <!-- [임시·광고심사용] 로컬(기기 저장) 모드 헬퍼 — 광고 승인 후 이 블록과 관련 분기를 제거하면 원복됩니다. -->
+    <script>
+    (function () {
+        // 정식 멤버 6명 (이 이름들만 파이어베이스와 동기화)
+        window.ENJOY_MEMBERS = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+        window.enjoyIsMemberName = function (n) { return window.ENJOY_MEMBERS.indexOf(n) >= 0; };
+        // true=멤버(파이어베이스 동기화) / false=게스트·스페셜(본인 기기 로컬 저장)
+        window.enjoySync = false;
+
+        // ----- 로컬 일정 저장소 -----
+        window.enjoyLoadLocalSchedule = function () {
+            try { window.dynamicEvents = JSON.parse(localStorage.getItem('enjoy_local_schedule') || '{}') || {}; }
+            catch (e) { window.dynamicEvents = {}; }
+            try { if (window.renderCalendar) window.renderCalendar(window.viewYear, window.viewMonth); } catch (e) {}
+            try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
+        };
+        window.enjoySaveLocalSchedule = function () {
+            try { localStorage.setItem('enjoy_local_schedule', JSON.stringify(window.dynamicEvents || {})); } catch (e) {}
+        };
+
+        // ----- 로컬 프로필 이름 -----
+        window.enjoyLoadLocalProfile = function () { try { return localStorage.getItem('enjoy_local_profile') || null; } catch (e) { return null; } };
+        window.enjoySaveLocalProfile = function (n) { try { localStorage.setItem('enjoy_local_profile', n); } catch (e) {} };
+
+        // 게스트/스페셜 공통: 로컬 데이터 로드 + 로더 숨김
+        window.enjoyEnterLocalMode = function () {
+            window.enjoySync = false;
+            window.enjoyLoadLocalSchedule();
+            try { window.enjoyLoadLocalStories && window.enjoyLoadLocalStories(); } catch (e) {}
+            var ld = document.getElementById('app-loader');
+            if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
+        };
+    })();
+    </script>
+
     <!-- [New] 엔조이 멤버: 프로필 이름(스토리 표시) + 멤버별 스토리/활동상태 통합 트레이 -->
     <script>
     (function () {
-        const MEMBERS = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+        const MEMBERS = window.ENJOY_MEMBERS;
         // 모임통장과 통일된 멤버 프로필 색상 (solid = 사진/스토리 없을 때 단색 원)
         const MEMBER_COLORS = {
             '홍박사': { bg: 'bg-blue-500/20',   text: 'text-blue-400',   solid: 'bg-blue-500',   char: '홍' },
@@ -3499,7 +3613,7 @@
             renameMode = !!isRename;
             const t = $('profile-title'), d = $('profile-desc'), c = $('profile-cancel'), inp = $('profile-input'), st = $('profile-status');
             if (t) t.textContent = isRename ? '프로필 이름 변경' : '프로필 이름을 입력해주세요';
-            if (d) d.innerHTML = isRename ? '새 이름을 입력해주세요. (이미 쓰는 이름은 불가)' : '스토리에 표시될 내 이름이에요.<br><b>한 번 정하면 바꿀 수 없어요.</b>';
+            if (d) d.innerHTML = isRename ? '새 이름을 입력해주세요. (이미 쓰는 이름은 불가)' : '스토리에 표시될 내 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(스페셜)</b>이 붙고, 기록은 본인 기기에만 저장돼요.';
             if (c) c.classList.toggle('hidden', !isRename);     // 변경 모드에서만 취소 가능
             if (inp) inp.value = isRename ? (window.enjoyProfileName || '') : '';
             if (st) st.textContent = '';
@@ -3512,29 +3626,44 @@
         window.enjoyCloseProfile = function () { if (renameMode) closeProfileModal(); };  // 최초 입력은 필수(못 닫음), 변경만 취소 허용
         // 탈퇴: 멤버 문서(이름·프로필) 삭제 후 로그아웃 → 재로그인 시 프로필 재입력
         window.enjoyWithdraw = async function () {
-            if (!fbReady()) return;
-            try { await window.fsDeleteDoc(window.fsDoc('members', window.enjoyUser.uid)); } catch (e) {}
+            try { localStorage.removeItem('enjoy_local_profile'); } catch (e) {}   // 스페셜 로컬 이름 제거
+            if (fbReady()) { try { await window.fsDeleteDoc(window.fsDoc('members', window.enjoyUser.uid)); } catch (e) {} }
             window.enjoyProfileName = null;
             if (window.enjoyLogout) window.enjoyLogout(); else location.reload();
         };
 
         window.enjoySubmitProfile = async function () {
-            const inp = $('profile-input'), st = $('profile-status'); if (!inp || !fbReady()) return;
-            const name = (inp.value || '').trim();
+            const inp = $('profile-input'), st = $('profile-status'); if (!inp) return;
+            let name = (inp.value || '').trim();
             if (!name) { if (st) st.textContent = '이름을 입력해주세요.'; return; }
-            if (MEMBERS.indexOf(name) < 0) { if (st) st.textContent = '등록된 멤버 이름이 아니에요.'; return; }
-            if (st) st.textContent = '확인 중…';
-            const taken = await takenNames();
-            if (taken[name]) { if (st) st.textContent = '이미 사용한 이름이에요.'; return; }
-            try {
-                await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid),
-                    { name: name, lastActive: Date.now(), email: window.enjoyUser.email || '', photoURL: window.enjoyUser.photoURL || '' },
-                    { merge: true });
-                window.enjoyProfileName = name;
-                closeProfileModal();
-                updateProfileCard();
-                renderMembers();
-            } catch (e) { if (st) st.textContent = '저장에 실패했어요. 다시 시도해 주세요.'; }
+
+            // 정식 멤버 6명 → 파이어베이스 동기화 (이름 중복 불가)
+            if (window.enjoyIsMemberName(name)) {
+                if (!fbReady()) { if (st) st.textContent = '연결 확인 중이에요. 잠시 후 다시 시도해 주세요.'; return; }
+                if (st) st.textContent = '확인 중…';
+                const taken = await takenNames();
+                if (taken[name]) { if (st) st.textContent = '이미 사용한 이름이에요.'; return; }
+                try {
+                    await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid),
+                        { name: name, lastActive: Date.now(), email: window.enjoyUser.email || '', photoURL: window.enjoyUser.photoURL || '' },
+                        { merge: true });
+                    window.enjoyProfileName = name;
+                    closeProfileModal();
+                    startMemberSync();     // 멤버 동기화 시작
+                    updateProfileCard();
+                    renderMembers();
+                } catch (e) { if (st) st.textContent = '저장에 실패했어요. 다시 시도해 주세요.'; }
+                return;
+            }
+
+            // 멤버 외 이름 → '(스페셜)' 자동 부착, 본인 기기에만 저장 (파이어베이스 미연동)
+            if (name.indexOf('(스페셜)') < 0) name = name + ' (스페셜)';
+            window.enjoyProfileName = name;
+            window.enjoySaveLocalProfile && window.enjoySaveLocalProfile(name);
+            closeProfileModal();
+            window.enjoyEnterLocalMode && window.enjoyEnterLocalMode();
+            updateProfileCard();
+            renderMembers();
         };
 
         /* ----- 더보기: 내 프로필 카드 (원형 사진/단색, 글자 없음) ----- */
@@ -3584,6 +3713,20 @@
                     '<span class="text-[10px] -mt-1">&nbsp;</span>' +
                 '</button>';
 
+            // [임시] 게스트/스페셜이 올린 로컬 스토리 → '내 스토리'로 표시
+            const myLocal = (window.enjoyStories || []).filter(s => s._local);
+            if (myLocal.length) {
+                const last = myLocal[myLocal.length - 1];
+                const luid = last.authorUid || 'local';
+                const lthumb = last.thumb;
+                const linner = lthumb ? '<img src="' + lthumb + '" class="w-full h-full object-cover rounded-full">' : '<div class="w-full h-full rounded-full bg-gray-500"></div>';
+                html += '<button onclick="window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid(\'' + luid + '\')" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">' +
+                        '<div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[1.5px] enjoy-page-bg">' + linner + '</div></div>' +
+                        '<span class="text-[11px] text-gray-400 font-medium w-full text-center truncate">내 스토리</span>' +
+                        '<span class="text-[10px] -mt-1">&nbsp;</span>' +
+                    '</button>';
+            }
+
             // 멤버 6명 항상 고정 표시
             html += MEMBERS.map(name => {
                 const mem = byName[name];                 // 가입자면 존재
@@ -3632,18 +3775,37 @@
             if (!decayTimer) decayTimer = setInterval(() => { if (lastMembers.length) renderMembers(); }, 30000);
         }
 
-        async function start() {
-            if (started || !fbReady()) return; started = true;
-            await beat();
-            beatTimer = setInterval(beat, BEAT_MS);
+        // 정식 멤버 전용 서비스 시작 (활동 하트비트 + 멤버/일정/모임통장/스토리 파이어베이스 동기화)
+        function startMemberSync() {
+            window.enjoySync = true;
+            beat();
+            if (!beatTimer) beatTimer = setInterval(beat, BEAT_MS);
             document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
             window.addEventListener('focus', beat);
             subscribeMembers();
+            if (window.enjoyEnableSync) window.enjoyEnableSync();             // 일정/모임통장
+            if (window.enjoySubscribeStories) window.enjoySubscribeStories(); // 스토리
+        }
+        window.enjoyStartMemberSync = startMemberSync;
+
+        async function start() {
+            if (started || !fbReady()) return; started = true;
             const myName = await loadMyName();
-            window.enjoyProfileName = myName;
+            if (myName && window.enjoyIsMemberName(myName)) {
+                // 정식 멤버 → 파이어베이스 동기화
+                window.enjoyProfileName = myName;
+                startMemberSync();
+                updateProfileCard();
+                renderMembers();
+                return;
+            }
+            // 멤버가 아니면 로컬(스페셜) 모드 — 본인 기기에만 저장
+            const localName = window.enjoyLoadLocalProfile && window.enjoyLoadLocalProfile();
+            window.enjoyProfileName = localName || null;
+            window.enjoyEnterLocalMode && window.enjoyEnterLocalMode();
             updateProfileCard();
             renderMembers();
-            if (!myName) openProfileModal(false);   // 이름 없으면 필수 입력
+            if (!localName) openProfileModal(false);   // 이름 없으면 필수 입력 ('(스페셜)' 자동 부착)
         }
         window.enjoyOnLogin = start;
         if (window.enjoyUser) start();   // 모듈이 먼저 로그인 처리한 경우 대비
@@ -3707,6 +3869,19 @@
                 const loginChecking = document.getElementById('login-checking');
                 const loginContent  = document.getElementById('login-content');
                 const loginStatus   = document.getElementById('login-status');
+                // 카카오 애드핏: 로그인 화면(컨테이너)이 보이게 된 뒤 광고를 (재)요청한다.
+                // 숨겨진 상태에서 최초 스캔되면 렌더되지 않을 수 있어, 노출 시점에 새로 그린다.
+                const renderLoginAd = () => {
+                    try {
+                        const holder = document.querySelector('#login-content .lg-ad');
+                        if (!holder || holder.querySelector('iframe')) return;   // 이미 렌더됐으면 스킵
+                        holder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="DAN-uEbYtdHZNXbnKtgT" data-ad-width="320" data-ad-height="50"></ins>';
+                        const s = document.createElement('script');
+                        s.type = 'text/javascript'; s.async = true;
+                        s.src = '//t1.kakaocdn.net/kas/static/ba.min.js';
+                        holder.appendChild(s);
+                    } catch (e) {}
+                };
                 const showLoginForm = () => {
                     if (loginScreen)   { loginScreen.style.display = 'block'; }
                     if (loginChecking) loginChecking.style.display = 'none';
@@ -3714,6 +3889,7 @@
                     // 미로그인 상태에서는 데이터 로더를 숨긴다(스피너 무한 회전 방지)
                     const ld = document.getElementById('app-loader');
                     if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
+                    setTimeout(renderLoginAd, 150);   // 컨테이너가 표시된 뒤 광고 요청
                 };
                 const hideLogin = () => { if (loginScreen) loginScreen.style.display = 'none'; };
 
@@ -3741,7 +3917,7 @@
                     location.reload();
                 };
                 // 로그인 없이 둘러보기(체험 모드) — 구경만 가능, 기능 사용 시 로그인 유도
-                window.enjoyGuest = function () { window.isGuest = true; hideLogin(); };
+                window.enjoyGuest = function () { window.isGuest = true; hideLogin(); window.enjoyEnterLocalMode && window.enjoyEnterLocalMode(); };
 
                 // 리다이렉트 로그인 결과 처리(모바일 폴백 후 복귀)
                 try { await getRedirectResult(meetingAuth); } catch (e) { console.warn('redirect result', e); }
@@ -3754,6 +3930,8 @@
                 onAuthStateChanged(meetingAuth, (user) => {
                     if (unsubMeeting) { unsubMeeting(); unsubMeeting = null; }
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
+                    window.enjoySync = false;        // 멤버 확정 전까지는 로컬 모드 기본
+                    window.__enjoySyncOn = false;
 
                     // 구글 계정으로 로그인하지 않았으면 앱을 막고 로그인 화면을 띄운다.
                     if (!user || user.isAnonymous) {
@@ -3762,17 +3940,16 @@
                         showLoginForm();
                         return;
                     }
+                    window.isGuest = false;
                     hideLogin();
                     const emailEl = document.getElementById('more-account-email');
                     if (emailEl && user.email) emailEl.textContent = user.email;
                     window.meetingAuthed = true; // 엔조이 스토리 구독 신호
-                    // 현재 로그인 사용자 정보 공개 + 멤버/현재현황 시스템 시작
+                    // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
-                    if (typeof window.enjoyOnLogin === 'function') { try { window.enjoyOnLogin(); } catch (e) {} }
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
-
                     const checkHideLoader = () => {
                         if (isMeetingLoaded && isScheduleLoaded) {
                             const loader = document.getElementById('app-loader');
@@ -3782,36 +3959,29 @@
                             }
                         }
                     };
-                    
-                    unsubMeeting = onSnapshot(doc(window.meetingDb, ...window.MEETING_PATH), (docSnap) => {
-                        if (docSnap.exists()) { 
-                            if (typeof window.updateMeetingUI === 'function') {
-                                window.updateMeetingUI(docSnap.data()); 
-                            }
-                        }
-                        isMeetingLoaded = true;
-                        checkHideLoader();
-                    }, (error) => { 
-                        console.warn("Meeting snapshot error:", error); 
-                        isMeetingLoaded = true; checkHideLoader();
-                    });
 
-                    unsubSchedule = onSnapshot(doc(window.meetingDb, ...window.SCHEDULE_PATH), (docSnap) => {
-                        if (docSnap.exists()) { 
-                            window.dynamicEvents = docSnap.data();
-                            if (typeof window.renderCalendar === 'function') {
-                                window.renderCalendar(window.viewYear, window.viewMonth);
+                    // 일정/모임통장 파이어베이스 동기화 — 정식 멤버 확정 후에만 호출됨
+                    window.enjoyEnableSync = function () {
+                        if (window.__enjoySyncOn) return; window.__enjoySyncOn = true;
+                        unsubMeeting = onSnapshot(doc(window.meetingDb, ...window.MEETING_PATH), (docSnap) => {
+                            if (docSnap.exists()) {
+                                if (typeof window.updateMeetingUI === 'function') { window.updateMeetingUI(docSnap.data()); }
                             }
-                            try { window.renderEnjoyToday(); } catch (e) {}
-                        } else { 
-                            window.dynamicEvents = {};
-                        }
-                        isScheduleLoaded = true;
-                        checkHideLoader();
-                    }, (error) => { 
-                        console.warn("Schedule snapshot error:", error); 
-                        isScheduleLoaded = true; checkHideLoader();
-                    });
+                            isMeetingLoaded = true; checkHideLoader();
+                        }, (error) => { console.warn("Meeting snapshot error:", error); isMeetingLoaded = true; checkHideLoader(); });
+
+                        unsubSchedule = onSnapshot(doc(window.meetingDb, ...window.SCHEDULE_PATH), (docSnap) => {
+                            if (docSnap.exists()) {
+                                window.dynamicEvents = docSnap.data();
+                                if (typeof window.renderCalendar === 'function') { window.renderCalendar(window.viewYear, window.viewMonth); }
+                                try { window.renderEnjoyToday(); } catch (e) {}
+                            } else { window.dynamicEvents = {}; }
+                            isScheduleLoaded = true; checkHideLoader();
+                        }, (error) => { console.warn("Schedule snapshot error:", error); isScheduleLoaded = true; checkHideLoader(); });
+                    };
+
+                    // 멤버/스페셜 판별 후 동기화(멤버) 또는 로컬 로드(스페셜)는 enjoyOnLogin에서 처리
+                    if (typeof window.enjoyOnLogin === 'function') { try { window.enjoyOnLogin(); } catch (e) {} }
                 });
 
             } catch(e) { console.error("Firebase Init Error:", e); }
