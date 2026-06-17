@@ -650,6 +650,9 @@
                     </div>
                 </section>
 
+                <!-- 광고 (카카오 애드핏) — 로그인 화면 광고와 별개 -->
+                <div id="home-ad" class="flex justify-center min-h-[50px]"></div>
+
                 <!-- 1. 출장엔조이 3화 -->
                 <section>
                     <div class="px-1 mb-2.5">
@@ -992,6 +995,9 @@
 
             <!-- 납부 내역 / 사용 내역 (탭으로 전환) -->
             <div class="border-t border-white/5 pt-5">
+                <!-- 광고 (카카오 애드핏) — 납부/사용 내역 탭 바로 위 -->
+                <div id="meeting-ad" class="flex justify-center mb-3 min-h-[50px]"></div>
+
                 <!-- 탭 -->
                 <div class="flex gap-1 bg-white/5 p-1 rounded-2xl mb-4">
                     <button id="mtab-dues" onclick="window.haptic(); window.switchMeetingTab('dues')" class="meeting-tab mtab-active flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors"><i class="fa-solid fa-coins mr-1.5 text-[11px]"></i>납부 내역</button>
@@ -2547,6 +2553,20 @@
         window.goSchedule = () => { window.closeMorePopover(); window.activeTabIndex = 3; window.updateTabUI(3); }
         window.goMeeting = () => { window.closeMorePopover(); window.activeTabIndex = 4; window.updateTabUI(4); }
 
+        // 카카오 애드핏 광고 표시 (홈/모임통장 — 로그인 화면 광고와 별개 광고단위)
+        // 컨테이너가 보이게 된 시점에 ins+SDK를 새로 넣어 안정적으로 렌더한다. 이미 렌더됐으면(iframe 존재) 스킵.
+        window.enjoyShowAd = function (holderId, adUnit) {
+            try {
+                const holder = document.getElementById(holderId);
+                if (!holder || holder.querySelector('iframe')) return;
+                holder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="' + adUnit + '" data-ad-width="320" data-ad-height="50"></ins>';
+                const s = document.createElement('script');
+                s.type = 'text/javascript'; s.async = true;
+                s.src = '//t1.kakaocdn.net/kas/static/ba.min.js';
+                holder.appendChild(s);
+            } catch (e) {}
+        };
+
         /* ===== 일정 화면 서브 탭 (일정 / 스케줄 / 커뮤니티) ===== */
         window._schedSub = 'calendar';
         window.switchScheduleSub = function (tab) {
@@ -3611,6 +3631,7 @@
             else if(index===2) {
                 home.classList.remove('hidden');
                 initBannerScrollListener();
+                if (window.enjoyShowAd) window.enjoyShowAd('home-ad', 'DAN-I5XORHdPd5Vfu6a2');
             }
             else if(index===3) {
                 sched.classList.remove('hidden');
@@ -3624,6 +3645,7 @@
                 meet.classList.add('flex');
                 window.renderDues(window.currentDuesMonth, window.currentDuesYear);
                 try { window.renderExpenses(); } catch (e) {}
+                if (window.enjoyShowAd) window.enjoyShowAd('meeting-ad', 'DAN-I5XORHdPd5Vfu6a2');
             }
 
             // 일정 화면(3)일 때만 전용 서브 메뉴 노출(모션), 그 외에는 기존 하단 메뉴 노출
