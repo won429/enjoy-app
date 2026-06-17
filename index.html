@@ -2575,13 +2575,14 @@
         window.goSchedule = () => { window.closeMorePopover(); window.activeTabIndex = 3; window.updateTabUI(3); }
         window.goMeeting = () => { window.closeMorePopover(); window.activeTabIndex = 4; window.updateTabUI(4); }
 
-        // 카카오 애드핏 광고 표시 (홈/모임통장 — 로그인 화면 광고와 별개 광고단위)
+        // 카카오 애드핏 광고 표시 (홈/모임통장/커뮤니티 — 로그인 화면 광고와 별개 광고단위)
         // 컨테이너가 보이게 된 시점에 ins+SDK를 새로 넣어 안정적으로 렌더한다. 이미 렌더됐으면(iframe 존재) 스킵.
-        window.enjoyShowAd = function (holderId, adUnit) {
+        window.enjoyShowAd = function (holderId, adUnit, width, height) {
             try {
                 const holder = document.getElementById(holderId);
                 if (!holder || holder.querySelector('iframe')) return;
-                holder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="' + adUnit + '" data-ad-width="320" data-ad-height="50"></ins>';
+                const w = width || 320, h = height || 50;
+                holder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="' + adUnit + '" data-ad-width="' + w + '" data-ad-height="' + h + '"></ins>';
                 const s = document.createElement('script');
                 s.type = 'text/javascript'; s.async = true;
                 s.src = '//t1.kakaocdn.net/kas/static/ba.min.js';
@@ -2861,17 +2862,11 @@
             });
             html += '<div class="mt-auto pt-2 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
             wrap.innerHTML = html;
-            // innerHTML로 삽입된 <script>는 실행되지 않으므로, 광고는 DOM으로 직접 주입한다.
-            try {
-                const adHolder = document.getElementById('community-ad');
-                if (adHolder && !adHolder.querySelector('iframe')) {
-                    adHolder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="DAN-Y60v78Z4ID5hsdjF" data-ad-width="320" data-ad-height="480"></ins>';
-                    const s = document.createElement('script');
-                    s.type = 'text/javascript'; s.async = true;
-                    s.src = '//t1.kakaocdn.net/kas/static/ba.min.js';
-                    adHolder.appendChild(s);
-                }
-            } catch (e) {}
+            // innerHTML로 삽입된 <script>는 실행되지 않으므로, 광고는 홈/모임통장과 동일한 방식(DOM 주입)으로 그린다.
+            // 패널이 레이아웃/표시된 다음 프레임에 요청해 애드핏 스캔이 안정적으로 되도록 한다.
+            requestAnimationFrame(() => {
+                if (window.enjoyShowAd) window.enjoyShowAd('community-ad', 'DAN-Y60v78Z4ID5hsdjF', 320, 480);
+            });
         };
 
         // 더보기 팝오버 (하단 메뉴 더보기 자리에서 통 튀어나오는 메뉴)
@@ -3682,7 +3677,7 @@
                 meet.classList.add('flex');
                 window.renderDues(window.currentDuesMonth, window.currentDuesYear);
                 try { window.renderExpenses(); } catch (e) {}
-                if (window.enjoyShowAd) window.enjoyShowAd('meeting-ad', 'DAN-I5XORHdPd5Vfu6a2');
+                if (window.enjoyShowAd) window.enjoyShowAd('meeting-ad', 'DAN-Jvtr8N7gGvSbJ9V1');
             }
 
             // 일정 화면(3)일 때만 전용 서브 메뉴 노출(모션), 그 외에는 기존 하단 메뉴 노출
