@@ -2834,7 +2834,7 @@
                   days: ['1일차 · 안목해변 커피거리 → 경포호', '2일차 · 정동진 → 주문진 회센터'], likes: 7, comments: 1 }
             ];
             let html = '';
-            posts.forEach(p => {
+            posts.forEach((p, idx) => {
                 const col = colorOf(p.author);
                 html += '<div class="bg-[#1C1C1E] rounded-3xl p-5 mb-4 border border-white/5">' +
                     '<div class="flex items-center gap-3 mb-3">' +
@@ -2854,9 +2854,24 @@
                     '<span><i class="fa-regular fa-comment mr-1"></i>' + p.comments + '</span>' +
                     '</div>' +
                     '</div>';
+                // 첫 번째 글 다음에 광고(카카오 애드핏 320x480) 자리 — 간격은 글 카드와 동일하게
+                if (idx === 0) {
+                    html += '<div id="community-ad" class="flex justify-center mb-4 min-h-[480px]"></div>';
+                }
             });
             html += '<div class="mt-auto pt-2 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
             wrap.innerHTML = html;
+            // innerHTML로 삽입된 <script>는 실행되지 않으므로, 광고는 DOM으로 직접 주입한다.
+            try {
+                const adHolder = document.getElementById('community-ad');
+                if (adHolder && !adHolder.querySelector('iframe')) {
+                    adHolder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="DAN-Y60v78Z4ID5hsdjF" data-ad-width="320" data-ad-height="480"></ins>';
+                    const s = document.createElement('script');
+                    s.type = 'text/javascript'; s.async = true;
+                    s.src = '//t1.kakaocdn.net/kas/static/ba.min.js';
+                    adHolder.appendChild(s);
+                }
+            } catch (e) {}
         };
 
         // 더보기 팝오버 (하단 메뉴 더보기 자리에서 통 튀어나오는 메뉴)
