@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>요금제 안내 및 결제하기</title>
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="icon.png">
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f7f7f4;
+            --sheet: #ffffff;
+            --text: #0d0d0d;
+            --muted: #6f6f6f;
+            --soft: #f4f4f2;
+            --line: #deded8;
+            --line-strong: #101010;
+            --green: #10a37f;
+            --green-soft: #e8f6f1;
+            --shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+            margin: 0;
+        }
+
+        body {
+            min-height: 100dvh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+            letter-spacing: 0;
+            word-break: keep-all;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .app {
+            width: min(100%, 480px);
+            min-height: 100dvh;
+            margin: 0 auto;
+            background: var(--sheet);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 58px;
+            padding: 0 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 0;
+            font-size: 15px;
+            font-weight: 750;
+        }
+
+        .brand img {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            flex: 0 0 auto;
+        }
+
+        .secure {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        main {
+            flex: 1;
+            padding: 28px 18px 134px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 29px;
+            line-height: 1.18;
+            font-weight: 850;
+        }
+
+        .lead {
+            margin: 12px 0 0;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.55;
+            font-weight: 560;
+        }
+
+        .plan-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 26px;
+        }
+
+        .plan-card {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: var(--sheet);
+            color: var(--text);
+            padding: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease, transform 150ms ease;
+        }
+
+        .plan-card.is-selected {
+            border-color: var(--line-strong);
+            box-shadow: 0 0 0 1px var(--line-strong);
+        }
+
+        .plan-card:active {
+            transform: scale(0.99);
+        }
+
+        .plan-card:focus-visible {
+            outline: 3px solid rgba(16, 163, 127, 0.28);
+            outline-offset: 3px;
+        }
+
+        .plan-main {
+            display: grid;
+            grid-template-columns: 24px 1fr auto;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .radio {
+            width: 22px;
+            height: 22px;
+            margin-top: 1px;
+            border: 1.5px solid #b8b8b0;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+        }
+
+        .radio::after {
+            content: "";
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: transparent;
+        }
+
+        .plan-card.is-selected .radio {
+            border-color: var(--green);
+        }
+
+        .plan-card.is-selected .radio::after {
+            background: var(--green);
+        }
+
+        .plan-title {
+            min-width: 0;
+        }
+
+        .plan-title h2 {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.25;
+            font-weight: 830;
+        }
+
+        .plan-title p {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.4;
+            font-weight: 560;
+        }
+
+        .price {
+            padding-left: 6px;
+            white-space: nowrap;
+            font-size: 18px;
+            line-height: 1.25;
+            font-weight: 850;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            height: 22px;
+            margin-top: 10px;
+            padding: 0 8px;
+            border-radius: 999px;
+            background: var(--green-soft);
+            color: var(--green);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .benefits {
+            display: grid;
+            gap: 8px;
+            margin: 14px 0 0 36px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .benefits li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            color: #343431;
+            font-size: 14px;
+            line-height: 1.45;
+            font-weight: 560;
+        }
+
+        .benefits li::before {
+            content: "✓";
+            color: var(--green);
+            font-size: 14px;
+            line-height: 1.45;
+            font-weight: 900;
+            flex: 0 0 auto;
+        }
+
+        .checkout {
+            margin-top: 22px;
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: var(--soft);
+        }
+
+        .checkout-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            color: #343431;
+            font-size: 14px;
+            line-height: 1.4;
+            font-weight: 650;
+        }
+
+        .checkout-row + .checkout-row {
+            margin-top: 10px;
+        }
+
+        .checkout-row strong {
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 820;
+            text-align: right;
+        }
+
+        .payment {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-top: 18px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: var(--sheet);
+        }
+
+        .payment-copy {
+            min-width: 0;
+        }
+
+        .payment-copy span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .payment-copy strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 15px;
+            line-height: 1.25;
+            font-weight: 820;
+        }
+
+        .payment-mark {
+            width: 42px;
+            height: 28px;
+            border-radius: 8px;
+            background: #111111;
+            color: #ffffff;
+            display: grid;
+            place-items: center;
+            font-size: 11px;
+            font-weight: 850;
+            flex: 0 0 auto;
+        }
+
+        .bottom-bar {
+            position: fixed;
+            left: 50%;
+            bottom: 0;
+            z-index: 10;
+            width: min(100%, 480px);
+            transform: translateX(-50%);
+            padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .total {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 10px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .total strong {
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .pay-button {
+            width: 100%;
+            min-height: 54px;
+            border: 0;
+            border-radius: 999px;
+            background: #111111;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 850;
+            cursor: pointer;
+            transition: transform 150ms ease, background 150ms ease;
+        }
+
+        .pay-button:active {
+            transform: scale(0.985);
+            background: #000000;
+        }
+
+        .pay-button:focus-visible {
+            outline: 3px solid rgba(16, 163, 127, 0.28);
+            outline-offset: 3px;
+        }
+
+        .notice {
+            margin: 9px 0 0;
+            min-height: 18px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.4;
+            text-align: center;
+            font-weight: 620;
+        }
+
+        .notice.is-done {
+            color: var(--green);
+            font-weight: 750;
+        }
+
+        @media (max-width: 360px) {
+            main {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .topbar,
+            .bottom-bar {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .plan-main {
+                grid-template-columns: 24px 1fr;
+            }
+
+            .price {
+                grid-column: 2;
+                padding-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="topbar">
+            <div class="brand">
+                <img src="icon.png" alt="엔조이">
+                <span>엔조이</span>
+            </div>
+            <div class="secure">보안 결제</div>
+        </header>
+
+        <main>
+            <p class="eyebrow">멤버십</p>
+            <h1>요금제를 선택하세요</h1>
+            <p class="lead">원하는 혜택을 고르고 아래에서 결제를 진행하세요.</p>
+
+            <section class="plan-list" aria-label="요금제 목록">
+                <button class="plan-card is-selected" type="button" data-plan="basic">
+                    <div class="plan-main">
+                        <span class="radio" aria-hidden="true"></span>
+                        <div class="plan-title">
+                            <h2>베이직</h2>
+                            <p>가볍게 광고만 제거</p>
+                        </div>
+                        <div class="price">100원</div>
+                    </div>
+                    <ul class="benefits">
+                        <li>광고제거</li>
+                    </ul>
+                </button>
+
+                <button class="plan-card" type="button" data-plan="plus">
+                    <div class="plan-main">
+                        <span class="radio" aria-hidden="true"></span>
+                        <div class="plan-title">
+                            <h2>플러스</h2>
+                            <p>할인까지 챙기는 기본 추천</p>
+                            <span class="badge">추천</span>
+                        </div>
+                        <div class="price">200원</div>
+                    </div>
+                    <ul class="benefits">
+                        <li>광고제거</li>
+                        <li>모임비 100원 할인</li>
+                    </ul>
+                </button>
+
+                <button class="plan-card" type="button" data-plan="premium">
+                    <div class="plan-main">
+                        <span class="radio" aria-hidden="true"></span>
+                        <div class="plan-title">
+                            <h2>프리미엄</h2>
+                            <p>할인과 면제권까지 한 번에</p>
+                        </div>
+                        <div class="price">10,000원</div>
+                    </div>
+                    <ul class="benefits">
+                        <li>광고제거</li>
+                        <li>모임비 1000원 할인</li>
+                        <li>벌금면제권 1개</li>
+                    </ul>
+                </button>
+            </section>
+
+            <section class="checkout" aria-label="결제 요약">
+                <div class="checkout-row">
+                    <span>선택한 요금제</span>
+                    <strong id="selected-name">베이직</strong>
+                </div>
+                <div class="checkout-row">
+                    <span>결제 금액</span>
+                    <strong id="selected-price">100원</strong>
+                </div>
+                <div class="payment">
+                    <div class="payment-copy">
+                        <span>결제 수단</span>
+                        <strong>간편 결제</strong>
+                    </div>
+                    <div class="payment-mark">PAY</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="bottom-bar">
+        <div class="total">
+            <span>오늘 결제</span>
+            <strong id="total-price">100원</strong>
+        </div>
+        <button class="pay-button" type="button" id="pay-button">베이직 결제하기</button>
+        <p class="notice" id="notice">요금제를 선택한 뒤 결제하기를 눌러주세요.</p>
+    </div>
+
+    <script>
+        const plans = {
+            basic: {
+                name: "베이직",
+                price: 100
+            },
+            plus: {
+                name: "플러스",
+                price: 200
+            },
+            premium: {
+                name: "프리미엄",
+                price: 10000
+            }
+        };
+
+        const cards = document.querySelectorAll(".plan-card");
+        const selectedName = document.getElementById("selected-name");
+        const selectedPrice = document.getElementById("selected-price");
+        const totalPrice = document.getElementById("total-price");
+        const payButton = document.getElementById("pay-button");
+        const notice = document.getElementById("notice");
+
+        let selectedPlan = "basic";
+
+        function formatWon(amount) {
+            return amount.toLocaleString("ko-KR") + "원";
+        }
+
+        function selectPlan(planKey) {
+            const plan = plans[planKey];
+            selectedPlan = planKey;
+
+            cards.forEach((card) => {
+                const isSelected = card.dataset.plan === planKey;
+                card.classList.toggle("is-selected", isSelected);
+                card.setAttribute("aria-pressed", String(isSelected));
+            });
+
+            selectedName.textContent = plan.name;
+            selectedPrice.textContent = formatWon(plan.price);
+            totalPrice.textContent = formatWon(plan.price);
+            payButton.textContent = `${plan.name} 결제하기`;
+            notice.classList.remove("is-done");
+            notice.textContent = "요금제를 선택한 뒤 결제하기를 눌러주세요.";
+        }
+
+        cards.forEach((card) => {
+            card.addEventListener("click", () => selectPlan(card.dataset.plan));
+        });
+
+        payButton.addEventListener("click", () => {
+            const plan = plans[selectedPlan];
+            notice.classList.add("is-done");
+            notice.textContent = `${plan.name} ${formatWon(plan.price)} 결제 화면입니다.`;
+        });
+
+        selectPlan(selectedPlan);
+    </script>
+</body>
+</html>
