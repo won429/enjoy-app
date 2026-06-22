@@ -1135,7 +1135,7 @@
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(confirm('새로운 버전인 우리의 발자취가 있음에도 불구하고 들어가시겠습니까?')) window.goToTravel();" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
                     <div class="w-9 h-9 rounded-[12px] bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-plane-departure"></i></div>
                     <div class="flex-1 min-w-0">
-                        <div class="text-[14px] font-bold text-white leading-tight">여행 기록</div>
+                        <div class="text-[14px] font-bold text-white leading-tight">우리 학교</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">지난 추억 떠올리기</div>
                     </div>
                 </button>
@@ -1181,14 +1181,6 @@
                     </div>
                 </button>
                 <div class="h-px bg-white/10 my-1 mx-2"></div>
-                <!-- 새로운 기능 준비 중 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.showSecretModal()" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-gift"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-[14px] font-bold text-white leading-tight">새로운 기능 준비 중</div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">어떤 서비스가 추가될까요?</div>
-                    </div>
-                </button>
                 <!-- 로그아웃 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(confirm('로그아웃 하시겠어요?')) window.enjoyLogout && window.enjoyLogout();" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
                     <div class="w-9 h-9 rounded-[12px] bg-gray-500/15 text-gray-300 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
@@ -1379,6 +1371,26 @@
                 </div>
             </div>
         </div>
+
+        <div class="absolute left-0 right-0 bottom-0 z-20 px-4 pb-safe-area pointer-events-none">
+            <button id="story-viewers-btn" onclick="window.haptic(); window.EnjoyStory.openViewersSheet()" class="hidden pointer-events-auto mb-4 h-10 px-4 rounded-full bg-black/45 backdrop-blur-sm text-white text-[13px] font-bold items-center gap-2 active:scale-95 transition-transform">
+                <i class="fa-solid fa-eye text-[13px]"></i>
+                <span id="story-viewers-count">조회 0</span>
+            </button>
+        </div>
+
+        <div id="story-viewers-sheet" class="hidden absolute inset-0 z-40 bg-black/45 items-end" onclick="window.EnjoyStory.closeViewersSheet(true)">
+            <div class="w-full max-h-[58vh] rounded-t-[26px] bg-[#1C1C1E] border-t border-white/10 p-5 pb-safe-area shadow-2xl" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-white text-[17px] font-extrabold leading-tight">본 사람</h3>
+                        <p id="story-viewers-subtitle" class="text-white/45 text-[12px] font-medium mt-1">조회 0</p>
+                    </div>
+                    <button onclick="window.haptic(); window.EnjoyStory.closeViewersSheet(true)" class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="story-viewers-list" class="max-h-[42vh] overflow-y-auto scrollbar-hide space-y-2"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1401,12 +1413,14 @@
         let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
         let viewerZoom = null, previewZoom = null; // 확대/축소 컨트롤러
         let viewList = [], viewUid = null;         // 현재 보고 있는 스토리 묶음(멤버별)
+        const viewedStoryKeys = {};
 
         const $ = (id) => document.getElementById(id);
         const openOverlay  = (el) => { el.classList.remove('hidden'); el.classList.add('flex'); };
         const closeOverlay = (el) => { el.classList.add('hidden'); el.classList.remove('flex'); };
         const mShow = (el) => el.classList.remove('hidden');
         const mHide = (el) => el.classList.add('hidden');
+        const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
         /* ---------- 공유 저장소 (Cloudinary 미디어 + Firestore 색인) ----------
            미디어 파일은 Cloudinary(무료 25GB)에 업로드, 공유용 메타데이터/URL만 Firestore에.
@@ -1452,6 +1466,7 @@
                     if (viewerIdx > viewList.length - 1) viewerIdx = viewList.length - 1;
                     buildBars(); showSegment(viewerIdx);
                 }
+                updateViewersButton(viewList[viewerIdx]);
             }
         }
         function subscribeStories() {
@@ -1917,6 +1932,105 @@
                 '<div class="flex-1 h-[2.5px] bg-white/30 rounded-full overflow-hidden"><div class="story-bar-fill h-full bg-white rounded-full" style="width:0%"></div></div>'
             ).join('');
         }
+        function isMyStory(s) {
+            const u = window.enjoyUser;
+            return !!(u && s && ((s.authorUid && s.authorUid === u.uid) || (!s.authorUid && s.author === window.enjoyProfileName)));
+        }
+        function viewerEntries(s) {
+            const raw = (s && s.viewers) || {};
+            const authorUid = s && s.authorUid;
+            let arr = [];
+            if (Array.isArray(raw)) arr = raw;
+            else if (raw && typeof raw === 'object') arr = Object.keys(raw).map(uid => Object.assign({ uid }, raw[uid] || {}));
+            return arr
+                .filter(v => v && v.uid !== authorUid)
+                .sort((a, b) => (b.viewedAt || 0) - (a.viewedAt || 0));
+        }
+        function viewedAtText(t) {
+            const diff = Math.max(0, Date.now() - (t || 0));
+            const m = Math.floor(diff / 60000);
+            if (m < 1) return '방금 봄';
+            if (m < 60) return m + '분 전';
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + '시간 전';
+            return Math.floor(h / 24) + '일 전';
+        }
+        function renderViewersSheet(s) {
+            const list = $('story-viewers-list'), sub = $('story-viewers-subtitle');
+            if (!list || !sub) return;
+            const entries = viewerEntries(s || viewList[viewerIdx]);
+            sub.textContent = '조회 ' + entries.length;
+            if (!entries.length) {
+                list.innerHTML = '<div class="py-8 text-center text-white/45 text-[13px] font-medium">아직 본 사람이 없어요.</div>';
+                return;
+            }
+            list.innerHTML = entries.map(v => {
+                const name = v.name || v.email || '알 수 없음';
+                const col = (window.enjoyMemberColor && v.name) ? window.enjoyMemberColor(v.name) : null;
+                const avatar = v.photoURL
+                    ? '<img src="' + esc(v.photoURL) + '" class="w-full h-full object-cover" referrerpolicy="no-referrer">'
+                    : '<div class="w-full h-full rounded-full ' + (col ? col.solid : 'bg-gray-500') + '"></div>';
+                return '<div class="flex items-center gap-3 p-2 rounded-2xl bg-white/5">' +
+                        '<div class="w-10 h-10 rounded-full overflow-hidden shrink-0">' + avatar + '</div>' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="text-white text-[14px] font-bold truncate">' + esc(name) + '</div>' +
+                            '<div class="text-white/45 text-[11px] font-medium mt-0.5">' + viewedAtText(v.viewedAt) + '</div>' +
+                        '</div>' +
+                    '</div>';
+            }).join('');
+        }
+        function updateViewersButton(s) {
+            const btn = $('story-viewers-btn'), cnt = $('story-viewers-count');
+            if (!btn || !cnt) return;
+            if (!s || s._local || !isMyStory(s)) {
+                btn.classList.add('hidden');
+                btn.classList.remove('flex');
+                closeViewersSheet(false);
+                return;
+            }
+            cnt.textContent = '조회 ' + viewerEntries(s).length;
+            btn.classList.remove('hidden');
+            btn.classList.add('flex');
+            renderViewersSheet(s);
+        }
+        async function markStoryViewed(s) {
+            const u = window.enjoyUser;
+            if (!s || s._local || !s._id || !u || !window.enjoySync || !fbReady() || isMyStory(s)) return;
+            if (s.viewers && s.viewers[u.uid]) return;
+            const key = s._id + ':' + u.uid;
+            if (viewedStoryKeys[key]) return;
+            viewedStoryKeys[key] = 1;
+            const viewer = {
+                uid: u.uid,
+                name: window.enjoyProfileName || u.displayName || '이름 없음',
+                email: u.email || '',
+                photoURL: u.photoURL || '',
+                viewedAt: Date.now()
+            };
+            if (!s.viewers || Array.isArray(s.viewers)) s.viewers = {};
+            s.viewers[u.uid] = viewer;
+            try {
+                const viewers = {};
+                viewers[u.uid] = viewer;
+                await window.fsSetDoc(window.fsDoc('stories', s._id), { viewers }, { merge: true });
+            } catch (e) {
+                delete viewedStoryKeys[key];
+            }
+        }
+        function openViewersSheet() {
+            const s = viewList[viewerIdx];
+            if (!s || s._local || !isMyStory(s)) return;
+            clearTimeout(viewerTimer);
+            const vid = $('story-viewer-video');
+            if (vid && !vid.classList.contains('hidden')) vid.pause();
+            renderViewersSheet(s);
+            openOverlay($('story-viewers-sheet'));
+        }
+        function closeViewersSheet(resume) {
+            const sheet = $('story-viewers-sheet');
+            if (sheet) closeOverlay(sheet);
+            if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
+        }
         // 멤버별 스토리 보기 (uid 없으면 전체)
         function openViewerByUid(uid) {
             viewUid = uid || null;
@@ -1936,6 +2050,7 @@
         let segToken = 0;
         function showSegment(idx) {
             clearTimeout(viewerTimer);
+            closeViewersSheet(false);
             if (idx < 0) idx = 0;
             if (idx > viewList.length - 1) { closeViewer(); return; }
             viewerIdx = idx;
@@ -1957,6 +2072,8 @@
                 if (photo) { av.className = 'w-7 h-7 rounded-full overflow-hidden'; av.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover" referrerpolicy="no-referrer">'; }
                 else { av.innerHTML = ''; av.className = 'w-7 h-7 rounded-full ' + (col ? col.solid : 'bg-gray-500'); }
             }
+            updateViewersButton(s);
+            markStoryViewed(s);
 
             const token = ++segToken;
             vid.pause(); vid.onended = null; vid.onloadedmetadata = null; vid.oncanplay = null; vid.onerror = null; vid.removeAttribute('src'); mHide(vid);
@@ -1983,6 +2100,7 @@
         function prev() { showSegment(viewerIdx > 0 ? viewerIdx - 1 : 0); }
         function closeViewer() {
             clearTimeout(viewerTimer);
+            closeViewersSheet(false);
             if (viewerZoom) viewerZoom.reset();
             const vid = $('story-viewer-video');
             vid.pause(); vid.onended = null; vid.removeAttribute('src');
@@ -1994,6 +2112,7 @@
             if (!s) return;
             if (!confirm('이 스토리를 모두에게서 삭제할까요?')) return;
             clearTimeout(viewerTimer);
+            closeViewersSheet(false);
             viewList.splice(viewerIdx, 1);                 // 보기 목록에서 즉시 제거
             const gi = stories.indexOf(s); if (gi >= 0) stories.splice(gi, 1); // 전체 목록에서도 제거
             removeStory(s);                                // 서버(Firestore)에서 삭제
@@ -2130,7 +2249,8 @@
 
         window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post, pickGallery,
                               setZoom, savePreview, saveCurrent,
-                              openViewer, openViewerByUid, prev, next, closeViewer, deleteCurrent };
+                              openViewer, openViewerByUid, prev, next, closeViewer, deleteCurrent,
+                              openViewersSheet, closeViewersSheet };
     })();
     </script>
 
