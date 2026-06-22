@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>우리 학교</title>
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="icon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+            background: #000;
+            color: #fff;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+        .enjoy-page { background: #000; color: #fff; }
+        .pt-safe { padding-top: max(20px, env(safe-area-inset-top)); }
+        .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border-radius: 24px;
+        }
+        .liquid-glass {
+            position: relative;
+            isolation: isolate;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 18px 52px rgba(0, 0, 0, 0.35), 0 6px 16px rgba(0, 0, 0, 0.22);
+            -webkit-backdrop-filter: blur(20px) saturate(1.6);
+            backdrop-filter: blur(20px) saturate(1.6);
+            overflow: hidden;
+        }
+        .fade-in-up { animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(16px); }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .nav-back { width: 64px; }
+        .school-nav-shell { width: min(420px, calc(100vw - 20px)); }
+        .school-scroll { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+        .school-scroll-track { position: relative; display: flex; gap: 4px; min-width: max-content; padding: 0; }
+        .school-item { width: 68px; }
+        .nav-back i, .school-item i {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .school-item span { max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .school-item.active i,
+        .school-item.active span { color: #fff; font-weight: 800; }
+        #school-indicator { width: 68px; transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
+        .school-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            min-height: 100vh;
+            background: #000;
+            color: #fff;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .school-placeholder {
+            min-height: 100vh;
+            padding: max(56px, env(safe-area-inset-top)) 20px 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .notice-screen {
+            min-height: 100vh;
+            padding: max(28px, env(safe-area-inset-top)) 20px 122px;
+        }
+        .notice-header {
+            padding-top: 10px;
+        }
+        .notice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .notice-card {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 22px;
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            padding: 17px;
+            text-align: left;
+        }
+        .notice-card:active { transform: scale(0.985); }
+        .notice-meta {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #8B95A1;
+            font-size: 11.5px;
+            font-weight: 800;
+        }
+        .notice-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 999px;
+            background: currentColor;
+            opacity: .55;
+        }
+        .notice-title {
+            margin-top: 8px;
+            font-size: 16px;
+            line-height: 1.35;
+            font-weight: 900;
+            letter-spacing: 0;
+            color: #fff;
+        }
+        .notice-summary {
+            margin-top: 7px;
+            color: #A1A1A6;
+            font-size: 13px;
+            line-height: 1.45;
+            font-weight: 650;
+        }
+        .notice-action {
+            margin-top: 13px;
+            color: #3182F6;
+            font-size: 12.5px;
+            font-weight: 900;
+        }
+        .state-card {
+            min-height: 100vh;
+            padding: max(56px, env(safe-area-inset-top)) 20px 124px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            color: #fff;
+        }
+        .setup-card {
+            width: 100%;
+            max-width: 360px;
+            border-radius: 28px;
+            padding: 24px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 16px 44px rgba(0,0,0,0.32);
+            text-align: center;
+        }
+        .setup-icon {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .state-copy,
+        .notice-subcopy,
+        .placeholder-copy { color: #A1A1A6; }
+        .notice-back-btn {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+        .detail-summary { color: #D1D5DB; }
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 3px solid rgba(49,130,246,0.18);
+            border-top-color: #3182F6;
+            animation: spin .8s linear infinite;
+            margin: 0 auto 14px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (prefers-color-scheme: light) {
+            body, .enjoy-page { background: #f2f4f6; color: #141414; }
+            .text-white { color: #141414 !important; }
+            .text-gray-300 { color: rgba(20, 20, 20, 0.72) !important; }
+            .text-white\/35 { color: rgba(20, 20, 20, 0.35) !important; }
+            .school-screen, .state-card {
+                background: #f7f8fa;
+                color: #141414;
+            }
+            .glass-card {
+                background: rgba(255, 255, 255, 0.8);
+                border-color: rgba(0, 0, 0, 0.06);
+                box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+            }
+            .notice-card, .setup-card {
+                background: rgba(255,255,255,0.86);
+                border-color: rgba(0,0,0,0.06);
+                box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+            }
+            .notice-title { color: #141414; }
+            .notice-meta,
+            .notice-summary,
+            .state-copy,
+            .notice-subcopy,
+            .placeholder-copy { color: #6B7684; }
+            .detail-summary { color: #4E5968; }
+            .notice-back-btn {
+                background: rgba(0,0,0,0.05);
+                color: #141414;
+            }
+            .setup-icon {
+                background: rgba(0,0,0,0.1);
+                color: #141414;
+            }
+            .liquid-glass {
+                border-color: rgba(0, 0, 0, 0.08);
+                box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 3px 10px rgba(0, 0, 0, 0.08);
+            }
+            #school-indicator {
+                background: rgba(0, 0, 0, 0.12) !important;
+                border-color: rgba(0, 0, 0, 0.06) !important;
+            }
+        }
+        .school-nav-shell.nav-on-light {
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14), 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        .school-nav-shell.nav-on-light .text-white,
+        .school-nav-shell.nav-on-light .text-gray-300 {
+            color: #141414 !important;
+        }
+        .school-nav-shell.nav-on-light [class*="bg-white/10"] {
+            background-color: rgba(0, 0, 0, 0.08) !important;
+        }
+        .school-nav-shell.nav-on-light #school-indicator {
+            background: rgba(0, 0, 0, 0.12) !important;
+            border-color: rgba(0, 0, 0, 0.06) !important;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+        }
+        .school-nav-shell.nav-on-light .bg-white\/10 {
+            background-color: rgba(0, 0, 0, 0.12) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="enjoy-page min-h-screen w-full max-w-md mx-auto relative overflow-x-hidden">
+        <main id="school-panel" class="school-screen">
+        </main>
+
+        <nav id="school-bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 select-none">
+            <div class="school-nav-shell liquid-glass flex items-center rounded-full p-1.5 gap-1 relative">
+                <button onclick="window.haptic(); location.href='index.html';" class="nav-back shrink-0 relative z-10 py-2 rounded-full active:scale-95 transition-transform" aria-label="뒤로가기">
+                    <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                        <i class="fa-solid fa-chevron-left text-base text-gray-300 transition-colors" aria-hidden="true"></i>
+                        <span class="text-[10px] font-medium text-gray-300">뒤로</span>
+                    </div>
+                </button>
+
+                <div class="h-9 w-px bg-white/10 shrink-0"></div>
+
+                <div id="school-nav-scroll" class="school-scroll scrollbar-hide">
+                    <div id="school-nav-track" class="school-scroll-track">
+                        <div id="school-indicator" class="absolute top-0 bottom-0 left-0 w-[68px] bg-white/45 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full backdrop-blur-[2px] border border-white/20 z-0"></div>
+                        <button data-school="andong" onclick="setSchool('andong')" class="school-item active relative z-10 py-2 rounded-full active:scale-95 transition-transform">
+                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                                <i class="fa-solid fa-building-columns text-base text-white transition-colors" aria-hidden="true"></i>
+                                <span class="text-[10px] font-bold text-white">안동</span>
+                            </div>
+                        </button>
+                        <button data-school="woosong" onclick="setSchool('woosong')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
+                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
+                                <span class="text-[10px] font-medium text-gray-300">우송</span>
+                            </div>
+                        </button>
+                        <button data-school="gyeongsang" onclick="setSchool('gyeongsang')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
+                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
+                                <span class="text-[10px] font-medium text-gray-300">경상</span>
+                            </div>
+                        </button>
+                        <button data-school="silla" onclick="setSchool('silla')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
+                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
+                                <span class="text-[10px] font-medium text-gray-300">신라</span>
+                            </div>
+                        </button>
+                        <button data-school="gwangju" onclick="setSchool('gwangju')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
+                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
+                                <span class="text-[10px] font-medium text-gray-300">광주</span>
+                            </div>
+                        </button>
+                        <button data-school="yeungnam" onclick="setSchool('yeungnam')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
+                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
+                                <span class="text-[10px] font-medium text-gray-300">영남</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        window.haptic = function () { if (navigator.vibrate) navigator.vibrate(10); };
+        const SCHOOL_NOTICE_API = 'https://enjoy-school-notices.sungwon4867.workers.dev';
+
+        const schools = {
+            andong: {
+                title: '국립경국대(안동캠)',
+                subtitle: '안동캠퍼스 공지 바로 확인',
+                accent: 'text-emerald-400',
+                query: '국립경국대학교 안동캠퍼스',
+                apiSchool: 'andong',
+                lightNav: true
+            },
+            woosong: {
+                title: '우송대학교',
+                subtitle: '우송대 공지 바로 확인',
+                accent: 'text-blue-400',
+                query: '우송대학교',
+                apiSchool: 'woosong',
+                lightNav: true
+            },
+            gyeongsang: {
+                title: '경상국립대학교',
+                subtitle: '경상대 공지 바로 확인',
+                accent: 'text-sky-400',
+                query: '경상국립대학교',
+                apiSchool: 'gyeongsang',
+                lightNav: true
+            },
+            silla: {
+                title: '신라대학교',
+                subtitle: '신라대 공지 바로 확인',
+                accent: 'text-purple-400',
+                query: '신라대학교',
+                apiSchool: 'silla',
+                lightNav: true
+            },
+            gwangju: {
+                title: '광주대학교',
+                subtitle: '광주대 공지 바로 확인',
+                accent: 'text-amber-400',
+                query: '광주대학교',
+                apiSchool: 'gwangju',
+                lightNav: true
+            },
+            yeungnam: {
+                title: '영남대학교',
+                subtitle: '영남대 공지 바로 확인',
+                accent: 'text-lime-400',
+                query: '영남대학교',
+                apiSchool: 'yeungnam',
+                lightNav: true
+            }
+        };
+
+        let activeId = 'andong';
+        const $ = (id) => document.getElementById(id);
+        const lightModeQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : { matches: false };
+
+        let renderToken = 0;
+        let currentNotices = [];
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function apiConfigured() {
+            return SCHOOL_NOTICE_API && SCHOOL_NOTICE_API.indexOf('YOUR_WORKER_SUBDOMAIN') < 0;
+        }
+
+        function formatDate(value) {
+            if (!value) return '';
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return '';
+            return (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+        }
+
+        function showState(title, desc, actionHtml) {
+            $('school-panel').innerHTML =
+                '<div class="state-card">' +
+                    '<div class="setup-card">' +
+                        '<div class="setup-icon mx-auto w-14 h-14 rounded-2xl flex items-center justify-center">' +
+                            '<i class="fa-solid fa-building-columns text-xl" aria-hidden="true"></i>' +
+                        '</div>' +
+                        '<h2 class="mt-5 text-[22px] font-black tracking-tight">' + escapeHtml(title) + '</h2>' +
+                        '<p class="state-copy mt-2 text-[13.5px] font-semibold leading-relaxed break-keep">' + escapeHtml(desc) + '</p>' +
+                        (actionHtml || '') +
+                    '</div>' +
+                '</div>';
+        }
+
+        function showLoading(school) {
+            $('school-panel').innerHTML =
+                '<div class="state-card">' +
+                    '<div class="setup-card">' +
+                        '<div class="spinner"></div>' +
+                        '<h2 class="text-[20px] font-black tracking-tight">' + escapeHtml(school.title) + '</h2>' +
+                        '<p class="state-copy mt-2 text-[13.5px] font-semibold leading-relaxed">Notion 공지를 불러오는 중이에요.</p>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        function renderNotices(school, notices) {
+            currentNotices = notices || [];
+            const countText = currentNotices.length ? currentNotices.length + '개의 공지' : '공지 없음';
+            $('school-panel').innerHTML =
+                '<div class="notice-screen">' +
+                    '<section class="notice-header">' +
+                        '<p class="text-[11px] font-bold text-[#3182F6] tracking-widest uppercase">SCHOOL NOTICE</p>' +
+                        '<h1 class="mt-1 text-[28px] font-black tracking-tight leading-tight">' + escapeHtml(school.title) + '</h1>' +
+                        '<p class="notice-subcopy mt-2 text-[13.5px] font-semibold leading-relaxed break-keep">' + escapeHtml(countText) + '를 Notion에서 가져왔어요.</p>' +
+                    '</section>' +
+                    '<section class="notice-list">' +
+                        (currentNotices.length ? currentNotices.map(renderNoticeCard).join('') :
+                            '<div class="notice-card text-center"><div class="notice-title">아직 표시할 공지가 없어요.</div><div class="notice-summary">Notion 데이터베이스에 글을 추가하면 여기에 나타나요.</div></div>') +
+                    '</section>' +
+                '</div>';
+        }
+
+        function renderNoticeCard(notice, index) {
+            const date = formatDate(notice.date || notice.createdAt);
+            const category = notice.category || '공지';
+            const summary = notice.summary ? '<div class="notice-summary">' + escapeHtml(notice.summary) + '</div>' : '';
+            const action = '<div class="notice-action">사이트 안에서 보기</div>';
+            return '<button type="button" class="notice-card transition-transform" data-index="' + index + '" onclick="openNoticeCard(this)">' +
+                '<div class="notice-meta">' +
+                    '<span>' + escapeHtml(category) + '</span>' +
+                    (date ? '<span class="notice-dot"></span><span>' + escapeHtml(date) + '</span>' : '') +
+                '</div>' +
+                '<div class="notice-title">' + escapeHtml(notice.title || '제목 없음') + '</div>' +
+                summary +
+                action +
+            '</button>';
+        }
+
+        function openNoticeCard(el) {
+            const index = Number(el && el.dataset ? el.dataset.index : -1);
+            const notice = currentNotices[index];
+            if (!notice) return;
+            renderNoticeDetail(notice);
+        }
+
+        function renderNoticeDetail(notice) {
+            const school = schools[activeId] || schools.andong;
+            const date = formatDate(notice.date || notice.createdAt);
+            const category = notice.category || '공지';
+            const summary = notice.summary || '상세 내용은 아직 등록되지 않았어요.';
+            $('school-panel').innerHTML =
+                '<div class="notice-screen">' +
+                    '<section class="notice-header">' +
+                        '<button type="button" onclick="renderNotices(schools[activeId] || schools.andong, currentNotices)" class="notice-back-btn mb-5 px-4 py-2 rounded-full text-[13px] font-black active:scale-95 transition-transform inline-flex items-center gap-1.5"><i class="fa-solid fa-chevron-left text-[12px]" aria-hidden="true"></i>목록으로</button>' +
+                        '<p class="text-[11px] font-bold text-[#3182F6] tracking-widest uppercase">' + escapeHtml(school.title) + '</p>' +
+                        '<h1 class="mt-2 text-[26px] font-black tracking-tight leading-tight break-keep">' + escapeHtml(notice.title || '제목 없음') + '</h1>' +
+                        '<div class="notice-meta mt-3">' +
+                            '<span>' + escapeHtml(category) + '</span>' +
+                            (date ? '<span class="notice-dot"></span><span>' + escapeHtml(date) + '</span>' : '') +
+                        '</div>' +
+                    '</section>' +
+                    '<section class="notice-list">' +
+                        '<article class="notice-card">' +
+                            '<div class="notice-summary detail-summary !mt-0 text-[15px] leading-relaxed whitespace-pre-line">' + escapeHtml(summary) + '</div>' +
+                        '</article>' +
+                    '</section>' +
+                '</div>';
+        }
+
+        async function loadNotices(school) {
+            const url = SCHOOL_NOTICE_API.replace(/\/$/, '') + '/notices?school=' + encodeURIComponent(school.apiSchool);
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || '공지 데이터를 불러오지 못했어요.');
+            return Array.isArray(data.notices) ? data.notices : [];
+        }
+
+        function updateNav() {
+            const shell = document.querySelector('.school-nav-shell');
+            const current = schools[activeId] || schools.andong;
+            const useLightNav = !!current.lightNav && !!lightModeQuery.matches;
+            if (shell) shell.classList.toggle('nav-on-light', useLightNav);
+            const buttons = Array.from(document.querySelectorAll('[data-school]'));
+            buttons.forEach((btn) => {
+                const on = btn.dataset.school === activeId;
+                btn.classList.toggle('active', on);
+                btn.querySelectorAll('i, span').forEach((el) => {
+                    el.classList.toggle('text-white', on);
+                    el.classList.toggle('font-bold', on);
+                    el.classList.toggle('text-gray-300', !on);
+                    el.classList.toggle('font-medium', !on);
+                });
+            });
+
+            const active = document.querySelector('[data-school="' + activeId + '"]');
+            const indicator = $('school-indicator');
+            if (active && indicator) {
+                indicator.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+                active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+
+        async function renderPanel() {
+            const token = ++renderToken;
+            const school = schools[activeId] || schools.andong;
+            if (school.apiSchool) {
+                if (!apiConfigured()) {
+                    showState(school.title, 'Cloudflare Worker 주소를 SCHOOL_NOTICE_API에 넣으면 Notion 글이 자동으로 표시돼요.');
+                    return;
+                }
+                showLoading(school);
+                try {
+                    const notices = await loadNotices(school);
+                    if (token !== renderToken) return;
+                    renderNotices(school, notices);
+                } catch (error) {
+                    if (token !== renderToken) return;
+                    showState(school.title, error.message || '공지 데이터를 불러오지 못했어요.');
+                }
+                return;
+            }
+
+            $('school-panel').innerHTML =
+                '<div class="school-placeholder">' +
+                        '<div class="glass-card w-full max-w-sm p-6 text-center fade-in-up">' +
+                            '<div class="mx-auto w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center ' + school.accent + '">' +
+                            '<i class="fa-solid fa-building-columns text-xl" aria-hidden="true"></i>' +
+                        '</div>' +
+                        '<h2 class="mt-5 text-[23px] font-black tracking-tight">' + school.title + '</h2>' +
+                        '<p class="placeholder-copy mt-2 text-[13.5px] font-semibold leading-relaxed break-keep">이 학교 Notion 화면은 추가 예정이에요.</p>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        function setSchool(id) {
+            activeId = id;
+            window.haptic();
+            updateNav();
+            renderPanel();
+        }
+
+        window.addEventListener('resize', updateNav);
+        if (lightModeQuery.addEventListener) {
+            lightModeQuery.addEventListener('change', updateNav);
+        } else if (lightModeQuery.addListener) {
+            lightModeQuery.addListener(updateNav);
+        }
+        updateNav();
+        renderPanel();
+    </script>
+</body>
+</html>
