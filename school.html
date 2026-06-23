@@ -422,17 +422,33 @@
                 '</div>';
         }
 
+        function normalizeNoticeText(value) {
+            return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+        }
+
+        function stripDuplicateTitle(text, title) {
+            const raw = String(text == null ? '' : text).trim();
+            const cleanTitle = String(title == null ? '' : title).trim();
+            if (!raw || !cleanTitle) return raw;
+            if (raw === cleanTitle) return '';
+            if (raw.indexOf(cleanTitle + '\n') === 0) return raw.slice(cleanTitle.length).replace(/^\s+/, '');
+            if (raw.indexOf(cleanTitle + ' ') === 0) return raw.slice(cleanTitle.length).replace(/^\s+/, '');
+            return raw;
+        }
+
         function renderNoticeCard(notice, index) {
             const date = formatDate(notice.date || notice.createdAt);
             const category = notice.category || '공지';
-            const summary = notice.summary ? '<div class="notice-summary">' + escapeHtml(notice.summary) + '</div>' : '';
+            const title = notice.title || '제목 없음';
+            const summaryText = normalizeNoticeText(notice.summary) === normalizeNoticeText(title) ? '' : notice.summary;
+            const summary = summaryText ? '<div class="notice-summary">' + escapeHtml(summaryText) + '</div>' : '';
             const action = '<div class="notice-action">사이트 안에서 보기</div>';
             return '<button type="button" class="notice-card transition-transform" data-index="' + index + '" onclick="openNoticeCard(this)">' +
                 '<div class="notice-meta">' +
                     '<span>' + escapeHtml(category) + '</span>' +
                     (date ? '<span class="notice-dot"></span><span>' + escapeHtml(date) + '</span>' : '') +
                 '</div>' +
-                '<div class="notice-title">' + escapeHtml(notice.title || '제목 없음') + '</div>' +
+                '<div class="notice-title">' + escapeHtml(title) + '</div>' +
                 summary +
                 action +
             '</button>';
@@ -449,7 +465,8 @@
             const school = schools[activeId] || schools.andong;
             const date = formatDate(notice.date || notice.createdAt);
             const category = notice.category || '공지';
-            const summary = notice.summary || '상세 내용은 아직 등록되지 않았어요.';
+            const bodyText = stripDuplicateTitle(notice.content || notice.summary || '', notice.title || '');
+            const summary = bodyText || '상세 내용은 아직 등록되지 않았어요.';
             $('school-panel').innerHTML =
                 '<div class="notice-screen">' +
                     '<section class="notice-header">' +
