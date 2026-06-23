@@ -166,6 +166,13 @@
             color: #fff;
         }
         .detail-summary { color: #D1D5DB; }
+        .detail-summary a {
+            color: #60A5FA;
+            font-weight: 800;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            word-break: break-all;
+        }
         .spinner {
             width: 24px;
             height: 24px;
@@ -202,6 +209,7 @@
             .notice-subcopy,
             .placeholder-copy { color: #6B7684; }
             .detail-summary { color: #4E5968; }
+            .detail-summary a { color: #2563EB; }
             .notice-back-btn {
                 background: rgba(0,0,0,0.05);
                 color: #141414;
@@ -436,6 +444,15 @@
             return raw;
         }
 
+        function linkifyNoticeText(text) {
+            const value = String(text == null ? '' : text);
+            const urlRegex = /(https?:\/\/[^\s<>'"]+)/g;
+            return escapeHtml(value).replace(urlRegex, function (url) {
+                const safeUrl = url.replace(/&amp;/g, '&');
+                return '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" download>' + url + '</a>';
+            });
+        }
+
         function renderNoticeCard(notice, index) {
             const date = formatDate(notice.date || notice.createdAt);
             const category = notice.category || '공지';
@@ -480,7 +497,7 @@
                     '</section>' +
                     '<section class="notice-list">' +
                         '<article class="notice-card">' +
-                            '<div class="notice-summary detail-summary !mt-0 text-[15px] leading-relaxed whitespace-pre-line">' + escapeHtml(summary) + '</div>' +
+                            '<div class="notice-summary detail-summary !mt-0 text-[15px] leading-relaxed whitespace-pre-line">' + linkifyNoticeText(summary) + '</div>' +
                         '</article>' +
                     '</section>' +
                 '</div>';
