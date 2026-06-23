@@ -3,586 +3,571 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>우리 학교</title>
+    <title>엔조이 비서실장</title>
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            color-scheme: dark light;
+            --page: #000000;
+            --surface: rgba(255, 255, 255, 0.055);
+            --surface-strong: rgba(255, 255, 255, 0.09);
+            --border: rgba(255, 255, 255, 0.11);
+            --text: #FFFFFF;
+            --muted: #A1A1A6;
+            --soft: rgba(255, 255, 255, 0.62);
+            --user: #3182F6;
+            --user-text: #FFFFFF;
+            --composer: rgba(22, 22, 24, 0.9);
+            --header: rgba(0, 0, 0, 0.88);
+            --send-disabled: rgba(255, 255, 255, 0.14);
+            --shadow: 0 18px 52px rgba(0, 0, 0, 0.36), 0 6px 16px rgba(0, 0, 0, 0.24);
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --page: #F2F4F6;
+                --surface: rgba(255, 255, 255, 0.86);
+                --surface-strong: rgba(255, 255, 255, 0.96);
+                --border: rgba(0, 0, 0, 0.07);
+                --text: #141414;
+                --muted: #6B7684;
+                --soft: rgba(20, 20, 20, 0.64);
+                --composer: rgba(255, 255, 255, 0.94);
+                --header: rgba(242, 244, 246, 0.9);
+                --send-disabled: rgba(0, 0, 0, 0.08);
+                --shadow: 0 14px 36px rgba(0, 0, 0, 0.11), 0 3px 10px rgba(0, 0, 0, 0.08);
+            }
+        }
+
+        * { box-sizing: border-box; }
+        html, body { min-height: 100%; }
         body {
+            margin: 0;
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-            background: #000;
-            color: #fff;
+            background: var(--page);
+            color: var(--text);
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: none;
         }
-        .enjoy-page { background: #000; color: #fff; }
-        .pt-safe { padding-top: max(20px, env(safe-area-inset-top)); }
-        .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            -webkit-backdrop-filter: blur(12px) saturate(180%);
-            backdrop-filter: blur(12px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            border-radius: 24px;
-        }
-        .liquid-glass {
+
+        .enjoy-page {
+            min-height: 100vh;
+            min-height: 100svh;
+            width: 100%;
+            max-width: 28rem;
+            margin: 0 auto;
             position: relative;
-            isolation: isolate;
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 18px 52px rgba(0, 0, 0, 0.35), 0 6px 16px rgba(0, 0, 0, 0.22);
-            -webkit-backdrop-filter: blur(20px) saturate(1.6);
-            backdrop-filter: blur(20px) saturate(1.6);
             overflow: hidden;
+            background: var(--page);
+            color: var(--text);
         }
-        .fade-in-up { animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(16px); }
-        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        .nav-back { width: 64px; }
-        .school-nav-shell { width: min(420px, calc(100vw - 20px)); }
-        .school-scroll { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
-        .school-scroll-track { position: relative; display: flex; gap: 4px; min-width: max-content; padding: 0; }
-        .school-item { width: 68px; }
-        .nav-back i, .school-item i {
+
+        .chat-shell {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            min-height: 100svh;
+            background: var(--page);
+        }
+
+        .chat-header {
+            position: relative;
+            z-index: 20;
+            padding: max(13px, env(safe-area-inset-top)) 14px 11px;
+            background: var(--header);
+            -webkit-backdrop-filter: blur(18px) saturate(1.5);
+            backdrop-filter: blur(18px) saturate(1.5);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-button {
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            transition: transform .14s ease, background .14s ease;
+        }
+        .header-button:active { transform: scale(0.94); background: var(--surface-strong); }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            background: #3182F6;
+            box-shadow: 0 8px 22px rgba(49, 130, 246, 0.36);
+            flex: 0 0 auto;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: #34C759;
+            box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.16);
+        }
+        .status-dot.thinking {
+            background: #FFB020;
+            box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.18);
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px 14px 124px;
+            scroll-behavior: smooth;
+        }
+        .messages::-webkit-scrollbar { display: none; }
+        .messages { scrollbar-width: none; -ms-overflow-style: none; }
+
+        .message-row {
+            display: flex;
+            gap: 9px;
+            margin: 0 0 16px;
+            animation: appear .22s ease both;
+        }
+        .message-row.user {
+            justify-content: flex-end;
+            margin-left: 48px;
+        }
+        .message-row.assistant { margin-right: 8px; }
+        @keyframes appear {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 31px;
+            height: 31px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #3182F6;
+            color: #FFFFFF;
+            box-shadow: 0 7px 18px rgba(49, 130, 246, 0.26);
+            flex: 0 0 auto;
+            margin-top: 2px;
+        }
+
+        .bubble {
+            max-width: min(100%, 320px);
+            padding: 12px 14px;
+            border-radius: 19px;
+            font-size: 14.5px;
+            line-height: 1.55;
+            font-weight: 600;
+            white-space: pre-wrap;
+            word-break: keep-all;
+            overflow-wrap: anywhere;
+        }
+        .assistant .bubble {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-top-left-radius: 7px;
+            box-shadow: 0 7px 22px rgba(0, 0, 0, 0.11);
+        }
+        .user .bubble {
+            background: var(--user);
+            color: var(--user-text);
+            border-top-right-radius: 7px;
+            box-shadow: 0 9px 24px rgba(49, 130, 246, 0.28);
+        }
+
+        .day-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0 18px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 850;
+        }
+        .day-divider::before,
+        .day-divider::after {
+            content: "";
+            height: 1px;
+            background: var(--border);
+            flex: 1;
+        }
+
+        .quick-prompts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin: 4px 0 18px 40px;
+        }
+        .quick-prompts.hidden { display: none; }
+        .quick-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            color: var(--text);
+            padding: 11px 12px;
+            font-size: 12.5px;
+            font-weight: 800;
+            line-height: 1.25;
+            text-align: left;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
+            transition: transform .14s ease, background .14s ease;
+        }
+        .quick-chip i {
             width: 18px;
             height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            line-height: 1;
-        }
-        .school-item span { max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .school-item.active i,
-        .school-item.active span { color: #fff; font-weight: 800; }
-        #school-indicator { width: 68px; transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
-        .school-screen {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            min-height: 100vh;
-            background: #000;
-            color: #fff;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .school-placeholder {
-            min-height: 100vh;
-            padding: max(56px, env(safe-area-inset-top)) 20px 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .notice-screen {
-            min-height: 100vh;
-            padding: max(28px, env(safe-area-inset-top)) 20px 122px;
-        }
-        .notice-header {
-            padding-top: 10px;
-        }
-        .notice-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 18px;
-        }
-        .notice-card {
-            width: 100%;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 22px;
-            background: rgba(255,255,255,0.05);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            padding: 17px;
-            text-align: left;
-        }
-        .notice-card:active { transform: scale(0.985); }
-        .notice-meta {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            color: #8B95A1;
-            font-size: 11.5px;
-            font-weight: 800;
-        }
-        .notice-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 999px;
-            background: currentColor;
-            opacity: .55;
-        }
-        .notice-title {
-            margin-top: 8px;
-            font-size: 16px;
-            line-height: 1.35;
-            font-weight: 900;
-            letter-spacing: 0;
-            color: #fff;
-        }
-        .notice-summary {
-            margin-top: 7px;
-            color: #A1A1A6;
-            font-size: 13px;
-            line-height: 1.45;
-            font-weight: 650;
-        }
-        .notice-action {
-            margin-top: 13px;
             color: #3182F6;
-            font-size: 12.5px;
-            font-weight: 900;
+            flex: 0 0 auto;
         }
-        .state-card {
-            min-height: 100vh;
-            padding: max(56px, env(safe-area-inset-top)) 20px 124px;
+        .quick-chip:active { transform: scale(0.96); background: var(--surface-strong); }
+
+        .typing {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: 18px;
+        }
+        .typing span {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--muted);
+            animation: typing 1s infinite ease-in-out;
+        }
+        .typing span:nth-child(2) { animation-delay: .14s; }
+        .typing span:nth-child(3) { animation-delay: .28s; }
+        @keyframes typing {
+            0%, 80%, 100% { opacity: .35; transform: translateY(0); }
+            40% { opacity: 1; transform: translateY(-3px); }
+        }
+
+        .composer-wrap {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 30;
+            padding: 14px 12px max(12px, env(safe-area-inset-bottom));
+            background: linear-gradient(to top, var(--page) 82%, transparent);
+        }
+
+        .composer {
+            display: flex;
+            align-items: flex-end;
+            gap: 9px;
+            padding: 8px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            background: var(--composer);
+            box-shadow: var(--shadow);
+            -webkit-backdrop-filter: blur(20px) saturate(1.5);
+            backdrop-filter: blur(20px) saturate(1.5);
+            transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+        }
+        .composer:focus-within {
+            border-color: rgba(49, 130, 246, 0.52);
+            box-shadow: 0 18px 48px rgba(49, 130, 246, 0.16), var(--shadow);
+        }
+
+        .chat-input {
+            flex: 1;
+            min-height: 24px;
+            max-height: 128px;
+            resize: none;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: var(--text);
+            font-size: 15px;
+            line-height: 1.5;
+            font-weight: 650;
+            padding: 9px 4px 8px 9px;
+        }
+        .chat-input::placeholder { color: var(--muted); }
+
+        .send-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 999px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #000;
-            color: #fff;
+            background: var(--user);
+            color: #FFFFFF;
+            flex: 0 0 auto;
+            transition: transform .14s ease, opacity .14s ease;
         }
-        .setup-card {
-            width: 100%;
-            max-width: 360px;
-            border-radius: 28px;
-            padding: 24px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 16px 44px rgba(0,0,0,0.32);
-            text-align: center;
+        .send-button:active { transform: scale(0.94); }
+        .send-button:disabled {
+            background: var(--send-disabled);
+            color: var(--muted);
+            opacity: 1;
+            transform: none;
         }
-        .setup-icon {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-        }
-        .state-copy,
-        .notice-subcopy,
-        .placeholder-copy { color: #A1A1A6; }
-        .notice-back-btn {
-            background: rgba(255,255,255,0.08);
-            color: #fff;
-        }
-        .detail-summary { color: #D1D5DB; }
-        .detail-summary a {
-            color: #60A5FA;
-            font-weight: 800;
-            text-decoration: underline;
-            text-underline-offset: 3px;
-            word-break: break-all;
-        }
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: 3px solid rgba(49,130,246,0.18);
-            border-top-color: #3182F6;
-            animation: spin .8s linear infinite;
-            margin: 0 auto 14px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (prefers-color-scheme: light) {
-            body, .enjoy-page { background: #f2f4f6; color: #141414; }
-            .text-white { color: #141414 !important; }
-            .text-gray-300 { color: rgba(20, 20, 20, 0.72) !important; }
-            .text-white\/35 { color: rgba(20, 20, 20, 0.35) !important; }
-            .school-screen, .state-card {
-                background: #f7f8fa;
-                color: #141414;
-            }
-            .glass-card {
-                background: rgba(255, 255, 255, 0.8);
-                border-color: rgba(0, 0, 0, 0.06);
-                box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
-            }
-            .notice-card, .setup-card {
-                background: rgba(255,255,255,0.86);
-                border-color: rgba(0,0,0,0.06);
-                box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-            }
-            .notice-title { color: #141414; }
-            .notice-meta,
-            .notice-summary,
-            .state-copy,
-            .notice-subcopy,
-            .placeholder-copy { color: #6B7684; }
-            .detail-summary { color: #4E5968; }
-            .detail-summary a { color: #2563EB; }
-            .notice-back-btn {
-                background: rgba(0,0,0,0.05);
-                color: #141414;
-            }
-            .setup-icon {
-                background: rgba(0,0,0,0.1);
-                color: #141414;
-            }
-            .liquid-glass {
-                border-color: rgba(0, 0, 0, 0.08);
-                box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 3px 10px rgba(0, 0, 0, 0.08);
-            }
-            #school-indicator {
-                background: rgba(0, 0, 0, 0.12) !important;
-                border-color: rgba(0, 0, 0, 0.06) !important;
-            }
-        }
-        .school-nav-shell.nav-on-light {
-            border-color: rgba(0, 0, 0, 0.08);
-            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14), 0 3px 10px rgba(0, 0, 0, 0.08);
-        }
-        .school-nav-shell.nav-on-light .text-white,
-        .school-nav-shell.nav-on-light .text-gray-300 {
-            color: #141414 !important;
-        }
-        .school-nav-shell.nav-on-light [class*="bg-white/10"] {
-            background-color: rgba(0, 0, 0, 0.08) !important;
-        }
-        .school-nav-shell.nav-on-light #school-indicator {
-            background: rgba(0, 0, 0, 0.12) !important;
-            border-color: rgba(0, 0, 0, 0.06) !important;
-            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
-        }
-        .school-nav-shell.nav-on-light .bg-white\/10 {
-            background-color: rgba(0, 0, 0, 0.12) !important;
+
+        @media (max-width: 360px) {
+            .quick-prompts { grid-template-columns: 1fr; }
+            .bubble { max-width: min(100%, 286px); }
         }
     </style>
 </head>
 <body>
-    <div class="enjoy-page min-h-screen w-full max-w-md mx-auto relative overflow-x-hidden">
-        <main id="school-panel" class="school-screen">
-        </main>
-
-        <nav id="school-bottom-nav" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 select-none">
-            <div class="school-nav-shell liquid-glass flex items-center rounded-full p-1.5 gap-1 relative">
-                <button onclick="window.haptic(); location.href='index.html';" class="nav-back shrink-0 relative z-10 py-2 rounded-full active:scale-95 transition-transform" aria-label="뒤로가기">
-                    <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                        <i class="fa-solid fa-chevron-left text-base text-gray-300 transition-colors" aria-hidden="true"></i>
-                        <span class="text-[10px] font-medium text-gray-300">뒤로</span>
+    <div class="enjoy-page">
+        <section class="chat-shell" aria-label="엔조이 비서실장 채팅">
+            <header class="chat-header">
+                <div class="flex items-center gap-3">
+                    <button type="button" class="header-button" onclick="window.haptic(); location.href='index.html';" aria-label="뒤로가기">
+                        <i class="fa-solid fa-chevron-left text-[15px]" aria-hidden="true"></i>
+                    </button>
+                    <div class="avatar" aria-hidden="true">
+                        <i class="fa-solid fa-user-tie text-[16px]"></i>
                     </div>
-                </button>
-
-                <div class="h-9 w-px bg-white/10 shrink-0"></div>
-
-                <div id="school-nav-scroll" class="school-scroll scrollbar-hide">
-                    <div id="school-nav-track" class="school-scroll-track">
-                        <div id="school-indicator" class="absolute top-0 bottom-0 left-0 w-[68px] bg-white/45 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full backdrop-blur-[2px] border border-white/20 z-0"></div>
-                        <button data-school="andong" onclick="setSchool('andong')" class="school-item active relative z-10 py-2 rounded-full active:scale-95 transition-transform">
-                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                                <i class="fa-solid fa-building-columns text-base text-white transition-colors" aria-hidden="true"></i>
-                                <span class="text-[10px] font-bold text-white">안동</span>
-                            </div>
-                        </button>
-                        <button data-school="woosong" onclick="setSchool('woosong')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
-                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
-                                <span class="text-[10px] font-medium text-gray-300">우송</span>
-                            </div>
-                        </button>
-                        <button data-school="gyeongsang" onclick="setSchool('gyeongsang')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
-                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
-                                <span class="text-[10px] font-medium text-gray-300">경상</span>
-                            </div>
-                        </button>
-                        <button data-school="silla" onclick="setSchool('silla')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
-                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
-                                <span class="text-[10px] font-medium text-gray-300">신라</span>
-                            </div>
-                        </button>
-                        <button data-school="gwangju" onclick="setSchool('gwangju')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
-                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
-                                <span class="text-[10px] font-medium text-gray-300">광주</span>
-                            </div>
-                        </button>
-                        <button data-school="yeungnam" onclick="setSchool('yeungnam')" class="school-item relative z-10 py-2 rounded-full active:scale-95 transition-transform">
-                            <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                                <i class="fa-solid fa-building-columns text-base text-gray-300 transition-colors" aria-hidden="true"></i>
-                                <span class="text-[10px] font-medium text-gray-300">영남</span>
-                            </div>
-                        </button>
+                    <div class="min-w-0 flex-1">
+                        <h1 class="text-[17px] font-black tracking-tight truncate">엔조이 비서실장</h1>
+                        <div class="mt-0.5 flex items-center gap-2 text-[11.5px] font-bold" style="color: var(--muted);">
+                            <span id="status-dot" class="status-dot"></span>
+                            <span id="status-text">대기 중</span>
+                        </div>
                     </div>
+                    <button type="button" class="header-button" onclick="resetChat()" aria-label="새 대화">
+                        <i class="fa-solid fa-pen text-[14px]" aria-hidden="true"></i>
+                    </button>
                 </div>
-            </div>
-        </nav>
+            </header>
+
+            <main id="messages" class="messages" aria-live="polite"></main>
+
+            <form id="chat-form" class="composer-wrap">
+                <div class="composer">
+                    <textarea id="chat-input" class="chat-input" rows="1" placeholder="메시지 보내기"></textarea>
+                    <button id="send-button" class="send-button" type="submit" aria-label="보내기" disabled>
+                        <i class="fa-solid fa-arrow-up text-[15px]" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </form>
+        </section>
     </div>
 
     <script>
         window.haptic = function () { if (navigator.vibrate) navigator.vibrate(10); };
-        const SCHOOL_NOTICE_API = 'https://enjoy-school-notices.sungwon4867.workers.dev';
 
-        const schools = {
-            andong: {
-                title: '국립경국대(안동캠)',
-                subtitle: '안동캠퍼스 공지 바로 확인',
-                accent: 'text-emerald-400',
-                query: '국립경국대학교 안동캠퍼스',
-                apiSchool: 'andong',
-                lightNav: true
-            },
-            woosong: {
-                title: '우송대학교',
-                subtitle: '우송대 공지 바로 확인',
-                accent: 'text-blue-400',
-                query: '우송대학교',
-                apiSchool: 'woosong',
-                lightNav: true
-            },
-            gyeongsang: {
-                title: '경상국립대학교',
-                subtitle: '경상대 공지 바로 확인',
-                accent: 'text-sky-400',
-                query: '경상국립대학교',
-                apiSchool: 'gyeongsang',
-                lightNav: true
-            },
-            silla: {
-                title: '신라대학교',
-                subtitle: '신라대 공지 바로 확인',
-                accent: 'text-purple-400',
-                query: '신라대학교',
-                apiSchool: 'silla',
-                lightNav: true
-            },
-            gwangju: {
-                title: '광주대학교',
-                subtitle: '광주대 공지 바로 확인',
-                accent: 'text-amber-400',
-                query: '광주대학교',
-                apiSchool: 'gwangju',
-                lightNav: true
-            },
-            yeungnam: {
-                title: '영남대학교',
-                subtitle: '영남대 공지 바로 확인',
-                accent: 'text-lime-400',
-                query: '영남대학교',
-                apiSchool: 'yeungnam',
-                lightNav: true
+        const messagesEl = document.getElementById('messages');
+        const formEl = document.getElementById('chat-form');
+        const inputEl = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const storageKey = 'enjoy-secretary-chat-v1';
+
+        const starterMessages = [
+            {
+                role: 'assistant',
+                text: '안녕하세요. 엔조이 비서실장입니다.\n일정 정리, 모임비 확인, 학교 공지 메모, 여행 계획처럼 귀찮은 일을 편하게 던져주세요.'
             }
-        };
+        ];
 
-        let activeId = 'andong';
-        const $ = (id) => document.getElementById(id);
-        const lightModeQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : { matches: false };
+        const quickPrompts = [
+            { icon: 'fa-calendar-check', text: '오늘 일정 정리해줘' },
+            { icon: 'fa-coins', text: '모임비 안내문 써줘' },
+            { icon: 'fa-bell', text: '학교 공지 메모해줘' },
+            { icon: 'fa-map-location-dot', text: '여행 계획 같이 짜줘' }
+        ];
 
-        let renderToken = 0;
-        let currentNotices = [];
+        let chatMessages = loadMessages();
+        let isTyping = false;
+
+        function loadMessages() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+                if (Array.isArray(saved) && saved.length) return saved.slice(0, 80);
+            } catch (error) {}
+            return starterMessages.slice();
+        }
+
+        function saveMessages() {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(chatMessages.slice(-80)));
+            } catch (error) {}
+        }
 
         function escapeHtml(value) {
-            return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-            }[ch]));
-        }
-
-        function apiConfigured() {
-            return SCHOOL_NOTICE_API && SCHOOL_NOTICE_API.indexOf('YOUR_WORKER_SUBDOMAIN') < 0;
-        }
-
-        function formatDate(value) {
-            if (!value) return '';
-            const d = new Date(value);
-            if (Number.isNaN(d.getTime())) return '';
-            return (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
-        }
-
-        function showState(title, desc, actionHtml) {
-            $('school-panel').innerHTML =
-                '<div class="state-card">' +
-                    '<div class="setup-card">' +
-                        '<div class="setup-icon mx-auto w-14 h-14 rounded-2xl flex items-center justify-center">' +
-                            '<i class="fa-solid fa-building-columns text-xl" aria-hidden="true"></i>' +
-                        '</div>' +
-                        '<h2 class="mt-5 text-[22px] font-black tracking-tight">' + escapeHtml(title) + '</h2>' +
-                        '<p class="state-copy mt-2 text-[13.5px] font-semibold leading-relaxed break-keep">' + escapeHtml(desc) + '</p>' +
-                        (actionHtml || '') +
-                    '</div>' +
-                '</div>';
-        }
-
-        function showLoading(school) {
-            $('school-panel').innerHTML =
-                '<div class="state-card">' +
-                    '<div class="setup-card">' +
-                        '<div class="spinner"></div>' +
-                        '<h2 class="text-[20px] font-black tracking-tight">' + escapeHtml(school.title) + '</h2>' +
-                        '<p class="state-copy mt-2 text-[13.5px] font-semibold leading-relaxed">Notion 공지를 불러오는 중이에요.</p>' +
-                    '</div>' +
-                '</div>';
-        }
-
-        function renderNotices(school, notices) {
-            currentNotices = notices || [];
-            const countText = currentNotices.length ? currentNotices.length + '개의 공지' : '공지 없음';
-            $('school-panel').innerHTML =
-                '<div class="notice-screen">' +
-                    '<section class="notice-header">' +
-                        '<p class="text-[11px] font-bold text-[#3182F6] tracking-widest uppercase">SCHOOL NOTICE</p>' +
-                        '<h1 class="mt-1 text-[28px] font-black tracking-tight leading-tight">' + escapeHtml(school.title) + '</h1>' +
-                        '<p class="notice-subcopy mt-2 text-[13.5px] font-semibold leading-relaxed break-keep">' + escapeHtml(countText) + '를 Notion에서 가져왔어요.</p>' +
-                    '</section>' +
-                    '<section class="notice-list">' +
-                        (currentNotices.length ? currentNotices.map(renderNoticeCard).join('') :
-                            '<div class="notice-card text-center"><div class="notice-title">아직 표시할 공지가 없어요.</div><div class="notice-summary">Notion 데이터베이스에 글을 추가하면 여기에 나타나요.</div></div>') +
-                    '</section>' +
-                '</div>';
-        }
-
-        function normalizeNoticeText(value) {
-            return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
-        }
-
-        function stripDuplicateTitle(text, title) {
-            const raw = String(text == null ? '' : text).trim();
-            const cleanTitle = String(title == null ? '' : title).trim();
-            if (!raw || !cleanTitle) return raw;
-            if (raw === cleanTitle) return '';
-            if (raw.indexOf(cleanTitle + '\n') === 0) return raw.slice(cleanTitle.length).replace(/^\s+/, '');
-            if (raw.indexOf(cleanTitle + ' ') === 0) return raw.slice(cleanTitle.length).replace(/^\s+/, '');
-            return raw;
-        }
-
-        function linkifyNoticeText(text) {
-            const value = String(text == null ? '' : text);
-            const urlRegex = /(https?:\/\/[^\s<>'"]+)/g;
-            return escapeHtml(value).replace(urlRegex, function (url) {
-                const safeUrl = url.replace(/&amp;/g, '&');
-                return '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" download>' + url + '</a>';
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
             });
         }
 
-        function renderNoticeCard(notice, index) {
-            const date = formatDate(notice.date || notice.createdAt);
-            const category = notice.category || '공지';
-            const title = notice.title || '제목 없음';
-            const summaryText = normalizeNoticeText(notice.summary) === normalizeNoticeText(title) ? '' : notice.summary;
-            const summary = summaryText ? '<div class="notice-summary">' + escapeHtml(summaryText) + '</div>' : '';
-            const action = '<div class="notice-action">사이트 안에서 보기</div>';
-            return '<button type="button" class="notice-card transition-transform" data-index="' + index + '" onclick="openNoticeCard(this)">' +
-                '<div class="notice-meta">' +
-                    '<span>' + escapeHtml(category) + '</span>' +
-                    (date ? '<span class="notice-dot"></span><span>' + escapeHtml(date) + '</span>' : '') +
-                '</div>' +
-                '<div class="notice-title">' + escapeHtml(title) + '</div>' +
-                summary +
-                action +
-            '</button>';
+        function renderChat() {
+            messagesEl.innerHTML = renderDayDivider() + chatMessages.map(renderMessage).join('') + renderQuickPrompts();
+            scrollToBottom();
         }
 
-        function openNoticeCard(el) {
-            const index = Number(el && el.dataset ? el.dataset.index : -1);
-            const notice = currentNotices[index];
-            if (!notice) return;
-            renderNoticeDetail(notice);
+        function renderDayDivider() {
+            return '<div class="day-divider">오늘</div>';
         }
 
-        function renderNoticeDetail(notice) {
-            const school = schools[activeId] || schools.andong;
-            const date = formatDate(notice.date || notice.createdAt);
-            const category = notice.category || '공지';
-            const bodyText = stripDuplicateTitle(notice.content || notice.summary || '', notice.title || '');
-            const summary = bodyText || '상세 내용은 아직 등록되지 않았어요.';
-            $('school-panel').innerHTML =
-                '<div class="notice-screen">' +
-                    '<section class="notice-header">' +
-                        '<button type="button" onclick="renderNotices(schools[activeId] || schools.andong, currentNotices)" class="notice-back-btn mb-5 px-4 py-2 rounded-full text-[13px] font-black active:scale-95 transition-transform inline-flex items-center gap-1.5"><i class="fa-solid fa-chevron-left text-[12px]" aria-hidden="true"></i>목록으로</button>' +
-                        '<p class="text-[11px] font-bold text-[#3182F6] tracking-widest uppercase">' + escapeHtml(school.title) + '</p>' +
-                        '<h1 class="mt-2 text-[26px] font-black tracking-tight leading-tight break-keep">' + escapeHtml(notice.title || '제목 없음') + '</h1>' +
-                        '<div class="notice-meta mt-3">' +
-                            '<span>' + escapeHtml(category) + '</span>' +
-                            (date ? '<span class="notice-dot"></span><span>' + escapeHtml(date) + '</span>' : '') +
-                        '</div>' +
-                    '</section>' +
-                    '<section class="notice-list">' +
-                        '<article class="notice-card">' +
-                            '<div class="notice-summary detail-summary !mt-0 text-[15px] leading-relaxed whitespace-pre-line">' + linkifyNoticeText(summary) + '</div>' +
-                        '</article>' +
-                    '</section>' +
-                '</div>';
+        function renderMessage(message) {
+            const role = message.role === 'user' ? 'user' : 'assistant';
+            const avatar = role === 'assistant'
+                ? '<div class="message-avatar"><i class="fa-solid fa-user-tie text-[12px]" aria-hidden="true"></i></div>'
+                : '';
+            return '<div class="message-row ' + role + '">' +
+                avatar +
+                '<div class="bubble">' + escapeHtml(message.text) + '</div>' +
+            '</div>';
         }
 
-        async function loadNotices(school) {
-            const url = SCHOOL_NOTICE_API.replace(/\/$/, '') + '/notices?school=' + encodeURIComponent(school.apiSchool);
-            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || '공지 데이터를 불러오지 못했어요.');
-            return Array.isArray(data.notices) ? data.notices : [];
+        function renderQuickPrompts() {
+            if (chatMessages.length > 1 || isTyping) return '';
+            return '<div class="quick-prompts">' + quickPrompts.map(function (prompt, index) {
+                return '<button type="button" class="quick-chip" data-prompt-index="' + index + '">' +
+                    '<i class="fa-solid ' + prompt.icon + '" aria-hidden="true"></i>' +
+                    '<span>' + escapeHtml(prompt.text) + '</span>' +
+                '</button>';
+            }).join('') + '</div>';
         }
 
-        function updateNav() {
-            const shell = document.querySelector('.school-nav-shell');
-            const current = schools[activeId] || schools.andong;
-            const useLightNav = !!current.lightNav && !!lightModeQuery.matches;
-            if (shell) shell.classList.toggle('nav-on-light', useLightNav);
-            const buttons = Array.from(document.querySelectorAll('[data-school]'));
-            buttons.forEach((btn) => {
-                const on = btn.dataset.school === activeId;
-                btn.classList.toggle('active', on);
-                btn.querySelectorAll('i, span').forEach((el) => {
-                    el.classList.toggle('text-white', on);
-                    el.classList.toggle('font-bold', on);
-                    el.classList.toggle('text-gray-300', !on);
-                    el.classList.toggle('font-medium', !on);
-                });
+        function renderTyping() {
+            const row = document.createElement('div');
+            row.className = 'message-row assistant';
+            row.id = 'typing-row';
+            row.innerHTML =
+                '<div class="message-avatar"><i class="fa-solid fa-user-tie text-[12px]" aria-hidden="true"></i></div>' +
+                '<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+            messagesEl.appendChild(row);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            requestAnimationFrame(function () {
+                messagesEl.scrollTop = messagesEl.scrollHeight;
             });
-
-            const active = document.querySelector('[data-school="' + activeId + '"]');
-            const indicator = $('school-indicator');
-            if (active && indicator) {
-                indicator.style.transform = 'translateX(' + active.offsetLeft + 'px)';
-                active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
         }
 
-        async function renderPanel() {
-            const token = ++renderToken;
-            const school = schools[activeId] || schools.andong;
-            if (school.apiSchool) {
-                if (!apiConfigured()) {
-                    showState(school.title, 'Cloudflare Worker 주소를 SCHOOL_NOTICE_API에 넣으면 Notion 글이 자동으로 표시돼요.');
-                    return;
-                }
-                showLoading(school);
-                try {
-                    const notices = await loadNotices(school);
-                    if (token !== renderToken) return;
-                    renderNotices(school, notices);
-                } catch (error) {
-                    if (token !== renderToken) return;
-                    showState(school.title, error.message || '공지 데이터를 불러오지 못했어요.');
-                }
-                return;
-            }
-
-            $('school-panel').innerHTML =
-                '<div class="school-placeholder">' +
-                        '<div class="glass-card w-full max-w-sm p-6 text-center fade-in-up">' +
-                            '<div class="mx-auto w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center ' + school.accent + '">' +
-                            '<i class="fa-solid fa-building-columns text-xl" aria-hidden="true"></i>' +
-                        '</div>' +
-                        '<h2 class="mt-5 text-[23px] font-black tracking-tight">' + school.title + '</h2>' +
-                        '<p class="placeholder-copy mt-2 text-[13.5px] font-semibold leading-relaxed break-keep">이 학교 Notion 화면은 추가 예정이에요.</p>' +
-                    '</div>' +
-                '</div>';
+        function resizeInput() {
+            inputEl.style.height = 'auto';
+            inputEl.style.height = Math.min(inputEl.scrollHeight, 128) + 'px';
+            sendButton.disabled = !inputEl.value.trim() || isTyping;
         }
 
-        function setSchool(id) {
-            activeId = id;
+        function sendQuickPrompt(text) {
+            inputEl.value = text;
+            resizeInput();
+            submitMessage();
+        }
+
+        function submitMessage() {
+            const text = inputEl.value.trim();
+            if (!text || isTyping) return;
             window.haptic();
-            updateNav();
-            renderPanel();
+            chatMessages.push({ role: 'user', text: text });
+            inputEl.value = '';
+            resizeInput();
+            saveMessages();
+            renderChat();
+            isTyping = true;
+            setAssistantThinking(true);
+            sendButton.disabled = true;
+            renderTyping();
+
+            window.setTimeout(function () {
+                const typingRow = document.getElementById('typing-row');
+                if (typingRow) typingRow.remove();
+                chatMessages.push({ role: 'assistant', text: createReply(text) });
+                isTyping = false;
+                setAssistantThinking(false);
+                saveMessages();
+                renderChat();
+                resizeInput();
+            }, Math.min(1100, 520 + text.length * 16));
         }
 
-        window.addEventListener('resize', updateNav);
-        if (lightModeQuery.addEventListener) {
-            lightModeQuery.addEventListener('change', updateNav);
-        } else if (lightModeQuery.addListener) {
-            lightModeQuery.addListener(updateNav);
+        function createReply(text) {
+            const t = text.toLowerCase();
+            if (hasAny(t, ['일정', '스케줄', '오늘', '내일', '약속'])) {
+                return '좋아요. 일정은 이렇게 정리하면 깔끔해요.\n\n1. 꼭 해야 하는 일\n2. 시간이 정해진 약속\n3. 미뤄도 되는 일\n\n시간이랑 해야 할 일을 보내주면 제가 우선순위대로 다시 정리해드릴게요.';
+            }
+            if (hasAny(t, ['모임비', '회비', '돈', '납부', '정산'])) {
+                return '모임비 관련이면 톤을 딱 맞춰드릴 수 있어요.\n\n예시 문구:\n이번 달 모임비 확인 부탁드려요. 납부하신 분은 따로 표시해둘게요. 아직 못 낸 분도 편할 때 알려주세요.';
+            }
+            if (hasAny(t, ['학교', '공지', '수업', '과제', '시험'])) {
+                return '학교 관련 내용은 공지 제목, 마감일, 해야 할 일을 나눠서 보면 좋아요.\n\n공지 내용을 붙여주면 제가 핵심만 요약하고 체크리스트로 바꿔드릴게요.';
+            }
+            if (hasAny(t, ['여행', '숙소', '맛집', '코스', '계획'])) {
+                return '여행 계획은 날짜, 지역, 예산, 이동수단만 있으면 바로 틀을 잡을 수 있어요.\n\n어디로 몇 명이 가는지 알려주면 일정표처럼 정리해드릴게요.';
+            }
+            if (hasAny(t, ['안녕', '하이', 'ㅎㅇ', '반가'])) {
+                return '안녕하세요. 오늘도 비서실은 열려 있습니다.\n필요한 일 하나만 던져주세요. 제가 정리해서 돌려드릴게요.';
+            }
+            if (hasAny(t, ['고마', '감사', '땡큐'])) {
+                return '언제든요. 이런 자잘한 정리는 제가 맡는 쪽이 마음 편하죠.';
+            }
+            return '좋아요. 제가 이해한 바로는 이걸 정리하거나 문장으로 다듬으면 될 것 같아요.\n\n조금 더 정확히 해드리려면 목적, 마감, 원하는 말투를 같이 보내주세요.';
         }
-        updateNav();
-        renderPanel();
+
+        function hasAny(text, words) {
+            return words.some(function (word) { return text.indexOf(word) > -1; });
+        }
+
+        function resetChat() {
+            window.haptic();
+            chatMessages = starterMessages.slice();
+            saveMessages();
+            inputEl.value = '';
+            isTyping = false;
+            setAssistantThinking(false);
+            renderChat();
+            resizeInput();
+            inputEl.focus();
+        }
+
+        function setAssistantThinking(active) {
+            if (statusDot) statusDot.classList.toggle('thinking', !!active);
+            if (statusText) statusText.textContent = active ? '답변 작성 중' : '대기 중';
+        }
+
+        formEl.addEventListener('submit', function (event) {
+            event.preventDefault();
+            submitMessage();
+        });
+
+        inputEl.addEventListener('input', resizeInput);
+        inputEl.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                submitMessage();
+            }
+        });
+        messagesEl.addEventListener('click', function (event) {
+            const button = event.target.closest('[data-prompt-index]');
+            if (!button) return;
+            const prompt = quickPrompts[Number(button.dataset.promptIndex)];
+            if (prompt) sendQuickPrompt(prompt.text);
+        });
+
+        setAssistantThinking(false);
+        renderChat();
+        resizeInput();
     </script>
 </body>
 </html>
