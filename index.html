@@ -4742,20 +4742,96 @@
             const cx2d = cv.getContext('2d', { willReadFrequently: true });
             const cache = new WeakMap();
 
-            function imgBrightness(img) {
+            function parseColor(value) {
+                const m = value && value.match(/rgba?\(([^)]+)\)/);
+                if (!m) return null;
+                const p = m[1].split(',').map(s => parseFloat(s));
+                if (p.length < 3 || p.slice(0, 3).some(Number.isNaN)) return null;
+                return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined || Number.isNaN(p[3]) ? 1 : p[3] };
+            }
+            function brightness(c) {
+                return c ? (0.299 * c.r + 0.587 * c.g + 0.114 * c.b) : null;
+            }
+            function imagePixels(img) {
                 if (cache.has(img)) return cache.get(img);
-                let b = null;
+                let result = null;
                 try {
-                    const w = 10, h = 10;
+                    if (!img.complete || !img.naturalWidth || !img.naturalHeight) return null;
+                    const w = 36, h = 36;
                     cv.width = w; cv.height = h;
                     cx2d.drawImage(img, 0, 0, w, h);
-                    const d = cx2d.getImageData(0, 0, w, h).data;
-                    let sum = 0, n = 0;
-                    for (let i = 0; i < d.length; i += 4) { sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; }
-                    b = sum / n;
-                    cache.set(img, b);
-                } catch (e) { b = null; }
-                return b;
+                    result = { data: cx2d.getImageData(0, 0, w, h).data, w, h };
+                } catch (e) { result = null; }
+                cache.set(img, result);
+                return result;
+            }
+            function objectPosition(style) {
+                const values = (style.objectPosition || '50% 50%').trim().split(/\s+/);
+                const read = (v, fallback) => {
+                    if (!v) return fallback;
+                    if (v === 'left' || v === 'top') return 0;
+                    if (v === 'right' || v === 'bottom') return 1;
+                    if (v === 'center') return .5;
+                    const n = parseFloat(v);
+                    return Number.isNaN(n) ? fallback : (v.includes('%') ? n / 100 : fallback);
+                };
+                return [read(values[0], .5), read(values[1], .5)];
+            }
+            function imageBrightnessAt(img, x, y) {
+                const pixels = imagePixels(img);
+                if (!pixels) return null;
+                const r = img.getBoundingClientRect();
+                if (!r.width || !r.height) return null;
+                const style = getComputedStyle(img);
+                const nw = img.naturalWidth, nh = img.naturalHeight;
+                const fit = style.objectFit || 'fill';
+                const pos = objectPosition(style);
+                let drawW = r.width, drawH = r.height;
+                if (fit === 'cover' || fit === 'contain') {
+                    const scale = fit === 'cover' ? Math.max(r.width / nw, r.height / nh) : Math.min(r.width / nw, r.height / nh);
+                    drawW = nw * scale; drawH = nh * scale;
+                }
+                const left = r.left - (drawW - r.width) * pos[0];
+                const top = r.top - (drawH - r.height) * pos[1];
+                const u = Math.max(0, Math.min(.999, (x - left) / Math.max(1, drawW)));
+                const v = Math.max(0, Math.min(.999, (y - top) / Math.max(1, drawH)));
+                const px = Math.floor(u * pixels.w), py = Math.floor(v * pixels.h);
+                let sum = 0, n = 0;
+                for (let yy = Math.max(0, py - 1); yy <= Math.min(pixels.h - 1, py + 1); yy++) {
+                    for (let xx = Math.max(0, px - 1); xx <= Math.min(pixels.w - 1, px + 1); xx++) {
+                        const i = (yy * pixels.w + xx) * 4;
+                        sum += 0.299 * pixels.data[i] + 0.587 * pixels.data[i + 1] + 0.114 * pixels.data[i + 2];
+                        n++;
+                    }
+                }
+                return n ? sum / n : null;
+            }
+            function gradientColorAt(el, style, x, y) {
+                const bg = style.backgroundImage || '';
+                if (!/gradient\(/i.test(bg)) return null;
+                const colors = Array.from(bg.matchAll(/rgba?\([^)]+\)/g)).map(m => parseColor(m[0])).filter(Boolean);
+                if (!colors.length) return null;
+                if (colors.length === 1) return colors[0];
+                const r = el.getBoundingClientRect();
+                let t = Math.max(0, Math.min(1, (y - r.top) / Math.max(1, r.height)));
+                if (/to top\b/i.test(bg)) t = 1 - t;
+                else if (/to right\b/i.test(bg)) t = Math.max(0, Math.min(1, (x - r.left) / Math.max(1, r.width)));
+                else if (/to left\b/i.test(bg)) t = 1 - Math.max(0, Math.min(1, (x - r.left) / Math.max(1, r.width)));
+                else if (/radial-gradient/i.test(bg)) {
+                    const dx = (x - (r.left + r.width / 2)) / Math.max(1, r.width / 2);
+                    const dy = (y - (r.top + r.height / 2)) / Math.max(1, r.height / 2);
+                    t = Math.max(0, Math.min(1, Math.hypot(dx, dy)));
+                }
+                const scaled = t * Math.max(1, colors.length - 1);
+                const i = Math.min(colors.length - 2, Math.floor(scaled));
+                const f = scaled - i;
+                const a = colors[i], b = colors[Math.min(colors.length - 1, i + 1)];
+                return {
+                    r: a.r + (b.r - a.r) * f,
+                    g: a.g + (b.g - a.g) * f,
+                    b: a.b + (b.b - a.b) * f,
+                    a: a.a + (b.a - a.a) * f
+                };
             }
 
             function detectLight(target) {
@@ -4769,22 +4845,36 @@
                     const prevP = pop ? pop.style.pointerEvents : null; if (pop) pop.style.pointerEvents = 'none';
                     const els = document.elementsFromPoint(cx, cy) || [];
                     nav.style.pointerEvents = prevN; if (pop) pop.style.pointerEvents = prevP;
+                    const layers = [];
+                    let base = 0;
                     for (const el of els) {
                         if (nav.contains(el) || (pop && pop.contains(el)) || el.id === 'app-loader' || el.id === 'more-popover' || el.id === 'more-popover-backdrop') continue;
+                        const style = getComputedStyle(el);
+                        const opacity = Number.isNaN(parseFloat(style.opacity)) ? 1 : parseFloat(style.opacity);
+                        const grad = gradientColorAt(el, style, cx, cy);
+                        if (grad && grad.a * opacity > .01) layers.push({ value: brightness(grad), alpha: grad.a * opacity });
                         if (el.tagName === 'IMG') {
-                            // 홈 배너 이미지들은 위에 어두운 그라데이션이 덮여 있어 실제로는 어두운 배경이다.
-                            // 이미지 위에서는 항상 어두운 배경으로 간주 → 밝은(흰) 글자.
-                            // (이미지 평균밝기/로딩 타이밍에 의존하지 않으므로 첫 로딩부터 즉시 올바르게 전환)
-                            return false;
+                            const value = imageBrightnessAt(el, cx, cy);
+                            if (value !== null) {
+                                if (opacity >= .98) { base = value; break; }
+                                layers.push({ value, alpha: opacity });
+                                continue;
+                            }
                         }
-                        const bg = getComputedStyle(el).backgroundColor;
-                        const m = bg && bg.match(/rgba?\(([^)]+)\)/);
-                        if (m) {
-                            const p = m[1].split(',').map(s => parseFloat(s));
-                            const a = p[3] === undefined ? 1 : p[3];
-                            if (a > 0.5) return (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) > 205;
+                        const color = parseColor(style.backgroundColor);
+                        if (color && color.a * opacity > .01) {
+                            const alpha = color.a * opacity;
+                            const value = brightness(color);
+                            if (alpha >= .98) { base = value; break; }
+                            layers.push({ value, alpha });
                         }
                     }
+                    for (let i = layers.length - 1; i >= 0; i--) {
+                        base = layers[i].value * layers[i].alpha + base * (1 - layers[i].alpha);
+                    }
+                    // 진입/이탈 기준을 다르게 두어 경계에서 글자색이 깜빡이지 않게 한다.
+                    const threshold = target.classList && target.classList.contains('btn-on-light') ? 148 : 168;
+                    return base > threshold;
                 } catch (e) {}
                 return false; // 기본은 다크 배경 가정 → 밝은 글자
             }
