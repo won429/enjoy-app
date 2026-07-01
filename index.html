@@ -345,6 +345,14 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        /* 홈 스토리 트레이는 저장소 원본 간격을 유지 */
+        #story-tray {
+            gap: 1rem;
+            padding: .25rem;
+            scroll-padding-inline: 0;
+            scroll-snap-type: none;
+            overscroll-behavior-inline: auto;
+        }
 
         /* 홈 콘텐츠: 인스타그램 피드형 */
         .enjoy-feed {
@@ -1164,12 +1172,12 @@
             <div class="flex flex-col gap-9">
 
                 <!-- 0. 엔조이 스토리 + 현재현황 (멤버별 스토리 링 + 활동 상태 통합) -->
-                <section class="story-strip" aria-labelledby="story-home-title">
-                    <div class="story-strip-head">
-                        <h3 id="story-home-title" class="story-strip-title">엔조이 스토리</h3>
-                        <span class="story-strip-note">24시간</span>
+                <section>
+                    <div class="px-1 mb-2.5">
+                        <p class="text-[11px] font-bold text-fuchsia-400 tracking-widest uppercase">ENJOY STORY</p>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이 스토리</h3>
                     </div>
-                    <div id="story-tray" class="flex overflow-x-auto scrollbar-hide" style="-webkit-overflow-scrolling:touch;">
+                    <div id="story-tray" class="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch;">
                         <!-- 멤버/스토리 항목은 JS가 채웁니다 -->
                     </div>
                 </section>
@@ -5067,60 +5075,57 @@
                 if ((s.createdAt || 0) >= e.t) { e.t = s.createdAt || 0; e.thumb = s.thumb || e.thumb; if (s.authorUid) e.uid = s.authorUid; }
             });
 
-            // 맨 앞: 인스타그램처럼 내 스토리 + 작은 추가 배지
-            const myName = window.enjoyProfileName || '';
-            const mine = stories.filter(s => s._local || (myName && s.author === myName));
-            const myStory = mine.length ? mine[mine.length - 1] : null;
-            let html;
-            if (myStory) {
-                const myUid = myStory.authorUid || 'local';
-                const myPhoto = myStory.thumb || ((window.enjoyUser && window.enjoyUser.photoURL) || '');
-                const myInner = myPhoto
-                    ? '<img src="' + myPhoto + '" alt="내 스토리 미리보기">'
-                    : '<span class="story-avatar-fallback bg-gray-500"><i class="fa-solid fa-user"></i></span>';
-                html = '<div class="story-person">' +
-                        '<span class="story-avatar-holder">' +
-                            '<button type="button" aria-label="내 스토리 보기" onclick="window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid(\'' + myUid + '\')" class="story-avatar-shell is-live">' +
-                                '<span class="story-avatar-gap"><span class="story-avatar">' + myInner + '</span></span>' +
-                            '</button>' +
-                            '<button type="button" aria-label="새 스토리 추가" onclick="window.haptic && window.haptic(); window.EnjoyStory.openCamera()" class="story-add-badge"><i class="fa-solid fa-plus"></i></button>' +
-                        '</span>' +
-                        '<span class="story-person-name">내 스토리</span>' +
-                    '</div>';
-            } else {
-                html = '<button type="button" aria-label="내 스토리 추가" onclick="window.haptic && window.haptic(); window.EnjoyStory.openCamera()" class="story-person">' +
-                        '<span class="story-avatar-holder"><span class="story-add-shell"><span class="story-add-inner"></span></span><span class="story-add-badge"><i class="fa-solid fa-plus"></i></span></span>' +
-                        '<span class="story-person-name">내 스토리</span>' +
+            // 맨 앞: 스토리 추가 버튼 (기존 모습 그대로)
+            let html = '<button onclick="window.haptic && window.haptic(); window.EnjoyStory.openCamera()" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">' +
+                    '<div class="w-[64px] h-[64px] rounded-full border-2 border-dashed border-white/30 flex items-center justify-center bg-white/5"><i class="fa-solid fa-plus text-white/85 text-[20px]"></i></div>' +
+                    '<span class="text-[11px] text-gray-400 font-medium w-full text-center truncate">스토리 추가</span>' +
+                    '<span class="text-[10px] -mt-1">&nbsp;</span>' +
+                '</button>';
+
+            // [임시] 게스트/스페셜이 올린 로컬 스토리 → '내 스토리'로 표시
+            const myLocal = (window.enjoyStories || []).filter(s => s._local);
+            if (myLocal.length) {
+                const last = myLocal[myLocal.length - 1];
+                const luid = last.authorUid || 'local';
+                const lthumb = last.thumb;
+                const linner = lthumb ? '<img src="' + lthumb + '" class="w-full h-full object-cover rounded-full">' : '<div class="w-full h-full rounded-full bg-gray-500"></div>';
+                html += '<button onclick="window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid(\'' + luid + '\')" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">' +
+                        '<div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[1.5px] enjoy-page-bg">' + linner + '</div></div>' +
+                        '<span class="text-[11px] text-gray-400 font-medium w-full text-center truncate">내 스토리</span>' +
+                        '<span class="text-[10px] -mt-1">&nbsp;</span>' +
                     '</button>';
             }
 
             // 멤버 6명 항상 고정 표시
-            html += MEMBERS.filter(name => name !== myName).map(name => {
+            html += MEMBERS.map(name => {
                 const mem = byName[name];                 // 가입자면 존재
                 const registered = !!mem;
+                const active = registered && (now - (mem.lastActive || 0) < ACTIVE_MS);
                 const col = window.enjoyMemberColor(name);
                 const st = storyByName[name];
                 const hasStory = !!(st && st.uid);
                 const photo = registered ? (mem.photoURL || '') : '';
 
-                // 원 안: 스토리 썸네일 > 구글 사진 > 멤버 색상과 첫 글자
+                // 원 안: 스토리 썸네일 > 구글 사진 > 단색 원 (글자 없음)
                 let inner;
-                if (hasStory && st.thumb) inner = '<img src="' + st.thumb + '" alt="' + name + ' 스토리 미리보기">';
-                else if (photo) inner = '<img src="' + photo + '" alt="' + name + ' 프로필" referrerpolicy="no-referrer">';
-                else inner = '<span class="story-avatar-fallback ' + col.solid + (registered ? '' : ' is-waiting') + '">' + col.char + '</span>';
+                if (hasStory && st.thumb) inner = '<img src="' + st.thumb + '" class="w-full h-full object-cover rounded-full">';
+                else if (photo) inner = '<img src="' + photo + '" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer">';
+                else inner = '<div class="w-full h-full rounded-full ' + col.solid + (registered ? '' : ' opacity-30') + '"></div>';
 
-                // 스토리 있으면 컬러 링, 없으면 차분한 테두리
+                // 스토리 있으면 알록달록 링(간격은 페이지색=거의 안 보임), 없으면 옅은 테두리
                 const circle = hasStory
-                    ? '<span class="story-avatar-shell is-live"><span class="story-avatar-gap"><span class="story-avatar">' + inner + '</span></span></span>'
-                    : '<span class="story-avatar-shell is-empty"><span class="story-avatar-gap"><span class="story-avatar">' + inner + '</span></span></span>';
-                const open = hasStory
-                    ? '<button type="button" aria-label="' + name + ' 스토리 보기" onclick="window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid(\'' + st.uid + '\')" class="story-person">'
-                    : '<div class="story-person">';
-                const close = hasStory ? '</button>' : '</div>';
-                return open +
-                            '<span class="story-avatar-holder">' + circle + '</span>' +
-                            '<span class="story-person-name">' + name + '</span>' +
-                        close;
+                    ? '<div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[1.5px] enjoy-page-bg">' + inner + '</div></div>'
+                    : '<div class="w-[64px] h-[64px] rounded-full p-[2px] bg-white/10"><div class="w-full h-full rounded-full overflow-hidden">' + inner + '</div></div>';
+                const dot = active ? '<span class="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 enjoy-page-border"></span>' : '';
+                const sub = registered
+                    ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-1 w-full text-center truncate">' + (active ? '활동 중' : agoText(now - (mem.lastActive || 0))) + '</span>'
+                    : '<span class="text-[10px] text-gray-500 -mt-1 w-full text-center truncate">미가입자</span>';
+                const onclick = hasStory ? "window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid('" + st.uid + "')" : "";
+                return '<div onclick="' + onclick + '" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] ' + (hasStory ? 'active:scale-95 transition-transform cursor-pointer' : '') + '">' +
+                            '<div class="relative">' + circle + dot + '</div>' +
+                            '<span class="text-[11px] font-semibold ' + (registered ? 'text-white' : 'text-gray-500') + ' w-full text-center truncate">' + name + '</span>' +
+                            sub +
+                        '</div>';
             }).join('');
 
             wrap.innerHTML = html;
