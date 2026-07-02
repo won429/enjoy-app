@@ -584,7 +584,8 @@
             display: none;
         }
         .home-content-item.home-featured > div:nth-child(2) {
-            height: 252px !important;
+            height: auto !important;
+            aspect-ratio: 16 / 9;
             border-radius: 22px !important;
             box-shadow: 0 18px 38px rgba(0,0,0,.35) !important;
         }
@@ -2328,11 +2329,39 @@
 
             const oldGroups = Array.from(catalog.querySelectorAll(':scope > .home-rail-group'));
             const firstOldGroup = oldGroups[0] || null;
+            const cardStore = {};
+            catalog.querySelectorAll('[data-home-card]').forEach(function (card) {
+                cardStore[card.dataset.homeCard] = card;
+            });
+
+            if (cardStore['first-trip']) {
+                const jejuStory = cardStore['first-trip'].cloneNode(true);
+                jejuStory.dataset.homeCard = 'jeju-story';
+                cardStore['jeju-story'] = jejuStory;
+            }
+            if (cardStore.throwback) {
+                const businessUrl = 'https://www.youtube.com/playlist?list=PL6V2mJA2-n8ptp8LGHjJIw5XMpT5PTgZ4&jct=SmM9dUmiXzF8PZqqEgl7eA';
+                const businessTrip = cardStore.throwback.cloneNode(true);
+                businessTrip.dataset.homeCard = 'business-trip';
+                businessTrip.setAttribute('onclick', "window.haptic(); window.openBrowser('" + businessUrl + "')");
+                businessTrip.children[0].querySelector('p:first-child').textContent = 'JEJU SPECIAL';
+                businessTrip.children[0].querySelector('h3').textContent = '출장 엔조이';
+                businessTrip.children[0].querySelector('.home-compact-summary').textContent = '출장엔조이 3화를 다시 만나보세요.';
+                const businessMedia = businessTrip.children[1];
+                businessMedia.setAttribute('onclick', "window.haptic(); window.openBrowser('" + businessUrl + "')");
+                businessMedia.querySelector('img').setAttribute('src', 'banner_4.jpg');
+                businessMedia.querySelector('.absolute.top-6 p').textContent = '출장엔조이 절찬 스트리밍 중';
+                businessMedia.querySelector('.absolute.top-6 h2').textContent = '출장엔조이 3화.';
+                businessMedia.querySelector('.absolute.bottom-5 p').textContent = '드디어 3화가 공개되었습니다!';
+                cardStore['business-trip'] = businessTrip;
+            }
+
             const collections = [
                 { title: '대구경북 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['throwback', 'music-1'] },
                 { title: '대전충남 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['first-trip', 'transfer-trip'] },
                 { title: '부울경 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['enjoy-vlog', 'music-2'] },
                 { title: '전남광주 브이로그', hint: '2027년 공개', icon: 'fa-calendar', cards: ['gwangju-2027'] },
+                { title: '제주 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['jeju-story', 'business-trip'] },
                 { title: '공개 예정', hint: '곧 만나요', icon: 'fa-lock', cards: ['f1-movie'] }
             ];
             const fragment = document.createDocumentFragment();
@@ -2349,7 +2378,7 @@
                 rail.className = 'home-upcoming-cards home-rail';
                 rail.setAttribute('aria-label', collection.title);
                 collection.cards.forEach(function (cardId) {
-                    const card = catalog.querySelector('[data-home-card="' + cardId + '"]');
+                    const card = cardStore[cardId];
                     if (card) rail.appendChild(card);
                 });
 
