@@ -570,116 +570,142 @@
             font-weight: 750;
         }
 
-        /* 홈 콘텐츠 탐색: 최신 1개 강조 + 나머지 컴팩트 목록 */
+        /* 홈 콘텐츠 탐색: 대표작 + 넷플릭스형 가로 작품 줄 */
         .home-catalog {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 27px;
         }
-        .home-category-tabs {
+        .home-content-item.is-filtered-out { display: none !important; }
+        .home-content-item.home-featured {
+            position: relative;
+        }
+        .home-content-item.home-featured > div:first-child {
+            display: none;
+        }
+        .home-content-item.home-featured > div:nth-child(2) {
+            height: 252px !important;
+            border-radius: 22px !important;
+            box-shadow: 0 18px 38px rgba(0,0,0,.35) !important;
+        }
+        .home-content-item.home-featured > div:nth-child(2) > .absolute.top-6 {
+            top: 22px;
+            left: 22px;
+            right: 22px;
+        }
+        .home-content-item.home-featured > div:nth-child(2) > .absolute.bottom-5 {
+            left: 22px;
+            right: 22px;
+            bottom: 18px;
+        }
+        .home-featured-play {
             display: flex;
+            align-items: center;
             gap: 7px;
-            margin: 0 -20px 4px;
-            padding: 0 20px 4px;
+            padding: 9px 14px;
+            border-radius: 8px;
+            color: #111;
+            background: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: 0 5px 16px rgba(0,0,0,.22);
+        }
+        .home-rail-group {
+            margin: 0 -20px;
+        }
+        .home-rail-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 0 20px 11px;
+        }
+        .home-rail-heading h3 {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 850;
+            letter-spacing: -.035em;
+        }
+        .home-rail-hint {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: rgba(255,255,255,.32);
+            font-size: 9.5px;
+            font-weight: 700;
+        }
+        .home-rail {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 0 0 7px;
             overflow-x: auto;
+            overscroll-behavior-x: contain;
+            scroll-padding-inline: 20px;
+            scroll-snap-type: x proximity;
             scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
         }
-        .home-category-tabs::-webkit-scrollbar { display: none; }
-        .home-category-tab {
+        .home-rail::-webkit-scrollbar { display: none; }
+        .home-rail > :first-child { margin-left: 20px; }
+        .home-rail > :last-child { margin-right: 20px; }
+        .home-rail > .home-content-item {
             flex: none;
-            min-height: 35px;
-            padding: 0 14px;
-            border: 1px solid rgba(255,255,255,.1);
-            border-radius: 999px;
-            color: rgba(255,255,255,.48);
-            background: rgba(255,255,255,.045);
-            font-size: 11.5px;
-            font-weight: 700;
-            transition: color .16s ease, background .16s ease, border-color .16s ease, transform .16s ease;
+            width: min(58vw, 226px);
+            scroll-snap-align: start;
         }
-        .home-category-tab:active { transform: scale(.94); }
-        .home-category-tab.is-active {
-            border-color: #fff;
-            color: #111;
-            background: #fff;
-        }
-        .home-content-item.is-filtered-out { display: none !important; }
-        .home-content-item.home-featured { margin-bottom: 8px; }
-        .home-compact-summary { display: none; }
-        .home-content-item:not(.home-featured) {
+        .home-rail .home-content-item:not(.home-featured) {
             position: relative;
-            min-height: 122px;
-            display: grid;
-            grid-template-columns: 104px minmax(0, 1fr);
-            align-items: center;
-            gap: 14px;
-            padding: 9px;
-            border: 1px solid rgba(255,255,255,.075);
-            border-radius: 22px;
-            background: rgba(255,255,255,.045);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
             cursor: pointer;
-            transition: transform .16s ease, background .16s ease;
+            transition: transform .16s ease, opacity .16s ease;
         }
-        .home-content-item:not(.home-featured):active {
-            transform: scale(.98);
-            background: rgba(255,255,255,.075);
+        .home-rail .home-content-item:not(.home-featured):active {
+            transform: scale(.965);
+            opacity: .82;
         }
-        .home-content-item:not(.home-featured) > div:first-child {
-            grid-column: 2;
-            grid-row: 1;
+        .home-rail .home-content-item:not(.home-featured) > div:first-child {
+            order: 2;
             min-width: 0;
             margin: 0;
-            padding: 0 8px 0 0;
+            padding: 0 2px;
         }
-        .home-content-item:not(.home-featured) > div:first-child > p:first-child {
-            margin-bottom: 5px;
-            font-size: 9px;
-            line-height: 1;
+        .home-rail .home-content-item:not(.home-featured) > div:first-child > p:first-child,
+        .home-rail .home-content-item:not(.home-featured) .home-compact-summary {
+            display: none;
         }
-        .home-content-item:not(.home-featured) > div:first-child > h3 {
+        .home-rail .home-content-item:not(.home-featured) > div:first-child > h3 {
             overflow: hidden;
             color: #fff;
-            font-size: 16px;
-            font-weight: 800;
-            line-height: 1.25;
+            font-size: 13px;
+            font-weight: 750;
+            line-height: 1.35;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .home-content-item:not(.home-featured) .home-compact-summary {
-            display: -webkit-box;
-            margin-top: 6px;
-            overflow: hidden;
-            color: rgba(255,255,255,.42);
-            font-size: 10.5px;
-            font-weight: 550;
-            line-height: 1.4;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-        }
-        .home-content-item:not(.home-featured) > div:nth-child(2) {
-            grid-column: 1;
-            grid-row: 1;
-            width: 104px !important;
-            height: 104px !important;
-            min-height: 104px !important;
-            border-radius: 16px !important;
+        .home-rail .home-content-item:not(.home-featured) > div:nth-child(2) {
+            order: 1;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            aspect-ratio: 16 / 9;
+            border-radius: 11px !important;
             box-shadow: none !important;
             pointer-events: none;
         }
-        .home-content-item:not(.home-featured) > div:nth-child(2) > .absolute.top-6,
-        .home-content-item:not(.home-featured) > div:nth-child(2) > .absolute.bottom-5 {
+        .home-rail .home-content-item:not(.home-featured) > div:nth-child(2) > .absolute.top-6,
+        .home-rail .home-content-item:not(.home-featured) > div:nth-child(2) > .absolute.bottom-5 {
             display: none !important;
         }
-        .home-content-item[data-home-category="music"]:not(.home-featured) > div:nth-child(2) {
+        .home-rail .home-content-item[data-home-category="music"] > div:nth-child(2) {
             background:
                 radial-gradient(circle at 75% 20%, rgba(236,72,153,.42), transparent 34%),
                 radial-gradient(circle at 20% 78%, rgba(99,102,241,.5), transparent 38%),
                 #17121E;
         }
-        .home-content-item[data-home-category="music"]:not(.home-featured) > div:nth-child(2)::after {
+        .home-rail .home-content-item[data-home-category="music"] > div:nth-child(2)::after {
             content: "\f001";
             position: absolute;
             inset: 0;
@@ -692,28 +718,22 @@
             font-size: 25px;
             font-weight: 900;
         }
-        .home-upcoming-cards { pointer-events: none; }
-        .home-content-item.home-upcoming-expanded {
-            display: block;
-            padding: 14px;
-            cursor: default;
-        }
-        .home-content-item.home-upcoming-expanded > div:first-child {
-            margin-bottom: 12px;
-            padding: 0 2px;
-        }
-        .home-content-item:not(.home-featured).home-upcoming-expanded > .home-upcoming-cards {
-            width: 100% !important;
+        .home-upcoming-cards > div {
+            flex: none;
+            width: min(58vw, 226px) !important;
             height: auto !important;
-            min-height: 0 !important;
-            display: flex;
-            grid-column: auto;
-            border-radius: 0 !important;
-            overflow: visible;
-            pointer-events: auto !important;
+            aspect-ratio: 16 / 9;
+            border-radius: 11px !important;
+            scroll-snap-align: start;
+            box-shadow: none !important;
         }
-        .home-content-item.home-upcoming-expanded > .home-upcoming-cards > div { height: 150px; }
-        .home-content-item.home-upcoming-expanded .home-compact-summary::after { content: " · 다시 눌러 접기"; }
+        .home-upcoming-cards > div .absolute.bottom-4 {
+            left: 13px;
+            right: 13px;
+            bottom: 11px;
+        }
+        .home-upcoming-cards > div h3 { font-size: 13px; }
+        .home-upcoming-cards > div span { font-size: 8px; }
 
         /* 엔조이 스토리: 카메라·미리보기·뷰어 공통 */
         .story-top-scrim {
@@ -1027,23 +1047,9 @@
             .pf-input::placeholder { color: rgba(0,0,0,0.3); }
             .enjoy-page-bg { background-color: #F2F2F7; }
             .enjoy-page-border { border-color: #F2F2F7 !important; }
-            .home-category-tab {
-                color: #6B7684;
-                border-color: rgba(0,0,0,.08);
-                background: rgba(0,0,0,.035);
-            }
-            .home-category-tab.is-active {
-                color: #fff;
-                border-color: #191F28;
-                background: #191F28;
-            }
-            .home-content-item:not(.home-featured) {
-                border-color: rgba(0,0,0,.06);
-                background: #fff;
-                box-shadow: 0 8px 24px rgba(15,23,42,.06);
-            }
-            .home-content-item:not(.home-featured) > div:first-child > h3 { color: #191F28; }
-            .home-content-item:not(.home-featured) .home-compact-summary { color: #8B95A1; }
+            .home-rail-heading h3,
+            .home-rail .home-content-item:not(.home-featured) > div:first-child > h3 { color: #191F28; }
+            .home-rail-hint { color: #8B95A1; }
 
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
@@ -1545,16 +1551,8 @@
                     </article>
                 </template>
 
-                <!-- 홈 콘텐츠: 최신 1개 강조 + 카테고리별 컴팩트 목록 -->
+                <!-- 홈 콘텐츠: 대표작 + 넷플릭스형 가로 작품 줄 -->
                 <div id="home-content-catalog" class="home-catalog">
-                <div id="home-category-tabs" class="home-category-tabs" aria-label="콘텐츠 카테고리">
-                    <button type="button" class="home-category-tab is-active" data-home-filter="all" aria-pressed="true" onclick="window.filterHomeCatalog('all', this)">전체</button>
-                    <button type="button" class="home-category-tab" data-home-filter="latest" aria-pressed="false" onclick="window.filterHomeCatalog('latest', this)">최신</button>
-                    <button type="button" class="home-category-tab" data-home-filter="travel" aria-pressed="false" onclick="window.filterHomeCatalog('travel', this)">여행</button>
-                    <button type="button" class="home-category-tab" data-home-filter="entertainment" aria-pressed="false" onclick="window.filterHomeCatalog('entertainment', this)">예능</button>
-                    <button type="button" class="home-category-tab" data-home-filter="music" aria-pressed="false" onclick="window.filterHomeCatalog('music', this)">음악</button>
-                    <button type="button" class="home-category-tab" data-home-filter="upcoming" aria-pressed="false" onclick="window.filterHomeCatalog('upcoming', this)">공개 예정</button>
-                </div>
                 <!-- 1. 출장엔조이 3화 -->
                 <section class="home-content-item home-featured" data-home-category="latest">
                     <div class="px-1 mb-2.5">
@@ -1573,17 +1571,23 @@
                         </div>
                         <div class="absolute bottom-5 left-5 right-5 z-10 flex items-end gap-3">
                             <p class="flex-1 text-[12.5px] text-white/85 font-medium leading-snug drop-shadow break-keep">드디어 3화가 공개되었습니다! 지금 바로 확인해보세요.</p>
-                            <div class="shrink-0 bg-white text-black font-bold text-[14px] px-5 py-2 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-95 transition-transform">보러가기</div>
+                            <div class="home-featured-play shrink-0 active:scale-95 transition-transform"><i class="fa-solid fa-play text-[10px]"></i><span>재생</span></div>
                         </div>
                     </div>
                 </section>
 
+                <div class="home-rail-group">
+                    <div class="home-rail-heading">
+                        <h3>여행 시리즈</h3>
+                        <span class="home-rail-hint">옆으로 밀어보기 <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
+                    </div>
+                    <div class="home-rail" aria-label="여행 시리즈">
 
                 <!-- 3. 그때 그 시절 -->
                 <section class="home-content-item" data-home-category="travel" role="button" tabindex="0" onclick="window.haptic(); window.openBrowser('https://www.youtube.com/playlist?list=PL6V2mJA2-n8p77MHyBm8TM-fzkTXw2oSj&jct=dk4QOH-EJt3HuZgM0KvrcQ')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <div class="px-1 mb-2.5">
                         <p class="text-[11px] font-bold text-blue-400 tracking-widest uppercase">THROWBACK</p>
-                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">그때 그 시절, 다시</h3>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">그때 그 시절, 우리</h3>
                         <p class="home-compact-summary">과거 여행을 다시 보고 싶을 때, 엔쪽이 브이로그 정주행.</p>
                     </div>
                     <div class="w-full relative overflow-hidden cursor-pointer bg-black group rounded-[28px] h-[420px] shadow-[0_10px_30px_rgba(0,0,0,0.45)]" onclick="window.haptic(); window.openBrowser('https://www.youtube.com/playlist?list=PL6V2mJA2-n8p77MHyBm8TM-fzkTXw2oSj&jct=dk4QOH-EJt3HuZgM0KvrcQ')">
@@ -1606,7 +1610,7 @@
                 <section class="home-content-item" data-home-category="travel" role="button" tabindex="0" onclick="window.haptic(); window.openBrowser('https://won429.github.io/bus/')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <div class="px-1 mb-2.5">
                         <p class="text-[11px] font-bold text-teal-400 tracking-widest uppercase">NEW SERVICE</p>
-                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이의 새 서비스</h3>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">우리의 발자취</h3>
                         <p class="home-compact-summary">우리가 함께한 모든 순간과 여행 기록을 한눈에.</p>
                     </div>
                     <div class="w-full relative overflow-hidden cursor-pointer bg-black group rounded-[28px] h-[420px] shadow-[0_10px_30px_rgba(0,0,0,0.45)]" onclick="window.haptic(); window.openBrowser('https://won429.github.io/bus/')">
@@ -1647,7 +1651,7 @@
                 <section class="home-content-item" data-home-category="travel" role="button" tabindex="0" onclick="window.haptic(); window.openBrowser('https://www.youtube.com/playlist?list=PL6V2mJA2-n8rssJc8wQE3jvPGqAFP_yQs&jct=OCpt0PxmET_Ej_etMpY-lw')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <div class="px-1 mb-2.5">
                         <p class="text-[11px] font-bold text-orange-400 tracking-widest uppercase">THE BEGINNING</p>
-                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">모든 여행의 시작</h3>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">우리의 첫 여행</h3>
                         <p class="home-compact-summary">풋풋했던 첫 여행의 추억부터 대환장 막장 이야기까지.</p>
                     </div>
                     <div class="w-full relative overflow-hidden cursor-pointer bg-black group rounded-[28px] h-[420px] shadow-[0_10px_30px_rgba(0,0,0,0.45)]" onclick="window.haptic(); window.openBrowser('https://www.youtube.com/playlist?list=PL6V2mJA2-n8rssJc8wQE3jvPGqAFP_yQs&jct=OCpt0PxmET_Ej_etMpY-lw')">
@@ -1666,11 +1670,21 @@
                     </div>
                 </section>
 
+                    </div>
+                </div>
+
+                <div class="home-rail-group">
+                    <div class="home-rail-heading">
+                        <h3>스페셜 &amp; 음악</h3>
+                        <span class="home-rail-hint">옆으로 밀어보기 <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
+                    </div>
+                    <div class="home-rail" aria-label="스페셜과 음악">
+
                 <!-- 6. 환승여행 -->
                 <section class="home-content-item" data-home-category="entertainment" role="button" tabindex="0" onclick="window.haptic(); window.openBrowser('https://youtu.be/n9rhdR9jwaI')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <div class="px-1 mb-2.5">
                         <p class="text-[11px] font-bold text-purple-400 tracking-widest uppercase">SPECIAL</p>
-                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">감정이 교차하는 순간</h3>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">환승여행</h3>
                         <p class="home-compact-summary">익숙함과 새로움 사이, 당신의 마음은 어디로 향할까요?</p>
                     </div>
                     <div class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[28px] h-[420px] shadow-[0_10px_30px_rgba(0,0,0,0.45)]" onclick="window.haptic(); window.openBrowser('https://youtu.be/n9rhdR9jwaI')">
@@ -1735,14 +1749,16 @@
                     </div>
                 </section>
 
-                <!-- 9. 공개 예정 (작은 카드, 절반 높이) -->
-                <section class="home-content-item" data-home-category="upcoming" role="button" tabindex="0" aria-expanded="false" onclick="if(!event.target.closest('.home-upcoming-cards')) window.toggleUpcomingCatalog(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.toggleUpcomingCatalog(this)}">
-                    <div class="px-1 mb-2.5">
-                        <p class="text-[11px] font-bold text-gray-400 tracking-widest uppercase">COMING SOON</p>
-                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">공개 예정</h3>
-                        <p class="home-compact-summary">3개의 공개 예정 콘텐츠 · 눌러서 펼치기</p>
                     </div>
-                    <div class="home-upcoming-cards flex flex-col gap-3">
+                </div>
+
+                <!-- 9. 공개 예정 (작은 카드, 절반 높이) -->
+                <section class="home-rail-group">
+                    <div class="home-rail-heading">
+                        <h3>공개 예정</h3>
+                        <span class="home-rail-hint">곧 만나요 <i class="fa-solid fa-lock text-[8px]"></i></span>
+                    </div>
+                    <div class="home-upcoming-cards home-rail" aria-label="공개 예정 콘텐츠">
                         <!-- 엔조이 브이로그 -->
                         <div class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[22px] h-[200px] shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-transform" onclick="window.haptic(); alert('올 여름 공개됩니다! 🔒')">
                             <div class="absolute inset-0">
@@ -2337,34 +2353,6 @@
             } catch (e) {
                 if (e && e.name !== 'AbortError') console.warn('feed share', e);
             }
-        };
-        window.filterHomeCatalog = function (filter, button) {
-            window.haptic && window.haptic();
-            document.querySelectorAll('#home-category-tabs .home-category-tab').forEach(function (tab) {
-                const active = tab === button;
-                tab.classList.toggle('is-active', active);
-                tab.setAttribute('aria-pressed', active ? 'true' : 'false');
-            });
-            document.querySelectorAll('#home-content-catalog .home-content-item').forEach(function (item) {
-                const visible = filter === 'all' || item.dataset.homeCategory === filter;
-                item.classList.toggle('is-filtered-out', !visible);
-                if (!visible || (item.dataset.homeCategory === 'upcoming' && filter !== 'upcoming')) {
-                    item.classList.remove('home-upcoming-expanded');
-                    if (item.dataset.homeCategory === 'upcoming') item.setAttribute('aria-expanded', 'false');
-                }
-            });
-            requestAnimationFrame(function () {
-                window.updateNavContrast && window.updateNavContrast();
-            });
-        };
-        window.toggleUpcomingCatalog = function (section) {
-            if (!section) return;
-            window.haptic && window.haptic();
-            const expanded = section.classList.toggle('home-upcoming-expanded');
-            section.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-            requestAnimationFrame(function () {
-                window.updateNavContrast && window.updateNavContrast();
-            });
         };
         function initFeedCarousels() {
             document.querySelectorAll('.ig-carousel').forEach(function (carousel) {
