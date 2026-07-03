@@ -1083,35 +1083,129 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* 홈 상단 엔조이 비서 (마스코트 + 말풍선, 좌우 번갈아) */
-        .assistant-bubble {
-            background: #26262B;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 22px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.26);
+        /* 홈 상단 엔조이 비서: 한 명의 캐릭터 + 오늘의 브리핑 카드 */
+        .assistant-hero {
+            position: relative;
+            min-height: 116px;
+            display: flex;
+            align-items: center;
+            padding-right: 116px;
         }
-        /* 말풍선 꼬리: 본체와 같은 색의 삼각형 (각 마스코트를 가리킴) */
-        .assistant-bubble.tail-left::after {
-            content: "";
-            position: absolute;
-            left: -11px; top: 50%;
-            transform: translateY(-50%);
-            width: 0; height: 0;
-            border-top: 11px solid transparent;
-            border-bottom: 11px solid transparent;
-            border-right: 14px solid #26262B;
-            pointer-events: none;
+        .assistant-kicker {
+            width: fit-content;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 9px;
+            padding: 5px 9px;
+            border: 1px solid rgba(49,130,246,.2);
+            border-radius: 999px;
+            color: #60A5FA;
+            background: rgba(49,130,246,.1);
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: .04em;
         }
-        .assistant-bubble.tail-right::after {
-            content: "";
+        .assistant-kicker-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #3182F6;
+            box-shadow: 0 0 0 4px rgba(49,130,246,.13);
+        }
+        .assistant-character {
             position: absolute;
-            right: -11px; top: 50%;
-            transform: translateY(-50%);
-            width: 0; height: 0;
-            border-top: 11px solid transparent;
-            border-bottom: 11px solid transparent;
-            border-left: 14px solid #26262B;
+            right: -7px;
+            bottom: -2px;
+            width: 124px;
+            height: 124px;
+            object-fit: contain;
+            object-position: center bottom;
+            filter: drop-shadow(0 12px 16px rgba(0,0,0,.28));
             pointer-events: none;
+            user-select: none;
+        }
+        .assistant-brief-card {
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 24px;
+            background:
+                radial-gradient(circle at 100% 0, rgba(49,130,246,.11), transparent 38%),
+                #1C1C1F;
+            box-shadow: 0 14px 34px rgba(0,0,0,.25);
+        }
+        .assistant-brief-head {
+            min-height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 0 16px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+        .assistant-brief-title {
+            color: #fff;
+            font-size: 13px;
+            font-weight: 850;
+            letter-spacing: -.015em;
+        }
+        .assistant-brief-date {
+            color: rgba(255,255,255,.38);
+            font-size: 10.5px;
+            font-weight: 650;
+            white-space: nowrap;
+        }
+        .assistant-brief-row {
+            min-height: 78px;
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1fr);
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+        }
+        .assistant-brief-row + .assistant-brief-row {
+            border-top: 1px solid rgba(255,255,255,.07);
+        }
+        .assistant-brief-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            font-size: 15px;
+        }
+        .assistant-brief-icon.dues {
+            color: #FB7185;
+            background: rgba(244,63,94,.12);
+        }
+        .assistant-brief-icon.schedule {
+            color: #C084FC;
+            background: rgba(168,85,247,.12);
+        }
+        .assistant-brief-label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 3px;
+            color: rgba(255,255,255,.48);
+            font-size: 10.5px;
+            font-weight: 750;
+        }
+        .assistant-brief-label::after {
+            content: "";
+            width: 3px;
+            height: 3px;
+            border-radius: 999px;
+            background: currentColor;
+        }
+        .assistant-brief-message {
+            color: #fff;
+            font-size: 13.5px;
+            font-weight: 700;
+            line-height: 1.42;
+            letter-spacing: -.012em;
+            word-break: keep-all;
         }
 
         /* 모임통장 납부/사용 내역 탭 (세그먼트) */
@@ -1241,10 +1335,17 @@
             #more-popover-panel .text-white { color: #FFFFFF !important; }
             #more-popover-panel .text-\[\#8B95A1\] { color: rgba(255, 255, 255, 0.6) !important; }
 
-            /* 홈 상단 비서 말풍선: 라이트 모드 흰색 (꼬리 색도 함께) */
-            .assistant-bubble { background: #FFFFFF !important; border-color: rgba(0, 0, 0, 0.05) !important; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10) !important; }
-            .assistant-bubble.tail-left::after { border-right-color: #FFFFFF !important; }
-            .assistant-bubble.tail-right::after { border-left-color: #FFFFFF !important; }
+            /* 홈 상단 비서 브리핑 카드 */
+            .assistant-brief-card {
+                border-color: rgba(0,0,0,.06);
+                background:
+                    radial-gradient(circle at 100% 0, rgba(49,130,246,.08), transparent 38%),
+                    #FFFFFF;
+                box-shadow: 0 12px 30px rgba(0,0,0,.08);
+            }
+            .assistant-brief-head, .assistant-brief-row + .assistant-brief-row { border-color: rgba(0,0,0,.07); }
+            .assistant-brief-title, .assistant-brief-message { color: #191F28; }
+            .assistant-brief-date, .assistant-brief-label { color: #8B95A1; }
 
             /* 일정: 선택한 날(흰 원) → 어두운 원 */
             #calendar-grid .bg-white { background-color: #141414 !important; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important; }
@@ -1465,32 +1566,39 @@
                 }
             </style>
 
-            <!-- 상단: 엔조이 비서 (마스코트들이 오늘을 안내, 좌우 번갈아) -->
+            <!-- 상단: 한 명의 엔조이 비서가 오늘의 소식을 요약 -->
             <div id="enjoy-assistant" class="mb-9 mt-2 fade-in-up delay-100">
-                <h2 id="assistant-greeting" class="text-[26px] font-black text-white tracking-tight leading-tight mb-1">오늘도 반가워요</h2>
-                <p id="assistant-sub" class="text-[14px] font-medium text-gray-400 leading-snug mb-5">엔조이 비서가 오늘을 안내해 드릴게요.</p>
-
-                <div class="flex flex-col gap-3.5">
-                    <!-- 1. 마스코트 오른쪽 -->
-                    <div class="flex items-center gap-1.5">
-                        <div class="assistant-bubble tail-right relative flex-1 min-w-0 px-4 py-3.5">
-                            <div class="flex items-start gap-2.5">
-                                <i id="asst-icon-2" class="fa-solid fa-piggy-bank text-emerald-400 text-[15px] mt-[2px] shrink-0"></i>
-                                <p id="asst-text-2" class="text-[14.5px] font-semibold text-white leading-snug break-keep">모임비를 확인하고 있어요.</p>
-                            </div>
-                        </div>
-                        <img alt="엔조이 마스코트" src="https://github.com/won429/enjoy-app/blob/main/image-7.png?raw=true"
-                             class="shrink-0 w-[100px] h-[100px] object-contain select-none pointer-events-none drop-shadow-[0_8px_14px_rgba(0,0,0,0.25)]" onerror="this.style.display='none'">
+                <div class="assistant-hero">
+                    <div class="min-w-0">
+                        <div class="assistant-kicker"><span class="assistant-kicker-dot"></span>ENJOY ASSISTANT</div>
+                        <h2 id="assistant-greeting" class="text-[25px] font-black text-white tracking-tight leading-tight mb-1.5">오늘도 반가워요</h2>
+                        <p id="assistant-sub" class="text-[13px] font-medium text-gray-400 leading-snug">오늘 알아둘 소식만 모아봤어요.</p>
                     </div>
-                    <!-- 3. 마스코트 왼쪽 -->
-                    <div class="flex items-center gap-1.5">
-                        <img alt="엔조이 마스코트" src="https://github.com/won429/enjoy-app/blob/main/image-5.png?raw=true"
-                             class="shrink-0 w-[100px] h-[100px] object-contain select-none pointer-events-none drop-shadow-[0_8px_14px_rgba(0,0,0,0.25)]" onerror="this.style.display='none'">
-                        <div class="assistant-bubble tail-left relative flex-1 min-w-0 px-4 py-3.5">
-                            <div class="flex items-start gap-2.5">
-                                <i id="asst-icon-3" class="fa-solid fa-bell text-amber-400 text-[15px] mt-[2px] shrink-0"></i>
-                                <p id="asst-text-3" class="text-[14.5px] font-semibold text-white leading-snug break-keep">오늘 일정을 살펴보고 있어요.</p>
-                            </div>
+                    <img alt="엔조이 수달 비서" src="https://raw.githubusercontent.com/won429/enjoy-app/main/dhkfodshf.png"
+                         class="assistant-character" onerror="this.style.display='none'">
+                </div>
+
+                <div class="assistant-brief-card mt-1">
+                    <div class="assistant-brief-head">
+                        <span class="assistant-brief-title">오늘의 브리핑</span>
+                        <span id="assistant-date" class="assistant-brief-date">오늘</span>
+                    </div>
+                    <div class="assistant-brief-row">
+                        <div id="asst-icon-wrap-2" class="assistant-brief-icon dues">
+                            <i id="asst-icon-2" class="fa-solid fa-piggy-bank"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="assistant-brief-label">모임비</div>
+                            <p id="asst-text-2" class="assistant-brief-message">모임비를 확인하고 있어요.</p>
+                        </div>
+                    </div>
+                    <div class="assistant-brief-row">
+                        <div id="asst-icon-wrap-3" class="assistant-brief-icon schedule">
+                            <i id="asst-icon-3" class="fa-solid fa-calendar-day"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="assistant-brief-label">오늘 일정</div>
+                            <p id="asst-text-3" class="assistant-brief-message">오늘 일정을 살펴보고 있어요.</p>
                         </div>
                     </div>
                 </div>
@@ -3751,7 +3859,7 @@
             try { window.renderEnjoyToday(); } catch (e) {}
         };
 
-        // 홈 상단 '엔조이 비서': 시간대 인사 + 마스코트 3종(각자 말풍선 하나씩)
+        // 홈 상단 '엔조이 비서': 시간대 인사 + 한 명의 캐릭터가 전하는 오늘의 브리핑
         window.renderEnjoyToday = function() {
             const root = document.getElementById('enjoy-assistant');
             if (!root) return;
@@ -3774,12 +3882,13 @@
 
             // 시간대별 인사 헤드라인
             let greeting, sub;
-            if (hh >= 5 && hh < 12)       { greeting = '활기찬 오전이에요'; sub = '엔조이 비서가 오늘을 안내해 드릴게요.'; }
-            else if (hh >= 12 && hh < 18) { greeting = '편안한 오후예요';   sub = '엔조이 비서가 오늘을 정리해 드릴게요.'; }
-            else if (hh >= 18 && hh < 23) { greeting = '나른한 저녁이에요'; sub = '엔조이 비서가 하루를 마무리해 드릴게요.'; }
-            else                          { greeting = '고요한 밤이에요';   sub = '엔조이 비서가 오늘을 돌아봐 드릴게요.'; }
+            if (hh >= 5 && hh < 12)       { greeting = '활기찬 오전이에요'; sub = '오늘 알아둘 소식부터 전해드릴게요.'; }
+            else if (hh >= 12 && hh < 18) { greeting = '편안한 오후예요';   sub = '지금 알아둘 소식만 모아봤어요.'; }
+            else if (hh >= 18 && hh < 23) { greeting = '나른한 저녁이에요'; sub = '남은 일정과 모임비를 확인해보세요.'; }
+            else                          { greeting = '고요한 밤이에요';   sub = '내일 전에 확인할 소식을 모아봤어요.'; }
             setTxt('assistant-greeting', greeting);
             setTxt('assistant-sub', sub);
+            setTxt('assistant-date', `${m}월 ${d}일 ${dow}요일`);
 
             // 2) 이번 달 모임비 (오른쪽 마스코트)
             try {
@@ -3792,10 +3901,10 @@
                     if (h.status === 'deferred') return false;
                     return !(h.status === 'paid' && h.amount >= h.totalOwed);
                 });
-                if (unpaid.length === 0) setMsg(2, { icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비는 모두 완료됐어요 👏' });
+                if (unpaid.length === 0) setMsg(2, { icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비 모두 납부 완료 👏' });
                 else {
                     const who = unpaid.length <= 3 ? unpaid.join(', ') : `${unpaid.slice(0, 3).join(', ')} 외 ${unpaid.length - 3}명`;
-                    setMsg(2, { icon: 'fa-piggy-bank', color: 'text-[#F04452]', text: `이번 달 모임비, 아직 ${who} 님이 안 냈어요. 💰` });
+                    setMsg(2, { icon: 'fa-piggy-bank', color: 'text-[#F04452]', text: `이번 달 모임비 미납 · ${who} 💰` });
                 }
             } catch (e) { setMsg(2, { icon: 'fa-piggy-bank', color: 'text-emerald-400', text: '모임비 현황을 불러오고 있어요.' }); }
 
@@ -3804,8 +3913,8 @@
                 const skip = ['personal_dot', 'anniv', 'dues'];
                 const items = (window.getMergedEvents(y, m)[todayKey] || []).filter(e => !skip.includes(e.type));
                 let schedText, icon, color;
-                if (items.length === 0) { schedText = '오늘은 특별한 일정이 없어요.'; icon = 'fa-mug-hot'; color = 'text-amber-400'; }
-                else { const more = items.length > 1 ? ` 외 ${items.length - 1}개` : ''; schedText = `오늘은 "${items[0].title}"${more} 일정이 있어요.`; icon = 'fa-bell'; color = 'text-amber-400'; }
+                if (items.length === 0) { schedText = '오늘 특별한 일정은 없어요'; icon = 'fa-mug-hot'; color = 'text-amber-400'; }
+                else { const more = items.length > 1 ? ` 외 ${items.length - 1}개` : ''; schedText = `오늘 · ${items[0].title}${more}`; icon = 'fa-bell'; color = 'text-amber-400'; }
 
                 // 다음 정기모임 탐색
                 let next = null;
@@ -3822,7 +3931,7 @@
                 }
                 let finalText = schedText;
                 if (next) {
-                    finalText += ` 다음 정기모임은 ${next.isToday ? '바로 오늘' : `${next.km}월 ${next.kd}일`}이에요.`;
+                    finalText += ` · 다음 모임 ${next.isToday ? '바로 오늘' : `${next.km}월 ${next.kd}일`}`;
                     if (items.length === 0) { icon = 'fa-suitcase-rolling'; color = 'text-purple-400'; }
                 }
                 setMsg(3, { icon, color, text: finalText });
