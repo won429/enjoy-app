@@ -801,6 +801,177 @@
             background: rgba(255,255,255,.96);
             box-shadow: 0 12px 32px rgba(0,0,0,.28), 0 0 24px rgba(255,255,255,.12);
         }
+        /* 스토리 만들기: 첨부된 인스타그램형 카메라/미리보기 UI */
+        .story-camera-media, .story-preview-media {
+            position: absolute;
+            top: max(8px, env(safe-area-inset-top));
+            left: 0;
+            width: 100%;
+            height: calc(100% - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+            border-radius: clamp(22px, 7vw, 34px);
+            overflow: hidden;
+            object-fit: cover;
+            background: #000;
+        }
+        .story-create-top {
+            position: relative;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: max(18px, env(safe-area-inset-top)) 20px 0;
+            pointer-events: none;
+        }
+        .story-create-top > button { pointer-events: auto; }
+        .story-create-circle {
+            width: 54px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(28,28,28,.62);
+            box-shadow: 0 5px 18px rgba(0,0,0,.2);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+            text-shadow: 0 1px 5px rgba(0,0,0,.25);
+        }
+        .story-camera-bottom {
+            position: relative;
+            z-index: 20;
+            margin-top: auto;
+            padding: 0 24px max(34px, calc(env(safe-area-inset-bottom) + 18px));
+        }
+        .story-camera-actions {
+            position: relative;
+            min-height: 88px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .story-camera-secondary {
+            position: absolute;
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(38,41,46,.8);
+            box-shadow: 0 6px 20px rgba(0,0,0,.2);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+        }
+        .story-camera-secondary.gallery { left: 0; }
+        .story-camera-secondary.flip { right: 0; }
+        #story-shutter {
+            width: 86px;
+            height: 86px;
+            border-radius: 999px;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,.18));
+        }
+        .story-preview-text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 15;
+            width: min(84vw, 390px);
+            min-height: 1.25em;
+            padding: 8px 12px;
+            transform: translate(-50%, -50%);
+            border: 0;
+            outline: 0;
+            color: #fff;
+            background: transparent;
+            font-size: clamp(28px, 9vw, 46px);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -.035em;
+            text-align: center;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            text-shadow: 0 2px 10px rgba(0,0,0,.7);
+            caret-color: #fff;
+            touch-action: manipulation;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        .story-preview-text:empty::before {
+            content: attr(data-placeholder);
+            color: rgba(255,255,255,.64);
+        }
+        .story-preview-bottom {
+            position: relative;
+            z-index: 20;
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px max(28px, calc(env(safe-area-inset-bottom) + 16px));
+        }
+        .story-my-story {
+            min-width: 0;
+            height: 58px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 0;
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(57,61,67,.94);
+            font-size: 15px;
+            font-weight: 800;
+        }
+        .story-my-story-avatar {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #fff;
+            border-radius: 999px;
+            color: #9CA3AF;
+            background: #F3F4F6;
+            font-size: 15px;
+        }
+        .story-send-button {
+            width: 58px;
+            height: 58px;
+            flex: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 999px;
+            color: #fff;
+            background: #4357F7;
+            box-shadow: 0 8px 24px rgba(67,87,247,.3);
+            font-size: 24px;
+        }
+        .story-viewer-text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 12;
+            width: min(84vw, 390px);
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: clamp(28px, 9vw, 46px);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -.035em;
+            text-align: center;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            text-shadow: 0 2px 10px rgba(0,0,0,.7);
+            pointer-events: none;
+        }
         .story-viewer-header {
             position: absolute;
             inset: 0 0 auto;
@@ -2142,41 +2313,33 @@
     <!-- ===================== 엔조이 스토리 (인스타그램 스토리형) ===================== -->
     <!-- 카메라 (사진: 탭 / 영상: 길게 눌러 최대 5초, 720p) -->
     <div id="story-camera" class="hidden fixed inset-0 z-[150] bg-black flex-col">
-        <video id="story-cam-video" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover bg-black"></video>
+        <video id="story-cam-video" autoplay playsinline muted class="story-camera-media"></video>
         <canvas id="story-cam-canvas" class="hidden"></canvas>
         <div class="story-top-scrim"></div>
         <div class="story-bottom-scrim"></div>
 
-        <!-- 상단 컨트롤 -->
-        <div class="relative z-10 grid grid-cols-[44px_1fr_44px] items-center pt-safe px-4 pt-3">
-            <button aria-label="카메라 닫기" title="닫기" onclick="window.haptic(); window.EnjoyStory.closeCamera()" class="story-glass-control w-11 h-11 rounded-full text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="flex justify-center"><span class="story-screen-title"><i class="fa-solid fa-circle"></i>스토리 만들기</span></div>
-            <button aria-label="카메라 전환" title="카메라 전환" onclick="window.haptic(); window.EnjoyStory.flipCamera()" class="story-glass-control w-11 h-11 rounded-full text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-camera-rotate text-base"></i></button>
+        <div class="story-create-top">
+            <button aria-label="카메라 닫기" title="닫기" onclick="window.haptic(); window.EnjoyStory.closeCamera()" class="story-create-circle active:scale-90 transition-transform">
+                <i class="fa-solid fa-xmark text-[28px]"></i>
+            </button>
+            <span aria-hidden="true"></span>
         </div>
 
-        <!-- 하단 셔터 -->
-        <div class="relative z-10 mt-auto pb-safe-area">
-            <!-- 줌 다이얼 (아이폰 카메라식 눈금 다이얼: 드래그/핀치로 확대·축소) -->
-            <div id="story-dial-wrap" class="relative z-10 mb-4 select-none" style="touch-action:none;">
-                <div class="text-center mb-1"><span id="story-zoom-label" class="text-[#FFD60A] text-[15px] font-extrabold drop-shadow">1x</span></div>
-                <div class="absolute left-1/2 -translate-x-1/2 z-20 pointer-events-none" style="top:24px;">
-                    <div class="mx-auto" style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #FFD60A;"></div>
-                </div>
-                <div id="story-dial" class="relative h-[44px]" style="overflow:hidden; touch-action:none; cursor:grab; -webkit-mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent); mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);">
-                    <div id="story-dial-track" class="absolute top-0 h-full will-change-transform" style="left:50%;"></div>
-                </div>
-            </div>
-            <p id="story-cam-hint" class="story-camera-hint">탭하여 사진 · 길게 눌러 최대 5초 영상</p>
-            <div class="relative flex items-center justify-center mb-10">
-                <button aria-label="갤러리에서 선택" title="갤러리" onclick="window.haptic(); window.EnjoyStory.pickGallery()" class="story-glass-control absolute left-7 w-12 h-12 rounded-2xl text-white flex items-center justify-center active:scale-90 transition-transform">
-                    <i class="fa-regular fa-images text-lg"></i><span class="story-camera-side-label">갤러리</span>
+        <!-- 하단에는 갤러리 · 촬영 · 카메라 전환만 표시 -->
+        <div class="story-camera-bottom">
+            <div class="story-camera-actions">
+                <button aria-label="갤러리에서 선택" title="갤러리" onclick="window.haptic(); window.EnjoyStory.pickGallery()" class="story-camera-secondary gallery active:scale-90 transition-transform">
+                    <i class="fa-regular fa-images text-[21px]"></i>
                 </button>
-                <button id="story-shutter" class="relative w-[80px] h-[80px] flex items-center justify-center active:scale-95 transition-transform" style="touch-action:none; -webkit-touch-callout:none;">
-                    <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
-                        <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="4"></circle>
-                        <circle id="story-rec-ring" cx="40" cy="40" r="36" fill="none" stroke="#F04452" stroke-width="6" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"></circle>
+                <button id="story-shutter" aria-label="촬영" class="relative flex items-center justify-center active:scale-95 transition-transform" style="touch-action:none; -webkit-touch-callout:none;">
+                    <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 86 86">
+                        <circle cx="43" cy="43" r="39" fill="none" stroke="rgba(255,255,255,0.98)" stroke-width="5"></circle>
+                        <circle id="story-rec-ring" cx="43" cy="43" r="39" fill="none" stroke="#F04452" stroke-width="6" stroke-linecap="round" stroke-dasharray="245" stroke-dashoffset="245"></circle>
                     </svg>
-                    <div id="story-shutter-dot" class="w-[62px] h-[62px] rounded-full bg-white transition-all duration-200"></div>
+                    <div id="story-shutter-dot" class="w-[68px] h-[68px] rounded-full bg-white transition-all duration-200"></div>
+                </button>
+                <button aria-label="카메라 전환" title="카메라 전환" onclick="window.haptic(); window.EnjoyStory.flipCamera()" class="story-camera-secondary flip active:scale-90 transition-transform">
+                    <i class="fa-solid fa-camera-rotate text-[21px]"></i>
                 </button>
             </div>
         </div>
@@ -2190,21 +2353,27 @@
 
     <!-- 촬영 미리보기 (올리기 / 다시) -->
     <div id="story-preview" class="hidden fixed inset-0 z-[151] bg-black flex-col">
-        <img id="story-preview-img" class="hidden absolute inset-0 w-full h-full object-contain bg-black">
-        <video id="story-preview-video" class="hidden absolute inset-0 w-full h-full object-contain bg-black" playsinline autoplay loop></video>
+        <img id="story-preview-img" class="story-preview-media hidden">
+        <video id="story-preview-video" class="story-preview-media hidden" playsinline autoplay loop></video>
         <div class="story-top-scrim"></div>
         <div class="story-bottom-scrim"></div>
-        <div class="relative z-10 grid grid-cols-[88px_1fr_88px] items-center pt-safe px-4 pt-3">
-            <button onclick="window.haptic(); window.EnjoyStory.retake()" class="story-glass-control justify-self-start px-3.5 h-10 rounded-full text-white text-[12px] font-bold flex items-center gap-2 active:scale-95 transition-transform"><i class="fa-solid fa-arrow-left"></i>다시</button>
-            <div class="flex justify-center"><span class="story-screen-title"><i class="fa-solid fa-check"></i>미리보기</span></div>
-            <button onclick="window.haptic(); window.EnjoyStory.savePreview()" class="story-glass-control justify-self-end px-3.5 h-10 rounded-full text-white text-[12px] font-bold flex items-center gap-2 active:scale-95 transition-transform"><i class="fa-solid fa-arrow-down"></i>저장</button>
+        <div class="story-create-top">
+            <button aria-label="다시 촬영" title="닫기" onclick="window.haptic(); window.EnjoyStory.retake()" class="story-create-circle active:scale-90 transition-transform">
+                <i class="fa-solid fa-xmark text-[28px]"></i>
+            </button>
+            <button aria-label="텍스트 추가" title="텍스트 추가" onclick="window.haptic(); window.EnjoyStory.toggleTextEditor()" class="story-create-circle active:scale-90 transition-transform">
+                <span class="text-[27px] font-medium tracking-[-.08em] pr-0.5">Aa</span>
+            </button>
         </div>
-        <div class="relative z-10 mt-auto px-5 pb-6 pb-safe-area">
-            <div class="story-preview-copy">
-                <strong>이 순간을 멤버들과 나눌까요?</strong>
-                <span>스토리는 24시간 후 자동으로 사라져요.</span>
-            </div>
-            <button id="story-post-btn" onclick="window.haptic(); window.EnjoyStory.post()" class="story-post-button w-full text-black font-extrabold rounded-full active:scale-[0.97] transition-transform flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane text-[13px]"></i>스토리에 공유하기</button>
+        <div id="story-preview-text" class="story-preview-text hidden" contenteditable="true" role="textbox" aria-label="스토리에 표시할 텍스트" data-placeholder="텍스트 입력..." spellcheck="false"></div>
+        <div class="story-preview-bottom">
+            <button id="story-post-btn" onclick="window.haptic(); window.EnjoyStory.post()" class="story-my-story active:scale-[0.97] transition-transform">
+                <span class="story-my-story-avatar"><i class="fa-solid fa-user"></i></span>
+                <span>내 스토리</span>
+            </button>
+            <button aria-label="스토리에 공유" title="스토리에 공유" onclick="window.haptic(); window.EnjoyStory.post()" class="story-send-button active:scale-90 transition-transform">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
         </div>
     </div>
 
@@ -2212,6 +2381,7 @@
     <div id="story-viewer" class="hidden fixed inset-0 z-[152] bg-black flex-col select-none">
         <img id="story-viewer-img" class="hidden absolute inset-0 w-full h-full object-contain bg-black">
         <video id="story-viewer-video" class="hidden absolute inset-0 w-full h-full object-contain bg-black" playsinline></video>
+        <div id="story-viewer-text" class="story-viewer-text hidden"></div>
         <div id="story-viewer-loading" class="hidden absolute inset-0 z-[5] flex items-center justify-center pointer-events-none"><i class="fa-solid fa-circle-notch fa-spin text-white/80 text-2xl"></i></div>
         <div class="story-top-scrim"></div>
         <div class="story-bottom-scrim"></div>
@@ -2396,7 +2566,7 @@
         const DB_NAME = 'enjoyStoryDB', STORE = 'stories';
 
         let stories = [];                  // createdAt 오름차순(과거→최신)
-        let pending = null;                // { type, blob, thumb }
+        let pending = null;                // { type, blob, thumb, text }
         let camStream = null, facing = 'environment';
         let mediaRec = null, recChunks = [], recording = false, recTimer = null, holdTimer = null, didRecord = false;
         let camZoom = 1; const ZOOM_MIN = 1, MAX_ZOOM = 4;   // 다이얼 1x~4x (기본 1x = 네이티브 화각)
@@ -2493,7 +2663,7 @@
             const url = await blobToDataURL(p.blob);
             const createdAt = Date.now();
             stories.push({
-                type: p.type, url, thumb: p.thumb, ready: true, createdAt,
+                type: p.type, url, thumb: p.thumb, text: p.text || '', ready: true, createdAt,
                 author: window.enjoyProfileName || '나',
                 authorUid: (window.enjoyUser && window.enjoyUser.uid) || 'local',
                 _id: 'loc_' + createdAt + '_' + Math.random().toString(36).slice(2, 6), _local: true
@@ -2527,7 +2697,7 @@
             const createdAt = Date.now();
             await window.fsSetDoc(window.fsDoc('stories', id), {
                 type: p.type, url: data.secure_url, publicId: data.public_id || '',
-                resourceType: data.resource_type || rt, thumb: p.thumb, ready: true, createdAt,
+                resourceType: data.resource_type || rt, thumb: p.thumb, text: p.text || '', ready: true, createdAt,
                 author: window.enjoyProfileName || '미가입',   // 올린 사람의 프로필 이름
                 authorUid: (window.enjoyUser && window.enjoyUser.uid) || '',
                 expireAt: window.fsTimestampFromMillis(createdAt + STORY_TTL)
@@ -2761,7 +2931,7 @@
         }
         function startRing() {
             const ring = $('story-rec-ring'), dot = $('story-shutter-dot');
-            ring.style.transition = 'none'; ring.style.strokeDashoffset = '226.2';
+            ring.style.transition = 'none'; ring.style.strokeDashoffset = '245';
             void ring.getBoundingClientRect();
             requestAnimationFrame(() => {
                 ring.style.transition = 'stroke-dashoffset ' + VIDEO_MAX_MS + 'ms linear';
@@ -2771,8 +2941,8 @@
         }
         function resetRing() {
             const ring = $('story-rec-ring'), dot = $('story-shutter-dot');
-            ring.style.transition = 'none'; ring.style.strokeDashoffset = '226.2';
-            dot.style.width = '62px'; dot.style.height = '62px'; dot.style.borderRadius = '9999px'; dot.style.background = '#fff';
+            ring.style.transition = 'none'; ring.style.strokeDashoffset = '245';
+            dot.style.width = '68px'; dot.style.height = '68px'; dot.style.borderRadius = '9999px'; dot.style.background = '#fff';
         }
 
         /* 셔터: 탭 = 사진, 길게 = 영상 */
@@ -2878,6 +3048,12 @@
         function showPreview() {
             if (!pending) return;
             const pv = $('story-preview'), img = $('story-preview-img'), vid = $('story-preview-video');
+            const text = $('story-preview-text');
+            pending.text = pending.text || '';
+            if (text) {
+                text.textContent = pending.text;
+                text.classList.toggle('hidden', !pending.text);
+            }
             if (previewZoom) previewZoom.reset();
             if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
             prevUrl = URL.createObjectURL(pending.blob);
@@ -2890,10 +3066,29 @@
             }
             openOverlay(pv);
         }
+        function syncPreviewText() {
+            const text = $('story-preview-text');
+            if (pending && text) pending.text = text.textContent.trim();
+        }
+        function toggleTextEditor() {
+            const text = $('story-preview-text');
+            if (!text || !pending) return;
+            text.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                text.focus();
+                const range = document.createRange();
+                range.selectNodeContents(text);
+                range.collapse(false);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            });
+        }
         function retake() {
-            const pv = $('story-preview'), vid = $('story-preview-video');
+            const pv = $('story-preview'), vid = $('story-preview-video'), text = $('story-preview-text');
             vid.pause();
             if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
+            if (text) { text.textContent = ''; text.classList.add('hidden'); text.blur(); }
             pending = null;
             closeOverlay(pv);
             // 카메라는 그대로 열려 있음 → 바로 재촬영
@@ -2901,14 +3096,16 @@
         let posting = false;
         async function post() {
             if (!pending || posting) return;
+            syncPreviewText();
             posting = true;
             const btn = $('story-post-btn'); const old = btn ? btn.innerHTML : '';
-            if (btn) { btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 올리는 중...'; btn.style.opacity = '0.7'; }
+            if (btn) { btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>올리는 중...</span>'; btn.style.opacity = '0.7'; }
             try { await putStory(pending); }
             catch (e) { if (btn) { btn.innerHTML = old; btn.style.opacity = '1'; } posting = false; alert('업로드에 실패했어요: ' + ((e && e.message) || e)); return; }
-            const pv = $('story-preview'), vid = $('story-preview-video');
+            const pv = $('story-preview'), vid = $('story-preview-video'), text = $('story-preview-text');
             vid.pause();
             if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
+            if (text) { text.textContent = ''; text.classList.add('hidden'); text.blur(); }
             pending = null;
             if (btn) { btn.innerHTML = old; btn.style.opacity = '1'; }
             posting = false;
@@ -3058,6 +3255,7 @@
             fills.forEach((f, i) => { f.style.transition = 'none'; f.style.width = i < idx ? '100%' : '0%'; });
             const fill = fills[idx];
             const img = $('story-viewer-img'), vid = $('story-viewer-video'), tl = $('story-viewer-time'), ld = $('story-viewer-loading');
+            const viewerText = $('story-viewer-text');
             const kind = $('story-media-kind');
             const ago = Math.max(0, Math.floor((Date.now() - s.createdAt) / 60000));
             tl.textContent = ago < 1 ? '방금' : (ago < 60 ? ago + '분 전' : Math.floor(ago / 60) + '시간 전');
@@ -3078,6 +3276,10 @@
             }
             updateViewersButton(s);
             markStoryViewed(s);
+            if (viewerText) {
+                viewerText.textContent = s.text || '';
+                viewerText.classList.toggle('hidden', !s.text);
+            }
 
             const token = ++segToken;
             vid.pause(); vid.onended = null; vid.onloadedmetadata = null; vid.oncanplay = null; vid.onerror = null; vid.removeAttribute('src'); mHide(vid);
@@ -3229,6 +3431,13 @@
             wireCameraZoom();
             buildDial();
             wireDial();
+            const previewText = $('story-preview-text');
+            if (previewText) {
+                previewText.addEventListener('input', syncPreviewText);
+                ['pointerdown', 'touchstart', 'click'].forEach((name) => {
+                    previewText.addEventListener(name, (e) => e.stopPropagation());
+                });
+            }
             // 확대/축소: 뷰어는 줌 시작 시 자동 넘김 일시정지, 원래 크기로 돌아오면 재생 재개
             viewerZoom = attachPinchZoom($('story-viewer'),
                 () => $('story-viewer-img').classList.contains('hidden') ? $('story-viewer-video') : $('story-viewer-img'),
@@ -3251,7 +3460,7 @@
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
         else init();
 
-        window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post, pickGallery,
+        window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post, pickGallery, toggleTextEditor,
                               setZoom, savePreview, saveCurrent,
                               openViewer, openViewerByUid, prev, next, closeViewer, deleteCurrent,
                               openViewersSheet, closeViewersSheet };
