@@ -972,6 +972,18 @@
             text-shadow: 0 2px 10px rgba(0,0,0,.7);
             pointer-events: none;
         }
+        .story-viewer-media {
+            position: absolute;
+            top: max(6px, env(safe-area-inset-top));
+            right: 0;
+            bottom: calc(92px + env(safe-area-inset-bottom));
+            left: 0;
+            width: 100%;
+            height: calc(100% - 92px - env(safe-area-inset-bottom) - max(6px, env(safe-area-inset-top)));
+            border-radius: 0 0 24px 24px;
+            object-fit: cover;
+            background: #000;
+        }
         .story-viewer-header {
             position: absolute;
             inset: 0 0 auto;
@@ -983,30 +995,75 @@
             display: flex;
             align-items: center;
             gap: 9px;
-            padding: 4px 8px 4px 4px;
-            border-radius: 999px;
-            background: rgba(0,0,0,.16);
+            padding: 4px;
+        }
+        .story-viewer-adaptive {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            gap: 7px;
+            color: #fff;
+            text-shadow: 0 1px 5px rgba(0,0,0,.48);
+            transition: color .18s ease, text-shadow .18s ease;
+        }
+        #story-viewer .story-top-scrim {
+            height: 150px;
+            background: linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.08) 62%, transparent 100%);
+        }
+        #story-viewer.story-ui-on-light .story-viewer-adaptive,
+        #story-viewer.story-ui-on-light .story-viewer-action {
+            color: #111418;
+            text-shadow: 0 1px 5px rgba(255,255,255,.36);
+            filter: none;
         }
         .story-viewer-action {
-            width: 36px;
-            height: 36px;
-            border: 1px solid rgba(255,255,255,.12);
-            border-radius: 999px;
+            width: 42px;
+            height: 42px;
+            border: 0;
             color: #fff;
-            background: rgba(0,0,0,.3);
-            -webkit-backdrop-filter: blur(14px);
-            backdrop-filter: blur(14px);
+            background: transparent;
+            filter: drop-shadow(0 1px 5px rgba(0,0,0,.55));
         }
         .story-viewer-footer {
             position: absolute;
             inset: auto 0 0;
             z-index: 20;
             display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 0 16px max(18px, env(safe-area-inset-bottom));
-            pointer-events: none;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(92px + env(safe-area-inset-bottom));
+            padding: 10px 24px max(10px, env(safe-area-inset-bottom));
+            background: #090D12;
+            pointer-events: auto;
+        }
+        .story-viewer-footer-actions {
+            width: min(100%, 270px);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+        .story-viewer-footer-action {
+            min-width: 84px;
+            min-height: 68px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            border: 0;
+            color: #fff;
+            background: transparent;
+            font-size: 11.5px;
+            font-weight: 750;
+        }
+        .story-viewer-footer-action i {
+            font-size: 24px;
+        }
+        .story-viewer-footer-action .story-action-count {
+            margin-left: 2px;
+            color: rgba(255,255,255,.48);
+            font-size: 10px;
+            font-weight: 650;
         }
         .story-viewer-pill {
             min-height: 42px;
@@ -1052,6 +1109,117 @@
             border-radius: 999px;
             background: rgba(255,255,255,.18);
         }
+        .story-activity-sheet {
+            background: #090D12;
+        }
+        .story-activity-hero {
+            position: relative;
+            flex: none;
+            height: min(34vh, 280px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: max(28px, env(safe-area-inset-top)) 20px 18px;
+        }
+        .story-activity-preview {
+            width: 94px;
+            height: 164px;
+            overflow: hidden;
+            border-radius: 16px;
+            background: #000;
+            box-shadow: 0 10px 28px rgba(0,0,0,.45);
+        }
+        .story-activity-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .story-activity-close {
+            position: absolute;
+            top: max(18px, env(safe-area-inset-top));
+            right: 18px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            color: #fff;
+            background: transparent;
+            font-size: 27px;
+        }
+        .story-activity-panel {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 26px 26px 0 0;
+            color: #fff;
+            background: #171B20;
+            box-shadow: 0 -12px 36px rgba(0,0,0,.22);
+        }
+        .story-activity-panel::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            width: 22px;
+            height: 22px;
+            transform: translateX(-50%) rotate(45deg);
+            border-radius: 4px;
+            background: #171B20;
+        }
+        .story-activity-tab {
+            height: 72px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 0 22px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+        .story-activity-tab-icon {
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6F8CFF;
+            font-size: 22px;
+        }
+        .story-viewer-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 4px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+        .story-more-panel {
+            width: 100%;
+            padding: 10px 16px max(18px, calc(env(safe-area-inset-bottom) + 10px));
+            border-radius: 24px 24px 0 0;
+            color: #fff;
+            background: #1B1F24;
+            box-shadow: 0 -18px 48px rgba(0,0,0,.38);
+        }
+        .story-more-action {
+            width: 100%;
+            min-height: 54px;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 0 16px;
+            border: 0;
+            border-radius: 14px;
+            color: #fff;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 700;
+            text-align: left;
+        }
+        .story-more-action:active { background: rgba(255,255,255,.07); }
+        .story-more-action.danger { color: #FF5A66; }
 
         /* 공지사항 롤링 애니메이션 수정: 무한 루프 구현 */
         @keyframes marquee {
@@ -2427,9 +2595,9 @@
     </div>
 
     <!-- 스토리 뷰어 (전체화면, 진행바, 탭 이동) -->
-    <div id="story-viewer" class="hidden fixed inset-0 z-[152] bg-black flex-col select-none">
-        <img id="story-viewer-img" class="hidden absolute inset-0 w-full h-full object-contain bg-black">
-        <video id="story-viewer-video" class="hidden absolute inset-0 w-full h-full object-contain bg-black" playsinline></video>
+    <div id="story-viewer" class="hidden fixed inset-0 z-[152] bg-[#090D12] flex-col select-none">
+        <img id="story-viewer-img" class="story-viewer-media hidden">
+        <video id="story-viewer-video" class="story-viewer-media hidden" playsinline></video>
         <div id="story-viewer-text" class="story-viewer-text hidden"></div>
         <div id="story-viewer-loading" class="hidden absolute inset-0 z-[5] flex items-center justify-center pointer-events-none"><i class="fa-solid fa-circle-notch fa-spin text-white/80 text-2xl"></i></div>
         <div class="story-top-scrim"></div>
@@ -2446,39 +2614,60 @@
                 <div class="flex items-center justify-between">
                     <div class="story-viewer-author-wrap pointer-events-none">
                         <div id="story-viewer-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-400 flex items-center justify-center text-white text-[11px] font-black">E</div>
-                        <div class="min-w-0">
-                            <div id="story-viewer-author" class="max-w-[112px] truncate text-white text-[12.5px] font-extrabold drop-shadow">엔조이 스토리</div>
-                            <div id="story-viewer-time" class="text-white/55 text-[10px] font-medium mt-0.5"></div>
+                        <div class="story-viewer-adaptive">
+                            <div id="story-viewer-author" class="max-w-[126px] truncate text-[13px] font-extrabold">엔조이 스토리</div>
+                            <div id="story-viewer-time" class="text-[11px] font-semibold opacity-70"></div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1 pointer-events-auto">
-                        <button aria-label="스토리 저장" title="저장" onclick="window.haptic(); window.EnjoyStory.saveCurrent()" class="story-viewer-action flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-arrow-down text-[12px]"></i></button>
-                        <button id="story-delete-btn" aria-label="스토리 삭제" title="삭제" onclick="window.haptic(); window.EnjoyStory.deleteCurrent()" class="story-viewer-action hidden items-center justify-center active:scale-90 transition-transform"><i class="fa-regular fa-trash-can text-[12px]"></i></button>
-                        <button aria-label="스토리 닫기" title="닫기" onclick="window.haptic(); window.EnjoyStory.closeViewer()" class="story-viewer-action flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-xmark text-base"></i></button>
-                    </div>
+                    <button aria-label="스토리 닫기" title="닫기" onclick="window.haptic(); window.EnjoyStory.closeViewer()" class="story-viewer-action flex items-center justify-center pointer-events-auto active:scale-90 transition-transform"><i class="fa-solid fa-xmark text-[25px]"></i></button>
                 </div>
             </div>
         </div>
 
         <div class="story-viewer-footer">
-            <button id="story-viewers-btn" onclick="window.haptic(); window.EnjoyStory.openViewersSheet()" class="story-viewer-pill hidden items-center gap-2 active:scale-95 transition-transform">
-                <i class="fa-solid fa-eye text-[12px]"></i>
-                <span id="story-viewers-count">조회 0</span>
-            </button>
-            <div id="story-media-kind" class="story-media-kind"><i class="fa-regular fa-image"></i><span>사진</span></div>
+            <div class="story-viewer-footer-actions">
+                <button id="story-viewers-btn" onclick="window.haptic(); window.EnjoyStory.openViewersSheet()" class="story-viewer-footer-action hidden active:scale-95 transition-transform">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span>활동 <span id="story-viewers-count" class="story-action-count">0</span></span>
+                </button>
+                <button onclick="window.haptic(); window.EnjoyStory.openMoreSheet()" class="story-viewer-footer-action active:scale-95 transition-transform">
+                    <i class="fa-solid fa-ellipsis"></i>
+                    <span>더보기</span>
+                </button>
+            </div>
         </div>
 
-        <div id="story-viewers-sheet" class="hidden absolute inset-0 z-40 bg-black/45 items-end" onclick="window.EnjoyStory.closeViewersSheet(true)">
-            <div class="story-sheet-panel w-full max-h-[62vh] rounded-t-[30px] p-5 pb-safe-area" onclick="event.stopPropagation()">
-                <div class="story-sheet-handle"></div>
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 class="text-white text-[18px] font-extrabold leading-tight">이 스토리를 본 멤버</h3>
-                        <p id="story-viewers-subtitle" class="text-white/45 text-[12px] font-medium mt-1">조회 0</p>
-                    </div>
-                    <button onclick="window.haptic(); window.EnjoyStory.closeViewersSheet(true)" class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+        <div id="story-viewers-sheet" class="story-activity-sheet hidden absolute inset-0 z-40 flex-col">
+            <div class="story-activity-hero">
+                <button aria-label="활동 닫기" onclick="window.haptic(); window.EnjoyStory.closeViewersSheet(true)" class="story-activity-close active:scale-90 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+                <div class="story-activity-preview">
+                    <img id="story-activity-preview-img" alt="현재 스토리 미리보기">
                 </div>
-                <div id="story-viewers-list" class="max-h-[42vh] overflow-y-auto scrollbar-hide space-y-2"></div>
+            </div>
+            <div class="story-activity-panel">
+                <div class="story-activity-tab">
+                    <div class="story-activity-tab-icon"><i class="fa-solid fa-user-group"></i></div>
+                    <div class="min-w-0">
+                        <h3 class="text-[16px] font-extrabold leading-tight">활동</h3>
+                        <p id="story-viewers-subtitle" class="text-white/45 text-[11px] font-medium mt-1">조회 0</p>
+                    </div>
+                </div>
+                <div id="story-viewers-list" class="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-5 pb-safe-area"></div>
+            </div>
+        </div>
+
+        <div id="story-more-sheet" class="hidden absolute inset-0 z-40 bg-black/45 items-end" onclick="window.EnjoyStory.closeMoreSheet(true)">
+            <div class="story-more-panel" onclick="event.stopPropagation()">
+                <div class="story-sheet-handle"></div>
+                <button onclick="window.haptic(); window.EnjoyStory.saveCurrentFromMore()" class="story-more-action active:scale-[0.99] transition-transform">
+                    <i class="fa-solid fa-download w-5 text-center"></i><span>기기에 저장</span>
+                </button>
+                <button id="story-more-delete" onclick="window.haptic(); window.EnjoyStory.deleteCurrentFromMore()" class="story-more-action danger hidden active:scale-[0.99] transition-transform">
+                    <i class="fa-regular fa-trash-can w-5 text-center"></i><span>스토리 삭제</span>
+                </button>
+                <button onclick="window.haptic(); window.EnjoyStory.closeMoreSheet(true)" class="story-more-action mt-1 justify-center bg-white/[0.06] active:scale-[0.99] transition-transform">
+                    <span>취소</span>
+                </button>
             </div>
         </div>
     </div>
@@ -3198,9 +3387,12 @@
             const list = $('story-viewers-list'), sub = $('story-viewers-subtitle');
             if (!list || !sub) return;
             const entries = viewerEntries(s || viewList[viewerIdx]);
-            sub.textContent = '조회 ' + entries.length;
+            sub.textContent = entries.length ? '조회한 멤버 ' + entries.length + '명' : '아직 조회한 멤버가 없어요';
             if (!entries.length) {
-                list.innerHTML = '<div class="py-8 text-center text-white/45 text-[13px] font-medium">아직 본 사람이 없어요.</div>';
+                list.innerHTML = '<div class="h-full min-h-[180px] flex flex-col items-center justify-center text-center text-white/40">' +
+                    '<div class="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mb-3"><i class="fa-solid fa-user-group text-[18px]"></i></div>' +
+                    '<div class="text-[13px] font-semibold">아직 본 사람이 없어요</div>' +
+                    '<div class="text-[11px] mt-1">스토리를 보면 여기에 표시돼요</div></div>';
                 return;
             }
             list.innerHTML = entries.map(v => {
@@ -3209,7 +3401,7 @@
                 const avatar = v.photoURL
                     ? '<img src="' + esc(v.photoURL) + '" class="w-full h-full object-cover" referrerpolicy="no-referrer">'
                     : '<div class="w-full h-full rounded-full ' + (col ? col.solid : 'bg-gray-500') + '"></div>';
-                return '<div class="flex items-center gap-3 p-2 rounded-2xl bg-white/5">' +
+                return '<div class="story-viewer-row">' +
                         '<div class="w-10 h-10 rounded-full overflow-hidden shrink-0">' + avatar + '</div>' +
                         '<div class="flex-1 min-w-0">' +
                             '<div class="text-white text-[14px] font-bold truncate">' + esc(name) + '</div>' +
@@ -3219,20 +3411,19 @@
             }).join('');
         }
         function updateViewersButton(s) {
-            const btn = $('story-viewers-btn'), cnt = $('story-viewers-count'), del = $('story-delete-btn');
+            const btn = $('story-viewers-btn'), cnt = $('story-viewers-count'), moreDelete = $('story-more-delete');
             const mine = !!(s && isMyStory(s));
-            if (del) {
-                del.classList.toggle('hidden', !mine);
-                del.classList.toggle('flex', mine);
+            if (moreDelete) {
+                moreDelete.classList.toggle('hidden', !mine);
             }
             if (!btn || !cnt) return;
-            if (!s || s._local || !isMyStory(s)) {
+            if (!s || !mine) {
                 btn.classList.add('hidden');
                 btn.classList.remove('flex');
                 closeViewersSheet(false);
                 return;
             }
-            cnt.textContent = '조회 ' + viewerEntries(s).length;
+            cnt.textContent = viewerEntries(s).length;
             btn.classList.remove('hidden');
             btn.classList.add('flex');
             renderViewersSheet(s);
@@ -3263,15 +3454,35 @@
         }
         function openViewersSheet() {
             const s = viewList[viewerIdx];
-            if (!s || s._local || !isMyStory(s)) return;
+            if (!s || !isMyStory(s)) return;
             clearTimeout(viewerTimer);
             const vid = $('story-viewer-video');
             if (vid && !vid.classList.contains('hidden')) vid.pause();
+            const preview = $('story-activity-preview-img');
+            if (preview) {
+                preview.src = s.thumb || (s.type === 'image' ? s.url : '');
+                preview.classList.toggle('opacity-0', !preview.getAttribute('src'));
+            }
             renderViewersSheet(s);
             openOverlay($('story-viewers-sheet'));
         }
         function closeViewersSheet(resume) {
             const sheet = $('story-viewers-sheet');
+            if (sheet) closeOverlay(sheet);
+            if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
+        }
+        function openMoreSheet() {
+            const s = viewList[viewerIdx];
+            if (!s) return;
+            clearTimeout(viewerTimer);
+            const vid = $('story-viewer-video');
+            if (vid && !vid.classList.contains('hidden')) vid.pause();
+            const del = $('story-more-delete');
+            if (del) del.classList.toggle('hidden', !isMyStory(s));
+            openOverlay($('story-more-sheet'));
+        }
+        function closeMoreSheet(resume) {
+            const sheet = $('story-more-sheet');
             if (sheet) closeOverlay(sheet);
             if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
         }
@@ -3291,31 +3502,53 @@
             buildBars();
             showSegment(start || 0);
         }
+        function updateStoryUiContrast(media) {
+            const viewer = $('story-viewer');
+            if (!viewer || !media) return;
+            try {
+                const w = media.naturalWidth || media.videoWidth || 0;
+                const h = media.naturalHeight || media.videoHeight || 0;
+                if (!w || !h) return;
+                const canvas = document.createElement('canvas');
+                canvas.width = 24;
+                canvas.height = 8;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(media, 0, 0, w, Math.max(1, Math.round(h * 0.28)), 0, 0, canvas.width, canvas.height);
+                const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                let luminance = 0, count = 0;
+                for (let i = 0; i < pixels.length; i += 4) {
+                    if (pixels[i + 3] < 32) continue;
+                    luminance += pixels[i] * 0.2126 + pixels[i + 1] * 0.7152 + pixels[i + 2] * 0.0722;
+                    count++;
+                }
+                viewer.classList.toggle('story-ui-on-light', !!count && luminance / count > 158);
+            } catch (e) {
+                viewer.classList.remove('story-ui-on-light');
+            }
+        }
         let segToken = 0;
         function showSegment(idx) {
             clearTimeout(viewerTimer);
             closeViewersSheet(false);
+            closeMoreSheet(false);
             if (idx < 0) idx = 0;
             if (idx > viewList.length - 1) { closeViewer(); return; }
             viewerIdx = idx;
             if (viewerZoom) viewerZoom.reset();
             const s = viewList[idx];
+            $('story-viewer').classList.remove('story-ui-on-light');
             const fills = $('story-viewer-bars').querySelectorAll('.story-bar-fill');
             fills.forEach((f, i) => { f.style.transition = 'none'; f.style.width = i < idx ? '100%' : '0%'; });
             const fill = fills[idx];
             const img = $('story-viewer-img'), vid = $('story-viewer-video'), tl = $('story-viewer-time'), ld = $('story-viewer-loading');
             const viewerText = $('story-viewer-text');
-            const kind = $('story-media-kind');
-            const ago = Math.max(0, Math.floor((Date.now() - s.createdAt) / 60000));
-            tl.textContent = ago < 1 ? '방금' : (ago < 60 ? ago + '분 전' : Math.floor(ago / 60) + '시간 전');
-            if (kind) {
-                kind.innerHTML = s.type === 'video'
-                    ? '<i class="fa-solid fa-video"></i><span>짧은 영상</span>'
-                    : '<i class="fa-regular fa-image"></i><span>사진</span>';
-            }
+            const ageMs = Math.max(0, Date.now() - s.createdAt);
+            const ageSeconds = Math.max(1, Math.floor(ageMs / 1000));
+            const ageMinutes = Math.floor(ageMs / 60000);
+            tl.textContent = ageSeconds < 60 ? ageSeconds + '초' : (ageMinutes < 60 ? ageMinutes + '분' : Math.floor(ageMinutes / 60) + '시간');
             // 올린 사람(프로필 이름) 표시 + 모임통장과 통일된 프로필 색상
             const author = s.author || '엔조이 스토리';
-            const au = $('story-viewer-author'); if (au) au.textContent = author;
+            const au = $('story-viewer-author'); if (au) au.textContent = isMyStory(s) ? '내 스토리' : author;
             const av = $('story-viewer-avatar');
             if (av) {
                 const photo = (window.enjoyMemberPhoto && s.authorUid) ? window.enjoyMemberPhoto(s.authorUid) : '';
@@ -3340,14 +3573,16 @@
             const startBar = (ms) => { if (!fill) return; fill.style.transition = 'none'; fill.style.width = '0%'; requestAnimationFrame(() => { fill.style.transition = 'width ' + ms + 'ms linear'; fill.style.width = '100%'; }); };
 
             if (s.type === 'image') {
-                img.onload = () => { if (token !== segToken) return; if (ld) mHide(ld); startBar(VIDEO_MAX_MS); viewerTimer = setTimeout(next, VIDEO_MAX_MS); };
+                img.onload = () => { if (token !== segToken) return; updateStoryUiContrast(img); if (ld) mHide(ld); startBar(VIDEO_MAX_MS); viewerTimer = setTimeout(next, VIDEO_MAX_MS); };
                 img.onerror = () => { if (token !== segToken) return; if (ld) mHide(ld); viewerTimer = setTimeout(next, 1200); };
+                img.crossOrigin = 'anonymous';
                 img.src = url; mShow(img);
             } else {
-                vid.oncanplay = () => { if (token !== segToken) return; if (ld) mHide(ld); };
+                vid.oncanplay = () => { if (token !== segToken) return; updateStoryUiContrast(vid); if (ld) mHide(ld); };
                 vid.onloadedmetadata = () => { if (token !== segToken) return; startBar((vid.duration && isFinite(vid.duration)) ? vid.duration * 1000 : VIDEO_MAX_MS); };
                 vid.onerror = () => { if (token !== segToken) return; if (ld) mHide(ld); viewerTimer = setTimeout(next, 1200); };
                 vid.onended = next;
+                vid.crossOrigin = 'anonymous';
                 vid.src = url; mShow(vid); vid.currentTime = 0; vid.play().catch(() => {});
             }
         }
@@ -3356,6 +3591,7 @@
         function closeViewer() {
             clearTimeout(viewerTimer);
             closeViewersSheet(false);
+            closeMoreSheet(false);
             if (viewerZoom) viewerZoom.reset();
             const vid = $('story-viewer-video');
             vid.pause(); vid.onended = null; vid.removeAttribute('src');
@@ -3368,6 +3604,7 @@
             if (!confirm('이 스토리를 모두에게서 삭제할까요?')) return;
             clearTimeout(viewerTimer);
             closeViewersSheet(false);
+            closeMoreSheet(false);
             viewList.splice(viewerIdx, 1);                 // 보기 목록에서 즉시 제거
             const gi = stories.indexOf(s); if (gi >= 0) stories.splice(gi, 1); // 전체 목록에서도 제거
             removeStory(s);                                // 서버(Firestore)에서 삭제
@@ -3402,6 +3639,14 @@
             const s = viewList[viewerIdx]; if (!s || !s.url) return;
             try { const r = await fetch(s.url); const b = await r.blob(); await saveMedia(b, s.type); }
             catch (e) { window.open(s.url, '_blank'); } // CORS 등 실패 시 새 탭으로 열어 저장
+        }
+        async function saveCurrentFromMore() {
+            await saveCurrent();
+            closeMoreSheet(true);
+        }
+        function deleteCurrentFromMore() {
+            closeMoreSheet(false);
+            deleteCurrent();
         }
 
         /* ---------- 카메라 핀치 줌 ---------- */
@@ -3510,9 +3755,10 @@
         else init();
 
         window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post, pickGallery, toggleTextEditor,
-                              setZoom, savePreview, saveCurrent,
+                              setZoom, savePreview, saveCurrent, saveCurrentFromMore,
                               openViewer, openViewerByUid, prev, next, closeViewer, deleteCurrent,
-                              openViewersSheet, closeViewersSheet };
+                              deleteCurrentFromMore, openViewersSheet, closeViewersSheet,
+                              openMoreSheet, closeMoreSheet };
     })();
     </script>
 
@@ -4647,9 +4893,6 @@
                         records.forEach(mem => {
                             let h = hist[mem.name][key];
                             if (h && h.isPaymentStopped) {
-                                hasPenalty = true;
-                                const stoppedMonth = `${y !== currentYear ? y + '년 ' : ''}${m}월 납부중단`;
-                                htmlPenalty += `<div class="w-full flex-none flex justify-between items-center"><span class="text-[13px] font-semibold text-white/90 truncate mr-2">${mem.name}</span><span class="text-[12px] font-semibold text-gray-400 shrink-0">${stoppedMonth}</span></div>`;
                                 return;
                             }
                             if (h && h.balanceAfter < 0) {
