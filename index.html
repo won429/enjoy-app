@@ -4002,7 +4002,7 @@
                 if (genH) genH.classList.remove('hidden');
                 if (tab === 'availability') {
                     if (genT) genT.textContent = '스케줄';
-                    if (genS) genS.textContent = '상태를 고른 뒤 날짜를 연속으로 눌러요.';
+                    if (genS) genS.textContent = '가능·불가를 한 번 고르고 날짜를 눌러요.';
                     if (genA) genA.classList.add('hidden');
                     try { window.renderAvailability(); } catch (e) {}
                 } else if (tab === 'community') {
@@ -4083,7 +4083,7 @@
             window._availSaveState = state;
             const label = document.getElementById('avail-save-state');
             if (!label) return;
-            label.textContent = state === 'saving' ? '저장 중…' : state === 'failed' ? '저장 실패' : '저장됨';
+            label.textContent = state === 'saving' ? '저장 중…' : state === 'failed' ? '저장 실패' : '';
             label.className = 'text-[11px] font-medium ' + (state === 'failed' ? 'text-[#F04452]' : 'text-gray-500');
         }
 
@@ -4151,28 +4151,31 @@
                 const modeButton = (mode, icon, label, selectedClass) => {
                     const active = inputMode === mode;
                     return '<button type="button" aria-pressed="' + active + '" onclick="window.haptic&&window.haptic(); window.setAvailInputMode(\'' + mode + '\')" ' +
-                        'class="min-w-0 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-all ' +
-                        (active ? selectedClass : 'bg-white/5 text-gray-400') + '">' +
-                        '<i class="' + icon + ' text-[12px]"></i><span class="text-[11px] font-bold whitespace-nowrap">' + label + '</span></button>';
+                        'class="min-w-0 h-9 rounded-[10px] flex items-center justify-center gap-1.5 active:scale-95 transition-all ' +
+                        (active ? selectedClass : 'text-gray-500') + '">' +
+                        '<i class="' + icon + ' text-[10px]"></i><span class="text-[11px] font-bold whitespace-nowrap">' + label + '</span></button>';
                 };
-                const saveText = window._availSaveState === 'saving' ? '저장 중…' : window._availSaveState === 'failed' ? '저장 실패' : '저장됨';
-                html += '<div class="bg-white/[0.06] border border-white/[0.07] rounded-2xl p-3.5 mb-5">' +
-                    '<div class="flex items-start justify-between gap-3 mb-3">' +
-                    '<div><div class="text-[14px] font-bold text-white">내 날짜 빠른 입력</div>' +
-                    '<div class="text-[11px] text-gray-400 mt-0.5">상태를 한 번 고르고 날짜를 연속으로 눌러요</div></div>' +
-                    '<div class="text-right shrink-0"><div class="text-[11px] font-bold"><span class="text-[#5B9CFF]">가능 ' + myYes + '일</span><span class="text-gray-600 mx-1">·</span><span class="text-[#FF6975]">불가 ' + myNo + '일</span></div>' +
-                    '<div id="avail-save-state" class="text-[11px] font-medium ' + (window._availSaveState === 'failed' ? 'text-[#F04452]' : 'text-gray-500') + ' mt-0.5">' + saveText + '</div></div></div>' +
-                    '<div class="grid grid-cols-4 gap-1.5">' +
-                    modeButton('yes', 'fa-solid fa-check', '가능', 'bg-[#3182F6] text-white shadow-[0_4px_14px_rgba(49,130,246,0.25)]') +
-                    modeButton('no', 'fa-solid fa-xmark', '불가', 'bg-[#F04452] text-white shadow-[0_4px_14px_rgba(240,68,82,0.22)]') +
-                    modeButton('clear', 'fa-solid fa-minus', '미정', 'bg-white/20 text-white') +
-                    modeButton('view', 'fa-solid fa-users', '현황 보기', 'bg-white text-black') +
-                    '</div></div>';
+                const saveText = window._availSaveState === 'saving' ? '저장 중…' : window._availSaveState === 'failed' ? '저장 실패' : '';
+                const guideText = inputMode === 'yes' ? '가능한 날짜를 계속 눌러주세요'
+                    : inputMode === 'no' ? '불가능한 날짜를 계속 눌러주세요'
+                        : inputMode === 'clear' ? '미정으로 되돌릴 날짜를 눌러주세요'
+                            : '날짜를 누르면 멤버별 현황을 볼 수 있어요';
+                html += '<div class="px-1 mb-5">' +
+                    '<div class="flex items-center justify-between gap-3 mb-2.5">' +
+                    '<div class="text-[13px] font-bold text-white">내 가능 여부</div>' +
+                    '<div class="text-[11px] font-semibold shrink-0"><span class="text-[#5B9CFF]">가능 ' + myYes + '</span><span class="text-gray-700 mx-1.5">/</span><span class="text-[#FF6975]">불가 ' + myNo + '</span></div></div>' +
+                    '<div class="grid grid-cols-4 gap-0.5 bg-white/[0.05] rounded-[13px] p-1">' +
+                    modeButton('yes', 'fa-solid fa-check', '가능', 'bg-[#3182F6]/20 text-[#5B9CFF]') +
+                    modeButton('no', 'fa-solid fa-xmark', '불가', 'bg-[#F04452]/20 text-[#FF6975]') +
+                    modeButton('clear', 'fa-solid fa-minus', '미정', 'bg-white/10 text-white') +
+                    modeButton('view', 'fa-solid fa-users', '현황', 'bg-white/10 text-white') +
+                    '</div>' +
+                    '<div class="flex items-center justify-between gap-3 px-1 mt-2">' +
+                    '<span class="text-[10.5px] text-gray-500">' + guideText + '</span>' +
+                    '<span id="avail-save-state" class="text-[11px] font-medium shrink-0 ' + (window._availSaveState === 'failed' ? 'text-[#F04452]' : 'text-gray-500') + '">' + saveText + '</span></div></div>';
             } else {
-                html += '<div class="flex items-center gap-3 bg-white/[0.05] border border-white/[0.06] rounded-2xl px-4 py-3.5 mb-5">' +
-                    '<div class="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center shrink-0"><i class="fa-solid fa-lock text-[12px] text-gray-400"></i></div>' +
-                    '<div><div class="text-[13px] font-bold text-gray-300">멤버 로그인 후 빠르게 입력할 수 있어요</div>' +
-                    '<div class="text-[11px] text-gray-500 mt-0.5">지금은 날짜별 멤버 현황을 볼 수 있어요</div></div></div>';
+                html += '<div class="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 mb-4">' +
+                    '<i class="fa-solid fa-lock text-[9px]"></i><span>로그인하면 날짜를 바로 입력할 수 있어요</span></div>';
             }
 
             html += '<div class="flex items-center justify-center gap-3 mb-3 pt-1">' +
@@ -4644,10 +4647,9 @@
                         records.forEach(mem => {
                             let h = hist[mem.name][key];
                             if (h && h.isPaymentStopped) {
-                                if (y === currentYear && m === currentRealMonth) {
-                                    hasPenalty = true;
-                                    htmlPenalty += `<div class="w-full flex-none flex justify-between items-center"><span class="text-[13px] font-semibold text-white/90 truncate mr-2">${mem.name}</span><span class="text-[12px] font-semibold text-gray-400 shrink-0">${m}월 납부중단</span></div>`;
-                                }
+                                hasPenalty = true;
+                                const stoppedMonth = `${y !== currentYear ? y + '년 ' : ''}${m}월 납부중단`;
+                                htmlPenalty += `<div class="w-full flex-none flex justify-between items-center"><span class="text-[13px] font-semibold text-white/90 truncate mr-2">${mem.name}</span><span class="text-[12px] font-semibold text-gray-400 shrink-0">${stoppedMonth}</span></div>`;
                                 return;
                             }
                             if (h && h.balanceAfter < 0) {
@@ -4795,13 +4797,22 @@
 
                 if (isPaymentStopped) {
                     amtClass = 'text-gray-400';
-                    amtText = '회비 부과 없음';
+                    amtText = `${month}월 중단`;
                     statusText = '납부중단';
                     statusColorClass = 'text-gray-400';
                     penaltyColorClass = 'text-gray-500';
-                    if (h.carriedDebt > 0) {
-                        penaltyText = `기존 미납 ${h.carriedDebt.toLocaleString()}원 보존`;
+                    const stoppedMonths = [];
+                    for (let stoppedYear = 2025; stoppedYear <= currentYear; stoppedYear++) {
+                        const firstStoppedMonth = stoppedYear === 2025 ? 10 : 1;
+                        const lastStoppedMonth = stoppedYear === currentYear ? currentRealMonth : 12;
+                        for (let stoppedMonth = firstStoppedMonth; stoppedMonth <= lastStoppedMonth; stoppedMonth++) {
+                            const stoppedHistory = histAll[m.name] && histAll[m.name][`${stoppedYear}-${stoppedMonth}`];
+                            if (stoppedHistory && stoppedHistory.isPaymentStopped) {
+                                stoppedMonths.push(`${stoppedYear !== currentYear ? stoppedYear + '년 ' : ''}${stoppedMonth}월`);
+                            }
+                        }
                     }
+                    if (stoppedMonths.length) penaltyText = `중단 월 · ${stoppedMonths.join(', ')}`;
                 } else if (isPaid) {
                     if (h.amount >= totalOwed) {
                         amtClass = 'text-white';
