@@ -133,8 +133,15 @@
         /* 더보기 팝오버: 밝은 배경 위에서 글자색 자동 보정 (항목별 개별) */
         #more-popover-panel [data-pop-item] .text-white,
         #more-popover-panel [data-pop-item] span { transition: color 0.12s ease; }
+        #more-popover-panel [data-pop-item] .text-\[\#8B95A1\] {
+            color: rgba(255, 255, 255, 0.76) !important;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.28);
+        }
         #more-popover-panel [data-pop-item].item-on-light .text-white { color: #141414 !important; }
-        #more-popover-panel [data-pop-item].item-on-light .text-\[\#8B95A1\] { color: #1f2937 !important; }
+        #more-popover-panel [data-pop-item].item-on-light .text-\[\#8B95A1\] {
+            color: rgba(20, 20, 20, 0.74) !important;
+            text-shadow: 0 1px 4px rgba(255, 255, 255, 0.32);
+        }
 
         /* === Liquid Glass (색 없는 완전 투명 유리 / 뒷배경 그대로 비침) === */
         .liquid-glass {
@@ -176,6 +183,31 @@
         @keyframes more-item-in {
             0%   { opacity: 0; transform: translateY(10px) scale(0.92); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes story-activity-bg-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes story-activity-bg-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes story-activity-hero-in {
+            0% { opacity: 0; transform: translateY(-14px) scale(.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes story-activity-panel-in {
+            0% { transform: translateY(102%); }
+            70% { transform: translateY(-8px); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes story-activity-panel-out {
+            from { transform: translateY(0); }
+            to { transform: translateY(102%); }
+        }
+        @keyframes story-activity-content-in {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -1110,24 +1142,60 @@
             background: rgba(255,255,255,.18);
         }
         .story-activity-sheet {
-            background: #090D12;
+            background:
+                radial-gradient(circle at 50% 18%, rgba(64,78,112,.2), transparent 34%),
+                #090D12;
+            opacity: 1;
+        }
+        .story-activity-sheet.is-opening {
+            animation: story-activity-bg-in .24s ease-out both;
+        }
+        .story-activity-sheet.is-closing {
+            animation: story-activity-bg-out .22s ease-in both;
+            pointer-events: none;
+        }
+        .story-activity-sheet.is-opening .story-activity-preview {
+            animation: story-activity-hero-in .42s cubic-bezier(.22,1,.36,1) .05s both;
+        }
+        .story-activity-sheet.is-opening .story-activity-panel {
+            animation: story-activity-panel-in .48s cubic-bezier(.22,1,.36,1) both;
+        }
+        .story-activity-sheet.is-closing .story-activity-panel {
+            animation: story-activity-panel-out .22s ease-in both;
+        }
+        .story-activity-sheet.is-opening .story-activity-tab,
+        .story-activity-sheet.is-opening #story-viewers-list {
+            animation: story-activity-content-in .3s ease-out .23s both;
         }
         .story-activity-hero {
             position: relative;
             flex: none;
-            height: min(34vh, 280px);
+            height: min(36vh, 300px);
             display: flex;
             align-items: center;
             justify-content: center;
             padding: max(28px, env(safe-area-inset-top)) 20px 18px;
         }
+        .story-activity-label {
+            position: absolute;
+            top: max(22px, env(safe-area-inset-top));
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,.72);
+            font-size: 12px;
+            font-weight: 750;
+        }
         .story-activity-preview {
-            width: 94px;
-            height: 164px;
+            position: relative;
+            width: 106px;
+            height: 184px;
             overflow: hidden;
-            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: 18px;
             background: #000;
-            box-shadow: 0 10px 28px rgba(0,0,0,.45);
+            box-shadow: 0 16px 38px rgba(0,0,0,.46), 0 0 0 5px rgba(255,255,255,.025);
         }
         .story-activity-preview img {
             width: 100%;
@@ -1155,10 +1223,12 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border-radius: 26px 26px 0 0;
+            border: 1px solid rgba(255,255,255,.055);
+            border-bottom: 0;
+            border-radius: 28px 28px 0 0;
             color: #fff;
-            background: #171B20;
-            box-shadow: 0 -12px 36px rgba(0,0,0,.22);
+            background: linear-gradient(180deg, #191E24 0%, #15191E 100%);
+            box-shadow: 0 -18px 44px rgba(0,0,0,.3);
         }
         .story-activity-panel::before {
             content: "";
@@ -1169,23 +1239,25 @@
             height: 22px;
             transform: translateX(-50%) rotate(45deg);
             border-radius: 4px;
-            background: #171B20;
+            background: #191E24;
         }
         .story-activity-tab {
-            height: 72px;
+            height: 76px;
             display: flex;
             align-items: center;
             gap: 11px;
-            padding: 0 22px;
+            padding: 0 20px;
             border-bottom: 1px solid rgba(255,255,255,.07);
         }
         .story-activity-tab-icon {
-            width: 46px;
-            height: 46px;
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #6F8CFF;
+            border-radius: 15px;
+            background: rgba(89,113,255,.13);
             font-size: 22px;
         }
         .story-viewer-row {
@@ -1196,30 +1268,75 @@
             border-bottom: 1px solid rgba(255,255,255,.06);
         }
         .story-more-panel {
-            width: 100%;
-            padding: 10px 16px max(18px, calc(env(safe-area-inset-bottom) + 10px));
-            border-radius: 24px 24px 0 0;
+            position: absolute;
+            right: 18px;
+            bottom: calc(100px + env(safe-area-inset-bottom));
+            width: 250px;
+            padding: 9px;
+            border: 1px solid rgba(255,255,255,.13);
+            border-radius: 25px;
             color: #fff;
-            background: #1B1F24;
-            box-shadow: 0 -18px 48px rgba(0,0,0,.38);
+            background: rgba(18,20,24,.48);
+            box-shadow: 0 18px 52px rgba(0,0,0,.38), 0 6px 16px rgba(0,0,0,.25);
+            -webkit-backdrop-filter: blur(22px) saturate(1.55);
+            backdrop-filter: blur(22px) saturate(1.55);
+            transform-origin: calc(100% - 56px) 100%;
+            pointer-events: auto;
         }
         .story-more-action {
             width: 100%;
-            min-height: 54px;
+            min-height: 58px;
             display: flex;
             align-items: center;
-            gap: 13px;
-            padding: 0 16px;
+            gap: 11px;
+            padding: 7px 9px;
             border: 0;
-            border-radius: 14px;
+            border-radius: 16px;
             color: #fff;
             background: transparent;
-            font-size: 14px;
-            font-weight: 700;
             text-align: left;
         }
         .story-more-action:active { background: rgba(255,255,255,.07); }
         .story-more-action.danger { color: #FF5A66; }
+        .story-more-icon {
+            width: 38px;
+            height: 38px;
+            flex: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 13px;
+            background: rgba(49,130,246,.15);
+            color: #65A2FF;
+            font-size: 15px;
+        }
+        .story-more-action.danger .story-more-icon {
+            color: #FF6672;
+            background: rgba(240,68,82,.15);
+        }
+        .story-more-title {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 750;
+            line-height: 1.15;
+        }
+        .story-more-action.danger .story-more-title { color: #FF6672; }
+        .story-more-sub {
+            margin-top: 3px;
+            color: rgba(255,255,255,.62);
+            font-size: 10.5px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .story-activity-sheet,
+            .story-activity-sheet *,
+            .story-more-panel,
+            .story-more-panel * {
+                animation-duration: .01ms !important;
+                animation-delay: 0s !important;
+            }
+        }
 
         /* 공지사항 롤링 애니메이션 수정: 무한 루프 구현 */
         @keyframes marquee {
@@ -2239,7 +2356,7 @@
                 <div class="flex flex-col min-h-[120px]">
                     <div class="flex items-center gap-1.5 mb-3">
                         <i class="fa-solid fa-triangle-exclamation text-[#F04452] text-[12px]"></i>
-                        <h3 class="text-[12px] font-bold text-gray-400 tracking-tight">부과금 · 유예 · 중단</h3>
+                        <h3 class="text-[12px] font-bold text-gray-400 tracking-tight">부과금 · 유예</h3>
                     </div>
                     <div id="penalty-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full flex-1"></div>
                 </div>
@@ -2639,6 +2756,7 @@
 
         <div id="story-viewers-sheet" class="story-activity-sheet hidden absolute inset-0 z-40 flex-col">
             <div class="story-activity-hero">
+                <div class="story-activity-label"><i class="fa-solid fa-chart-simple"></i><span>스토리 활동</span></div>
                 <button aria-label="활동 닫기" onclick="window.haptic(); window.EnjoyStory.closeViewersSheet(true)" class="story-activity-close active:scale-90 transition-transform"><i class="fa-solid fa-xmark"></i></button>
                 <div class="story-activity-preview">
                     <img id="story-activity-preview-img" alt="현재 스토리 미리보기">
@@ -2656,17 +2774,15 @@
             </div>
         </div>
 
-        <div id="story-more-sheet" class="hidden absolute inset-0 z-40 bg-black/45 items-end" onclick="window.EnjoyStory.closeMoreSheet(true)">
+        <div id="story-more-sheet" class="hidden absolute inset-0 z-40 bg-black/10" onclick="window.EnjoyStory.closeMoreSheet(true)">
             <div class="story-more-panel" onclick="event.stopPropagation()">
-                <div class="story-sheet-handle"></div>
-                <button onclick="window.haptic(); window.EnjoyStory.saveCurrentFromMore()" class="story-more-action active:scale-[0.99] transition-transform">
-                    <i class="fa-solid fa-download w-5 text-center"></i><span>기기에 저장</span>
+                <button data-story-more-item onclick="window.haptic(); window.EnjoyStory.saveCurrentFromMore()" class="story-more-action active:scale-[0.96] transition-transform">
+                    <span class="story-more-icon"><i class="fa-solid fa-download"></i></span>
+                    <span class="min-w-0"><span class="story-more-title block">기기에 저장</span><span class="story-more-sub block">사진 또는 영상으로 보관</span></span>
                 </button>
-                <button id="story-more-delete" onclick="window.haptic(); window.EnjoyStory.deleteCurrentFromMore()" class="story-more-action danger hidden active:scale-[0.99] transition-transform">
-                    <i class="fa-regular fa-trash-can w-5 text-center"></i><span>스토리 삭제</span>
-                </button>
-                <button onclick="window.haptic(); window.EnjoyStory.closeMoreSheet(true)" class="story-more-action mt-1 justify-center bg-white/[0.06] active:scale-[0.99] transition-transform">
-                    <span>취소</span>
+                <button id="story-more-delete" data-story-more-item onclick="window.haptic(); window.EnjoyStory.deleteCurrentFromMore()" class="story-more-action danger hidden active:scale-[0.96] transition-transform">
+                    <span class="story-more-icon"><i class="fa-regular fa-trash-can"></i></span>
+                    <span class="min-w-0"><span class="story-more-title block">스토리 삭제</span><span class="story-more-sub block">모든 멤버에게서 삭제</span></span>
                 </button>
             </div>
         </div>
@@ -2813,6 +2929,7 @@
         let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
         let viewerZoom = null, previewZoom = null; // 확대/축소 컨트롤러
         let viewList = [], viewUid = null;         // 현재 보고 있는 스토리 묶음(멤버별)
+        let activityCloseTimer = null, storyMoreCloseTimer = null;
         const viewedStoryKeys = {};
 
         const $ = (id) => document.getElementById(id);
@@ -3387,7 +3504,7 @@
             const list = $('story-viewers-list'), sub = $('story-viewers-subtitle');
             if (!list || !sub) return;
             const entries = viewerEntries(s || viewList[viewerIdx]);
-            sub.textContent = entries.length ? '조회한 멤버 ' + entries.length + '명' : '아직 조회한 멤버가 없어요';
+            sub.textContent = '조회 ' + entries.length;
             if (!entries.length) {
                 list.innerHTML = '<div class="h-full min-h-[180px] flex flex-col items-center justify-center text-center text-white/40">' +
                     '<div class="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mb-3"><i class="fa-solid fa-user-group text-[18px]"></i></div>' +
@@ -3464,12 +3581,24 @@
                 preview.classList.toggle('opacity-0', !preview.getAttribute('src'));
             }
             renderViewersSheet(s);
-            openOverlay($('story-viewers-sheet'));
+            const sheet = $('story-viewers-sheet');
+            clearTimeout(activityCloseTimer);
+            sheet.classList.remove('is-opening', 'is-closing');
+            openOverlay(sheet);
+            void sheet.offsetWidth;
+            sheet.classList.add('is-opening');
         }
         function closeViewersSheet(resume) {
             const sheet = $('story-viewers-sheet');
-            if (sheet) closeOverlay(sheet);
-            if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
+            if (!sheet || sheet.classList.contains('hidden')) return;
+            clearTimeout(activityCloseTimer);
+            sheet.classList.remove('is-opening');
+            sheet.classList.add('is-closing');
+            activityCloseTimer = setTimeout(function () {
+                closeOverlay(sheet);
+                sheet.classList.remove('is-closing');
+                if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
+            }, 220);
         }
         function openMoreSheet() {
             const s = viewList[viewerIdx];
@@ -3479,12 +3608,32 @@
             if (vid && !vid.classList.contains('hidden')) vid.pause();
             const del = $('story-more-delete');
             if (del) del.classList.toggle('hidden', !isMyStory(s));
-            openOverlay($('story-more-sheet'));
+            const sheet = $('story-more-sheet');
+            const panel = sheet && sheet.querySelector('.story-more-panel');
+            if (!sheet || !panel) return;
+            clearTimeout(storyMoreCloseTimer);
+            openOverlay(sheet);
+            panel.style.animation = 'none';
+            void panel.offsetWidth;
+            panel.style.animation = 'more-pop-in 0.46s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+            panel.querySelectorAll('[data-story-more-item]').forEach(function (item, i) {
+                if (item.classList.contains('hidden')) return;
+                item.style.animation = 'none';
+                void item.offsetWidth;
+                item.style.animation = 'more-item-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ' + (0.06 + i * 0.055) + 's both';
+            });
         }
         function closeMoreSheet(resume) {
             const sheet = $('story-more-sheet');
-            if (sheet) closeOverlay(sheet);
-            if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
+            if (!sheet || sheet.classList.contains('hidden')) return;
+            const panel = sheet.querySelector('.story-more-panel');
+            clearTimeout(storyMoreCloseTimer);
+            if (panel) panel.style.animation = 'more-pop-out 0.2s cubic-bezier(0.4, 0, 1, 1) forwards';
+            storyMoreCloseTimer = setTimeout(function () {
+                closeOverlay(sheet);
+                if (panel) panel.style.animation = '';
+                if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
+            }, 195);
         }
         // 멤버별 스토리 보기 (uid 없으면 전체)
         function openViewerByUid(uid) {
