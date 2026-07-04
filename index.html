@@ -1155,6 +1155,7 @@
             line-height: 1.45;
             letter-spacing: -.015em;
             word-break: keep-all;
+            white-space: pre-line;
         }
 
         /* 모임통장 납부/사용 내역 탭 (세그먼트) */
@@ -1523,8 +1524,8 @@
                         <img alt="엔조이 수달 비서" src="https://raw.githubusercontent.com/won429/enjoy-app/main/dhkfodshf.png"
                              class="assistant-character" onerror="this.style.display='none'">
                         <div class="assistant-dialogue">
-                            <span class="assistant-speaker">엔조이 비서</span>
-                            <p id="assistant-sub" class="assistant-spoken-intro">오늘 소식은 내가 알려줄게!</p>
+                            <span class="assistant-speaker">안녕, 난 엔조이 비서실장이야.</span>
+                            <p id="assistant-sub" class="assistant-spoken-intro">오늘 남은 소식은 내가 정리해줄게.</p>
                             <div class="assistant-news-row">
                                 <div class="assistant-news-label">
                                     <i id="asst-icon-2" class="fa-solid fa-piggy-bank"></i>
@@ -1549,7 +1550,7 @@
                 <!-- 0. 엔조이 스토리 + 현재현황 (멤버별 스토리 링 + 활동 상태 통합) -->
                 <section>
                     <div class="px-1 mb-2.5">
-                        <p class="text-[11px] font-bold text-fuchsia-400 tracking-widest uppercase">ENJOY STORY</p>
+                        <p class="text-[12px] font-medium text-gray-400 tracking-tight">오늘의 일상을 엔조이에게만 공유해보아요.</p>
                         <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이 스토리</h3>
                     </div>
                     <div id="story-tray" class="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch;">
@@ -3816,7 +3817,13 @@
             const setMsg = (n, msg) => {
                 const t = document.getElementById('asst-text-' + n);
                 const ic = document.getElementById('asst-icon-' + n);
-                if (t) t.textContent = msg.text;
+                const cleanText = String(msg.text || '')
+                    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+                    .replace(/\uFE0F/g, '')
+                    .replace(/[ \t]+\n/g, '\n')
+                    .replace(/ {2,}/g, ' ')
+                    .trim();
+                if (t) t.textContent = cleanText;
                 if (ic) ic.className = `fa-solid ${msg.icon}`;
             };
 
@@ -3841,12 +3848,12 @@
                     if (h.status === 'deferred') return false;
                     return !(h.status === 'paid' && h.amount >= h.totalOwed);
                 });
-                if (unpaid.length === 0) setMsg(2, { icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비 모두 납부 완료 👏' });
+                if (unpaid.length === 0) setMsg(2, { icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비\n모두 납부 완료' });
                 else {
-                    const who = unpaid.length <= 3 ? unpaid.join(', ') : `${unpaid.slice(0, 3).join(', ')} 외 ${unpaid.length - 3}명`;
-                    setMsg(2, { icon: 'fa-piggy-bank', color: 'text-[#F04452]', text: `이번 달 모임비 미납 · ${who} 💰` });
+                    const who = unpaid.join(', ');
+                    setMsg(2, { icon: 'fa-piggy-bank', color: 'text-[#F04452]', text: `이번 달 모임비 미납\n${who}` });
                 }
-            } catch (e) { setMsg(2, { icon: 'fa-piggy-bank', color: 'text-emerald-400', text: '모임비 현황을 불러오고 있어요.' }); }
+            } catch (e) { setMsg(2, { icon: 'fa-piggy-bank', color: 'text-emerald-400', text: '이번 달 모임비\n현황을 불러오고 있어요.' }); }
 
             // 3) 오늘의 일정 + 다음 정기모임 (왼쪽 마스코트)
             try {
@@ -3854,7 +3861,7 @@
                 const items = (window.getMergedEvents(y, m)[todayKey] || []).filter(e => !skip.includes(e.type));
                 let schedText, icon, color;
                 if (items.length === 0) { schedText = '오늘 특별한 일정은 없어요'; icon = 'fa-mug-hot'; color = 'text-amber-400'; }
-                else { const more = items.length > 1 ? ` 외 ${items.length - 1}개` : ''; schedText = `오늘 · ${items[0].title}${more}`; icon = 'fa-bell'; color = 'text-amber-400'; }
+                else { const more = items.length > 1 ? ` 외 ${items.length - 1}개` : ''; schedText = `오늘 일정\n${items[0].title}${more}`; icon = 'fa-bell'; color = 'text-amber-400'; }
 
                 // 다음 정기모임 탐색
                 let next = null;
@@ -3871,7 +3878,7 @@
                 }
                 let finalText = schedText;
                 if (next) {
-                    finalText += ` · 다음 모임 ${next.isToday ? '바로 오늘' : `${next.km}월 ${next.kd}일`}`;
+                    finalText += `\n다음 모임 ${next.isToday ? '바로 오늘' : `${next.km}월 ${next.kd}일`}`;
                     if (items.length === 0) { icon = 'fa-suitcase-rolling'; color = 'text-purple-400'; }
                 }
                 setMsg(3, { icon, color, text: finalText });
