@@ -2071,7 +2071,7 @@
                 <div class="flex flex-col min-h-[120px]">
                     <div class="flex items-center gap-1.5 mb-3">
                         <i class="fa-solid fa-triangle-exclamation text-[#F04452] text-[12px]"></i>
-                        <h3 class="text-[12px] font-bold text-gray-400 tracking-tight">부과금 · 유예</h3>
+                        <h3 class="text-[12px] font-bold text-gray-400 tracking-tight">부과금 · 유예 · 중단</h3>
                     </div>
                     <div id="penalty-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full flex-1"></div>
                 </div>
@@ -3845,7 +3845,7 @@
                 const unpaid = members.filter(n => {
                     const h = hist[n] && hist[n][monthKey];
                     if (!h) return false;
-                    if (h.status === 'deferred') return false;
+                    if (h.status === 'deferred' || h.isPaymentStopped) return false;
                     return !(h.status === 'paid' && h.amount >= h.totalOwed);
                 });
                 if (unpaid.length === 0) setMsg(2, { icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비\n모두 납부 완료' });
@@ -4447,7 +4447,7 @@
                 let history = {}; 
                 let carriedDebt = 0;
                 let prevStatus = 'paid';
-                let prevExempted = false;
+                let shouldApplyPenalty = false;
 
                 let maxYear = Math.max(currentYear, window.currentDuesYear);
                 for (let y = startYear; y <= maxYear; y++) {
@@ -4466,20 +4466,23 @@
                         let isExempted = mem && (mem.ticketUsed || (mem.penalty && mem.penalty.includes('면제')));
                         let isLeader = mem ? mem.isLeader : (name === '전시기');
                         let rawPenaltyText = mem ? (mem.penalty || '') : '';
+                        let isPaymentStopped = status === 'stopped';
 
-                        let baseDues = y >= 2026 ? 20000 : 15000;
+                        let regularDues = y >= 2026 ? 20000 : 15000;
+                        let baseDues = isPaymentStopped ? 0 : regularDues;
                         let penaltyAmount = 0;
                         
                         let isPastOrCurrent = (y < currentYear || (y === currentYear && m <= currentRealMonth));
 
-                        if (isPastOrCurrent) {
-                            if (prevStatus === 'unpaid' && !prevExempted) {
-                                penaltyAmount = 10000;
-                            }
+                        if (isPastOrCurrent && shouldApplyPenalty && !isPaymentStopped) {
+                            penaltyAmount = 10000;
                         }
                         
                         let totalOwed = baseDues + penaltyAmount + carriedDebt; 
                         let balanceAfter = amount - totalOwed; 
+                        // 과거 미납이 남아 있어도 이번 달 정상 회비를 냈다면
+                        // 이번 달을 원인으로 다음 달 부과금이 다시 생기지 않는다.
+                        let currentDuesPaid = isPaymentStopped || amount >= regularDues;
                         
                         history[key] = {
                             amount: amount,
@@ -4488,32 +4491,38 @@
                             isLeader: isLeader,
                             rawPenaltyText: rawPenaltyText,
                             baseDues: baseDues,
+                            regularDues: regularDues,
                             penaltyAmount: penaltyAmount,
                             carriedDebt: carriedDebt,
                             totalOwed: totalOwed,
                             balanceAfter: balanceAfter, 
-                            prevStatus: prevStatus
+                            prevStatus: prevStatus,
+                            currentDuesPaid: currentDuesPaid,
+                            isPaymentStopped: isPaymentStopped
                         };
                         
                         if (isPastOrCurrent) {
                             if (balanceAfter < 0) {
                                 carriedDebt = Math.abs(balanceAfter);
-                                if (status === 'deferred') {
+                                if (isPaymentStopped) {
+                                    prevStatus = 'stopped';
+                                    shouldApplyPenalty = false;
+                                } else if (status === 'deferred') {
                                     prevStatus = 'deferred';
-                                    prevExempted = false;
+                                    shouldApplyPenalty = false;
                                 } else {
                                     prevStatus = 'unpaid';
-                                    prevExempted = (status === 'unpaid') ? isExempted : false;
+                                    shouldApplyPenalty = !currentDuesPaid && !isExempted;
                                 }
                             } else {
                                 carriedDebt = 0;
-                                prevStatus = 'paid';
-                                prevExempted = false;
+                                prevStatus = isPaymentStopped ? 'stopped' : 'paid';
+                                shouldApplyPenalty = false;
                             }
                         } else {
                             carriedDebt = 0;
                             prevStatus = 'paid'; 
-                            prevExempted = false;
+                            shouldApplyPenalty = false;
                         }
                     }
                 }
@@ -4550,6 +4559,13 @@
                         
                         records.forEach(mem => {
                             let h = hist[mem.name][key];
+                            if (h && h.isPaymentStopped) {
+                                if (y === currentYear && m === currentRealMonth) {
+                                    hasPenalty = true;
+                                    htmlPenalty += `<div class="w-full flex-none flex justify-between items-center"><span class="text-[13px] font-semibold text-white/90 truncate mr-2">${mem.name}</span><span class="text-[12px] font-semibold text-gray-400 shrink-0">${m}월 납부중단</span></div>`;
+                                }
+                                return;
+                            }
                             if (h && h.balanceAfter < 0) {
                                 let isResolved = false;
                                 let cy = y, cm = m;
@@ -4584,7 +4600,7 @@
                                         }
                                     }
                                 } else if (y === currentYear && m === currentRealMonth && mem.status !== 'deferred' && now.getDate() >= lastDay - 5) {
-                                    statusText = `${m}월 부과금 예정`;
+                                    statusText = h.currentDuesPaid ? `${m}월 미납(이월)` : `${m}월 부과금 예정`;
                                     showPenalty = true;
                                     if (isResolved) showPenalty = false;
                                 } else if (y === currentYear && m === currentRealMonth && mem.status === 'deferred') {
@@ -4609,7 +4625,7 @@
                     }
                 }
             }
-            if (!hasPenalty) htmlPenalty = `<div class="h-full w-full flex flex-col items-center justify-center pb-2 opacity-40"><i class="fa-solid fa-circle-check mb-1.5 text-gray-400 text-lg"></i><span class="text-[12px] font-semibold text-gray-400">미납/유예 없음</span></div>`;
+            if (!hasPenalty) htmlPenalty = `<div class="h-full w-full flex flex-col items-center justify-center pb-2 opacity-40"><i class="fa-solid fa-circle-check mb-1.5 text-gray-400 text-lg"></i><span class="text-[12px] font-semibold text-gray-400">미납/유예/중단 없음</span></div>`;
             penaltyListMini.innerHTML = htmlPenalty;
 
             let htmlTicket = '';
@@ -4657,9 +4673,8 @@
             
             let displayRecords = [...records];
             displayRecords.sort((a, b) => {
-                if (a.status === 'paid' && b.status !== 'paid') return -1;
-                if (a.status !== 'paid' && b.status === 'paid') return 1;
-                return 0;
+                const order = { paid: 0, deferred: 1, stopped: 2, unpaid: 3 };
+                return (order[a.status] ?? 3) - (order[b.status] ?? 3);
             });
 
             if (displayRecords.length === 0) { list.innerHTML = `<div class="py-16 text-center"><p class="text-[14px] font-medium text-gray-500">납부 내역이 없습니다</p></div>`; return; }
@@ -4690,10 +4705,20 @@
 
                 let isPaid = h.status === 'paid';
                 let isDeferred = h.status === 'deferred';
+                let isPaymentStopped = h.isPaymentStopped;
                 let isPastDue = (year < currentYear || (year === currentYear && month < currentRealMonth));
                 let isWarningPeriod = (year === currentYear && month === currentRealMonth && now.getDate() >= lastDay - 5);
 
-                if (isPaid) {
+                if (isPaymentStopped) {
+                    amtClass = 'text-gray-400';
+                    amtText = '회비 부과 없음';
+                    statusText = '납부중단';
+                    statusColorClass = 'text-gray-400';
+                    penaltyColorClass = 'text-gray-500';
+                    if (h.carriedDebt > 0) {
+                        penaltyText = `기존 미납 ${h.carriedDebt.toLocaleString()}원 보존`;
+                    }
+                } else if (isPaid) {
                     if (h.amount >= totalOwed) {
                         amtClass = 'text-white';
                         amtText = `${h.amount.toLocaleString()}원`;
