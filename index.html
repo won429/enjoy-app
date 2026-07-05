@@ -1446,6 +1446,28 @@
         /* 모임통장 납부/사용 내역 탭 (세그먼트) */
         .meeting-tab { color: #8B95A1; }
         .meeting-tab.mtab-active { background: #3182F6; color: #FFFFFF; box-shadow: 0 2px 8px rgba(49, 130, 246, 0.3); }
+        .ledger-surface {
+            background: rgba(255,255,255,.045);
+            border: 1px solid rgba(255,255,255,.07);
+        }
+        .ledger-bar-track {
+            height: 8px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255,255,255,.07);
+        }
+        .ledger-bar-fill {
+            display: block;
+            min-width: 4px;
+            height: 100%;
+            border-radius: inherit;
+        }
+        .ledger-forecast {
+            background:
+                radial-gradient(circle at 90% 12%, rgba(49,130,246,.24), transparent 38%),
+                linear-gradient(145deg, rgba(49,130,246,.12), rgba(255,255,255,.035));
+            border: 1px solid rgba(49,130,246,.2);
+        }
 
         /* =========================================================
            라이트 모드 (기기 설정이 라이트면 자동 적용)
@@ -1647,6 +1669,14 @@
             .border-white\/5 { border-color: rgba(0, 0, 0, 0.07) !important; }
             .border-white\/10 { border-color: rgba(0, 0, 0, 0.10) !important; }
             .border-white\/15, .border-white\/20 { border-color: rgba(0, 0, 0, 0.12) !important; }
+            .ledger-surface { background: rgba(255,255,255,.72); border-color: rgba(0,0,0,.07); }
+            .ledger-bar-track { background: rgba(0,0,0,.07); }
+            .ledger-forecast {
+                background:
+                    radial-gradient(circle at 90% 12%, rgba(49,130,246,.16), transparent 38%),
+                    linear-gradient(145deg, rgba(49,130,246,.08), rgba(255,255,255,.86));
+                border-color: rgba(49,130,246,.16);
+            }
 
             /* 보호 ① 홈 카드 이미지 위 글씨는 흰색 유지 */
             #apple-tv-banner .bg-black .text-white,
@@ -2534,7 +2564,7 @@
                 </div>
             </div>
 
-            <!-- 납부 내역 / 사용 내역 (탭으로 전환) -->
+            <!-- 납부 내역 / 가계부 (탭으로 전환) -->
             <div class="border-t border-white/5 pt-5">
                 <!-- 광고 (카카오 애드핏) — 납부/사용 내역 탭 바로 위 -->
                 <div id="meeting-ad" class="flex justify-center mb-3 min-h-[50px]"></div>
@@ -2542,7 +2572,7 @@
                 <!-- 탭 -->
                 <div class="flex gap-1 bg-white/5 p-1 rounded-2xl mb-4">
                     <button id="mtab-dues" onclick="window.haptic(); window.switchMeetingTab('dues')" class="meeting-tab mtab-active flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors"><i class="fa-solid fa-coins mr-1.5 text-[11px]"></i>납부 내역</button>
-                    <button id="mtab-expense" onclick="window.haptic(); window.switchMeetingTab('expense')" class="meeting-tab flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors"><i class="fa-solid fa-receipt mr-1.5 text-[11px]"></i>사용 내역</button>
+                    <button id="mtab-expense" onclick="window.haptic(); window.switchMeetingTab('expense')" class="meeting-tab flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors"><i class="fa-solid fa-book-open mr-1.5 text-[11px]"></i>가계부</button>
                 </div>
 
                 <!-- 납부 내역 패널 -->
@@ -2555,8 +2585,16 @@
                     <div id="dues-list" class="flex flex-col px-1"></div>
                 </div>
 
-                <!-- 사용 내역 패널 -->
+                <!-- 가계부 패널 -->
                 <div id="mpanel-expense" class="hidden">
+                    <div id="ledger-insights"></div>
+                    <div class="flex items-center justify-between mt-7 mb-2 px-1">
+                        <div>
+                            <h3 class="text-[16px] font-black text-white tracking-tight">수입 · 지출 내역</h3>
+                            <p class="text-[11px] text-gray-500 mt-1">관리자 페이지에서 등록한 가계부 기록입니다.</p>
+                        </div>
+                        <i class="fa-solid fa-receipt text-[14px] text-gray-600"></i>
+                    </div>
                     <div id="expense-list" class="flex flex-col px-1"></div>
                 </div>
             </div>
@@ -4368,6 +4406,7 @@
                 const b = document.getElementById(id);
                 if (b) b.classList.toggle('mtab-active', n === name);
             });
+            if (name === 'expense' && window.renderExpenses) window.renderExpenses();
         };
 
         window.updateMeetingUI = function(data) {
@@ -4492,36 +4531,228 @@
             } catch (e) { setMsg(3, { icon: 'fa-bell', color: 'text-amber-400', text: '오늘 일정을 살펴보고 있어요.' }); }
         };
 
-        // 모임통장: 사용 내역(지출/입금) 렌더링 — meetingData.expenses 배열을 표시
-        // 각 항목: { date:"2026-06-15", title:"6월 정기모임 회식", amount:80000, type:"expense"|"income", memo?:"" }
+        // 모임통장 가계부 — 회비 기록·일정·수입/지출을 함께 계산해 현황과 예측을 표시
+        // 관리자 입력 항목: { date, title, amount, type:"expense"|"income", memo?, place?, category? }
         window.renderExpenses = function() {
             const list = document.getElementById('expense-list');
-            if (!list) return;
+            const insights = document.getElementById('ledger-insights');
+            if (!list || !insights) return;
             const raw = (window.meetingData && Array.isArray(window.meetingData.expenses)) ? window.meetingData.expenses : [];
+
+            const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+            const atMidnight = (value) => {
+                if (value instanceof Date) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+                const parts = String(value || '').split(/[-./]/).map(Number);
+                if (parts.length < 3 || parts.some(Number.isNaN)) return null;
+                return new Date(parts[0], parts[1] - 1, parts[2]);
+            };
+            const fmtDate = (value, withYear) => {
+                const date = value instanceof Date ? value : atMidnight(value);
+                if (!date) return String(value || '');
+                return (withYear ? date.getFullYear() + '년 ' : '') + (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
+            };
+            const isIncome = (entry) => entry && (entry.type === 'income' || entry.type === '입금' || entry.type === '수입');
+            const amountOf = (entry) => Math.abs(Number(entry && entry.amount) || 0);
+            const inRange = (date, start, end) => date && date >= start && date <= end;
+            const recordsForMonth = (year, month) => {
+                const records = window.meetingData && window.meetingData.records ? window.meetingData.records : {};
+                const key = `${year}-${month}`;
+                const legacy = (year === 2025 && month >= 10) || (year === 2026 && month <= 9);
+                return records[key] || (legacy ? records[month] : null) || [];
+            };
+
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const meetingWindows = [];
+            if (typeof window.getMergedEvents === 'function') {
+                const points = [];
+                for (let year = 2025; year <= now.getFullYear() + 2; year++) {
+                    for (let month = 1; month <= 12; month++) {
+                        const events = window.getMergedEvents(year, month) || {};
+                        Object.keys(events).forEach(key => {
+                            const meet = (events[key] || []).find(event => event && event.type === 'meet');
+                            const date = meet ? atMidnight(key) : null;
+                            if (date) points.push({ date, title: meet.title || '정기모임' });
+                        });
+                    }
+                }
+                points.sort((a, b) => a.date - b.date);
+                points.forEach(point => {
+                    const last = meetingWindows[meetingWindows.length - 1];
+                    const gap = last ? Math.round((point.date - last.end) / 86400000) : 99;
+                    if (last && last.title === point.title && gap >= 0 && gap <= 2) last.end = point.date;
+                    else meetingWindows.push({ start: point.date, end: point.date, title: point.title });
+                });
+            }
+
+            const targetMeeting = meetingWindows.find(item => item.end >= today) || null;
+            const previousMeeting = [...meetingWindows].reverse().find(item => !targetMeeting
+                ? item.end < today
+                : item.end < targetMeeting.start) || null;
+            const periodStart = previousMeeting
+                ? new Date(previousMeeting.end.getFullYear(), previousMeeting.end.getMonth(), previousMeeting.end.getDate() + 1)
+                : new Date(2025, 9, 1);
+            const periodEnd = targetMeeting ? targetMeeting.start : today;
+
+            let duesCollected = 0;
+            const monthCursor = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
+            const lastPeriodMonth = new Date(periodEnd.getFullYear(), periodEnd.getMonth(), 1);
+            while (monthCursor <= lastPeriodMonth) {
+                recordsForMonth(monthCursor.getFullYear(), monthCursor.getMonth() + 1).forEach(member => {
+                    duesCollected += Math.max(0, Number(member.amount) || 0);
+                });
+                monthCursor.setMonth(monthCursor.getMonth() + 1);
+            }
+
+            const periodEntries = raw.filter(entry => inRange(atMidnight(entry.date), periodStart, periodEnd));
+            const otherIncome = periodEntries.filter(entry => {
+                if (!isIncome(entry)) return false;
+                const hint = `${entry.title || ''} ${entry.category || ''} ${entry.memo || ''}`;
+                return !/회비|모임비|납부/.test(hint);
+            }).reduce((sum, entry) => sum + amountOf(entry), 0);
+            const periodExpense = periodEntries.filter(entry => !isIncome(entry)).reduce((sum, entry) => sum + amountOf(entry), 0);
+            const periodIncome = duesCollected + otherIncome;
+            const periodNet = periodIncome - periodExpense;
+            const maxFlow = Math.max(periodIncome, periodExpense, 1);
+            const incomeWidth = periodIncome ? Math.max(6, Math.round(periodIncome / maxFlow * 100)) : 0;
+            const expenseWidth = periodExpense ? Math.max(6, Math.round(periodExpense / maxFlow * 100)) : 0;
+            const periodLabel = previousMeeting
+                ? `${fmtDate(previousMeeting.end)} 이후 · ${targetMeeting ? fmtDate(targetMeeting.start) + ' 모임까지' : fmtDate(today) + ' 현재'}`
+                : `${fmtDate(periodStart, true)}부터 · ${targetMeeting ? fmtDate(targetMeeting.start) + ' 모임까지' : fmtDate(today) + ' 현재'}`;
+
+            const pastMeetingExpenses = meetingWindows.filter(item => item.end < today).map(item => {
+                const start = new Date(item.start.getFullYear(), item.start.getMonth(), item.start.getDate() - 1);
+                const end = new Date(item.end.getFullYear(), item.end.getMonth(), item.end.getDate() + 2);
+                return raw.filter(entry => !isIncome(entry) && inRange(atMidnight(entry.date), start, end))
+                    .reduce((sum, entry) => sum + amountOf(entry), 0);
+            }).filter(amount => amount > 0);
+            const allExpense = raw.filter(entry => !isIncome(entry)).reduce((sum, entry) => sum + amountOf(entry), 0);
+            const averageMeetingExpense = pastMeetingExpenses.length
+                ? Math.round(pastMeetingExpenses.reduce((sum, amount) => sum + amount, 0) / pastMeetingExpenses.length)
+                : (allExpense || 0);
+
+            const currentBalance = Math.max(0, Number(window.meetingData && window.meetingData.totalBalance) || 0);
+            let expectedAdditionalDues = 0;
+            if (targetMeeting && targetMeeting.end >= today) {
+                const cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+                const targetMonth = new Date(targetMeeting.end.getFullYear(), targetMeeting.end.getMonth(), 1);
+                while (cursor <= targetMonth) {
+                    const year = cursor.getFullYear();
+                    const month = cursor.getMonth() + 1;
+                    const dueDate = new Date(year, month, 0);
+                    if (dueDate >= today && dueDate <= targetMeeting.end) {
+                        const records = recordsForMonth(year, month);
+                        const activeCount = records.length
+                            ? records.filter(member => member.status !== 'stopped').length
+                            : 6;
+                        const expected = activeCount * (year >= 2026 ? 20000 : 15000);
+                        const paid = records.reduce((sum, member) => sum + Math.max(0, Number(member.amount) || 0), 0);
+                        expectedAdditionalDues += Math.max(0, expected - paid);
+                    }
+                    cursor.setMonth(cursor.getMonth() + 1);
+                }
+            }
+            const expectedBalance = currentBalance + expectedAdditionalDues;
+            const expectedAfterMeeting = Math.max(0, expectedBalance - averageMeetingExpense);
+
+            const forecastHtml = targetMeeting
+                ? `<section class="ledger-forecast rounded-[22px] p-4 mt-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-bold text-[#3182F6]">다음 모임 예상</p>
+                            <h4 class="text-[16px] font-black text-white mt-1 break-words">${esc(targetMeeting.title)}</h4>
+                            <p class="text-[11px] text-gray-500 mt-1">${fmtDate(targetMeeting.start, true)}${targetMeeting.end > targetMeeting.start ? ' ~ ' + fmtDate(targetMeeting.end) : ''}</p>
+                        </div>
+                        <i class="fa-solid fa-wand-magic-sparkles text-[#3182F6] mt-1"></i>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+                        <div><p class="text-[9px] text-gray-500">현재 잔액</p><strong class="block text-[12px] text-white mt-1">${currentBalance.toLocaleString()}원</strong></div>
+                        <div class="border-x border-white/10"><p class="text-[9px] text-gray-500">추가 적립 예상</p><strong class="block text-[12px] text-[#3182F6] mt-1">+${expectedAdditionalDues.toLocaleString()}원</strong></div>
+                        <div><p class="text-[9px] text-gray-500">모임 전 예상</p><strong class="block text-[12px] text-white mt-1">${expectedBalance.toLocaleString()}원</strong></div>
+                    </div>
+                    <div class="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-white/10">
+                        <span class="text-[10.5px] text-gray-500">최근 모임 평균 지출 ${averageMeetingExpense.toLocaleString()}원 반영</span>
+                        <strong class="text-[12px] text-emerald-400 shrink-0">모임 후 약 ${expectedAfterMeeting.toLocaleString()}원</strong>
+                    </div>
+                </section>`
+                : `<section class="ledger-forecast rounded-[22px] p-4 mt-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-[#3182F6]/15 text-[#3182F6] flex items-center justify-center shrink-0"><i class="fa-regular fa-calendar-plus"></i></div>
+                        <div><h4 class="text-[13px] font-bold text-white">다음 모임 일정이 아직 없어요.</h4><p class="text-[10.5px] text-gray-500 mt-1">일정에 정기모임을 등록하면 예상 적립액이 자동 계산됩니다.</p></div>
+                    </div>
+                </section>`;
+
+            insights.innerHTML = `
+                <section>
+                    <div class="px-1 mb-3">
+                        <p class="text-[11px] font-bold text-gray-500">모임 사이 가계부</p>
+                        <h3 class="text-[17px] font-black text-white mt-1">${periodLabel}</h3>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div class="ledger-surface rounded-[20px] p-4">
+                            <div class="w-8 h-8 rounded-full bg-[#3182F6]/15 text-[#3182F6] flex items-center justify-center"><i class="fa-solid fa-piggy-bank text-[12px]"></i></div>
+                            <p class="text-[10.5px] text-gray-500 mt-3">모인 금액</p>
+                            <strong class="block text-[18px] text-white mt-1">${periodIncome.toLocaleString()}원</strong>
+                            <span class="text-[9.5px] text-gray-600">월별 납부 기록 기준</span>
+                        </div>
+                        <div class="ledger-surface rounded-[20px] p-4">
+                            <div class="w-8 h-8 rounded-full bg-[#F04452]/12 text-[#F04452] flex items-center justify-center"><i class="fa-solid fa-wallet text-[12px]"></i></div>
+                            <p class="text-[10.5px] text-gray-500 mt-3">사용한 금액</p>
+                            <strong class="block text-[18px] text-white mt-1">${periodExpense.toLocaleString()}원</strong>
+                            <span class="text-[9.5px] ${periodNet >= 0 ? 'text-emerald-400' : 'text-[#F04452]'}">차액 ${periodNet >= 0 ? '+' : '−'}${Math.abs(periodNet).toLocaleString()}원</span>
+                        </div>
+                    </div>
+                    <div class="ledger-surface rounded-[20px] p-4 mt-3">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-[13px] font-bold text-white">수입 · 지출 흐름</h4>
+                            <span class="text-[9.5px] text-gray-600">같은 기간 비교</span>
+                        </div>
+                        <div class="grid grid-cols-[42px_1fr_auto] items-center gap-2.5 mb-3">
+                            <span class="text-[10.5px] font-bold text-[#3182F6]">수입</span>
+                            <div class="ledger-bar-track"><span class="ledger-bar-fill bg-[#3182F6]" style="width:${incomeWidth}%"></span></div>
+                            <strong class="text-[10.5px] text-gray-400 tabular-nums">${periodIncome.toLocaleString()}원</strong>
+                        </div>
+                        <div class="grid grid-cols-[42px_1fr_auto] items-center gap-2.5">
+                            <span class="text-[10.5px] font-bold text-[#F04452]">지출</span>
+                            <div class="ledger-bar-track"><span class="ledger-bar-fill bg-[#F04452]" style="width:${expenseWidth}%"></span></div>
+                            <strong class="text-[10.5px] text-gray-400 tabular-nums">${periodExpense.toLocaleString()}원</strong>
+                        </div>
+                    </div>
+                    ${forecastHtml}
+                </section>`;
+
             if (raw.length === 0) {
-                list.innerHTML = `<div class="py-12 text-center"><p class="text-[14px] font-medium text-gray-500">사용 내역이 없습니다</p></div>`;
+                list.innerHTML = `<div class="py-10 text-center"><div class="w-11 h-11 rounded-full bg-white/5 text-gray-600 flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-receipt"></i></div><p class="text-[13px] font-bold text-gray-400">등록된 가계부 내역이 없어요.</p><p class="text-[10.5px] text-gray-600 mt-1">관리자 페이지 연동 후 사용처와 금액이 여기에 표시됩니다.</p></div>`;
                 return;
             }
-            const fmtDate = (s) => {
-                const p = String(s || '').split(/[-./]/).map(n => parseInt(n, 10));
-                if (p.length >= 3 && !isNaN(p[1]) && !isNaN(p[2])) return `${p[1]}월 ${p[2]}일`;
-                return String(s || '');
+
+            const categoryIcon = (entry) => {
+                const hint = `${entry.category || ''} ${entry.title || ''}`;
+                if (isIncome(entry)) return 'fa-arrow-down';
+                if (/식비|식사|카페|회식/.test(hint)) return 'fa-utensils';
+                if (/교통|택시|버스|기차|주유/.test(hint)) return 'fa-bus-simple';
+                if (/숙소|숙박|호텔/.test(hint)) return 'fa-bed';
+                if (/관람|입장|체험|티켓/.test(hint)) return 'fa-ticket';
+                return 'fa-receipt';
             };
+
             // 날짜 내림차순(최신 먼저)
             const items = [...raw].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
             list.innerHTML = items.map(e => {
-                const income = (e.type === 'income' || e.type === '입금');
-                const amt = Math.abs(Number(e.amount) || 0);
+                const income = isIncome(e);
+                const amt = amountOf(e);
                 const sign = income ? '+' : '−';
                 const amtColor = income ? 'text-[#3182F6]' : 'text-[#F04452]';
                 const wrap = income ? 'bg-[#3182F6]/15 text-[#3182F6]' : 'bg-[#F04452]/12 text-[#F04452]';
-                const icon = income ? 'fa-arrow-down' : 'fa-arrow-up';
-                const sub = `${fmtDate(e.date)}${e.memo ? ' · ' + e.memo : ''}`;
+                const icon = categoryIcon(e);
+                const detail = [fmtDate(e.date), e.place || e.location || e.merchant || '', e.memo || ''].filter(Boolean).map(esc).join(' · ');
                 return `<div class="flex items-center gap-3.5 py-3.5 border-b border-white/5">
                     <div class="w-[42px] h-[42px] rounded-full ${wrap} flex items-center justify-center text-[14px] shrink-0"><i class="fa-solid ${icon}"></i></div>
                     <div class="flex-1 min-w-0">
-                        <div class="text-[15px] font-semibold text-white/95 tracking-tight break-keep">${e.title || '내역'}</div>
-                        <div class="text-[12.5px] text-gray-500 mt-0.5">${sub}</div>
+                        <div class="text-[15px] font-semibold text-white/95 tracking-tight break-words">${esc(e.title || e.category || (income ? '입금' : '사용 내역'))}</div>
+                        <div class="text-[11.5px] text-gray-500 mt-0.5 break-words">${detail}</div>
                     </div>
                     <span class="text-[15.5px] font-bold ${amtColor} tracking-tight shrink-0 ml-2">${sign}${amt.toLocaleString()}원</span>
                 </div>`;
@@ -7346,6 +7577,7 @@
                                 if (typeof window.renderCalendar === 'function') { window.renderCalendar(window.viewYear, window.viewMonth); }
                                 try { window.renderEnjoyToday(); } catch (e) {}
                             } else { window.dynamicEvents = {}; }
+                            try { if (window.meetingTab === 'expense') window.renderExpenses(); } catch (e) {}
                             isScheduleLoaded = true; checkHideLoader();
                         }, (error) => { console.warn("Schedule snapshot error:", error); isScheduleLoaded = true; checkHideLoader(); });
                     };
