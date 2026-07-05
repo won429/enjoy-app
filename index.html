@@ -1462,15 +1462,6 @@
             height: 100%;
             border-radius: inherit;
         }
-        .ledger-balance {
-            background: #102A46;
-            border: 1px solid #1D4F7E;
-        }
-        .ledger-forecast {
-            background: #121F2E;
-            border: 1px solid #24415E;
-        }
-
         /* =========================================================
            라이트 모드 (기기 설정이 라이트면 자동 적용)
            - 전역으로 텍스트/표면을 밝게 전환(누락 방지)
@@ -1673,8 +1664,6 @@
             .border-white\/15, .border-white\/20 { border-color: rgba(0, 0, 0, 0.12) !important; }
             .ledger-surface { background: rgba(255,255,255,.72); border-color: rgba(0,0,0,.07); }
             .ledger-bar-track { background: rgba(0,0,0,.07); }
-            .ledger-balance { background: #E8F3FF; border-color: #B9D9F8; }
-            .ledger-forecast { background: #EDF4FA; border-color: #C9DCEB; }
             #ledger-meeting-select { color-scheme: light !important; }
 
             /* 보호 ① 홈 카드 이미지 위 글씨는 흰색 유지 */
@@ -2595,7 +2584,6 @@
                     <div class="flex items-center justify-between mt-7 mb-2 px-1">
                         <div>
                             <h3 class="text-[16px] font-black text-white tracking-tight">수입 · 지출 내역</h3>
-                            <p class="text-[11px] text-gray-500 mt-1">관리자 페이지에서 등록한 가계부 기록입니다.</p>
                         </div>
                         <i class="fa-solid fa-receipt text-[14px] text-gray-600"></i>
                     </div>
@@ -4677,7 +4665,7 @@
                 : incomeStartMonth;
             const periodIncome = sumDuesByMonth(incomeStartMonth, incomeEndMonth) + otherIncome;
             const inclusiveIncome = sumDuesByMonth(inclusiveStartMonth, incomeEndMonth) + otherIncome;
-            const periodLabel = `${esc(targetMeeting.title)} · ${fmtDate(targetMeeting.start, true)}${targetMeeting.end > targetMeeting.start ? ' ~ ' + fmtDate(targetMeeting.end) : ''}`;
+            const periodDateLabel = `${fmtDate(targetMeeting.start, true)}${targetMeeting.end > targetMeeting.start ? ' ~ ' + fmtDate(targetMeeting.end) : ''}`;
 
             const pastMeetingExpenses = meetingWindows.filter(item => item.end < today).map(item => {
                 return raw.filter(entry => !isIncome(entry) && (entry.meetingKey
@@ -4689,8 +4677,6 @@
             const averageMeetingExpense = pastMeetingExpenses.length
                 ? Math.round(pastMeetingExpenses.reduce((sum, amount) => sum + amount, 0) / pastMeetingExpenses.length)
                 : (allExpense || 0);
-
-            const currentBalance = Math.max(0, Number(window.meetingData && window.meetingData.totalBalance) || 0);
 
             const expenseByCategory = {};
             periodEntries.filter(entry => !isIncome(entry)).forEach(entry => {
@@ -4757,14 +4743,13 @@
                 ? `완료된 모임 ${pastMeetingExpenses.length}회 평균`
                 : '현재 등록된 지출 참고';
 
-            const forecastHtml = `<section class="ledger-forecast rounded-[22px] p-4 mt-3">
+            const forecastHtml = `<section class="ledger-surface rounded-[22px] p-4 mt-3">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="text-[11px] font-bold text-[#3182F6]">등록되지 않은 다음 모임 예상</p>
+                        <p class="text-[11px] font-bold text-gray-400">엔조이 비서실장의 다음 모임비 관련 예측</p>
                         <h4 class="text-[17px] font-black text-white mt-1">${predictedMeetingLabel}</h4>
                         <p class="text-[10px] text-gray-500 mt-1">과거 일정 간격 ${scheduleGaps.length || 1}건 · 보통 약 ${Math.round(typicalGapDays / 30)}개월 간격</p>
                     </div>
-                    <div class="w-9 h-9 rounded-full bg-[#3182F6] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-wand-magic-sparkles text-[12px]"></i></div>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5 mt-4">
                     <div class="rounded-[16px] bg-black/20 border border-white/5 p-3">
@@ -4785,19 +4770,12 @@
                 <section>
                     <div class="px-1 mb-3">
                         <p class="text-[11px] font-bold text-gray-500">선택한 모임 가계부</p>
-                        <h3 class="text-[17px] font-black text-white mt-1">${periodLabel}</h3>
-                    </div>
-                    <div class="ledger-balance rounded-[22px] p-4 mb-3 flex items-center justify-between gap-4">
-                        <div>
-                            <p class="text-[10.5px] font-bold text-[#72B7FF]">현재 통장 잔액</p>
-                            <strong class="block text-[24px] text-white mt-1 tracking-tight">${currentBalance.toLocaleString()}원</strong>
-                            <span class="text-[9.5px] text-gray-400">관리자 페이지의 실제 잔액 기준</span>
-                        </div>
-                        <div class="w-11 h-11 rounded-full bg-[#3182F6] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-piggy-bank"></i></div>
+                        <h3 class="text-[17px] font-black text-white mt-1 break-words">${esc(targetMeeting.title)}</h3>
+                        <p class="text-[12px] font-bold text-gray-400 mt-1.5 whitespace-nowrap">${periodDateLabel}</p>
                     </div>
                     <div class="grid grid-cols-2 gap-2.5">
                         <div class="ledger-surface rounded-[20px] p-4">
-                            <div class="w-8 h-8 rounded-full bg-[#3182F6]/15 text-[#3182F6] flex items-center justify-center"><i class="fa-solid fa-piggy-bank text-[12px]"></i></div>
+                            <i class="fa-solid fa-piggy-bank text-[15px] text-[#3182F6]"></i>
                             <p class="text-[10.5px] text-gray-500 mt-3">모인 금액</p>
                             <strong class="block text-[18px] text-white mt-1">${periodIncome.toLocaleString()}원</strong>
                             <span class="block text-[9.5px] text-gray-600 mt-1">지난 모임 다음 달부터</span>
@@ -4821,7 +4799,7 @@
                 </section>`;
 
             if (periodEntries.length === 0) {
-                list.innerHTML = `<div class="py-10 text-center"><div class="w-11 h-11 rounded-full bg-white/5 text-gray-600 flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-receipt"></i></div><p class="text-[13px] font-bold text-gray-400">${esc(targetMeeting.title)} 가계부가 비어 있어요.</p><p class="text-[10.5px] text-gray-600 mt-1">관리자 페이지에서 이 모임의 사용처와 금액을 등록해 주세요.</p></div>`;
+                list.innerHTML = `<div class="py-10 text-center"><div class="w-11 h-11 rounded-full bg-white/5 text-gray-600 flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-receipt"></i></div><p class="text-[13px] font-bold text-gray-400">${esc(targetMeeting.title)} 가계부가 비어 있어요.</p><p class="text-[10.5px] text-gray-600 mt-1">이 모임의 사용처와 금액을 등록해 주세요.</p></div>`;
                 return;
             }
 
