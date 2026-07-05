@@ -1462,11 +1462,13 @@
             height: 100%;
             border-radius: inherit;
         }
+        .ledger-balance {
+            background: #102A46;
+            border: 1px solid #1D4F7E;
+        }
         .ledger-forecast {
-            background:
-                radial-gradient(circle at 90% 12%, rgba(49,130,246,.24), transparent 38%),
-                linear-gradient(145deg, rgba(49,130,246,.12), rgba(255,255,255,.035));
-            border: 1px solid rgba(49,130,246,.2);
+            background: #121F2E;
+            border: 1px solid #24415E;
         }
 
         /* =========================================================
@@ -1671,12 +1673,8 @@
             .border-white\/15, .border-white\/20 { border-color: rgba(0, 0, 0, 0.12) !important; }
             .ledger-surface { background: rgba(255,255,255,.72); border-color: rgba(0,0,0,.07); }
             .ledger-bar-track { background: rgba(0,0,0,.07); }
-            .ledger-forecast {
-                background:
-                    radial-gradient(circle at 90% 12%, rgba(49,130,246,.16), transparent 38%),
-                    linear-gradient(145deg, rgba(49,130,246,.08), rgba(255,255,255,.86));
-                border-color: rgba(49,130,246,.16);
-            }
+            .ledger-balance { background: #E8F3FF; border-color: #B9D9F8; }
+            .ledger-forecast { background: #EDF4FA; border-color: #C9DCEB; }
             #ledger-meeting-select { color-scheme: light !important; }
 
             /* 보호 ① 홈 카드 이미지 위 글씨는 흰색 유지 */
@@ -4647,16 +4645,6 @@
             const periodEnd = targetMeeting.periodEnd;
             if (meetingPeriod) meetingPeriod.textContent = `관리 기간 · ${fmtDate(periodStart, true)} ~ ${fmtDate(periodEnd, true)}`;
 
-            let duesCollected = 0;
-            const monthCursor = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
-            const lastPeriodMonth = new Date(periodEnd.getFullYear(), periodEnd.getMonth(), 1);
-            while (monthCursor <= lastPeriodMonth) {
-                recordsForMonth(monthCursor.getFullYear(), monthCursor.getMonth() + 1).forEach(member => {
-                    duesCollected += Math.max(0, Number(member.amount) || 0);
-                });
-                monthCursor.setMonth(monthCursor.getMonth() + 1);
-            }
-
             const periodEntries = raw.filter(entry => entry.meetingKey
                 ? entry.meetingKey === targetMeeting.key
                 : inRange(atMidnight(entry.date), periodStart, periodEnd));
@@ -4666,11 +4654,29 @@
                 return !/회비|모임비|납부/.test(hint);
             }).reduce((sum, entry) => sum + amountOf(entry), 0);
             const periodExpense = periodEntries.filter(entry => !isIncome(entry)).reduce((sum, entry) => sum + amountOf(entry), 0);
-            const periodIncome = duesCollected + otherIncome;
-            const periodNet = periodIncome - periodExpense;
-            const maxFlow = Math.max(periodIncome, periodExpense, 1);
-            const incomeWidth = periodIncome ? Math.max(6, Math.round(periodIncome / maxFlow * 100)) : 0;
-            const expenseWidth = periodExpense ? Math.max(6, Math.round(periodExpense / maxFlow * 100)) : 0;
+
+            const sumDuesByMonth = (startMonth, endMonth) => {
+                if (!startMonth || !endMonth || startMonth > endMonth) return 0;
+                let total = 0;
+                const cursor = new Date(startMonth.getFullYear(), startMonth.getMonth(), 1);
+                while (cursor <= endMonth) {
+                    recordsForMonth(cursor.getFullYear(), cursor.getMonth() + 1).forEach(member => {
+                        total += Math.max(0, Number(member.amount) || 0);
+                    });
+                    cursor.setMonth(cursor.getMonth() + 1);
+                }
+                return total;
+            };
+            // 납부일을 따로 저장하지 않으므로 확정 수입은 지난 모임의 '다음 달'부터 계산한다.
+            const incomeStartMonth = previousMeeting
+                ? new Date(previousMeeting.end.getFullYear(), previousMeeting.end.getMonth() + 1, 1)
+                : new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
+            const incomeEndMonth = new Date(periodEnd.getFullYear(), periodEnd.getMonth(), 1);
+            const inclusiveStartMonth = previousMeeting
+                ? new Date(previousMeeting.end.getFullYear(), previousMeeting.end.getMonth(), 1)
+                : incomeStartMonth;
+            const periodIncome = sumDuesByMonth(incomeStartMonth, incomeEndMonth) + otherIncome;
+            const inclusiveIncome = sumDuesByMonth(inclusiveStartMonth, incomeEndMonth) + otherIncome;
             const periodLabel = `${esc(targetMeeting.title)} · ${fmtDate(targetMeeting.start, true)}${targetMeeting.end > targetMeeting.start ? ' ~ ' + fmtDate(targetMeeting.end) : ''}`;
 
             const pastMeetingExpenses = meetingWindows.filter(item => item.end < today).map(item => {
@@ -4685,55 +4691,95 @@
                 : (allExpense || 0);
 
             const currentBalance = Math.max(0, Number(window.meetingData && window.meetingData.totalBalance) || 0);
-            let expectedAdditionalDues = 0;
-            if (targetMeeting && targetMeeting.end >= today) {
-                const cursor = new Date(today.getFullYear(), today.getMonth(), 1);
-                const targetMonth = new Date(targetMeeting.end.getFullYear(), targetMeeting.end.getMonth(), 1);
-                while (cursor <= targetMonth) {
-                    const year = cursor.getFullYear();
-                    const month = cursor.getMonth() + 1;
-                    const dueDate = new Date(year, month, 0);
-                    if (dueDate >= today && dueDate <= targetMeeting.end) {
-                        const records = recordsForMonth(year, month);
-                        const activeCount = records.length
-                            ? records.filter(member => member.status !== 'stopped').length
-                            : 6;
-                        const expected = activeCount * (year >= 2026 ? 20000 : 15000);
-                        const paid = records.reduce((sum, member) => sum + Math.max(0, Number(member.amount) || 0), 0);
-                        expectedAdditionalDues += Math.max(0, expected - paid);
-                    }
-                    cursor.setMonth(cursor.getMonth() + 1);
-                }
-            }
-            const expectedBalance = currentBalance + expectedAdditionalDues;
-            const expectedAfterMeeting = Math.max(0, expectedBalance - averageMeetingExpense);
 
-            const forecastHtml = targetMeeting.end >= today
-                ? `<section class="ledger-forecast rounded-[22px] p-4 mt-3">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p class="text-[11px] font-bold text-[#3182F6]">다음 모임 예상</p>
-                            <h4 class="text-[16px] font-black text-white mt-1 break-words">${esc(targetMeeting.title)}</h4>
-                            <p class="text-[11px] text-gray-500 mt-1">${fmtDate(targetMeeting.start, true)}${targetMeeting.end > targetMeeting.start ? ' ~ ' + fmtDate(targetMeeting.end) : ''}</p>
+            const expenseByCategory = {};
+            periodEntries.filter(entry => !isIncome(entry)).forEach(entry => {
+                const category = String(entry.category || '기타').trim() || '기타';
+                expenseByCategory[category] = (expenseByCategory[category] || 0) + amountOf(entry);
+            });
+            const categoryRows = Object.entries(expenseByCategory).sort((a, b) => b[1] - a[1]);
+            const categoryColors = ['#F04452', '#FF8A34', '#8B5CF6', '#3182F6', '#14B8A6', '#8B95A1'];
+            const categoryHtml = categoryRows.length
+                ? categoryRows.map(([category, amount], index) => {
+                    const ratio = periodExpense ? Math.round(amount / periodExpense * 100) : 0;
+                    return `<div class="${index ? 'mt-3.5' : ''}">
+                        <div class="flex items-center justify-between gap-3 mb-1.5">
+                            <span class="text-[11px] font-bold text-gray-300">${esc(category)}</span>
+                            <span class="text-[10.5px] text-gray-500 tabular-nums">${amount.toLocaleString()}원 · ${ratio}%</span>
                         </div>
-                        <i class="fa-solid fa-wand-magic-sparkles text-[#3182F6] mt-1"></i>
+                        <div class="ledger-bar-track"><span class="ledger-bar-fill" style="width:${Math.max(4, ratio)}%;background:${categoryColors[index % categoryColors.length]}"></span></div>
+                    </div>`;
+                }).join('')
+                : '<p class="text-[11px] text-gray-500 py-2">아직 분류할 지출 내역이 없어요.</p>';
+
+            // 등록된 과거 일정 간격의 중앙값으로, 아직 등록되지 않은 다음 모임 시점을 추정한다.
+            const dayMs = 86400000;
+            const scheduleGaps = [];
+            for (let index = 1; index < meetingWindows.length; index++) {
+                const gap = Math.round((meetingWindows[index].start - meetingWindows[index - 1].end) / dayMs);
+                if (gap >= 14 && gap <= 800) scheduleGaps.push(gap);
+            }
+            const median = values => {
+                if (!values.length) return 0;
+                const sorted = values.slice().sort((a, b) => a - b);
+                const middle = Math.floor(sorted.length / 2);
+                return sorted.length % 2 ? sorted[middle] : Math.round((sorted[middle - 1] + sorted[middle]) / 2);
+            };
+            const typicalGapDays = median(scheduleGaps) || 180;
+            const latestMeeting = meetingWindows[meetingWindows.length - 1];
+            let predictedMeeting = new Date(latestMeeting.end.getFullYear(), latestMeeting.end.getMonth(), latestMeeting.end.getDate() + typicalGapDays);
+            while (predictedMeeting <= today) predictedMeeting.setDate(predictedMeeting.getDate() + typicalGapDays);
+            const monthPart = predictedMeeting.getDate() <= 10 ? '초' : (predictedMeeting.getDate() <= 20 ? '중순' : '말');
+            const predictedMeetingLabel = `${predictedMeeting.getFullYear()}년 ${predictedMeeting.getMonth() + 1}월 ${monthPart} 전후`;
+
+            const recentMonthlyCollections = [];
+            const recentMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            for (let offset = 0; offset < 12 && recentMonthlyCollections.length < 6; offset++) {
+                const cursor = new Date(recentMonth.getFullYear(), recentMonth.getMonth() - offset, 1);
+                const collected = recordsForMonth(cursor.getFullYear(), cursor.getMonth() + 1)
+                    .reduce((sum, member) => sum + Math.max(0, Number(member.amount) || 0), 0);
+                if (collected > 0) recentMonthlyCollections.push(collected);
+            }
+            const fallbackMonthlyDues = 6 * (predictedMeeting.getFullYear() >= 2026 ? 20000 : 15000);
+            const averageMonthlyDues = recentMonthlyCollections.length
+                ? Math.round(recentMonthlyCollections.reduce((sum, amount) => sum + amount, 0) / recentMonthlyCollections.length)
+                : fallbackMonthlyDues;
+            let expectedCollectionMonths = 0;
+            const collectionCursor = new Date(latestMeeting.end.getFullYear(), latestMeeting.end.getMonth() + 1, 1);
+            const predictionMonth = new Date(predictedMeeting.getFullYear(), predictedMeeting.getMonth(), 1);
+            while (collectionCursor <= predictionMonth) {
+                expectedCollectionMonths++;
+                collectionCursor.setMonth(collectionCursor.getMonth() + 1);
+            }
+            const expectedFutureDues = averageMonthlyDues * expectedCollectionMonths;
+            const expectedNextExpense = averageMeetingExpense || periodExpense;
+            const expenseBasis = pastMeetingExpenses.length
+                ? `완료된 모임 ${pastMeetingExpenses.length}회 평균`
+                : '현재 등록된 지출 참고';
+
+            const forecastHtml = `<section class="ledger-forecast rounded-[22px] p-4 mt-3">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold text-[#3182F6]">등록되지 않은 다음 모임 예상</p>
+                        <h4 class="text-[17px] font-black text-white mt-1">${predictedMeetingLabel}</h4>
+                        <p class="text-[10px] text-gray-500 mt-1">과거 일정 간격 ${scheduleGaps.length || 1}건 · 보통 약 ${Math.round(typicalGapDays / 30)}개월 간격</p>
                     </div>
-                    <div class="grid grid-cols-3 gap-2 mt-4 text-center">
-                        <div><p class="text-[9px] text-gray-500">현재 잔액</p><strong class="block text-[12px] text-white mt-1">${currentBalance.toLocaleString()}원</strong></div>
-                        <div class="border-x border-white/10"><p class="text-[9px] text-gray-500">추가 적립 예상</p><strong class="block text-[12px] text-[#3182F6] mt-1">+${expectedAdditionalDues.toLocaleString()}원</strong></div>
-                        <div><p class="text-[9px] text-gray-500">모임 전 예상</p><strong class="block text-[12px] text-white mt-1">${expectedBalance.toLocaleString()}원</strong></div>
+                    <div class="w-9 h-9 rounded-full bg-[#3182F6] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-wand-magic-sparkles text-[12px]"></i></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5 mt-4">
+                    <div class="rounded-[16px] bg-black/20 border border-white/5 p-3">
+                        <p class="text-[9.5px] text-gray-500">그때까지 모일 회비</p>
+                        <strong class="block text-[14px] text-[#3182F6] mt-1">약 ${expectedFutureDues.toLocaleString()}원</strong>
+                        <span class="block text-[9px] text-gray-600 mt-1">월평균 ${averageMonthlyDues.toLocaleString()}원 × ${expectedCollectionMonths}개월</span>
                     </div>
-                    <div class="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-white/10">
-                        <span class="text-[10.5px] text-gray-500">최근 모임 평균 지출 ${averageMeetingExpense.toLocaleString()}원 반영</span>
-                        <strong class="text-[12px] text-emerald-400 shrink-0">모임 후 약 ${expectedAfterMeeting.toLocaleString()}원</strong>
+                    <div class="rounded-[16px] bg-black/20 border border-white/5 p-3">
+                        <p class="text-[9.5px] text-gray-500">다음 모임 예상 지출</p>
+                        <strong class="block text-[14px] text-[#F04452] mt-1">약 ${expectedNextExpense.toLocaleString()}원</strong>
+                        <span class="block text-[9px] text-gray-600 mt-1">${expenseBasis}</span>
                     </div>
-                </section>`
-                : `<section class="ledger-surface rounded-[22px] p-4 mt-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0"><i class="fa-solid fa-check"></i></div>
-                        <div><h4 class="text-[13px] font-bold text-white">정산이 끝난 모임이에요.</h4><p class="text-[10.5px] text-gray-500 mt-1">이 모임의 적립액과 사용 내역을 확인할 수 있습니다.</p></div>
-                    </div>
-                </section>`;
+                </div>
+                <p class="text-[9.5px] text-gray-600 mt-3 leading-relaxed">일정과 실제 납부 상황에 따라 달라질 수 있는 참고 예상치예요.</p>
+            </section>`;
 
             insights.innerHTML = `
                 <section>
@@ -4741,35 +4787,35 @@
                         <p class="text-[11px] font-bold text-gray-500">선택한 모임 가계부</p>
                         <h3 class="text-[17px] font-black text-white mt-1">${periodLabel}</h3>
                     </div>
+                    <div class="ledger-balance rounded-[22px] p-4 mb-3 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-[10.5px] font-bold text-[#72B7FF]">현재 통장 잔액</p>
+                            <strong class="block text-[24px] text-white mt-1 tracking-tight">${currentBalance.toLocaleString()}원</strong>
+                            <span class="text-[9.5px] text-gray-400">관리자 페이지의 실제 잔액 기준</span>
+                        </div>
+                        <div class="w-11 h-11 rounded-full bg-[#3182F6] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-piggy-bank"></i></div>
+                    </div>
                     <div class="grid grid-cols-2 gap-2.5">
                         <div class="ledger-surface rounded-[20px] p-4">
                             <div class="w-8 h-8 rounded-full bg-[#3182F6]/15 text-[#3182F6] flex items-center justify-center"><i class="fa-solid fa-piggy-bank text-[12px]"></i></div>
                             <p class="text-[10.5px] text-gray-500 mt-3">모인 금액</p>
                             <strong class="block text-[18px] text-white mt-1">${periodIncome.toLocaleString()}원</strong>
-                            <span class="text-[9.5px] text-gray-600">월별 납부 기록 기준</span>
+                            <span class="block text-[9.5px] text-gray-600 mt-1">지난 모임 다음 달부터</span>
+                            ${previousMeeting ? `<span class="block text-[9px] text-gray-600 mt-0.5">(지난 모임 달 포함 시 약 ${inclusiveIncome.toLocaleString()}원)</span>` : ''}
                         </div>
                         <div class="ledger-surface rounded-[20px] p-4">
                             <div class="w-8 h-8 rounded-full bg-[#F04452]/12 text-[#F04452] flex items-center justify-center"><i class="fa-solid fa-wallet text-[12px]"></i></div>
                             <p class="text-[10.5px] text-gray-500 mt-3">사용한 금액</p>
                             <strong class="block text-[18px] text-white mt-1">${periodExpense.toLocaleString()}원</strong>
-                            <span class="text-[9.5px] ${periodNet >= 0 ? 'text-emerald-400' : 'text-[#F04452]'}">차액 ${periodNet >= 0 ? '+' : '−'}${Math.abs(periodNet).toLocaleString()}원</span>
+                            <span class="block text-[9.5px] text-gray-600 mt-1">등록된 지출 ${periodEntries.filter(entry => !isIncome(entry)).length}건</span>
                         </div>
                     </div>
                     <div class="ledger-surface rounded-[20px] p-4 mt-3">
                         <div class="flex items-center justify-between mb-4">
-                            <h4 class="text-[13px] font-bold text-white">수입 · 지출 흐름</h4>
-                            <span class="text-[9.5px] text-gray-600">같은 기간 비교</span>
+                            <h4 class="text-[13px] font-bold text-white">분류별 지출</h4>
+                            <span class="text-[9.5px] text-gray-600">${categoryRows.length}개 분류</span>
                         </div>
-                        <div class="grid grid-cols-[42px_1fr_auto] items-center gap-2.5 mb-3">
-                            <span class="text-[10.5px] font-bold text-[#3182F6]">수입</span>
-                            <div class="ledger-bar-track"><span class="ledger-bar-fill bg-[#3182F6]" style="width:${incomeWidth}%"></span></div>
-                            <strong class="text-[10.5px] text-gray-400 tabular-nums">${periodIncome.toLocaleString()}원</strong>
-                        </div>
-                        <div class="grid grid-cols-[42px_1fr_auto] items-center gap-2.5">
-                            <span class="text-[10.5px] font-bold text-[#F04452]">지출</span>
-                            <div class="ledger-bar-track"><span class="ledger-bar-fill bg-[#F04452]" style="width:${expenseWidth}%"></span></div>
-                            <strong class="text-[10.5px] text-gray-400 tabular-nums">${periodExpense.toLocaleString()}원</strong>
-                        </div>
+                        ${categoryHtml}
                     </div>
                     ${forecastHtml}
                 </section>`;
