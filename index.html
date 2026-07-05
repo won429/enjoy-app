@@ -1507,11 +1507,50 @@
             min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
         #community-write-screen select { min-width: 0; max-width: 100%; box-sizing: border-box; color-scheme: dark; }
         .community-screen { background-color: #000; }
+        #home-screen, #home-screen .fade-in-up {
+            animation: none !important;
+            transition: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
         .community-place-badge {
             max-width: 100%;
             white-space: normal;
             overflow-wrap: anywhere;
             word-break: keep-all;
+        }
+        .community-back-fab {
+            position: absolute;
+            top: max(16px, env(safe-area-inset-top));
+            left: 16px;
+            z-index: 30;
+            width: 44px;
+            height: 44px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #F2F4F6;
+            background: rgba(35, 35, 38, 0.84);
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.34);
+            -webkit-backdrop-filter: blur(16px) saturate(1.35);
+            backdrop-filter: blur(16px) saturate(1.35);
+            animation: communityBackFloatIn .42s cubic-bezier(.2, 1.45, .45, 1) both;
+            transition: transform .18s ease, background-color .18s ease, box-shadow .18s ease;
+        }
+        .community-back-fab:active {
+            transform: scale(.84) rotate(-8deg);
+            background: rgba(49,130,246,.86);
+            box-shadow: 0 5px 14px rgba(49,130,246,.24);
+        }
+        @keyframes communityBackFloatIn {
+            0% { opacity: 0; transform: translateX(-16px) scale(.72) rotate(-12deg); }
+            70% { opacity: 1; transform: translateX(2px) scale(1.05) rotate(2deg); }
+            100% { opacity: 1; transform: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .community-back-fab { animation: none; transition: none; }
         }
 
         /* 하단 메뉴 ↔ 일정 화면 서브 메뉴 전환: 좌측 기준으로 스르륵 줄어들며 접히고, 좌→우로 펼쳐지는 모션 */
@@ -1552,6 +1591,12 @@
             #schedule-screen header, #meeting-screen header { background-color: rgba(242, 242, 247, 0.9) !important; }
             .community-screen { background-color: #F2F2F7 !important; }
             .community-screen > header { background-color: rgba(242, 242, 247, 0.94) !important; }
+            .community-back-fab {
+                color: #141414;
+                background: rgba(255,255,255,.9);
+                border-color: rgba(0,0,0,.08);
+                box-shadow: 0 10px 28px rgba(0,0,0,.14);
+            }
             #community-comment-bar { background-color: rgba(242, 242, 247, 0.96) !important; }
             #community-write-screen select { color-scheme: light; }
             #app-loader { background-color: #F2F2F7 !important; }
@@ -2336,17 +2381,13 @@
     </div>
 
     <!-- 커뮤니티 글쓰기 전체 화면 -->
-    <section id="community-write-screen" class="community-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-md flex-col overflow-hidden">
-        <header class="flex-none pt-safe px-5 pb-4 bg-black/90 backdrop-blur-md border-b border-white/5">
-            <div class="flex items-center gap-3">
-                <button type="button" onclick="window.closeCommunityComposer(false)" class="w-9 h-9 -ml-2 rounded-full flex items-center justify-center text-gray-400 active:scale-90 transition-transform" aria-label="글쓰기 나가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
-                <div class="min-w-0">
-                    <h2 class="text-[24px] font-black text-white tracking-tight">여행계획 공유</h2>
-                    <p class="text-[12px] text-gray-400 mt-1">사진 없이 일정만 가볍게 나눠요.</p>
-                </div>
+    <section id="community-write-screen" class="community-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-md flex-col overflow-hidden">
+        <button type="button" onclick="window.closeCommunityComposer(false)" class="community-back-fab" aria-label="글쓰기 나가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
+        <div class="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-5 pb-8" style="padding-top: calc(max(20px, env(safe-area-inset-top)) + 62px);">
+            <div class="mb-6 px-1">
+                <h2 id="community-write-heading" class="text-[24px] font-black text-white tracking-tight">여행계획 공유</h2>
+                <p id="community-write-subheading" class="text-[12px] text-gray-400 mt-1">사진 없이 일정만 가볍게 나눠요.</p>
             </div>
-        </header>
-        <div class="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-5 pt-5 pb-8">
             <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()" class="w-full min-w-0">
                 <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-title">제목</label>
                 <input id="community-post-title" maxlength="80" autocomplete="off" placeholder="예: 제주도 2박 3일 뚜벅이 여행" class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[14px] text-white placeholder:text-gray-600 outline-none focus:border-[#3182F6] mb-4">
@@ -2360,10 +2401,13 @@
                     </div>
                     <div class="min-w-0">
                         <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-district">시·군·구</label>
-                        <select id="community-post-district" disabled class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6] disabled:opacity-45">
+                        <select id="community-post-district" onchange="window.updateCommunityPlaceAddButton()" disabled class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6] disabled:opacity-45">
                             <option value="">시·도를 먼저 선택하세요</option>
                         </select>
                     </div>
+                    <button id="community-add-place" type="button" onclick="window.addCommunityPlace()" class="w-full h-11 rounded-2xl bg-white/10 text-[13px] font-bold text-white active:scale-[0.98] transition-transform disabled:opacity-40">지역 추가</button>
+                    <div id="community-selected-places" class="hidden flex flex-wrap gap-2"></div>
+                    <p class="-mt-2 text-[11px] text-gray-500">여러 지역을 차례로 선택해 추가할 수 있어요.</p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 mb-4 min-w-0">
@@ -2391,16 +2435,8 @@
 
     <!-- 커뮤니티 게시글 상세 전체 화면 -->
     <section id="community-detail-screen" class="community-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-md flex-col overflow-hidden">
-        <header class="flex-none pt-safe px-5 pb-4 bg-black/90 backdrop-blur-md border-b border-white/5">
-            <div class="flex items-center gap-3">
-                <button type="button" onclick="window.closeCommunityDetail()" class="w-9 h-9 -ml-2 rounded-full flex items-center justify-center text-gray-400 active:scale-90 transition-transform" aria-label="커뮤니티로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
-                <div class="min-w-0">
-                    <h2 class="text-[24px] font-black text-white tracking-tight">여행계획</h2>
-                    <p class="text-[12px] text-gray-400 mt-1">일정과 댓글을 한눈에 확인해요.</p>
-                </div>
-            </div>
-        </header>
-        <div id="community-detail-scroll" class="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-5 pt-5">
+        <button type="button" onclick="window.closeCommunityDetail()" class="community-back-fab" aria-label="커뮤니티로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
+        <div id="community-detail-scroll" class="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-5" style="padding-top: calc(max(20px, env(safe-area-inset-top)) + 66px);">
             <div id="community-detail-content"></div>
             <div class="flex items-center justify-between mt-7 mb-2 px-1">
                 <h3 class="text-[16px] font-black text-white">댓글</h3>
@@ -4817,6 +4853,9 @@
         window._communityView = 'list';
         window._communityLoading = false;
         window._communityError = '';
+        window._communitySelectedPlaces = [];
+        window._communityEditingPostId = null;
+        window._communityComposerReturnView = 'list';
 
         const COMMUNITY_REGION_DISTRICTS = {
             '서울특별시': ['종로구', '중구', '용산구', '성동구', '광진구', '동대문구', '중랑구', '성북구', '강북구', '도봉구', '노원구', '은평구', '서대문구', '마포구', '양천구', '강서구', '구로구', '금천구', '영등포구', '동작구', '관악구', '서초구', '강남구', '송파구', '강동구'],
@@ -4866,6 +4905,85 @@
             });
             district.disabled = !items.length;
             district.value = '';
+            window.updateCommunityPlaceAddButton();
+        };
+
+        window.updateCommunityPlaceAddButton = function () {
+            const region = document.getElementById('community-post-region');
+            const district = document.getElementById('community-post-district');
+            const button = document.getElementById('community-add-place');
+            if (button) button.disabled = !(region && region.value && district && district.value);
+        };
+
+        function communityPostPlaces(post) {
+            const next = [];
+            const raw = post && Array.isArray(post.places) ? post.places : [];
+            raw.forEach(function (item) {
+                if (typeof item === 'string') {
+                    const label = item.trim();
+                    if (label) next.push({ region: '', district: '', label: label });
+                    return;
+                }
+                if (!item || typeof item !== 'object') return;
+                const region = String(item.region || '').trim();
+                const district = String(item.district || '').trim();
+                const label = String(item.label || (region + ' ' + district)).trim();
+                if (label) next.push({ region: region, district: district, label: label });
+            });
+            if (!next.length && post) {
+                const region = String(post.region || '').trim();
+                const district = String(post.district || '').trim();
+                const label = String(post.place || (region + ' ' + district)).trim();
+                if (label) next.push({ region: region, district: district, label: label });
+            }
+            return next.filter(function (item, index, list) {
+                return list.findIndex(function (other) { return other.label === item.label; }) === index;
+            });
+        }
+
+        function communityPlaceBadges(post, sizeClass) {
+            const places = communityPostPlaces(post);
+            const size = sizeClass || 'text-[clamp(11px,3.2vw,13px)] px-3 py-1.5';
+            return places.map(function (item) {
+                return '<span class="community-place-badge inline-flex rounded-full bg-[#3182F6]/15 text-[#3182F6] ' +
+                    size + ' font-bold leading-snug">' + communityEsc(item.label) + '</span>';
+            }).join('');
+        }
+
+        window.renderCommunitySelectedPlaces = function () {
+            const wrap = document.getElementById('community-selected-places');
+            if (!wrap) return;
+            const places = Array.isArray(window._communitySelectedPlaces) ? window._communitySelectedPlaces : [];
+            wrap.classList.toggle('hidden', !places.length);
+            wrap.innerHTML = places.map(function (item, index) {
+                return '<button type="button" onclick="window.removeCommunityPlace(' + index + ')" class="max-w-full inline-flex items-center gap-1.5 rounded-full bg-[#3182F6]/15 text-[#3182F6] px-3 py-2 text-[12px] font-bold leading-snug text-left active:scale-95 transition-transform">' +
+                    '<span class="break-words">' + communityEsc(item.label) + '</span><i class="fa-solid fa-xmark text-[10px] shrink-0"></i></button>';
+            }).join('');
+        };
+
+        window.addCommunityPlace = function () {
+            const region = document.getElementById('community-post-region');
+            const district = document.getElementById('community-post-district');
+            if (!region || !district || !region.value || !district.value) return false;
+            const item = {
+                region: region.value,
+                district: district.value,
+                label: (region.value + ' ' + district.value).trim()
+            };
+            const places = Array.isArray(window._communitySelectedPlaces) ? window._communitySelectedPlaces : [];
+            if (!places.some(function (other) { return other.label === item.label; })) places.push(item);
+            window._communitySelectedPlaces = places;
+            window.renderCommunitySelectedPlaces();
+            region.value = '';
+            window.updateCommunityDistricts();
+            return true;
+        };
+
+        window.removeCommunityPlace = function (index) {
+            const places = Array.isArray(window._communitySelectedPlaces) ? window._communitySelectedPlaces : [];
+            if (index < 0 || index >= places.length) return;
+            places.splice(index, 1);
+            window.renderCommunitySelectedPlaces();
         };
         window.initCommunityRegions();
 
@@ -5013,17 +5131,35 @@
             if (window._schedSub === 'community') window.renderCommunity();
         };
 
-        window.openCommunityComposer = function () {
+        window.openCommunityComposer = function (postId) {
             const user = communityRequireUser();
             if (!user) return;
+            const post = postId ? window._communityPosts.find(function (item) { return item._id === postId; }) : null;
+            if (postId && (!post || post.authorUid !== user.uid)) return;
             window.initCommunityRegions();
             ['community-post-title', 'community-post-region', 'community-post-start', 'community-post-end', 'community-post-days'].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
+            window._communityEditingPostId = post ? post._id : null;
+            window._communityComposerReturnView = post && window._communityActivePostId === post._id ? 'detail' : 'list';
+            window._communitySelectedPlaces = post ? communityPostPlaces(post) : [];
+            if (post) {
+                document.getElementById('community-post-title').value = post.title || '';
+                document.getElementById('community-post-start').value = post.startDate || '';
+                document.getElementById('community-post-end').value = post.endDate || '';
+                document.getElementById('community-post-days').value = Array.isArray(post.itinerary) ? post.itinerary.join('\n') : '';
+            }
             window.updateCommunityDistricts();
+            window.renderCommunitySelectedPlaces();
             const status = document.getElementById('community-write-status');
             if (status) status.textContent = '';
+            const heading = document.getElementById('community-write-heading');
+            const subheading = document.getElementById('community-write-subheading');
+            const submit = document.getElementById('community-submit-btn');
+            if (heading) heading.textContent = post ? '여행계획 수정' : '여행계획 공유';
+            if (subheading) subheading.textContent = post ? '바꿀 내용을 확인하고 저장해 주세요.' : '사진 없이 일정만 가볍게 나눠요.';
+            if (submit) submit.textContent = post ? '수정 완료' : '공유하기';
             window._communityView = 'write';
             const screen = document.getElementById('community-write-screen');
             if (screen) { screen.classList.remove('hidden'); screen.classList.add('flex'); }
@@ -5035,26 +5171,34 @@
         };
 
         window.closeCommunityComposer = function (force) {
-            if (!force && !confirm('작성 중인 내용이 사라집니다. 글쓰기를 종료할까요?')) return;
+            if (!force && !confirm(window._communityEditingPostId ? '수정 중인 내용이 사라집니다. 수정을 종료할까요?' : '작성 중인 내용이 사라집니다. 글쓰기를 종료할까요?')) return;
             const screen = document.getElementById('community-write-screen');
             if (screen) { screen.classList.add('hidden'); screen.classList.remove('flex'); }
-            window._communityView = 'list';
-            if (window.setCommunityFocusedNav) window.setCommunityFocusedNav(false);
+            const returnToDetail = window._communityComposerReturnView === 'detail' && !!window._communityActivePostId;
+            window._communityView = returnToDetail ? 'detail' : 'list';
+            window._communityEditingPostId = null;
+            window._communityComposerReturnView = 'list';
+            window._communitySelectedPlaces = [];
+            if (!returnToDetail && window.setCommunityFocusedNav) window.setCommunityFocusedNav(false);
         };
 
         window.submitCommunityPost = async function () {
             const user = communityRequireUser();
             if (!user) return;
             const title = (document.getElementById('community-post-title').value || '').trim();
-            const region = document.getElementById('community-post-region').value || '';
-            const district = document.getElementById('community-post-district').value || '';
-            const place = (region + ' ' + district).trim();
+            const pendingRegion = document.getElementById('community-post-region').value || '';
+            const pendingDistrict = document.getElementById('community-post-district').value || '';
+            if (pendingRegion && pendingDistrict) window.addCommunityPlace();
+            const places = (Array.isArray(window._communitySelectedPlaces) ? window._communitySelectedPlaces : []).map(function (item) {
+                return { region: item.region || '', district: item.district || '', label: item.label || '' };
+            }).filter(function (item) { return item.label; });
+            const firstPlace = places[0] || { region: '', district: '', label: '' };
             const startDate = document.getElementById('community-post-start').value || '';
             const endDate = document.getElementById('community-post-end').value || '';
             const itinerary = (document.getElementById('community-post-days').value || '').split(/\n+/)
                 .map(function (line) { return line.trim(); }).filter(Boolean).slice(0, 20);
             const status = document.getElementById('community-write-status');
-            if (!title || !region || !district || !startDate || !endDate || !itinerary.length) {
+            if (!title || !places.length || !startDate || !endDate || !itinerary.length) {
                 if (status) status.textContent = '모든 항목을 입력해 주세요.';
                 return;
             }
@@ -5062,38 +5206,59 @@
                 if (status) status.textContent = '종료일이 시작일보다 빠를 수 없어요.';
                 return;
             }
-            if (!window.fsAddDoc) {
+            const editingId = window._communityEditingPostId;
+            if ((!editingId && !window.fsAddDoc) || (editingId && !window.fsUpdateDoc)) {
                 if (status) status.textContent = 'Firebase 연결을 기다려 주세요.';
                 return;
             }
             const button = document.getElementById('community-submit-btn');
-            if (button) { button.disabled = true; button.textContent = '공유 중…'; button.style.opacity = '.65'; }
+            if (button) { button.disabled = true; button.textContent = editingId ? '수정 중…' : '공유 중…'; button.style.opacity = '.65'; }
             if (status) status.textContent = '';
             try {
-                await window.fsAddDoc(window.fsCol('community_posts'), {
-                    authorUid: user.uid,
-                    authorName: communityAuthorName(user),
-                    authorPhoto: user.photoURL || '',
+                const postData = {
                     title: title,
-                    place: place,
-                    region: region,
-                    district: district,
+                    places: places,
+                    place: places.map(function (item) { return item.label; }).join(', '),
+                    region: firstPlace.region,
+                    district: firstPlace.district,
                     startDate: startDate,
                     endDate: endDate,
                     itinerary: itinerary,
-                    likedBy: [],
-                    commentCount: 0,
-                    createdAt: Date.now()
-                });
+                    updatedAt: Date.now()
+                };
+                if (editingId) {
+                    const original = window._communityPosts.find(function (item) { return item._id === editingId; });
+                    if (!original || original.authorUid !== user.uid) throw new Error('permission-denied');
+                    await window.fsUpdateDoc(window.fsDoc('community_posts', editingId), postData);
+                    Object.assign(original, postData);
+                    renderCommunityDetail();
+                    window.renderCommunity();
+                } else {
+                    postData.authorUid = user.uid;
+                    postData.authorName = communityAuthorName(user);
+                    postData.authorPhoto = user.photoURL || '';
+                    postData.likedBy = [];
+                    postData.commentCount = 0;
+                    postData.createdAt = Date.now();
+                    await window.fsAddDoc(window.fsCol('community_posts'), postData);
+                }
                 window.closeCommunityComposer(true);
             } catch (error) {
                 console.error('community post', error);
-                if (status) status.textContent = error && error.code === 'permission-denied'
-                    ? 'Firebase 쓰기 권한 설정이 필요해요.'
+                if (status) status.textContent = error && (error.code === 'permission-denied' || error.message === 'permission-denied')
+                    ? '본인이 작성한 글만 수정할 수 있어요.'
                     : '저장하지 못했어요. 다시 시도해 주세요.';
             } finally {
-                if (button) { button.disabled = false; button.textContent = '공유하기'; button.style.opacity = '1'; }
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = window._communityEditingPostId ? '수정 완료' : '공유하기';
+                    button.style.opacity = '1';
+                }
             }
+        };
+
+        window.openCommunityEditor = function (postId) {
+            window.openCommunityComposer(postId);
         };
 
         window.toggleCommunityLike = async function (postId) {
@@ -5147,18 +5312,20 @@
             const itinerary = Array.isArray(post.itinerary) ? post.itinerary.slice(0, 20) : [];
             const own = post.authorUid === user.uid;
             wrap.innerHTML =
-                '<article class="bg-[#1C1C1E] rounded-3xl p-5 border border-white/5">' +
-                    '<div class="flex items-start gap-3">' +
+                '<article class="px-1 pb-2">' +
+                    '<h1 class="text-[clamp(24px,7vw,31px)] font-black text-white tracking-tight leading-[1.25] break-words">' + communityEsc(post.title || '') + '</h1>' +
+                    '<div class="flex items-start gap-3 mt-5">' +
                         communityAvatar(post.authorName, post.authorPhoto, 'w-10 h-10') +
                         '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-white leading-tight break-words">' + communityEsc(post.authorName || '여행자') + '</div>' +
                         '<div class="text-[11px] text-gray-400 mt-1">' + communityRelativeTime(post.createdAt) + '</div></div>' +
-                        (own ? '<button type="button" onclick="window.deleteCommunityPost(\'' + communityEsc(post._id) + '\')" class="w-9 h-9 shrink-0 rounded-full bg-white/5 text-gray-500 flex items-center justify-center active:scale-90" aria-label="게시글 삭제"><i class="fa-regular fa-trash-can text-[12px]"></i></button>' : '') +
+                        (own ? '<div class="flex items-center gap-1.5 shrink-0">' +
+                            '<button type="button" onclick="window.openCommunityEditor(\'' + communityEsc(post._id) + '\')" class="w-9 h-9 rounded-full bg-white/5 text-gray-400 flex items-center justify-center active:scale-90 transition-transform" aria-label="게시글 수정"><i class="fa-regular fa-pen-to-square text-[12px]"></i></button>' +
+                            '<button type="button" onclick="window.deleteCommunityPost(\'' + communityEsc(post._id) + '\')" class="w-9 h-9 rounded-full bg-white/5 text-gray-500 flex items-center justify-center active:scale-90 transition-transform" aria-label="게시글 삭제"><i class="fa-regular fa-trash-can text-[12px]"></i></button></div>' : '') +
                     '</div>' +
-                    '<div class="community-place-badge inline-flex mt-5 rounded-full bg-[#3182F6]/15 text-[#3182F6] px-3 py-1.5 text-[clamp(11px,3.2vw,13px)] font-bold leading-snug">' + communityEsc(post.place || '') + '</div>' +
-                    '<h3 class="text-[22px] font-black text-white tracking-tight leading-snug break-words mt-3">' + communityEsc(post.title || '') + '</h3>' +
+                    '<div class="flex flex-wrap gap-2 mt-5">' + communityPlaceBadges(post) + '</div>' +
                     '<div class="flex items-center gap-2 text-[13px] text-gray-400 font-medium mt-2">' +
                         '<i class="fa-regular fa-calendar text-[12px]"></i><span>' + communityDateText(post.startDate, post.endDate) + '</span></div>' +
-                    '<div class="flex flex-col gap-3 bg-white/5 rounded-2xl p-4 mt-5">' +
+                    '<div class="flex flex-col gap-3 mt-5 py-5 border-y border-white/10">' +
                         itinerary.map(function (line) {
                             return '<div class="flex items-start gap-2.5 text-[14px] text-gray-300 leading-relaxed"><i class="fa-solid fa-location-dot text-[#3182F6] text-[11px] mt-1.5 shrink-0"></i><span class="break-words min-w-0">' + communityEsc(line) + '</span></div>';
                         }).join('') +
@@ -5346,7 +5513,7 @@
                     '<div class="text-[11px] text-gray-400 leading-tight mt-0.5">' + communityRelativeTime(post.createdAt) + '</div></div>' +
                     (own ? '<button type="button" onclick="event.stopPropagation(); window.deleteCommunityPost(\'' + communityEsc(post._id) + '\')" class="w-8 h-8 shrink-0 flex items-center justify-center text-gray-600 hover:text-[#F04452]" aria-label="게시글 삭제"><i class="fa-solid fa-ellipsis text-[12px]"></i></button>' : '') +
                     '</div>' +
-                    '<div class="community-place-badge inline-flex mb-3 rounded-full bg-[#3182F6]/15 text-[#3182F6] px-2.5 py-1 text-[clamp(10px,3vw,12px)] font-bold leading-snug">' + communityEsc(post.place || '') + '</div>' +
+                    '<div class="flex flex-wrap gap-1.5 mb-3">' + communityPlaceBadges(post, 'text-[clamp(10px,3vw,12px)] px-2.5 py-1') + '</div>' +
                     '<h3 class="text-[17px] font-bold text-white tracking-tight leading-snug break-words">' + communityEsc(post.title || '') + '</h3>' +
                     '<div class="flex items-center gap-1.5 text-[12px] text-gray-400 font-medium mt-1.5 mb-3">' +
                     '<i class="fa-regular fa-calendar text-[11px]"></i>' + communityDateText(post.startDate, post.endDate) + '</div>' +
