@@ -1505,6 +1505,37 @@
         /* 일정 추가 모달의 날짜 입력칸이 카드 밖으로 삐져나오는 문제 방지 (iOS WebKit) */
         #schedule-modal input[type="date"], #community-write-screen input[type="date"] { -webkit-appearance: none; appearance: none;
             min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
+        #community-write-screen .community-date-field { position: relative; }
+        #community-write-screen .community-date-field input[type="date"] {
+            position: relative;
+            padding-left: 16px;
+            padding-right: 46px;
+            text-align: left;
+            line-height: 1;
+        }
+        #community-write-screen .community-date-field input[type="date"]::-webkit-date-and-time-value {
+            min-height: 1.2em;
+            margin: 0;
+            text-align: left;
+        }
+        #community-write-screen .community-date-field input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        #community-write-screen .community-date-icon {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            z-index: 2;
+            color: #8B95A1;
+            font-size: 13px;
+            pointer-events: none;
+        }
         #community-write-screen select { min-width: 0; max-width: 100%; box-sizing: border-box; color-scheme: dark; }
         .community-screen { background-color: #000; }
         #home-screen, #home-screen .fade-in-up {
@@ -1519,6 +1550,7 @@
             overflow-wrap: anywhere;
             word-break: keep-all;
         }
+        .community-like-profile { box-shadow: 0 0 0 2px #000; }
         .community-back-fab {
             position: absolute;
             top: max(16px, env(safe-area-inset-top));
@@ -1597,6 +1629,7 @@
                 border-color: rgba(0,0,0,.08);
                 box-shadow: 0 10px 28px rgba(0,0,0,.14);
             }
+            .community-like-profile { box-shadow: 0 0 0 2px #F2F2F7; }
             #community-comment-bar { background-color: rgba(242, 242, 247, 0.96) !important; }
             #community-write-screen select { color-scheme: light; }
             #app-loader { background-color: #F2F2F7 !important; }
@@ -2411,13 +2444,15 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 mb-4 min-w-0">
-                    <div class="min-w-0">
+                    <div class="community-date-field min-w-0">
                         <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-start">시작일</label>
                         <input id="community-post-start" type="date" class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6]">
+                        <i class="community-date-icon fa-regular fa-calendar"></i>
                     </div>
-                    <div class="min-w-0">
+                    <div class="community-date-field min-w-0">
                         <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-end">종료일</label>
                         <input id="community-post-end" type="date" class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6]">
+                        <i class="community-date-icon fa-regular fa-calendar"></i>
                     </div>
                 </div>
 
@@ -3031,8 +3066,56 @@
             oldGroups.forEach(function (group) { group.remove(); });
             catalog.dataset.regionalized = 'true';
         }
+
+        function initVlogRailTapGuards() {
+            document.querySelectorAll('.home-rail').forEach(function (rail) {
+                if (rail.dataset.tapGuard === 'true') return;
+                rail.dataset.tapGuard = 'true';
+
+                // 카드와 카드 안 이미지 영역에 중복된 onclick이 있어 한 번 눌러도 두 번 열리던 문제를 제거한다.
+                rail.querySelectorAll('.home-content-item[data-home-card]').forEach(function (card) {
+                    card.querySelectorAll('[onclick]').forEach(function (child) {
+                        child.removeAttribute('onclick');
+                    });
+                });
+
+                let startX = 0;
+                let startY = 0;
+                let dragged = false;
+                let blockClickUntil = 0;
+
+                rail.addEventListener('pointerdown', function (event) {
+                    startX = event.clientX;
+                    startY = event.clientY;
+                    dragged = false;
+                }, { passive: true });
+                rail.addEventListener('pointermove', function (event) {
+                    if (Math.abs(event.clientX - startX) > 7 || Math.abs(event.clientY - startY) > 7) dragged = true;
+                }, { passive: true });
+                rail.addEventListener('pointerup', function () {
+                    if (dragged) blockClickUntil = Date.now() + 320;
+                }, { passive: true });
+                rail.addEventListener('pointercancel', function () {
+                    dragged = true;
+                    blockClickUntil = Date.now() + 320;
+                }, { passive: true });
+                rail.addEventListener('scroll', function () {
+                    blockClickUntil = Date.now() + 180;
+                }, { passive: true });
+                rail.addEventListener('click', function (event) {
+                    if (event.detail === 0) return;
+                    if (!dragged && Date.now() >= blockClickUntil) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    dragged = false;
+                }, true);
+            });
+        }
+
         function initHomeContent() {
             initRegionalVlogRails();
+            initVlogRailTapGuards();
             initFeedCarousels();
         }
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHomeContent);
@@ -5054,6 +5137,32 @@
                 (col.solid || 'bg-gray-500') + '">' + initial + '</div>';
         }
 
+        function communityLikeProfiles(likedBy, post) {
+            if (!Array.isArray(likedBy) || !likedBy.length) return '';
+            const joined = typeof window.enjoyJoinedMembers === 'function' ? window.enjoyJoinedMembers() : [];
+            const current = communityUser();
+            const visible = likedBy.slice(0, 5);
+            const circles = visible.map(function (uid) {
+                const member = joined.find(function (item) { return item.uid === uid; });
+                let name = member && member.name ? member.name : '멤버';
+                let photo = member && member.photoURL ? member.photoURL : '';
+                if (post && post.authorUid === uid) {
+                    name = post.authorName || name;
+                    photo = post.authorPhoto || photo;
+                }
+                if (current && current.uid === uid) {
+                    name = communityAuthorName(current) || name;
+                    photo = current.photoURL || photo;
+                }
+                return '<span class="community-like-profile inline-flex rounded-full" title="' + communityEsc(name) + '">' +
+                    communityAvatar(name, photo, 'w-7 h-7') + '</span>';
+            }).join('');
+            const more = likedBy.length > visible.length
+                ? '<span class="community-like-profile w-7 h-7 rounded-full bg-white/10 text-[9px] font-black text-gray-300 flex items-center justify-center">+' + (likedBy.length - visible.length) + '</span>'
+                : '';
+            return '<div class="flex items-center -space-x-2" aria-label="좋아요를 누른 멤버">' + circles + more + '</div>';
+        }
+
         function communityReady() {
             return !!(window.meetingDb && window.fsOnSnapshot && window.fsCol && window.fsQuery && window.fsOrderBy);
         }
@@ -5330,9 +5439,12 @@
                             return '<div class="flex items-start gap-2.5 text-[14px] text-gray-300 leading-relaxed"><i class="fa-solid fa-location-dot text-[#3182F6] text-[11px] mt-1.5 shrink-0"></i><span class="break-words min-w-0">' + communityEsc(line) + '</span></div>';
                         }).join('') +
                     '</div>' +
-                    '<button type="button" onclick="window.toggleCommunityLike(\'' + communityEsc(post._id) + '\')" class="mt-4 h-10 px-4 rounded-full flex items-center gap-2 text-[13px] font-bold ' +
-                        (liked ? 'bg-[#F04452]/15 text-[#F04452]' : 'bg-white/5 text-gray-400') + '">' +
-                        '<i class="' + (liked ? 'fa-solid' : 'fa-regular') + ' fa-heart"></i><span>' + likedBy.length + '</span></button>' +
+                    '<div class="flex items-center gap-3 mt-4">' +
+                        '<button type="button" onclick="window.toggleCommunityLike(\'' + communityEsc(post._id) + '\')" class="h-10 px-4 rounded-full flex items-center gap-2 text-[13px] font-bold ' +
+                            (liked ? 'bg-[#F04452]/15 text-[#F04452]' : 'bg-white/5 text-gray-400') + '">' +
+                            '<i class="' + (liked ? 'fa-solid' : 'fa-regular') + ' fa-heart"></i><span>' + likedBy.length + '</span></button>' +
+                        communityLikeProfiles(likedBy, post) +
+                    '</div>' +
                 '</article>';
         }
 
