@@ -1572,8 +1572,7 @@
         .community-like-profile { box-shadow: 0 0 0 2px #000; }
         .vlog-detail-screen { background-color: #000; }
         .vlog-episode-card {
-            background: rgba(255,255,255,.045);
-            border: 1px solid rgba(255,255,255,.07);
+            border-bottom: 1px solid rgba(255,255,255,.09);
         }
         .vlog-episode-card[data-ready="true"] { cursor: pointer; }
         .vlog-episode-card[data-ready="true"]:active { transform: scale(.985); }
@@ -1680,9 +1679,8 @@
             .ledger-bar-track { background: rgba(0,0,0,.07); }
             #ledger-meeting-select { color-scheme: light !important; }
             .vlog-detail-screen { background-color: #F2F2F7; }
-            .vlog-episode-card { background: #FFFFFF; border-color: rgba(0,0,0,.07); }
-            .vlog-hero .text-white, .vlog-hero [class*="text-white/"],
-            .vlog-media-label, .vlog-member-avatar { color: #FFFFFF !important; }
+            .vlog-episode-card { border-color: rgba(0,0,0,.10); }
+            .vlog-media-label { color: #FFFFFF !important; }
 
             /* 보호 ① 홈 카드 이미지 위 글씨는 흰색 유지 */
             #apple-tv-banner .bg-black .text-white,
@@ -3125,12 +3123,6 @@
             const videoId = vlogYoutubeId(episode && episode.url);
             return videoId ? 'https://i.ytimg.com/vi/' + encodeURIComponent(videoId) + '/hqdefault.jpg' : (episode.image || program.image);
         }
-        function vlogMemberBadge(name) {
-            const colors = window.enjoyMemberColor ? window.enjoyMemberColor(name) : { solid: 'bg-gray-500' };
-            return '<span class="inline-flex flex-col items-center gap-1.5 min-w-[42px]">' +
-                '<span class="vlog-member-avatar w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-black text-white ' + (colors.solid || 'bg-gray-500') + '">' + vlogEsc(String(name).slice(0, 1)) + '</span>' +
-                '<span class="text-[9px] font-bold text-gray-500 whitespace-nowrap">' + vlogEsc(name) + '</span></span>';
-        }
         function renderVlogProgram(programId) {
             const program = window.ENJOY_VLOG_PROGRAMS[programId];
             const wrap = document.getElementById('vlog-detail-content');
@@ -3138,39 +3130,36 @@
             const episodes = program.episodes || [];
             wrap.innerHTML =
                 '<article>' +
-                    '<div class="vlog-hero relative h-[280px] overflow-hidden bg-[#111]">' +
-                        '<img src="' + vlogEsc(program.image) + '" class="absolute inset-0 w-full h-full object-cover opacity-75" alt="" onerror="this.style.display=\'none\'">' +
-                        '<div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/35"></div>' +
-                        '<div class="absolute left-5 right-5 bottom-5">' +
-                            '<p class="text-[10px] font-black tracking-[0.16em] text-white/65">' + vlogEsc(program.category) + '</p>' +
-                            '<h1 class="text-[29px] font-black text-white tracking-tight mt-1 leading-tight break-keep">' + vlogEsc(program.title) + '</h1>' +
-                            '<p class="text-[11px] font-bold text-white/70 mt-2">에피소드 ' + episodes.length + '개</p>' +
-                        '</div>' +
+                    '<div class="relative aspect-video overflow-hidden bg-black">' +
+                        '<img src="' + vlogEsc(program.image) + '" class="absolute inset-0 w-full h-full object-contain" alt="' + vlogEsc(program.title) + '" onerror="this.style.display=\'none\'">' +
                     '</div>' +
                     '<div class="px-5 pt-5">' +
-                        '<p class="text-[13px] leading-relaxed text-gray-300 break-keep">' + vlogEsc(program.description) + '</p>' +
-                        '<div class="mt-5">' +
-                            '<p class="text-[11px] font-bold text-gray-500 mb-3">출연</p>' +
-                            '<div class="flex items-start gap-2 overflow-x-auto scrollbar-hide pb-1">' + (program.cast || []).map(vlogMemberBadge).join('') + '</div>' +
+                        '<p class="text-[10px] font-black tracking-[0.14em] text-[#3182F6]">' + vlogEsc(program.category) + '</p>' +
+                        '<h1 class="text-[27px] font-black text-white tracking-tight mt-1 leading-tight break-keep">' + vlogEsc(program.title) + '</h1>' +
+                        '<p class="text-[12px] font-semibold text-gray-500 mt-2">엔조이 오리지널 · 에피소드 ' + episodes.length + '개</p>' +
+                        '<p class="text-[13px] leading-relaxed text-gray-300 mt-6 break-keep">' + vlogEsc(program.description) + '</p>' +
+                        '<p class="text-[11px] leading-relaxed text-gray-500 mt-4 break-keep"><strong class="text-gray-400">출연:</strong> ' + (program.cast || []).map(vlogEsc).join(', ') + '</p>' +
+                        '<div class="mt-8 border-b border-white/10 flex items-end gap-7">' +
+                            '<span class="relative pb-3 text-[16px] font-bold text-white">회차<span class="absolute left-0 right-0 -bottom-px h-[3px] rounded-full bg-[#3182F6]"></span></span>' +
                         '</div>' +
-                        '<div class="flex items-end justify-between gap-3 mt-7 mb-3">' +
-                            '<div><p class="text-[10px] font-bold text-[#3182F6]">EPISODES</p><h2 class="text-[20px] font-black text-white mt-0.5">회차</h2></div>' +
-                            '<span class="text-[10px] text-gray-500">' + episodes.length + '개</span>' +
+                        '<div class="flex items-center justify-between gap-3 pt-5 pb-2">' +
+                            '<h2 class="text-[15px] font-bold text-gray-300">' + vlogEsc(program.title) + '</h2>' +
+                            '<span class="text-[10px] text-gray-500">총 ' + episodes.length + '개</span>' +
                         '</div>' +
-                        '<div class="space-y-3 pb-5">' +
+                        '<div class="pb-5">' +
                             episodes.map(function (episode, index) {
                                 const ready = !!String(episode.url || '').trim();
                                 const thumb = vlogEpisodeThumbnail(episode, program);
                                 const action = ready ? ' onclick="window.openVlogEpisode(\'' + vlogEsc(programId) + '\',' + index + ')" role="button" tabindex="0"' : '';
-                                return '<article class="vlog-episode-card rounded-[20px] overflow-hidden transition-transform"' + action + ' data-ready="' + ready + '">' +
-                                    '<div class="aspect-video bg-[#171719] overflow-hidden relative">' +
+                                const displayTitle = episode.label === '티저' ? '티저' : (index + 1) + '. ' + episode.label;
+                                return '<article class="vlog-episode-card flex items-center gap-3 py-4 transition-transform"' + action + ' data-ready="' + ready + '">' +
+                                    '<div class="w-[132px] aspect-video rounded-[10px] bg-[#171719] overflow-hidden relative shrink-0">' +
                                         '<img src="' + vlogEsc(thumb) + '" class="w-full h-full object-cover" alt="' + vlogEsc(program.title + ' ' + episode.label) + ' 썸네일" onerror="this.onerror=null;this.src=\'' + vlogEsc(program.image) + '\'">' +
-                                        '<span class="vlog-media-label absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/70 text-[9px] font-black text-white">' + vlogEsc(episode.label) + '</span>' +
+                                        '<span class="vlog-media-label absolute top-2 left-2 px-2 py-1 rounded-full bg-black/70 text-[8px] font-black text-white">' + vlogEsc(episode.label) + '</span>' +
                                     '</div>' +
-                                    '<div class="px-4 py-3.5 flex items-center justify-between gap-3">' +
-                                        '<div class="min-w-0"><h3 class="text-[14px] font-bold text-white truncate">' + vlogEsc(program.title + ' ' + episode.title) + '</h3>' +
-                                        '<p class="text-[10px] text-gray-500 mt-1">' + (ready ? 'YouTube에서 보기' : '영상 링크 준비 중') + '</p></div>' +
-                                        (ready ? '<i class="fa-brands fa-youtube text-[#FF0033] text-[18px] shrink-0"></i>' : '<span class="text-[9px] font-bold text-gray-600 shrink-0">COMING SOON</span>') +
+                                    '<div class="min-w-0 flex-1">' +
+                                        '<h3 class="text-[15px] font-bold text-white break-keep">' + vlogEsc(displayTitle) + '</h3>' +
+                                        '<p class="text-[10px] text-gray-500 mt-1.5">' + (ready ? 'YouTube에서 보기' : '영상 링크 준비 중') + '</p>' +
                                     '</div>' +
                                 '</article>';
                             }).join('') +
