@@ -1503,8 +1503,15 @@
             color: rgba(255,255,255,0.30); padding: 8px 0 4px; }
 
         /* 일정 추가 모달의 날짜 입력칸이 카드 밖으로 삐져나오는 문제 방지 (iOS WebKit) */
-        #schedule-modal input[type="date"] { -webkit-appearance: none; appearance: none;
+        #schedule-modal input[type="date"], #community-write-screen input[type="date"] { -webkit-appearance: none; appearance: none;
             min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
+        .community-screen { background-color: #000; }
+        .community-place-badge {
+            max-width: 100%;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: keep-all;
+        }
 
         /* 하단 메뉴 ↔ 일정 화면 서브 메뉴 전환: 좌측 기준으로 스르륵 줄어들며 접히고, 좌→우로 펼쳐지는 모션 */
         #bottom-nav > .liquid-glass, #schedule-subnav > .liquid-glass {
@@ -1542,6 +1549,9 @@
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
             #schedule-screen header, #meeting-screen header { background-color: rgba(242, 242, 247, 0.9) !important; }
+            .community-screen { background-color: #F2F2F7 !important; }
+            .community-screen > header { background-color: rgba(242, 242, 247, 0.94) !important; }
+            #community-comment-bar { background-color: rgba(242, 242, 247, 0.96) !important; }
             #app-loader { background-color: #F2F2F7 !important; }
 
             /* 전역 텍스트 → 어둡게 */
@@ -2323,31 +2333,28 @@
         <div id="sched-panel-community" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
     </div>
 
-    <!-- 커뮤니티 글쓰기 -->
-    <div id="community-write-modal" class="hidden fixed inset-0 z-[100] items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-3" onclick="if(event.target===this) window.closeCommunityComposer()">
-        <div class="w-full max-w-md max-h-[92dvh] overflow-y-auto scrollbar-hide rounded-t-[28px] sm:rounded-[28px] bg-[#1C1C1E] border border-white/10 p-5 pb-safe-area shadow-2xl" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <h3 class="text-[20px] font-black text-white tracking-tight">여행계획 공유</h3>
-                    <p class="text-[12px] text-gray-400 mt-1">사진 없이 일정만 가볍게 나눠요.</p>
-                </div>
-                <button type="button" onclick="window.closeCommunityComposer()" class="w-9 h-9 rounded-full bg-white/10 text-gray-300 flex items-center justify-center active:scale-90 transition-transform" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()">
+    <!-- 커뮤니티 글쓰기 전체 화면 -->
+    <section id="community-write-screen" class="community-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-md flex-col overflow-hidden">
+        <header class="flex-none pt-safe px-5 pb-4 bg-black/90 backdrop-blur-md border-b border-white/5">
+            <h2 class="text-[24px] font-black text-white tracking-tight">여행계획 공유</h2>
+            <p class="text-[12px] text-gray-400 mt-1">사진 없이 일정만 가볍게 나눠요.</p>
+        </header>
+        <div class="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-5 pt-5 pb-32">
+            <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()" class="w-full min-w-0">
                 <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-title">제목</label>
                 <input id="community-post-title" maxlength="80" autocomplete="off" placeholder="예: 제주도 2박 3일 뚜벅이 여행" class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[14px] text-white placeholder:text-gray-600 outline-none focus:border-[#3182F6] mb-4">
 
                 <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-place">여행지</label>
                 <input id="community-post-place" maxlength="40" autocomplete="off" placeholder="예: 제주" class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[14px] text-white placeholder:text-gray-600 outline-none focus:border-[#3182F6] mb-4">
 
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-start">출발일</label>
-                        <input id="community-post-start" type="date" class="w-full h-12 px-3 rounded-2xl bg-white/5 border border-white/10 text-[13px] text-white outline-none focus:border-[#3182F6]">
+                <div class="grid grid-cols-1 gap-4 mb-4 min-w-0">
+                    <div class="min-w-0">
+                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-start">시작일</label>
+                        <input id="community-post-start" type="date" class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6]">
                     </div>
-                    <div>
-                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-end">도착일</label>
-                        <input id="community-post-end" type="date" class="w-full h-12 px-3 rounded-2xl bg-white/5 border border-white/10 text-[13px] text-white outline-none focus:border-[#3182F6]">
+                    <div class="min-w-0">
+                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-end">종료일</label>
+                        <input id="community-post-end" type="date" class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6]">
                     </div>
                 </div>
 
@@ -2361,25 +2368,29 @@
                 <button id="community-submit-btn" type="submit" class="w-full h-12 rounded-2xl bg-[#3182F6] text-white text-[14px] font-bold active:scale-[0.98] transition-transform">공유하기</button>
             </form>
         </div>
-    </div>
+    </section>
 
-    <!-- 커뮤니티 댓글 -->
-    <div id="community-comments-modal" class="hidden fixed inset-0 z-[105] items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-3" onclick="if(event.target===this) window.closeCommunityComments()">
-        <div class="w-full max-w-md h-[72dvh] sm:h-[620px] flex flex-col rounded-t-[28px] sm:rounded-[28px] bg-[#1C1C1E] border border-white/10 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                <div class="min-w-0">
-                    <h3 class="text-[18px] font-black text-white">댓글</h3>
-                    <p id="community-comments-title" class="text-[11px] text-gray-500 truncate mt-0.5"></p>
-                </div>
-                <button type="button" onclick="window.closeCommunityComments()" class="w-9 h-9 rounded-full bg-white/10 text-gray-300 flex items-center justify-center active:scale-90 transition-transform" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+    <!-- 커뮤니티 게시글 상세 전체 화면 -->
+    <section id="community-detail-screen" class="community-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-md flex-col overflow-hidden">
+        <header class="flex-none pt-safe px-5 pb-4 bg-black/90 backdrop-blur-md border-b border-white/5">
+            <h2 class="text-[24px] font-black text-white tracking-tight">여행계획</h2>
+            <p class="text-[12px] text-gray-400 mt-1">일정과 댓글을 한눈에 확인해요.</p>
+        </header>
+        <div id="community-detail-scroll" class="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-5 pt-5">
+            <div id="community-detail-content"></div>
+            <div class="flex items-center justify-between mt-7 mb-2 px-1">
+                <h3 class="text-[16px] font-black text-white">댓글</h3>
+                <span id="community-detail-comment-count" class="text-[11px] font-bold text-gray-500"></span>
             </div>
-            <div id="community-comments-list" class="flex-1 overflow-y-auto scrollbar-hide px-5 py-4"></div>
-            <form onsubmit="event.preventDefault(); window.submitCommunityComment()" class="flex items-center gap-2 px-4 py-3 border-t border-white/10 pb-safe-area">
+            <div id="community-detail-comments-list" class="pb-5"></div>
+        </div>
+        <div id="community-comment-bar" class="flex-none px-4 pt-3 border-t border-white/10 bg-black/90 backdrop-blur-md" style="padding-bottom: calc(92px + env(safe-area-inset-bottom));">
+            <form onsubmit="event.preventDefault(); window.submitCommunityComment()" class="flex items-center gap-2">
                 <input id="community-comment-input" maxlength="300" autocomplete="off" placeholder="댓글을 입력하세요" class="flex-1 h-11 px-4 rounded-full bg-white/10 border border-white/10 text-[13px] text-white placeholder:text-gray-500 outline-none focus:border-[#3182F6]">
                 <button id="community-comment-submit" type="submit" class="w-11 h-11 rounded-full bg-[#3182F6] text-white flex items-center justify-center active:scale-90 transition-transform" aria-label="댓글 등록"><i class="fa-solid fa-arrow-up text-[13px]"></i></button>
             </form>
         </div>
-    </div>
+    </section>
 
     <!-- 💰 모임통장 화면 -->
     <div id="meeting-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-30 flex-col overflow-hidden bg-black">
@@ -2523,7 +2534,7 @@
         <div class="liquid-glass nav-collapsed flex items-center rounded-full p-1.5 gap-1 relative">
             <div id="subnav-indicator" class="absolute top-1 bottom-1 bg-white/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full backdrop-blur-[2px] border border-white/20 z-0 nav-transition" style="left: 6px; width: 64px; opacity: 0;"></div>
             <!-- 뒤로가기 → 홈 -->
-            <button onclick="window.haptic && window.haptic(); window.goHome()" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
+            <button id="subnav-back" onclick="window.haptic && window.haptic(); window.handleScheduleBack()" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
                     <i class="fa-solid fa-chevron-left text-base text-gray-300 group-hover:text-white transition-colors"></i>
                     <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">뒤로</span>
@@ -4510,6 +4521,36 @@
             if (ind && btn) { ind.style.opacity = '1'; ind.style.width = btn.offsetWidth + 'px'; ind.style.transform = 'translateX(' + (btn.offsetLeft - 6) + 'px)'; }
         };
 
+        // 커뮤니티 글쓰기/상세 화면에서는 하단 메뉴를 '뒤로' 하나만 표시
+        window.setCommunityFocusedNav = function (focused) {
+            ['subnav-calendar', 'subnav-availability', 'subnav-community'].forEach(function (id) {
+                const button = document.getElementById(id);
+                if (button) button.classList.toggle('hidden', !!focused);
+            });
+            const indicator = document.getElementById('subnav-indicator');
+            if (indicator) indicator.style.opacity = focused ? '0' : '1';
+            const back = document.getElementById('subnav-back');
+            if (back) {
+                back.classList.toggle('w-[64px]', !focused);
+                back.classList.toggle('w-[72px]', !!focused);
+            }
+            if (!focused && window.updateSubnavActive) {
+                requestAnimationFrame(function () { window.updateSubnavActive(window._schedSub || 'community'); });
+            }
+        };
+
+        window.handleScheduleBack = function () {
+            if (window._communityView === 'write') {
+                if (window.closeCommunityComposer) window.closeCommunityComposer(false);
+                return;
+            }
+            if (window._communityView === 'detail') {
+                if (window.closeCommunityDetail) window.closeCommunityDetail();
+                return;
+            }
+            window.goHome();
+        };
+
         // 커뮤니티 헤더의 + 버튼
         window.schedGenericAction = function () {
             if (window.openCommunityComposer) window.openCommunityComposer();
@@ -4753,6 +4794,7 @@
         window._communityComments = [];
         window._communityCommentsUnsub = null;
         window._communityActivePostId = null;
+        window._communityView = 'list';
         window._communityLoading = false;
         window._communityError = '';
 
@@ -4863,6 +4905,11 @@
                     window._communityLoading = false;
                     window._communityError = '';
                     window.renderCommunity();
+                    if (window._communityActivePostId) {
+                        const activeStillExists = next.some(function (item) { return item._id === window._communityActivePostId; });
+                        if (activeStillExists) renderCommunityDetail();
+                        else window.closeCommunityDetail();
+                    }
                 }, function (error) {
                     console.warn('community snapshot', error);
                     if (window._communityPostsUnsub) {
@@ -4904,17 +4951,22 @@
             });
             const status = document.getElementById('community-write-status');
             if (status) status.textContent = '';
-            const modal = document.getElementById('community-write-modal');
-            if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+            window._communityView = 'write';
+            const screen = document.getElementById('community-write-screen');
+            if (screen) { screen.classList.remove('hidden'); screen.classList.add('flex'); }
+            if (window.setCommunityFocusedNav) window.setCommunityFocusedNav(true);
             setTimeout(function () {
                 const title = document.getElementById('community-post-title');
                 if (title) title.focus();
             }, 120);
         };
 
-        window.closeCommunityComposer = function () {
-            const modal = document.getElementById('community-write-modal');
-            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        window.closeCommunityComposer = function (force) {
+            if (!force && !confirm('작성 중인 내용이 사라집니다. 글쓰기를 종료할까요?')) return;
+            const screen = document.getElementById('community-write-screen');
+            if (screen) { screen.classList.add('hidden'); screen.classList.remove('flex'); }
+            window._communityView = 'list';
+            if (window.setCommunityFocusedNav) window.setCommunityFocusedNav(false);
         };
 
         window.submitCommunityPost = async function () {
@@ -4932,7 +4984,7 @@
                 return;
             }
             if (endDate < startDate) {
-                if (status) status.textContent = '도착일이 출발일보다 빠를 수 없어요.';
+                if (status) status.textContent = '종료일이 시작일보다 빠를 수 없어요.';
                 return;
             }
             if (!window.fsAddDoc) {
@@ -4956,7 +5008,7 @@
                     commentCount: 0,
                     createdAt: Date.now()
                 });
-                window.closeCommunityComposer();
+                window.closeCommunityComposer(true);
             } catch (error) {
                 console.error('community post', error);
                 if (status) status.textContent = error && error.code === 'permission-denied'
@@ -4976,6 +5028,7 @@
             const wasLiked = likedBy.indexOf(user.uid) >= 0;
             post.likedBy = wasLiked ? likedBy.filter(function (uid) { return uid !== user.uid; }) : likedBy.concat(user.uid);
             window.renderCommunity();
+            if (window._communityActivePostId === postId) renderCommunityDetail();
             try {
                 await window.fsUpdateDoc(window.fsDoc('community_posts', postId), {
                     likedBy: wasLiked ? window.fsArrayRemove(user.uid) : window.fsArrayUnion(user.uid)
@@ -4983,6 +5036,7 @@
             } catch (error) {
                 post.likedBy = likedBy;
                 window.renderCommunity();
+                if (window._communityActivePostId === postId) renderCommunityDetail();
                 alert(error && error.code === 'permission-denied' ? '좋아요 권한 설정이 필요해요.' : '좋아요를 반영하지 못했어요.');
             }
         };
@@ -4999,20 +5053,54 @@
                 comments.forEach(function (entry) { deletes.push(window.fsDeleteDoc(entry.ref)); });
                 await Promise.all(deletes);
                 await window.fsDeleteDoc(window.fsDoc('community_posts', postId));
-                if (window._communityActivePostId === postId) window.closeCommunityComments();
+                if (window._communityActivePostId === postId) window.closeCommunityDetail();
             } catch (error) {
                 console.error('community delete', error);
                 alert(error && error.code === 'permission-denied' ? '본인이 작성한 글만 삭제할 수 있어요.' : '삭제하지 못했어요.');
             }
         };
 
+        function renderCommunityDetail() {
+            const wrap = document.getElementById('community-detail-content');
+            const post = window._communityPosts.find(function (item) { return item._id === window._communityActivePostId; });
+            const user = communityUser();
+            if (!wrap || !post || !user) return;
+            const likedBy = Array.isArray(post.likedBy) ? post.likedBy : [];
+            const liked = likedBy.indexOf(user.uid) >= 0;
+            const itinerary = Array.isArray(post.itinerary) ? post.itinerary.slice(0, 20) : [];
+            const own = post.authorUid === user.uid;
+            wrap.innerHTML =
+                '<article class="bg-[#1C1C1E] rounded-3xl p-5 border border-white/5">' +
+                    '<div class="flex items-start gap-3">' +
+                        communityAvatar(post.authorName, post.authorPhoto, 'w-10 h-10') +
+                        '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-white leading-tight break-words">' + communityEsc(post.authorName || '여행자') + '</div>' +
+                        '<div class="text-[11px] text-gray-400 mt-1">' + communityRelativeTime(post.createdAt) + '</div></div>' +
+                        (own ? '<button type="button" onclick="window.deleteCommunityPost(\'' + communityEsc(post._id) + '\')" class="w-9 h-9 shrink-0 rounded-full bg-white/5 text-gray-500 flex items-center justify-center active:scale-90" aria-label="게시글 삭제"><i class="fa-regular fa-trash-can text-[12px]"></i></button>' : '') +
+                    '</div>' +
+                    '<div class="community-place-badge inline-flex mt-5 rounded-full bg-[#3182F6]/15 text-[#3182F6] px-3 py-1.5 text-[clamp(11px,3.2vw,13px)] font-bold leading-snug">' + communityEsc(post.place || '') + '</div>' +
+                    '<h3 class="text-[22px] font-black text-white tracking-tight leading-snug break-words mt-3">' + communityEsc(post.title || '') + '</h3>' +
+                    '<div class="flex items-center gap-2 text-[13px] text-gray-400 font-medium mt-2">' +
+                        '<i class="fa-regular fa-calendar text-[12px]"></i><span>' + communityDateText(post.startDate, post.endDate) + '</span></div>' +
+                    '<div class="flex flex-col gap-3 bg-white/5 rounded-2xl p-4 mt-5">' +
+                        itinerary.map(function (line) {
+                            return '<div class="flex items-start gap-2.5 text-[14px] text-gray-300 leading-relaxed"><i class="fa-solid fa-location-dot text-[#3182F6] text-[11px] mt-1.5 shrink-0"></i><span class="break-words min-w-0">' + communityEsc(line) + '</span></div>';
+                        }).join('') +
+                    '</div>' +
+                    '<button type="button" onclick="window.toggleCommunityLike(\'' + communityEsc(post._id) + '\')" class="mt-4 h-10 px-4 rounded-full flex items-center gap-2 text-[13px] font-bold ' +
+                        (liked ? 'bg-[#F04452]/15 text-[#F04452]' : 'bg-white/5 text-gray-400') + '">' +
+                        '<i class="' + (liked ? 'fa-solid' : 'fa-regular') + ' fa-heart"></i><span>' + likedBy.length + '</span></button>' +
+                '</article>';
+        }
+
         function renderCommunityComments() {
-            const wrap = document.getElementById('community-comments-list');
+            const wrap = document.getElementById('community-detail-comments-list');
             if (!wrap) return;
             const user = communityUser();
+            const count = document.getElementById('community-detail-comment-count');
+            if (count) count.textContent = window._communityComments.length ? window._communityComments.length + '개' : '';
             if (!window._communityComments.length) {
-                wrap.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-center">' +
-                    '<i class="fa-regular fa-comments text-[30px] text-gray-700 mb-3"></i>' +
+                wrap.innerHTML = '<div class="py-10 flex flex-col items-center justify-center text-center">' +
+                    '<i class="fa-regular fa-comments text-[26px] text-gray-700 mb-3"></i>' +
                     '<p class="text-[13px] font-bold text-gray-400">첫 댓글을 남겨보세요.</p></div>';
                 return;
             }
@@ -5027,24 +5115,26 @@
                     (own ? '<button type="button" onclick="window.deleteCommunityComment(\'' + communityEsc(comment._id) + '\')" class="text-gray-600 hover:text-[#F04452] p-1" aria-label="댓글 삭제"><i class="fa-regular fa-trash-can text-[11px]"></i></button>' : '') +
                     '</div>';
             }).join('');
-            wrap.scrollTop = wrap.scrollHeight;
         }
 
-        window.openCommunityComments = function (postId) {
+        window.openCommunityPost = function (postId) {
             const user = communityRequireUser();
             if (!user) return;
             const post = window._communityPosts.find(function (item) { return item._id === postId; });
             if (!post) return;
             window._communityActivePostId = postId;
             window._communityComments = [];
-            const title = document.getElementById('community-comments-title');
-            if (title) title.textContent = post.title || '';
+            window._communityView = 'detail';
             const input = document.getElementById('community-comment-input');
             if (input) input.value = '';
-            const modal = document.getElementById('community-comments-modal');
-            if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
-            const wrap = document.getElementById('community-comments-list');
-            if (wrap) wrap.innerHTML = '<div class="h-full flex items-center justify-center text-[12px] text-gray-500"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>댓글 불러오는 중…</div>';
+            const screen = document.getElementById('community-detail-screen');
+            if (screen) { screen.classList.remove('hidden'); screen.classList.add('flex'); }
+            if (window.setCommunityFocusedNav) window.setCommunityFocusedNav(true);
+            renderCommunityDetail();
+            const scroll = document.getElementById('community-detail-scroll');
+            if (scroll) scroll.scrollTop = 0;
+            const wrap = document.getElementById('community-detail-comments-list');
+            if (wrap) wrap.innerHTML = '<div class="py-10 flex items-center justify-center text-[12px] text-gray-500"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>댓글 불러오는 중…</div>';
             if (window._communityCommentsUnsub) {
                 try { window._communityCommentsUnsub(); } catch (e) {}
                 window._communityCommentsUnsub = null;
@@ -5072,17 +5162,21 @@
                 console.warn('community comments subscribe', error);
             }
         };
+        window.openCommunityComments = window.openCommunityPost;
 
-        window.closeCommunityComments = function () {
+        window.closeCommunityDetail = function () {
             if (window._communityCommentsUnsub) {
                 try { window._communityCommentsUnsub(); } catch (e) {}
                 window._communityCommentsUnsub = null;
             }
             window._communityActivePostId = null;
             window._communityComments = [];
-            const modal = document.getElementById('community-comments-modal');
-            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+            window._communityView = 'list';
+            const screen = document.getElementById('community-detail-screen');
+            if (screen) { screen.classList.add('hidden'); screen.classList.remove('flex'); }
+            if (window.setCommunityFocusedNav) window.setCommunityFocusedNav(false);
         };
+        window.closeCommunityComments = window.closeCommunityDetail;
 
         window.submitCommunityComment = async function () {
             const user = communityRequireUser();
@@ -5167,26 +5261,27 @@
                 const likedBy = Array.isArray(post.likedBy) ? post.likedBy : [];
                 const liked = likedBy.indexOf(user.uid) >= 0;
                 const itinerary = Array.isArray(post.itinerary) ? post.itinerary.slice(0, 20) : [];
-                html += '<article class="bg-[#1C1C1E] rounded-3xl p-5 mb-4 border border-white/5">' +
+                const firstPlan = itinerary.length ? itinerary[0] : '세부 일정은 게시글에서 확인해 주세요.';
+                html += '<article onclick="window.openCommunityPost(\'' + communityEsc(post._id) + '\')" class="bg-[#1C1C1E] rounded-3xl p-5 mb-4 border border-white/5 cursor-pointer active:scale-[0.99] transition-transform">' +
                     '<div class="flex items-center gap-3 mb-3">' +
                     communityAvatar(post.authorName, post.authorPhoto, 'w-9 h-9') +
                     '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-white leading-tight truncate">' + communityEsc(post.authorName || '여행자') + '</div>' +
                     '<div class="text-[11px] text-gray-400 leading-tight mt-0.5">' + communityRelativeTime(post.createdAt) + '</div></div>' +
-                    '<span class="max-w-[92px] truncate text-[11px] font-bold text-[#3182F6] bg-[#3182F6]/15 px-2 py-1 rounded-full">' + communityEsc(post.place || '') + '</span>' +
-                    (own ? '<button type="button" onclick="window.deleteCommunityPost(\'' + communityEsc(post._id) + '\')" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-[#F04452]" aria-label="게시글 삭제"><i class="fa-solid fa-ellipsis text-[12px]"></i></button>' : '') +
+                    (own ? '<button type="button" onclick="event.stopPropagation(); window.deleteCommunityPost(\'' + communityEsc(post._id) + '\')" class="w-8 h-8 shrink-0 flex items-center justify-center text-gray-600 hover:text-[#F04452]" aria-label="게시글 삭제"><i class="fa-solid fa-ellipsis text-[12px]"></i></button>' : '') +
                     '</div>' +
+                    '<div class="community-place-badge inline-flex mb-3 rounded-full bg-[#3182F6]/15 text-[#3182F6] px-2.5 py-1 text-[clamp(10px,3vw,12px)] font-bold leading-snug">' + communityEsc(post.place || '') + '</div>' +
                     '<h3 class="text-[17px] font-bold text-white tracking-tight leading-snug break-words">' + communityEsc(post.title || '') + '</h3>' +
                     '<div class="flex items-center gap-1.5 text-[12px] text-gray-400 font-medium mt-1.5 mb-3">' +
                     '<i class="fa-regular fa-calendar text-[11px]"></i>' + communityDateText(post.startDate, post.endDate) + '</div>' +
-                    '<div class="flex flex-col gap-1.5 bg-white/5 rounded-2xl p-3.5">' +
-                    itinerary.map(function (line) {
-                        return '<div class="flex items-start gap-2 text-[12.5px] text-gray-300 leading-snug"><i class="fa-solid fa-location-dot text-[#3182F6] text-[10px] mt-1 shrink-0"></i><span class="break-words min-w-0">' + communityEsc(line) + '</span></div>';
-                    }).join('') + '</div>' +
+                    '<div class="bg-white/5 rounded-2xl p-3.5">' +
+                        '<div class="flex items-start gap-2 text-[12.5px] text-gray-300 leading-snug"><i class="fa-solid fa-location-dot text-[#3182F6] text-[10px] mt-1 shrink-0"></i><span class="break-words min-w-0">' + communityEsc(firstPlan) + '</span></div>' +
+                        '<div class="flex items-center justify-between gap-2 mt-2.5 pt-2.5 border-t border-white/5"><span class="text-[10.5px] text-gray-500">' + (itinerary.length > 1 ? '외 ' + (itinerary.length - 1) + '개 일정' : itinerary.length ? '일정 1개' : '일정 미정') + '</span><span class="text-[11px] font-bold text-[#3182F6]">전체 보기 <i class="fa-solid fa-chevron-right text-[9px] ml-0.5"></i></span></div>' +
+                    '</div>' +
                     '<div class="flex items-center gap-2 mt-3.5">' +
-                    '<button type="button" onclick="window.toggleCommunityLike(\'' + communityEsc(post._id) + '\')" class="h-9 px-3 rounded-full flex items-center gap-1.5 text-[12px] font-bold ' +
+                    '<button type="button" onclick="event.stopPropagation(); window.toggleCommunityLike(\'' + communityEsc(post._id) + '\')" class="h-9 px-3 rounded-full flex items-center gap-1.5 text-[12px] font-bold ' +
                     (liked ? 'bg-[#F04452]/15 text-[#F04452]' : 'bg-white/5 text-gray-400') + '">' +
                     '<i class="' + (liked ? 'fa-solid' : 'fa-regular') + ' fa-heart"></i><span>' + likedBy.length + '</span></button>' +
-                    '<button type="button" onclick="window.openCommunityComments(\'' + communityEsc(post._id) + '\')" class="h-9 px-3 rounded-full bg-white/5 text-gray-400 flex items-center gap-1.5 text-[12px] font-bold">' +
+                    '<button type="button" onclick="event.stopPropagation(); window.openCommunityPost(\'' + communityEsc(post._id) + '\')" class="h-9 px-3 rounded-full bg-white/5 text-gray-400 flex items-center gap-1.5 text-[12px] font-bold">' +
                     '<i class="fa-regular fa-comment"></i><span>' + Math.max(0, Number(post.commentCount || 0)) + '</span></button>' +
                     '</div></article>';
                 if (index === 0) html += '<div id="community-ad" class="flex justify-center mb-4 min-h-[100px]"></div>';
