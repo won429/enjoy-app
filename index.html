@@ -1450,6 +1450,10 @@
             background: rgba(255,255,255,.045);
             border: 1px solid rgba(255,255,255,.07);
         }
+        .ledger-mini-card {
+            background: rgba(0,0,0,.2);
+            border: 1px solid rgba(255,255,255,.05);
+        }
         .ledger-bar-track {
             height: 8px;
             overflow: hidden;
@@ -1566,6 +1570,13 @@
             word-break: keep-all;
         }
         .community-like-profile { box-shadow: 0 0 0 2px #000; }
+        .vlog-detail-screen { background-color: #000; }
+        .vlog-episode-card {
+            background: rgba(255,255,255,.045);
+            border: 1px solid rgba(255,255,255,.07);
+        }
+        .vlog-episode-card[data-ready="true"] { cursor: pointer; }
+        .vlog-episode-card[data-ready="true"]:active { transform: scale(.985); }
         .community-back-fab {
             position: absolute;
             top: max(16px, env(safe-area-inset-top));
@@ -1662,9 +1673,16 @@
             .border-white\/5 { border-color: rgba(0, 0, 0, 0.07) !important; }
             .border-white\/10 { border-color: rgba(0, 0, 0, 0.10) !important; }
             .border-white\/15, .border-white\/20 { border-color: rgba(0, 0, 0, 0.12) !important; }
-            .ledger-surface { background: rgba(255,255,255,.72); border-color: rgba(0,0,0,.07); }
+            .ledger-surface { background: #FFFFFF; border-color: rgba(0,0,0,.07); }
+            .ledger-mini-card { background: #FFFFFF; border-color: rgba(0,0,0,.08); }
+            .ledger-mini-card.ledger-mini-blue { background: #EDF6FF; border-color: #CFE5FA; }
+            .ledger-mini-card.ledger-mini-red { background: #FFF1F3; border-color: #FFD5DA; }
             .ledger-bar-track { background: rgba(0,0,0,.07); }
             #ledger-meeting-select { color-scheme: light !important; }
+            .vlog-detail-screen { background-color: #F2F2F7; }
+            .vlog-episode-card { background: #FFFFFF; border-color: rgba(0,0,0,.07); }
+            .vlog-hero .text-white, .vlog-hero [class*="text-white/"],
+            .vlog-media-label, .vlog-member-avatar { color: #FFFFFF !important; }
 
             /* 보호 ① 홈 카드 이미지 위 글씨는 흰색 유지 */
             #apple-tv-banner .bg-black .text-white,
@@ -2505,6 +2523,14 @@
         </div>
     </section>
 
+    <!-- 브이로그 프로그램 상세 전체 화면 -->
+    <section id="vlog-detail-screen" class="vlog-detail-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md flex-col overflow-hidden">
+        <button type="button" onclick="window.closeVlogProgram()" class="community-back-fab" aria-label="홈으로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
+        <div id="vlog-detail-scroll" class="flex-1 overflow-y-auto scrollbar-hide" style="padding-bottom: calc(28px + env(safe-area-inset-bottom));">
+            <div id="vlog-detail-content"></div>
+        </div>
+    </section>
+
     <!-- 💰 모임통장 화면 -->
     <div id="meeting-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-30 flex-col overflow-hidden bg-black">
         <header class="flex-none pt-safe px-5 pb-2 flex justify-between items-center bg-black z-10 sticky top-0">
@@ -3016,6 +3042,172 @@
                 if (e && e.name !== 'AbortError') console.warn('feed share', e);
             }
         };
+
+        const vlogMemberNames = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+        const makeVlogEpisodes = function (labels, image) {
+            return labels.map(function (label) {
+                return { label: label, title: label, url: '', image: image };
+            });
+        };
+        window.ENJOY_VLOG_PROGRAMS = {
+            enjjok: {
+                title: '엔쪽이',
+                category: 'TRAVEL SERIES',
+                image: 'banner_1.jpg',
+                description: '엔조이의 지난 여행과 웃음 가득한 순간을 다시 만나는 정주행 시리즈.',
+                cast: vlogMemberNames,
+                episodes: makeVlogEpisodes(['1화','2화','3화','4화','5화','6화','7화','8화','9화','10화'], 'banner_1.jpg')
+            },
+            music1: {
+                title: '엔조이 인기가요 시즌1',
+                category: 'MUSIC · SEASON 1',
+                image: 'nbc_3.jpg',
+                description: '엔조이 멤버들이 직접 꾸민 첫 번째 인기가요 무대.',
+                cast: vlogMemberNames,
+                episodes: makeVlogEpisodes(['1화'], 'nbc_3.jpg')
+            },
+            music2: {
+                title: '엔조이 인기가요 시즌2',
+                category: 'MUSIC · SEASON 2',
+                image: 'coming_1.jpg',
+                description: '더 다채로운 무대로 돌아온 엔조이 인기가요 두 번째 시즌.',
+                cast: vlogMemberNames,
+                episodes: makeVlogEpisodes(['1화'], 'coming_1.jpg')
+            },
+            story: {
+                title: '그날 엔조이 이야기',
+                category: 'THE BEGINNING',
+                image: 'banner_2.jpg',
+                description: '풋풋했던 첫 여행부터 지금까지, 그날의 엔조이를 다시 꺼내보는 이야기.',
+                cast: vlogMemberNames,
+                episodes: makeVlogEpisodes(['1화','2화','3화','4화','5화'], 'banner_2.jpg')
+            },
+            transfer: {
+                title: '환승여행',
+                category: 'SPECIAL',
+                image: 'banner_3.jpg',
+                description: '익숙함과 새로움 사이에서 엔조이 멤버들의 솔직한 선택이 교차하는 특별편.',
+                cast: vlogMemberNames,
+                episodes: makeVlogEpisodes(['티저'], 'banner_3.jpg')
+            },
+            business: {
+                title: '출장엔조이',
+                category: 'JEJU SPECIAL',
+                image: 'banner_4.jpg',
+                description: '제주로 출장을 떠난 엔조이 멤버들의 예측 불가능한 여정.',
+                cast: vlogMemberNames,
+                episodes: makeVlogEpisodes(['티저','1화','2화','3화'], 'banner_4.jpg')
+            }
+        };
+
+        function vlogEsc(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+            });
+        }
+        function vlogYoutubeId(url) {
+            const value = String(url || '').trim();
+            if (!value) return '';
+            try {
+                const parsed = new URL(value, location.href);
+                if (parsed.hostname === 'youtu.be') return parsed.pathname.split('/').filter(Boolean)[0] || '';
+                if (/youtube\.com$/.test(parsed.hostname) || /youtube-nocookie\.com$/.test(parsed.hostname)) {
+                    const direct = parsed.searchParams.get('v');
+                    if (direct) return direct;
+                    const parts = parsed.pathname.split('/').filter(Boolean);
+                    const marker = parts.findIndex(function (part) { return part === 'shorts' || part === 'embed' || part === 'live'; });
+                    return marker >= 0 ? (parts[marker + 1] || '') : '';
+                }
+            } catch (e) {}
+            return '';
+        }
+        function vlogEpisodeThumbnail(episode, program) {
+            const videoId = vlogYoutubeId(episode && episode.url);
+            return videoId ? 'https://i.ytimg.com/vi/' + encodeURIComponent(videoId) + '/hqdefault.jpg' : (episode.image || program.image);
+        }
+        function vlogMemberBadge(name) {
+            const colors = window.enjoyMemberColor ? window.enjoyMemberColor(name) : { solid: 'bg-gray-500' };
+            return '<span class="inline-flex flex-col items-center gap-1.5 min-w-[42px]">' +
+                '<span class="vlog-member-avatar w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-black text-white ' + (colors.solid || 'bg-gray-500') + '">' + vlogEsc(String(name).slice(0, 1)) + '</span>' +
+                '<span class="text-[9px] font-bold text-gray-500 whitespace-nowrap">' + vlogEsc(name) + '</span></span>';
+        }
+        function renderVlogProgram(programId) {
+            const program = window.ENJOY_VLOG_PROGRAMS[programId];
+            const wrap = document.getElementById('vlog-detail-content');
+            if (!program || !wrap) return;
+            const episodes = program.episodes || [];
+            wrap.innerHTML =
+                '<article>' +
+                    '<div class="vlog-hero relative h-[280px] overflow-hidden bg-[#111]">' +
+                        '<img src="' + vlogEsc(program.image) + '" class="absolute inset-0 w-full h-full object-cover opacity-75" alt="" onerror="this.style.display=\'none\'">' +
+                        '<div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/35"></div>' +
+                        '<div class="absolute left-5 right-5 bottom-5">' +
+                            '<p class="text-[10px] font-black tracking-[0.16em] text-white/65">' + vlogEsc(program.category) + '</p>' +
+                            '<h1 class="text-[29px] font-black text-white tracking-tight mt-1 leading-tight break-keep">' + vlogEsc(program.title) + '</h1>' +
+                            '<p class="text-[11px] font-bold text-white/70 mt-2">에피소드 ' + episodes.length + '개</p>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="px-5 pt-5">' +
+                        '<p class="text-[13px] leading-relaxed text-gray-300 break-keep">' + vlogEsc(program.description) + '</p>' +
+                        '<div class="mt-5">' +
+                            '<p class="text-[11px] font-bold text-gray-500 mb-3">출연</p>' +
+                            '<div class="flex items-start gap-2 overflow-x-auto scrollbar-hide pb-1">' + (program.cast || []).map(vlogMemberBadge).join('') + '</div>' +
+                        '</div>' +
+                        '<div class="flex items-end justify-between gap-3 mt-7 mb-3">' +
+                            '<div><p class="text-[10px] font-bold text-[#3182F6]">EPISODES</p><h2 class="text-[20px] font-black text-white mt-0.5">회차</h2></div>' +
+                            '<span class="text-[10px] text-gray-500">' + episodes.length + '개</span>' +
+                        '</div>' +
+                        '<div class="space-y-3 pb-5">' +
+                            episodes.map(function (episode, index) {
+                                const ready = !!String(episode.url || '').trim();
+                                const thumb = vlogEpisodeThumbnail(episode, program);
+                                const action = ready ? ' onclick="window.openVlogEpisode(\'' + vlogEsc(programId) + '\',' + index + ')" role="button" tabindex="0"' : '';
+                                return '<article class="vlog-episode-card rounded-[20px] overflow-hidden transition-transform"' + action + ' data-ready="' + ready + '">' +
+                                    '<div class="aspect-video bg-[#171719] overflow-hidden relative">' +
+                                        '<img src="' + vlogEsc(thumb) + '" class="w-full h-full object-cover" alt="' + vlogEsc(program.title + ' ' + episode.label) + ' 썸네일" onerror="this.onerror=null;this.src=\'' + vlogEsc(program.image) + '\'">' +
+                                        '<span class="vlog-media-label absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/70 text-[9px] font-black text-white">' + vlogEsc(episode.label) + '</span>' +
+                                    '</div>' +
+                                    '<div class="px-4 py-3.5 flex items-center justify-between gap-3">' +
+                                        '<div class="min-w-0"><h3 class="text-[14px] font-bold text-white truncate">' + vlogEsc(program.title + ' ' + episode.title) + '</h3>' +
+                                        '<p class="text-[10px] text-gray-500 mt-1">' + (ready ? 'YouTube에서 보기' : '영상 링크 준비 중') + '</p></div>' +
+                                        (ready ? '<i class="fa-brands fa-youtube text-[#FF0033] text-[18px] shrink-0"></i>' : '<span class="text-[9px] font-bold text-gray-600 shrink-0">COMING SOON</span>') +
+                                    '</div>' +
+                                '</article>';
+                            }).join('') +
+                        '</div>' +
+                    '</div>' +
+                '</article>';
+        }
+        window.openVlogProgram = function (programId) {
+            if (!window.ENJOY_VLOG_PROGRAMS[programId]) return;
+            window.haptic && window.haptic();
+            const screen = document.getElementById('vlog-detail-screen');
+            const scroll = document.getElementById('vlog-detail-scroll');
+            renderVlogProgram(programId);
+            window._activeVlogProgramId = programId;
+            if (screen) {
+                screen.classList.remove('hidden');
+                screen.classList.add('flex');
+            }
+            if (scroll) scroll.scrollTop = 0;
+        };
+        window.closeVlogProgram = function () {
+            window.haptic && window.haptic();
+            const screen = document.getElementById('vlog-detail-screen');
+            if (screen) {
+                screen.classList.add('hidden');
+                screen.classList.remove('flex');
+            }
+            window._activeVlogProgramId = '';
+        };
+        window.openVlogEpisode = function (programId, episodeIndex) {
+            const program = window.ENJOY_VLOG_PROGRAMS[programId];
+            const episode = program && program.episodes ? program.episodes[episodeIndex] : null;
+            if (!episode || !episode.url) return;
+            window.haptic && window.haptic();
+            window.openBrowser(episode.url);
+        };
+
         function initFeedCarousels() {
             document.querySelectorAll('.ig-carousel').forEach(function (carousel) {
                 const count = carousel.parentElement && carousel.parentElement.querySelector('.ig-carousel-count');
@@ -3060,6 +3252,25 @@
                 businessMedia.querySelector('.absolute.bottom-5 p').textContent = '드디어 3화가 공개되었습니다!';
                 cardStore['business-trip'] = businessTrip;
             }
+
+            const vlogProgramCards = {
+                'throwback': 'enjjok',
+                'music-1': 'music1',
+                'music-2': 'music2',
+                'first-trip': 'story',
+                'jeju-story': 'story',
+                'transfer-trip': 'transfer',
+                'business-trip': 'business'
+            };
+            Object.keys(vlogProgramCards).forEach(function (cardId) {
+                const card = cardStore[cardId];
+                const programId = vlogProgramCards[cardId];
+                const program = window.ENJOY_VLOG_PROGRAMS[programId];
+                if (!card || !program) return;
+                card.dataset.vlogProgram = programId;
+                card.setAttribute('aria-label', program.title + ' 회차 보기');
+                card.setAttribute('onclick', "window.openVlogProgram('" + programId + "')");
+            });
 
             const collections = [
                 { title: '대구경북 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['throwback', 'music-1'] },
@@ -4752,12 +4963,12 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5 mt-4">
-                    <div class="rounded-[16px] bg-black/20 border border-white/5 p-3">
+                    <div class="ledger-mini-card ledger-mini-blue rounded-[16px] p-3">
                         <p class="text-[9.5px] text-gray-500">그때까지 모일 회비</p>
                         <strong class="block text-[14px] text-[#3182F6] mt-1">약 ${expectedFutureDues.toLocaleString()}원</strong>
                         <span class="block text-[9px] text-gray-600 mt-1">월평균 ${averageMonthlyDues.toLocaleString()}원 × ${expectedCollectionMonths}개월</span>
                     </div>
-                    <div class="rounded-[16px] bg-black/20 border border-white/5 p-3">
+                    <div class="ledger-mini-card ledger-mini-red rounded-[16px] p-3">
                         <p class="text-[9.5px] text-gray-500">다음 모임 예상 지출</p>
                         <strong class="block text-[14px] text-[#F04452] mt-1">약 ${expectedNextExpense.toLocaleString()}원</strong>
                         <span class="block text-[9px] text-gray-600 mt-1">${expenseBasis}</span>
@@ -5460,13 +5671,14 @@
                     name = communityAuthorName(current) || name;
                     photo = current.photoURL || photo;
                 }
-                return '<span class="community-like-profile inline-flex rounded-full" title="' + communityEsc(name) + '">' +
-                    communityAvatar(name, photo, 'w-7 h-7') + '</span>';
+                return '<span class="inline-flex min-w-[38px] max-w-[48px] flex-col items-center gap-1" title="' + communityEsc(name) + '">' +
+                    '<span class="community-like-profile inline-flex rounded-full">' + communityAvatar(name, photo, 'w-7 h-7') + '</span>' +
+                    '<span class="block w-full truncate text-center text-[8.5px] font-bold text-gray-500">' + communityEsc(name) + '</span></span>';
             }).join('');
             const more = likedBy.length > visible.length
-                ? '<span class="community-like-profile w-7 h-7 rounded-full bg-white/10 text-[9px] font-black text-gray-300 flex items-center justify-center">+' + (likedBy.length - visible.length) + '</span>'
+                ? '<span class="inline-flex min-w-[38px] flex-col items-center gap-1"><span class="community-like-profile w-7 h-7 rounded-full bg-white/10 text-[9px] font-black text-gray-300 flex items-center justify-center">+' + (likedBy.length - visible.length) + '</span><span class="text-[8.5px] font-bold text-gray-500">더보기</span></span>'
                 : '';
-            return '<div class="flex items-center -space-x-2" aria-label="좋아요를 누른 멤버">' + circles + more + '</div>';
+            return '<div class="flex items-start gap-1.5 overflow-x-auto scrollbar-hide" aria-label="좋아요를 누른 멤버">' + circles + more + '</div>';
         }
 
         function communityReady() {
