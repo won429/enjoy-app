@@ -4179,25 +4179,6 @@
         window.viewMonth = new Date().getMonth();
         window.activeTabIndex = 0;
         window.selectedLedgerMeetingKey = '';
-        if (location.hostname === '127.0.0.1' && location.search.includes('meeting-ledger-preview=1')) {
-            window.meetingData = {
-                totalBalance: 448999,
-                exemptions: {},
-                records: {
-                    '2026-5': ['홍박사','류짱','오스틴','전시기','이진누','성원제'].map(name => ({ name, status: 'paid', amount: 20000 })),
-                    '2026-6': ['홍박사','류짱','오스틴','전시기','이진누','성원제'].map(name => ({ name, status: 'paid', amount: 20000 })),
-                    '2026-7': ['홍박사','류짱','오스틴','전시기','이진누','성원제'].map((name, i) => ({ name, status: i < 3 ? 'paid' : 'unpaid', amount: i < 3 ? 20000 : 0 }))
-                },
-                expenses: [
-                    { date: '2026-04-10', title: '봄 모임 식사', amount: 90000, type: 'expense', category: '식비', place: '봄 식당', meetingKey: '2026-04-10', meetingTitle: '봄 정기모임', meetingStart: '2026-04-10', meetingEnd: '2026-04-10' },
-                    { date: '2026-06-20', title: '여름 모임 숙소 예약', amount: 150000, type: 'expense', category: '숙박', place: '여름 펜션', meetingKey: '2026-08-15', meetingTitle: '여름 정기모임', meetingStart: '2026-08-15', meetingEnd: '2026-08-15' }
-                ]
-            };
-            window.dynamicEvents = {
-                '2026-04-10': [{ type: 'meet', title: '봄 정기모임', time: '정기모임' }],
-                '2026-08-15': [{ type: 'meet', title: '여름 정기모임', time: '정기모임' }]
-            };
-        }
 
         // Helper Functions
         window.haptic = function() {
@@ -7190,7 +7171,6 @@
 
         // ----- 로컬 일정 저장소 -----
         window.enjoyLoadLocalSchedule = function () {
-            if (location.hostname === '127.0.0.1' && location.search.includes('meeting-ledger-preview=1')) return;
             try { window.dynamicEvents = JSON.parse(localStorage.getItem('enjoy_local_schedule') || '{}') || {}; }
             catch (e) { window.dynamicEvents = {}; }
             try { if (window.renderCalendar) window.renderCalendar(window.viewYear, window.viewMonth); } catch (e) {}
