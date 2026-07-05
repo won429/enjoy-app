@@ -2323,6 +2323,64 @@
         <div id="sched-panel-community" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
     </div>
 
+    <!-- 커뮤니티 글쓰기 -->
+    <div id="community-write-modal" class="hidden fixed inset-0 z-[100] items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-3" onclick="if(event.target===this) window.closeCommunityComposer()">
+        <div class="w-full max-w-md max-h-[92dvh] overflow-y-auto scrollbar-hide rounded-t-[28px] sm:rounded-[28px] bg-[#1C1C1E] border border-white/10 p-5 pb-safe-area shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h3 class="text-[20px] font-black text-white tracking-tight">여행계획 공유</h3>
+                    <p class="text-[12px] text-gray-400 mt-1">사진 없이 일정만 가볍게 나눠요.</p>
+                </div>
+                <button type="button" onclick="window.closeCommunityComposer()" class="w-9 h-9 rounded-full bg-white/10 text-gray-300 flex items-center justify-center active:scale-90 transition-transform" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()">
+                <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-title">제목</label>
+                <input id="community-post-title" maxlength="80" autocomplete="off" placeholder="예: 제주도 2박 3일 뚜벅이 여행" class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[14px] text-white placeholder:text-gray-600 outline-none focus:border-[#3182F6] mb-4">
+
+                <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-place">여행지</label>
+                <input id="community-post-place" maxlength="40" autocomplete="off" placeholder="예: 제주" class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[14px] text-white placeholder:text-gray-600 outline-none focus:border-[#3182F6] mb-4">
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-start">출발일</label>
+                        <input id="community-post-start" type="date" class="w-full h-12 px-3 rounded-2xl bg-white/5 border border-white/10 text-[13px] text-white outline-none focus:border-[#3182F6]">
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-end">도착일</label>
+                        <input id="community-post-end" type="date" class="w-full h-12 px-3 rounded-2xl bg-white/5 border border-white/10 text-[13px] text-white outline-none focus:border-[#3182F6]">
+                    </div>
+                </div>
+
+                <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-days">세부 일정</label>
+                <textarea id="community-post-days" maxlength="2000" rows="6" placeholder="한 줄에 일정 하나씩 적어주세요.&#10;1일차 · 공항 → 애월 카페거리&#10;2일차 · 우도 → 성산일출봉" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-[14px] leading-relaxed text-white placeholder:text-gray-600 outline-none focus:border-[#3182F6] resize-none"></textarea>
+                <div class="flex items-center justify-between mt-2 mb-5">
+                    <p class="text-[11px] text-gray-500">최대 20줄까지 표시됩니다.</p>
+                    <p id="community-write-status" class="text-[11px] text-[#F04452]"></p>
+                </div>
+
+                <button id="community-submit-btn" type="submit" class="w-full h-12 rounded-2xl bg-[#3182F6] text-white text-[14px] font-bold active:scale-[0.98] transition-transform">공유하기</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 커뮤니티 댓글 -->
+    <div id="community-comments-modal" class="hidden fixed inset-0 z-[105] items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-3" onclick="if(event.target===this) window.closeCommunityComments()">
+        <div class="w-full max-w-md h-[72dvh] sm:h-[620px] flex flex-col rounded-t-[28px] sm:rounded-[28px] bg-[#1C1C1E] border border-white/10 shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                <div class="min-w-0">
+                    <h3 class="text-[18px] font-black text-white">댓글</h3>
+                    <p id="community-comments-title" class="text-[11px] text-gray-500 truncate mt-0.5"></p>
+                </div>
+                <button type="button" onclick="window.closeCommunityComments()" class="w-9 h-9 rounded-full bg-white/10 text-gray-300 flex items-center justify-center active:scale-90 transition-transform" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="community-comments-list" class="flex-1 overflow-y-auto scrollbar-hide px-5 py-4"></div>
+            <form onsubmit="event.preventDefault(); window.submitCommunityComment()" class="flex items-center gap-2 px-4 py-3 border-t border-white/10 pb-safe-area">
+                <input id="community-comment-input" maxlength="300" autocomplete="off" placeholder="댓글을 입력하세요" class="flex-1 h-11 px-4 rounded-full bg-white/10 border border-white/10 text-[13px] text-white placeholder:text-gray-500 outline-none focus:border-[#3182F6]">
+                <button id="community-comment-submit" type="submit" class="w-11 h-11 rounded-full bg-[#3182F6] text-white flex items-center justify-center active:scale-90 transition-transform" aria-label="댓글 등록"><i class="fa-solid fa-arrow-up text-[13px]"></i></button>
+            </form>
+        </div>
+    </div>
+
     <!-- 💰 모임통장 화면 -->
     <div id="meeting-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-30 flex-col overflow-hidden bg-black">
         <header class="flex-none pt-safe px-5 pb-2 flex justify-between items-center bg-black z-10 sticky top-0">
@@ -4452,12 +4510,9 @@
             if (ind && btn) { ind.style.opacity = '1'; ind.style.width = btn.offsetWidth + 'px'; ind.style.transform = 'translateX(' + (btn.offsetLeft - 6) + 'px)'; }
         };
 
-        // 커뮤니티 헤더의 + 버튼 (글쓰기 편집 기능은 추후)
+        // 커뮤니티 헤더의 + 버튼
         window.schedGenericAction = function () {
-            window.showCommonModal && window.showCommonModal(
-                '커뮤니티 글쓰기',
-                '여행 일정 공유 글쓰기는 곧 추가돼요. 편집 기능을 준비 중입니다. 🙌',
-                'fa-solid fa-screwdriver-wrench', 'text-[#3182F6]');
+            if (window.openCommunityComposer) window.openCommunityComposer();
         };
 
         /* ===== 스케줄(가능/불가능) — 실제 사용 가능 (월 달력 + 멤버 6명 목록 + 날짜별 상세) =====
@@ -4692,50 +4747,453 @@
             window.queueMyAvailSave();
         };
 
-        /* ===== 커뮤니티(여행 일정 공유) 렌더 — 샘플 피드/표시 전용 ===== */
+        /* ===== 커뮤니티(여행 일정 공유) — Firestore 실시간 피드 ===== */
+        window._communityPosts = [];
+        window._communityPostsUnsub = null;
+        window._communityComments = [];
+        window._communityCommentsUnsub = null;
+        window._communityActivePostId = null;
+        window._communityLoading = false;
+        window._communityError = '';
+
+        function communityEsc(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+            });
+        }
+
+        function communityUser() {
+            return window.enjoyUser && window.enjoyUser.uid ? window.enjoyUser : null;
+        }
+
+        function communityRequireUser() {
+            const user = communityUser();
+            if (user) return user;
+            if (window.showLoginPrompt) window.showLoginPrompt();
+            else alert('Google 로그인이 필요합니다.');
+            return null;
+        }
+
+        function communityAuthorName(user) {
+            const profileName = String(window.enjoyProfileName || '').trim();
+            if (profileName) return profileName;
+            const displayName = String((user && user.displayName) || '').trim();
+            if (displayName) return displayName;
+            const email = String((user && user.email) || '');
+            return email.indexOf('@') > 0 ? email.split('@')[0] : '여행자';
+        }
+
+        function communityRelativeTime(value) {
+            const time = Number(value || 0);
+            if (!time) return '방금';
+            const diff = Math.max(0, Date.now() - time);
+            const minute = Math.floor(diff / 60000);
+            if (minute < 1) return '방금';
+            if (minute < 60) return minute + '분 전';
+            const hour = Math.floor(minute / 60);
+            if (hour < 24) return hour + '시간 전';
+            const day = Math.floor(hour / 24);
+            if (day < 7) return day + '일 전';
+            return new Date(time).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+        }
+
+        function communityDateText(start, end) {
+            function one(value) {
+                if (!value) return '';
+                const parts = String(value).split('-').map(Number);
+                if (parts.length !== 3) return communityEsc(value);
+                return parts[1] + '월 ' + parts[2] + '일';
+            }
+            const first = one(start), last = one(end);
+            if (!first && !last) return '날짜 미정';
+            if (!last || start === end) return first || last;
+            return first + ' ~ ' + last;
+        }
+
+        function communityAvatar(authorName, photoURL, sizeClass) {
+            const size = sizeClass || 'w-9 h-9';
+            if (photoURL) {
+                return '<div class="' + size + ' rounded-full overflow-hidden shrink-0 bg-white/10 border border-white/10">' +
+                    '<img src="' + communityEsc(photoURL) + '" class="w-full h-full object-cover" referrerpolicy="no-referrer" alt=""></div>';
+            }
+            const colorOf = window.enjoyMemberColor || function () { return { solid: 'bg-gray-500' }; };
+            const col = colorOf(authorName);
+            const initial = communityEsc(String(authorName || '여').slice(0, 1));
+            return '<div class="' + size + ' rounded-full shrink-0 flex items-center justify-center text-[12px] font-black text-white ' +
+                (col.solid || 'bg-gray-500') + '">' + initial + '</div>';
+        }
+
+        function communityReady() {
+            return !!(window.meetingDb && window.fsOnSnapshot && window.fsCol && window.fsQuery && window.fsOrderBy);
+        }
+
+        function ensureCommunitySubscription() {
+            if (window._communityPostsUnsub || window._communityLoading) return;
+            if (!communityUser()) {
+                window._communityError = '';
+                window.renderCommunity();
+                return;
+            }
+            if (!communityReady()) {
+                window._communityLoading = true;
+                window.renderCommunity();
+                setTimeout(function () {
+                    window._communityLoading = false;
+                    if (window._schedSub === 'community') ensureCommunitySubscription();
+                }, 350);
+                return;
+            }
+            window._communityLoading = true;
+            window._communityError = '';
+            window.renderCommunity();
+            try {
+                const feedQuery = window.fsQuery(
+                    window.fsCol('community_posts'),
+                    window.fsOrderBy('createdAt', 'desc'),
+                    window.fsLimit(30)
+                );
+                window._communityPostsUnsub = window.fsOnSnapshot(feedQuery, function (snapshot) {
+                    const next = [];
+                    snapshot.forEach(function (entry) {
+                        const value = entry.data() || {};
+                        value._id = entry.id;
+                        next.push(value);
+                    });
+                    window._communityPosts = next;
+                    window._communityLoading = false;
+                    window._communityError = '';
+                    window.renderCommunity();
+                }, function (error) {
+                    console.warn('community snapshot', error);
+                    if (window._communityPostsUnsub) {
+                        try { window._communityPostsUnsub(); } catch (e) {}
+                        window._communityPostsUnsub = null;
+                    }
+                    window._communityLoading = false;
+                    window._communityError = error && error.code === 'permission-denied'
+                        ? 'Firebase에서 커뮤니티 접근 권한을 허용해야 해요.'
+                        : '커뮤니티를 불러오지 못했어요.';
+                    window.renderCommunity();
+                });
+            } catch (error) {
+                console.warn('community subscribe', error);
+                window._communityLoading = false;
+                window._communityError = '커뮤니티 연결을 확인해 주세요.';
+                window.renderCommunity();
+            }
+        }
+
+        window.enjoyCommunityOnAuth = function (user) {
+            if (window._communityPostsUnsub) {
+                try { window._communityPostsUnsub(); } catch (e) {}
+                window._communityPostsUnsub = null;
+            }
+            window._communityPosts = [];
+            window._communityLoading = false;
+            window._communityError = '';
+            if (user && window._schedSub === 'community') ensureCommunitySubscription();
+            if (window._schedSub === 'community') window.renderCommunity();
+        };
+
+        window.openCommunityComposer = function () {
+            const user = communityRequireUser();
+            if (!user) return;
+            ['community-post-title', 'community-post-place', 'community-post-start', 'community-post-end', 'community-post-days'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            const status = document.getElementById('community-write-status');
+            if (status) status.textContent = '';
+            const modal = document.getElementById('community-write-modal');
+            if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+            setTimeout(function () {
+                const title = document.getElementById('community-post-title');
+                if (title) title.focus();
+            }, 120);
+        };
+
+        window.closeCommunityComposer = function () {
+            const modal = document.getElementById('community-write-modal');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        };
+
+        window.submitCommunityPost = async function () {
+            const user = communityRequireUser();
+            if (!user) return;
+            const title = (document.getElementById('community-post-title').value || '').trim();
+            const place = (document.getElementById('community-post-place').value || '').trim();
+            const startDate = document.getElementById('community-post-start').value || '';
+            const endDate = document.getElementById('community-post-end').value || '';
+            const itinerary = (document.getElementById('community-post-days').value || '').split(/\n+/)
+                .map(function (line) { return line.trim(); }).filter(Boolean).slice(0, 20);
+            const status = document.getElementById('community-write-status');
+            if (!title || !place || !startDate || !endDate || !itinerary.length) {
+                if (status) status.textContent = '모든 항목을 입력해 주세요.';
+                return;
+            }
+            if (endDate < startDate) {
+                if (status) status.textContent = '도착일이 출발일보다 빠를 수 없어요.';
+                return;
+            }
+            if (!window.fsAddDoc) {
+                if (status) status.textContent = 'Firebase 연결을 기다려 주세요.';
+                return;
+            }
+            const button = document.getElementById('community-submit-btn');
+            if (button) { button.disabled = true; button.textContent = '공유 중…'; button.style.opacity = '.65'; }
+            if (status) status.textContent = '';
+            try {
+                await window.fsAddDoc(window.fsCol('community_posts'), {
+                    authorUid: user.uid,
+                    authorName: communityAuthorName(user),
+                    authorPhoto: user.photoURL || '',
+                    title: title,
+                    place: place,
+                    startDate: startDate,
+                    endDate: endDate,
+                    itinerary: itinerary,
+                    likedBy: [],
+                    commentCount: 0,
+                    createdAt: Date.now()
+                });
+                window.closeCommunityComposer();
+            } catch (error) {
+                console.error('community post', error);
+                if (status) status.textContent = error && error.code === 'permission-denied'
+                    ? 'Firebase 쓰기 권한 설정이 필요해요.'
+                    : '저장하지 못했어요. 다시 시도해 주세요.';
+            } finally {
+                if (button) { button.disabled = false; button.textContent = '공유하기'; button.style.opacity = '1'; }
+            }
+        };
+
+        window.toggleCommunityLike = async function (postId) {
+            const user = communityRequireUser();
+            if (!user || !window.fsUpdateDoc) return;
+            const post = window._communityPosts.find(function (item) { return item._id === postId; });
+            if (!post) return;
+            const likedBy = Array.isArray(post.likedBy) ? post.likedBy.slice() : [];
+            const wasLiked = likedBy.indexOf(user.uid) >= 0;
+            post.likedBy = wasLiked ? likedBy.filter(function (uid) { return uid !== user.uid; }) : likedBy.concat(user.uid);
+            window.renderCommunity();
+            try {
+                await window.fsUpdateDoc(window.fsDoc('community_posts', postId), {
+                    likedBy: wasLiked ? window.fsArrayRemove(user.uid) : window.fsArrayUnion(user.uid)
+                });
+            } catch (error) {
+                post.likedBy = likedBy;
+                window.renderCommunity();
+                alert(error && error.code === 'permission-denied' ? '좋아요 권한 설정이 필요해요.' : '좋아요를 반영하지 못했어요.');
+            }
+        };
+
+        window.deleteCommunityPost = async function (postId) {
+            const user = communityRequireUser();
+            if (!user) return;
+            const post = window._communityPosts.find(function (item) { return item._id === postId; });
+            if (!post || post.authorUid !== user.uid) return;
+            if (!confirm('이 여행계획과 댓글을 삭제할까요?')) return;
+            try {
+                const comments = await window.fsGetDocs(window.fsCol('community_posts', postId, 'comments'));
+                const deletes = [];
+                comments.forEach(function (entry) { deletes.push(window.fsDeleteDoc(entry.ref)); });
+                await Promise.all(deletes);
+                await window.fsDeleteDoc(window.fsDoc('community_posts', postId));
+                if (window._communityActivePostId === postId) window.closeCommunityComments();
+            } catch (error) {
+                console.error('community delete', error);
+                alert(error && error.code === 'permission-denied' ? '본인이 작성한 글만 삭제할 수 있어요.' : '삭제하지 못했어요.');
+            }
+        };
+
+        function renderCommunityComments() {
+            const wrap = document.getElementById('community-comments-list');
+            if (!wrap) return;
+            const user = communityUser();
+            if (!window._communityComments.length) {
+                wrap.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-center">' +
+                    '<i class="fa-regular fa-comments text-[30px] text-gray-700 mb-3"></i>' +
+                    '<p class="text-[13px] font-bold text-gray-400">첫 댓글을 남겨보세요.</p></div>';
+                return;
+            }
+            wrap.innerHTML = window._communityComments.map(function (comment) {
+                const own = user && comment.authorUid === user.uid;
+                return '<div class="flex items-start gap-3 py-3 border-b border-white/5">' +
+                    communityAvatar(comment.authorName, comment.authorPhoto, 'w-8 h-8') +
+                    '<div class="flex-1 min-w-0"><div class="flex items-center gap-2">' +
+                    '<strong class="text-[12px] text-white">' + communityEsc(comment.authorName || '여행자') + '</strong>' +
+                    '<span class="text-[10px] text-gray-600">' + communityRelativeTime(comment.createdAt) + '</span></div>' +
+                    '<p class="text-[13px] text-gray-300 leading-relaxed break-words mt-1">' + communityEsc(comment.text || '') + '</p></div>' +
+                    (own ? '<button type="button" onclick="window.deleteCommunityComment(\'' + communityEsc(comment._id) + '\')" class="text-gray-600 hover:text-[#F04452] p-1" aria-label="댓글 삭제"><i class="fa-regular fa-trash-can text-[11px]"></i></button>' : '') +
+                    '</div>';
+            }).join('');
+            wrap.scrollTop = wrap.scrollHeight;
+        }
+
+        window.openCommunityComments = function (postId) {
+            const user = communityRequireUser();
+            if (!user) return;
+            const post = window._communityPosts.find(function (item) { return item._id === postId; });
+            if (!post) return;
+            window._communityActivePostId = postId;
+            window._communityComments = [];
+            const title = document.getElementById('community-comments-title');
+            if (title) title.textContent = post.title || '';
+            const input = document.getElementById('community-comment-input');
+            if (input) input.value = '';
+            const modal = document.getElementById('community-comments-modal');
+            if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+            const wrap = document.getElementById('community-comments-list');
+            if (wrap) wrap.innerHTML = '<div class="h-full flex items-center justify-center text-[12px] text-gray-500"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>댓글 불러오는 중…</div>';
+            if (window._communityCommentsUnsub) {
+                try { window._communityCommentsUnsub(); } catch (e) {}
+                window._communityCommentsUnsub = null;
+            }
+            try {
+                const commentsQuery = window.fsQuery(
+                    window.fsCol('community_posts', postId, 'comments'),
+                    window.fsOrderBy('createdAt', 'asc'),
+                    window.fsLimit(100)
+                );
+                window._communityCommentsUnsub = window.fsOnSnapshot(commentsQuery, function (snapshot) {
+                    const next = [];
+                    snapshot.forEach(function (entry) {
+                        const value = entry.data() || {};
+                        value._id = entry.id;
+                        next.push(value);
+                    });
+                    window._communityComments = next;
+                    renderCommunityComments();
+                }, function (error) {
+                    console.warn('community comments', error);
+                    if (wrap) wrap.innerHTML = '<div class="h-full flex items-center justify-center text-[12px] text-[#F04452]">댓글을 불러오지 못했어요.</div>';
+                });
+            } catch (error) {
+                console.warn('community comments subscribe', error);
+            }
+        };
+
+        window.closeCommunityComments = function () {
+            if (window._communityCommentsUnsub) {
+                try { window._communityCommentsUnsub(); } catch (e) {}
+                window._communityCommentsUnsub = null;
+            }
+            window._communityActivePostId = null;
+            window._communityComments = [];
+            const modal = document.getElementById('community-comments-modal');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        };
+
+        window.submitCommunityComment = async function () {
+            const user = communityRequireUser();
+            const postId = window._communityActivePostId;
+            const input = document.getElementById('community-comment-input');
+            const text = input ? (input.value || '').trim() : '';
+            if (!user || !postId || !text || !window.fsAddDoc) return;
+            const button = document.getElementById('community-comment-submit');
+            if (button) { button.disabled = true; button.style.opacity = '.55'; }
+            try {
+                await window.fsAddDoc(window.fsCol('community_posts', postId, 'comments'), {
+                    authorUid: user.uid,
+                    authorName: communityAuthorName(user),
+                    authorPhoto: user.photoURL || '',
+                    text: text,
+                    createdAt: Date.now()
+                });
+                await window.fsUpdateDoc(window.fsDoc('community_posts', postId), {
+                    commentCount: window.fsIncrement(1)
+                });
+                if (input) input.value = '';
+            } catch (error) {
+                console.error('community comment', error);
+                alert(error && error.code === 'permission-denied' ? '댓글 쓰기 권한 설정이 필요해요.' : '댓글을 등록하지 못했어요.');
+            } finally {
+                if (button) { button.disabled = false; button.style.opacity = '1'; }
+            }
+        };
+
+        window.deleteCommunityComment = async function (commentId) {
+            const user = communityRequireUser();
+            const postId = window._communityActivePostId;
+            if (!user || !postId || !commentId) return;
+            const comment = window._communityComments.find(function (item) { return item._id === commentId; });
+            if (!comment || comment.authorUid !== user.uid || !confirm('댓글을 삭제할까요?')) return;
+            try {
+                await window.fsDeleteDoc(window.fsDoc('community_posts', postId, 'comments', commentId));
+                await window.fsUpdateDoc(window.fsDoc('community_posts', postId), {
+                    commentCount: window.fsIncrement(-1)
+                });
+            } catch (error) {
+                console.error('community comment delete', error);
+                alert('댓글을 삭제하지 못했어요.');
+            }
+        };
+
         window.renderCommunity = function () {
             const wrap = document.getElementById('sched-panel-community');
             if (!wrap) return;
-            const colorOf = window.enjoyMemberColor || (() => ({ solid: 'bg-gray-500' }));
-            const posts = [
-                { author: '오스틴', when: '2일 전', title: '제주도 2박 3일 뚜벅이 여행', dates: '7월 18일 ~ 7월 20일', place: '제주',
-                  days: ['1일차 · 공항 → 애월 카페거리 → 한담해변', '2일차 · 우도 자전거 → 성산일출봉', '3일차 · 동문시장 → 흑돼지'], likes: 12, comments: 4 },
-                { author: '류짱', when: '5일 전', title: '부산 먹방 원정대', dates: '8월 2일 ~ 8월 3일', place: '부산',
-                  days: ['1일차 · 광안리 → 해운대 → 돼지국밥', '2일차 · 감천문화마을 → 자갈치시장'], likes: 9, comments: 2 },
-                { author: '전시기', when: '1주 전', title: '강릉 바다 보며 멍때리기', dates: '9월 14일 ~ 9월 15일', place: '강릉',
-                  days: ['1일차 · 안목해변 커피거리 → 경포호', '2일차 · 정동진 → 주문진 회센터'], likes: 7, comments: 1 }
-            ];
+            const user = communityUser();
+            if (!user) {
+                wrap.innerHTML = '<div class="flex-1 min-h-[55vh] flex flex-col items-center justify-center text-center px-6">' +
+                    '<div class="w-14 h-14 rounded-full bg-[#3182F6]/15 text-[#3182F6] flex items-center justify-center mb-4"><i class="fa-solid fa-users text-[21px]"></i></div>' +
+                    '<h3 class="text-[17px] font-bold text-white">로그인하고 여행계획을 나눠보세요.</h3>' +
+                    '<p class="text-[12px] text-gray-500 mt-2">게시글 작성, 좋아요, 댓글은 Google 로그인 후 사용할 수 있어요.</p>' +
+                    '<button type="button" onclick="window.showLoginPrompt && window.showLoginPrompt()" class="mt-5 px-5 py-3 rounded-full bg-white text-black text-[13px] font-bold">로그인하기</button></div>';
+                return;
+            }
+            if (!window._communityPostsUnsub && !window._communityLoading && !window._communityError) ensureCommunitySubscription();
+            if (window._communityLoading && !window._communityPosts.length) {
+                wrap.innerHTML = '<div class="min-h-[55vh] flex items-center justify-center text-[12px] text-gray-500"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>여행계획 불러오는 중…</div>';
+                return;
+            }
+            if (window._communityError && !window._communityPosts.length) {
+                wrap.innerHTML = '<div class="min-h-[55vh] flex flex-col items-center justify-center text-center px-6">' +
+                    '<i class="fa-solid fa-triangle-exclamation text-[#F04452] text-[25px] mb-3"></i>' +
+                    '<p class="text-[13px] font-bold text-white">' + communityEsc(window._communityError) + '</p>' +
+                    '<button type="button" onclick="window._communityError=\'\'; window.renderCommunity()" class="mt-4 px-4 py-2.5 rounded-full bg-white/10 text-[12px] font-bold text-white">다시 시도</button></div>';
+                return;
+            }
+            if (!window._communityPosts.length) {
+                wrap.innerHTML = '<div class="min-h-[55vh] flex flex-col items-center justify-center text-center px-6">' +
+                    '<div class="w-14 h-14 rounded-full bg-white/5 text-gray-500 flex items-center justify-center mb-4"><i class="fa-regular fa-map text-[22px]"></i></div>' +
+                    '<h3 class="text-[17px] font-bold text-white">아직 공유된 여행계획이 없어요.</h3>' +
+                    '<p class="text-[12px] text-gray-500 mt-2">오른쪽 위 + 버튼으로 첫 계획을 남겨보세요.</p></div>';
+                return;
+            }
+
             let html = '';
-            posts.forEach((p, idx) => {
-                const col = colorOf(p.author);
-                html += '<div class="bg-[#1C1C1E] rounded-3xl p-5 mb-4 border border-white/5">' +
+            window._communityPosts.forEach(function (post, index) {
+                const own = post.authorUid === user.uid;
+                const likedBy = Array.isArray(post.likedBy) ? post.likedBy : [];
+                const liked = likedBy.indexOf(user.uid) >= 0;
+                const itinerary = Array.isArray(post.itinerary) ? post.itinerary.slice(0, 20) : [];
+                html += '<article class="bg-[#1C1C1E] rounded-3xl p-5 mb-4 border border-white/5">' +
                     '<div class="flex items-center gap-3 mb-3">' +
-                    '<div class="w-9 h-9 rounded-full shrink-0 ' + (col.solid || 'bg-gray-500') + '"></div>' +
-                    '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-white leading-tight">' + p.author + '</div>' +
-                    '<div class="text-[11px] text-gray-400 leading-tight mt-0.5">' + p.when + '</div></div>' +
-                    '<span class="text-[11px] font-bold text-[#3182F6] bg-[#3182F6]/15 px-2 py-1 rounded-full">' + p.place + '</span>' +
+                    communityAvatar(post.authorName, post.authorPhoto, 'w-9 h-9') +
+                    '<div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-white leading-tight truncate">' + communityEsc(post.authorName || '여행자') + '</div>' +
+                    '<div class="text-[11px] text-gray-400 leading-tight mt-0.5">' + communityRelativeTime(post.createdAt) + '</div></div>' +
+                    '<span class="max-w-[92px] truncate text-[11px] font-bold text-[#3182F6] bg-[#3182F6]/15 px-2 py-1 rounded-full">' + communityEsc(post.place || '') + '</span>' +
+                    (own ? '<button type="button" onclick="window.deleteCommunityPost(\'' + communityEsc(post._id) + '\')" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-[#F04452]" aria-label="게시글 삭제"><i class="fa-solid fa-ellipsis text-[12px]"></i></button>' : '') +
                     '</div>' +
-                    '<h3 class="text-[17px] font-bold text-white tracking-tight leading-snug">' + p.title + '</h3>' +
+                    '<h3 class="text-[17px] font-bold text-white tracking-tight leading-snug break-words">' + communityEsc(post.title || '') + '</h3>' +
                     '<div class="flex items-center gap-1.5 text-[12px] text-gray-400 font-medium mt-1.5 mb-3">' +
-                    '<i class="fa-regular fa-calendar text-[11px]"></i>' + p.dates + '</div>' +
+                    '<i class="fa-regular fa-calendar text-[11px]"></i>' + communityDateText(post.startDate, post.endDate) + '</div>' +
                     '<div class="flex flex-col gap-1.5 bg-white/5 rounded-2xl p-3.5">' +
-                    p.days.map(d => '<div class="flex items-start gap-2 text-[12.5px] text-gray-300 leading-snug"><i class="fa-solid fa-location-dot text-[#3182F6] text-[10px] mt-1 shrink-0"></i><span>' + d + '</span></div>').join('') +
-                    '</div>' +
-                    '<div class="flex items-center gap-4 mt-3.5 text-[12px] text-gray-400 font-medium">' +
-                    '<span><i class="fa-regular fa-heart mr-1"></i>' + p.likes + '</span>' +
-                    '<span><i class="fa-regular fa-comment mr-1"></i>' + p.comments + '</span>' +
-                    '</div>' +
-                    '</div>';
-                // 첫 번째 글 다음에 광고(카카오 애드핏 320x480) 자리 — 간격은 글 카드와 동일하게
-                if (idx === 0) {
-                    html += '<div id="community-ad" class="flex justify-center mb-4 min-h-[100px]"></div>';
-                }
+                    itinerary.map(function (line) {
+                        return '<div class="flex items-start gap-2 text-[12.5px] text-gray-300 leading-snug"><i class="fa-solid fa-location-dot text-[#3182F6] text-[10px] mt-1 shrink-0"></i><span class="break-words min-w-0">' + communityEsc(line) + '</span></div>';
+                    }).join('') + '</div>' +
+                    '<div class="flex items-center gap-2 mt-3.5">' +
+                    '<button type="button" onclick="window.toggleCommunityLike(\'' + communityEsc(post._id) + '\')" class="h-9 px-3 rounded-full flex items-center gap-1.5 text-[12px] font-bold ' +
+                    (liked ? 'bg-[#F04452]/15 text-[#F04452]' : 'bg-white/5 text-gray-400') + '">' +
+                    '<i class="' + (liked ? 'fa-solid' : 'fa-regular') + ' fa-heart"></i><span>' + likedBy.length + '</span></button>' +
+                    '<button type="button" onclick="window.openCommunityComments(\'' + communityEsc(post._id) + '\')" class="h-9 px-3 rounded-full bg-white/5 text-gray-400 flex items-center gap-1.5 text-[12px] font-bold">' +
+                    '<i class="fa-regular fa-comment"></i><span>' + Math.max(0, Number(post.commentCount || 0)) + '</span></button>' +
+                    '</div></article>';
+                if (index === 0) html += '<div id="community-ad" class="flex justify-center mb-4 min-h-[100px]"></div>';
             });
             html += '<div class="mt-auto pt-2 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
             wrap.innerHTML = html;
-            // innerHTML로 삽입된 <script>는 실행되지 않으므로, 광고는 홈/모임통장과 동일한 방식(DOM 주입)으로 그린다.
-            // 패널이 레이아웃/표시된 다음 프레임에 요청해 애드핏 스캔이 안정적으로 되도록 한다.
-            requestAnimationFrame(() => {
+            requestAnimationFrame(function () {
                 if (window.enjoyShowAd) window.enjoyShowAd('community-ad', 'DAN-Y60v78Z4ID5hsdjF', 320, 100);
             });
         };
@@ -6269,7 +6727,7 @@
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, increment, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global functions for firebase interaction
         window.getDoc = getDoc;
@@ -6290,8 +6748,14 @@
         window.fsSetDoc = setDoc;
         window.fsGetDocs = getDocs;
         window.fsDeleteDoc = deleteDoc;
+        window.fsAddDoc = addDoc;
+        window.fsUpdateDoc = updateDoc;
+        window.fsArrayUnion = arrayUnion;
+        window.fsArrayRemove = arrayRemove;
+        window.fsIncrement = increment;
         window.fsQuery = query;
         window.fsOrderBy = orderBy;
+        window.fsLimit = limit;
         
         window.MEETING_PATH = ['meeting_account', 'dues_status'];
         window.SCHEDULE_PATH = ['meeting_account', 'schedules'];
@@ -6390,6 +6854,7 @@
                     if (!user || user.isAnonymous) {
                         window.meetingAuthed = false;
                         window.enjoyUser = null;
+                        if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(null);
                         showLoginForm();
                         return;
                     }
@@ -6400,6 +6865,7 @@
                     window.meetingAuthed = true; // 엔조이 스토리 구독 신호
                     // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
+                    if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(window.enjoyUser);
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
