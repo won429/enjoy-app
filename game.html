@@ -664,32 +664,29 @@
         }
         .wheel-pointer {
             position: absolute;
-            top: -4px;
+            top: -2px;
             left: 50%;
-            width: 22px;
-            height: 22px;
-            z-index: 3;
+            width: 24px;
+            height: 24px;
+            z-index: 4;
             transform: translateX(-50%) rotate(45deg);
             border-radius: 4px;
             background: var(--button);
+            box-shadow: 0 4px 12px rgba(0,0,0,.28);
         }
-        .wheel-disc {
-            width: 100%;
-            height: 100%;
+        .wheel-engine {
+            position: absolute;
+            inset: 0;
             border-radius: 999px;
-            border: 8px solid var(--button);
             background: var(--solid);
+            border: 8px solid var(--button);
             box-shadow: 0 12px 34px rgba(0,0,0,.28);
+            overflow: hidden;
         }
-        .wheel-text {
-            fill: #fff;
-            font-size: 8px;
-            font-weight: 900;
-            text-anchor: middle;
-            dominant-baseline: middle;
-            paint-order: stroke;
-            stroke: rgba(0,0,0,.45);
-            stroke-width: 2px;
+        .wheel-engine canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
         }
         .wheel-center {
             position: absolute;
@@ -716,6 +713,125 @@
             color: var(--sub);
             font-size: 12px;
             font-weight: 850;
+        }
+        .dice-game {
+            width: 100%;
+            display: grid;
+            gap: 12px;
+        }
+        .dice-arena {
+            width: 100%;
+            height: 218px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            background: var(--solid-2);
+            border: 1px solid var(--line);
+            isolation: isolate;
+        }
+        .dice-arena canvas {
+            position: absolute;
+            inset: 0;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 2;
+        }
+        .dice-arena-idle {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            display: grid;
+            place-items: center;
+            color: var(--faint);
+            text-align: center;
+        }
+        .dice-arena-idle i {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 30px;
+        }
+        .dice-arena-idle span {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .dice-live {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            z-index: 4;
+            min-height: 30px;
+            display: none;
+            align-items: center;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: var(--button);
+            color: var(--button-text);
+            box-shadow: 0 6px 18px rgba(0,0,0,.2);
+            font-size: 11px;
+            font-weight: 900;
+        }
+        .dice-live.show { display: inline-flex; }
+        .dice-roster {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .dice-player {
+            min-height: 58px;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px;
+            border-radius: 15px;
+            background: rgba(128,128,128,.09);
+            border: 1px solid var(--line);
+            text-align: left;
+        }
+        .dice-player.ready {
+            background: var(--panel-strong);
+            border-color: var(--line-strong);
+        }
+        .dice-player.done {
+            background: var(--panel-strong);
+        }
+        .dice-player.win {
+            background: var(--ok-soft);
+            border-color: var(--ok-border);
+        }
+        .dice-player-copy {
+            min-width: 0;
+            flex: 1;
+        }
+        .dice-player-copy strong,
+        .dice-player-copy span {
+            display: block;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .dice-player-copy strong {
+            font-size: 11.5px;
+            font-weight: 900;
+        }
+        .dice-player-copy span {
+            margin-top: 3px;
+            color: var(--sub);
+            font-size: 10px;
+            font-weight: 750;
+        }
+        .dice-score {
+            width: 25px;
+            height: 25px;
+            flex: 0 0 auto;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            background: var(--button);
+            color: var(--button-text);
+            font-size: 12px;
+            font-weight: 950;
         }
         .dice-grid {
             width: 100%;
@@ -915,7 +1031,7 @@
         }
         .hidden { display: none !important; }
         @media (max-width: 380px) {
-            .member-grid, .lots-grid, .dice-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+            .member-grid, .lots-grid, .dice-grid, .dice-roster { grid-template-columns: repeat(2, minmax(0,1fr)); }
             .stage { padding: 13px; }
             .mode-copy h2 { font-size: 23px; }
             .present-count { display: none; }
@@ -1020,10 +1136,12 @@
         <div id="toast" class="toast"></div>
     </div>
 
+    <script src="vendor/spin-wheel-5.0.2.js"></script>
+    <script src="vendor/dice-box-threejs-0.0.12.js"></script>
     <script type="module">
         import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, getDoc, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, collection, getDoc, onSnapshot, runTransaction, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const MEMBERS = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
         const MEMBER_META = {
@@ -1044,7 +1162,7 @@
         const ROOM_ID = 'enjoy-main';
         const ACTIVE_MS = 75000;
         const WHEEL_DURATION = 4200;
-        const DICE_DURATION = 1200;
+        const DICE_DURATION = 3000;
         const DEFAULT_ROOM = {
             mode: 'ladder',
             participants: MEMBERS.slice(),
@@ -1065,6 +1183,9 @@
         const $ = (id) => document.getElementById(id);
         let app, auth, db, roomRef, roomUnsub, membersUnsub, beatTimer, tickTimer;
         let currentUser = null, profileName = '', room = Object.assign({}, DEFAULT_ROOM), memberDocs = {};
+        let wheelEngine = null, wheelEngineRoundId = '', wheelEngineSpinKey = '';
+        let diceEngine = null, diceEngineRoundId = '', diceEngineReady = false, diceBusy = false, diceActiveName = '';
+        let diceQueue = [], dicePlayed = new Set();
 
         window.haptic = function () {
             try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
@@ -1174,6 +1295,11 @@
             return (round.participants || []).every(name => !!a[name]);
         }
 
+        function allDiceRevealed(round) {
+            if (!round || !allActed(round)) return false;
+            return (round.participants || []).every(name => Date.now() >= ((round.actions[name] || {}).revealAt || 0));
+        }
+
         function currentMode() {
             return (room.round && room.round.mode) || room.mode || 'ladder';
         }
@@ -1233,8 +1359,9 @@
         }
 
         function diceWinner(round) {
+            if (!allDiceRevealed(round)) return '';
+            if (diceEngineRoundId === round.id && (diceBusy || diceQueue.length)) return '';
             const entries = Object.keys(round.actions || {}).map(name => Object.assign({ name }, round.actions[name]));
-            if (entries.length !== (round.participants || []).length) return '';
             entries.sort((a, b) => (b.value - a.value) || ((b.tie || 0) - (a.tie || 0)));
             return entries[0] ? entries[0].name : '';
         }
@@ -1287,7 +1414,9 @@
                 pill.innerHTML = '<i class="fa-solid fa-circle"></i><span>대기</span>';
                 return;
             }
-            const done = room.round.mode === 'wheel' ? isWheelDone(room.round) : allActed(room.round);
+            let done = allActed(room.round);
+            if (room.round.mode === 'wheel') done = isWheelDone(room.round);
+            if (room.round.mode === 'dice') done = !!diceWinner(room.round);
             pill.className = 'round-pill live';
             pill.innerHTML = '<i class="fa-solid ' + (done ? 'fa-check' : 'fa-circle') + '"></i><span>' + (done ? '완료' : '진행') + '</span>';
         }
@@ -1362,16 +1491,54 @@
         function renderGame() {
             const area = $('game-area');
             if (!room.round) {
+                disposeGameEngines();
+                area.dataset.engine = '';
+                area.dataset.roundId = '';
                 const mode = MODES[room.mode] || MODES.ladder;
                 area.innerHTML = '<div class="empty"><div><i class="fa-solid ' + mode.icon + '"></i><strong>새 판을 만들어주세요</strong><span>게임을 고른 뒤 멤버가 직접 참여해요</span></div></div>';
                 renderResult(null);
                 return;
             }
-            if (room.round.mode === 'ladder') renderLadder(area, room.round);
-            else if (room.round.mode === 'lots') renderLots(area, room.round);
+            if (room.round.mode === 'ladder') {
+                disposeGameEngines();
+                area.dataset.engine = '';
+                renderLadder(area, room.round);
+            } else if (room.round.mode === 'lots') {
+                disposeGameEngines();
+                area.dataset.engine = '';
+                renderLots(area, room.round);
+            }
             else if (room.round.mode === 'wheel') renderWheel(area, room.round);
             else renderDice(area, room.round);
             renderResult(room.round);
+        }
+
+        function disposeWheelEngine() {
+            if (wheelEngine) {
+                try { wheelEngine.stop(); } catch (e) {}
+                try { wheelEngine.remove(); } catch (e) {}
+            }
+            wheelEngine = null;
+            wheelEngineRoundId = '';
+            wheelEngineSpinKey = '';
+        }
+
+        function disposeDiceEngine() {
+            if (diceEngine) {
+                try { diceEngine.clear(); } catch (e) {}
+            }
+            diceEngine = null;
+            diceEngineRoundId = '';
+            diceEngineReady = false;
+            diceBusy = false;
+            diceActiveName = '';
+            diceQueue = [];
+            dicePlayed = new Set();
+        }
+
+        function disposeGameEngines(keep) {
+            if (keep !== 'wheel') disposeWheelEngine();
+            if (keep !== 'dice') disposeDiceEngine();
         }
 
         function renderLadder(area, round) {
@@ -1459,72 +1626,213 @@
 
         function renderWheel(area, round) {
             const participants = round.participants || [];
-            const n = Math.max(1, participants.length);
-            const spin = round.spin || null;
-            const seg = 360 / n;
-            let rotation = 0;
-            if (spin) {
-                const elapsed = Math.max(0, Date.now() - (spin.startedAt || 0));
-                const duration = Math.max(1, (spin.endAt || 0) - (spin.startedAt || 0));
-                const t = Math.min(1, elapsed / duration);
-                const eased = 1 - Math.pow(1 - t, 3);
-                rotation = (spin.totalRotation || 0) * eased;
+            disposeGameEngines('wheel');
+            if (area.dataset.engine !== 'wheel' || area.dataset.roundId !== round.id) {
+                disposeWheelEngine();
+                area.dataset.engine = 'wheel';
+                area.dataset.roundId = round.id;
+                area.innerHTML = '<div class="wheel-wrap"><div class="wheel-shell"><div class="wheel-pointer"></div>' +
+                    '<div id="wheel-engine" class="wheel-engine"></div><div id="wheel-center" class="wheel-center">SPIN</div></div>' +
+                    '<div id="wheel-note" class="wheel-note">룰렛을 돌려주세요</div></div>';
+                initializeWheelEngine(round);
             }
-            const pieces = participants.map((name, i) => {
-                const start = -90 + seg * i;
-                const end = -90 + seg * (i + 1);
-                const mid = (start + end) / 2;
-                const textPos = polar(100, 100, 58, mid);
-                return '<path d="' + sectorPath(100, 100, 93, start, end) + '" fill="' + COLORS[i % COLORS.length] + '"></path>' +
-                    '<text class="wheel-text" x="' + textPos.x + '" y="' + textPos.y + '" transform="rotate(' + (mid + 90) + ' ' + textPos.x + ' ' + textPos.y + ')">' + name + '</text>';
-            }).join('');
-            const winnerText = isWheelDone(round) ? round.wheel.winner + ' 당첨' : (isWheelSpinning(round) ? '도는 중' : 'READY');
-            area.innerHTML = '<div class="wheel-wrap"><div class="wheel-shell"><div class="wheel-pointer"></div>' +
-                '<svg class="wheel-disc" viewBox="0 0 200 200" style="transform:rotate(' + rotation + 'deg)">' + pieces + '<circle cx="100" cy="100" r="26" fill="var(--button)"></circle></svg>' +
-                '<div class="wheel-center">' + (isWheelDone(round) ? 'STOP' : 'SPIN') + '</div></div><div class="wheel-note">' + winnerText + '</div></div>';
+            const center = $('wheel-center');
+            const note = $('wheel-note');
+            if (center) center.textContent = isWheelDone(round) ? 'STOP' : 'SPIN';
+            if (note) note.textContent = isWheelDone(round)
+                ? round.wheel.winner + ' 당첨'
+                : (isWheelSpinning(round) ? '룰렛 도는 중' : participants.length + '명이 들어간 룰렛');
+            syncWheelEngine(round);
         }
 
-        function sectorPath(cx, cy, r, startAngle, endAngle) {
-            const start = polar(cx, cy, r, endAngle);
-            const end = polar(cx, cy, r, startAngle);
-            const large = endAngle - startAngle <= 180 ? 0 : 1;
-            return ['M', cx, cy, 'L', start.x, start.y, 'A', r, r, 0, large, 0, end.x, end.y, 'Z'].join(' ');
+        function initializeWheelEngine(round) {
+            const Wheel = window.spinWheel && window.spinWheel.Wheel;
+            const container = $('wheel-engine');
+            if (!Wheel || !container) {
+                showToast('룰렛 엔진을 불러오지 못했어요');
+                return;
+            }
+            wheelEngineRoundId = round.id;
+            wheelEngine = new Wheel(container, {
+                items: (round.participants || []).map((name, index) => ({
+                    label: name,
+                    value: name,
+                    backgroundColor: COLORS[index % COLORS.length],
+                    labelColor: '#ffffff'
+                })),
+                borderColor: 'rgba(255,255,255,.92)',
+                borderWidth: 5,
+                lineColor: 'rgba(255,255,255,.72)',
+                lineWidth: 2,
+                isInteractive: false,
+                itemLabelAlign: 'right',
+                itemLabelFont: 'Pretendard, sans-serif',
+                itemLabelFontSizeMax: 34,
+                itemLabelRadius: .82,
+                itemLabelRadiusMax: .36,
+                itemLabelStrokeColor: 'rgba(0,0,0,.34)',
+                itemLabelStrokeWidth: 2,
+                pointerAngle: 0,
+                radius: .96,
+                onCurrentIndexChange: function () {
+                    if (isWheelSpinning(room.round)) {
+                        try { if (navigator.vibrate) navigator.vibrate(3); } catch (e) {}
+                    }
+                },
+                onRest: function () {
+                    renderAll();
+                }
+            });
+            syncWheelEngine(round);
         }
 
-        function polar(cx, cy, r, angle) {
-            const rad = angle * Math.PI / 180;
-            return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+        function cubicOut(value) {
+            return 1 - Math.pow(1 - value, 3);
+        }
+
+        function syncWheelEngine(round) {
+            if (!wheelEngine || wheelEngineRoundId !== round.id) return;
+            const spin = round.spin;
+            if (!spin) {
+                if (wheelEngineSpinKey) {
+                    wheelEngine.stop();
+                    wheelEngine.rotation = 0;
+                    wheelEngineSpinKey = '';
+                }
+                return;
+            }
+            const key = round.id + ':' + spin.startedAt;
+            if (wheelEngineSpinKey === key) return;
+            wheelEngineSpinKey = key;
+            const remaining = Math.max(0, (spin.endAt || 0) - Date.now());
+            const progress = Math.max(0, Math.min(1, remaining / WHEEL_DURATION));
+            const turns = remaining > 0 ? Math.max(2, Math.ceil((round.wheel.turns || 6) * progress)) : 0;
+            wheelEngine.spinToItem(round.wheel.winnerIndex, remaining, true, turns, 1, cubicOut);
         }
 
         function renderDice(area, round) {
+            disposeGameEngines('dice');
+            if (area.dataset.engine !== 'dice' || area.dataset.roundId !== round.id) {
+                disposeDiceEngine();
+                area.dataset.engine = 'dice';
+                area.dataset.roundId = round.id;
+                area.innerHTML = '<div class="dice-game"><div id="dice-arena" class="dice-arena">' +
+                    '<div class="dice-arena-idle"><div><i class="fa-solid fa-dice"></i><span>내 이름을 눌러 주사위를 던져요</span></div></div>' +
+                    '<div id="dice-live" class="dice-live"></div></div><div id="dice-roster" class="dice-roster"></div></div>';
+                initializeDiceEngine(round);
+            }
+            renderDiceRoster(round);
+            syncDiceEngine(round);
+        }
+
+        function renderDiceRoster(round) {
+            const roster = $('dice-roster');
+            if (!roster) return;
             const participants = round.participants || [];
             const a = round.actions || {};
             const winner = diceWinner(round);
-            area.innerHTML = '<div class="dice-grid">' + participants.map(name => {
+            roster.innerHTML = participants.map(name => {
                 const act = a[name];
-                const rolling = act && Date.now() < (act.revealAt || 0);
-                const visibleValue = rolling ? (1 + Math.floor(rng(name + Date.now())() * 6)) : (act ? act.value : 1);
-                const disabled = !!act || !canPlay() || name !== profileName;
+                const queued = diceQueue.some(item => item.name === name);
+                const rolling = !!act && (Date.now() < (act.revealAt || 0) || diceActiveName === name || queued);
                 const open = !!act && !rolling;
                 const win = open && winner === name;
-                return '<button class="dice-card' + (open ? ' open' : '') + (win ? ' win' : '') + '" ' + (disabled ? 'disabled' : '') + ' onclick="window.haptic(); window.EnjoyGame.rollDice()">' +
-                    renderDie(visibleValue, rolling) + '<div class="game-name">' + name + '</div><div class="game-result">' + (rolling ? '굴리는 중' : (act ? act.value + '점' : (name === profileName ? '눌러서 굴리기' : '대기'))) + '</div></button>';
-            }).join('') + '</div>';
+                const disabled = !!act || !canPlay() || name !== profileName;
+                const state = open ? act.value + '점' : (rolling ? '굴리는 중' : (name === profileName ? '눌러서 던지기' : '대기'));
+                return '<button class="dice-player' + (!act && name === profileName ? ' ready' : '') + (open ? ' done' : '') + (win ? ' win' : '') + '" ' +
+                    (disabled ? 'disabled' : '') + ' onclick="window.haptic(); window.EnjoyGame.rollDice()">' +
+                    avatar(name, 30) + '<span class="dice-player-copy"><strong>' + name + '</strong><span>' + state + '</span></span>' +
+                    (open ? '<span class="dice-score">' + act.value + '</span>' : '') + '</button>';
+            }).join('');
         }
 
-        function renderDie(value, rolling) {
-            const map = {
-                1: [4],
-                2: [0, 8],
-                3: [0, 4, 8],
-                4: [0, 2, 6, 8],
-                5: [0, 2, 4, 6, 8],
-                6: [0, 2, 3, 5, 6, 8]
-            };
-            const on = map[value] || [];
-            let html = '<div class="die' + (rolling ? ' rolling' : '') + '">';
-            for (let i = 0; i < 9; i++) html += '<span class="pip' + (on.includes(i) ? ' on' : '') + '"></span>';
-            return html + '</div>';
+        async function initializeDiceEngine(round) {
+            const DiceBox = window['dice-box-threejs'];
+            const arena = $('dice-arena');
+            if (!DiceBox || !arena) {
+                showToast('주사위 엔진을 불러오지 못했어요');
+                return;
+            }
+            const targetRoundId = round.id;
+            diceEngineRoundId = targetRoundId;
+            const engine = new DiceBox('#dice-arena', {
+                assetPath: './vendor/',
+                sounds: false,
+                shadows: true,
+                theme_surface: 'default',
+                theme_colorset: 'white',
+                theme_texture: '',
+                theme_material: 'plastic',
+                gravity_multiplier: 470,
+                light_intensity: .8,
+                baseScale: 78,
+                strength: 1.35
+            });
+            diceEngine = engine;
+            try {
+                await engine.initialize();
+                if (diceEngine !== engine || diceEngineRoundId !== targetRoundId) return;
+                diceEngineReady = true;
+                syncDiceEngine(room.round);
+                playNextDice();
+            } catch (e) {
+                console.warn(e);
+                if (diceEngine === engine) showToast('3D 주사위를 시작하지 못했어요');
+            }
+        }
+
+        function syncDiceEngine(round) {
+            if (!round || round.mode !== 'dice' || diceEngineRoundId !== round.id) return;
+            Object.keys(round.actions || {})
+                .map(name => ({ name, action: round.actions[name] }))
+                .sort((a, b) => (a.action.at || 0) - (b.action.at || 0))
+                .forEach(item => {
+                    const key = round.id + ':' + item.name + ':' + (item.action.at || 0);
+                    if (dicePlayed.has(key)) return;
+                    dicePlayed.add(key);
+                    if (Date.now() <= (item.action.revealAt || 0) + 900) {
+                        diceQueue.push({
+                            roundId: round.id,
+                            key,
+                            name: item.name,
+                            value: item.action.value
+                        });
+                    }
+                });
+            playNextDice();
+        }
+
+        async function playNextDice() {
+            if (!diceEngineReady || diceBusy || !diceEngine || !diceQueue.length) return;
+            const item = diceQueue.shift();
+            if (item.roundId !== diceEngineRoundId) {
+                playNextDice();
+                return;
+            }
+            diceBusy = true;
+            diceActiveName = item.name;
+            const live = $('dice-live');
+            if (live) {
+                live.textContent = item.name + ' 주사위';
+                live.classList.add('show');
+            }
+            renderDiceRoster(room.round);
+            try {
+                await diceEngine.roll('1d6@' + item.value);
+            } catch (e) {
+                console.warn(e);
+            }
+            if (item.roundId !== diceEngineRoundId) return;
+            diceBusy = false;
+            diceActiveName = '';
+            if (live) {
+                live.textContent = item.name + ' ' + item.value + '점';
+                setTimeout(() => {
+                    if (!diceBusy && $('dice-live')) $('dice-live').classList.remove('show');
+                }, 1000);
+            }
+            renderAll();
+            playNextDice();
         }
 
         function renderResult(round) {
@@ -1582,9 +1890,6 @@
             if (room.round && room.round.mode === 'wheel' && isWheelSpinning(room.round)) need = true;
             if (room.round && room.round.mode === 'dice') {
                 need = Object.values(room.round.actions || {}).some(a => Date.now() < (a.revealAt || 0));
-            }
-            if (room.round && room.round.mode === 'ladder') {
-                need = Object.values(room.round.actions || {}).some(a => Date.now() - (a.at || 0) < 1700);
             }
             if (need && !tickTimer) tickTimer = setInterval(renderAll, 80);
             if (!need && tickTimer) {
@@ -1787,7 +2092,7 @@
                     finalLane,
                     result,
                     at: Date.now()
-                });
+                }, 'slot');
             },
             chooseLot: async function (item) {
                 if (!canPlay() || room.round.mode !== 'lots') return;
@@ -1798,7 +2103,7 @@
                     item,
                     result,
                     at: Date.now()
-                });
+                }, 'item');
             },
             spinWheel: async function () {
                 if (!room.round || room.round.mode !== 'wheel' || isWheelSpinning(room.round) || isWheelDone(room.round)) return;
@@ -1814,12 +2119,22 @@
                     startedBy: profileName,
                     startedByUid: currentUser.uid
                 };
-                room.round.spin = spin;
-                renderAll();
                 try {
-                    await updateDoc(roomRef, { 'round.spin': spin, updatedAt: Date.now() });
+                    const roundId = room.round.id;
+                    await runTransaction(db, async transaction => {
+                        const snap = await transaction.get(roomRef);
+                        const remote = snap.exists() ? snap.data() : {};
+                        if (!remote.round || remote.round.id !== roundId || remote.round.spin) {
+                            throw new Error('SPIN_TAKEN');
+                        }
+                        transaction.update(roomRef, { 'round.spin': spin, updatedAt: Date.now() });
+                    });
+                    if (room.round && room.round.id === roundId) {
+                        room.round.spin = spin;
+                        renderAll();
+                    }
                 } catch (e) {
-                    showToast('룰렛 저장에 실패했어요');
+                    if (e && e.message !== 'SPIN_TAKEN') showToast('룰렛 저장에 실패했어요');
                 }
             },
             rollDice: async function () {
@@ -1833,21 +2148,43 @@
                     revealAt: Date.now() + DICE_DURATION
                 });
             },
-            saveAction: async function (action) {
-                if (!room.round.actions) room.round.actions = {};
-                room.round.actions[profileName] = Object.assign({
+            saveAction: async function (action, claimField) {
+                if (!room.round || !currentUser || !profileName) return;
+                const roundId = room.round.id;
+                const saved = Object.assign({
                     uid: currentUser.uid,
                     name: profileName
                 }, action);
-                renderAll();
                 try {
-                    await updateDoc(roomRef, {
-                        ['round.actions.' + profileName]: room.round.actions[profileName],
-                        updatedAt: Date.now()
+                    await runTransaction(db, async transaction => {
+                        const snap = await transaction.get(roomRef);
+                        const remote = snap.exists() ? snap.data() : {};
+                        const remoteRound = remote.round;
+                        if (!remoteRound || remoteRound.id !== roundId) throw new Error('ROUND_CHANGED');
+                        if (!(remoteRound.participants || []).includes(profileName)) throw new Error('NOT_PARTICIPANT');
+                        const remoteActions = remoteRound.actions || {};
+                        if (remoteActions[profileName]) throw new Error('ALREADY_ACTED');
+                        if (claimField && Object.values(remoteActions).some(item => item[claimField] === action[claimField])) {
+                            throw new Error('CHOICE_TAKEN');
+                        }
+                        transaction.update(roomRef, {
+                            ['round.actions.' + profileName]: saved,
+                            updatedAt: Date.now()
+                        });
                     });
+                    if (room.round && room.round.id === roundId) {
+                        if (!room.round.actions) room.round.actions = {};
+                        room.round.actions[profileName] = saved;
+                        renderAll();
+                    }
                 } catch (e) {
-                    showToast('참여 저장에 실패했어요');
-                    console.warn(e);
+                    if (e && e.message === 'CHOICE_TAKEN') showToast('방금 다른 멤버가 먼저 골랐어요');
+                    else if (e && e.message === 'ALREADY_ACTED') showToast('이미 참여를 완료했어요');
+                    else if (e && e.message === 'ROUND_CHANGED') showToast('새 판이 시작됐어요');
+                    else {
+                        showToast('참여 저장에 실패했어요');
+                        console.warn(e);
+                    }
                 }
             }
         };
