@@ -1537,6 +1537,22 @@
         /* 일정 추가 모달의 날짜 입력칸이 카드 밖으로 삐져나오는 문제 방지 (iOS WebKit) */
         #schedule-modal input[type="date"], #community-write-screen input[type="date"] { -webkit-appearance: none; appearance: none;
             min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
+        #schedule-modal input[type="date"] {
+            height: 52px;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            line-height: 52px;
+        }
+        #schedule-modal input[type="date"]::-webkit-date-and-time-value {
+            display: flex;
+            align-items: center;
+            height: 52px;
+            min-height: 0;
+            margin: 0;
+            padding: 0;
+            line-height: 52px;
+            text-align: left;
+        }
         #community-write-screen .community-date-field { position: relative; }
         #community-write-screen .community-date-field input[type="date"] {
             position: relative;
@@ -1582,6 +1598,298 @@
         }
         #community-write-screen select { min-width: 0; max-width: 100%; box-sizing: border-box; color-scheme: dark; }
         .community-screen { background-color: #000; }
+
+        /* 일정 추가 / 커뮤니티 글쓰기 폼 정리 */
+        #schedule-modal {
+            background: rgba(0, 0, 0, 0.68);
+            -webkit-backdrop-filter: blur(18px) saturate(1.35);
+            backdrop-filter: blur(18px) saturate(1.35);
+        }
+        .schedule-modal-card {
+            width: min(100%, 390px);
+            max-height: min(92dvh, 720px);
+            overflow-y: auto;
+            padding: 7px;
+            border-radius: 34px;
+            background:
+                radial-gradient(circle at 12% 0%, rgba(49, 130, 246, 0.34), transparent 34%),
+                linear-gradient(160deg, rgba(38, 38, 42, 0.98), rgba(16, 16, 18, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58), 0 10px 26px rgba(0, 0, 0, 0.32);
+        }
+        .schedule-modal-inner {
+            padding: 20px;
+            border-radius: 28px;
+            background: rgba(10, 10, 12, 0.42);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .schedule-modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+        .schedule-modal-kicker,
+        .community-form-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: #8bbcff;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .schedule-modal-title {
+            margin-top: 6px;
+            color: #fff;
+            font-size: 23px;
+            line-height: 1.1;
+            font-weight: 950;
+            letter-spacing: -0.04em;
+        }
+        .schedule-modal-desc {
+            margin-top: 6px;
+            color: rgba(255, 255, 255, 0.52);
+            font-size: 12px;
+            line-height: 1.45;
+            font-weight: 650;
+        }
+        .schedule-close-button,
+        .community-close-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            background: rgba(255, 255, 255, 0.09);
+            color: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            transition: transform .14s ease, background .14s ease;
+        }
+        .schedule-close-button:active,
+        .community-close-button:active {
+            transform: scale(.93);
+            background: rgba(255, 255, 255, 0.16);
+        }
+        .schedule-form-grid,
+        .community-form-stack {
+            display: grid;
+            gap: 13px;
+        }
+        .schedule-card-section,
+        .community-card-section {
+            padding: 14px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.065);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+        }
+        .schedule-date-grid,
+        .community-date-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .schedule-field,
+        .community-field {
+            min-width: 0;
+        }
+        .schedule-label,
+        .community-label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 7px;
+            color: rgba(255, 255, 255, 0.56);
+            font-size: 11px;
+            line-height: 1.2;
+            font-weight: 850;
+            letter-spacing: -0.01em;
+        }
+        .schedule-label i,
+        .community-label i {
+            color: #5da2ff;
+            font-size: 11px;
+        }
+        .schedule-control,
+        .community-control {
+            width: 100%;
+            min-width: 0;
+            height: 52px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.085);
+            color: #fff;
+            outline: none;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+        }
+        .schedule-control {
+            padding-left: 15px;
+            padding-right: 15px;
+            font-size: 14px;
+            font-weight: 720;
+        }
+        .community-control {
+            padding-left: 16px;
+            padding-right: 16px;
+            font-size: 15px;
+            font-weight: 720;
+        }
+        .schedule-control:focus,
+        .community-control:focus {
+            border-color: rgba(49, 130, 246, 0.74);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 4px rgba(49, 130, 246, 0.16);
+        }
+        .schedule-control::placeholder,
+        .community-control::placeholder {
+            color: rgba(255, 255, 255, 0.34);
+            font-weight: 650;
+        }
+        .community-textarea {
+            min-height: 146px;
+            height: auto;
+            padding-top: 15px;
+            padding-bottom: 15px;
+            line-height: 1.6;
+            resize: none;
+        }
+        .schedule-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .schedule-delete-button,
+        .schedule-save-button,
+        .community-submit-button,
+        .community-add-place-button {
+            min-height: 50px;
+            border-radius: 18px;
+            font-size: 14px;
+            font-weight: 900;
+            transition: transform .14s ease, filter .14s ease, opacity .14s ease;
+        }
+        .schedule-delete-button:active,
+        .schedule-save-button:active,
+        .community-submit-button:active,
+        .community-add-place-button:active {
+            transform: scale(.98);
+        }
+        .schedule-delete-button {
+            background: rgba(240, 68, 82, 0.14);
+            color: #ff808a;
+            border: 1px solid rgba(240, 68, 82, 0.22);
+        }
+        .schedule-save-button,
+        .community-submit-button {
+            background: linear-gradient(135deg, #5aa7ff, #246bff);
+            color: #fff;
+            box-shadow: 0 14px 34px rgba(49, 130, 246, 0.32);
+        }
+        .community-write-shell {
+            background:
+                radial-gradient(circle at 50% -12%, rgba(49, 130, 246, 0.34), transparent 42%),
+                radial-gradient(circle at 100% 16%, rgba(45, 212, 191, 0.13), transparent 30%),
+                #090a0f;
+        }
+        .community-write-scroll {
+            padding: calc(max(18px, env(safe-area-inset-top)) + 24px) 16px max(28px, env(safe-area-inset-bottom));
+        }
+        .community-write-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+        .community-hero-card {
+            padding: 20px;
+            border-radius: 28px;
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.055)),
+                radial-gradient(circle at 82% 8%, rgba(49, 130, 246, 0.42), transparent 34%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 52px rgba(0, 0, 0, 0.25);
+        }
+        .community-hero-title {
+            margin-top: 8px;
+            color: #fff;
+            font-size: 27px;
+            line-height: 1.05;
+            font-weight: 950;
+            letter-spacing: -0.045em;
+        }
+        .community-hero-desc {
+            margin-top: 8px;
+            max-width: 280px;
+            color: rgba(255, 255, 255, 0.58);
+            font-size: 12.5px;
+            line-height: 1.5;
+            font-weight: 650;
+        }
+        .community-write-form {
+            display: grid;
+            gap: 14px;
+            margin-top: 14px;
+        }
+        .community-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+        .community-section-title i {
+            color: #5da2ff;
+            font-size: 12px;
+        }
+        .community-place-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .community-add-place-button {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.10);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+        }
+        .community-add-place-button:disabled {
+            opacity: .42;
+            transform: none;
+        }
+        .community-help-text {
+            margin-top: 9px;
+            color: rgba(255, 255, 255, 0.38);
+            font-size: 11px;
+            font-weight: 650;
+            line-height: 1.45;
+        }
+        .community-form-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 9px;
+        }
+        .community-status-text {
+            color: #ff7a85;
+            font-size: 11px;
+            font-weight: 800;
+            text-align: right;
+        }
+        @media (max-width: 360px) {
+            .schedule-date-grid,
+            .community-date-grid { grid-template-columns: 1fr; }
+            .schedule-modal-inner { padding: 17px; }
+            .community-write-scroll { padding-left: 13px; padding-right: 13px; }
+        }
         #home-screen, #home-screen .fade-in-up {
             animation: none !important;
             transition: none !important;
@@ -1682,6 +1990,60 @@
             .community-like-profile { box-shadow: 0 0 0 2px #F2F2F7; }
             #community-comment-bar { background-color: rgba(242, 242, 247, 0.96) !important; }
             #community-write-screen select { color-scheme: light; }
+            #schedule-modal { background: rgba(0,0,0,0.32); }
+            .schedule-modal-card {
+                background:
+                    radial-gradient(circle at 12% 0%, rgba(49, 130, 246, 0.18), transparent 34%),
+                    linear-gradient(160deg, rgba(255,255,255,0.98), rgba(242,244,247,0.98));
+                border-color: rgba(0,0,0,0.08);
+                box-shadow: 0 28px 80px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
+            }
+            .schedule-modal-inner {
+                background: rgba(255,255,255,0.62);
+                border-color: rgba(0,0,0,0.06);
+            }
+            .schedule-modal-title,
+            .community-hero-title,
+            .community-section-title { color: #191F28; }
+            .schedule-modal-desc,
+            .community-hero-desc { color: #6B7684; }
+            .schedule-card-section,
+            .community-card-section {
+                background: rgba(255,255,255,0.78);
+                border-color: rgba(0,0,0,0.07);
+            }
+            .schedule-label,
+            .community-label,
+            .community-help-text { color: #6B7684; }
+            .schedule-control,
+            .community-control {
+                background: rgba(0,0,0,0.035);
+                border-color: rgba(0,0,0,0.08);
+                color: #191F28;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.68);
+            }
+            .schedule-control::placeholder,
+            .community-control::placeholder { color: rgba(25,31,40,0.36); }
+            .schedule-close-button,
+            .community-close-button,
+            .community-add-place-button {
+                background: rgba(255,255,255,0.82);
+                color: #191F28;
+                border-color: rgba(0,0,0,0.08);
+                box-shadow: 0 8px 22px rgba(0,0,0,0.10);
+            }
+            .community-write-shell {
+                background:
+                    radial-gradient(circle at 50% -12%, rgba(49, 130, 246, 0.20), transparent 42%),
+                    #F2F2F7 !important;
+            }
+            .community-hero-card {
+                background:
+                    linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.68)),
+                    radial-gradient(circle at 82% 8%, rgba(49, 130, 246, 0.20), transparent 34%);
+                border-color: rgba(0,0,0,0.07);
+                box-shadow: 0 16px 42px rgba(0,0,0,0.10);
+            }
             #app-loader { background-color: #F2F2F7 !important; }
 
             /* 전역 텍스트 → 어둡게 */
@@ -2474,56 +2836,73 @@
     </div>
 
     <!-- 커뮤니티 글쓰기 전체 화면 -->
-    <section id="community-write-screen" class="community-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-md flex-col overflow-hidden">
-        <button type="button" onclick="window.closeCommunityComposer(false)" class="community-back-fab" aria-label="글쓰기 나가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
-        <div class="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-5 pb-8" style="padding-top: calc(max(20px, env(safe-area-inset-top)) + 62px);">
-            <div class="mb-6 px-1">
-                <h2 id="community-write-heading" class="text-[24px] font-black text-white tracking-tight">여행계획 공유</h2>
-                <p id="community-write-subheading" class="text-[12px] text-gray-400 mt-1">사진 없이 일정만 가볍게 나눠요.</p>
+    <section id="community-write-screen" class="community-screen community-write-shell hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-md flex-col overflow-hidden">
+        <div class="community-write-scroll flex-1 overflow-y-auto scrollbar-hide">
+            <div class="community-write-topbar">
+                <button type="button" onclick="window.closeCommunityComposer(false)" class="community-close-button" aria-label="글쓰기 나가기"><i class="fa-solid fa-chevron-left text-[15px]"></i></button>
+                <span class="community-form-kicker"><i class="fa-solid fa-route"></i> ENJOY PLAN</span>
             </div>
-            <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()" class="w-full min-w-0">
-                <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-title">제목</label>
-                <input id="community-post-title" maxlength="80" autocomplete="off" placeholder="예: 제주도 2박 3일 뚜벅이 여행" class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[14px] text-white placeholder:text-gray-600 outline-none focus:border-[#3182F6] mb-4">
-
-                <div class="grid grid-cols-1 gap-4 mb-4 min-w-0">
-                    <div class="min-w-0">
-                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-region">시·도</label>
-                        <select id="community-post-region" onchange="window.updateCommunityDistricts()" class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6]">
-                            <option value="">시·도 선택</option>
-                        </select>
+            <div class="community-hero-card">
+                <span class="community-form-kicker"><i class="fa-regular fa-map"></i> COMMUNITY</span>
+                <h2 id="community-write-heading" class="community-hero-title">여행계획 공유</h2>
+                <p id="community-write-subheading" class="community-hero-desc">지역, 날짜, 세부 동선만 정리하면 친구들이 바로 보기 좋은 여행 카드가 됩니다.</p>
+            </div>
+            <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()" class="community-write-form w-full min-w-0">
+                <section class="community-card-section">
+                    <h3 class="community-section-title"><i class="fa-solid fa-heading"></i> 기본 정보</h3>
+                    <div class="community-field">
+                        <label class="community-label" for="community-post-title">제목</label>
+                        <input id="community-post-title" maxlength="80" autocomplete="off" placeholder="예: 제주도 2박 3일 뚜벅이 여행" class="community-control">
                     </div>
-                    <div class="min-w-0">
-                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-district">시·군·구</label>
-                        <select id="community-post-district" onchange="window.updateCommunityPlaceAddButton()" disabled class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6] disabled:opacity-45">
-                            <option value="">시·도를 먼저 선택하세요</option>
-                        </select>
-                    </div>
-                    <button id="community-add-place" type="button" onclick="window.addCommunityPlace()" class="w-full h-11 rounded-2xl bg-white/10 text-[13px] font-bold text-white active:scale-[0.98] transition-transform disabled:opacity-40">지역 추가</button>
-                    <div id="community-selected-places" class="hidden flex flex-wrap gap-2"></div>
-                    <p class="-mt-2 text-[11px] text-gray-500">여러 지역을 차례로 선택해 추가할 수 있어요.</p>
-                </div>
+                </section>
 
-                <div class="grid grid-cols-1 gap-4 mb-4 min-w-0">
-                    <div class="community-date-field min-w-0">
-                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-start">시작일</label>
-                        <input id="community-post-start" type="date" class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6]">
-                        <i class="community-date-icon fa-regular fa-calendar"></i>
+                <section class="community-card-section">
+                    <h3 class="community-section-title"><i class="fa-solid fa-location-dot"></i> 여행 지역</h3>
+                    <div class="community-place-grid min-w-0">
+                        <div class="community-field">
+                            <label class="community-label" for="community-post-region">시·도</label>
+                            <select id="community-post-region" onchange="window.updateCommunityDistricts()" class="community-control">
+                                <option value="">시·도 선택</option>
+                            </select>
+                        </div>
+                        <div class="community-field">
+                            <label class="community-label" for="community-post-district">시·군·구</label>
+                            <select id="community-post-district" onchange="window.updateCommunityPlaceAddButton()" disabled class="community-control disabled:opacity-45">
+                                <option value="">시·도를 먼저 선택하세요</option>
+                            </select>
+                        </div>
+                        <button id="community-add-place" type="button" onclick="window.addCommunityPlace()" class="community-add-place-button disabled:opacity-40">지역 추가</button>
+                        <div id="community-selected-places" class="hidden flex flex-wrap gap-2"></div>
+                        <p class="community-help-text">여러 지역을 차례로 선택해 추가할 수 있어요.</p>
                     </div>
-                    <div class="community-date-field min-w-0">
-                        <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-end">종료일</label>
-                        <input id="community-post-end" type="date" class="block w-full min-w-0 h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-[16px] text-white outline-none focus:border-[#3182F6]">
-                        <i class="community-date-icon fa-regular fa-calendar"></i>
+                </section>
+
+                <section class="community-card-section">
+                    <h3 class="community-section-title"><i class="fa-regular fa-calendar"></i> 여행 날짜</h3>
+                    <div class="community-date-grid min-w-0">
+                        <div class="community-date-field community-field">
+                            <label class="community-label" for="community-post-start">시작일</label>
+                            <input id="community-post-start" type="date" class="community-control">
+                            <i class="community-date-icon fa-regular fa-calendar"></i>
+                        </div>
+                        <div class="community-date-field community-field">
+                            <label class="community-label" for="community-post-end">종료일</label>
+                            <input id="community-post-end" type="date" class="community-control">
+                            <i class="community-date-icon fa-regular fa-calendar"></i>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                <label class="block text-[12px] font-bold text-gray-400 mb-1.5" for="community-post-days">세부 일정</label>
-                <textarea id="community-post-days" maxlength="2000" rows="6" placeholder="한 줄에 일정 하나씩 적어주세요.&#10;1일차 · 공항 → 애월 카페거리&#10;2일차 · 우도 → 성산일출봉" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-[14px] leading-relaxed text-white placeholder:text-gray-600 outline-none focus:border-[#3182F6] resize-none"></textarea>
-                <div class="flex items-center justify-between mt-2 mb-5">
-                    <p class="text-[11px] text-gray-500">최대 20줄까지 표시됩니다.</p>
-                    <p id="community-write-status" class="text-[11px] text-[#F04452]"></p>
-                </div>
+                <section class="community-card-section">
+                    <h3 class="community-section-title"><i class="fa-solid fa-list-check"></i> 세부 일정</h3>
+                    <textarea id="community-post-days" maxlength="2000" rows="6" placeholder="한 줄에 일정 하나씩 적어주세요.&#10;1일차 · 공항 → 애월 카페거리&#10;2일차 · 우도 → 성산일출봉" class="community-control community-textarea"></textarea>
+                    <div class="community-form-footer">
+                        <p class="community-help-text !mt-0">최대 20줄까지 표시됩니다.</p>
+                        <p id="community-write-status" class="community-status-text"></p>
+                    </div>
+                </section>
 
-                <button id="community-submit-btn" type="submit" class="w-full h-12 rounded-2xl bg-[#3182F6] text-white text-[14px] font-bold active:scale-[0.98] transition-transform">공유하기</button>
+                <button id="community-submit-btn" type="submit" class="community-submit-button w-full">공유하기</button>
             </form>
         </div>
     </section>
@@ -2821,47 +3200,61 @@
     </div>
 
     <!-- Modals -->
-    <div id="schedule-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center px-6">
-        <div class="bg-[#1C1C1E] rounded-3xl p-6 w-full max-w-sm shadow-2xl scale-in relative overflow-hidden flex flex-col border border-white/5">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold text-main" id="sch-modal-title">일정 추가</h3>
-                <button onclick="window.haptic(); window.closeModal('schedule-modal')" class="text-gray-500 hover:text-gray-300 active:scale-90"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <div class="space-y-4">
-                <input type="hidden" id="sch-edit-date-key">
-                <input type="hidden" id="sch-edit-index">
-                <div>
-                    <label class="block text-xs text-gray-400 font-bold mb-1.5">카테고리</label>
-                    <select id="add-sch-category" class="w-full bg-[#2C2C2E] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
-                        <option value="meet">정기 모임</option>
-                        <option value="personal">개인 일정</option>
-                        <option value="school">학교/종강</option>
-                        <option value="bday">생일</option>
-                        <option value="etc">기타</option>
-                    </select>
-                </div>
-                <div class="flex flex-col gap-3 w-full">
-                    <div class="w-full">
-                        <label class="block text-xs text-gray-400 font-bold mb-1.5">시작일</label>
-                        <input type="date" id="add-sch-start-date" class="block w-full max-w-full bg-[#2C2C2E] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors box-border">
+    <div id="schedule-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4">
+        <div class="schedule-modal-card scale-in relative flex flex-col">
+            <div class="schedule-modal-inner">
+                <div class="schedule-modal-header">
+                    <div>
+                        <span class="schedule-modal-kicker"><i class="fa-regular fa-calendar-plus"></i> ENJOY CALENDAR</span>
+                        <h3 class="schedule-modal-title" id="sch-modal-title">일정 추가</h3>
+                        <p class="schedule-modal-desc">날짜와 이름만 넣어도 캘린더에 깔끔하게 정리돼요.</p>
                     </div>
-                    <div class="w-full">
-                        <label class="block text-xs text-gray-400 font-bold mb-1.5">종료일</label>
-                        <input type="date" id="add-sch-end-date" class="block w-full max-w-full bg-[#2C2C2E] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors box-border">
-                    </div>
+                    <button onclick="window.haptic(); window.closeModal('schedule-modal')" class="schedule-close-button" aria-label="일정 추가 닫기"><i class="fa-solid fa-xmark text-[16px]"></i></button>
                 </div>
-                <div>
-                    <label class="block text-xs text-gray-400 font-bold mb-1.5">시간</label>
-                    <input type="text" id="add-sch-time" placeholder="예: 19:00, 하루 종일" class="w-full bg-[#2C2C2E] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                <div class="schedule-form-grid">
+                    <input type="hidden" id="sch-edit-date-key">
+                    <input type="hidden" id="sch-edit-index">
+                    <section class="schedule-card-section">
+                        <div class="schedule-field">
+                            <label class="schedule-label" for="add-sch-category"><i class="fa-solid fa-layer-group"></i> 카테고리</label>
+                            <select id="add-sch-category" class="schedule-control">
+                                <option value="meet">정기 모임</option>
+                                <option value="personal">개인 일정</option>
+                                <option value="school">학교/종강</option>
+                                <option value="bday">생일</option>
+                                <option value="etc">기타</option>
+                            </select>
+                        </div>
+                    </section>
+                    <section class="schedule-card-section">
+                        <div class="schedule-date-grid">
+                            <div class="schedule-field">
+                                <label class="schedule-label" for="add-sch-start-date"><i class="fa-regular fa-calendar"></i> 시작일</label>
+                                <input type="date" id="add-sch-start-date" class="schedule-control">
+                            </div>
+                            <div class="schedule-field">
+                                <label class="schedule-label" for="add-sch-end-date"><i class="fa-regular fa-calendar-check"></i> 종료일</label>
+                                <input type="date" id="add-sch-end-date" class="schedule-control">
+                            </div>
+                        </div>
+                    </section>
+                    <section class="schedule-card-section">
+                        <div class="schedule-field">
+                            <label class="schedule-label" for="add-sch-time"><i class="fa-regular fa-clock"></i> 시간</label>
+                            <input type="text" id="add-sch-time" placeholder="예: 19:00, 하루 종일" class="schedule-control">
+                        </div>
+                    </section>
+                    <section class="schedule-card-section">
+                        <div class="schedule-field">
+                            <label class="schedule-label" for="add-sch-title"><i class="fa-solid fa-pen"></i> 일정 이름</label>
+                            <input type="text" id="add-sch-title" placeholder="일정 내용을 입력하세요" class="schedule-control">
+                        </div>
+                    </section>
                 </div>
-                <div>
-                    <label class="block text-xs text-gray-400 font-bold mb-1.5">일정 이름</label>
-                    <input type="text" id="add-sch-title" placeholder="일정 내용을 입력하세요" class="w-full bg-[#2C2C2E] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                <div class="schedule-actions">
+                    <button id="sch-delete-btn" onclick="window.haptic(); window.deleteSchedule()" class="schedule-delete-button hidden flex-1">삭제</button>
+                    <button id="sch-save-btn" onclick="window.haptic(); window.saveScheduleToFirebase()" class="schedule-save-button flex-[2]">등록하기</button>
                 </div>
-            </div>
-            <div class="mt-6 pt-2 flex gap-2">
-                <button id="sch-delete-btn" onclick="window.haptic(); window.deleteSchedule()" class="hidden flex-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 font-bold py-3.5 rounded-xl transition-colors shadow-sm active:bg-red-900/70">삭제</button>
-                <button id="sch-save-btn" onclick="window.haptic(); window.saveScheduleToFirebase()" class="flex-[2] bg-blue-500 hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl transition-colors shadow-md active:bg-blue-700">등록하기</button>
             </div>
         </div>
     </div>

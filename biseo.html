@@ -392,7 +392,7 @@
             display: flex;
             align-items: center;
             gap: 9px;
-            padding: 4px 4px 4px 16px;
+            padding: 5px 5px 5px 18px;
             border: 1px solid #c7c7cc;
             border-color: var(--border);
             border-radius: 24px;
@@ -403,31 +403,32 @@
             transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
         }
         .composer:focus-within {
-            border-color: rgba(49, 130, 246, 0.52);
-            box-shadow: 0 18px 48px rgba(49, 130, 246, 0.16), var(--shadow);
+            border-color: rgba(49, 130, 246, 0.24);
+            box-shadow: var(--shadow);
         }
         .chat-input {
             display: block;
             flex: 1 1 auto;
             width: 100%;
-            height: 34px;
-            min-height: 34px;
+            height: 28px;
+            min-height: 28px;
             max-height: 112px;
             margin: 0;
-            padding: 7px 0 7px 1px;
+            padding: 3px 0;
             resize: none;
-            overflow-y: auto;
+            overflow-y: hidden;
             border: 0;
             outline: 0;
             background: transparent;
             color: var(--text);
             font-size: 15.5px;
-            line-height: 20px;
+            line-height: 22px;
             font-weight: 500;
             letter-spacing: -0.01em;
             -webkit-appearance: none;
             appearance: none;
             caret-color: var(--blue);
+            transform: translateY(0);
         }
         .chat-input::placeholder {
             color: var(--muted);
@@ -441,7 +442,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            align-self: flex-end;
+            align-self: center;
             background: var(--user);
             color: #ffffff;
             font-size: 14px;
@@ -924,9 +925,10 @@
         }
 
         function resizeInput() {
-            inputEl.style.height = '34px';
-            const nextHeight = Math.max(34, Math.min(inputEl.scrollHeight, 112));
+            inputEl.style.height = '28px';
+            const nextHeight = Math.max(28, Math.min(inputEl.scrollHeight, 112));
             inputEl.style.height = nextHeight + 'px';
+            inputEl.style.overflowY = inputEl.scrollHeight > 112 ? 'auto' : 'hidden';
             sendButton.disabled = !inputEl.value.trim() || pendingReplies.has(activeThread().id);
         }
 
