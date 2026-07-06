@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>엔조이 공식 홈페이지 - 발자취</title>
+    
+    <!-- PC 및 태블릿 접속 시 index_pc.html로 리다이렉션 -->
+    <script>
+        (function() {
+            try {
+                var ua = navigator.userAgent.toLowerCase();
+                // 스마트폰(아이폰, 안드로이드폰 등) 감지 (안드로이드 태블릿은 보통 'mobile' 키워드가 없음)
+                var isMobilePhone = /iphone|ipod|android.*mobile|blackberry|windows phone|opera mini|iemobile/i.test(ua);
+                // 아이패드 OS 13 이상 (데스크톱 맥으로 인식되므로 터치 지원 여부로 추가 판별)
+                var isIPadOS = ua.includes('macintosh') && navigator.maxTouchPoints > 1;
+                // 스마트폰이 아니거나(PC, 안드로이드 태블릿), 아이패드인 경우 pc 버전으로 이동
+                if (!isMobilePhone || isIPadOS) {
+                    // 미리보기 환경(blob: 또는 data: URL)에서는 상대 경로 리다이렉션 시 SyntaxError가 발생하므로 방어 코드 추가
+                    if (window.location.protocol !== 'blob:' && window.location.protocol !== 'data:') {
+                        window.location.replace('index_pc.html');
+                    } else {
+                        console.warn('미리보기 환경이므로 PC 버전 리다이렉션을 건너뜁니다.');
+                    }
+                }
+            } catch (e) {
+                console.warn('리다이렉션 처리 중 오류 발생:', e);
+            }
+        })();
+    </script>
+
+    <!-- 운영체제의 라이트/다크 모드를 첫 화면부터 즉시 반영 -->
+    <script>
+        (function() {
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.dataset.deviceTheme = prefersDark ? 'dark' : 'light';
+        })();
+    </script>
+
+    <!-- 전역 에러 핸들러: 미리보기 환경의 크로스 도메인 스크립트 에러 방지 -->
+    <script>
+        window.addEventListener('error', function(e) {
+            if (e.message === 'Script error.' || (e.message && e.message.includes('Script error'))) {
+                console.warn('외부 스크립트(카카오 지도 API 등) 도메인 제한으로 인한 경고입니다. (정상 작동 중)');
+                e.preventDefault();
+            }
+        });
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 폰트 및 아이콘 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" type="text/css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 카카오 지도 API: YOUR_KAKAO_JAVASCRIPT_KEY를 카카오 JavaScript 키로 교체하세요. -->
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0be88f46eb39dabeacc3414f5af0bb5f"></script>
+
+    <style>
+        :root {
+            color-scheme: light;
+            --app-bg: #f5f7fa;
+            --app-text: #1f2937;
+            --app-text-strong: #0f172a;
+            --app-text-secondary: #475569;
+            --app-text-muted: #526071;
+            --app-text-faint: #5c6675;
+            --app-line: rgba(15, 23, 42, 0.14);
+            --app-line-soft: rgba(15, 23, 42, 0.10);
+            --app-border: rgba(15, 23, 42, 0.12);
+            --app-track: #d8dee7;
+            --app-fill: #475569;
+            --card-bg: #ffffff;
+            --card-active: #eef2f6;
+            --map-fallback: #eef2f6;
+            --sheet-bg: rgba(255, 255, 255, 0.88);
+            --sheet-border: rgba(15, 23, 42, 0.12);
+            --sheet-shadow: 0 12px 34px rgba(15, 23, 42, 0.20);
+            --sheet-control-bg: rgba(15, 23, 42, 0.07);
+            --sheet-control-hover: rgba(15, 23, 42, 0.12);
+            --lg-glass-border: rgba(255, 255, 255, 0.82);
+            --lg-glass-inner-border: rgba(255, 255, 255, 0.50);
+            --lg-glass-shadow: 0 14px 38px rgba(15, 23, 42, 0.16);
+            --lg-glass-shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.12);
+            --lg-blur: 24px;
+        }
+
+        :root[data-device-theme="dark"] {
+            color-scheme: dark;
+            --app-bg: #08090b;
+            --app-text: #d7d8dc;
+            --app-text-strong: #f4f4f5;
+            --app-text-secondary: #b7bac1;
+            --app-text-muted: #9ca0a9;
+            --app-text-faint: #858a94;
+            --app-line: #292b31;
+            --app-line-soft: #23252b;
+            --app-border: rgba(255, 255, 255, 0.10);
+            --app-track: #292b31;
+            --app-fill: #d4d6db;
+            --card-bg: #1c1c1e;
+            --card-active: #2c2c2e;
+            --map-fallback: #111214;
+            --sheet-bg: rgba(28, 28, 30, 0.88);
+            --sheet-border: rgba(255, 255, 255, 0.10);
+            --sheet-shadow: 0 8px 32px rgba(0, 0, 0, 0.40);
+            --sheet-control-bg: rgba(255, 255, 255, 0.10);
+            --sheet-control-hover: rgba(255, 255, 255, 0.18);
+            --lg-glass-border: rgba(255, 255, 255, 0.48);
+            --lg-glass-inner-border: rgba(255, 255, 255, 0.20);
+            --lg-glass-shadow: 0 14px 38px rgba(3, 8, 20, 0.24);
+            --lg-glass-shadow-soft: 0 8px 24px rgba(3, 8, 20, 0.18);
+        }
+
+        body { 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "sans-serif";
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+            touch-action: pan-y;
+            background: var(--app-bg) !important;
+            color: var(--app-text);
+        }
+
+        #mobile-wrapper {
+            background: var(--app-bg) !important;
+            border-color: var(--app-border) !important;
+        }
+
+        #map-screen,
+        .map-fallback {
+            background: var(--map-fallback) !important;
+        }
+
+        .map-fallback,
+        .map-fallback p {
+            color: var(--app-text-secondary) !important;
+        }
+
+        .map-fallback-icon {
+            color: var(--app-text-faint) !important;
+        }
+
+        .map-fallback strong {
+            color: var(--app-text-strong) !important;
+        }
+
+        /* 유리 재질 공통 클래스 */
+        .toss-card {
+            background: var(--sheet-bg);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid var(--sheet-border);
+            border-radius: 24px;
+            box-shadow: var(--sheet-shadow);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+        }
+
+        #sheet-title {
+            color: var(--app-text-strong) !important;
+        }
+
+        #sheet-desc {
+            color: var(--app-text-secondary) !important;
+        }
+
+        .sheet-control {
+            color: var(--app-text-secondary) !important;
+            background: var(--sheet-control-bg) !important;
+            border-color: var(--sheet-border) !important;
+        }
+
+        .sheet-control:hover {
+            color: var(--app-text-strong) !important;
+            background: var(--sheet-control-hover) !important;
+        }
+        
+        .list-card {
+            background: var(--card-bg);
+            border: 1px solid var(--app-line-soft);
+            border-radius: 20px;
+            transition: transform 0.1s;
+        }
+        .list-card:active {
+            transform: scale(0.97);
+            background: var(--card-active);
+        }
+
+        #list-screen,
+        #stats-screen {
+            background: var(--app-bg);
+        }
+
+        .screen-header {
+            background: var(--app-bg);
+            border-bottom: 1px solid var(--app-line-soft);
+        }
+
+        .screen-kicker {
+            color: var(--app-text-muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+        }
+
+        .screen-description {
+            color: var(--app-text-secondary);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .screen-count {
+            min-width: 58px;
+            text-align: center;
+        }
+
+        .screen-count strong {
+            display: block;
+            color: var(--app-text-strong);
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .screen-count span {
+            display: block;
+            margin-top: 4px;
+            color: var(--app-text-faint);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .record-item {
+            position: relative;
+            display: grid;
+            grid-template-columns: 32px minmax(0, 1fr);
+            gap: 10px;
+        }
+
+        .record-item:not(:last-child)::before {
+            content: "";
+            position: absolute;
+            top: 26px;
+            bottom: -16px;
+            left: 15px;
+            width: 1px;
+            background: var(--app-line);
+        }
+
+        .record-index {
+            position: relative;
+            z-index: 1;
+            width: 32px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--app-text-muted);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .record-panel {
+            padding: 0 0 16px;
+            border-bottom: 1px solid var(--app-line);
+            transition: opacity 160ms ease;
+        }
+
+        .record-panel:active {
+            opacity: 0.68;
+        }
+
+        .record-logo {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 auto;
+            overflow: hidden;
+            border-radius: 14px;
+        }
+
+        .record-date {
+            color: var(--app-text-muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .record-region {
+            overflow: hidden;
+            color: var(--app-text-strong);
+            font-size: 14px;
+            font-weight: 800;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .record-title {
+            color: var(--app-text);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .record-description {
+            margin-top: 5px;
+            color: var(--app-text-muted);
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        .record-arrow {
+            color: var(--app-text-faint);
+            font-size: 11px;
+        }
+
+        .record-year-group {
+            border-bottom: 1px solid var(--app-line);
+        }
+
+        .record-year-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 0;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .record-year-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .record-year-title {
+            color: var(--app-text-strong);
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+        }
+
+        .record-year-count {
+            color: var(--app-text-muted);
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .record-year-chevron {
+            color: var(--app-text-muted);
+            font-size: 11px;
+            transition: transform 180ms ease;
+        }
+
+        .record-year-group[open] .record-year-chevron {
+            transform: rotate(180deg);
+        }
+
+        .record-year-content {
+            padding: 2px 0 18px;
+            border-top: 1px solid var(--app-line-soft);
+        }
+
+        .record-month-group {
+            padding-top: 18px;
+        }
+
+        .record-month-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .record-month-heading::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--app-line);
+        }
+
+        .record-month-title {
+            color: var(--app-text-secondary);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .record-month-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .record-status {
+            display: inline-flex;
+            align-items: center;
+            min-height: 19px;
+            padding: 0 2px;
+            color: var(--app-text-secondary);
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .stats-hero {
+            padding: 0 0 22px;
+            border-bottom: 1px solid var(--app-line);
+        }
+
+        .stats-hero-number {
+            color: var(--app-text-strong);
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: -0.07em;
+            line-height: 0.95;
+        }
+
+        .stats-metric-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid var(--app-line);
+        }
+
+        .stats-metric {
+            min-width: 0;
+            padding: 0 10px;
+            text-align: center;
+        }
+
+        .stats-metric + .stats-metric {
+            border-left: 1px solid var(--app-line);
+        }
+
+        .stats-metric strong {
+            display: block;
+            color: var(--app-text-strong);
+            font-size: 18px;
+            font-weight: 850;
+        }
+
+        .stats-metric span {
+            display: block;
+            margin-top: 4px;
+            color: var(--app-text-muted);
+            font-size: 10px;
+        }
+
+        .stats-section-title {
+            color: var(--app-text-strong);
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .ranking-list {
+            overflow: hidden;
+        }
+
+        .ranking-row {
+            padding: 14px 0;
+        }
+
+        .ranking-row + .ranking-row {
+            border-top: 1px solid var(--app-line-soft);
+        }
+
+        .ranking-number {
+            width: 24px;
+            color: var(--app-text-muted);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .ranking-region {
+            min-width: 0;
+            overflow: hidden;
+            color: var(--app-text);
+            font-size: 12px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ranking-count {
+            color: var(--app-text-secondary);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .ranking-track {
+            height: 3px;
+            margin-top: 9px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: var(--app-track);
+        }
+
+        .ranking-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: var(--app-fill);
+        }
+
+        .record-copy-divider {
+            border-color: var(--app-line-soft) !important;
+        }
+
+        .stats-total-unit,
+        .stats-region-total,
+        .stats-route-icon {
+            color: var(--app-text-muted);
+        }
+
+        .theme-accent-orange { color: #c2410c; }
+        .theme-accent-purple { color: #7e22ce; }
+        .theme-accent-red { color: #b91c1c; }
+        .theme-accent-yellow { color: #854d0e; }
+        .theme-accent-blue { color: #1d4ed8; }
+        .theme-accent-green { color: #166534; }
+
+        :root[data-device-theme="dark"] .theme-accent-orange { color: #fb923c; }
+        :root[data-device-theme="dark"] .theme-accent-purple { color: #c084fc; }
+        :root[data-device-theme="dark"] .theme-accent-red { color: #f87171; }
+        :root[data-device-theme="dark"] .theme-accent-yellow { color: #facc15; }
+        :root[data-device-theme="dark"] .theme-accent-blue { color: #60a5fa; }
+        :root[data-device-theme="dark"] .theme-accent-green { color: #4ade80; }
+
+        .text-main { color: var(--app-text-strong); }
+        .text-sub { color: var(--app-text-secondary); }
+
+        .pt-safe { padding-top: max(20px, env(safe-area-inset-top)); }
+        
+        #nav-indicator { will-change: transform, width; }
+        .nav-transition { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+        /* 상단바와 하단 메뉴에만 적용하는 Liquid Glass */
+        .liquid-glass-control {
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            border: 1px solid var(--lg-glass-border);
+            box-shadow: var(--lg-glass-shadow);
+        }
+
+        .liquid-glass-control::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: transparent;
+            backdrop-filter: blur(var(--lg-blur)) saturate(1.65) contrast(1.04);
+            -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(1.65) contrast(1.04);
+            pointer-events: none;
+        }
+
+        .liquid-glass-control::after {
+            content: "";
+            position: absolute;
+            inset: 1px;
+            border: 1px solid var(--lg-glass-inner-border);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        /*
+         * 흰색을 difference 합성하면 실제 뒤쪽 픽셀이 밝을 때는 어둡게,
+         * 어두울 때는 밝게 표시된다. 지도 타일에도 별도 색상 판별 없이 반응한다.
+         */
+        .adaptive-contrast {
+            color: #fff !important;
+            mix-blend-mode: difference;
+            filter: grayscale(1) contrast(2.4);
+        }
+
+        .adaptive-muted {
+            opacity: 0.64;
+        }
+
+        #map-topbar .topbar-capsule {
+            min-height: 46px;
+            border-radius: 999px;
+        }
+
+        #map-topbar .topbar-title-content {
+            min-width: 0;
+            line-height: 1.1;
+        }
+
+        #map-topbar .topbar-capsule > div,
+        #map-topbar .topbar-action,
+        #bottom-nav .nav-item {
+            position: relative;
+            z-index: 1;
+        }
+
+        #map-topbar .topbar-action {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            opacity: 0.82;
+            transition: opacity 160ms ease, transform 160ms ease;
+        }
+
+        #map-topbar .topbar-action:hover,
+        #map-topbar .topbar-action.is-active {
+            opacity: 1;
+        }
+
+        #map-topbar .topbar-action:active {
+            transform: scale(0.88);
+        }
+
+        #map-topbar .glass-divider {
+            background: rgba(255, 255, 255, 0.42);
+            box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.28);
+        }
+
+        #bottom-nav {
+            bottom: max(16px, env(safe-area-inset-bottom));
+            transition:
+                width 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                max-width 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        #bottom-nav.is-compact {
+            width: 58% !important;
+            max-width: 216px !important;
+        }
+
+        #bottom-nav .bottom-nav-glass {
+            border-radius: 999px;
+            box-shadow: var(--lg-glass-shadow), inset 0 1px 0 rgba(255,255,255,0.34);
+            transition: padding 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        #bottom-nav .nav-item {
+            min-width: 0;
+            color: #fff;
+            mix-blend-mode: difference;
+            filter: grayscale(1) contrast(2.4);
+            opacity: 0.62;
+            transition:
+                opacity 180ms ease,
+                transform 160ms ease,
+                padding 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        #bottom-nav .nav-label {
+            max-height: 16px;
+            overflow: hidden;
+            opacity: 1;
+            transform: translateY(0);
+            transition:
+                max-height 240ms ease,
+                opacity 180ms ease,
+                transform 240ms ease;
+        }
+
+        #bottom-nav.is-compact .nav-item {
+            padding-top: 0.55rem;
+            padding-bottom: 0.55rem;
+        }
+
+        #bottom-nav.is-compact .nav-item > div {
+            gap: 0;
+        }
+
+        #bottom-nav.is-compact .nav-label {
+            max-height: 0 !important;
+            opacity: 0 !important;
+            transform: translateY(4px) !important;
+        }
+
+        #bottom-nav .nav-item .adaptive-contrast {
+            color: inherit !important;
+            mix-blend-mode: normal;
+            filter: none;
+        }
+
+        /* 화면과 지도 모드에 따라 글자색과 유리 틴트를 자동 전환한다. */
+        #mobile-wrapper[data-chrome-ink="dark"] .adaptive-contrast {
+            color: rgba(8, 15, 28, 0.94) !important;
+            mix-blend-mode: normal;
+            filter: none;
+        }
+
+        #mobile-wrapper[data-chrome-ink="light"] .adaptive-contrast {
+            color: rgba(255, 255, 255, 0.96) !important;
+            mix-blend-mode: normal;
+            filter: none;
+        }
+
+        #mobile-wrapper[data-chrome-ink="dark"] #bottom-nav .nav-item {
+            color: rgba(8, 15, 28, 0.94);
+            mix-blend-mode: normal;
+            filter: none;
+        }
+
+        #mobile-wrapper[data-chrome-ink="light"] #bottom-nav .nav-item {
+            color: rgba(255, 255, 255, 0.96);
+            mix-blend-mode: normal;
+            filter: none;
+        }
+
+        #bottom-nav .nav-item:hover,
+        #bottom-nav .nav-item.is-active {
+            opacity: 1;
+        }
+
+        #bottom-nav .nav-item:active {
+            transform: scale(0.92);
+        }
+
+        #bottom-nav .nav-item.is-active span {
+            font-weight: 800;
+        }
+
+        #nav-indicator {
+            background: rgba(255,255,255,0.38);
+            border: 1px solid rgba(255,255,255,0.68);
+            box-shadow:
+                inset 0 1px 1px rgba(255,255,255,0.72),
+                0 5px 16px rgba(4, 10, 22, 0.18);
+            backdrop-filter: blur(14px) saturate(1.5);
+            -webkit-backdrop-filter: blur(14px) saturate(1.5);
+        }
+
+        #mobile-wrapper[data-chrome-ink="dark"] #nav-indicator {
+            background: rgba(255,255,255,0.48);
+            border-color: rgba(255,255,255,0.78);
+        }
+
+        #mobile-wrapper[data-chrome-ink="light"] #nav-indicator {
+            background: rgba(255,255,255,0.30);
+            border-color: rgba(255,255,255,0.58);
+        }
+
+        :root[data-device-theme="light"] #mobile-wrapper[data-chrome-ink="dark"] .liquid-glass-control {
+            border-color: rgba(15, 23, 42, 0.22);
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+        }
+
+        :root[data-device-theme="light"] #mobile-wrapper[data-chrome-ink="dark"] .liquid-glass-control::after {
+            border-color: rgba(15, 23, 42, 0.10);
+        }
+
+        :root[data-device-theme="light"] #mobile-wrapper[data-chrome-ink="dark"] #nav-indicator {
+            background: rgba(15, 23, 42, 0.14);
+            border-color: rgba(15, 23, 42, 0.26);
+            box-shadow:
+                inset 0 1px 1px rgba(255,255,255,0.42),
+                0 5px 16px rgba(15, 23, 42, 0.16);
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 커스텀 마커 스타일 */
+        .travel-marker {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            transition: transform 0.2s;
+            /* 명시적 크기 지정으로 위치 틀어짐 방지 */
+            width: 40px;
+            height: 48px;
+        }
+        .travel-marker.active {
+            transform: scale(1.15) translateY(-5px);
+            z-index: 100 !important;
+        }
+        .travel-marker-icon {
+            pointer-events: auto;
+            width: 40px;
+            height: 40px;
+            background: #3182F6;
+            border: 3px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        .travel-marker-tail {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid white;
+            margin-top: -2px;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+            flex-shrink: 0;
+        }
+        .travel-marker-label {
+            position: absolute;
+            bottom: 54px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
+        }
+
+        /* 바텀 시트 (정보 패널) 애니메이션 */
+        #bottom-sheet {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+            transform: translate(-50%, 120%);
+            opacity: 0;
+        }
+        #bottom-sheet.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .liquid-glass-control::before {
+                background: transparent;
+            }
+        }
+
+        @media (prefers-reduced-transparency: reduce) {
+            .liquid-glass-control::before {
+                background: transparent;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+            }
+
+            #nav-indicator {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body class="w-full h-[100dvh] bg-[#0a0a0a] flex justify-center items-center overflow-hidden">
+
+    <!-- 스마트폰 형태의 메인 래퍼 (모든 UI는 이 안에서 절대 벗어나지 않음) -->
+    <div id="mobile-wrapper" class="w-full h-full max-w-[430px] bg-black relative flex flex-col overflow-hidden sm:border-x border-white/10 sm:shadow-2xl">
+
+        <!-- 1. 지도 화면 (메인) -->
+        <main id="map-screen" class="flex-1 relative w-full flex flex-col bg-[#111]">
+            
+            <!-- 오류/안내 배경 (지도가 막혔을 때 보임) -->
+            <div class="map-fallback absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-0">
+                <i class="map-fallback-icon fa-solid fa-map-location-dot text-4xl mb-4"></i>
+                <p class="text-sm break-keep leading-relaxed">
+                    <span class="theme-accent-blue font-bold">지도 로딩 중...</span><br><br>
+                    만약 지도가 계속 보이지 않는다면,<br>
+                    카카오 JavaScript 키 또는 현재 도메인이<br>
+                    등록되지 않아 차단된 것입니다.<br>
+                    <strong class="text-white mt-2 block">키와 도메인 설정을 확인해 주세요. ✨</strong>
+                </p>
+            </div>
+
+            <!-- 카카오 지도 컨테이너 -->
+            <div id="map" class="absolute inset-0 z-10 w-full h-full"></div>
+            
+            <!-- 상단 헤더 오버레이 (새로운 캡슐 디자인) -->
+            <header id="map-topbar" class="absolute top-0 left-0 right-0 pt-safe px-4 pb-4 z-20 pointer-events-none">
+                <div class="mt-3 flex items-center gap-2 w-full pointer-events-auto pb-2">
+                    <!-- 1. 타이틀 캡슐 -->
+                    <div class="topbar-capsule liquid-glass-control flex items-center flex-1 px-4 py-2">
+                        <div class="topbar-title-content">
+                            <h1 class="adaptive-contrast text-[13px] font-extrabold flex items-center tracking-tight">
+                                엔조이 여행 지도<span class="w-1 h-1 bg-[#3182F6] rounded-full ml-1 mb-0.5"></span>
+                            </h1>
+                            <span class="adaptive-contrast adaptive-muted block mt-1 text-[10px] font-medium whitespace-nowrap">전국 226개 지역 중 11개 채움</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. 컨트롤 캡슐 -->
+                    <div class="topbar-capsule liquid-glass-control flex items-center gap-2 px-3 py-2 shrink-0">
+                        <button id="satellite-top-btn" class="topbar-action adaptive-contrast text-[13px]" onclick="toggleSatellite()" aria-label="위성 지도 전환" aria-pressed="false">
+                            <i class="fa-solid fa-satellite"></i>
+                        </button>
+                        <div class="glass-divider w-px h-3"></div>
+                        <button id="marker-toggle-btn" class="topbar-action adaptive-contrast text-[13px]" onclick="toggleMarkers()" aria-label="여행 마커 표시" aria-pressed="false">
+                            <i class="fa-solid fa-eye-slash"></i>
+                        </button>
+                        <div class="glass-divider w-px h-3"></div>
+                        <button class="topbar-action adaptive-contrast text-[13px]" onclick="zoomToAll()" aria-label="전체 여행지 보기">
+                            <i class="fa-solid fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 선택된 여행지 정보 바텀 시트 (mobile-wrapper 안에서 absolute로 동작) -->
+            <div id="bottom-sheet" class="absolute bottom-24 left-1/2 w-[92%] z-30 toss-card p-5 cursor-default">
+                <button onclick="closeBottomSheet()" class="sheet-control absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                
+                <div class="flex items-center gap-3 mb-3">
+                    <div id="sheet-emoji" class="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-2xl border border-blue-500/30 overflow-hidden p-0.5">
+                        <img src="logo_jeju.png" alt="logo" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div class="flex-1">
+                        <span id="sheet-date" class="theme-accent-blue text-[10px] font-bold bg-blue-500/10 px-2 py-0.5 rounded-full">2024.08.15</span>
+                        <h3 id="sheet-title" class="text-xl font-bold text-white mt-1 leading-tight">제주도 출장엔조이</h3>
+                    </div>
+                </div>
+                
+                <p id="sheet-desc" class="text-sm text-gray-300 font-medium mb-4 break-keep line-clamp-2">
+                    여름 휴가 겸 떠난 첫 출장엔조이! 비도 오고 우여곡절이 많았지만 즐거웠던 기억.
+                </p>
+                
+                <div class="flex gap-2">
+                    <button onclick="alert('사진 갤러리 준비 중!')" class="sheet-control w-full text-sm font-bold py-3 rounded-xl transition-colors border">
+                        <i class="fa-regular fa-images mr-1"></i> 사진 보기
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 2. 목록 화면 -->
+        <main id="list-screen" class="hidden flex-1 relative w-full flex-col overflow-y-auto scrollbar-hide pb-28">
+            <header class="screen-header flex-none pt-safe z-10 sticky top-0">
+                <div class="px-5 pt-4 pb-5 flex justify-between items-end gap-4">
+                    <div class="min-w-0">
+                        <p class="screen-kicker mb-2">TRAVEL LOG</p>
+                        <h2 class="text-[27px] leading-none font-extrabold text-main tracking-[-0.04em]">여행 기록</h2>
+                        <p class="screen-description mt-2">함께 지나온 순간을 시간순으로 모았어요.</p>
+                    </div>
+                    <div class="screen-count shrink-0">
+                        <strong id="record-count">0</strong>
+                        <span>journeys</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="px-5 pt-5 space-y-4" id="travel-list-container">
+                <!-- JS로 목록 렌더링 -->
+            </div>
+        </main>
+
+        <!-- 3. 통계 화면 -->
+        <main id="stats-screen" class="hidden flex-1 relative w-full flex-col overflow-y-auto scrollbar-hide pb-28">
+            <header class="screen-header flex-none pt-safe z-10 sticky top-0">
+                <div class="px-5 pt-4 pb-5">
+                    <p class="screen-kicker mb-2">JOURNEY INSIGHT</p>
+                    <h2 class="text-[27px] leading-none font-extrabold text-main tracking-[-0.04em]">여행 요약</h2>
+                    <p class="screen-description mt-2">숫자로 다시 보는 우리의 발자취예요.</p>
+                </div>
+            </header>
+            
+            <!-- 통계 콘텐츠 컨테이너 -->
+            <div class="w-full pb-10" id="stats-container">
+                <!-- JS로 통계 데이터가 렌더링 됩니다 -->
+            </div>
+        </main>
+
+        <!-- 하단 플로팅 메뉴 -->
+        <nav id="bottom-nav" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[88%] max-w-[300px] px-2 touch-pan-x select-none">
+            <div class="bottom-nav-glass liquid-glass-control flex items-center justify-between p-1 gap-0.5 relative transition-all duration-300">
+                <!-- 활성화 표시 배경 -->
+                <div id="nav-indicator" class="absolute top-1 bottom-1 rounded-full z-0 nav-transition" style="left: 4px; width: 66px;"></div>
+                
+                <a href="https://won429.github.io/enjoy-app/" class="nav-item relative py-1.5 flex-1 rounded-full" style="text-decoration: none;" aria-label="홈으로 이동">
+                    <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                        <i class="adaptive-contrast fa-solid fa-house text-base"></i>
+                        <span class="nav-label adaptive-contrast text-[10px] font-medium whitespace-nowrap">홈</span>
+                    </div>
+                </a>
+
+                <button class="nav-item is-active relative py-1.5 flex-1 rounded-full" onclick="switchTab(0)" aria-label="지도" aria-current="page">
+                    <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                        <i class="adaptive-contrast fa-solid fa-map-location-dot text-base"></i>
+                        <span class="nav-label adaptive-contrast text-[10px] font-bold whitespace-nowrap">지도</span>
+                    </div>
+                </button>
+
+                <button class="nav-item relative py-1.5 flex-1 rounded-full" onclick="switchTab(1)" aria-label="목록">
+                    <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                        <i class="adaptive-contrast fa-solid fa-list-ul text-base"></i>
+                        <span class="nav-label adaptive-contrast text-[10px] font-medium whitespace-nowrap">목록</span>
+                    </div>
+                </button>
+                
+                <button class="nav-item relative py-1.5 flex-1 rounded-full" onclick="switchTab(2)" aria-label="통계">
+                    <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                        <i class="adaptive-contrast fa-solid fa-chart-pie text-base"></i>
+                        <span class="nav-label adaptive-contrast text-[10px] font-medium whitespace-nowrap">통계</span>
+                    </div>
+                </button>
+            </div>
+        </nav>
+    </div> <!-- // mobile-wrapper 끝 -->
+
+    <script>
+        // 전역 변수
+        let map = null;
+        let markers = [];
+        let regionPolygons = [];
+        let activeMarkerIndex = -1;
+        let isMarkerVisible = false; // 마커 표시 상태
+        let isSatellite = false; // 위성 지도 상태
+        let activeTabIndex = 0;
+        const deviceThemeQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+        function isDeviceDarkMode() {
+            return Boolean(deviceThemeQuery && deviceThemeQuery.matches);
+        }
+
+        function syncDeviceTheme() {
+            document.documentElement.dataset.deviceTheme = isDeviceDarkMode() ? 'dark' : 'light';
+            updateChromeContrast();
+        }
+
+        if (deviceThemeQuery) {
+            if (typeof deviceThemeQuery.addEventListener === 'function') {
+                deviceThemeQuery.addEventListener('change', syncDeviceTheme);
+            } else if (typeof deviceThemeQuery.addListener === 'function') {
+                deviceThemeQuery.addListener(syncDeviceTheme);
+            }
+        }
+
+        // 여행 데이터 모음
+        const travelData = [
+            {
+                id: 1,
+                title: '진주, 과거와 현재 사이',
+                region: '경상남도 진주시',
+                date: '2025.08.29 ~ 08.30',
+                logo: 'logo_jinju.png',
+                color: 'purple',
+                desc: '진주성에서 역사를 느끼고, 귀여운 하모도 구경하며 힐링했던 시간들.',
+                lat: 35.1803,
+                lng: 128.1076
+            },
+            {
+                id: 2,
+                title: '대구 맛집 탐방',
+                region: '대구광역시',
+                date: '2025.02.05 ~ 02.07',
+                logo: 'logo_daegu.png',
+                color: 'red',
+                desc: '끊임없이 먹고 또 먹었던 여행. 대구의 맛있는 음식들 완벽정복!',
+                lat: 35.8714,
+                lng: 128.6014
+            },
+            {
+                id: 5,
+                title: '칠곡의 여유로움',
+                region: '경상북도 칠곡군',
+                date: '2025.02.05 ~ 02.07',
+                logo: 'logo_chilgok.png',
+                color: 'blue',
+                desc: '자연과 함께하는 칠곡에서의 평화롭고 여유로운 시간.',
+                lat: 35.9956,
+                lng: 128.4017
+            },
+            {
+                id: 6,
+                title: '구미 산업과 자연',
+                region: '경상북도 구미시',
+                date: '2025.02.05',
+                logo: 'logo_gumi.png',
+                color: 'green',
+                desc: '금오산의 절경과 함께했던 구미에서의 특별한 하루.',
+                lat: 36.1195,
+                lng: 128.3445
+            },
+            {
+                id: 7,
+                title: '청양 1박 2일',
+                region: '충청남도 청양군',
+                date: '2026.01.26 ~ 01.27',
+                logo: 'logo_cheongyang.png',
+                color: 'red',
+                desc: '자연과 함께한 충남 청양에서의 즐거운 1박 2일.',
+                lat: 36.4593,
+                lng: 126.8024
+            },
+            {
+                id: 3,
+                title: '엔조이 첫 완전체 전역 여행',
+                region: '제주특별자치도',
+                date: '2024.10.30 ~ 11.02',
+                logo: 'logo_jeju.png',
+                color: 'orange',
+                desc: '우리의 첫 완전체 여행! 날씨가 완벽하진 않았지만 그래서 더 잊지 못할 추억이 된 제주도 풀빌라 여행.',
+                lat: 33.4996,
+                lng: 126.5312
+            },
+            {
+                id: 4,
+                title: '성심당 빵지순례',
+                region: '대전광역시',
+                date: '2024.09.26 ~ 09.27',
+                logo: 'logo_daejeon.png',
+                color: 'yellow',
+                desc: '오직 빵을 위해 떠난 대전. 두 손 무겁게 돌아왔던 달콤한 하루.',
+                lat: 36.3504,
+                lng: 127.3845
+            },
+            {
+                id: 8,
+                title: '2026년 대전 방문',
+                region: '대전광역시',
+                date: '2026.01.26 ~ 01.27',
+                logo: 'logo_daejeon.png',
+                color: 'yellow',
+                desc: '2026년 새해에 다시 찾은 대전광역시 기록.',
+                lat: 36.3504,
+                lng: 127.3845
+            },
+            {
+                id: 9,
+                title: '우리의 시작, 파주',
+                region: '경기도 파주시',
+                date: '2023년 상반기 ~ 2024년 하반기',
+                logo: 'logo_paju.png',
+                color: 'blue',
+                desc: '우리가 군생활을 했던 곳이고 우리가 만난 곳이라는 의미를 담고 있어.',
+                lat: 37.7599,
+                lng: 126.7795
+            },
+            {
+                id: 10,
+                title: '전남광주통합특별시 여행',
+                region: '전남광주통합특별시',
+                date: '2026.07.14 ~ 07.15',
+                emoji: '🌿',
+                color: 'green',
+                status: 'upcoming',
+                desc: '새롭게 출범한 전남광주통합특별시로 떠나는 첫 여행.',
+                lat: 35.1595,
+                lng: 126.8526
+            }
+        ];
+
+        function getTripDateMeta(trip) {
+            const yearMatch = trip.date.match(/^(\d{4})/);
+            const monthMatch = trip.date.match(/^\d{4}\.(\d{1,2})/);
+            const dayMatch = trip.date.match(/^\d{4}\.\d{1,2}\.(\d{1,2})/);
+            const periodMatch = trip.date.match(/^\d{4}년\s*([^~]+)/);
+
+            return {
+                year: yearMatch ? Number(yearMatch[1]) : 0,
+                month: monthMatch ? Number(monthMatch[1]) : 0,
+                day: dayMatch ? Number(dayMatch[1]) : 0,
+                periodLabel: periodMatch ? periodMatch[1].trim() : '기타'
+            };
+        }
+
+        function compareTripChronology(a, b) {
+            const aDate = getTripDateMeta(a);
+            const bDate = getTripDateMeta(b);
+            return aDate.year - bDate.year || aDate.month - bDate.month || aDate.day - bDate.day;
+        }
+
+        // 화면은 최신순으로 보여주되 번호는 가장 오래된 기록부터 고정한다.
+        travelData.sort((a, b) => compareTripChronology(b, a));
+        const tripSequenceById = new Map(
+            [...travelData]
+                .sort(compareTripChronology)
+                .map((trip, index) => [trip.id, index + 1])
+        );
+
+        const colorThemes = {
+            orange: { bg: 'bg-orange-500/20', text: 'theme-accent-orange', border: 'border-orange-500/30', markerBg: '#F97316' },
+            purple: { bg: 'bg-purple-500/20', text: 'theme-accent-purple', border: 'border-purple-500/30', markerBg: '#A855F7' },
+            red:    { bg: 'bg-red-500/20', text: 'theme-accent-red', border: 'border-red-500/30', markerBg: '#EF4444' },
+            yellow: { bg: 'bg-yellow-500/20', text: 'theme-accent-yellow', border: 'border-yellow-500/30', markerBg: '#EAB308' },
+            blue:   { bg: 'bg-blue-500/20', text: 'theme-accent-blue', border: 'border-blue-500/30', markerBg: '#3B82F6' },
+            green:  { bg: 'bg-green-500/20', text: 'theme-accent-green', border: 'border-green-500/30', markerBg: '#22C55E' }
+        };
+
+        function createCurrentDaeguBoundary(encodedPath) {
+            let index = 0;
+            let latitude = 0;
+            let longitude = 0;
+            const coordinates = [];
+
+            function decodeNextValue() {
+                let result = 0;
+                let shift = 0;
+                let byte;
+
+                do {
+                    byte = encodedPath.charCodeAt(index++) - 63;
+                    result |= (byte & 0x1f) << shift;
+                    shift += 5;
+                } while (byte >= 0x20);
+
+                return (result & 1) ? ~(result >> 1) : (result >> 1);
+            }
+
+            while (index < encodedPath.length) {
+                latitude += decodeNextValue();
+                longitude += decodeNextValue();
+                coordinates.push([longitude / 1e5, latitude / 1e5]);
+            }
+
+            return {
+                type: 'Feature',
+                properties: {
+                    name: '대구광역시',
+                    includesGunwi: true,
+                    boundaryDate: '2026-04-01'
+                },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [coordinates]
+                }
+            };
+        }
+
+        // 2026-04-01 행정경계에서 대구광역시 소속 지역을 하나로 합친 외곽선입니다.
+        const currentDaeguBoundary = createCurrentDaeguBoundary("kxzxEylknWtqAmYteAov@laBipBzk@{zAf\\ee@~eArCrt@nv@jz@d]vQlj@a@`_A`PiLjIyu@{Q_OgAiUac@ogArBogAuf@q`@vH_f@iT}WGe`@go@ud@ek@ot@dFkr@eTag@vTmX|Cy[aX}w@x[sWx@gKcUcpAwBqs@ce@c[{ZjWotBiNg[fIeMgr@qc@}k@aBo`AaGhIs[tA}d@iV}OrUwu@qDwq@|_@qa@ugBk\\y[sb@alAci@{TrKch@q[ybArj@yn@w_@gi@mKanAfK_p@|NJxHfL~NwDz]l_@vWo^bVcKhUtRnVJlk@yw@wUkp@nF{i@uGcc@goA{lBbFyz@}LcRaAaz@cXp@si@yu@wShCyJdNsf@ub@{X`Jqt@kU{SfVy_@rBkYzRQ|N}j@wDuk@n`@}e@kDeNog@iYmW|M{WcE_R{{@}aAoJuj@icAbZk\\f[oSr@u{@c{@_Dgj@mWrEeYiLay@pDgPrVsHqTdj@qbA\\wNub@sq@wEu_@mg@oM_Hce@y^bHeTaLsYfNk^eVsfBf]k^]oL_Sib@dN_QnLag@ffAin@hh@ma@{Hqy@ke@oUrV_m@fPsmAeh@m_@OoTbl@qMtL}OSgGhUmY~Gac@sVeYvRcC|QuVAwRjSaTnj@qR~pB{^|_@aeAkc@kZbEwTfSi_Aap@o}@jLws@qh@uz@sLgK{OpMeu@gUqX{YaOu`@`JaKtQ_KkBk~@cfBoM_Mmf@eFbb@mh@naAcAbFmIs^g\\uV{g@tEyTxYwLvGwv@lk@sfAg@{[fKuPul@ynByc@kNyMoT_Lut@uMyGyH{Wsf@}Hmd@clAqz@cQix@rNwn@_s@Jkz@nPgq@oEg}AmVjGos@qMyj@kn@ii@zc@wXuJmPv]ua@nBqLh`@se@dXmv@yFuCdy@uWpNaP~}@ys@nu@cPx}@bMxo@gMvWhJpm@d_@jx@fB`y@tz@~Epi@|j@uNrz@bNdQyEzz@lH~Wqj@|cAeLfDWp`@fi@jSfHfTcY|YwKbh@vLz_@{MlMnPff@sMzXpFrkAeSjr@wMRaXoSk`@da@aDjnA`Nti@rXxKi@vHiSnV{z@rXtYnaAgBdTdb@nj@xWnNcEp_@wk@nQw^mWqhAiEmYhLeHxTc`@iJcRy`@kaA{Miw@|fBsD|k@wTpl@lCh}@kk@f^vAbZ}Mv{@W|[t]pa@`BtUoOtV`Sxd@q@~TymB|o@aTvy@~E|i@{a@|UeCtb@yJvKpGlj@kPh\\k@x|@q[nu@sUjuAw_@|@qQjMu^r}AsJfG@vR~t@ff@zYtk@`J}E|o@|HkEtWvV~KtN~V~@jcAv^zV|VwE|MrP~YqOnZq_AlOePpN|Ap^f^dr@xBzPfZpj@g]n`@lKn]kZdVGhHa|@tXcEtZcVdZbCrYyRq`AgdC{JsiAkUeXYmk@xSsCbf@zf@tB_i@hY_Qbb@fCbv@ud@hn@m@b^qv@fUrCbYgH_GeVy]e[kv@_XmCom@jk@k|A|Li@`rAa}@Rgs@n[pR|s@tD`Cda@cJvT|[~W`i@wKjXyp@vPjLhj@b@pNsZpm@vWpPqZlRlA~VoMfK{j@zYkM|nArCtf@aX~d@oFbwBt_@d~@of@aZuq@oReLyPoz@k^wr@mA{jAyPkZg@qp@cNiJrTa`@xJqEdmA~OhmAcInwAjf@jeA~IrViZz]igA|g@cT~`@`qCxYhGjJ~Sbq@`f@pH~SpSOdTry@bM|AlHlNhI~m@mAldAl]jp@rJtl@b`@dDfM|PrO_@iVbe@w_Ad^}a@~rAdRyAfLfMxnAyThXcYjm@rKtkAiNb_@nEp^|Z`^UvFtVdd@jWxc@rcAjWzVpUnKbtAzBpSvPq_@lk@k]pJwH|Lq@nO`S~U}Q|c@lOxRc\\xk@{l@vE_{@ek@{e@lC_g@kRkh@`CiNhj@zAjj@}WbZeFbVnk@~FlFveA`S|X~Bxa@tUrWqBdO|^nGtHba@v^lA|sAlz@jm@vHzd@rS~\\v^zFl[hgAfg@xg@fJ`zA{[|Dco@oJg{Crr@opEraBicCb^kSzX`@z`@`TnYlq@mFpmHfmAxoAzvBtu@ncBprAlf@[p}@ui@df@enAlOieAv_Ak~AhwA{Q~w@lI`x@~mA~Cj^gZ~vByTpk@g@rt@ag@djCtXtj@bp@`E");
+
+        function decodeBoundaryPath(encodedPath) {
+            let index = 0;
+            let latitude = 0;
+            let longitude = 0;
+            const coordinates = [];
+
+            function decodeNextValue() {
+                let result = 0;
+                let shift = 0;
+                let byte;
+
+                do {
+                    byte = encodedPath.charCodeAt(index++) - 63;
+                    result |= (byte & 0x1f) << shift;
+                    shift += 5;
+                } while (byte >= 0x20);
+
+                return (result & 1) ? ~(result >> 1) : (result >> 1);
+            }
+
+            while (index < encodedPath.length) {
+                latitude += decodeNextValue();
+                longitude += decodeNextValue();
+                coordinates.push([longitude / 1e5, latitude / 1e5]);
+            }
+
+            return coordinates;
+        }
+
+        function createRegionBoundary(spec) {
+            const coordinates = spec.type === 'Polygon'
+                ? spec.paths.map(decodeBoundaryPath)
+                : spec.paths.map(polygon => polygon.map(decodeBoundaryPath));
+
+            return {
+                type: 'Feature',
+                properties: {
+                    name: spec.name,
+                    colorKey: spec.color,
+                    boundaryDate: '2026-04-01'
+                },
+                geometry: {
+                    type: spec.type,
+                    coordinates
+                }
+            };
+        }
+
+        const currentRegionBoundarySpecs = [
+            {"name":"대전광역시","color":"yellow","type":"Polygon","paths":["g~n|Eu{sgWxj@mOz`@mi@fWw~@nu@_zALk`A|MtBf_@bv@~Vb@`IpJtg@eE~IjQA}Jpm@wQvf@{q@tk@mOvGoy@il@gCxYu]bM{b@nu@ak@fXnC~e@aN}B{]nUg`@pd@`Tv_AgIzAcTka@wa@qn@kSoEgUqa@~Be^}PaUwScLeg@s[sEeHgYsi@d\\y`@wQoJxEmsAuOsX|BaKlOyw@tIwg@aRuC}r@_MuGtV{iA`Ye`@lToCt}@dX`]_H`SqS|RrBfL|OnQIpOinAzw@}Wp_@mf@xZfOxc@eeA_F{PjLiH`D{`@ne@kY~^gy@qi@woA_QwC{QfSyQoc@uRmE}Nww@sTzJ}Yk@_Qiy@qUcEgR{`A}D{HoUCoCoPkh@b@aD`R{^pJiPkNc[bAmGrUwLKut@mRaSzC}e@oq@gT_IioBzx@`D{Yy_@me@ag@h\\gSc[cXbEqi@c`@}oApMmZkq@oOtGm\\qJ}Nce@g@_a@qcBua@ij@xHidAuAw|@_sAtA_w@tK}d@uNcRgq@j_@ic@nm@cc@jHaQuFeEfKfKps@mB`\\aWl_@xQb\\cLvVvvBhb@}K|DyQxg@u{ClrAyk@yQyp@o|@_\\cEiM~IdCdwAyR|o@szB}\\^x]t]j~@ng@dZjz@tClg@dbAkAn|@qe@lk@uBhR~@dj@zHmAb@pK}FAdGv}BcMlRsWbDiv@_@kd@{Pyk@uC}}AndBmHni@r{@n|@RrcAd]nFzo@kLtRaS~OP~n@zs@|p@gPvq@bb@pTls@rf@lLjLpOf^cDtw@jvAuIv_@nUxZy\\fg@{@`h@lRbOyCba@nSlPTtWvTr@jGxh@nlBfV`jBq@t^mLbe@hT|TJnYvh@bi@yGbb@cb@hWrMtB|PfYbPlFfPbl@gDdRnKvF`f@|_@}B~e@~PpaA}D`S}I`b@dEZ|k@hb@l_@"]},
+            {"name":"제주특별자치도","color":"orange","type":"MultiPolygon","paths":[["qcijEcm|`W~KqLsKgp@yMtOlMbm@"],["yeijEcm_aWlH_EqGoP[nV"],["{`njEgm_aW|TqCrGkNbp@tE`JuVbVmF`|@`X|z@_VxOv^nNrGl]{JzVtBfUum@xm@}Fjh@qt@db@{HpQmOf^{{@zHfB~f@ms@d_@klAiEak@he@{u@lFsZdg@uOpMq\\tmAkz@{CmQzYoQDsk@fY}FnAtNfc@rB`_@_t@aIam@wYcGbIgJcIud@jT}AlKcRuJsf@{e@~EyHxMcj@mHml@gWoKjKkf@il@{Hug@wYqR`FgRsYoBwF}IwTkbAvIaf@lQoIxI~OqKabAjIs`@cE_b@lFm`@zUu\\k@yPlKcHwPsk@jHqG{L_TtCwQw`@}r@yk@imBbPms@t_@i\\lZcv@gAkR}QcCo@e]o\\qy@TuWzO_]fj@yI`V}g@pXwPxDwb@aFaRmSrAoBs^cTs\\tBso@jJ_GqN}gAwj@_`A}U{FnOwpA_Pce@dOsPrD__@wVkPtn@}uAm]`GdDpTw\\uAnOkFdUid@hC~IiJ}]mTxS}QcSOmaBdDmQr`@wVzHmf@{ZaiAD{i@_QkKof@K~EiEsUqQvC{Sob@koAyl@eEmOaPyMmx@fJgVcDwWmb@lLDmT|NfBfIoMhPtQ_P_ZsDqa@|Vyf@_WaHbF_\\_Di~A_Rql@yPckB{KqB]gr@_OoGnZqa@uPox@_S_QyGzDcF_Wie@mp@iCqVcd@yJiOeb@ie@c_@o@iOd\\{`A{HsMhFqc@wF{XlNw]qHqVyMs@uGaRiCiWhJcB|BwVqRw`AedAu|@qCgX_a@gG_Obe@gRpAi`@ai@rGwEgQed@_x@y[eA{Lwn@{g@su@~K_Jy^_f@eBio@st@cXiEso@atCmm@rCyZpQaVa`@q\\e@{MiSe`@PyDoMsl@w[wNxL_UTiBwf@tWeJ~S`Pn\\_v@el@af@kd@xk@]b\\wRbHi\\_Ic@xR_L}Ac@{OwUz@yRsGc@mLiP}KaRr@kGgVz`@}g@yF}f@qL}FsUvUwDz[wR|LcPaAgUlOuc@}AlVnBDjk@|ZfAyFtUcQ}RyMUdf@ll@sAfEyHkKgMNwJ~m@`SBuk@nZrIrSkI~L{OpFk\\mKfI}MoG{TxHea@iIeJsR|EqBnVwQzDeN}MiZb@qFuIch@zK}Tlf@Cbq@uTu[aMnMuCeXePoIkEhW{XnChEva@eWp]cGtsB{GfKvCt]fKvLfQr@U~`@mDnHoT_GcBre@cRbIP|a@yI~OcShDFfLy[xe@_W|Sc\\q@oVhQqZ{AqPntAbY|b@kEhj@nP|IhA`Q_V|O_k@~uA|Ff]oDhy@fHpXd^dFlFdKrBtNiObm@~Kbv@~IpCnA{K~EfHii@|x@dWdnAtNnB~GdNtDvoBdK~MmHf\\`OhO~@zX{Q`OLzLpD~R`l@hLfCvXkHnErJ`MiRxSuCzW_WjAk[~xA|a@pV`GlQtT_H`Gv[pP`HnGoItVhG{Qdb@hG`}AdKdGBzc@rHdI}FbA{F~`@~]x}@fb@nRwLzy@vL~LlJwDdCxn@_SfTf_@~W|Klo@g@jJuPmJv@pe@eZ_DeRva@ze@t\\|b@pl@uEx_AbTvRy@t]mHbo@yQhW@t[xRjp@lTrLjOcD~KnVqBthArIdVva@jJaGvq@fPtN`FsLfSdR}G|a@nZbuA}Frq@fR`XxRxEuBdo@~D~KvU`ImCfTzLja@gAzUea@`Vt@fb@|]r^CnNhc@zy@mBbhAfHxTxThEpQzaAlSvNzFzT_M`y@~Hxc@}Ltj@pT|_@vd@kMnm@pYj`@dh@@nRpS`Y}SBg@pGpSvJsHfUfNnTeCxZjk@xY_JvBeA`Q|Itq@tPfIlq@oMt@vZlv@|FzBjZe@mb@ub@oJdg@oRrV|w@nTnSjSzHtV}CrBju@rb@DaA`[f_@dZeQ`SvPtNj@d]xSjCpc@lw@vJoKhR`F`Utm@bT`G~TlW}A~RbPf|@jY~j@xN~IhS{Erl@xKeIxO|Jpl@hTdOhXdBc@vOlN~M"],["sk|jEgukaWd^}Gv@iq@g_@yDgK`LkCjV|Nr["],["wfmnEumpaWlMaZ{NcSoQ`T|RbY"],["eqlnEgkraW_F_PoDlEnKpI"],["yimiEktsaWjPs\\l_@mNmf@}_AqVlE{a@vo@xDbQfi@tc@"],["i|mnEm}saWhIyLkFmH}AfV"],["ygciEs_taWz_@eL}@{VuY{Cul@|KpBtJzd@hP"],["urinEsgwaWjFgMyDgFuMtPbLxB"],["mdhnEcnwaW`Kgb@po@{|@mJw\\y_@hEaMnj@uK}JxHeMEaImF|A_Rvb@yJd}@vNdFvHoEqCaOzK}KdDtg@"],["g{enE_p{aWhPgOtEkd@hFhDdUs_@zdAs]Dso@{BsKgKlBgOnMBtPgb@nAmRoWcI_tA}TkDcSp_@}Ke_@eN~c@v^blA_Q|{@vMrYwGnb@|V~J"],["cw|mEqp{aWtD{S}H|LfC|E"],["qguiEwl|aWbYaGgFmS}JrE}EzT"],["kwcnEav|aW_DyV_EvN~I`G"],["glmnEuw~aWfSyRM}S{PfG}@n_@"],["o`_nE}z~aWlPwOpKhEfH_Ry_@uFmEbd@"],["gvqnEk~`bWxM}XvAwq@hOs\\aIqXqZvf@L`b@eLvTnOhb@"],["ys|mE}bcbWlJkIu[c@b@dGbOhB"],["khlnEwxcbWtGWhDgXgHmZyRbl@`NhG"],["izhnE__jbW`IyDgVgZkEtMpRjQ"],["efhnEcclbWdFuLsWiD_JdGl[xI"],["iunnE{qlbWlImE{AqKqF~Q"],["myviEspdcWfK{PkGsTcUxPfQtT"],["wqxiEshncWfJ_Z_IaJgHrY~FlJ"],["kgyiEmwtcWlKwF{Dec@oSbX|LxQ"],["}aykEetgdW|KmM_@cOy^xFzRvU"],["cpikEchreWkDaS{SpKfYnF"],["uqikE_yreW|J{El@_PkLzV"],["m{nkEqbxeW`o@_VtMjFzV{oAeHkT|Q_Te@eVwv@c]ynAv]eFeGjEq]}Pk@wMhc@pVvr@kKvDwYoZyh@jj@|@h[hOdW|SoAxB{HtUbFrV~^|h@rK"]]},
+            {"name":"진주시","color":"purple","type":"Polygon","paths":["c`}uEoaqkW`L}CdX}c@hmAdEhKcXhaAeaAhW{fA~aAcqB|SyKp[tRtPXrPuVpIq{@aR}i@aAs_@|BqOpQyFvCq_@aT{MyKif@`MqVLqy@lHyOjg@qc@xQ|BzFhVbRoSrn@aOtdBxJjY_ZtHg`@mC_t@oJwP_RlHgE{TiRwAwHmTpOeu@{A_j@iWc`@eRfGcVgOdS{_A}Cuw@lb@ie@xQ{cA`ZiZjc@aAf`@jKnViIab@wj@xFebAg|@}wAfA_`@gM{b@hNyrAzWug@ly@eW}@y^n]yV{A_RxQaU`a@j]n`@?|Und@sEtz@~Uz[lIkAdGeVhr@{Yo@me@vvAkz@sHmg@pSkb@qPaZioA_s@oo@uvAuKpF{DtxBaiA|R{v@}T|Gqf@{X{UcT~N}XqJgm@ibArFedBiRwHDmb@uWmk@{[{GcErIqA{]uHyFbJav@kI{N`Gm_@c\\kb@|@exBzc@ccA}HeYfIc_@qXei@Iuf@x_@ec@gAec@aSkZvEs{@aYkDuT}ZoBo[{ThDgT__@a^vTa`@gUe~@nDgz@wVif@xB{oAaVci@bUiTn[sa@tRqO~XrOvnC}h@zl@m\\bDqU|SHhcAmMzH}a@wKep@fYsB`ZwRp^sk@{\\m_@ha@lJjm@ob@`iAbGfMiFpnAbUjfA}@prA_Kv_@w]bVsW`j@bLvVaMfPtKfg@~y@n\\qPpi@c|@eEeHvY}l@rOaBjTeW|ZsNjIeX_Gyf@n`@qMz@g]eR_v@b[oh@{Ga_@c\\eO~AmtAjwAid@|AoMbXqh@z_@pRrx@n`@xj@dGr[t]|Uje@pwAaIds@oTzb@mHbfCbDza@|NlCzDpWyEndAr[|Ilq@fi@`MyJdc@{@fi@|i@vM|YqXhi@|ZlxBxXhMhJdk@dj@jV`Xfe@gAp{@t_@pKd[qL~SzDjRjMjCjz@``BnHdo@h\\``@|{ByTxK_Mra@iNtIyErb@jHvn@yQdUfeAzy@psA~CfTlKzGrVg]xk@dEfo@lcA~N"]},
+            {"name":"칠곡군","color":"blue","type":"Polygon","paths":["yaf{E}s~mWvrBibBfdA`MtGza@~c@|Vh^uEfu@we@pEob@{EuNdJga@`d@_JtYgc@lSfQjBvNzs@vDhiBsRxIoSr]}Hr]aaAnK}x@dc@U|LiTrVhMpx@em@gH}iApZm]h_@V|Ye^f@e^dSac@e@}kBlwBid@dq@aCrrDjaA{Fm[_]w^{d@sSkm@wH}sAmz@w^mAuHca@}^oGpBeOuUsW_Cya@aS}XmFweAok@iGdF{U|WaZ{Akj@hNij@`IoBh^Q~f@jRze@mC~z@fk@zl@yEb\\yk@mOyR|Q}c@_S}Un@qOvH}Lj]qJp_@mk@qSwPctA{BoUoKmW{Vyc@scAed@iWuFwVc^Tq^}Zc_@oEukAhNkm@sKiXbYynAxTgLgMeRxA|a@_sAv_Ae^jVce@uO^gM}Pc`@eDsJul@m]kp@lAmdAiI_n@mHmNaM}AgTsy@qSNqH_Tcq@af@kJ_TyYiG_a@aqC}g@bT{]hgAsVhZkeA_JowAkf@}hBxHsx@}NkYze@bNhJf@pp@xPjZlAzjAj^vr@dPfy@bSlMvYlt@u_Ajd@iuBi`@_e@nFuf@`Xyn@eGkJzIjN~PkEvp@~G~`@gTpVzKpTcMb]zDlr@sSfi@rXxfAw\\|dA}u@zOcErXfSoDve@lIha@ri@~_@fWhTaDbQlYzc@iH`eAnqAz\\sClXkZ~Qnd@i\\htAgV`SqNpkBkU`[yUvGj@jKtOjDbMpV}Bdn@cl@`M_HzNw@za@jJy@neBbbBnV}MhUl[tIhVkF~`@zYbb@dFtYcdArxA{r@`VwLjl@ox@na@mA~w@~c@paB{I`r@aTtYfS`Fzh@tk@"]},
+            {"name":"구미시","color":"green","type":"Polygon","paths":["sqj|Ew|`mWtj@wZvV\\_FqZhJy}@yByt@|Tym@bUeArY}YjJqiAyCsnAt\\e\\fRkmAzf@wYgFam@z`@qu@fImJ|e@rPhYgCtj@gZtEdSjYfIvCeFcBsy@pNSiKmlArTec@vMyu@pWdC|v@kNnXdQnYmArPqm@}DcZjHcz@nVmW~ZfSps@lJnF~RbPdG`PgF|Zfj@vy@waBzzBdtBn|@zMby@ijB`UiE`TuYxGgc@p@aPoc@i_BlA_x@nx@oa@vLkl@zr@aVbcAitAaEw]cZyb@`Dek@q]ch@oV|MoeBcbBkJx@vIwq@bl@aM|Ben@cMqVuOkDk@kKxUwGjUa[pNqkBfVaSb\\{tAyQ}c@mXjZ{\\rCaeAoqA{c@hHcQmYiT`D_`@gWia@si@we@mIgSnDbEsX|u@{Ov\\}dAsXyfArSgi@{Dmr@bMc]{KqTfTqV_H_a@jEwp@{JqPaV_G}ZnMiK~j@aWnMmRmAqPpZqm@wWqNrZij@c@yPkLiXxp@ai@vK}[_XbJwTaCea@}s@uDo[qRSfs@arA`}@}Lh@kk@j|AlCnm@jv@~Wx]b[~FfVcYfHgUsCc^pv@in@l@av@td@eb@gCiY~PuB~h@cf@yf@ySpCXlk@jUdXzJriAp`AfdCsYxReZcCuZbVuXbEiH`|@eVFo]jZo`@mKqj@f]{PgZer@yBq^g^}NyAqj@rpA_ZrOiBzg@aa@nq@gXrEwKv\\_XfQyYsJg\\zv@w_@m@o]tJaMng@op@tc@gd@bBm`@~hAej@lTzNd}@iAng@rb@hVzBz_@rk@bz@`]dLv@zb@aMnTka@n@oa@tQoZlr@fQbOk_@zsAk\\sFgb@fZmJ`\\xDbxAr[xYh_@cBtH~\\feBn}AnZhHt_@kKzV|GrLyDfyAjQ@jOcRzQ_AzY~Khd@ve@vc@bChn@iNh{@tSt\\{Eh_@hEzN{Nhg@lPfZdK|bAdl@tj@sD~RxWdf@z]xRhjAxQ"]},
+            {"name":"청양군","color":"red","type":"Polygon","paths":["uop}E_zcdWrgAkYdMyYdCqf@dKeD|z@b]~l@on@nR~O|_@cSfZtGra@{Dxd@ezAtXuSnWb@vO{_@h]tXrd@o\\jq@sz@_So}@fZsZbt@_ApIaXcPoPNqKrVn@zd@gYxRapAyWs}Bd_@wh@UkL}XcT{P@}X}a@wcAiSiNcL[yaAo[kT_Yci@~H}y@eQa|@dLqI|dA`n@uYnf@bCn[dc@aObi@?`Bo~@tOj@f\\~WjIkJoA_d@`x@}`@rR{b@hf@oD`e@l\\v]gUfQ{k@oP}bDic@kn@|XeEfJs\\wHkh@fIcKpNrGlMwG~a@qoAwZoeBqg@u_Amd@{_@}Oy|Aga@cy@{UsRoe@gHuiAzB_~@}S}iBa}CuxAuhAm{AtnAkh@eu@ix@ld@uZyKhEjl@kGdc@cKnCuU{Kcj@rCbBv_@{\\yJiArTmYtTePzwAiVls@sDjr@vHze@}NtUlRdZvUlhAvi@`_ArAzdAgEbRa`AjT}Qds@oPnQy]|J{Il^i`@VcRlL}MaGou@pEo]eJsa@rr@aRdKyo@ac@q^gCwLmTcl@r_@yi@yFof@a]{N}]ct@kAoTpkAie@vsAqL`KvE`rAcUt}@dHp^`GcLjWvEhQpZdo@tMdLvWb`@zSl[c@byAhe@yBjw@gL|V|G`b@pRnGoq@jzBPvMjN|LgLjn@pr@`Zho@sCj{AvqAfAth@nz@nPpR|Rja@kD|qA~r@ir@d{@gIthApStd@eAzn@pn@h{@nv@jqB"]},
+            {"name":"파주시","color":"blue","type":"Polygon","paths":["ct}eF{cadWna@yz@KmN|UcOruBlp@|rAdE`t@bQ~O_FfHkRpfBug@zxAoSd^pLv|AeTteAiq@l_AjJdrAdk@pcAy{Aop@ip@bDa`@aUyl@{YctBsDvCUg_A|Jap@}I}m@vHm[oCm]gQaF~Oml@c^L{gAmhAs^{t@{UeNuWbByGpKuLw[vJeOb^sBri@anAi`@ow@hJaRiJmb@|J{MyI{_@}PsJuLmi@Dwf@{KoLnMyMjDsd@lQ{Ox@_WvRcKCgn@xi@uIjDoTyi@{a@qRg`Aku@~F}Z{OiSg`@eLTyHwaCu`@iM}UtSm}@s_@mR|E_UyTyb@dQwj@s\\oJrd@bVp]e`@`o@aGv]pC|aAudAkIiXwf@gZnRid@}Gek@zl@wPUaMis@em@gIeNtEiOoKgBgfAbUeKgBsb@{L}Taa@jKuR}EmRiSa[sDo}@ah@oh@~K{cA{VyV~Kyr@{NaQhJeoA_q@sg@`_@aTai@rLaV}^kJqQaSkbAl@a`@efAa|@eQqd@wy@yi@{Ocf@a_@Ia~@}Pi]ys@eGwMwZc]fHc[`zAok@fv@l@rf@uHhVnGdmAnb@lp@h{@nx@`b@dgAbCt_@gYxvAosAjgDjeA`U|l@cD~t@qT`YhKxJrb@qHjw@wTbj@qcBrhBg@d\\dNhf@jXlVjdBpTtCrXbYjZrMhn@}V|RoPyDyXnVwEtLdI|KgRbd@_iBpd@yYaNqId[tqAnwA}Wzf@xAzMhIjIbK}TzKxN{h@n{@fTncAlm@pn@nHt[~i@bTcInHwFnl@hVls@mWbPzAx[uL~Nq[|BfDvf@n_@lJ~Pzw@nw@pYuDpd@v[x]uLld@hl@mKpVpQnSbApImPzj@xYn\\iI~c@nTdV]jXcYcG{eArQqRhHvXx]t[xs@mHnw@h_@pCvKzK_ZlV`KdBkRqQgD?iShRdEfJuS|Nzg@cDpTfUwRhZjOw@an@{UuSxa@qu@rgBvkAvb@z@lKdTeJn_@bOnd@qAhXjTbI"]},
+            {"name":"강릉시","color":"blue","type":"Polygon","paths":["co{eFkjxoWvvAyZx`@ucAbr@m^d`AnB~dAmH`c@`Qx\\uT|Rgh@{Yw]xB{}@cS{Rh@ePam@{TeMcT@oLf`@iZbc@akAhEqaAvSw[{e@ef@|Ai~@zPw\\oEeu@tYs|@rImEbH`Ihx@elAb`@wMlLqo@x_@}g@bAwTxx@{MreB}Gb\\ed@lSsIr{@aGzX}UbaA_NbSePtc@aHbNvCjMnbArPzIpBz]tp@d[fYtx@h[~FbPkGz`At]fn@{l@hsBeCf@jhAjVr`@tMpJt}@xGfNvWdOn@_Fbk@_Wpc@vFhTmChiA~aDl]t@n`A|c@q@dHs]fp@oOnZgnAz~@s_AdIi]oKuP{Fw{@wSmY|EwThMfDzDeFq@wa@wv@}~A~_@s|AaJkf@s@}vAb]s~@xd@we@bDo]nIqHf]mCvg@bk@ny@avAjQ_RnR|Ao|@gyBlFei@qRwo@yc@iGgW}Zy~@cG_v@u`@qy@yCkl@~NwUeTs`@sKqQhJkYeBiP_h@{~@o\\dGeXoZok@~AkMdUoM`Kqh@|N{J`m@{Btz@}f@~P|EfiAyGyAki@~\\aTtFkt@|u@_}@pEgf@yYqZTsz@g\\u[}Od@eAmItKgMnUrBvz@e`AfCap@sDgh@u^yXkV_m@`LmzApNaa@gLsVob@{ZcNe}@lNcr@{FoOuj@}IuWtHye@yBaOsKay@_@ilAmv@{V`IaNfT_O}BgAsb@eWsQmZex@ov@b}@k^hQeHtc@iZDjPi_AiSli@Wja@evAvp@wPHqv@k]uAgRt]`HieAeg@ye@`Ocn@aUyR`Im]vk@g_@pVsFt_@o_CjaD}d@bNorAhhB{a@`Vu_AbPjC|V_eClrDeXzY{LuHkLpNh@|KugB|dC{gB`pBuvCvzDk`@rTmMc@bF{Na`@hP}lCtgDm`@lD_I~\\aoArmA{OcUu[zF_g@cLmMzCoU~\\}G_FlFwH_PxHiGjf@w`AdwAba@pl@~Cpz@mQfbAl]tg@tBztAaPxs@nO|h@~`@vNfDdr@zTjYqRp_@vDvUgIz^d_@r]p@peAht@zsB]`i@vXrl@HzMe]vLiFr_@xDvdAoTzSqB`U`KrSh`@zSrb@p~@zi@tEbPfQxHbzBx\\|YzAt^rU~UpbAvS`X{Dhn@~Xt_AxD"]},
+            {"name":"원주시","color":"purple","type":"Polygon","paths":["crbbFa~tjWbsEa~@fkAyn@vi@ah@pd@yxA|h@sj@cJob@hIwg@uPyd@lC}p@we@}fAbFwx@cIyoA}c@sKeJ}LtCqJvVeA|Eo^gf@aFcPiu@tTsbBv[_r@df@k[gKaO_~Asg@iKoi@h]}w@wgAqx@oh@rCwe@gVed@pUsnAnBuiAvb@qN`UyVnJo|AqkBj@gj@ig@uNuS{dAdAoTij@c}@kI{f@dI{KmEy`@zXcp@qDm\\jQ{s@j\\ka@fOqd@|\\n@rl@uNl_@}\\jRwb@p^qHjBiR~PwPva@`d@bg@fTlWqJhd@Z|Zwe@_H{f@rH_a@c[y}@mAgvBkd@}w@`@uj@qd@guAmjAedAgS_a@wf@zUuk@u]t]ii@dAap@fc@wKdRcj@|ZcUnLihAa^_p@yc@`BqU{SaYhJu`BebDoMcHqFk^ez@u\\ax@bDeYmGwRka@kd@bAmUpNaDrg@kQrf@qf@zd@nXfa@fIpeA|HnEh_@we@dElBpd@htAjSh`CqV|oBhNhRQlg@w`@fIcKvXecA|Pqo@oFaJrYb@jgBqS~vAkTnVuCxTX|{Ae_A|kAusAlm@i`@oX}c@wIwT|Mgf@}Bi_Awt@_IsjCet@sYor@dGs^rSmUr@{d@}a@yYyk@iJy|@uIqTaEzAuYtQgLj_@kwAnu@gp@nbAsBj_@ge@bBeYlSrL`w@oB||@a^rpA|V~tAsH|E_Ejm@un@zO~AbeAkOd\\jJlZqHpi@|r@nlAg`@lr@nDp]ws@vf@wiA|ZsDjMwg@k@ib@za@cLk@yc@_a@cX{C_h@naAb`@~c@bVbIzBxPvYkEhc@`w@ps@|Jha@`Ytg@p`BqEl\\zKvt@vaAfHfYn_@|d@rNtZ?b[jOn]kJxg@pEvq@si@dhBtZLx|@z\\``@oa@~Pes@_PgMjLk|Brm@{Hv]{fArwAzF`q@|TlTtVvx@vf@kLh\\fy@|tB~h@nXD~ObYbs@lB|j@|g@b]rCbl@eKvIlp@sA`i@zP~UhSqIpWvJr`@kBru@pKpYoFxCmI|j@oDp[pF|d@yNdMjCfmAyf@zNfGfSeDhAle@rZtk@vQyInb@zOpe@kK~YvE`_CqUli@~[nV`]`XpFnuAxF|QgVfZsCzjAxj@"]},
+        ];
+
+        const integratedSpecialCityBoundarySpec = {"name":"전남광주통합특별시","color":"green","type":"MultiPolygon","paths":[["efroEyzkcWxgCivLwc@pjBx{A`C}~AfzAtcDnwCzqAncI_oFti@ogBgzG"],["qjvoEwd`dWngBu|Dz|@vrDbpCmgDniFlnCswE`hEyqCuuCivBvrBg~@ebC"],["{azoEygneWf]u|BhnDnRs^acC~bEfaA|s@peFkcBfdBz|Alu@qlHgFyqB_nE"],["kh}oEshocWloBceH`nAm_AtSfkCdgB{sA{o@rxDnqB{Doe@ddDs_AkEj@vpAeqAaz@cXd`@_a@keA{Ez_Awb@cQma@__Awx@rvAcCgzA"],["kslpEuhdeW??"],["{}qpEeoifWvAnhAwAohA"],["{}qpEeoifW??"],["kslpEuhdeWgsA`cAt`AbvE}uBheGhImfDqrAir@xz@atDqiCqtB`yAeqAzO}~H`bA`oBf`C?ukA`|AzqC|wC}rA|N"],["{}qpEcpifW_aCxoGtUq~BguCwoCfuD{xAq|@gfExqCuzCyy@vjEf}Amu@fuCzxE}iB~`@wbAeiB}ShtC"],["om}pEg_hdW??"],["om}pEg_hdWhvBgzErbFqe@p~DoaFprAz{@bfAy~A}iBfkGxoBiTyc@`mGsbExbDyYznCupIhh@ceBwyI"],["ak|pEwqxeWx|Co\\huAldGwxBrgGkoEfKlcBenL}iCamAn{BL"],["_waqE_v`dW??"],["y~dqEqbceWtcB}_AjKfwBnCa`DzsDyyArj@x{L|uDlnAuV`mAy{CmdAtJbxDyhG_|CkyAmkJ"],["yuhqEghneW??"],["ugjqEscaiW`a@k}AwxAccAjfGqqE~kBb}HwoByb@_kAx{DmXwkC}Fz}EmgDaa@zhAcqC"],["}ipqEqcngWjxBgmBdaHpeDka@fkGvxAvtCwdDtuCvV~oB}jDnf@ayBcoD~kBi`C}jCawM"],["ifwqEs_zjW??"],["aiwqE_dydW??"],["{xyqEkw~hWzq@yjAf|@|zBjaAuiBfHtnBbfCcoHdrAlnIayA|hAcqBq{Asr@`hCguC{iE"],["eozqE{n{dW??"],["ifwqEs_zjW|tBclAvMbvAvnAg|Dxy@xq@wcBvyIesChOkbAb{EsuAi{JtbCmiA"],["gvarEgsqaWnqA{_IdiDsbAyo@{xCtoF_kFtdEgr@xB~eDh`AqvAlyAbvAvmAim@~pHjbFm{Dvw@zrCf_@eq@tkCd|A`RzgAy`ClpBrgCyhDkTod@hcDtwByJhi@lsKjcAgfAzeAvtEydBptBpe@`~D_aDahAjVjlDejFn|CqiBcj@eq@ahEyyAhjA_cDy}I}wD}pB`pB~MnB}fBg}Atd@ka@awCuaAffAoz@uuCkyCq{AmeCjnAsHowA"],["akjrEovk`WhxFukIvzBrxBdfBwm@tcCxgLwnAvKi^qcE_lAlzDtJufEy|CcvC{~CxvF{qBsbA"],["awkrE{wc`Wva@miC|tB|f@|s@omCfvE?bZjbF__MrL"],["mhrrEau_aWplEwaGh`C|pN_cDc~@yo@jeCayBmuH"],["auwrEebp|VfhAkXwLmxExbKbgKwfEhyAqvFsnF"],["_uzrE_h}jWjmAmNukAv|@pp@zzBnkG}fHbuIhrBxy@}zBfiAzqB_dFneNkcBwoAoe@hjAarG{zHuyGdzCtaC{kH"],["wp`sE{_gjW??"],["}i}rEooz_WhkC{nGzrBzg@rlDtfGkaBd}@|EvtE_xFb[}Rk{DumCgcBfhAco@"],["wiesE_yt`WdqAgmLjgIyE{E~oDmeDhw@xzBjdKe_Gsi@_lB~jBbC_zF"],["}{gsEcgfbW~t@}kB~aDtzA_xEfP"],["mfmsEcb_`WhlB_k@n|Ad_BboAqqAvxAxlFkxBdi@dqAwOcB||C|~B_uBprA|rAyoA~eHieHsbAtUq`Fm|DqeJ"],["mtrsEqz{`W??"],["ksusEk{yaW??"],["m{{sEi_w`W~`By`Gdg@nwCn|BudBbnAzl@kj@zdCbrE~HrRzxCegCbvAjyCfZo~DtkElc@ofFyqDp~BegA{nC|s@kjEgbEoC"],["ksusEk{yaWwb@boBvbBvtAaaAbeFayA}k@|Fc`HgsCiJnXapBcfDptBsjAoaB~wC}wI`c@`|Cx{CliAzPohGd~DwcBtxBjnCgs@`mCerAesBo{A~wA^xgF"],["yxetEkul`WtnC}|EjwAn|AhvBsgAq]beBrkBw^lyB`cGulDlkBzpAfiBe|Ah`GoOupCa{EsqCbDyqFmfCgaA"],["qfgtEiysjWtxC{aHdtDx@gvBveG}PqtBg]f_JmrEexB~j@evA","evatE_wyjWh_BxETiyAcdBj@bCbqA"],["u`xtE}xz`Wbb@y{Dj|G{xAne@v~EngCfwB_oGoy@hIsbAsuA`eHerCghF"],["_sauEsfk`W??"],["_sauEsfk`Woy@~rAypBgi@{\\weEe~E{nEyNkvHz{@`oFbtIxJcn@rbCpgAk{B|vDldCofC~rCpFxgBxoAsLi_A`|Cwy@qoB"],["yuhqEghneWvAlzBvqEioAixDptFq\\zuFgiA{Svn@dsBe}Oim@}yKpoBp{Ox{@xCdbA`fDyl@npAvhDtuAwcBxsDh{Dp}A|uHrhA_NkaAznA`{CfmHh_PdbA_k@naHdtDdiFgfLrGjmAhoGuvAnhAcOmiCmnBf_BqQaaDqtC`u@{\\unDmdDh|@p|Ap{CqhCt_DwMmdCqhD`hCeq@gaAwcBr}@_`@a|AuaBptDmz@{qB_aD||Gz}CpoDsvD~Rac@trLo|B~CuwCznI}jBuzEeeAbqEapCf_@ofQmzDngBudHx{B~HngD}kD}uD{pDsvBvcDmfDy`CkvA_kLcfB|u@x{BnoJsiBdgEc`HmdKicFp~@xDr_BeiEyqBegP`cEf`EzxAh`AuuAdiFlb@}q@jzJe~A_wAgiCp`DumCesBveCowAogBiwDe|@tzCs`EuhJsvCds@f}@`tDapCjeC{p@sqAanB~cAyCh~AtcDrnBxn@qvA~kAxgBo|BrlAhu@zxChuBuuA~lCxxCs~Ahc@jk@hhBimE_a@iuAd|LumCfZunC{nEfuBenLanBhcBicE_aBkl@evA|~Aur@tl@_uFagE}aD||Kb{Aeg@acChlCpt@{DwkCldBoRguCieCvzBvh@cz@orAbpAy`AvxBxqBr`BofF_lBzl@euDwhFalAffCgtA_uDkk@|mGmaKffK}}A|\\md@mpBogCgZtxB`tFmeC_\\|}@taC_wB|wCc|DowAly@}kBgaFsGcZkdGopOy~Cf`Cg|H{sDnpFcvIsBfRa|Kn|BghB`oCr_BtuAa~BdhCzX}gAyvBpkHsgAnqAoyJ}vD?|_A_uJ_eEgfCjl@wwBilCsdF_nE?ofBkeEimE`fBulBwhDsIyqHopBqy@rt@y{BvcBlS`xAoaJziDmf@~aD_iEoe@{_GogDv^sjAwoCsjC{]yZc{EpkEiOvl@o|A|vCp`@bn@rxB|vDqlGz}Cx@wApoBxqBrx@tlCocK{jFayNvdCqoBiwBofBpjCkbFzp@ohIwnBitGl{Bg|DszIq`Hkl@exFrcHy}Q~hLkgHtrJeQh{IuwLvrHuzCxhEqbIxiG{dC`qHxsE~nD}aBoElsCehDei@jk@|~Bd_Fb{EqgAnwCpjDvAtwBzdEyqBn|Akk@gfEmoAxxMdjDomEd}BzsCzsC_pBnX_pDdsB]cy@cvE{iDawC~uAmkHuaAlSUamEznJ`Wd}ClsC`qFk{@jmBd_JiwEh{FxsHx~A_kAvmB~kAbgAhkCc`DcCvfCzxI{qDwoCtkKtbCdQk}HjvDeqBkv@`VwaCoeBjeEw|Ea|GqtDzsE_`@gfA{tCpvAaVfuEinE}zBsHbjBunE|u@n[hhDngE|WoZvcHhbCrnF}~Aj}G|`D{fFwB{sEveD~eFruAfUnn@whBd~CdxDzdLmxIjyCa~JlMfaEp}AilF~lD{{@n}DfsByoBtwDlzA~rAe}@zpHrt@upAftBtkA`cAgfGrbFjv@kv@vcBvnBdiFlzBi`Aq]~`HfiAn|Atv@yjAbYlzBtaBkiCne@poBquDh`CukAhoEaxAkbBcrCpoDlNnmCmeBrgAtmBlu@g_BnkBbpAhoCadArxH}tDhm@m~F{xEtj@yeCorEiO{tComCuTgfE{bJsqCef@oyD|mGtUr~@udFsxG{zDwgG|kBx|BdfKapDfkCdxKtdJsi@bxJ~}KjgNf\\zkPbfCacIzvE~yDdZ}kDb{ArVqh@htAdoKfzC`dD{xAqgA~vEx}Ehc@uv@pjH","y}_sEsw}bW`cAldC}_B~j@wAzxC`cBrGukAjlDbzApo@vdBcqMswDw~A"]]};
+
+        currentDaeguBoundary.properties.colorKey = 'red';
+        const currentRegionBoundaries = [
+            currentDaeguBoundary,
+            ...currentRegionBoundarySpecs
+                .filter(spec => !['강릉시', '원주시'].includes(spec.name))
+                .map(createRegionBoundary),
+            createRegionBoundary(integratedSpecialCityBoundarySpec)
+        ];
+
+        function updateChromeContrast() {
+            const wrapper = document.getElementById('mobile-wrapper');
+            if (!wrapper) return;
+
+            // 지도에서는 지도 종류를, 목록/통계에서는 기기의 색상 모드를 기준으로 대비를 맞춘다.
+            const useLightInk = activeTabIndex === 0 ? isSatellite : isDeviceDarkMode();
+            wrapper.dataset.chromeInk = useLightInk ? 'light' : 'dark';
+        }
+
+        function syncBottomNavIndicator() {
+            const navButtons = document.querySelectorAll('#bottom-nav button');
+            const indicator = document.getElementById('nav-indicator');
+            const activeButton = navButtons[activeTabIndex];
+
+            if (!indicator || !activeButton) return;
+            indicator.style.width = `${activeButton.offsetWidth}px`;
+            indicator.style.transform = `translateX(${activeButton.offsetLeft - 4}px)`;
+        }
+
+        function setBottomNavCompact(compact) {
+            const bottomNav = document.getElementById('bottom-nav');
+            if (!bottomNav || bottomNav.classList.contains('is-compact') === compact) return;
+
+            bottomNav.classList.toggle('is-compact', compact);
+            requestAnimationFrame(syncBottomNavIndicator);
+            window.setTimeout(syncBottomNavIndicator, 320);
+        }
+
+        function syncBottomNavForActiveScreen() {
+            if (activeTabIndex === 0) {
+                setBottomNavCompact(false);
+                return;
+            }
+
+            const activeScreen = activeTabIndex === 1
+                ? document.getElementById('list-screen')
+                : document.getElementById('stats-screen');
+            setBottomNavCompact(Boolean(activeScreen && activeScreen.scrollTop > 28));
+        }
+
+        // 탭 전환 로직
+        function switchTab(index) {
+            if (navigator.vibrate) navigator.vibrate(10);
+            activeTabIndex = index;
+            updateChromeContrast();
+
+            const screens = [
+                document.getElementById('map-screen'),
+                document.getElementById('list-screen'),
+                document.getElementById('stats-screen')
+            ];
+            
+            screens.forEach((screen, i) => {
+                if (i === index) {
+                    screen.classList.remove('hidden');
+                    screen.classList.add('flex');
+                } else {
+                    screen.classList.add('hidden');
+                    screen.classList.remove('flex');
+                }
+            });
+
+            // 바텀 네비게이션 선택 상태 조정
+            const navButtons = document.querySelectorAll('#bottom-nav button');
+
+            navButtons.forEach((btn, i) => {
+                const isActive = i === index;
+                btn.classList.toggle('is-active', isActive);
+                btn.setAttribute('aria-current', isActive ? 'page' : 'false');
+            });
+
+            // 홈 버튼(<a> 태그) 색상 동기화
+            const homeLink = document.querySelector('#bottom-nav a');
+            if (homeLink) {
+                homeLink.classList.remove('is-active');
+                homeLink.setAttribute('aria-current', 'false');
+            }
+
+            if (index === 0 && map) {
+                requestAnimationFrame(() => map.relayout());
+            }
+            
+            if (index === 1) {
+                renderTravelList();
+            } else if (index === 2) {
+                renderStats(); // 통계 탭을 누르면 통계 데이터 렌더링
+            }
+
+            syncBottomNavForActiveScreen();
+            requestAnimationFrame(syncBottomNavIndicator);
+        }
+
+        // 지도 초기화
+        function initMap() {
+            if (typeof kakao === 'undefined' || typeof kakao.maps === 'undefined' || typeof kakao.maps.LatLng === 'undefined') {
+                console.warn("카카오 지도 API를 불러올 수 없습니다. JavaScript 키와 등록 도메인을 확인해 주세요.");
+                return;
+            }
+
+            const centerLocation = new kakao.maps.LatLng(36.3504, 127.3845);
+            
+            const mapOptions = {
+                center: centerLocation,
+                level: 13
+            };
+
+            map = new kakao.maps.Map(document.getElementById('map'), mapOptions);
+            
+            kakao.maps.event.addListener(map, 'click', function() {
+                closeBottomSheet();
+            });
+
+            // --- 땅 모양(행정구역 경계선) 색칠 ---
+            loadRegionBoundaries();
+            createMarkers();
+        }
+
+        // --- 행정구역 GeoJSON 좌표를 카카오 폴리곤으로 변환해 그립니다 ---
+        function loadRegionBoundaries() {
+            if (!map || typeof kakao === 'undefined' || !kakao.maps) return;
+
+            regionPolygons.forEach(polygon => polygon.setMap(null));
+            regionPolygons = [];
+
+            currentRegionBoundaries.forEach(feature => {
+                const color = colorThemes[feature.properties.colorKey]?.markerBg;
+                if (!color) return;
+
+                const polygons = feature.geometry.type === 'Polygon'
+                    ? [feature.geometry.coordinates]
+                    : feature.geometry.coordinates;
+
+                polygons.forEach(coordinates => {
+                    const paths = coordinates
+                        .filter(ring => new Set(ring.map(([lng, lat]) => `${lng},${lat}`)).size >= 3)
+                        .map(ring => ring.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng)));
+
+                    if (!paths.length) return;
+
+                    const polygon = new kakao.maps.Polygon({
+                        map,
+                        path: paths.length === 1 ? paths[0] : paths,
+                        fillColor: color,
+                        fillOpacity: 0.15,
+                        strokeColor: color,
+                        strokeWeight: 2,
+                        strokeOpacity: 0.7,
+                        strokeStyle: 'solid',
+                        zIndex: 1
+                    });
+
+                    regionPolygons.push(polygon);
+                });
+            });
+        }
+
+        function getTripLogoMarkup(trip, imageClass = 'w-full h-full object-cover rounded-full') {
+            if (trip.emoji) {
+                return `<span aria-hidden="true" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;">${trip.emoji}</span>`;
+            }
+
+            return `<img src="${trip.logo}" alt="logo" class="${imageClass}">`;
+        }
+
+        // 마커 생성
+        function createMarkers() {
+            if (!map || typeof kakao === 'undefined' || !kakao.maps) return;
+
+            travelData.forEach((trip, index) => {
+                const position = new kakao.maps.LatLng(trip.lat, trip.lng);
+                const theme = colorThemes[trip.color] || colorThemes.blue;
+
+                const markerHtml = `
+                    <div id="marker-${index}" class="travel-marker">
+                        <div class="travel-marker-label" style="display:none;">${trip.region}</div>
+                        <div class="travel-marker-icon overflow-hidden" style="background-color: ${theme.markerBg}; padding: 2px;">
+                            ${getTripLogoMarkup(trip)}
+                        </div>
+                        <div class="travel-marker-tail" style="border-top-color: ${theme.markerBg};"></div>
+                    </div>
+                `;
+
+                const markerContainer = document.createElement('div');
+                markerContainer.innerHTML = markerHtml.trim();
+                const markerElement = markerContainer.firstElementChild;
+
+                const marker = new kakao.maps.CustomOverlay({
+                    position: position,
+                    map: map,
+                    content: markerElement,
+                    xAnchor: 0.5,
+                    yAnchor: 1,
+                    zIndex: 10,
+                    clickable: true
+                });
+                marker.setVisible(isMarkerVisible);
+
+                markers.push(marker);
+
+                markerElement.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (navigator.vibrate) navigator.vibrate(5);
+                    focusMarker(index);
+                });
+            });
+        }
+
+        function focusMarker(index) {
+            if (activeMarkerIndex !== -1 && markers[activeMarkerIndex]) {
+                const prevEl = document.getElementById(`marker-${activeMarkerIndex}`);
+                if (prevEl) {
+                    prevEl.classList.remove('active');
+                    prevEl.querySelector('.travel-marker-label').style.display = 'none';
+                }
+                if (typeof markers[activeMarkerIndex].setZIndex === 'function') {
+                    markers[activeMarkerIndex].setZIndex(10);
+                }
+            }
+
+            activeMarkerIndex = index;
+            const trip = travelData[index];
+            const marker = markers[index];
+
+            const el = document.getElementById(`marker-${index}`);
+            if (el) {
+                el.classList.add('active');
+                el.querySelector('.travel-marker-label').style.display = 'block';
+            }
+            
+            if (marker && typeof marker.setZIndex === 'function') {
+                marker.setZIndex(100);
+            }
+
+            if (map && marker) {
+                map.setLevel(8);
+                map.panTo(marker.getPosition());
+            }
+
+            const theme = colorThemes[trip.color] || colorThemes.blue;
+            document.getElementById('sheet-emoji').innerHTML = getTripLogoMarkup(trip);
+            document.getElementById('sheet-emoji').className = `w-12 h-12 rounded-full ${theme.bg} flex items-center justify-center border ${theme.border} overflow-hidden p-0.5`;
+            
+            document.getElementById('sheet-date').innerText = trip.date;
+            document.getElementById('sheet-date').className = `text-[10px] font-bold ${theme.text} ${theme.bg} px-2 py-0.5 rounded-full`;
+            
+            document.getElementById('sheet-title').innerText = trip.title;
+            document.getElementById('sheet-desc').innerText = trip.desc;
+
+            const sheet = document.getElementById('bottom-sheet');
+            if (sheet) sheet.classList.add('show');
+        }
+
+        function closeBottomSheet() {
+            const sheet = document.getElementById('bottom-sheet');
+            if (sheet) sheet.classList.remove('show');
+            
+            if (activeMarkerIndex !== -1 && markers[activeMarkerIndex]) {
+                const el = document.getElementById(`marker-${activeMarkerIndex}`);
+                if (el) {
+                    el.classList.remove('active');
+                    el.querySelector('.travel-marker-label').style.display = 'none';
+                }
+                if (typeof markers[activeMarkerIndex].setZIndex === 'function') {
+                    markers[activeMarkerIndex].setZIndex(10);
+                }
+                activeMarkerIndex = -1;
+            }
+        }
+
+        // --- 마커 보이기/숨기기 기능 ---
+        function toggleMarkers() {
+            if (navigator.vibrate) navigator.vibrate(5);
+            isMarkerVisible = !isMarkerVisible; // 상태 반전
+            
+            markers.forEach(marker => {
+                if (marker) {
+                    marker.setVisible(isMarkerVisible);
+                }
+            });
+
+            // 아이콘 변경 (눈 모양 <-> 감은 눈 모양)
+            const icon = document.querySelector('#marker-toggle-btn i');
+            if (icon) {
+                icon.className = isMarkerVisible ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+            }
+            const markerButton = document.getElementById('marker-toggle-btn');
+            if (markerButton) {
+                markerButton.classList.toggle('is-active', isMarkerVisible);
+                markerButton.setAttribute('aria-pressed', String(isMarkerVisible));
+            }
+        }
+
+        // --- 위성 지도 토글 기능 ---
+        function toggleSatellite() {
+            if (navigator.vibrate) navigator.vibrate(5);
+            isSatellite = !isSatellite;
+
+            // 상단 캡슐 버튼 UI 업데이트
+            const topSatBtn = document.getElementById('satellite-top-btn');
+            if (topSatBtn) {
+                topSatBtn.classList.toggle('is-active', isSatellite);
+                topSatBtn.setAttribute('aria-pressed', String(isSatellite));
+            }
+
+            // 지도 타입 변경 (HYBRID: 위성 사진 + 도로/지명 표시)
+            if (map && typeof kakao !== 'undefined' && kakao.maps) {
+                map.setMapTypeId(isSatellite ? kakao.maps.MapTypeId.HYBRID : kakao.maps.MapTypeId.ROADMAP);
+            }
+            updateChromeContrast();
+        }
+
+        function zoomToAll() {
+            if (navigator.vibrate) navigator.vibrate(5);
+            closeBottomSheet();
+            if (map && typeof kakao !== 'undefined' && kakao.maps) {
+                map.setLevel(13);
+                map.setCenter(new kakao.maps.LatLng(36.3504, 127.3845));
+            }
+        }
+
+        function renderTravelList() {
+            const container = document.getElementById('travel-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const count = document.getElementById('record-count');
+            if (count) count.textContent = travelData.length;
+
+            const currentYear = new Date().getFullYear();
+            const yearGroups = new Map();
+
+            travelData.forEach((trip, tripIndex) => {
+                const meta = getTripDateMeta(trip);
+                const year = meta.year;
+                const monthKey = meta.month ? `month-${meta.month}` : `period-${meta.periodLabel}`;
+                const monthLabel = meta.month ? `${meta.month}월` : meta.periodLabel;
+
+                if (!yearGroups.has(year)) yearGroups.set(year, new Map());
+                const monthGroups = yearGroups.get(year);
+                if (!monthGroups.has(monthKey)) {
+                    monthGroups.set(monthKey, { label: monthLabel, trips: [] });
+                }
+                monthGroups.get(monthKey).trips.push({ trip, tripIndex });
+            });
+
+            Array.from(yearGroups.entries())
+                .sort((a, b) => b[0] - a[0])
+                .forEach(([year, monthGroups]) => {
+                    const tripCount = Array.from(monthGroups.values())
+                        .reduce((sum, group) => sum + group.trips.length, 0);
+                    const yearDetails = document.createElement('details');
+                    yearDetails.className = 'record-year-group';
+                    yearDetails.open = year === currentYear;
+
+                    const monthMarkup = Array.from(monthGroups.values()).map(group => `
+                        <section class="record-month-group">
+                            <div class="record-month-heading">
+                                <h3 class="record-month-title">${group.label}</h3>
+                            </div>
+                            <div class="record-month-list">
+                                ${group.trips.map(({ trip, tripIndex }) => `
+                                    <div class="record-item">
+                                        <div class="record-index">${String(tripSequenceById.get(trip.id)).padStart(2, '0')}</div>
+                                        <button type="button" class="record-panel w-full text-left" data-trip-index="${tripIndex}" aria-label="${trip.region} 여행 기록을 지도에서 보기">
+                                            <div class="flex items-center gap-3">
+                                                <div class="record-logo">
+                                                    ${getTripLogoMarkup(trip, 'w-full h-full object-cover')}
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="record-date">${trip.date}</div>
+                                                        ${trip.status === 'upcoming' ? '<span class="record-status">예정</span>' : ''}
+                                                    </div>
+                                                    <div class="record-region mt-1">${trip.region}</div>
+                                                </div>
+                                                <i class="record-arrow fa-solid fa-arrow-up-right-from-square"></i>
+                                            </div>
+                                            <div class="record-copy-divider mt-4 pt-3 border-t">
+                                                <p class="record-title">${trip.title}</p>
+                                                <p class="record-description break-keep line-clamp-2">${trip.desc}</p>
+                                            </div>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+                    `).join('');
+
+                    yearDetails.innerHTML = `
+                        <summary class="record-year-summary">
+                            <div>
+                                <div class="record-year-title">${year}</div>
+                                <div class="record-year-count mt-1">${tripCount}개의 여행 기록</div>
+                            </div>
+                            <i class="record-year-chevron fa-solid fa-chevron-down"></i>
+                        </summary>
+                        <div class="record-year-content">${monthMarkup}</div>
+                    `;
+
+                    yearDetails.querySelectorAll('[data-trip-index]').forEach(panel => {
+                        panel.addEventListener('click', () => {
+                            const tripIndex = Number(panel.dataset.tripIndex);
+                            if (navigator.vibrate) navigator.vibrate(10);
+                            switchTab(0);
+                            setTimeout(() => { focusMarker(tripIndex); }, 300);
+                        });
+                    });
+
+                    container.appendChild(yearDetails);
+                });
+        }
+
+        // 통계 렌더링
+        function renderStats() {
+            const container = document.getElementById('stats-container');
+            if (!container) return;
+
+            let totalTrips = travelData.length;
+            let totalDays = 0;
+            let regionCounts = {};
+
+            // 데이터 분석
+            travelData.forEach(trip => {
+                // 1. 지역 카운트
+                let region = trip.region;
+                regionCounts[region] = (regionCounts[region] || 0) + 1;
+
+                // 2. 여행 일수 계산 (예: '2024.10.30 ~ 11.02')
+                if (trip.date.includes('~')) {
+                    let parts = trip.date.split('~').map(s => s.trim());
+                    let startStr = parts[0].replace(/\./g, '-');
+                    let endStr = parts[1];
+                    // 연도가 생략된 경우 (예: '08.30') 앞에 연도 붙여주기
+                    if (endStr.length <= 5) { 
+                        endStr = parts[0].substring(0, 5) + endStr; 
+                    }
+                    endStr = endStr.replace(/\./g, '-');
+                    
+                    let start = new Date(startStr);
+                    let end = new Date(endStr);
+                    let days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    totalDays += (isNaN(days) ? 1 : days);
+                } else {
+                    // 당일치기
+                    totalDays += 1;
+                }
+            });
+
+            // 가장 많이 간 지역 찾기 (내림차순 정렬)
+            let sortedRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]);
+            let favoriteRegion = sortedRegions.length > 0 ? sortedRegions[0][0] : '-';
+            // 이름이 길면 마지막 단어만 추출 (예: '경상북도 구미시' -> '구미시')
+            let shortFavoriteRegion = favoriteRegion.split(' ').pop();
+            let uniqueRegions = sortedRegions.length;
+            let maxVisits = sortedRegions.length > 0 ? sortedRegions[0][1] : 1;
+
+            container.innerHTML = `
+                <div class="px-5 pt-5">
+                    <section class="stats-hero">
+                        <div class="flex items-end justify-between gap-4">
+                            <div>
+                                <p class="screen-kicker mb-3">TOTAL JOURNEYS</p>
+                                <div class="flex items-end gap-2">
+                                    <strong class="stats-hero-number">${totalTrips}</strong>
+                                    <span class="stats-total-unit text-sm font-bold mb-1">번의 여행</span>
+                                </div>
+                            </div>
+                            <i class="stats-route-icon fa-solid fa-route text-2xl mb-1"></i>
+                        </div>
+                        <div class="stats-metric-grid">
+                            <div class="stats-metric">
+                                <strong>${totalDays}</strong>
+                                <span>여행 일수</span>
+                            </div>
+                            <div class="stats-metric">
+                                <strong>${uniqueRegions}</strong>
+                                <span>방문 지역</span>
+                            </div>
+                            <div class="stats-metric">
+                                <strong class="truncate">${shortFavoriteRegion}</strong>
+                                <span>최다 방문</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="mt-7">
+                        <div class="flex items-end justify-between mb-3 px-1">
+                            <div>
+                                <p class="screen-kicker mb-1.5">DESTINATIONS</p>
+                                <h3 class="stats-section-title">지역별 방문 순위</h3>
+                            </div>
+                            <span class="stats-region-total text-[10px] font-medium">${uniqueRegions}개 지역</span>
+                        </div>
+
+                        <div class="ranking-list">
+                            ${sortedRegions.map((r, i) => `
+                                <div class="ranking-row">
+                                    <div class="flex items-center gap-2">
+                                        <span class="ranking-number">${String(i + 1).padStart(2, '0')}</span>
+                                        <span class="ranking-region flex-1">${r[0]}</span>
+                                        <span class="ranking-count">${r[1]}회</span>
+                                    </div>
+                                    <div class="ranking-track">
+                                        <div class="ranking-fill" style="width: ${Math.max(12, (r[1] / maxVisits) * 100)}%;"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+                </div>
+            `;
+        }
+
+        [document.getElementById('list-screen'), document.getElementById('stats-screen')]
+            .forEach(screen => {
+                if (!screen) return;
+                screen.addEventListener('scroll', () => {
+                    if (!screen.classList.contains('hidden')) {
+                        setBottomNavCompact(screen.scrollTop > 28);
+                    }
+                }, { passive: true });
+            });
+
+        window.addEventListener('resize', syncBottomNavIndicator);
+        const bottomNavGlass = document.querySelector('#bottom-nav .bottom-nav-glass');
+        if (bottomNavGlass) {
+            bottomNavGlass.addEventListener('transitionend', syncBottomNavIndicator);
+        }
+
+        // 초기 실행
+        window.onload = () => {
+            syncDeviceTheme();
+            switchTab(0);
+            initMap();
+        };
+    </script>
+</body>
+</html>
