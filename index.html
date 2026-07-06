@@ -7896,10 +7896,22 @@
                 };
                 window.enjoyLogout = async function () {
                     try { await signOut(meetingAuth); } catch (e) {}
+                    try {
+                        localStorage.setItem('enjoy_chat_account_v1', 'guest');
+                        localStorage.setItem('enjoy_chat_account_label_v1', '게스트');
+                    } catch (e) {}
                     location.reload();
                 };
                 // 로그인 없이 둘러보기(체험 모드) — 구경만 가능, 기능 사용 시 로그인 유도
-                window.enjoyGuest = function () { window.isGuest = true; hideLogin(); window.enjoyEnterLocalMode && window.enjoyEnterLocalMode(); };
+                window.enjoyGuest = function () {
+                    window.isGuest = true;
+                    try {
+                        localStorage.setItem('enjoy_chat_account_v1', 'guest');
+                        localStorage.setItem('enjoy_chat_account_label_v1', '게스트');
+                    } catch (e) {}
+                    hideLogin();
+                    window.enjoyEnterLocalMode && window.enjoyEnterLocalMode();
+                };
 
                 // 리다이렉트 로그인 결과 처리(모바일 폴백 후 복귀)
                 try { await getRedirectResult(meetingAuth); } catch (e) { console.warn('redirect result', e); }
@@ -7919,6 +7931,10 @@
                     if (!user || user.isAnonymous) {
                         window.meetingAuthed = false;
                         window.enjoyUser = null;
+                        try {
+                            localStorage.setItem('enjoy_chat_account_v1', 'guest');
+                            localStorage.setItem('enjoy_chat_account_label_v1', '게스트');
+                        } catch (e) {}
                         if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(null);
                         showLoginForm();
                         return;
@@ -7930,6 +7946,10 @@
                     window.meetingAuthed = true; // 엔조이 스토리 구독 신호
                     // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
+                    try {
+                        localStorage.setItem('enjoy_chat_account_v1', user.uid);
+                        localStorage.setItem('enjoy_chat_account_label_v1', user.displayName || user.email || '엔조이 계정');
+                    } catch (e) {}
                     if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(window.enjoyUser);
 
                     let isMeetingLoaded = false;
