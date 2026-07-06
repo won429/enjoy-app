@@ -16,21 +16,50 @@
         :root {
             color-scheme: dark;
             --bg: #000000;
-            --card: #101114;
-            --card-2: #17181c;
-            --glass: rgba(255,255,255,.07);
-            --glass-strong: rgba(255,255,255,.11);
+            --panel: rgba(255,255,255,.07);
+            --panel-strong: rgba(255,255,255,.12);
+            --solid: #101114;
+            --solid-2: #17181c;
             --line: rgba(255,255,255,.1);
-            --line-strong: rgba(255,255,255,.18);
+            --line-strong: rgba(255,255,255,.2);
             --text: #f2f4f6;
             --sub: #8b95a1;
-            --faint: rgba(255,255,255,.36);
-            --blue: #3182f6;
-            --red: #f04452;
-            --green: #22c55e;
-            --yellow: #ffd60a;
+            --faint: rgba(255,255,255,.38);
+            --button: #ffffff;
+            --button-text: #111111;
+            --danger: #f04452;
+            --ok: #22c55e;
+            --danger-soft: rgba(240,68,82,.18);
+            --danger-border: rgba(240,68,82,.48);
+            --ok-soft: rgba(34,197,94,.16);
+            --ok-border: rgba(34,197,94,.46);
+            --ladder-line: rgba(255,255,255,.26);
+            --ladder-rung: rgba(255,255,255,.44);
             --safe-top: max(14px, env(safe-area-inset-top));
             --safe-bottom: max(18px, env(safe-area-inset-bottom));
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                color-scheme: light;
+                --bg: #f2f4f6;
+                --panel: rgba(255,255,255,.86);
+                --panel-strong: rgba(255,255,255,.96);
+                --solid: #ffffff;
+                --solid-2: #eef1f5;
+                --line: rgba(0,0,0,.08);
+                --line-strong: rgba(0,0,0,.16);
+                --text: #141414;
+                --sub: #6b7280;
+                --faint: rgba(20,20,20,.42);
+                --button: #141414;
+                --button-text: #ffffff;
+                --danger-soft: rgba(240,68,82,.14);
+                --danger-border: rgba(240,68,82,.38);
+                --ok-soft: rgba(34,197,94,.13);
+                --ok-border: rgba(34,197,94,.36);
+                --ladder-line: rgba(20,20,20,.22);
+                --ladder-rung: rgba(20,20,20,.38);
+            }
         }
         html, body {
             width: 100%;
@@ -50,29 +79,28 @@
         button {
             border: 0;
             padding: 0;
-            color: inherit;
             background: none;
+            color: inherit;
             font: inherit;
             cursor: pointer;
             touch-action: manipulation;
         }
         button:active { transform: scale(.96); }
+        button:disabled {
+            opacity: .46;
+            transform: none;
+        }
         .app {
             width: min(100%, 480px);
             height: 100dvh;
             margin: 0 auto;
+            background: var(--bg);
             position: relative;
             overflow: hidden;
-            background: #000;
-        }
-        .screen {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
         }
         .topbar {
+            padding: var(--safe-top) 18px 10px;
             flex: 0 0 auto;
-            padding: var(--safe-top) 18px 9px;
         }
         .top-line {
             display: flex;
@@ -94,16 +122,15 @@
             align-items: center;
             justify-content: center;
             border-radius: 999px;
-            background: rgba(255,255,255,.09);
-            border: 1px solid rgba(255,255,255,.08);
-            color: rgba(255,255,255,.86);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--text);
             -webkit-backdrop-filter: blur(16px);
             backdrop-filter: blur(16px);
         }
         .title-block { min-width: 0; }
         .title-block h1 {
             margin: 0;
-            color: #fff;
             font-size: 21px;
             line-height: 1.1;
             font-weight: 850;
@@ -118,51 +145,64 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .present-wrap {
+        .present-btn {
+            min-height: 38px;
+            max-width: 130px;
             display: flex;
             align-items: center;
             gap: 6px;
-            min-height: 38px;
             padding: 5px 8px;
             border-radius: 999px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.08);
-        }
-        .present-count {
-            color: rgba(255,255,255,.65);
-            font-size: 10.5px;
-            font-weight: 800;
-            white-space: nowrap;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--text);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
         }
         .present-avatars {
             display: flex;
             align-items: center;
+            min-width: 0;
         }
         .present-avatars .avatar {
             width: 26px;
             height: 26px;
-            margin-left: -6px;
-            border: 2px solid #0b0b0c;
+            margin-left: -7px;
+            border: 2px solid var(--bg);
         }
         .present-avatars .avatar:first-child { margin-left: 0; }
+        .present-count {
+            color: var(--sub);
+            font-size: 10.5px;
+            font-weight: 850;
+            white-space: nowrap;
+        }
+        .screen {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
         .content {
             flex: 1 1 auto;
             overflow-y: auto;
-            padding: 4px 18px 132px;
+            padding: 4px 18px calc(var(--safe-bottom) + 18px);
             scrollbar-width: none;
         }
         .content::-webkit-scrollbar { display: none; }
         .card {
-            background: rgba(255,255,255,.07);
-            border: 1px solid rgba(255,255,255,.1);
+            background: var(--panel);
+            border: 1px solid var(--line);
             border-radius: 24px;
-            box-shadow: 0 4px 24px rgba(0,0,0,.38);
+            box-shadow: 0 4px 24px rgba(0,0,0,.28);
             -webkit-backdrop-filter: blur(12px) saturate(180%);
             backdrop-filter: blur(12px) saturate(180%);
         }
+        @media (prefers-color-scheme: light) {
+            .card { box-shadow: 0 8px 24px rgba(15,23,42,.08); }
+        }
         .stage {
-            min-height: 438px;
-            padding: 16px;
+            min-height: 468px;
+            padding: 15px;
             overflow: hidden;
         }
         .stage-head {
@@ -170,12 +210,11 @@
             align-items: flex-start;
             justify-content: space-between;
             gap: 12px;
-            margin-bottom: 13px;
+            margin-bottom: 12px;
         }
         .mode-copy { min-width: 0; }
         .mode-copy h2 {
             margin: 0;
-            color: #fff;
             font-size: 24px;
             line-height: 1.1;
             font-weight: 900;
@@ -188,34 +227,34 @@
             font-weight: 650;
         }
         .round-pill {
-            flex: 0 0 auto;
             min-height: 32px;
+            flex: 0 0 auto;
             display: inline-flex;
             align-items: center;
             gap: 6px;
             padding: 0 10px;
             border-radius: 999px;
-            background: rgba(0,0,0,.26);
-            border: 1px solid rgba(255,255,255,.08);
-            color: rgba(255,255,255,.72);
+            background: rgba(128,128,128,.1);
+            border: 1px solid var(--line);
+            color: var(--sub);
             font-size: 10.5px;
             font-weight: 850;
         }
-        .round-pill.live { color: #fff; }
-        .round-pill.live i { color: var(--green); }
+        .round-pill.live { color: var(--text); }
+        .round-pill.live i { color: var(--ok); }
         .game-area {
-            min-height: 314px;
+            min-height: 350px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .empty {
             width: 100%;
-            min-height: 304px;
+            min-height: 324px;
             display: grid;
             place-items: center;
             text-align: center;
-            color: rgba(255,255,255,.48);
+            color: var(--sub);
         }
         .empty i {
             width: 70px;
@@ -225,30 +264,68 @@
             align-items: center;
             justify-content: center;
             border-radius: 999px;
-            background: rgba(255,255,255,.08);
-            color: #fff;
+            background: var(--panel-strong);
+            border: 1px solid var(--line);
+            color: var(--text);
             font-size: 28px;
         }
         .empty strong {
             display: block;
-            color: #fff;
+            color: var(--text);
             font-size: 18px;
             font-weight: 850;
         }
         .empty span {
             display: block;
             margin-top: 7px;
-            color: var(--sub);
             font-size: 12px;
             font-weight: 650;
         }
-        .action-bar {
+        .result-card {
+            min-height: 58px;
             margin-top: 12px;
+            padding: 12px 13px;
             display: flex;
             align-items: center;
-            gap: 9px;
+            gap: 10px;
+            border-radius: 18px;
+            background: rgba(128,128,128,.1);
+            border: 1px solid var(--line);
         }
-        .my-action {
+        .result-card.hidden { display: none; }
+        .result-icon {
+            width: 36px;
+            height: 36px;
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 13px;
+            background: var(--panel-strong);
+            color: var(--text);
+        }
+        .result-copy { min-width: 0; }
+        .result-copy strong {
+            display: block;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-size: 14px;
+            font-weight: 900;
+        }
+        .result-copy span {
+            display: block;
+            margin-top: 3px;
+            color: var(--sub);
+            font-size: 11.5px;
+            font-weight: 650;
+        }
+        .stage-actions {
+            display: flex;
+            gap: 9px;
+            margin-top: 12px;
+        }
+        .primary-action {
             min-height: 52px;
             flex: 1;
             display: inline-flex;
@@ -256,24 +333,19 @@
             justify-content: center;
             gap: 9px;
             border-radius: 18px;
-            background: #fff;
-            color: #111;
+            background: var(--button);
+            color: var(--button-text);
             font-size: 15px;
             font-weight: 900;
-            box-shadow: 0 8px 28px rgba(255,255,255,.12);
         }
-        .my-action:disabled {
-            opacity: .48;
-            transform: none;
-        }
-        .sub-action {
+        .secondary-action {
             width: 52px;
             height: 52px;
             flex: 0 0 auto;
             border-radius: 18px;
-            background: rgba(255,255,255,.09);
-            border: 1px solid rgba(255,255,255,.08);
-            color: rgba(255,255,255,.82);
+            background: rgba(128,128,128,.12);
+            border: 1px solid var(--line);
+            color: var(--text);
         }
         .mode-tabs {
             display: grid;
@@ -285,15 +357,15 @@
             min-height: 68px;
             padding: 8px 4px;
             border-radius: 20px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.08);
-            color: rgba(255,255,255,.48);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--sub);
             text-align: center;
         }
         .mode-tab.active {
-            background: rgba(255,255,255,.14);
-            color: #fff;
-            border-color: rgba(255,255,255,.16);
+            background: var(--panel-strong);
+            color: var(--text);
+            border-color: var(--line-strong);
         }
         .mode-tab i {
             display: block;
@@ -317,7 +389,6 @@
             margin-bottom: 10px;
         }
         .section-head strong {
-            color: #fff;
             font-size: 14px;
             font-weight: 850;
         }
@@ -338,15 +409,15 @@
             gap: 8px;
             padding: 8px;
             border-radius: 16px;
-            background: rgba(255,255,255,.055);
-            border: 1px solid rgba(255,255,255,.07);
-            color: rgba(255,255,255,.46);
+            background: rgba(128,128,128,.08);
+            border: 1px solid var(--line);
+            color: var(--sub);
             text-align: left;
         }
         .member-chip.active {
-            background: rgba(255,255,255,.13);
-            border-color: rgba(255,255,255,.15);
-            color: #fff;
+            background: var(--panel-strong);
+            color: var(--text);
+            border-color: var(--line-strong);
         }
         .avatar {
             width: 28px;
@@ -383,9 +454,9 @@
             min-height: 38px;
             flex: 1;
             border-radius: 14px;
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.08);
-            color: rgba(255,255,255,.72);
+            background: rgba(128,128,128,.12);
+            border: 1px solid var(--line);
+            color: var(--text);
             font-size: 12px;
             font-weight: 850;
         }
@@ -401,7 +472,6 @@
         }
         .count-label strong {
             display: block;
-            color: #fff;
             font-size: 13px;
             font-weight: 850;
         }
@@ -413,21 +483,22 @@
             font-weight: 650;
         }
         .stepper {
-            flex: 1;
             min-height: 46px;
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 4px;
             border-radius: 16px;
-            background: rgba(0,0,0,.24);
-            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(128,128,128,.1);
+            border: 1px solid var(--line);
         }
         .stepper button {
             width: 38px;
             height: 38px;
             border-radius: 13px;
-            background: rgba(255,255,255,.1);
+            background: var(--panel-strong);
+            border: 1px solid var(--line);
         }
         .stepper strong {
             font-size: 14px;
@@ -437,139 +508,69 @@
             width: 100%;
             min-height: 52px;
             margin-top: 12px;
-            border-radius: 18px;
-            background: #fff;
-            color: #111;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 9px;
+            border-radius: 18px;
+            background: var(--button);
+            color: var(--button-text);
             font-size: 15px;
             font-weight: 900;
         }
-        .result-card {
-            margin-top: 12px;
-            padding: 13px 14px;
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            border-radius: 18px;
-            background: rgba(255,255,255,.09);
-            border: 1px solid rgba(255,255,255,.1);
-        }
-        .result-card.hidden { display: none; }
-        .result-icon {
-            width: 38px;
-            height: 38px;
-            flex: 0 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-            background: rgba(255,255,255,.1);
-            color: #fff;
-        }
-        .result-copy strong {
-            display: block;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 900;
-        }
-        .result-copy span {
-            display: block;
-            margin-top: 3px;
-            color: var(--sub);
-            font-size: 11.5px;
-            font-weight: 650;
-        }
-        .status-grid {
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0,1fr));
-            gap: 9px;
-        }
-        .play-card {
-            min-height: 116px;
-            padding: 10px 7px;
-            border-radius: 20px;
-            background: rgba(255,255,255,.065);
-            border: 1px solid rgba(255,255,255,.08);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            text-align: center;
-        }
-        .play-card.done {
-            background: rgba(255,255,255,.12);
-            border-color: rgba(255,255,255,.15);
-        }
-        .play-card.win {
-            background: rgba(240,68,82,.16);
-            border-color: rgba(240,68,82,.32);
-        }
-        .play-symbol {
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-            background: #fff;
-            color: #111;
-            font-size: 19px;
-            font-weight: 950;
-        }
-        .play-name {
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 850;
-        }
-        .play-result {
-            color: var(--sub);
-            font-size: 11px;
-            font-weight: 800;
-        }
-        .play-card.win .play-result { color: #ff9ca5; }
         .ladder-wrap { width: 100%; }
-        .ladder-labels {
+        .ladder-top, .ladder-bottom {
             display: grid;
             gap: 5px;
         }
-        .ladder-name, .ladder-out {
+        .ladder-slot, .ladder-result {
             min-width: 0;
-            padding: 7px 3px;
+            min-height: 34px;
+            padding: 6px 3px;
             border-radius: 11px;
-            background: rgba(255,255,255,.08);
-            color: rgba(255,255,255,.68);
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(128,128,128,.1);
+            border: 1px solid var(--line);
+            color: var(--sub);
             overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
-            font-size: 10px;
+            text-overflow: ellipsis;
+            text-align: center;
+            font-size: 10.5px;
             font-weight: 850;
         }
-        .ladder-name.mine { background: rgba(255,255,255,.16); color: #fff; }
-        .ladder-out.win { background: rgba(240,68,82,.16); color: #ff9ca5; }
+        .ladder-slot.open {
+            color: var(--text);
+            background: var(--panel-strong);
+        }
+        .ladder-slot.mine {
+            outline: 2px solid var(--text);
+            outline-offset: -2px;
+        }
+        .ladder-result.win {
+            color: #fff;
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+        @media (prefers-color-scheme: light) {
+            .ladder-result.win { color: #fff; }
+        }
         .ladder-svg {
             width: 100%;
-            height: 242px;
+            height: 248px;
             display: block;
             margin: 8px 0;
             overflow: visible;
         }
         .ladder-line {
-            stroke: rgba(255,255,255,.24);
+            stroke: var(--ladder-line);
             stroke-width: 3;
             stroke-linecap: round;
         }
         .ladder-rung {
-            stroke: rgba(255,255,255,.44);
+            stroke: var(--ladder-rung);
             stroke-width: 5;
             stroke-linecap: round;
         }
@@ -578,11 +579,75 @@
             stroke-width: 6;
             stroke-linecap: round;
             stroke-linejoin: round;
+        }
+        .ladder-path.recent {
             stroke-dasharray: 920;
             stroke-dashoffset: 920;
-            animation: path-in 1.1s ease-out forwards;
+            animation: path-in 1.3s cubic-bezier(.16,1,.3,1) forwards;
         }
         @keyframes path-in { to { stroke-dashoffset: 0; } }
+        .lots-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .paper-card {
+            min-height: 126px;
+            padding: 11px 7px;
+            border-radius: 20px;
+            background: rgba(128,128,128,.09);
+            border: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+        }
+        .paper-card.open { background: var(--panel-strong); }
+        .paper-card.win {
+            background: var(--danger-soft);
+            border-color: var(--danger-border);
+        }
+        .paper {
+            width: 42px;
+            height: 52px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--button);
+            color: var(--button-text);
+            font-size: 18px;
+            font-weight: 950;
+            box-shadow: 0 8px 18px rgba(0,0,0,.2);
+        }
+        .paper-card:not(.open) .paper {
+            transform: rotate(-4deg);
+        }
+        .paper-card.recent .paper {
+            animation: pick-paper .72s cubic-bezier(.2,1.4,.3,1);
+        }
+        @keyframes pick-paper {
+            0% { transform: translateY(0) rotate(-4deg); }
+            45% { transform: translateY(-18px) rotate(8deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        .game-name {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            font-weight: 850;
+        }
+        .game-result {
+            color: var(--sub);
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .paper-card.win .game-result { color: var(--danger); }
         .wheel-wrap {
             width: 100%;
             display: flex;
@@ -591,49 +656,54 @@
             gap: 12px;
         }
         .wheel-shell {
-            width: min(266px, 74vw);
+            width: min(286px, 76vw);
             aspect-ratio: 1;
             position: relative;
             display: grid;
             place-items: center;
         }
-        .wheel-svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border-radius: 999px;
-            border: 8px solid rgba(255,255,255,.92);
-            background: #111;
-            box-shadow: 0 12px 34px rgba(0,0,0,.34);
-        }
-        .wheel-svg.spinning {
-            animation: spin .55s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
         .wheel-pointer {
             position: absolute;
-            top: -1px;
+            top: -4px;
             left: 50%;
             width: 22px;
             height: 22px;
+            z-index: 3;
             transform: translateX(-50%) rotate(45deg);
-            background: #fff;
             border-radius: 4px;
-            z-index: 2;
+            background: var(--button);
+        }
+        .wheel-disc {
+            width: 100%;
+            height: 100%;
+            border-radius: 999px;
+            border: 8px solid var(--button);
+            background: var(--solid);
+            box-shadow: 0 12px 34px rgba(0,0,0,.28);
+        }
+        .wheel-text {
+            fill: #fff;
+            font-size: 8px;
+            font-weight: 900;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            paint-order: stroke;
+            stroke: rgba(0,0,0,.45);
+            stroke-width: 2px;
         }
         .wheel-center {
             position: absolute;
-            width: 68px;
-            height: 68px;
+            width: 66px;
+            height: 66px;
             border-radius: 999px;
+            z-index: 2;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fff;
-            color: #111;
+            background: var(--button);
+            color: var(--button-text);
             font-size: 12px;
             font-weight: 950;
-            z-index: 3;
         }
         .wheel-note {
             min-height: 38px;
@@ -641,52 +711,139 @@
             display: inline-flex;
             align-items: center;
             border-radius: 999px;
-            background: rgba(255,255,255,.09);
-            border: 1px solid rgba(255,255,255,.1);
-            color: rgba(255,255,255,.76);
+            background: rgba(128,128,128,.1);
+            border: 1px solid var(--line);
+            color: var(--sub);
             font-size: 12px;
             font-weight: 850;
         }
-        .bottom-dock {
-            position: absolute;
-            left: 18px;
-            right: 18px;
-            bottom: var(--safe-bottom);
-            display: flex;
-            gap: 8px;
-            padding: 8px;
-            border-radius: 999px;
-            background: rgba(12,12,14,.42);
-            border: 1px solid rgba(255,255,255,.14);
-            box-shadow: 0 18px 52px rgba(0,0,0,.45);
-            -webkit-backdrop-filter: blur(24px) saturate(1.7);
-            backdrop-filter: blur(24px) saturate(1.7);
+        .dice-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
         }
-        .dock-btn {
-            min-height: 48px;
-            flex: 1;
-            display: inline-flex;
+        .dice-card {
+            min-height: 126px;
+            padding: 11px 7px;
+            border-radius: 20px;
+            background: rgba(128,128,128,.09);
+            border: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            text-align: center;
+        }
+        .dice-card.open { background: var(--panel-strong); }
+        .dice-card.win {
+            border-color: var(--ok-border);
+            background: var(--ok-soft);
+        }
+        .die {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 3px;
+            padding: 8px;
+            background: var(--button);
+            color: var(--button-text);
+            box-shadow: 0 8px 18px rgba(0,0,0,.22);
+        }
+        .die.rolling {
+            animation: dice-roll .16s linear infinite;
+        }
+        @keyframes dice-roll {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(16deg); }
+            100% { transform: translateY(0) rotate(-8deg); }
+        }
+        .pip {
+            width: 7px;
+            height: 7px;
+            align-self: center;
+            justify-self: center;
             border-radius: 999px;
-            color: rgba(255,255,255,.72);
-            font-size: 12px;
+            background: currentColor;
+            opacity: 0;
+        }
+        .pip.on { opacity: 1; }
+        .sheet {
+            position: absolute;
+            inset: 0;
+            z-index: 40;
+            display: none;
+            align-items: flex-end;
+            background: rgba(0,0,0,.54);
+        }
+        @media (prefers-color-scheme: light) {
+            .sheet { background: rgba(0,0,0,.24); }
+        }
+        .sheet.show { display: flex; }
+        .sheet-panel {
+            width: 100%;
+            max-height: 72dvh;
+            padding: 12px 18px calc(var(--safe-bottom) + 12px);
+            border-radius: 26px 26px 0 0;
+            background: var(--solid);
+            border: 1px solid var(--line);
+            box-shadow: 0 -18px 54px rgba(0,0,0,.34);
+        }
+        .sheet-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .sheet-head strong {
+            font-size: 17px;
+            font-weight: 900;
+        }
+        .sheet-list {
+            display: grid;
+            gap: 8px;
+        }
+        .sheet-person {
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 18px;
+            background: rgba(128,128,128,.1);
+            border: 1px solid var(--line);
+        }
+        .sheet-person .avatar {
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+        }
+        .sheet-person strong {
+            display: block;
+            font-size: 14px;
             font-weight: 850;
         }
-        .dock-btn.primary {
-            background: #fff;
-            color: #111;
+        .sheet-person span {
+            display: block;
+            margin-top: 2px;
+            color: var(--sub);
+            font-size: 11px;
+            font-weight: 700;
         }
         .gate {
             position: absolute;
             inset: 0;
-            z-index: 30;
+            z-index: 50;
             display: none;
             align-items: center;
             justify-content: center;
             padding: 24px;
-            background: #000;
+            background: var(--bg);
         }
         .gate.show { display: flex; }
         .gate-card {
@@ -694,10 +851,10 @@
             max-width: 340px;
             padding: 22px;
             border-radius: 26px;
-            background: #1c1c1e;
-            border: 1px solid rgba(255,255,255,.12);
+            background: var(--solid);
+            border: 1px solid var(--line);
             text-align: center;
-            box-shadow: 0 24px 70px rgba(0,0,0,.46);
+            box-shadow: 0 24px 70px rgba(0,0,0,.3);
         }
         .gate-icon {
             width: 58px;
@@ -707,13 +864,12 @@
             align-items: center;
             justify-content: center;
             border-radius: 20px;
-            background: #fff;
-            color: #111;
+            background: var(--button);
+            color: var(--button-text);
             font-size: 22px;
         }
         .gate-card h2 {
             margin: 0;
-            color: #fff;
             font-size: 22px;
             line-height: 1.18;
             font-weight: 900;
@@ -729,22 +885,22 @@
             width: 100%;
             min-height: 50px;
             border-radius: 17px;
-            background: #fff;
-            color: #111;
+            background: var(--button);
+            color: var(--button-text);
             font-size: 14px;
             font-weight: 900;
         }
         .toast {
             position: absolute;
             left: 50%;
-            bottom: calc(var(--safe-bottom) + 76px);
-            z-index: 40;
+            bottom: calc(var(--safe-bottom) + 16px);
+            z-index: 60;
             max-width: calc(100% - 44px);
             padding: 11px 14px;
             border-radius: 999px;
-            background: rgba(255,255,255,.94);
-            color: #111;
-            box-shadow: 0 16px 40px rgba(0,0,0,.35);
+            background: var(--button);
+            color: var(--button-text);
+            box-shadow: 0 16px 40px rgba(0,0,0,.24);
             font-size: 12px;
             font-weight: 850;
             white-space: nowrap;
@@ -759,10 +915,10 @@
         }
         .hidden { display: none !important; }
         @media (max-width: 380px) {
-            .member-grid, .status-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
-            .stage { padding: 14px; }
+            .member-grid, .lots-grid, .dice-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+            .stage { padding: 13px; }
             .mode-copy h2 { font-size: 23px; }
-            .present-wrap { padding-right: 7px; }
+            .present-count { display: none; }
         }
     </style>
 </head>
@@ -777,13 +933,13 @@
                         </button>
                         <div class="title-block">
                             <h1>복불복 게임</h1>
-                            <p>엔조이 멤버끼리 각자 뽑는 실시간 게임</p>
+                            <p>각자 직접 고르고 결과를 여는 실시간 게임</p>
                         </div>
                     </div>
-                    <div class="present-wrap" aria-label="입장 멤버">
+                    <button class="present-btn" aria-label="입장 멤버 보기" onclick="window.haptic(); window.EnjoyGame.openPresenceSheet()">
                         <div id="present-avatars" class="present-avatars"></div>
-                        <div id="present-count" class="present-count">입장 0</div>
-                    </div>
+                        <span id="present-count" class="present-count">입장 0</span>
+                    </button>
                 </div>
             </header>
 
@@ -792,7 +948,7 @@
                     <div class="stage-head">
                         <div class="mode-copy">
                             <h2 id="mode-title">사다리타기</h2>
-                            <p id="mode-desc">각자 자기 사다리를 타고 결과를 확인해요</p>
+                            <p id="mode-desc">자리를 직접 고르면 사다리가 내려갑니다</p>
                         </div>
                         <div id="round-pill" class="round-pill">
                             <i class="fa-solid fa-circle"></i><span>대기</span>
@@ -800,11 +956,11 @@
                     </div>
                     <div id="game-area" class="game-area"></div>
                     <div id="result-card" class="result-card hidden"></div>
-                    <div class="action-bar">
-                        <button id="my-action" class="my-action" onclick="window.haptic(); window.EnjoyGame.playMine()">
-                            <i class="fa-solid fa-hand-pointer"></i><span>내 차례</span>
+                    <div class="stage-actions">
+                        <button id="main-action" class="primary-action" onclick="window.haptic(); window.EnjoyGame.mainAction()">
+                            <i class="fa-solid fa-rotate"></i><span>새 판 만들기</span>
                         </button>
-                        <button class="sub-action" aria-label="새 판" onclick="window.haptic(); window.EnjoyGame.startRound()">
+                        <button class="secondary-action" aria-label="새 판" onclick="window.haptic(); window.EnjoyGame.startRound()">
                             <i class="fa-solid fa-plus"></i>
                         </button>
                     </div>
@@ -825,7 +981,7 @@
                     <div class="count-row">
                         <div class="count-label">
                             <strong>당첨 수</strong>
-                            <span>주사위 제외</span>
+                            <span>룰렛·주사위 제외</span>
                         </div>
                         <div class="stepper">
                             <button aria-label="줄이기" onclick="window.haptic(); window.EnjoyGame.adjustPenalty(-1)"><i class="fa-solid fa-minus"></i></button>
@@ -840,13 +996,16 @@
             </main>
         </div>
 
-        <div class="bottom-dock">
-            <button class="dock-btn" onclick="window.haptic(); location.href='index.html'">
-                <i class="fa-solid fa-house"></i><span>홈</span>
-            </button>
-            <button class="dock-btn primary" onclick="window.haptic(); window.EnjoyGame.playMine()">
-                <i class="fa-solid fa-hand-pointer"></i><span>내 차례</span>
-            </button>
+        <div id="presence-sheet" class="sheet" onclick="window.EnjoyGame.closePresenceSheet()">
+            <div class="sheet-panel" onclick="event.stopPropagation()">
+                <div class="sheet-head">
+                    <strong>입장한 멤버</strong>
+                    <button class="icon-btn" aria-label="닫기" onclick="window.haptic(); window.EnjoyGame.closePresenceSheet()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="presence-list" class="sheet-list"></div>
+            </div>
         </div>
 
         <div id="gate" class="gate">
@@ -875,15 +1034,17 @@
             '류짱': { color: '#a855f7', short: '류' },
             '홍박사': { color: '#06b6d4', short: '홍' }
         };
-        const COLORS = ['#3182f6', '#f04452', '#ffd60a', '#22c55e', '#a855f7', '#06b6d4'];
+        const COLORS = ['#3182f6', '#f04452', '#f59e0b', '#22c55e', '#a855f7', '#06b6d4'];
         const MODES = {
-            ladder: { title: '사다리타기', desc: '각자 자기 사다리를 타고 결과를 확인해요', icon: 'fa-bars-staggered', action: '내 사다리 타기' },
-            lots: { title: '제비뽑기', desc: '멤버가 각자 자기 제비를 뽑아요', icon: 'fa-ticket', action: '내 제비 뽑기' },
-            wheel: { title: '룰렛', desc: '각자 자기 룰렛을 돌려 결과를 열어요', icon: 'fa-circle-notch', action: '내 룰렛 돌리기' },
-            dice: { title: '주사위 대결', desc: '각자 주사위를 굴리고 최고점이 이겨요', icon: 'fa-dice-six', action: '내 주사위 굴리기' }
+            ladder: { title: '사다리타기', desc: '자리를 직접 고르면 사다리가 내려갑니다', icon: 'fa-bars-staggered' },
+            lots: { title: '제비뽑기', desc: '접힌 제비 중 하나를 직접 뽑습니다', icon: 'fa-ticket' },
+            wheel: { title: '룰렛', desc: '멤버 칸이 적힌 룰렛을 돌립니다', icon: 'fa-circle-notch' },
+            dice: { title: '주사위 대결', desc: '각자 주사위를 던져 높은 사람이 이깁니다', icon: 'fa-dice-six' }
         };
         const ROOM_ID = 'enjoy-main';
         const ACTIVE_MS = 75000;
+        const WHEEL_DURATION = 4200;
+        const DICE_DURATION = 1200;
         const DEFAULT_ROOM = {
             mode: 'ladder',
             participants: MEMBERS.slice(),
@@ -917,13 +1078,13 @@
             showToast.timer = setTimeout(() => el.classList.remove('show'), 1700);
         }
 
-        function escapeHtml(v) {
-            return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        }
-
         function getOrInitializeApp(config, name) {
             const found = getApps().find(item => item.name === name);
             return found || initializeApp(config, name);
+        }
+
+        function escapeHtml(v) {
+            return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
         function hashSeed(seed) {
@@ -978,7 +1139,8 @@
             const now = Date.now();
             return Object.keys(room.presence || {})
                 .map(uid => Object.assign({ uid }, room.presence[uid] || {}))
-                .filter(v => now - (v.lastSeen || 0) < ACTIVE_MS && MEMBERS.includes(v.name));
+                .filter(v => now - (v.lastSeen || 0) < ACTIVE_MS && MEMBERS.includes(v.name))
+                .sort((a, b) => MEMBERS.indexOf(a.name) - MEMBERS.indexOf(b.name));
         }
 
         function memberDocByName() {
@@ -998,89 +1160,136 @@
             return '<span class="avatar" style="' + dim + 'background:' + meta.color + ';">' + meta.short + '</span>';
         }
 
-        function hasActed(name) {
-            return !!(room.round && room.round.actions && room.round.actions[name]);
+        function actions() {
+            return (room.round && room.round.actions) || {};
+        }
+
+        function actionOf(name) {
+            return actions()[name] || null;
         }
 
         function allActed(round) {
             if (!round) return false;
-            const actions = round.actions || {};
-            return (round.participants || []).every(name => !!actions[name]);
+            const a = round.actions || {};
+            return (round.participants || []).every(name => !!a[name]);
         }
 
-        function resultOf(round, name) {
-            return round && round.results ? round.results[name] : '';
+        function currentMode() {
+            return (room.round && room.round.mode) || room.mode || 'ladder';
         }
 
-        function isWinner(round, name) {
-            return !!(round && Array.isArray(round.winners) && round.winners.includes(name));
+        function canPlay() {
+            return !!(currentUser && profileName && room.round && room.round.participants.includes(profileName) && !actionOf(profileName));
         }
 
-        function buildWinners(seed, participants, count) {
-            return shuffle(participants, seed + ':winners').slice(0, Math.max(1, Math.min(count, participants.length)));
+        function buildPrizeLabels(seed, total, count) {
+            const labels = [];
+            for (let i = 0; i < total; i++) labels.push(i < count ? '당첨' : '통과');
+            return shuffle(labels, seed + ':prizes');
         }
 
         function buildLadder(seed, participants, penaltyCount) {
             const n = participants.length;
-            const levels = Math.max(7, n + 4);
+            const levels = Math.max(8, n + 5);
             const rand = rng(seed + ':ladder');
             const rungs = [];
             for (let level = 0; level < levels; level++) {
                 const occupied = {};
-                const rungCount = n > 4 && rand() > .45 ? 2 : 1;
-                for (let k = 0; k < rungCount; k++) {
+                const tries = n > 4 && rand() > .45 ? 2 : 1;
+                for (let k = 0; k < tries; k++) {
                     const lane = Math.floor(rand() * Math.max(1, n - 1));
                     if (occupied[lane] || occupied[lane - 1] || occupied[lane + 1]) continue;
                     occupied[lane] = true;
                     rungs.push({ level, lane });
                 }
             }
-            const labels = [];
-            for (let i = 0; i < n; i++) labels.push(i < penaltyCount ? '당첨' : '통과');
-            const bottom = shuffle(labels, seed + ':labels');
-            const results = {};
-            participants.forEach((name, start) => {
-                let lane = start;
-                rungs.forEach(r => {
-                    if (r.lane === lane) lane += 1;
-                    else if (r.lane + 1 === lane) lane -= 1;
-                });
-                results[name] = bottom[lane];
-            });
+            return { ladder: { levels, rungs, labels: buildPrizeLabels(seed, n, penaltyCount) } };
+        }
+
+        function buildLots(seed, participants, penaltyCount) {
+            return { lotLabels: buildPrizeLabels(seed, participants.length, penaltyCount) };
+        }
+
+        function buildWheel(seed, participants) {
+            const rand = rng(seed + ':wheel');
+            const winnerIndex = Math.floor(rand() * participants.length);
             return {
-                ladder: { levels, rungs, labels: bottom },
-                results,
-                winners: participants.filter(name => results[name] === '당첨')
+                wheel: {
+                    winnerIndex,
+                    winner: participants[winnerIndex],
+                    turns: 6 + Math.floor(rand() * 2),
+                    offset: rand() * 20 - 10
+                }
             };
         }
 
-        function buildDice(seed, participants) {
-            const rand = rng(seed + ':dice');
-            const dice = participants.map(name => ({
-                name,
-                value: 1 + Math.floor(rand() * 6),
-                tie: rand()
-            }));
-            const winner = dice.slice().sort((a, b) => (b.value - a.value) || (b.tie - a.tie))[0];
-            const results = {};
-            dice.forEach(item => { results[item.name] = item.value + '점'; });
-            if (winner) results[winner.name] = winner.value + '점 1등';
-            return { dice, results, winners: winner ? [winner.name] : [] };
+        function traceLadder(slot, ladder) {
+            let lane = slot;
+            (ladder.rungs || []).forEach(r => {
+                if (r.lane === lane) lane += 1;
+                else if (r.lane + 1 === lane) lane -= 1;
+            });
+            return lane;
         }
 
-        function buildRound(mode, seed, participants, penaltyCount) {
-            if (mode === 'ladder') return buildLadder(seed, participants, penaltyCount);
-            if (mode === 'dice') return buildDice(seed, participants);
-            const winners = buildWinners(seed, participants, penaltyCount);
-            const results = {};
-            participants.forEach(name => { results[name] = winners.includes(name) ? '당첨' : '통과'; });
-            return { results, winners };
+        function diceWinner(round) {
+            const entries = Object.keys(round.actions || {}).map(name => Object.assign({ name }, round.actions[name]));
+            if (entries.length !== (round.participants || []).length) return '';
+            entries.sort((a, b) => (b.value - a.value) || ((b.tie || 0) - (a.tie || 0)));
+            return entries[0] ? entries[0].name : '';
+        }
+
+        function roundWinnerNames(round) {
+            if (!round) return [];
+            if (round.mode === 'wheel') return isWheelDone(round) ? [round.wheel.winner] : [];
+            if (round.mode === 'dice') {
+                const win = diceWinner(round);
+                return win ? [win] : [];
+            }
+            return Object.keys(round.actions || {}).filter(name => round.actions[name].result === '당첨');
+        }
+
+        function makeRound(mode, participants, penaltyCount, seed) {
+            const base = {
+                id: 'rd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                mode,
+                seed,
+                participants,
+                penaltyCount,
+                actions: {},
+                startedAt: Date.now(),
+                startedBy: profileName,
+                startedByUid: currentUser.uid
+            };
+            if (mode === 'ladder') return Object.assign(base, buildLadder(seed, participants, penaltyCount));
+            if (mode === 'lots') return Object.assign(base, buildLots(seed, participants, penaltyCount));
+            if (mode === 'wheel') return Object.assign(base, buildWheel(seed, participants));
+            return base;
         }
 
         function renderPresence() {
             const active = activePresence();
             $('present-count').textContent = '입장 ' + active.length;
             $('present-avatars').innerHTML = active.slice(0, 4).map(v => avatar(v.name, 26)).join('');
+            $('presence-list').innerHTML = active.length ? active.map(v => {
+                const ago = Math.max(0, Math.floor((Date.now() - (v.lastSeen || 0)) / 1000));
+                return '<div class="sheet-person">' + avatar(v.name, 36) + '<div><strong>' + v.name + '</strong><span>' + (ago < 10 ? '방금 입장' : ago + '초 전 활동') + '</span></div></div>';
+            }).join('') : '<div class="sheet-person"><div class="avatar" style="background:#6b7280;">?</div><div><strong>아직 없음</strong><span>멤버가 들어오면 여기에 표시돼요</span></div></div>';
+        }
+
+        function renderHeader() {
+            const mode = MODES[currentMode()] || MODES.ladder;
+            $('mode-title').textContent = mode.title;
+            $('mode-desc').textContent = mode.desc;
+            const pill = $('round-pill');
+            if (!room.round) {
+                pill.className = 'round-pill';
+                pill.innerHTML = '<i class="fa-solid fa-circle"></i><span>대기</span>';
+                return;
+            }
+            const done = room.round.mode === 'wheel' ? isWheelDone(room.round) : allActed(room.round);
+            pill.className = 'round-pill live';
+            pill.innerHTML = '<i class="fa-solid ' + (done ? 'fa-check' : 'fa-circle') + '"></i><span>' + (done ? '완료' : '진행') + '</span>';
         }
 
         function renderModeTabs() {
@@ -1102,96 +1311,77 @@
             }).join('');
         }
 
-        function renderHeader() {
-            const mode = MODES[room.mode] || MODES.ladder;
-            $('mode-title').textContent = mode.title;
-            $('mode-desc').textContent = mode.desc;
-            const round = room.round;
-            const pill = $('round-pill');
-            if (!round) {
-                pill.className = 'round-pill';
-                pill.innerHTML = '<i class="fa-solid fa-circle"></i><span>대기</span>';
-                return;
-            }
-            const done = allActed(round);
-            pill.className = 'round-pill live';
-            pill.innerHTML = '<i class="fa-solid ' + (done ? 'fa-check' : 'fa-circle') + '"></i><span>' + (done ? '완료' : '진행') + '</span>';
-        }
-
-        function renderActionButton() {
-            const mode = MODES[(room.round && room.round.mode) || room.mode] || MODES.ladder;
-            const btn = $('my-action');
-            const label = btn.querySelector('span');
+        function renderMainAction() {
+            const btn = $('main-action');
             const icon = btn.querySelector('i');
-            icon.className = 'fa-solid ' + mode.icon;
+            const label = btn.querySelector('span');
             if (!room.round) {
-                label.textContent = '새 판 먼저 만들기';
+                icon.className = 'fa-solid fa-rotate';
+                label.textContent = '새 판 만들기';
                 btn.disabled = !profileName;
                 return;
             }
-            if (!profileName || !room.round.participants.includes(profileName)) {
+            if (room.round.mode === 'wheel') {
+                icon.className = 'fa-solid fa-circle-notch';
+                if (isWheelSpinning(room.round)) {
+                    label.textContent = '룰렛 도는 중';
+                    btn.disabled = true;
+                } else if (isWheelDone(room.round)) {
+                    label.textContent = '새 판 만들기';
+                    btn.disabled = false;
+                } else {
+                    label.textContent = '룰렛 돌리기';
+                    btn.disabled = false;
+                }
+                return;
+            }
+            if (!room.round.participants.includes(profileName)) {
+                icon.className = 'fa-solid fa-ban';
                 label.textContent = '참가 멤버가 아니에요';
                 btn.disabled = true;
                 return;
             }
-            if (hasActed(profileName)) {
+            if (actionOf(profileName)) {
+                icon.className = 'fa-solid fa-check';
                 label.textContent = '내 결과 확인 완료';
                 btn.disabled = true;
                 return;
             }
-            label.textContent = mode.action;
-            btn.disabled = false;
+            icon.className = 'fa-solid fa-hand-pointer';
+            label.textContent = selectHint(room.round.mode);
+            btn.disabled = true;
+        }
+
+        function selectHint(mode) {
+            if (mode === 'ladder') return '위 자리 하나를 선택';
+            if (mode === 'lots') return '제비 하나를 선택';
+            if (mode === 'dice') return '내 카드 눌러 굴리기';
+            return '선택';
         }
 
         function renderGame() {
             const area = $('game-area');
-            const round = room.round;
-            if (!round) {
+            if (!room.round) {
                 const mode = MODES[room.mode] || MODES.ladder;
-                area.innerHTML = '<div class="empty"><div><i class="fa-solid ' + mode.icon + '"></i><strong>새 판을 만들어주세요</strong><span>멤버가 들어오면 각자 자기 폰에서 참여해요</span></div></div>';
+                area.innerHTML = '<div class="empty"><div><i class="fa-solid ' + mode.icon + '"></i><strong>새 판을 만들어주세요</strong><span>게임을 고른 뒤 멤버가 직접 참여해요</span></div></div>';
                 renderResult(null);
                 return;
             }
-            if (round.mode === 'ladder') renderLadder(area, round);
-            else if (round.mode === 'wheel') renderWheel(area, round);
-            else if (round.mode === 'dice') renderDice(area, round);
-            else renderSimpleCards(area, round, 'fa-ticket');
-            renderResult(round);
-        }
-
-        function renderSimpleCards(area, round, fallbackIcon) {
-            const actions = round.actions || {};
-            area.innerHTML = '<div class="status-grid">' + round.participants.map(name => {
-                const acted = !!actions[name];
-                const win = acted && isWinner(round, name);
-                const result = acted ? resultOf(round, name) : '아직 안 뽑음';
-                const icon = acted ? (win ? 'fa-bolt' : 'fa-check') : fallbackIcon;
-                return '<div class="play-card' + (acted ? ' done' : '') + (win ? ' win' : '') + '">' +
-                    '<div class="play-symbol"><i class="fa-solid ' + icon + '"></i></div>' +
-                    '<div class="play-name">' + name + '</div><div class="play-result">' + result + '</div></div>';
-            }).join('') + '</div>';
-        }
-
-        function renderDice(area, round) {
-            const actions = round.actions || {};
-            const diceByName = {};
-            (round.dice || []).forEach(item => { diceByName[item.name] = item; });
-            area.innerHTML = '<div class="status-grid">' + round.participants.map(name => {
-                const acted = !!actions[name];
-                const win = acted && isWinner(round, name);
-                const value = acted && diceByName[name] ? diceByName[name].value : '?';
-                const result = acted ? resultOf(round, name) : '아직 안 굴림';
-                return '<div class="play-card' + (acted ? ' done' : '') + (win ? ' win' : '') + '">' +
-                    '<div class="play-symbol">' + value + '</div>' +
-                    '<div class="play-name">' + name + '</div><div class="play-result">' + result + '</div></div>';
-            }).join('') + '</div>';
+            if (room.round.mode === 'ladder') renderLadder(area, room.round);
+            else if (room.round.mode === 'lots') renderLots(area, room.round);
+            else if (room.round.mode === 'wheel') renderWheel(area, room.round);
+            else renderDice(area, room.round);
+            renderResult(room.round);
         }
 
         function renderLadder(area, round) {
             const participants = round.participants || [];
             const n = participants.length;
-            const ladder = round.ladder || { levels: 7, rungs: [], labels: [] };
-            const width = 360, height = 236, top = 10, bottom = 222;
+            const ladder = round.ladder || { levels: 8, rungs: [], labels: [] };
+            const a = round.actions || {};
+            const occupied = {};
+            Object.keys(a).forEach(name => { if (typeof a[name].slot === 'number') occupied[a[name].slot] = name; });
+            const width = 360, height = 248, top = 10, bottom = 234;
             const gap = n > 1 ? width / (n - 1) : width;
             const x = lane => n > 1 ? lane * gap : width / 2;
             const y = level => top + ((level + 1) / (ladder.levels + 1)) * (bottom - top);
@@ -1200,17 +1390,26 @@
             (ladder.rungs || []).forEach(r => {
                 svg += '<line class="ladder-rung" x1="' + x(r.lane) + '" y1="' + y(r.level) + '" x2="' + x(r.lane + 1) + '" y2="' + y(r.level) + '"></line>';
             });
-            participants.forEach((name, idx) => {
-                if (hasActed(name)) svg += '<path class="ladder-path" d="' + ladderPath(idx, ladder, x, y, top, bottom) + '" stroke="' + COLORS[idx % COLORS.length] + '"></path>';
+            Object.keys(a).forEach(name => {
+                const act = a[name];
+                if (typeof act.slot !== 'number') return;
+                const idx = participants.indexOf(name);
+                const recent = Date.now() - (act.at || 0) < 1600;
+                svg += '<path class="ladder-path' + (recent ? ' recent' : '') + '" d="' + ladderPath(act.slot, ladder, x, y, top, bottom) + '" stroke="' + COLORS[(idx < 0 ? act.slot : idx) % COLORS.length] + '"></path>';
             });
             const cols = 'grid-template-columns:repeat(' + n + ',minmax(0,1fr))';
             area.innerHTML = '<div class="ladder-wrap">' +
-                '<div class="ladder-labels" style="' + cols + '">' + participants.map(name => '<div class="ladder-name' + (name === profileName ? ' mine' : '') + '">' + name + '</div>').join('') + '</div>' +
+                '<div class="ladder-top" style="' + cols + '">' + Array.from({ length: n }).map((_, i) => {
+                    const chosenBy = occupied[i];
+                    const mine = chosenBy === profileName;
+                    const disabled = !!chosenBy || !canPlay();
+                    return '<button class="ladder-slot ' + (chosenBy ? '' : 'open') + (mine ? ' mine' : '') + '" ' + (disabled ? 'disabled' : '') + ' onclick="window.haptic(); window.EnjoyGame.chooseLadder(' + i + ')">' + (chosenBy || (i + 1 + '번')) + '</button>';
+                }).join('') + '</div>' +
                 '<svg class="ladder-svg" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' + svg + '</svg>' +
-                '<div class="ladder-labels" style="' + cols + '">' + participants.map(name => {
-                    const acted = hasActed(name);
-                    const win = acted && isWinner(round, name);
-                    return '<div class="ladder-out' + (win ? ' win' : '') + '">' + (acted ? resultOf(round, name) : '?') + '</div>';
+                '<div class="ladder-bottom" style="' + cols + '">' + Array.from({ length: n }).map((_, lane) => {
+                    const actionName = Object.keys(a).find(name => a[name].finalLane === lane);
+                    const result = actionName ? a[actionName].result : '?';
+                    return '<div class="ladder-result' + (result === '당첨' ? ' win' : '') + '">' + result + '</div>';
                 }).join('') + '</div></div>';
         }
 
@@ -1231,20 +1430,58 @@
             return d;
         }
 
+        function renderLots(area, round) {
+            const participants = round.participants || [];
+            const n = participants.length;
+            const a = round.actions || {};
+            const occupied = {};
+            Object.keys(a).forEach(name => { if (typeof a[name].item === 'number') occupied[a[name].item] = name; });
+            area.innerHTML = '<div class="lots-grid">' + Array.from({ length: n }).map((_, i) => {
+                const chosenBy = occupied[i];
+                const act = chosenBy ? a[chosenBy] : null;
+                const result = act ? act.result : '제비 ' + (i + 1);
+                const win = act && act.result === '당첨';
+                const disabled = !!chosenBy || !canPlay();
+                const recent = act && Date.now() - (act.at || 0) < 1000;
+                return '<button class="paper-card' + (act ? ' open' : '') + (win ? ' win' : '') + (recent ? ' recent' : '') + '" ' + (disabled ? 'disabled' : '') + ' onclick="window.haptic(); window.EnjoyGame.chooseLot(' + i + ')">' +
+                    '<div class="paper"><i class="fa-solid ' + (act ? (win ? 'fa-bolt' : 'fa-check') : 'fa-question') + '"></i></div>' +
+                    '<div class="game-name">' + (chosenBy || '선택 가능') + '</div><div class="game-result">' + result + '</div></button>';
+            }).join('') + '</div>';
+        }
+
+        function isWheelSpinning(round) {
+            return !!(round && round.spin && Date.now() < (round.spin.endAt || 0));
+        }
+
+        function isWheelDone(round) {
+            return !!(round && round.spin && Date.now() >= (round.spin.endAt || 0));
+        }
+
         function renderWheel(area, round) {
             const participants = round.participants || [];
             const n = Math.max(1, participants.length);
-            const actions = round.actions || {};
-            const recent = profileName && actions[profileName] && Date.now() - actions[profileName].at < 1400;
-            const sectors = participants.map((name, i) => {
-                const start = -90 + (360 / n) * i;
-                const end = -90 + (360 / n) * (i + 1);
-                return '<path d="' + sectorPath(100, 100, 92, start, end) + '" fill="' + COLORS[i % COLORS.length] + '" opacity="' + (hasActed(name) ? '.95' : '.52') + '"></path>';
+            const spin = round.spin || null;
+            const seg = 360 / n;
+            let rotation = 0;
+            if (spin) {
+                const elapsed = Math.max(0, Date.now() - (spin.startedAt || 0));
+                const duration = Math.max(1, (spin.endAt || 0) - (spin.startedAt || 0));
+                const t = Math.min(1, elapsed / duration);
+                const eased = 1 - Math.pow(1 - t, 3);
+                rotation = (spin.totalRotation || 0) * eased;
+            }
+            const pieces = participants.map((name, i) => {
+                const start = -90 + seg * i;
+                const end = -90 + seg * (i + 1);
+                const mid = (start + end) / 2;
+                const textPos = polar(100, 100, 58, mid);
+                return '<path d="' + sectorPath(100, 100, 93, start, end) + '" fill="' + COLORS[i % COLORS.length] + '"></path>' +
+                    '<text class="wheel-text" x="' + textPos.x + '" y="' + textPos.y + '" transform="rotate(' + (mid + 90) + ' ' + textPos.x + ' ' + textPos.y + ')">' + name + '</text>';
             }).join('');
+            const winnerText = isWheelDone(round) ? round.wheel.winner + ' 당첨' : (isWheelSpinning(round) ? '도는 중' : 'READY');
             area.innerHTML = '<div class="wheel-wrap"><div class="wheel-shell"><div class="wheel-pointer"></div>' +
-                '<svg class="wheel-svg' + (recent ? ' spinning' : '') + '" viewBox="0 0 200 200" aria-hidden="true">' + sectors + '<circle cx="100" cy="100" r="28" fill="#ffffff"></circle></svg>' +
-                '<div class="wheel-center">' + (profileName && hasActed(profileName) ? resultOf(round, profileName) : 'READY') + '</div></div>' +
-                '<div class="wheel-note">' + actedText(round) + '</div></div>';
+                '<svg class="wheel-disc" viewBox="0 0 200 200" style="transform:rotate(' + rotation + 'deg)">' + pieces + '<circle cx="100" cy="100" r="26" fill="var(--button)"></circle></svg>' +
+                '<div class="wheel-center">' + (isWheelDone(round) ? 'STOP' : 'SPIN') + '</div></div><div class="wheel-note">' + winnerText + '</div></div>';
         }
 
         function sectorPath(cx, cy, r, startAngle, endAngle) {
@@ -1259,10 +1496,35 @@
             return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
         }
 
-        function actedText(round) {
-            const total = (round.participants || []).length;
-            const count = Object.keys(round.actions || {}).length;
-            return count + '/' + total + '명 참여';
+        function renderDice(area, round) {
+            const participants = round.participants || [];
+            const a = round.actions || {};
+            const winner = diceWinner(round);
+            area.innerHTML = '<div class="dice-grid">' + participants.map(name => {
+                const act = a[name];
+                const rolling = act && Date.now() < (act.revealAt || 0);
+                const visibleValue = rolling ? (1 + Math.floor(rng(name + Date.now())() * 6)) : (act ? act.value : 1);
+                const disabled = !!act || !canPlay() || name !== profileName;
+                const open = !!act && !rolling;
+                const win = open && winner === name;
+                return '<button class="dice-card' + (open ? ' open' : '') + (win ? ' win' : '') + '" ' + (disabled ? 'disabled' : '') + ' onclick="window.haptic(); window.EnjoyGame.rollDice()">' +
+                    renderDie(visibleValue, rolling) + '<div class="game-name">' + name + '</div><div class="game-result">' + (rolling ? '굴리는 중' : (act ? act.value + '점' : (name === profileName ? '눌러서 굴리기' : '대기'))) + '</div></button>';
+            }).join('') + '</div>';
+        }
+
+        function renderDie(value, rolling) {
+            const map = {
+                1: [4],
+                2: [0, 8],
+                3: [0, 4, 8],
+                4: [0, 2, 6, 8],
+                5: [0, 2, 4, 6, 8],
+                6: [0, 2, 3, 5, 6, 8]
+            };
+            const on = map[value] || [];
+            let html = '<div class="die' + (rolling ? ' rolling' : '') + '">';
+            for (let i = 0; i < 9; i++) html += '<span class="pip' + (on.includes(i) ? ' on' : '') + '"></span>';
+            return html + '</div>';
         }
 
         function renderResult(round) {
@@ -1272,17 +1534,35 @@
                 card.innerHTML = '';
                 return;
             }
-            const mineDone = profileName && hasActed(profileName);
-            const allDone = allActed(round);
-            if (!mineDone && !allDone) {
-                card.classList.add('hidden');
-                card.innerHTML = '';
-                return;
+            let title = '', sub = '';
+            if (round.mode === 'wheel') {
+                if (!isWheelDone(round)) {
+                    card.classList.add('hidden');
+                    card.innerHTML = '';
+                    return;
+                }
+                title = round.wheel.winner + ' 당첨';
+                sub = (round.spin && round.spin.startedBy ? round.spin.startedBy : '멤버') + '이 룰렛을 돌렸어요';
+            } else if (round.mode === 'dice') {
+                const mine = actionOf(profileName);
+                const winner = diceWinner(round);
+                if (!mine && !winner) {
+                    card.classList.add('hidden');
+                    card.innerHTML = '';
+                    return;
+                }
+                title = winner ? winner + ' 승리' : '내 주사위 ' + mine.value + '점';
+                sub = winner ? '모든 멤버가 주사위를 굴렸어요' : '다른 멤버를 기다리는 중';
+            } else {
+                const mine = actionOf(profileName);
+                if (!mine && !allActed(round)) {
+                    card.classList.add('hidden');
+                    card.innerHTML = '';
+                    return;
+                }
+                title = mine ? '내 결과: ' + mine.result : '결과 공개';
+                sub = allActed(round) ? '모든 멤버가 선택을 끝냈어요' : '다른 멤버를 기다리는 중';
             }
-            const mine = mineDone ? resultOf(round, profileName) : '';
-            const winners = (round.winners || []).filter(name => hasActed(name));
-            const title = allDone ? ('완료: ' + ((round.winners || []).join(', ') || '결과 없음')) : ('내 결과: ' + mine);
-            const sub = allDone ? '모든 멤버가 자기 차례를 끝냈어요' : (winners.length ? '현재 당첨: ' + winners.join(', ') : actedText(round));
             card.classList.remove('hidden');
             card.innerHTML = '<div class="result-icon"><i class="fa-solid fa-trophy"></i></div><div class="result-copy"><strong>' + title + '</strong><span>' + sub + '</span></div>';
         }
@@ -1292,15 +1572,21 @@
             renderHeader();
             renderModeTabs();
             renderMemberControls();
-            renderActionButton();
+            renderMainAction();
             renderGame();
             manageTicker();
         }
 
         function manageTicker() {
-            const actions = room.round && room.round.actions ? Object.values(room.round.actions) : [];
-            const need = actions.some(a => Date.now() - (a.at || 0) < 1600);
-            if (need && !tickTimer) tickTimer = setInterval(renderAll, 240);
+            let need = false;
+            if (room.round && room.round.mode === 'wheel' && isWheelSpinning(room.round)) need = true;
+            if (room.round && room.round.mode === 'dice') {
+                need = Object.values(room.round.actions || {}).some(a => Date.now() < (a.revealAt || 0));
+            }
+            if (room.round && room.round.mode === 'ladder') {
+                need = Object.values(room.round.actions || {}).some(a => Date.now() - (a.at || 0) < 1700);
+            }
+            if (need && !tickTimer) tickTimer = setInterval(renderAll, 80);
             if (!need && tickTimer) {
                 clearInterval(tickTimer);
                 tickTimer = null;
@@ -1411,6 +1697,13 @@
         }
 
         window.EnjoyGame = {
+            openPresenceSheet: function () {
+                $('presence-sheet').classList.add('show');
+                renderPresence();
+            },
+            closePresenceSheet: function () {
+                $('presence-sheet').classList.remove('show');
+            },
             setMode: function (mode) {
                 if (!MODES[mode]) return;
                 room.mode = mode;
@@ -1471,50 +1764,85 @@
                 const mode = room.mode || 'ladder';
                 const seed = Date.now() + ':' + currentUser.uid + ':' + Math.random().toString(36).slice(2);
                 const penaltyCount = clampPenalty(room.penaltyCount, participants.length);
-                const built = buildRound(mode, seed, participants, penaltyCount);
-                const round = Object.assign({
-                    id: 'rd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-                    mode,
-                    seed,
-                    participants,
-                    penaltyCount,
-                    actions: {},
-                    startedAt: Date.now(),
-                    startedBy: profileName,
-                    startedByUid: currentUser.uid
-                }, built);
+                const round = makeRound(mode, participants, penaltyCount, seed);
                 room.round = round;
                 renderAll();
                 await writeRoom({ mode, participants, penaltyCount, round });
             },
-            playMine: async function () {
-                if (!currentUser || !profileName) {
-                    showGate(true);
-                    return;
-                }
-                if (!room.round) {
+            mainAction: async function () {
+                if (!room.round || (room.round.mode === 'wheel' && isWheelDone(room.round))) {
                     await window.EnjoyGame.startRound();
                     return;
                 }
-                if (!room.round.participants.includes(profileName)) {
-                    showToast('이번 판 참가자가 아니에요');
-                    return;
-                }
-                if (hasActed(profileName)) {
-                    showToast('이미 참여했어요');
-                    return;
-                }
-                const action = {
-                    uid: currentUser.uid,
-                    name: profileName,
+                if (room.round.mode === 'wheel') await window.EnjoyGame.spinWheel();
+            },
+            chooseLadder: async function (slot) {
+                if (!canPlay() || room.round.mode !== 'ladder') return;
+                const a = room.round.actions || {};
+                if (Object.values(a).some(item => item.slot === slot)) return;
+                const finalLane = traceLadder(slot, room.round.ladder);
+                const result = (room.round.ladder.labels || [])[finalLane] || '통과';
+                await window.EnjoyGame.saveAction({
+                    slot,
+                    finalLane,
+                    result,
                     at: Date.now()
+                });
+            },
+            chooseLot: async function (item) {
+                if (!canPlay() || room.round.mode !== 'lots') return;
+                const a = room.round.actions || {};
+                if (Object.values(a).some(v => v.item === item)) return;
+                const result = (room.round.lotLabels || [])[item] || '통과';
+                await window.EnjoyGame.saveAction({
+                    item,
+                    result,
+                    at: Date.now()
+                });
+            },
+            spinWheel: async function () {
+                if (!room.round || room.round.mode !== 'wheel' || isWheelSpinning(room.round) || isWheelDone(room.round)) return;
+                const n = room.round.participants.length;
+                const seg = 360 / n;
+                const winnerIndex = room.round.wheel.winnerIndex;
+                const target = 360 - (winnerIndex * seg + seg / 2) + (room.round.wheel.offset || 0);
+                const startedAt = Date.now();
+                const spin = {
+                    startedAt,
+                    endAt: startedAt + WHEEL_DURATION,
+                    totalRotation: (room.round.wheel.turns * 360) + target,
+                    startedBy: profileName,
+                    startedByUid: currentUser.uid
                 };
+                room.round.spin = spin;
+                renderAll();
+                try {
+                    await updateDoc(roomRef, { 'round.spin': spin, updatedAt: Date.now() });
+                } catch (e) {
+                    showToast('룰렛 저장에 실패했어요');
+                }
+            },
+            rollDice: async function () {
+                if (!canPlay() || room.round.mode !== 'dice') return;
+                const rand = rng(room.round.seed + ':' + profileName + ':' + Date.now());
+                const value = 1 + Math.floor(rand() * 6);
+                await window.EnjoyGame.saveAction({
+                    value,
+                    tie: rand(),
+                    at: Date.now(),
+                    revealAt: Date.now() + DICE_DURATION
+                });
+            },
+            saveAction: async function (action) {
                 if (!room.round.actions) room.round.actions = {};
-                room.round.actions[profileName] = action;
+                room.round.actions[profileName] = Object.assign({
+                    uid: currentUser.uid,
+                    name: profileName
+                }, action);
                 renderAll();
                 try {
                     await updateDoc(roomRef, {
-                        ['round.actions.' + profileName]: action,
+                        ['round.actions.' + profileName]: room.round.actions[profileName],
                         updatedAt: Date.now()
                     });
                 } catch (e) {
