@@ -1597,6 +1597,12 @@
             pointer-events: none;
         }
         #community-write-screen select { min-width: 0; max-width: 100%; box-sizing: border-box; color-scheme: dark; }
+        #community-write-screen input,
+        #community-write-screen textarea,
+        #schedule-modal input,
+        #schedule-modal select {
+            color-scheme: dark;
+        }
         .community-screen { background-color: #000; }
 
         /* 일정 추가 / 커뮤니티 글쓰기 폼 정리 */
@@ -1634,10 +1640,10 @@
             align-items: center;
             gap: 7px;
             color: #3182f6;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 900;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            letter-spacing: -0.01em;
+            text-transform: none;
         }
         .schedule-modal-title {
             margin-top: 6px;
@@ -1802,7 +1808,7 @@
             margin-bottom: 18px;
         }
         .community-hero-card {
-            padding: 2px 0 4px;
+            padding: 2px 0 2px;
             border-radius: 0;
             background: transparent;
             border: 0;
@@ -1830,8 +1836,8 @@
             margin-top: 22px;
         }
         #community-write-screen .community-card-section {
-            padding: 16px;
-            border-radius: 20px;
+            padding: 15px;
+            border-radius: 18px;
             background: #1c1c1e;
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
@@ -1989,6 +1995,12 @@
             .community-like-profile { box-shadow: 0 0 0 2px #F2F2F7; }
             #community-comment-bar { background-color: rgba(242, 242, 247, 0.96) !important; }
             #community-write-screen select { color-scheme: light; }
+            #community-write-screen input,
+            #community-write-screen textarea,
+            #schedule-modal input,
+            #schedule-modal select {
+                color-scheme: light;
+            }
             #schedule-modal { background: rgba(0,0,0,0.32); }
             .schedule-modal-card {
                 background: #ffffff;
@@ -2015,10 +2027,17 @@
             .community-help-text { color: #6B7684; }
             .schedule-control,
             .community-control {
-                background: rgba(0,0,0,0.035);
+                background: #F7F7F8;
                 border-color: rgba(0,0,0,0.08);
                 color: #191F28;
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.68);
+                box-shadow: none;
+            }
+            .schedule-control:focus,
+            .community-control:focus {
+                background: #F7F7F8;
+                border-color: rgba(49,130,246,0.70);
+                color: #191F28;
+                box-shadow: 0 0 0 3px rgba(49,130,246,0.14);
             }
             .schedule-control::placeholder,
             .community-control::placeholder { color: rgba(25,31,40,0.36); }
@@ -2834,24 +2853,23 @@
         <div class="community-write-scroll flex-1 overflow-y-auto scrollbar-hide">
             <div class="community-write-topbar">
                 <button type="button" onclick="window.closeCommunityComposer(false)" class="community-close-button" aria-label="글쓰기 나가기"><i class="fa-solid fa-chevron-left text-[15px]"></i></button>
-                <span class="community-form-kicker"><i class="fa-solid fa-route"></i> ENJOY PLAN</span>
+                <span class="community-form-kicker">글쓰기</span>
             </div>
             <div class="community-hero-card">
-                <span class="community-form-kicker"><i class="fa-regular fa-map"></i> COMMUNITY</span>
                 <h2 id="community-write-heading" class="community-hero-title">여행계획 공유</h2>
-                <p id="community-write-subheading" class="community-hero-desc">지역, 날짜, 세부 동선만 정리하면 친구들이 바로 보기 좋은 여행 카드가 됩니다.</p>
+                <p id="community-write-subheading" class="community-hero-desc">지역, 날짜, 세부 동선만 정리해서 가볍게 공유해요.</p>
             </div>
-            <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()" class="community-write-form w-full min-w-0">
+            <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()" class="community-write-form w-full min-w-0" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <section class="community-card-section">
-                    <h3 class="community-section-title"><i class="fa-solid fa-heading"></i> 기본 정보</h3>
+                    <h3 class="community-section-title">기본 정보</h3>
                     <div class="community-field">
                         <label class="community-label" for="community-post-title">제목</label>
-                        <input id="community-post-title" maxlength="80" autocomplete="off" placeholder="예: 제주도 2박 3일 뚜벅이 여행" class="community-control">
+                        <input id="community-post-title" maxlength="80" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="예: 제주도 2박 3일 뚜벅이 여행" class="community-control">
                     </div>
                 </section>
 
                 <section class="community-card-section">
-                    <h3 class="community-section-title"><i class="fa-solid fa-location-dot"></i> 여행 지역</h3>
+                    <h3 class="community-section-title">여행 지역</h3>
                     <div class="community-place-grid min-w-0">
                         <div class="community-field">
                             <label class="community-label" for="community-post-region">시·도</label>
@@ -2872,7 +2890,7 @@
                 </section>
 
                 <section class="community-card-section">
-                    <h3 class="community-section-title"><i class="fa-regular fa-calendar"></i> 여행 날짜</h3>
+                    <h3 class="community-section-title">여행 날짜</h3>
                     <div class="community-date-grid min-w-0">
                         <div class="community-date-field community-field">
                             <label class="community-label" for="community-post-start">시작일</label>
@@ -2888,8 +2906,8 @@
                 </section>
 
                 <section class="community-card-section">
-                    <h3 class="community-section-title"><i class="fa-solid fa-list-check"></i> 세부 일정</h3>
-                    <textarea id="community-post-days" maxlength="2000" rows="6" placeholder="한 줄에 일정 하나씩 적어주세요.&#10;1일차 · 공항 → 애월 카페거리&#10;2일차 · 우도 → 성산일출봉" class="community-control community-textarea"></textarea>
+                    <h3 class="community-section-title">세부 일정</h3>
+                    <textarea id="community-post-days" maxlength="2000" rows="6" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="한 줄에 일정 하나씩 적어주세요.&#10;1일차 · 공항 → 애월 카페거리&#10;2일차 · 우도 → 성산일출봉" class="community-control community-textarea"></textarea>
                     <div class="community-form-footer">
                         <p class="community-help-text !mt-0">최대 20줄까지 표시됩니다.</p>
                         <p id="community-write-status" class="community-status-text"></p>
@@ -3194,14 +3212,13 @@
     </div>
 
     <!-- Modals -->
-    <div id="schedule-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4">
+    <div id="schedule-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4" lang="ko">
         <div class="schedule-modal-card scale-in relative flex flex-col">
             <div class="schedule-modal-inner">
                 <div class="schedule-modal-header">
                     <div>
-                        <span class="schedule-modal-kicker"><i class="fa-regular fa-calendar-plus"></i> ENJOY CALENDAR</span>
                         <h3 class="schedule-modal-title" id="sch-modal-title">일정 추가</h3>
-                        <p class="schedule-modal-desc">날짜와 이름만 넣어도 캘린더에 깔끔하게 정리돼요.</p>
+                        <p class="schedule-modal-desc">날짜와 이름만 넣어도 일정표에 깔끔하게 정리돼요.</p>
                     </div>
                     <button onclick="window.haptic(); window.closeModal('schedule-modal')" class="schedule-close-button" aria-label="일정 추가 닫기"><i class="fa-solid fa-xmark text-[16px]"></i></button>
                 </div>
@@ -3210,7 +3227,7 @@
                     <input type="hidden" id="sch-edit-index">
                     <section class="schedule-card-section">
                         <div class="schedule-field">
-                            <label class="schedule-label" for="add-sch-category"><i class="fa-solid fa-layer-group"></i> 카테고리</label>
+                            <label class="schedule-label" for="add-sch-category">카테고리</label>
                             <select id="add-sch-category" class="schedule-control">
                                 <option value="meet">정기 모임</option>
                                 <option value="personal">개인 일정</option>
@@ -3223,25 +3240,25 @@
                     <section class="schedule-card-section">
                         <div class="schedule-date-grid">
                             <div class="schedule-field">
-                                <label class="schedule-label" for="add-sch-start-date"><i class="fa-regular fa-calendar"></i> 시작일</label>
+                                <label class="schedule-label" for="add-sch-start-date">시작일</label>
                                 <input type="date" id="add-sch-start-date" class="schedule-control">
                             </div>
                             <div class="schedule-field">
-                                <label class="schedule-label" for="add-sch-end-date"><i class="fa-regular fa-calendar-check"></i> 종료일</label>
+                                <label class="schedule-label" for="add-sch-end-date">종료일</label>
                                 <input type="date" id="add-sch-end-date" class="schedule-control">
                             </div>
                         </div>
                     </section>
                     <section class="schedule-card-section">
                         <div class="schedule-field">
-                            <label class="schedule-label" for="add-sch-time"><i class="fa-regular fa-clock"></i> 시간</label>
-                            <input type="text" id="add-sch-time" placeholder="예: 19:00, 하루 종일" class="schedule-control">
+                            <label class="schedule-label" for="add-sch-time">시간</label>
+                            <input type="text" id="add-sch-time" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="예: 19:00, 하루 종일" class="schedule-control">
                         </div>
                     </section>
                     <section class="schedule-card-section">
                         <div class="schedule-field">
-                            <label class="schedule-label" for="add-sch-title"><i class="fa-solid fa-pen"></i> 일정 이름</label>
-                            <input type="text" id="add-sch-title" placeholder="일정 내용을 입력하세요" class="schedule-control">
+                            <label class="schedule-label" for="add-sch-title">일정 이름</label>
+                            <input type="text" id="add-sch-title" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="일정 내용을 입력하세요" class="schedule-control">
                         </div>
                     </section>
                 </div>
