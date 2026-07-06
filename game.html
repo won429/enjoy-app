@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>엔조이 복불복</title>
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="icon.png">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            color-scheme: dark;
+            --bg: #000;
+            --surface: #101114;
+            --surface-2: #18191f;
+            --glass: rgba(255,255,255,.075);
+            --glass-strong: rgba(255,255,255,.12);
+            --line: rgba(255,255,255,.11);
+            --line-strong: rgba(255,255,255,.2);
+            --text: #f4f4f5;
+            --muted: rgba(255,255,255,.55);
+            --faint: rgba(255,255,255,.35);
+            --blue: #3182F6;
+            --red: #F04452;
+            --yellow: #FFD60A;
+            --green: #34C759;
+            --purple: #A855F7;
+            --cyan: #22D3EE;
+            --orange: #F59E0B;
+            --safe-bottom: max(20px, env(safe-area-inset-bottom));
+            --safe-top: max(14px, env(safe-area-inset-top));
+        }
+        html, body {
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+            letter-spacing: 0;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+        body {
+            min-height: 100dvh;
+            overflow: hidden;
+        }
+        button, input {
+            font: inherit;
+            color: inherit;
+        }
+        button {
+            border: 0;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .app {
+            width: min(100%, 480px);
+            height: 100dvh;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 18% 0%, rgba(49,130,246,.17), transparent 32%),
+                radial-gradient(circle at 86% 13%, rgba(240,68,82,.14), transparent 27%),
+                linear-gradient(180deg, #07080b 0%, #000 48%, #050506 100%);
+        }
+        .app::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: linear-gradient(180deg, rgba(0,0,0,.7), transparent 42%);
+        }
+        .screen {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: var(--safe-top) 18px 10px;
+        }
+        .brand {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,.96);
+            color: #111;
+            box-shadow: 0 12px 32px rgba(255,255,255,.08);
+        }
+        .brand-title {
+            min-width: 0;
+        }
+        .brand-title strong {
+            display: block;
+            font-size: 20px;
+            line-height: 1.1;
+            font-weight: 850;
+        }
+        .brand-title span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 650;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(255,255,255,.1);
+            color: rgba(255,255,255,.86);
+            border: 1px solid rgba(255,255,255,.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: transform .12s ease, background .12s ease;
+        }
+        .icon-btn:active, .primary-btn:active, .chip:active, .mode-btn:active, .mini-btn:active {
+            transform: scale(.94);
+        }
+        .content {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            padding: 4px 18px 132px;
+            scrollbar-width: none;
+        }
+        .content::-webkit-scrollbar { display: none; }
+        .hero-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 2px 0 14px;
+        }
+        .status-pill {
+            min-height: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 0 11px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.1);
+            color: rgba(255,255,255,.72);
+            font-size: 11px;
+            font-weight: 750;
+        }
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--faint);
+        }
+        .status-dot.on {
+            background: var(--green);
+            box-shadow: 0 0 0 4px rgba(52,199,89,.13);
+        }
+        .round-title {
+            text-align: right;
+            color: var(--faint);
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .panel {
+            border-radius: 24px;
+            background: rgba(255,255,255,.075);
+            border: 1px solid rgba(255,255,255,.11);
+            box-shadow: 0 16px 48px rgba(0,0,0,.32);
+            backdrop-filter: blur(18px) saturate(1.5);
+            -webkit-backdrop-filter: blur(18px) saturate(1.5);
+        }
+        .stage {
+            min-height: 430px;
+            position: relative;
+            overflow: hidden;
+            padding: 16px;
+        }
+        .stage-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .stage-copy {
+            min-width: 0;
+        }
+        .stage-copy h1 {
+            margin: 0;
+            font-size: 26px;
+            line-height: 1.08;
+            font-weight: 900;
+        }
+        .stage-copy p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+            font-weight: 620;
+        }
+        .round-chip {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 34px;
+            padding: 0 11px;
+            border-radius: 999px;
+            background: rgba(0,0,0,.28);
+            border: 1px solid rgba(255,255,255,.1);
+            color: rgba(255,255,255,.78);
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .game-area {
+            min-height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .waiting {
+            width: 100%;
+            min-height: 290px;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            color: rgba(255,255,255,.5);
+        }
+        .waiting i {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(255,255,255,.08);
+            color: rgba(255,255,255,.88);
+            font-size: 30px;
+        }
+        .waiting strong {
+            display: block;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 850;
+        }
+        .waiting span {
+            display: block;
+            margin-top: 7px;
+            font-size: 12px;
+            font-weight: 650;
+        }
+        .mode-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .mode-btn {
+            min-height: 74px;
+            padding: 9px 5px;
+            border-radius: 20px;
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.08);
+            color: rgba(255,255,255,.58);
+            transition: transform .12s ease, background .14s ease, border-color .14s ease, color .14s ease;
+        }
+        .mode-btn i {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 20px;
+        }
+        .mode-btn span {
+            display: block;
+            font-size: 11px;
+            line-height: 1.15;
+            font-weight: 800;
+        }
+        .mode-btn.active {
+            background: rgba(255,255,255,.16);
+            border-color: rgba(255,255,255,.24);
+            color: #fff;
+        }
+        .control-panel {
+            margin-top: 12px;
+            padding: 14px;
+        }
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .section-title strong {
+            font-size: 14px;
+            font-weight: 850;
+        }
+        .section-title span {
+            color: var(--faint);
+            font-size: 11px;
+            font-weight: 720;
+        }
+        .chips {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .chip {
+            min-height: 48px;
+            padding: 8px 9px;
+            border-radius: 16px;
+            background: rgba(255,255,255,.065);
+            border: 1px solid rgba(255,255,255,.08);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,.52);
+            text-align: left;
+            transition: transform .12s ease, background .14s ease, color .14s ease, border-color .14s ease;
+        }
+        .chip.active {
+            background: rgba(255,255,255,.15);
+            color: #fff;
+            border-color: rgba(255,255,255,.2);
+        }
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 900;
+        }
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .chip-name {
+            min-width: 0;
+            display: block;
+            font-size: 12px;
+            font-weight: 800;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .mini-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .mini-btn {
+            min-height: 38px;
+            flex: 1;
+            border-radius: 14px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.08);
+            color: rgba(255,255,255,.72);
+            font-size: 12px;
+            font-weight: 800;
+            transition: transform .12s ease, background .14s ease;
+        }
+        .penalty-control {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .stepper {
+            flex: 1;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 17px;
+            background: rgba(0,0,0,.22);
+            border: 1px solid rgba(255,255,255,.09);
+            padding: 4px;
+        }
+        .stepper button {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.11);
+            color: #fff;
+        }
+        .stepper strong {
+            font-size: 14px;
+            font-weight: 850;
+        }
+        .primary-btn {
+            width: 100%;
+            min-height: 58px;
+            margin-top: 12px;
+            border-radius: 21px;
+            background: #fff;
+            color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 16px 38px rgba(255,255,255,.13);
+            font-size: 16px;
+            font-weight: 900;
+            transition: transform .12s ease, opacity .12s ease;
+        }
+        .primary-btn:disabled {
+            opacity: .45;
+        }
+        .presence {
+            margin-top: 12px;
+            padding: 13px;
+        }
+        .presence-list {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .presence-list::-webkit-scrollbar { display: none; }
+        .presence-person {
+            min-width: 76px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255,255,255,.5);
+            font-size: 10.5px;
+            font-weight: 750;
+        }
+        .presence-person .avatar {
+            width: 44px;
+            height: 44px;
+            font-size: 15px;
+            outline: 2px solid rgba(255,255,255,.08);
+            outline-offset: 2px;
+        }
+        .presence-person.on .avatar {
+            outline-color: rgba(52,199,89,.7);
+        }
+        .presence-person.on {
+            color: rgba(255,255,255,.88);
+        }
+        .ladder-wrap {
+            width: 100%;
+            padding: 4px 0 0;
+        }
+        .ladder-labels {
+            display: grid;
+            gap: 5px;
+            margin: 0 3px;
+        }
+        .ladder-labels.top { align-items: end; }
+        .ladder-labels.bottom { align-items: start; }
+        .ladder-name, .ladder-result {
+            min-width: 0;
+            padding: 7px 3px;
+            border-radius: 11px;
+            text-align: center;
+            font-size: 10.5px;
+            font-weight: 850;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .ladder-name { background: rgba(255,255,255,.1); }
+        .ladder-result { background: rgba(255,255,255,.08); color: rgba(255,255,255,.58); }
+        .ladder-result.win { background: rgba(240,68,82,.18); color: #ff9ca5; }
+        .ladder-svg {
+            width: 100%;
+            height: 260px;
+            display: block;
+            margin: 8px 0;
+            overflow: visible;
+        }
+        .ladder-line {
+            stroke: rgba(255,255,255,.28);
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+        .ladder-rung {
+            stroke: rgba(255,255,255,.42);
+            stroke-width: 5;
+            stroke-linecap: round;
+        }
+        .ladder-path {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,.2));
+            stroke-dasharray: 900;
+            stroke-dashoffset: 900;
+            animation: path-in 1.4s ease-out forwards;
+        }
+        @keyframes path-in { to { stroke-dashoffset: 0; } }
+        .lots-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .lot-card {
+            min-height: 122px;
+            border-radius: 22px;
+            padding: 12px 8px;
+            background: linear-gradient(160deg, rgba(255,255,255,.13), rgba(255,255,255,.055));
+            border: 1px solid rgba(255,255,255,.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .lot-card::before {
+            content: "";
+            position: absolute;
+            inset: -25% 20% auto -30%;
+            height: 70px;
+            transform: rotate(-18deg);
+            background: rgba(255,255,255,.12);
+        }
+        .lot-card .paper {
+            width: 42px;
+            height: 52px;
+            border-radius: 10px;
+            background: #f5f5f5;
+            color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,.24);
+            transform: rotate(-4deg);
+        }
+        .lot-card.win {
+            border-color: rgba(240,68,82,.5);
+            background: linear-gradient(160deg, rgba(240,68,82,.23), rgba(255,255,255,.07));
+        }
+        .lot-name {
+            position: relative;
+            z-index: 1;
+            font-size: 12px;
+            font-weight: 850;
+        }
+        .lot-result {
+            position: relative;
+            z-index: 1;
+            color: rgba(255,255,255,.58);
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .lot-card.win .lot-result { color: #ffadb5; }
+        .wheel-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .wheel-shell {
+            width: min(285px, 78vw);
+            aspect-ratio: 1;
+            position: relative;
+            display: grid;
+            place-items: center;
+        }
+        .pointer {
+            position: absolute;
+            top: -3px;
+            left: 50%;
+            z-index: 5;
+            width: 0;
+            height: 0;
+            transform: translateX(-50%);
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 24px solid #fff;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,.35));
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 999px;
+            border: 9px solid rgba(255,255,255,.93);
+            box-shadow: 0 20px 52px rgba(0,0,0,.38), inset 0 0 0 1px rgba(255,255,255,.18);
+            position: relative;
+            overflow: hidden;
+            background: conic-gradient(var(--blue), var(--red), var(--yellow), var(--green), var(--purple), var(--cyan), var(--blue));
+        }
+        .wheel.spinning {
+            animation: wheel-spin .56s linear infinite;
+        }
+        @keyframes wheel-spin {
+            to { transform: rotate(360deg); }
+        }
+        .wheel::after {
+            content: "";
+            position: absolute;
+            inset: 34%;
+            border-radius: 999px;
+            background: #fff;
+            box-shadow: inset 0 0 0 8px #111, 0 0 28px rgba(0,0,0,.28);
+        }
+        .wheel-label {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 2;
+            transform-origin: 0 0;
+            color: #fff;
+            text-shadow: 0 1px 5px rgba(0,0,0,.55);
+            font-size: 11px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        .wheel-result {
+            min-height: 48px;
+            padding: 0 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.16);
+            font-size: 16px;
+            font-weight: 900;
+        }
+        .dice-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .dice-card {
+            min-height: 124px;
+            border-radius: 22px;
+            padding: 12px 7px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.1);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .dice-card.win {
+            background: rgba(49,130,246,.18);
+            border-color: rgba(49,130,246,.45);
+        }
+        .die {
+            width: 48px;
+            height: 48px;
+            border-radius: 13px;
+            display: grid;
+            place-items: center;
+            background: #fff;
+            color: #111;
+            box-shadow: 0 9px 18px rgba(0,0,0,.28);
+            font-size: 24px;
+            font-weight: 950;
+        }
+        .dice-name {
+            font-size: 12px;
+            font-weight: 850;
+        }
+        .dice-score {
+            color: rgba(255,255,255,.58);
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .result-banner {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px 15px;
+            border-radius: 20px;
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.13);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .result-banner i {
+            width: 38px;
+            height: 38px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(240,68,82,.18);
+            color: #ff9ca5;
+            flex: 0 0 auto;
+        }
+        .result-banner strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 900;
+        }
+        .result-banner span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 11.5px;
+            font-weight: 650;
+        }
+        .bottom-dock {
+            position: absolute;
+            z-index: 10;
+            left: 18px;
+            right: 18px;
+            bottom: var(--safe-bottom);
+            display: flex;
+            gap: 10px;
+            padding: 9px;
+            border-radius: 999px;
+            background: rgba(12,12,14,.46);
+            border: 1px solid rgba(255,255,255,.14);
+            box-shadow: 0 18px 52px rgba(0,0,0,.45);
+            backdrop-filter: blur(24px) saturate(1.7);
+            -webkit-backdrop-filter: blur(24px) saturate(1.7);
+        }
+        .dock-btn {
+            min-height: 48px;
+            flex: 1;
+            border-radius: 999px;
+            background: transparent;
+            color: rgba(255,255,255,.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 850;
+        }
+        .dock-btn.primary {
+            background: #fff;
+            color: #111;
+            box-shadow: 0 10px 28px rgba(255,255,255,.12);
+        }
+        .overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+            background: rgba(0,0,0,.76);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .overlay.show { display: flex; }
+        .login-card {
+            width: 100%;
+            max-width: 360px;
+            border-radius: 28px;
+            padding: 26px 22px 22px;
+            text-align: center;
+            background: rgba(28,28,30,.92);
+            border: 1px solid rgba(255,255,255,.12);
+            box-shadow: 0 24px 70px rgba(0,0,0,.48);
+        }
+        .login-card .brand-mark {
+            margin: 0 auto 16px;
+            width: 58px;
+            height: 58px;
+            border-radius: 20px;
+            font-size: 22px;
+        }
+        .login-card h2 {
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.15;
+            font-weight: 900;
+        }
+        .login-card p {
+            margin: 9px 0 20px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.45;
+            font-weight: 650;
+        }
+        .login-btn {
+            width: 100%;
+            min-height: 52px;
+            border-radius: 18px;
+            background: #fff;
+            color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            font-size: 15px;
+            font-weight: 850;
+        }
+        .login-secondary {
+            width: 100%;
+            min-height: 46px;
+            margin-top: 8px;
+            border-radius: 16px;
+            background: rgba(255,255,255,.08);
+            color: rgba(255,255,255,.75);
+            font-size: 13px;
+            font-weight: 800;
+        }
+        .toast {
+            position: absolute;
+            z-index: 40;
+            left: 50%;
+            bottom: calc(var(--safe-bottom) + 76px);
+            max-width: calc(100% - 44px);
+            padding: 12px 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.94);
+            color: #111;
+            box-shadow: 0 16px 40px rgba(0,0,0,.35);
+            font-size: 12px;
+            font-weight: 850;
+            opacity: 0;
+            transform: translate(-50%, 12px);
+            pointer-events: none;
+            transition: opacity .18s ease, transform .18s ease;
+            white-space: nowrap;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+        .hidden { display: none !important; }
+        @media (max-width: 380px) {
+            .chips, .lots-grid, .dice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .stage { padding: 14px; }
+            .stage-copy h1 { font-size: 24px; }
+            .mode-btn span { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="screen">
+            <header class="topbar">
+                <div class="brand">
+                    <button class="icon-btn" aria-label="메인으로" onclick="window.haptic(); location.href='index.html'">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <div class="brand-mark"><i class="fa-solid fa-dice"></i></div>
+                    <div class="brand-title">
+                        <strong>복불복 게임</strong>
+                        <span id="account-label">연결 확인 중</span>
+                    </div>
+                </div>
+                <button class="icon-btn" aria-label="새로고침" onclick="window.haptic(); window.EnjoyGame && window.EnjoyGame.resetRoom()">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </header>
+
+            <main class="content">
+                <div class="hero-status">
+                    <div class="status-pill"><span id="sync-dot" class="status-dot"></span><span id="sync-label">Firebase 연결 중</span></div>
+                    <div id="round-label" class="round-title">대기 중</div>
+                </div>
+
+                <section class="stage panel">
+                    <div class="stage-head">
+                        <div class="stage-copy">
+                            <h1 id="mode-title">사다리타기</h1>
+                            <p id="mode-desc">엔조이 멤버끼리 바로 돌리는 실시간 복불복</p>
+                        </div>
+                        <div id="mode-chip" class="round-chip"><i class="fa-solid fa-bars-staggered"></i><span>READY</span></div>
+                    </div>
+                    <div id="game-area" class="game-area"></div>
+                    <div id="result-banner" class="result-banner hidden"></div>
+                </section>
+
+                <nav id="mode-strip" class="mode-strip" aria-label="게임 선택"></nav>
+
+                <section class="control-panel panel">
+                    <div class="section-title">
+                        <strong>참가 멤버</strong>
+                        <span id="participant-count">6명</span>
+                    </div>
+                    <div id="member-chips" class="chips"></div>
+                    <div class="mini-row">
+                        <button class="mini-btn" onclick="window.haptic(); window.EnjoyGame.selectAll()">전체 선택</button>
+                        <button class="mini-btn" onclick="window.haptic(); window.EnjoyGame.shuffleMembers()">랜덤 정렬</button>
+                    </div>
+                    <div class="penalty-control">
+                        <div class="section-title" style="margin:0; min-width:92px; display:block;">
+                            <strong>당첨 수</strong>
+                            <span style="display:block; margin-top:3px;">사다리·제비</span>
+                        </div>
+                        <div class="stepper">
+                            <button aria-label="당첨 수 줄이기" onclick="window.haptic(); window.EnjoyGame.adjustPenalty(-1)"><i class="fa-solid fa-minus"></i></button>
+                            <strong id="penalty-label">1명</strong>
+                            <button aria-label="당첨 수 늘리기" onclick="window.haptic(); window.EnjoyGame.adjustPenalty(1)"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <button id="start-btn" class="primary-btn" onclick="window.haptic(); window.EnjoyGame.startGame()">
+                        <i class="fa-solid fa-play"></i><span>시작하기</span>
+                    </button>
+                </section>
+
+                <section class="presence panel">
+                    <div class="section-title">
+                        <strong>입장 멤버</strong>
+                        <span id="presence-count">0명</span>
+                    </div>
+                    <div id="presence-list" class="presence-list"></div>
+                </section>
+            </main>
+        </div>
+
+        <div class="bottom-dock">
+            <button class="dock-btn" onclick="window.haptic(); location.href='index.html'"><i class="fa-solid fa-house"></i><span>홈</span></button>
+            <button class="dock-btn primary" onclick="window.haptic(); window.EnjoyGame && window.EnjoyGame.startGame()"><i class="fa-solid fa-dice"></i><span>한 판 더</span></button>
+        </div>
+
+        <div id="login-overlay" class="overlay">
+            <div class="login-card">
+                <div class="brand-mark"><i class="fa-solid fa-dice"></i></div>
+                <h2 id="login-title">로그인이 필요해요</h2>
+                <p id="login-message">엔조이 계정으로 들어오면 입장 멤버와 결과가 함께 동기화돼요.</p>
+                <button class="login-btn" onclick="window.haptic(); window.EnjoyGame && window.EnjoyGame.login()">
+                    <i class="fa-brands fa-google"></i><span>Google로 계속하기</span>
+                </button>
+                <button class="login-secondary" onclick="window.haptic(); location.href='index.html'">메인으로 돌아가기</button>
+            </div>
+        </div>
+
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, getDoc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const MEMBERS = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+        const MEMBER_META = {
+            '전시기': { color: '#F04452', short: '전' },
+            '성원제': { color: '#3182F6', short: '성' },
+            '오스틴': { color: '#F59E0B', short: '오' },
+            '이진누': { color: '#22C55E', short: '이' },
+            '류짱': { color: '#A855F7', short: '류' },
+            '홍박사': { color: '#06B6D4', short: '홍' }
+        };
+        const MODES = {
+            ladder: { title: '사다리타기', desc: '위에서 내려가면 운명이 딱 갈립니다', icon: 'fa-bars-staggered', duration: 3200, accent: '#3182F6' },
+            lots: { title: '제비뽑기', desc: '접힌 종이 안에 오늘의 결과가 들어있습니다', icon: 'fa-ticket', duration: 2400, accent: '#F59E0B' },
+            wheel: { title: '룰렛', desc: '멈추는 곳이 오늘의 주인공입니다', icon: 'fa-circle-notch', duration: 4200, accent: '#F04452' },
+            dice: { title: '주사위 대결', desc: '가장 높은 숫자가 한 번에 치고 나갑니다', icon: 'fa-dice-six', duration: 2600, accent: '#34C759' }
+        };
+        const COLORS = ['#3182F6', '#F04452', '#FFD60A', '#34C759', '#A855F7', '#22D3EE', '#F59E0B', '#EC4899'];
+        const ROOM_ID = 'enjoy-main';
+        const ACTIVE_MS = 75000;
+        const DEFAULT_ROOM = {
+            mode: 'ladder',
+            participants: MEMBERS.slice(),
+            penaltyCount: 1,
+            round: null,
+            presence: {},
+            updatedAt: Date.now()
+        };
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVQ_WdMXKuU2CgTgvSHqLKuAVGPeeDuOQ",
+            authDomain: "enjoy-meeting-account.firebaseapp.com",
+            projectId: "enjoy-meeting-account",
+            storageBucket: "enjoy-meeting-account.firebasestorage.app",
+            messagingSenderId: "956113498506",
+            appId: "1:956113498506:web:b520f2b77fdb3295cb9873"
+        };
+
+        const $ = (id) => document.getElementById(id);
+        let app, auth, db, roomRef, membersUnsub = null, roomUnsub = null, beatTimer = null, tickTimer = null;
+        let currentUser = null, profileName = '', memberDocs = {}, room = Object.assign({}, DEFAULT_ROOM), lastRoundId = '';
+
+        window.haptic = function () {
+            try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+        };
+
+        function showToast(text) {
+            const el = $('toast');
+            el.textContent = text;
+            el.classList.add('show');
+            clearTimeout(showToast.t);
+            showToast.t = setTimeout(() => el.classList.remove('show'), 1800);
+        }
+
+        function getOrInitializeApp(config, name) {
+            const found = getApps().find(item => item.name === name);
+            return found || initializeApp(config, name);
+        }
+
+        function normalizeRoom(data) {
+            const next = Object.assign({}, DEFAULT_ROOM, data || {});
+            next.mode = MODES[next.mode] ? next.mode : 'ladder';
+            next.participants = Array.isArray(next.participants) && next.participants.length ? next.participants.filter(n => MEMBERS.includes(n)) : MEMBERS.slice();
+            next.penaltyCount = clampPenalty(next.penaltyCount, next.participants.length);
+            next.presence = next.presence || {};
+            return next;
+        }
+
+        function clampPenalty(value, total) {
+            const max = Math.max(1, Math.min(5, (total || MEMBERS.length) - 1));
+            return Math.max(1, Math.min(max, Number(value) || 1));
+        }
+
+        function hashSeed(seed) {
+            let h = 2166136261;
+            const s = String(seed || Date.now());
+            for (let i = 0; i < s.length; i++) {
+                h ^= s.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
+            return h >>> 0;
+        }
+
+        function rng(seed) {
+            let a = hashSeed(seed) || 1;
+            return function () {
+                a |= 0;
+                a = (a + 0x6D2B79F5) | 0;
+                let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        function shuffle(list, seed) {
+            const out = list.slice();
+            const rand = rng(seed);
+            for (let i = out.length - 1; i > 0; i--) {
+                const j = Math.floor(rand() * (i + 1));
+                [out[i], out[j]] = [out[j], out[i]];
+            }
+            return out;
+        }
+
+        function resultLabels(count, penaltyCount, seed) {
+            const labels = [];
+            for (let i = 0; i < count; i++) labels.push(i < penaltyCount ? '당첨' : '통과');
+            return shuffle(labels, seed + ':labels');
+        }
+
+        function buildLadderRound(seed, participants, penaltyCount) {
+            const n = participants.length;
+            const levels = Math.max(7, n + 4);
+            const rand = rng(seed + ':ladder');
+            const rungs = [];
+            for (let level = 0; level < levels; level++) {
+                const occupied = {};
+                const rungCount = n > 4 && rand() > .45 ? 2 : 1;
+                for (let k = 0; k < rungCount; k++) {
+                    let lane = Math.floor(rand() * Math.max(1, n - 1));
+                    if (occupied[lane] || occupied[lane - 1] || occupied[lane + 1]) continue;
+                    occupied[lane] = true;
+                    rungs.push({ level, lane });
+                }
+            }
+            const labels = resultLabels(n, penaltyCount, seed);
+            const finals = participants.map((name, start) => {
+                let lane = start;
+                rungs.forEach(r => {
+                    if (r.lane === lane) lane += 1;
+                    else if (r.lane + 1 === lane) lane -= 1;
+                });
+                return { name, lane, result: labels[lane] };
+            });
+            return {
+                ladder: { levels, rungs, labels },
+                results: Object.fromEntries(finals.map(v => [v.name, v.result])),
+                winners: finals.filter(v => v.result === '당첨').map(v => v.name)
+            };
+        }
+
+        function buildSimpleWinners(seed, participants, penaltyCount) {
+            const order = shuffle(participants, seed + ':winners');
+            const winners = order.slice(0, Math.max(1, Math.min(penaltyCount, participants.length)));
+            return {
+                results: Object.fromEntries(participants.map(name => [name, winners.includes(name) ? '당첨' : '통과'])),
+                winners
+            };
+        }
+
+        function buildDiceRound(seed, participants) {
+            const rand = rng(seed + ':dice');
+            const rolls = participants.map((name, idx) => ({
+                name,
+                value: 1 + Math.floor(rand() * 6),
+                tie: rand(),
+                idx
+            }));
+            const sorted = rolls.slice().sort((a, b) => (b.value - a.value) || (b.tie - a.tie));
+            const winner = sorted[0] ? sorted[0].name : '';
+            return {
+                dice: rolls,
+                results: Object.fromEntries(rolls.map(v => [v.name, v.name === winner ? '1등' : v.value + '점'])),
+                winners: winner ? [winner] : []
+            };
+        }
+
+        function buildRound(mode, seed, participants, penaltyCount) {
+            if (mode === 'ladder') return buildLadderRound(seed, participants, penaltyCount);
+            if (mode === 'dice') return buildDiceRound(seed, participants);
+            return buildSimpleWinners(seed, participants, mode === 'wheel' ? 1 : penaltyCount);
+        }
+
+        function isRoundActive(round) {
+            if (!round) return false;
+            return Date.now() - (round.startedAt || 0) < (round.duration || 2600);
+        }
+
+        function isRoundRevealed(round) {
+            if (!round) return false;
+            return Date.now() - (round.startedAt || 0) >= (round.duration || 2600);
+        }
+
+        function memberAvatar(name, size) {
+            const doc = memberDocsByName()[name] || {};
+            const meta = MEMBER_META[name] || { color: '#6B7280', short: '?' };
+            if (doc.photoURL) return '<span class="avatar" style="' + (size ? 'width:' + size + 'px;height:' + size + 'px;' : '') + '"><img src="' + escapeHtml(doc.photoURL) + '" referrerpolicy="no-referrer"></span>';
+            return '<span class="avatar" style="background:' + meta.color + ';' + (size ? 'width:' + size + 'px;height:' + size + 'px;' : '') + '">' + meta.short + '</span>';
+        }
+
+        function memberDocsByName() {
+            const by = {};
+            Object.keys(memberDocs).forEach(uid => {
+                const v = memberDocs[uid] || {};
+                if (v.name) by[v.name] = v;
+            });
+            return by;
+        }
+
+        function escapeHtml(v) {
+            return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function renderModes() {
+            const wrap = $('mode-strip');
+            wrap.innerHTML = Object.keys(MODES).map(key => {
+                const m = MODES[key];
+                const active = room.mode === key ? ' active' : '';
+                return '<button class="mode-btn' + active + '" onclick="window.haptic(); window.EnjoyGame.setMode(\'' + key + '\')">' +
+                    '<i class="fa-solid ' + m.icon + '"></i><span>' + m.title + '</span></button>';
+            }).join('');
+        }
+
+        function renderControls() {
+            const participants = room.participants || MEMBERS;
+            $('participant-count').textContent = participants.length + '명';
+            $('penalty-label').textContent = clampPenalty(room.penaltyCount, participants.length) + '명';
+            $('member-chips').innerHTML = MEMBERS.map(name => {
+                const active = participants.includes(name);
+                return '<button class="chip' + (active ? ' active' : '') + '" onclick="window.haptic(); window.EnjoyGame.toggleMember(\'' + name + '\')">' +
+                    memberAvatar(name) + '<span class="chip-name">' + name + '</span></button>';
+            }).join('');
+            const start = $('start-btn');
+            start.disabled = participants.length < 2 || !currentUser || !profileName;
+            start.innerHTML = isRoundActive(room.round)
+                ? '<i class="fa-solid fa-circle-notch fa-spin"></i><span>진행 중</span>'
+                : '<i class="fa-solid fa-play"></i><span>시작하기</span>';
+        }
+
+        function renderPresence() {
+            const now = Date.now();
+            const presence = room.presence || {};
+            const activeEntries = Object.keys(presence)
+                .map(uid => Object.assign({ uid }, presence[uid] || {}))
+                .filter(v => now - (v.lastSeen || 0) < ACTIVE_MS);
+            $('presence-count').textContent = activeEntries.length + '명';
+            $('presence-list').innerHTML = MEMBERS.map(name => {
+                const docEntry = Object.keys(memberDocs).map(uid => Object.assign({ uid }, memberDocs[uid] || {})).find(v => v.name === name);
+                const uid = docEntry && docEntry.uid;
+                const p = uid ? presence[uid] : null;
+                const on = !!(p && now - (p.lastSeen || 0) < ACTIVE_MS);
+                return '<div class="presence-person' + (on ? ' on' : '') + '">' +
+                    memberAvatar(name, 44) + '<span>' + name + '</span></div>';
+            }).join('');
+        }
+
+        function renderHeader() {
+            const mode = MODES[room.mode];
+            $('mode-title').textContent = mode.title;
+            $('mode-desc').textContent = mode.desc;
+            $('mode-chip').innerHTML = '<i class="fa-solid ' + mode.icon + '"></i><span>' + (isRoundActive(room.round) ? 'LIVE' : 'READY') + '</span>';
+            $('mode-chip').style.color = mode.accent;
+            $('sync-dot').classList.toggle('on', !!currentUser && !!roomRef);
+            $('sync-label').textContent = currentUser ? '실시간 연결됨' : '로그인 필요';
+            const round = room.round;
+            $('round-label').textContent = round ? ((round.startedBy || '멤버') + ' 시작') : '대기 중';
+            $('account-label').textContent = profileName ? (profileName + ' 입장 중') : (currentUser ? '프로필 확인 중' : '로그인 필요');
+        }
+
+        function renderGame() {
+            const area = $('game-area');
+            const round = room.round;
+            if (!round) {
+                area.innerHTML = '<div class="waiting"><div><i class="fa-solid ' + MODES[room.mode].icon + '"></i><strong>' + MODES[room.mode].title + '</strong><span>멤버를 고르고 시작하면 모두에게 같이 보여요</span></div></div>';
+                renderResult(null);
+                return;
+            }
+            if (round.mode === 'ladder') renderLadder(area, round);
+            else if (round.mode === 'lots') renderLots(area, round);
+            else if (round.mode === 'wheel') renderWheel(area, round);
+            else if (round.mode === 'dice') renderDice(area, round);
+            renderResult(round);
+        }
+
+        function renderLadder(area, round) {
+            const participants = round.participants || [];
+            const n = participants.length;
+            const ladder = round.ladder || buildLadderRound(round.seed, participants, round.penaltyCount).ladder;
+            const width = 360, height = 250, top = 14, bottom = 236;
+            const gap = n > 1 ? width / (n - 1) : width;
+            const x = (lane) => n > 1 ? lane * gap : width / 2;
+            const y = (level) => top + ((level + 1) / (ladder.levels + 1)) * (bottom - top);
+            const revealed = isRoundRevealed(round);
+            let svg = '';
+            for (let i = 0; i < n; i++) svg += '<line class="ladder-line" x1="' + x(i) + '" y1="' + top + '" x2="' + x(i) + '" y2="' + bottom + '"></line>';
+            (ladder.rungs || []).forEach(r => {
+                svg += '<line class="ladder-rung" x1="' + x(r.lane) + '" y1="' + y(r.level) + '" x2="' + x(r.lane + 1) + '" y2="' + y(r.level) + '"></line>';
+            });
+            if (revealed) {
+                participants.forEach((name, idx) => {
+                    svg += '<path class="ladder-path" d="' + ladderPath(idx, ladder, n, x, y, top, bottom) + '" stroke="' + COLORS[idx % COLORS.length] + '"></path>';
+                });
+            }
+            const cols = 'grid-template-columns:repeat(' + n + ',minmax(0,1fr))';
+            area.innerHTML = '<div class="ladder-wrap">' +
+                '<div class="ladder-labels top" style="' + cols + '">' + participants.map(nm => '<div class="ladder-name">' + nm + '</div>').join('') + '</div>' +
+                '<svg class="ladder-svg" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' + svg + '</svg>' +
+                '<div class="ladder-labels bottom" style="' + cols + '">' + (ladder.labels || []).map(v => '<div class="ladder-result' + (v === '당첨' ? ' win' : '') + '">' + (revealed ? v : '?') + '</div>').join('') + '</div>' +
+            '</div>';
+        }
+
+        function ladderPath(startLane, ladder, count, x, y, top, bottom) {
+            let lane = startLane;
+            let d = 'M ' + x(lane) + ' ' + top;
+            (ladder.rungs || []).forEach(r => {
+                const ry = y(r.level);
+                if (r.lane === lane) {
+                    d += ' L ' + x(lane) + ' ' + ry + ' L ' + x(lane + 1) + ' ' + ry;
+                    lane += 1;
+                } else if (r.lane + 1 === lane) {
+                    d += ' L ' + x(lane) + ' ' + ry + ' L ' + x(lane - 1) + ' ' + ry;
+                    lane -= 1;
+                }
+            });
+            d += ' L ' + x(lane) + ' ' + bottom;
+            return d;
+        }
+
+        function renderLots(area, round) {
+            const revealed = isRoundRevealed(round);
+            const participants = round.participants || [];
+            area.innerHTML = '<div class="lots-grid">' + participants.map((name, idx) => {
+                const win = (round.winners || []).includes(name);
+                const text = revealed ? (win ? '당첨' : '통과') : '대기';
+                return '<div class="lot-card' + (revealed && win ? ' win' : '') + '">' +
+                    '<div class="paper"><i class="fa-solid ' + (revealed ? (win ? 'fa-bolt' : 'fa-check') : 'fa-question') + '"></i></div>' +
+                    '<div class="lot-name">' + name + '</div><div class="lot-result">' + text + '</div></div>';
+            }).join('') + '</div>';
+        }
+
+        function renderWheel(area, round) {
+            const participants = round.participants || [];
+            const n = Math.max(1, participants.length);
+            const winner = (round.winners || [])[0] || participants[0] || '';
+            const winnerIndex = Math.max(0, participants.indexOf(winner));
+            const seg = 360 / n;
+            const finalRotation = 360 * 6 + (360 - (winnerIndex * seg + seg / 2));
+            const elapsed = Date.now() - (round.startedAt || 0);
+            const active = elapsed < (round.duration || 4200);
+            const gradient = participants.map((name, i) => {
+                const a = i * seg, b = (i + 1) * seg;
+                return COLORS[i % COLORS.length] + ' ' + a + 'deg ' + b + 'deg';
+            }).join(',');
+            const labels = participants.map((name, i) => {
+                const angle = i * seg + seg / 2;
+                return '<span class="wheel-label" style="transform: rotate(' + angle + 'deg) translate(78px) rotate(90deg);">' + name + '</span>';
+            }).join('');
+            area.innerHTML = '<div class="wheel-wrap"><div class="wheel-shell"><div class="pointer"></div>' +
+                '<div class="wheel' + (active ? ' spinning' : '') + '" style="background:conic-gradient(' + gradient + '); transform:rotate(' + (active ? 0 : finalRotation) + 'deg);">' + labels + '</div></div>' +
+                '<div class="wheel-result">' + (isRoundRevealed(round) ? winner + ' 당첨' : '돌아가는 중') + '</div></div>';
+        }
+
+        function renderDice(area, round) {
+            const revealed = isRoundRevealed(round);
+            const rolls = round.dice || buildDiceRound(round.seed, round.participants || []).dice;
+            const spin = rng((round.seed || '') + ':' + Math.floor(Date.now() / 180));
+            area.innerHTML = '<div class="dice-grid">' + rolls.map((r, idx) => {
+                const win = (round.winners || []).includes(r.name);
+                const value = revealed ? r.value : (1 + Math.floor(spin() * 6));
+                return '<div class="dice-card' + (revealed && win ? ' win' : '') + '">' +
+                    '<div class="die">' + value + '</div><div class="dice-name">' + r.name + '</div>' +
+                    '<div class="dice-score">' + (revealed ? (win ? '1등' : r.value + '점') : '굴리는 중') + '</div></div>';
+            }).join('') + '</div>';
+        }
+
+        function renderResult(round) {
+            const banner = $('result-banner');
+            if (!round || !isRoundRevealed(round)) {
+                banner.classList.add('hidden');
+                banner.innerHTML = '';
+                return;
+            }
+            const winners = round.winners || [];
+            const mode = MODES[round.mode] || MODES.ladder;
+            banner.classList.remove('hidden');
+            banner.innerHTML = '<i class="fa-solid fa-trophy"></i><div><strong>' + (winners.length ? winners.join(', ') : '결과 없음') + '</strong>' +
+                '<span>' + mode.title + ' 결과가 동기화됐어요</span></div>';
+        }
+
+        function renderAll() {
+            renderHeader();
+            renderModes();
+            renderControls();
+            renderPresence();
+            renderGame();
+            manageTicker();
+        }
+
+        function manageTicker() {
+            const needTick = !!(room.round && (isRoundActive(room.round) || !isRoundRevealed(room.round)));
+            if (needTick && !tickTimer) tickTimer = setInterval(renderAll, 220);
+            if (!needTick && tickTimer) {
+                clearInterval(tickTimer);
+                tickTimer = null;
+            }
+        }
+
+        async function writeRoom(patch) {
+            if (!roomRef) return;
+            try {
+                await setDoc(roomRef, Object.assign({ updatedAt: Date.now() }, patch), { merge: true });
+            } catch (e) {
+                showToast('Firebase 저장에 실패했어요');
+                console.warn(e);
+            }
+        }
+
+        async function heartbeat() {
+            if (!roomRef || !currentUser) return;
+            const name = profileName || currentUser.displayName || currentUser.email || '미등록';
+            const entry = {};
+            entry[currentUser.uid] = {
+                uid: currentUser.uid,
+                name,
+                email: currentUser.email || '',
+                photoURL: currentUser.photoURL || '',
+                lastSeen: Date.now()
+            };
+            await writeRoom({ presence: entry });
+        }
+
+        async function loadProfile(user) {
+            currentUser = user;
+            profileName = '';
+            if (!user) return;
+            try {
+                const snap = await getDoc(doc(db, 'members', user.uid));
+                const data = snap.exists() ? (snap.data() || {}) : {};
+                profileName = MEMBERS.includes(data.name) ? data.name : '';
+            } catch (e) {
+                profileName = '';
+            }
+        }
+
+        function showLogin(kind) {
+            const overlay = $('login-overlay');
+            const title = $('login-title');
+            const message = $('login-message');
+            if (kind === 'profile') {
+                title.textContent = '멤버 프로필이 필요해요';
+                message.textContent = '메인에서 6명 멤버 이름으로 프로필을 먼저 연결해 주세요.';
+            } else {
+                title.textContent = '로그인이 필요해요';
+                message.textContent = '엔조이 계정으로 들어오면 입장 멤버와 결과가 함께 동기화돼요.';
+            }
+            overlay.classList.add('show');
+        }
+
+        function hideLogin() {
+            $('login-overlay').classList.remove('show');
+        }
+
+        function subscribeMembers() {
+            if (membersUnsub) membersUnsub();
+            membersUnsub = onSnapshot(collection(db, 'members'), snap => {
+                const next = {};
+                snap.forEach(d => { next[d.id] = Object.assign({ uid: d.id }, d.data() || {}); });
+                memberDocs = next;
+                renderAll();
+            });
+        }
+
+        async function subscribeRoom() {
+            if (roomUnsub) roomUnsub();
+            roomRef = doc(db, 'game_rooms', ROOM_ID);
+            const first = await getDoc(roomRef);
+            if (!first.exists()) await setDoc(roomRef, DEFAULT_ROOM, { merge: true });
+            roomUnsub = onSnapshot(roomRef, snap => {
+                room = normalizeRoom(snap.exists() ? snap.data() : {});
+                if (room.round && room.round.id !== lastRoundId) {
+                    lastRoundId = room.round.id;
+                    if (room.round.startedByUid !== (currentUser && currentUser.uid)) window.haptic();
+                }
+                renderAll();
+            }, err => {
+                showToast('실시간 연결을 확인해 주세요');
+                console.warn(err);
+            });
+        }
+
+        async function initFirebase() {
+            app = getOrInitializeApp(firebaseConfig, 'meetingApp');
+            auth = getAuth(app);
+            db = getFirestore(app);
+            try { await setPersistence(auth, browserLocalPersistence); } catch (e) {}
+            try { await getRedirectResult(auth); } catch (e) { console.warn(e); }
+            onAuthStateChanged(auth, async user => {
+                currentUser = user ? {
+                    uid: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName || '',
+                    photoURL: user.photoURL || ''
+                } : null;
+                if (!currentUser) {
+                    roomRef = null;
+                    profileName = '';
+                    renderAll();
+                    showLogin('login');
+                    return;
+                }
+                await loadProfile(currentUser);
+                if (!profileName) {
+                    renderAll();
+                    showLogin('profile');
+                    return;
+                }
+                hideLogin();
+                subscribeMembers();
+                await subscribeRoom();
+                await heartbeat();
+                clearInterval(beatTimer);
+                beatTimer = setInterval(heartbeat, 15000);
+                document.addEventListener('visibilitychange', () => { if (!document.hidden) heartbeat(); });
+                window.addEventListener('focus', heartbeat);
+            });
+        }
+
+        window.EnjoyGame = {
+            login: async function () {
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch (e) {
+                    if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/operation-not-supported-in-this-environment' || e.code === 'auth/popup-closed-by-user')) {
+                        try { await signInWithRedirect(auth, provider); return; } catch (err) { e = err; }
+                    }
+                    showToast('로그인에 실패했어요');
+                    console.warn(e);
+                }
+            },
+            logout: async function () {
+                try { await signOut(auth); } catch (e) {}
+            },
+            setMode: function (mode) {
+                if (!MODES[mode]) return;
+                room.mode = mode;
+                renderAll();
+                writeRoom({ mode });
+            },
+            toggleMember: function (name) {
+                if (!MEMBERS.includes(name)) return;
+                const current = (room.participants || MEMBERS).slice();
+                let next = current.includes(name) ? current.filter(v => v !== name) : current.concat(name);
+                if (next.length < 2) {
+                    showToast('최소 2명은 필요해요');
+                    next = current;
+                }
+                room.participants = next;
+                room.penaltyCount = clampPenalty(room.penaltyCount, next.length);
+                renderAll();
+                writeRoom({ participants: next, penaltyCount: room.penaltyCount });
+            },
+            selectAll: function () {
+                room.participants = MEMBERS.slice();
+                room.penaltyCount = clampPenalty(room.penaltyCount, MEMBERS.length);
+                renderAll();
+                writeRoom({ participants: room.participants, penaltyCount: room.penaltyCount });
+            },
+            shuffleMembers: function () {
+                const next = shuffle(room.participants || MEMBERS, Date.now() + ':' + (currentUser && currentUser.uid));
+                room.participants = next;
+                renderAll();
+                writeRoom({ participants: next });
+            },
+            adjustPenalty: function (delta) {
+                const participants = room.participants || MEMBERS;
+                const next = clampPenalty((room.penaltyCount || 1) + delta, participants.length);
+                room.penaltyCount = next;
+                renderAll();
+                writeRoom({ penaltyCount: next });
+            },
+            startGame: async function () {
+                if (!currentUser || !profileName) {
+                    showLogin(currentUser ? 'profile' : 'login');
+                    return;
+                }
+                const participants = (room.participants || MEMBERS).filter(n => MEMBERS.includes(n));
+                if (participants.length < 2) {
+                    showToast('최소 2명이 필요해요');
+                    return;
+                }
+                const mode = room.mode || 'ladder';
+                const seed = Date.now() + ':' + currentUser.uid + ':' + Math.random().toString(36).slice(2);
+                const penaltyCount = clampPenalty(room.penaltyCount, participants.length);
+                const built = buildRound(mode, seed, participants, penaltyCount);
+                const round = Object.assign({
+                    id: 'rd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                    mode,
+                    seed,
+                    participants,
+                    penaltyCount,
+                    startedAt: Date.now(),
+                    duration: MODES[mode].duration,
+                    startedBy: profileName,
+                    startedByUid: currentUser.uid
+                }, built);
+                room.round = round;
+                renderAll();
+                await writeRoom({ mode, participants, penaltyCount, round });
+            },
+            resetRoom: function () {
+                writeRoom({ round: null, mode: room.mode || 'ladder', participants: MEMBERS.slice(), penaltyCount: 1 });
+                showToast('게임판을 정리했어요');
+            }
+        };
+
+        renderAll();
+        initFirebase();
+    </script>
+</body>
+</html>
