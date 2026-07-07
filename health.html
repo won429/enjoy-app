@@ -2599,7 +2599,10 @@
   <script>
     const PLAN_KEY = "enjoy.body.plan.v2";
     const WORKOUT_KEY = "enjoy.workouts.v1";
+    const ACCOUNT_KEY = "enjoy_chat_account_v1";
+    const LOCAL_PROFILE_KEY = "enjoy_local_profile";
     const DB_NAME = "enjoy-body-photos";
+    const DB_VERSION = 2;
     const STORE_NAME = "photos";
     const BODY_BACKUP_CLOUDINARY = {
       cloudName: "dpnljgudv",
@@ -2609,6 +2612,7 @@
     const app = document.querySelector("#app");
     const objectUrls = new Set();
     const activeBodyBackups = new Set();
+    const HEALTH_ACCOUNT_ID = readHealthAccountId();
     let bodyBackupQueueRunning = false;
 
     const bodyState = {
@@ -2770,22 +2774,44 @@
       window.location.href = "index.html";
     }
 
+    function readHealthAccountId() {
+      try {
+        const accountId = (localStorage.getItem(ACCOUNT_KEY) || "").trim();
+        if (accountId && accountId !== "guest") return accountId;
+
+        const localProfile = (localStorage.getItem(LOCAL_PROFILE_KEY) || "").trim();
+        return localProfile ? `local:${localProfile}` : "guest";
+      } catch (error) {
+        return "guest";
+      }
+    }
+
+    function accountStorageKey(baseKey) {
+      return `${baseKey}:${encodeURIComponent(HEALTH_ACCOUNT_ID)}`;
+    }
+
     function loadPlan() {
       try {
-        const saved = localStorage.getItem(PLAN_KEY) || localStorage.getItem("enjoy.body.plan.v1");
-        return saved ? JSON.parse(saved) : null;
+        const saved = localStorage.getItem(accountStorageKey(PLAN_KEY));
+        if (!saved) return null;
+
+        const plan = JSON.parse(saved);
+        return plan ? { ...plan, accountId: plan.accountId || HEALTH_ACCOUNT_ID } : null;
       } catch (error) {
         return null;
       }
     }
 
     function savePlan(plan) {
-      localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
+      localStorage.setItem(accountStorageKey(PLAN_KEY), JSON.stringify({
+        ...plan,
+        accountId: HEALTH_ACCOUNT_ID
+      }));
     }
 
     function loadWorkoutEntries() {
       try {
-        const saved = localStorage.getItem(WORKOUT_KEY);
+        const saved = localStorage.getItem(accountStorageKey(WORKOUT_KEY));
         const entries = saved ? JSON.parse(saved) : [];
         return Array.isArray(entries) ? entries : [];
       } catch (error) {
@@ -2794,7 +2820,7 @@
     }
 
     function saveWorkoutEntries() {
-      localStorage.setItem(WORKOUT_KEY, JSON.stringify(workoutState.entries));
+      localStorage.setItem(accountStorageKey(WORKOUT_KEY), JSON.stringify(workoutState.entries));
     }
 
     function todayISO() {
@@ -2960,13 +2986,19 @@
 
     function openBodyDb() {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 1);
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onupgradeneeded = () => {
           const db = request.result;
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
+          const store = db.objectStoreNames.contains(STORE_NAME)
+            ? request.transaction.objectStore(STORE_NAME)
+            : db.createObjectStore(STORE_NAME, { keyPath: "id" });
+
+          if (!store.indexNames.contains("planId")) {
             store.createIndex("planId", "planId", { unique: false });
+          }
+          if (!store.indexNames.contains("accountId")) {
+            store.createIndex("accountId", "accountId", { unique: false });
           }
         };
 
@@ -3007,7 +3039,7 @@
 
         request.onsuccess = () => {
           resolve(request.result
-            .filter((photo) => photo.planId === bodyState.plan.id)
+            .filter((photo) => photo.accountId === HEALTH_ACCOUNT_ID && photo.planId === bodyState.plan.id)
             .sort((a, b) => a.dayIndex - b.dayIndex));
         };
 
@@ -3089,7 +3121,7 @@
 
         request.onsuccess = () => {
           const current = request.result;
-          if (!current || current.updatedAt !== photo.updatedAt) return;
+          if (!current || current.accountId !== HEALTH_ACCOUNT_ID || current.updatedAt !== photo.updatedAt) return;
           current.cloudBackup = cloudBackup;
           store.put(current);
         };
@@ -3147,7 +3179,8 @@
       const plan = bodyState.plan;
       const dayIndex = bodyState.selectedDay;
       const item = {
-        id: `${plan.id}:${dayIndex}`,
+        id: `${HEALTH_ACCOUNT_ID}:${plan.id}:${dayIndex}`,
+        accountId: HEALTH_ACCOUNT_ID,
         planId: plan.id,
         dayIndex,
         date: dateForDay(plan, dayIndex),
@@ -3185,12 +3218,11 @@
       const planId = bodyState.plan.id;
       await withPhotoStore("readwrite", (store) => {
         bodyState.photos
-          .filter((photo) => photo.planId === planId)
+          .filter((photo) => photo.accountId === HEALTH_ACCOUNT_ID && photo.planId === planId)
           .forEach((photo) => store.delete(photo.id));
       });
 
-      localStorage.removeItem(PLAN_KEY);
-      localStorage.removeItem("enjoy.body.plan.v1");
+      localStorage.removeItem(accountStorageKey(PLAN_KEY));
       bodyState.plan = null;
       bodyState.photos = [];
       bodyState.selectedDay = 1;
@@ -4184,6 +4216,7 @@
         }
         workoutState.entries.unshift({
           id: `workout-${Date.now()}`,
+          accountId: HEALTH_ACCOUNT_ID,
           date: todayISO(),
           workoutId: workout.id,
           values,
@@ -4203,6 +4236,7 @@
         const days = clamp(customDays || bodyState.selectedPeriod, 1, 365);
         bodyState.plan = {
           id: `plan-${Date.now()}`,
+          accountId: HEALTH_ACCOUNT_ID,
           startDate,
           days,
           createdAt: new Date().toISOString()
