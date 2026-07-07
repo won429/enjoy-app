@@ -1,566 +1,1908 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>요금제 안내 및 결제하기</title>
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="icon" href="icon.png">
-    <style>
-        :root {
-            color-scheme: light;
-            --bg: #f7f7f4;
-            --sheet: #ffffff;
-            --text: #0d0d0d;
-            --muted: #6f6f6f;
-            --soft: #f4f4f2;
-            --line: #deded8;
-            --line-strong: #101010;
-            --green: #10a37f;
-            --green-soft: #e8f6f1;
-            --shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>엔조이 헬스</title>
 
-        * {
-            box-sizing: border-box;
-        }
+  <link rel="apple-touch-icon" href="icon.png" />
+  <link rel="icon" href="icon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-        html,
-        body {
-            min-height: 100%;
-            margin: 0;
-        }
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #000000;
+      --surface: #1c1c1e;
+      --surface-2: #26262b;
+      --surface-3: #2c2c2e;
+      --text: #ffffff;
+      --text-main: #f2f4f6;
+      --text-sub: #a1a1a6;
+      --text-muted: #8b95a1;
+      --blue: #3182f6;
+      --red: #f04452;
+      --green: #22c55e;
+      --teal: #2dd4bf;
+      --line: rgba(255, 255, 255, 0.1);
+      --line-soft: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.45);
+      --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
 
-        body {
-            min-height: 100dvh;
-            background: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
-            letter-spacing: 0;
-            word-break: keep-all;
-        }
+    @media (prefers-color-scheme: light) {
+      :root {
+        color-scheme: light;
+        --bg: #f2f2f7;
+        --surface: #ffffff;
+        --surface-2: #ffffff;
+        --surface-3: #e9e9eb;
+        --text: #141414;
+        --text-main: #141414;
+        --text-sub: #5e6470;
+        --text-muted: #8b95a1;
+        --line: rgba(0, 0, 0, 0.1);
+        --line-soft: rgba(0, 0, 0, 0.06);
+        --glass-border: rgba(255, 255, 255, 0.12);
+        --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.12);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+    }
 
-        button {
-            font: inherit;
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        .app {
-            width: min(100%, 480px);
-            min-height: 100dvh;
-            margin: 0 auto;
-            background: var(--sheet);
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-        }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
 
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 58px;
-            padding: 0 18px;
-            border-bottom: 1px solid var(--line);
-        }
+    body {
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
+      touch-action: pan-y;
+    }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            min-width: 0;
-            font-size: 15px;
-            font-weight: 750;
-        }
+    button,
+    input {
+      font: inherit;
+    }
 
-        .brand img {
-            width: 26px;
-            height: 26px;
-            border-radius: 6px;
-            flex: 0 0 auto;
-        }
+    button {
+      border: 0;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
 
-        .secure {
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 650;
-        }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
 
-        main {
-            flex: 1;
-            padding: 28px 18px 134px;
-        }
+    #app {
+      width: 100%;
+      height: 100dvh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--bg);
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
-        .eyebrow {
-            margin: 0 0 10px;
-            color: var(--green);
-            font-size: 13px;
-            font-weight: 800;
-        }
+    #app::-webkit-scrollbar,
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
 
-        h1 {
-            margin: 0;
-            font-size: 29px;
-            line-height: 1.18;
-            font-weight: 850;
-        }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
-        .lead {
-            margin: 12px 0 0;
-            color: var(--muted);
-            font-size: 15px;
-            line-height: 1.55;
-            font-weight: 560;
-        }
+    .pt-safe {
+      padding-top: max(20px, env(safe-area-inset-top));
+    }
 
-        .plan-list {
-            display: grid;
-            gap: 10px;
-            margin-top: 26px;
-        }
+    .pb-safe {
+      padding-bottom: max(110px, calc(92px + env(safe-area-inset-bottom)));
+    }
 
-        .plan-card {
-            width: 100%;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            background: var(--sheet);
-            color: var(--text);
-            padding: 16px;
-            text-align: left;
-            cursor: pointer;
-            transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease, transform 150ms ease;
-        }
+    .screen {
+      width: min(100%, 448px);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
 
-        .plan-card.is-selected {
-            border-color: var(--line-strong);
-            box-shadow: 0 0 0 1px var(--line-strong);
-        }
+    .screen-header {
+      flex: none;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 14px;
+      background: linear-gradient(180deg, var(--bg) 72%, rgba(0, 0, 0, 0));
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
 
-        .plan-card:active {
-            transform: scale(0.99);
-        }
+    @media (prefers-color-scheme: light) {
+      .screen-header {
+        background: linear-gradient(180deg, var(--bg) 72%, rgba(242, 242, 247, 0));
+      }
+    }
 
-        .plan-card:focus-visible {
-            outline: 3px solid rgba(16, 163, 127, 0.28);
-            outline-offset: 3px;
-        }
+    .screen-title {
+      min-width: 0;
+    }
 
-        .plan-main {
-            display: grid;
-            grid-template-columns: 24px 1fr auto;
-            gap: 12px;
-            align-items: start;
-        }
+    .screen-title h1 {
+      margin: 0;
+      color: var(--text-main);
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
 
-        .radio {
-            width: 22px;
-            height: 22px;
-            margin-top: 1px;
-            border: 1.5px solid #b8b8b0;
-            border-radius: 999px;
-            display: grid;
-            place-items: center;
-            flex: 0 0 auto;
-        }
+    .screen-title p {
+      margin: 5px 0 0;
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.45;
+      letter-spacing: 0;
+    }
 
-        .radio::after {
-            content: "";
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: transparent;
-        }
+    .icon-chip {
+      flex: 0 0 auto;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 0 13px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
 
-        .plan-card.is-selected .radio {
-            border-color: var(--green);
-        }
+    @media (prefers-color-scheme: light) {
+      .icon-chip {
+        background: rgba(0, 0, 0, 0.04);
+      }
+    }
 
-        .plan-card.is-selected .radio::after {
-            background: var(--green);
-        }
+    .content-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      padding-bottom: 18px;
+    }
 
-        .plan-title {
-            min-width: 0;
-        }
+    .section-label {
+      padding: 0 4px;
+      margin-bottom: 10px;
+    }
 
-        .plan-title h2 {
-            margin: 0;
-            font-size: 18px;
-            line-height: 1.25;
-            font-weight: 830;
-        }
+    .section-label p {
+      margin: 0 0 5px;
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
 
-        .plan-title p {
-            margin: 5px 0 0;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.4;
-            font-weight: 560;
-        }
+    .section-label h2 {
+      margin: 0;
+      color: var(--text-main);
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
 
-        .price {
-            padding-left: 6px;
-            white-space: nowrap;
-            font-size: 18px;
-            line-height: 1.25;
-            font-weight: 850;
-        }
+    .hero-card {
+      position: relative;
+      min-height: 330px;
+      overflow: hidden;
+      border-radius: 28px;
+      background: #000;
+      box-shadow: var(--shadow-card);
+      isolation: isolate;
+    }
 
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            height: 22px;
-            margin-top: 10px;
-            padding: 0 8px;
-            border-radius: 999px;
-            background: var(--green-soft);
-            color: var(--green);
-            font-size: 12px;
-            font-weight: 800;
-        }
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: -80px -80px auto auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(49, 130, 246, 0.55), rgba(45, 212, 191, 0.18) 52%, transparent 72%);
+      filter: blur(4px);
+      opacity: 0.82;
+      z-index: 0;
+    }
 
-        .benefits {
-            display: grid;
-            gap: 8px;
-            margin: 14px 0 0 36px;
-            padding: 0;
-            list-style: none;
-        }
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.74), rgba(0, 0, 0, 0.16) 45%, rgba(0, 0, 0, 0.92)),
+        linear-gradient(135deg, rgba(49, 130, 246, 0.16), transparent 44%);
+      z-index: 1;
+    }
 
-        .benefits li {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            color: #343431;
-            font-size: 14px;
-            line-height: 1.45;
-            font-weight: 560;
-        }
+    .hero-visual {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
 
-        .benefits li::before {
-            content: "✓";
-            color: var(--green);
-            font-size: 14px;
-            line-height: 1.45;
-            font-weight: 900;
-            flex: 0 0 auto;
-        }
+    .orbit {
+      position: relative;
+      width: 230px;
+      height: 230px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 55%, transparent);
+      transform: translateY(18px);
+    }
 
-        .checkout {
-            margin-top: 22px;
-            padding: 16px;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            background: var(--soft);
-        }
+    .orbit i {
+      position: absolute;
+      color: rgba(255, 255, 255, 0.9);
+      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
+    }
 
-        .checkout-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            color: #343431;
-            font-size: 14px;
-            line-height: 1.4;
-            font-weight: 650;
-        }
+    .orbit .main-icon {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 76px;
+      color: #ffffff;
+    }
 
-        .checkout-row + .checkout-row {
-            margin-top: 10px;
-        }
+    .orbit .spark-1 {
+      left: 24px;
+      top: 34px;
+      color: var(--teal);
+      font-size: 25px;
+    }
 
-        .checkout-row strong {
-            color: var(--text);
-            font-size: 15px;
-            font-weight: 820;
-            text-align: right;
-        }
+    .orbit .spark-2 {
+      right: 24px;
+      top: 74px;
+      color: #60a5fa;
+      font-size: 23px;
+    }
 
-        .payment {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            margin-top: 18px;
-            padding: 14px;
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            background: var(--sheet);
-        }
+    .orbit .spark-3 {
+      left: 58px;
+      bottom: 28px;
+      color: #facc15;
+      font-size: 21px;
+    }
 
-        .payment-copy {
-            min-width: 0;
-        }
+    .hero-copy {
+      position: absolute;
+      inset: 24px 24px 22px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      pointer-events: none;
+    }
 
-        .payment-copy span {
-            display: block;
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 700;
-        }
+    .eyebrow {
+      margin: 0 0 7px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0.04em;
+    }
 
-        .payment-copy strong {
-            display: block;
-            margin-top: 3px;
-            font-size: 15px;
-            line-height: 1.25;
-            font-weight: 820;
-        }
+    .hero-copy h2 {
+      margin: 0;
+      max-width: 280px;
+      color: #ffffff;
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
 
-        .payment-mark {
-            width: 42px;
-            height: 28px;
-            border-radius: 8px;
-            background: #111111;
-            color: #ffffff;
-            display: grid;
-            place-items: center;
-            font-size: 11px;
-            font-weight: 850;
-            flex: 0 0 auto;
-        }
+    .hero-bottom {
+      display: flex;
+      align-items: flex-end;
+      gap: 13px;
+    }
 
-        .bottom-bar {
-            position: fixed;
-            left: 50%;
-            bottom: 0;
-            z-index: 10;
-            width: min(100%, 480px);
-            transform: translateX(-50%);
-            padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
-            border-top: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-        }
+    .hero-bottom p {
+      flex: 1;
+      margin: 0;
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
 
-        .total {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            margin-bottom: 10px;
-            color: var(--muted);
-            font-size: 13px;
-            font-weight: 700;
-        }
+    .hero-pill {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #141414;
+      padding: 9px 18px;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
 
-        .total strong {
-            color: var(--text);
-            font-size: 18px;
-            font-weight: 900;
-        }
+    .glass-card,
+    .status-card,
+    .setup-card {
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
 
-        .pay-button {
-            width: 100%;
-            min-height: 54px;
-            border: 0;
-            border-radius: 999px;
-            background: #111111;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 850;
-            cursor: pointer;
-            transition: transform 150ms ease, background 150ms ease;
-        }
+    .status-card,
+    .setup-card {
+      background: var(--surface);
+    }
 
-        .pay-button:active {
-            transform: scale(0.985);
-            background: #000000;
-        }
+    .card-pad {
+      padding: 22px;
+    }
 
-        .pay-button:focus-visible {
-            outline: 3px solid rgba(16, 163, 127, 0.28);
-            outline-offset: 3px;
-        }
+    .status-top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line-soft);
+    }
 
-        .notice {
-            margin: 9px 0 0;
-            min-height: 18px;
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.4;
-            text-align: center;
-            font-weight: 620;
-        }
+    .status-kicker {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 7px;
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 700;
+    }
 
-        .notice.is-done {
-            color: var(--green);
-            font-weight: 750;
-        }
+    .status-number {
+      color: var(--text-main);
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0;
+    }
 
-        @media (max-width: 360px) {
-            main {
-                padding-left: 14px;
-                padding-right: 14px;
-            }
+    .status-number span {
+      margin-left: 3px;
+      font-size: 20px;
+      font-weight: 800;
+    }
 
-            .topbar,
-            .bottom-bar {
-                padding-left: 14px;
-                padding-right: 14px;
-            }
+    .progress-circle {
+      --progress: 0%;
+      position: relative;
+      width: 82px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: conic-gradient(var(--blue) var(--progress), rgba(255, 255, 255, 0.12) 0);
+      flex: 0 0 auto;
+    }
 
-            .plan-main {
-                grid-template-columns: 24px 1fr;
-            }
+    .progress-circle::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: inherit;
+      background: var(--surface);
+    }
 
-            .price {
-                grid-column: 2;
-                padding-left: 0;
-            }
-        }
-    </style>
+    .progress-circle strong,
+    .progress-circle span {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    .progress-circle strong {
+      top: 24px;
+      color: var(--text-main);
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .progress-circle span {
+      top: 47px;
+      color: var(--text-sub);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding-top: 17px;
+    }
+
+    .stat-item {
+      min-width: 0;
+      border-left: 1px solid var(--line-soft);
+      padding-left: 12px;
+    }
+
+    .stat-item:first-child {
+      border-left: 0;
+      padding-left: 0;
+    }
+
+    .stat-item span {
+      display: block;
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .stat-item strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.25;
+      word-break: keep-all;
+    }
+
+    .period-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .period-card {
+      min-height: 98px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      color: var(--text-main);
+      padding: 17px;
+      text-align: left;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .period-card {
+        background: rgba(0, 0, 0, 0.04);
+      }
+    }
+
+    .period-card:active,
+    .day-cell:active,
+    .pill-button:active,
+    .ghost-button:active,
+    .danger-link:active {
+      transform: scale(0.96);
+    }
+
+    .period-card.is-selected {
+      border-color: rgba(49, 130, 246, 0.8);
+      background: rgba(49, 130, 246, 0.18);
+    }
+
+    .period-card strong {
+      color: var(--text-main);
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .period-card span {
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 118px;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .text-input {
+      width: 100%;
+      min-height: 50px;
+      border-radius: 16px;
+      border: 1.5px solid var(--line);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      padding: 0 15px;
+      outline: none;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .text-input {
+        background: rgba(0, 0, 0, 0.04);
+      }
+    }
+
+    .text-input:focus {
+      border-color: var(--blue);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .pill-button,
+    .ghost-button {
+      min-height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 0 18px;
+      font-size: 15px;
+      font-weight: 900;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    .pill-button {
+      background: #ffffff;
+      color: #141414;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.12);
+    }
+
+    .pill-button.blue {
+      background: var(--blue);
+      color: #ffffff;
+      box-shadow: 0 6px 18px rgba(49, 130, 246, 0.28);
+    }
+
+    .ghost-button {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--line);
+    }
+
+    .pill-button:disabled,
+    .ghost-button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .danger-link {
+      width: fit-content;
+      background: transparent;
+      color: var(--red);
+      padding: 9px 2px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .photo-card {
+      position: relative;
+      min-height: 420px;
+      border-radius: 28px;
+      overflow: hidden;
+      background: #050505;
+      box-shadow: var(--shadow-card);
+      isolation: isolate;
+    }
+
+    .photo-preview {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 65% 34%, rgba(49, 130, 246, 0.26), transparent 34%), #111114;
+    }
+
+    .photo-preview img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .photo-preview::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.68), transparent 30%, rgba(0, 0, 0, 0.88));
+    }
+
+    .photo-empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: rgba(255, 255, 255, 0.72);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      z-index: 1;
+    }
+
+    .photo-empty i {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--blue);
+      font-size: 36px;
+    }
+
+    .photo-content {
+      position: absolute;
+      inset: 22px 22px 20px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .photo-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .day-badge {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: #ffffff;
+      color: #141414;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+    }
+
+    .day-badge strong {
+      font-size: 23px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .photo-date {
+      text-align: right;
+    }
+
+    .photo-date h3 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.16;
+    }
+
+    .photo-date p {
+      margin: 3px 0 0;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .photo-bottom {
+      pointer-events: auto;
+    }
+
+    .photo-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .calendar-card {
+      padding-top: 20px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .calendar-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+      padding: 0 4px;
+    }
+
+    .calendar-head h3 {
+      margin: 0;
+      color: var(--text-main);
+      font-size: 17px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .calendar-head p {
+      margin: 3px 0 0;
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .day-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap-y: 8px;
+      text-align: center;
+    }
+
+    .day-cell {
+      height: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border-radius: 16px;
+      background: transparent;
+      color: var(--text-main);
+      transition: transform 0.15s;
+      padding: 0;
+    }
+
+    .day-number {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1;
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    @media (prefers-color-scheme: light) {
+      .day-number {
+        background: rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .day-cell.is-selected .day-number {
+      background: #ffffff;
+      color: #141414;
+      box-shadow: 0 2px 12px rgba(255, 255, 255, 0.28);
+    }
+
+    @media (prefers-color-scheme: light) {
+      .day-cell.is-selected .day-number {
+        background: #141414;
+        color: #ffffff;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+      }
+    }
+
+    .day-cell.is-future {
+      opacity: 0.42;
+    }
+
+    .day-cell img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .day-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: transparent;
+    }
+
+    .day-cell.has-photo .day-dot {
+      background: var(--blue);
+    }
+
+    .compare-card {
+      border-radius: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      padding: 22px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .compare-empty {
+      min-height: 116px;
+      display: grid;
+      place-items: center;
+      color: var(--text-sub);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+
+    .compare-lead {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .compare-strip {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(124px, 38%);
+      gap: 10px;
+      overflow-x: auto;
+      padding: 0 2px 6px;
+      scroll-snap-type: x proximity;
+    }
+
+    .compare-item {
+      margin: 0;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      scroll-snap-align: start;
+    }
+
+    .compare-item img {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      display: block;
+      object-fit: cover;
+      background: var(--surface-3);
+    }
+
+    .compare-item figcaption {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 9px 10px 10px;
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .simple-card {
+      min-height: 420px;
+    }
+
+    .app-copyright {
+      margin: auto 0 0;
+      padding: 24px 0 8px;
+      color: rgba(255, 255, 255, 0.3);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .app-copyright {
+        color: #9b95a8;
+      }
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(86px + env(safe-area-inset-bottom));
+      z-index: 80;
+      width: min(calc(100% - 36px), 384px);
+      transform: translateX(-50%);
+      border-radius: 18px;
+      background: rgba(28, 28, 30, 0.92);
+      color: #ffffff;
+      padding: 13px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 14px 42px rgba(0, 0, 0, 0.38);
+      backdrop-filter: blur(16px) saturate(1.5);
+      -webkit-backdrop-filter: blur(16px) saturate(1.5);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.56s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .liquid-glass {
+      position: relative;
+      isolation: isolate;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 18px 52px rgba(0, 0, 0, 0.35),
+        0 6px 16px rgba(0, 0, 0, 0.22);
+      -webkit-backdrop-filter: blur(20px) saturate(1.6);
+      backdrop-filter: blur(20px) saturate(1.6);
+      overflow: hidden;
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .liquid-glass {
+        background: rgba(30, 30, 30, 0.86);
+      }
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+      .liquid-glass {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        background: rgba(30, 30, 30, 0.92);
+      }
+    }
+
+    #bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      z-index: 50;
+      width: auto;
+      transform: translateX(-50%);
+      user-select: none;
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .bottom-nav-inner {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 6px;
+    }
+
+    .nav-indicator {
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      left: 6px;
+      width: 62px;
+      z-index: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .nav-item {
+      appearance: none;
+      position: relative;
+      z-index: 1;
+      width: 62px;
+      min-height: 54px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border-radius: 999px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.72);
+      padding: 7px 2px;
+      text-decoration: none;
+      transition: transform 0.18s, color 0.16s;
+    }
+
+    .nav-item i {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .nav-item span {
+      max-width: 100%;
+      overflow: hidden;
+      color: currentColor;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-item.is-active {
+      color: #ffffff;
+    }
+
+    .nav-item:active {
+      transform: scale(0.95);
+    }
+
+    @media (max-width: 390px) {
+      .screen {
+        padding-inline: 17px;
+      }
+
+      .nav-item {
+        width: 58px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .nav-item {
+        width: 52px;
+      }
+
+      .nav-item span {
+        font-size: 9px;
+      }
+
+      .field-row,
+      .button-row,
+      .photo-actions,
+      .compare-lead {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
-<body>
-    <div class="app">
-        <header class="topbar">
-            <div class="brand">
-                <img src="icon.png" alt="엔조이">
-                <span>엔조이</span>
-            </div>
-            <div class="secure">보안 결제</div>
-        </header>
 
-        <main>
-            <p class="eyebrow">멤버십</p>
-            <h1>요금제를 선택하세요</h1>
-            <p class="lead">원하는 혜택을 고르고 아래에서 결제를 진행하세요.</p>
+<body ontouchstart="">
+  <main id="app"></main>
 
-            <section class="plan-list" aria-label="요금제 목록">
-                <button class="plan-card is-selected" type="button" data-plan="basic">
-                    <div class="plan-main">
-                        <span class="radio" aria-hidden="true"></span>
-                        <div class="plan-title">
-                            <h2>베이직</h2>
-                            <p>가볍게 광고만 제거</p>
-                        </div>
-                        <div class="price">100원</div>
-                    </div>
-                    <ul class="benefits">
-                        <li>광고제거</li>
-                    </ul>
-                </button>
+  <nav id="bottom-nav" aria-label="하단 메뉴">
+    <div class="bottom-nav-inner liquid-glass">
+      <div class="nav-indicator" aria-hidden="true"></div>
 
-                <button class="plan-card" type="button" data-plan="plus">
-                    <div class="plan-main">
-                        <span class="radio" aria-hidden="true"></span>
-                        <div class="plan-title">
-                            <h2>플러스</h2>
-                            <p>할인까지 챙기는 기본 추천</p>
-                            <span class="badge">추천</span>
-                        </div>
-                        <div class="price">200원</div>
-                    </div>
-                    <ul class="benefits">
-                        <li>광고제거</li>
-                        <li>모임비 100원 할인</li>
-                    </ul>
-                </button>
+      <button type="button" class="nav-item" onclick="goBack()" aria-label="뒤로가기">
+        <i class="fa-solid fa-chevron-left"></i>
+        <span>뒤로</span>
+      </button>
 
-                <button class="plan-card" type="button" data-plan="premium">
-                    <div class="plan-main">
-                        <span class="radio" aria-hidden="true"></span>
-                        <div class="plan-title">
-                            <h2>프리미엄</h2>
-                            <p>할인과 면제권까지 한 번에</p>
-                        </div>
-                        <div class="price">10,000원</div>
-                    </div>
-                    <ul class="benefits">
-                        <li>광고제거</li>
-                        <li>모임비 1000원 할인</li>
-                        <li>벌금면제권 1개</li>
-                    </ul>
-                </button>
-            </section>
+      <a class="nav-item is-active" href="#home" aria-label="홈" data-route="home" aria-current="page">
+        <i class="fa-solid fa-house"></i>
+        <span>홈</span>
+      </a>
 
-            <section class="checkout" aria-label="결제 요약">
-                <div class="checkout-row">
-                    <span>선택한 요금제</span>
-                    <strong id="selected-name">베이직</strong>
-                </div>
-                <div class="checkout-row">
-                    <span>결제 금액</span>
-                    <strong id="selected-price">100원</strong>
-                </div>
-                <div class="payment">
-                    <div class="payment-copy">
-                        <span>결제 수단</span>
-                        <strong>간편 결제</strong>
-                    </div>
-                    <div class="payment-mark">PAY</div>
-                </div>
-            </section>
-        </main>
+      <a class="nav-item" href="#body" aria-label="바디" data-route="body">
+        <i class="fa-solid fa-person"></i>
+        <span>바디</span>
+      </a>
+
+      <a class="nav-item" href="#food" aria-label="푸드" data-route="food">
+        <i class="fa-solid fa-utensils"></i>
+        <span>푸드</span>
+      </a>
+
+      <a class="nav-item" href="#workout" aria-label="운동" data-route="workout">
+        <i class="fa-solid fa-dumbbell"></i>
+        <span>운동</span>
+      </a>
     </div>
+  </nav>
 
-    <div class="bottom-bar">
-        <div class="total">
-            <span>오늘 결제</span>
-            <strong id="total-price">100원</strong>
-        </div>
-        <button class="pay-button" type="button" id="pay-button">베이직 결제하기</button>
-        <p class="notice" id="notice">요금제를 선택한 뒤 결제하기를 눌러주세요.</p>
-    </div>
+  <script>
+    const PLAN_KEY = "enjoy.body.plan.v2";
+    const DB_NAME = "enjoy-body-photos";
+    const STORE_NAME = "photos";
+    const app = document.querySelector("#app");
+    const objectUrls = new Set();
 
-    <script>
-        const plans = {
-            basic: {
-                name: "베이직",
-                price: 100
-            },
-            plus: {
-                name: "플러스",
-                price: 200
-            },
-            premium: {
-                name: "프리미엄",
-                price: 10000
-            }
+    const bodyState = {
+      plan: loadPlan(),
+      photos: [],
+      selectedDay: 1,
+      selectedPeriod: 30,
+      busy: false
+    };
+
+    const periodOptions = [
+      { days: 14, title: "2주", note: "14일 기록" },
+      { days: 30, title: "1개월", note: "30일 기록" },
+      { days: 60, title: "2개월", note: "60일 기록" },
+      { days: 90, title: "3개월", note: "90일 기록" }
+    ];
+
+    function haptic() {
+      if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(8);
+    }
+
+    function goBack() {
+      haptic();
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      window.location.hash = "#home";
+    }
+
+    function loadPlan() {
+      try {
+        const saved = localStorage.getItem(PLAN_KEY) || localStorage.getItem("enjoy.body.plan.v1");
+        return saved ? JSON.parse(saved) : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function savePlan(plan) {
+      localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
+    }
+
+    function todayISO() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      return now.toISOString().slice(0, 10);
+    }
+
+    function addDays(dateText, amount) {
+      const date = new Date(`${dateText}T00:00:00`);
+      date.setDate(date.getDate() + amount);
+      date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+      return date.toISOString().slice(0, 10);
+    }
+
+    function daysBetween(from, to) {
+      const start = new Date(`${from}T00:00:00`);
+      const end = new Date(`${to}T00:00:00`);
+      return Math.floor((end - start) / 86400000);
+    }
+
+    function formatDate(dateText) {
+      const date = new Date(`${dateText}T00:00:00`);
+      return new Intl.DateTimeFormat("ko-KR", {
+        month: "long",
+        day: "numeric"
+      }).format(date);
+    }
+
+    function clamp(number, min, max) {
+      return Math.min(Math.max(number, min), max);
+    }
+
+    function getRoute() {
+      return (window.location.hash || "#home").replace("#", "") || "home";
+    }
+
+    function currentDayIndex(plan) {
+      return clamp(daysBetween(plan.startDate, todayISO()) + 1, 1, plan.days);
+    }
+
+    function planEndDate(plan) {
+      return addDays(plan.startDate, plan.days - 1);
+    }
+
+    function dateForDay(plan, dayIndex) {
+      return addDays(plan.startDate, dayIndex - 1);
+    }
+
+    function finalReached(plan) {
+      return daysBetween(planEndDate(plan), todayISO()) >= 0;
+    }
+
+    function getPhoto(dayIndex) {
+      return bodyState.photos.find((photo) => photo.dayIndex === dayIndex);
+    }
+
+    function makePhotoUrl(photo) {
+      const url = URL.createObjectURL(photo.blob);
+      objectUrls.add(url);
+      return url;
+    }
+
+    function revokePhotoUrls() {
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+      objectUrls.clear();
+    }
+
+    function openBodyDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
+            store.createIndex("planId", "planId", { unique: false });
+          }
         };
 
-        const cards = document.querySelectorAll(".plan-card");
-        const selectedName = document.getElementById("selected-name");
-        const selectedPrice = document.getElementById("selected-price");
-        const totalPrice = document.getElementById("total-price");
-        const payButton = document.getElementById("pay-button");
-        const notice = document.getElementById("notice");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
 
-        let selectedPlan = "basic";
+    function withPhotoStore(mode, callback) {
+      return openBodyDb().then((db) => new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, mode);
+        const store = transaction.objectStore(STORE_NAME);
+        callback(store);
 
-        function formatWon(amount) {
-            return amount.toLocaleString("ko-KR") + "원";
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
+      }));
+    }
+
+    async function loadPhotos() {
+      if (!bodyState.plan) {
+        bodyState.photos = [];
+        return;
+      }
+
+      const db = await openBodyDb();
+      bodyState.photos = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, "readonly");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+          resolve(request.result
+            .filter((photo) => photo.planId === bodyState.plan.id)
+            .sort((a, b) => a.dayIndex - b.dayIndex));
+        };
+
+        request.onerror = () => reject(request.error);
+        transaction.oncomplete = () => db.close();
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
+      });
+    }
+
+    async function savePhoto(blob, file) {
+      const plan = bodyState.plan;
+      const dayIndex = bodyState.selectedDay;
+      const item = {
+        id: `${plan.id}:${dayIndex}`,
+        planId: plan.id,
+        dayIndex,
+        date: dateForDay(plan, dayIndex),
+        blob,
+        name: file.name || `day-${dayIndex}.jpg`,
+        type: blob.type || file.type || "image/jpeg",
+        updatedAt: new Date().toISOString()
+      };
+
+      await withPhotoStore("readwrite", (store) => store.put(item));
+      await loadPhotos();
+      render();
+      showToast(`${dayIndex}일차 사진을 저장했어요.`);
+    }
+
+    async function deleteSelectedPhoto() {
+      const photo = getPhoto(bodyState.selectedDay);
+      if (!photo) return;
+      await withPhotoStore("readwrite", (store) => store.delete(photo.id));
+      await loadPhotos();
+      render();
+      showToast(`${bodyState.selectedDay}일차 사진을 삭제했어요.`);
+    }
+
+    async function clearCurrentPlan() {
+      if (!bodyState.plan) return;
+      const confirmed = window.confirm("바디 사진 기록을 이 기기에서 모두 삭제할까요?");
+      if (!confirmed) return;
+
+      const planId = bodyState.plan.id;
+      await withPhotoStore("readwrite", (store) => {
+        bodyState.photos
+          .filter((photo) => photo.planId === planId)
+          .forEach((photo) => store.delete(photo.id));
+      });
+
+      localStorage.removeItem(PLAN_KEY);
+      localStorage.removeItem("enjoy.body.plan.v1");
+      bodyState.plan = null;
+      bodyState.photos = [];
+      bodyState.selectedDay = 1;
+      render();
+      scrollAppTop();
+      showToast("바디 기록을 초기화했어요.");
+    }
+
+    function fileToImage(file) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(file);
+
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(image);
+        };
+
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("이미지를 불러오지 못했어요."));
+        };
+
+        image.src = url;
+      });
+    }
+
+    async function compressImage(file) {
+      if (!file.type.startsWith("image/")) {
+        throw new Error("이미지 파일만 올릴 수 있어요.");
+      }
+
+      const image = await fileToImage(file);
+      const maxSide = 1600;
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve(blob || file);
+        }, "image/jpeg", 0.86);
+      });
+    }
+
+    async function handlePhotoFile(file) {
+      if (!file || bodyState.busy || !bodyState.plan) return;
+
+      try {
+        bodyState.busy = true;
+        render();
+        const blob = await compressImage(file);
+        await savePhoto(blob, file);
+      } catch (error) {
+        showToast(error.message || "사진 저장에 실패했어요.");
+      } finally {
+        bodyState.busy = false;
+        render();
+      }
+    }
+
+    function scrollAppTop() {
+      app.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function showToast(message) {
+      const oldToast = document.querySelector(".toast");
+      if (oldToast) oldToast.remove();
+
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      window.setTimeout(() => toast.remove(), 2300);
+    }
+
+    function render() {
+      revokePhotoUrls();
+      const route = getRoute();
+      updateNav(route);
+
+      if (route === "body") {
+        renderBody();
+        return;
+      }
+
+      renderSimpleScreen(route);
+    }
+
+    function updateNav(route) {
+      document.querySelectorAll("[data-route]").forEach((item) => {
+        const isActive = item.dataset.route === route;
+        item.classList.toggle("is-active", isActive);
+        if (isActive) item.setAttribute("aria-current", "page");
+        else item.removeAttribute("aria-current");
+      });
+
+      requestAnimationFrame(() => {
+        const active = document.querySelector(`[data-route="${route}"]`);
+        const indicator = document.querySelector(".nav-indicator");
+        const inner = document.querySelector(".bottom-nav-inner");
+        if (!active || !indicator || !inner) return;
+        const activeRect = active.getBoundingClientRect();
+        const innerRect = inner.getBoundingClientRect();
+        indicator.style.width = `${Math.round(activeRect.width)}px`;
+        indicator.style.transform = `translateX(${Math.round(activeRect.left - innerRect.left - 6)}px)`;
+      });
+    }
+
+    function headerTemplate(title, subtitle, chip = "") {
+      return `
+        <header class="screen-header pt-safe">
+          <div class="screen-title">
+            <h1>${title}</h1>
+            <p>${subtitle}</p>
+          </div>
+          ${chip ? `<div class="icon-chip">${chip}</div>` : ""}
+        </header>
+      `;
+    }
+
+    function heroCardTemplate(options) {
+      return `
+        <section class="hero-card fade-in-up">
+          <div class="hero-visual">
+            <div class="orbit">
+              <i class="${options.mainIcon} main-icon"></i>
+              <i class="fa-solid fa-circle spark-1"></i>
+              <i class="fa-solid fa-bolt spark-2"></i>
+              <i class="fa-solid fa-star spark-3"></i>
+            </div>
+          </div>
+          <div class="hero-copy">
+            <div>
+              <p class="eyebrow">${options.eyebrow}</p>
+              <h2>${options.title}</h2>
+            </div>
+            <div class="hero-bottom">
+              <p>${options.copy}</p>
+              <span class="hero-pill">${options.cta}</span>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderSimpleScreen(route) {
+      const screens = {
+        home: {
+          title: "엔조이 헬스",
+          subtitle: "엔조이 안에서 쓰는 건강 기록 서비스예요.",
+          section: "NEW SERVICE",
+          sectionTitle: "오늘의 몸 기록",
+          heroTitle: "바디 체크.",
+          copy: "매일 같은 구도로 남기고, 마지막 날에 변화만 깔끔하게 확인해요.",
+          icon: "fa-solid fa-dumbbell",
+          cta: "바디 시작",
+          route: "#body"
+        },
+        food: {
+          title: "푸드",
+          subtitle: "식단 기록은 준비 중이에요.",
+          section: "COMING SOON",
+          sectionTitle: "식단 기록",
+          heroTitle: "오늘 먹은 것.",
+          copy: "엔조이 톤에 맞춰 식단 기록도 곧 이어서 붙일게요.",
+          icon: "fa-solid fa-utensils",
+          cta: "준비중",
+          route: "#food"
+        },
+        workout: {
+          title: "운동",
+          subtitle: "운동 루틴 기록은 준비 중이에요.",
+          section: "COMING SOON",
+          sectionTitle: "운동 기록",
+          heroTitle: "오늘 한 운동.",
+          copy: "루틴, 세트, 체크인을 한 화면에서 볼 수 있게 준비 중이에요.",
+          icon: "fa-solid fa-dumbbell",
+          cta: "준비중",
+          route: "#workout"
         }
+      };
 
-        function selectPlan(planKey) {
-            const plan = plans[planKey];
-            selectedPlan = planKey;
+      const screen = screens[route] || screens.home;
+      app.innerHTML = `
+        <div class="screen pb-safe">
+          ${headerTemplate(screen.title, screen.subtitle)}
+          <div class="content-stack">
+            <section>
+              <div class="section-label">
+                <p>${screen.section}</p>
+                <h2>${screen.sectionTitle}</h2>
+              </div>
+              <a href="${screen.route}">
+                ${heroCardTemplate({
+                  eyebrow: "ENJOY HEALTH",
+                  title: screen.heroTitle,
+                  copy: screen.copy,
+                  mainIcon: screen.icon,
+                  cta: screen.cta
+                })}
+              </a>
+            </section>
+            <p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
+          </div>
+        </div>
+      `;
+    }
 
-            cards.forEach((card) => {
-                const isSelected = card.dataset.plan === planKey;
-                card.classList.toggle("is-selected", isSelected);
-                card.setAttribute("aria-pressed", String(isSelected));
-            });
+    function renderBody() {
+      if (!bodyState.plan) {
+        renderBodySetup();
+        return;
+      }
 
-            selectedName.textContent = plan.name;
-            selectedPrice.textContent = formatWon(plan.price);
-            totalPrice.textContent = formatWon(plan.price);
-            payButton.textContent = `${plan.name} 결제하기`;
-            notice.classList.remove("is-done");
-            notice.textContent = "요금제를 선택한 뒤 결제하기를 눌러주세요.";
-        }
+      const plan = bodyState.plan;
+      const todayDay = currentDayIndex(plan);
+      bodyState.selectedDay = clamp(bodyState.selectedDay || todayDay, 1, plan.days);
+      const selectedPhoto = getPhoto(bodyState.selectedDay);
+      const uploaded = bodyState.photos.length;
+      const progress = Math.round((uploaded / plan.days) * 100);
+      const selectedDate = dateForDay(plan, bodyState.selectedDay);
+      const endDate = planEndDate(plan);
+      const remaining = Math.max(0, daysBetween(todayISO(), endDate));
 
-        cards.forEach((card) => {
-            card.addEventListener("click", () => selectPlan(card.dataset.plan));
-        });
+      app.innerHTML = `
+        <div class="screen pb-safe">
+          ${headerTemplate("바디", "매일 사진으로 변화를 남겨요.", `<i class="fa-solid fa-lock"></i> 내 기기 저장`)}
+          <div class="content-stack">
+            <section class="status-card fade-in-up">
+              <div class="card-pad">
+                <div class="status-top">
+                  <div>
+                    <div class="status-kicker"><i class="fa-solid fa-calendar-check"></i> ${formatDate(plan.startDate)} - ${formatDate(endDate)}</div>
+                    <div class="status-number">D+${todayDay}<span>/ ${plan.days}</span></div>
+                  </div>
+                  <div class="progress-circle" style="--progress: ${progress}%">
+                    <strong>${progress}</strong>
+                    <span>% 완료</span>
+                  </div>
+                </div>
+                <div class="stats-grid">
+                  <div class="stat-item"><span>기록</span><strong>${uploaded}장</strong></div>
+                  <div class="stat-item"><span>남은 날</span><strong>${remaining}일</strong></div>
+                  <div class="stat-item"><span>저장</span><strong>로컬</strong></div>
+                </div>
+              </div>
+            </section>
 
-        payButton.addEventListener("click", () => {
-            const plan = plans[selectedPlan];
-            notice.classList.add("is-done");
-            notice.textContent = `${plan.name} ${formatWon(plan.price)} 결제 화면입니다.`;
-        });
+            <section>
+              <div class="section-label">
+                <p>BODY PHOTO</p>
+                <h2>${bodyState.selectedDay}일차 사진</h2>
+              </div>
+              <div class="photo-card">
+                <div class="photo-preview">
+                  ${selectedPhoto ? `<img src="${makePhotoUrl(selectedPhoto)}" alt="${bodyState.selectedDay}일차 바디 사진">` : ""}
+                </div>
+                ${selectedPhoto ? "" : `<div class="photo-empty"><div><i class="fa-solid fa-camera"></i>사진 없음</div></div>`}
+                <div class="photo-content">
+                  <div class="photo-top">
+                    <div class="day-badge"><strong>${bodyState.selectedDay}</strong></div>
+                    <div class="photo-date">
+                      <h3>${formatDate(selectedDate)}</h3>
+                      <p>${selectedPhoto ? "저장된 사진" : "아직 기록 전"}</p>
+                    </div>
+                  </div>
+                  <div class="photo-bottom">
+                    <div class="photo-actions">
+                      <button class="pill-button" type="button" data-action="open-camera" ${bodyState.busy ? "disabled" : ""}>
+                        <i class="fa-solid fa-camera"></i> 바로 촬영
+                      </button>
+                      <button class="ghost-button" type="button" data-action="open-gallery" ${bodyState.busy ? "disabled" : ""}>
+                        <i class="fa-regular fa-images"></i> 갤러리
+                      </button>
+                    </div>
+                    ${selectedPhoto ? `<button class="danger-link" type="button" data-action="delete-photo">선택 사진 삭제</button>` : ""}
+                  </div>
+                </div>
+                <input class="sr-only" id="camera-input" type="file" accept="image/*" capture="user">
+                <input class="sr-only" id="gallery-input" type="file" accept="image/*">
+              </div>
+            </section>
 
-        selectPlan(selectedPlan);
-    </script>
+            <section class="calendar-card">
+              <div class="calendar-head">
+                <div>
+                  <h3>기간 달력</h3>
+                  <p>날짜를 누르면 일차별 사진을 볼 수 있어요.</p>
+                </div>
+              </div>
+              <div class="day-grid">
+                ${renderDayGrid(plan, todayDay)}
+              </div>
+            </section>
+
+            ${renderComparePanel(plan)}
+
+            <button class="danger-link" type="button" data-action="reset-plan">기록 초기화</button>
+            <p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBodySetup() {
+      const today = todayISO();
+
+      app.innerHTML = `
+        <div class="screen pb-safe">
+          ${headerTemplate("바디", "기간을 정하고 오늘의 첫 사진부터 시작해요.", `<i class="fa-solid fa-lock"></i> 내 기기 저장`)}
+          <div class="content-stack">
+            <section>
+              <div class="section-label">
+                <p>ENJOY HEALTH</p>
+                <h2>바디 체크</h2>
+              </div>
+              ${heroCardTemplate({
+                eyebrow: "NEW SERVICE",
+                title: "몸의 변화를 기록해요.",
+                copy: "Firebase 없이 각자 기기에만 저장돼요. 촬영하거나 갤러리에서 불러오면 됩니다.",
+                mainIcon: "fa-solid fa-person",
+                cta: "로컬 저장"
+              })}
+            </section>
+
+            <section class="setup-card">
+              <div class="card-pad">
+                <div class="section-label" style="padding:0;margin-bottom:14px;">
+                  <p>PERIOD</p>
+                  <h2>운동 기간</h2>
+                </div>
+                <div class="period-grid">
+                  ${periodOptions.map((option) => `
+                    <button class="period-card ${bodyState.selectedPeriod === option.days ? "is-selected" : ""}" type="button" data-period="${option.days}">
+                      <strong>${option.title}</strong>
+                      <span>${option.note}</span>
+                    </button>
+                  `).join("")}
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <label for="start-date">시작일</label>
+                    <input class="text-input" id="start-date" type="date" value="${today}">
+                  </div>
+                  <div class="field">
+                    <label for="custom-days">직접</label>
+                    <input class="text-input" id="custom-days" type="number" min="1" max="365" inputmode="numeric" placeholder="일">
+                  </div>
+                </div>
+                <button class="pill-button blue" style="width:100%; margin-top:16px;" type="button" data-action="create-plan">시작하기</button>
+              </div>
+            </section>
+
+            <p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDayGrid(plan, todayDay) {
+      return Array.from({ length: plan.days }, (_, index) => {
+        const dayIndex = index + 1;
+        const photo = getPhoto(dayIndex);
+        const isFuture = dayIndex > todayDay && !finalReached(plan);
+        const classes = [
+          "day-cell",
+          dayIndex === bodyState.selectedDay ? "is-selected" : "",
+          isFuture ? "is-future" : "",
+          photo ? "has-photo" : ""
+        ].filter(Boolean).join(" ");
+        const photoThumb = photo ? `<img src="${makePhotoUrl(photo)}" alt="">` : dayIndex;
+
+        return `
+          <button class="${classes}" type="button" data-day="${dayIndex}" aria-label="${dayIndex}일차">
+            <span class="day-number">${photoThumb}</span>
+            <span class="day-dot"></span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderComparePanel(plan) {
+      const photos = bodyState.photos.slice().sort((a, b) => a.dayIndex - b.dayIndex);
+
+      if (!finalReached(plan)) {
+        return `
+          <section>
+            <div class="section-label">
+              <p>COMPARE</p>
+              <h2>전체 비교</h2>
+            </div>
+            <div class="compare-card compare-empty">마지막 날에 전체 비교 화면이 열려요.</div>
+          </section>
+        `;
+      }
+
+      if (!photos.length) {
+        return `
+          <section>
+            <div class="section-label">
+              <p>COMPARE</p>
+              <h2>전체 비교</h2>
+            </div>
+            <div class="compare-card compare-empty">비교할 사진이 아직 없어요.</div>
+          </section>
+        `;
+      }
+
+      const first = photos[0];
+      const last = photos[photos.length - 1];
+      const beforeAfter = photos.length > 1 ? `
+        <div class="compare-lead">
+          ${renderCompareItem(first, "처음")}
+          ${renderCompareItem(last, "마지막")}
+        </div>
+      ` : "";
+
+      return `
+        <section>
+          <div class="section-label">
+            <p>COMPARE</p>
+            <h2>전체 비교</h2>
+          </div>
+          <div class="compare-card">
+            ${beforeAfter}
+            <div class="compare-strip scrollbar-hide">
+              ${photos.map((photo) => renderCompareItem(photo, `${photo.dayIndex}일차`)).join("")}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderCompareItem(photo, label) {
+      return `
+        <figure class="compare-item">
+          <img src="${makePhotoUrl(photo)}" alt="${label} 바디 사진">
+          <figcaption><span>${label}</span><span>${formatDate(photo.date)}</span></figcaption>
+        </figure>
+      `;
+    }
+
+    app.addEventListener("click", async (event) => {
+      const periodButton = event.target.closest("[data-period]");
+      if (periodButton) {
+        haptic();
+        bodyState.selectedPeriod = Number(periodButton.dataset.period);
+        render();
+        return;
+      }
+
+      const dayButton = event.target.closest("[data-day]");
+      if (dayButton) {
+        haptic();
+        bodyState.selectedDay = Number(dayButton.dataset.day);
+        render();
+        return;
+      }
+
+      const actionButton = event.target.closest("[data-action]");
+      if (!actionButton) return;
+
+      haptic();
+      const action = actionButton.dataset.action;
+
+      if (action === "create-plan") {
+        const startDate = document.querySelector("#start-date").value || todayISO();
+        const customDays = Number(document.querySelector("#custom-days").value);
+        const days = clamp(customDays || bodyState.selectedPeriod, 1, 365);
+        bodyState.plan = {
+          id: `plan-${Date.now()}`,
+          startDate,
+          days,
+          createdAt: new Date().toISOString()
+        };
+        bodyState.selectedDay = currentDayIndex(bodyState.plan);
+        savePlan(bodyState.plan);
+        await loadPhotos();
+        render();
+        scrollAppTop();
+        showToast(`${days}일 바디 기록을 시작했어요.`);
+        return;
+      }
+
+      if (action === "open-camera") {
+        document.querySelector("#camera-input").click();
+        return;
+      }
+
+      if (action === "open-gallery") {
+        document.querySelector("#gallery-input").click();
+        return;
+      }
+
+      if (action === "delete-photo") {
+        await deleteSelectedPhoto();
+        return;
+      }
+
+      if (action === "reset-plan") {
+        await clearCurrentPlan();
+      }
+    });
+
+    app.addEventListener("change", (event) => {
+      if (event.target.matches("#camera-input, #gallery-input")) {
+        handlePhotoFile(event.target.files[0]);
+        event.target.value = "";
+      }
+    });
+
+    window.addEventListener("hashchange", () => {
+      haptic();
+      scrollAppTop();
+      render();
+    });
+
+    window.addEventListener("resize", () => updateNav(getRoute()));
+
+    loadPhotos()
+      .catch(() => showToast("사진 저장소를 열지 못했어요."))
+      .finally(() => render());
+  </script>
 </body>
 </html>
