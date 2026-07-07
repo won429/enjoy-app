@@ -1343,21 +1343,25 @@
     .workout-metrics {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 0;
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
     }
 
     .workout-metric,
     .workout-empty,
     .workout-log {
-      border-radius: 18px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow-soft);
+      background: transparent;
     }
 
     .workout-metric {
-      min-height: 72px;
-      padding: 13px;
+      min-height: 70px;
+      padding: 13px 4px;
+      text-align: center;
+    }
+
+    .workout-metric + .workout-metric {
+      border-left: 1px solid var(--line-soft);
     }
 
     .workout-metric span,
@@ -1380,15 +1384,46 @@
 
     .workout-log {
       display: grid;
-      grid-template-columns: 42px minmax(0, 1fr);
-      gap: 12px;
-      padding: 14px;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line-soft);
     }
 
-    .workout-log i,
-    .workout-option i {
+    .workout-log-list {
+      gap: 0;
+    }
+
+    .workout-glyph {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      justify-self: center;
       color: #9cff1a;
+      line-height: 1;
+    }
+
+    .workout-glyph i {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
       font-size: 20px;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .workout-log .workout-glyph,
+    .workout-option .workout-glyph,
+    .workout-record-title .workout-glyph {
+      color: #9cff1a;
+    }
+
+    .workout-chevron {
+      justify-self: end;
+      color: var(--text-muted);
+      font-size: 12px;
     }
 
     .workout-log strong,
@@ -1415,6 +1450,8 @@
       place-items: center;
       padding: 20px;
       text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 18px;
     }
 
     .workout-modal {
@@ -1478,6 +1515,38 @@
       display: none;
     }
 
+    .workout-search {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 20px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      margin: 0 0 14px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      padding: 0 14px;
+    }
+
+    .workout-search i {
+      color: var(--text-sub);
+      font-size: 14px;
+    }
+
+    .workout-search input {
+      min-width: 0;
+      height: 46px;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
     .workout-group {
       margin-top: 18px;
     }
@@ -1492,27 +1561,40 @@
     }
 
     .workout-group-card {
-      overflow: hidden;
-      border-radius: 22px;
-      background: var(--surface);
-      border: 1px solid var(--line);
+      overflow: visible;
+      border-top: 1px solid var(--line-soft);
     }
 
     .workout-option {
       width: 100%;
       min-height: 60px;
       display: grid;
-      grid-template-columns: 42px minmax(0, 1fr) 24px;
+      grid-template-columns: 44px minmax(0, 1fr) 22px;
       align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
+      gap: 14px;
+      padding: 10px 0;
       background: transparent;
       color: var(--text-main);
       text-align: left;
+      border-bottom: 1px solid var(--line-soft);
     }
 
-    .workout-option + .workout-option {
-      border-top: 1px solid var(--line-soft);
+    .workout-option.is-hidden,
+    .workout-group.is-hidden {
+      display: none;
+    }
+
+    .workout-no-results {
+      display: none;
+      padding: 28px 0;
+      color: var(--text-sub);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .workout-no-results.is-visible {
+      display: block;
     }
 
     .workout-option span {
@@ -1524,11 +1606,8 @@
     .workout-record-card {
       display: grid;
       gap: 18px;
-      border-radius: 24px;
-      padding: 20px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow-soft);
+      padding: 4px 0 0;
+      background: transparent;
     }
 
     .workout-record-title {
@@ -1537,15 +1616,11 @@
       gap: 12px;
     }
 
-    .workout-record-title i {
+    .workout-record-title .workout-glyph {
       width: 42px;
       height: 42px;
-      display: grid;
-      place-items: center;
       border-radius: 16px;
       background: rgba(156, 255, 26, 0.12);
-      color: #9cff1a;
-      font-size: 20px;
       flex: 0 0 auto;
     }
 
@@ -2526,8 +2601,15 @@
     const WORKOUT_KEY = "enjoy.workouts.v1";
     const DB_NAME = "enjoy-body-photos";
     const STORE_NAME = "photos";
+    const BODY_BACKUP_CLOUDINARY = {
+      cloudName: "dpnljgudv",
+      uploadPreset: "stories_unsigned",
+      folder: "enjoy_body"
+    };
     const app = document.querySelector("#app");
     const objectUrls = new Set();
+    const activeBodyBackups = new Set();
+    let bodyBackupQueueRunning = false;
 
     const bodyState = {
       plan: loadPlan(),
@@ -2590,37 +2672,37 @@
     };
 
     const workoutCatalog = [
-      { id: "other", group: "인기 항목", name: "기타", icon: "fa-solid fa-forward", profile: "basic", popular: true },
-      { id: "strength", group: "인기 항목", name: "근력 강화 운동", icon: "fa-solid fa-dumbbell", profile: "strength", popular: true },
-      { id: "downhill-ski", group: "인기 항목", name: "다운힐 스키", icon: "fa-solid fa-person-skiing", profile: "elevation", popular: true },
-      { id: "barre", group: "ㅂ", name: "발레 바", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "other", group: "ㄱ", name: "기타", icon: "fa-solid fa-ellipsis", profile: "basic" },
+      { id: "strength", group: "ㄱ", name: "근력 강화 운동", icon: "fa-solid fa-dumbbell", profile: "strength" },
+      { id: "downhill-ski", group: "ㄷ", name: "다운힐 스키", icon: "fa-solid fa-person-skiing", profile: "elevation" },
+      { id: "barre", group: "ㅂ", name: "발레 바", icon: "fa-solid fa-child-reaching", profile: "basic" },
       { id: "badminton", group: "ㅂ", name: "배드민턴", icon: "fa-solid fa-table-tennis-paddle-ball", profile: "rounds" },
-      { id: "mixed-cardio", group: "ㅂ", name: "복합 유산소 운동", icon: "fa-solid fa-person", profile: "basic" },
-      { id: "snowboarding", group: "ㅅ", name: "스노보딩", icon: "fa-solid fa-person-snowboarding", profile: "elevation", popular: true },
-      { id: "outdoor-soccer", group: "ㅅ", name: "실외 축구", icon: "fa-solid fa-person-running", profile: "distance", popular: true },
-      { id: "cross-training", group: "ㅋ", name: "크로스 트레이닝", icon: "fa-solid fa-person-running", profile: "basic", popular: true },
-      { id: "cross-country-ski", group: "ㅋ", name: "크로스컨트리 스키", icon: "fa-solid fa-person-skiing-nordic", profile: "elevation", popular: true },
-      { id: "table-tennis", group: "ㅌ", name: "탁구", icon: "fa-solid fa-table-tennis-paddle-ball", profile: "rounds", popular: true },
-      { id: "tennis", group: "ㅌ", name: "테니스", icon: "fa-solid fa-person-running", profile: "rounds", popular: true },
-      { id: "play", group: "ㄱ", name: "각종 놀이", icon: "fa-solid fa-person-snowboarding", profile: "basic" },
-      { id: "stairs", group: "ㄱ", name: "계단 오르기", icon: "fa-solid fa-person-walking", profile: "steps" },
+      { id: "mixed-cardio", group: "ㅂ", name: "복합 유산소 운동", icon: "fa-solid fa-heart-pulse", profile: "basic" },
+      { id: "snowboarding", group: "ㅅ", name: "스노보딩", icon: "fa-solid fa-person-snowboarding", profile: "elevation" },
+      { id: "outdoor-soccer", group: "ㅅ", name: "실외 축구", icon: "fa-solid fa-futbol", profile: "distance" },
+      { id: "cross-training", group: "ㅋ", name: "크로스 트레이닝", icon: "fa-solid fa-shuffle", profile: "basic" },
+      { id: "cross-country-ski", group: "ㅋ", name: "크로스컨트리 스키", icon: "fa-solid fa-person-skiing-nordic", profile: "elevation" },
+      { id: "table-tennis", group: "ㅌ", name: "탁구", icon: "fa-solid fa-table-tennis-paddle-ball", profile: "rounds" },
+      { id: "tennis", group: "ㅌ", name: "테니스", icon: "fa-solid fa-table-tennis-paddle-ball", profile: "rounds" },
+      { id: "play", group: "ㄱ", name: "각종 놀이", icon: "fa-solid fa-shapes", profile: "basic" },
+      { id: "stairs", group: "ㄱ", name: "계단 오르기", icon: "fa-solid fa-stairs", profile: "steps" },
       { id: "hiit", group: "ㄱ", name: "고강도 인터벌 트레이닝", icon: "fa-solid fa-person-running", profile: "basic" },
       { id: "golf", group: "ㄱ", name: "골프", icon: "fa-solid fa-golf-ball-tee", profile: "rounds" },
-      { id: "boxing", group: "ㄱ", name: "권투", icon: "fa-solid fa-person", profile: "rounds" },
+      { id: "boxing", group: "ㄱ", name: "권투", icon: "fa-solid fa-hand-fist", profile: "rounds" },
       { id: "functional-strength", group: "ㄱ", name: "기능성 근력 강화 운동", icon: "fa-solid fa-dumbbell", profile: "strength" },
-      { id: "fishing", group: "ㄴ", name: "낚시", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "fishing", group: "ㄴ", name: "낚시", icon: "fa-solid fa-fish", profile: "basic" },
       { id: "basketball", group: "ㄴ", name: "농구", icon: "fa-solid fa-basketball", profile: "rounds" },
-      { id: "dance", group: "ㄷ", name: "댄스", icon: "fa-solid fa-person", profile: "basic" },
-      { id: "racquetball", group: "ㄹ", name: "라켓볼", icon: "fa-solid fa-person-running", profile: "rounds" },
-      { id: "lacrosse", group: "ㄹ", name: "라크로스", icon: "fa-solid fa-person-running", profile: "rounds" },
-      { id: "rugby", group: "ㄹ", name: "럭비", icon: "fa-solid fa-person-running", profile: "distance" },
-      { id: "wrestling", group: "ㄹ", name: "레슬링", icon: "fa-solid fa-person", profile: "rounds" },
-      { id: "martial-arts", group: "ㅁ", name: "무술", icon: "fa-solid fa-person", profile: "rounds" },
-      { id: "baseball", group: "ㅁ", name: "미식축구", icon: "fa-solid fa-person-running", profile: "rounds" },
+      { id: "dance", group: "ㄷ", name: "댄스", icon: "fa-solid fa-music", profile: "basic" },
+      { id: "racquetball", group: "ㄹ", name: "라켓볼", icon: "fa-solid fa-table-tennis-paddle-ball", profile: "rounds" },
+      { id: "lacrosse", group: "ㄹ", name: "라크로스", icon: "fa-solid fa-baseball-bat-ball", profile: "rounds" },
+      { id: "rugby", group: "ㄹ", name: "럭비", icon: "fa-solid fa-football", profile: "distance" },
+      { id: "wrestling", group: "ㄹ", name: "레슬링", icon: "fa-solid fa-hand-fist", profile: "rounds" },
+      { id: "martial-arts", group: "ㅁ", name: "무술", icon: "fa-solid fa-user-ninja", profile: "rounds" },
+      { id: "american-football", group: "ㅁ", name: "미식축구", icon: "fa-solid fa-football", profile: "rounds" },
       { id: "volleyball", group: "ㅂ", name: "배구", icon: "fa-solid fa-volleyball", profile: "rounds" },
       { id: "bowling", group: "ㅂ", name: "볼링", icon: "fa-solid fa-bowling-ball", profile: "rounds" },
       { id: "social-dance", group: "ㅅ", name: "사교 댄스", icon: "fa-solid fa-people-arrows", profile: "basic" },
-      { id: "hunting", group: "ㅅ", name: "사냥", icon: "fa-solid fa-person-hiking", profile: "basic" },
+      { id: "hunting", group: "ㅅ", name: "사냥", icon: "fa-solid fa-crosshairs", profile: "basic" },
       { id: "surfing", group: "ㅅ", name: "서핑", icon: "fa-solid fa-person-swimming", profile: "distance" },
       { id: "snow-sports", group: "ㅅ", name: "설상 스포츠", icon: "fa-regular fa-snowflake", profile: "elevation" },
       { id: "sailing", group: "ㅅ", name: "세일링", icon: "fa-solid fa-sailboat", profile: "distance" },
@@ -2649,28 +2731,28 @@
       { id: "mind-body", group: "ㅅ", name: "심신수련 운동", icon: "fa-solid fa-spa", profile: "basic" },
       { id: "baseball", group: "ㅇ", name: "야구", icon: "fa-solid fa-baseball", profile: "rounds" },
       { id: "archery", group: "ㅇ", name: "양궁", icon: "fa-solid fa-bullseye", profile: "rounds" },
-      { id: "yoga", group: "ㅇ", name: "요가", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "yoga", group: "ㅇ", name: "요가", icon: "fa-solid fa-spa", profile: "basic" },
       { id: "track-field", group: "ㅇ", name: "육상 운동", icon: "fa-solid fa-person-running", profile: "distance" },
       { id: "elliptical", group: "ㅇ", name: "일립티컬", icon: "fa-solid fa-person-walking", profile: "distance" },
       { id: "cooldown", group: "ㅈ", name: "정리 운동", icon: "fa-solid fa-person-walking", profile: "basic" },
       { id: "jump-rope", group: "ㅈ", name: "줄넘기", icon: "fa-solid fa-person-running", profile: "steps" },
-      { id: "gymnastics", group: "ㅊ", name: "체조", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "gymnastics", group: "ㅊ", name: "체조", icon: "fa-solid fa-child-reaching", profile: "basic" },
       { id: "curling", group: "ㅋ", name: "컬링", icon: "fa-solid fa-person-skiing", profile: "rounds" },
       { id: "core-training", group: "ㅋ", name: "코어 트레이닝", icon: "fa-solid fa-person-praying", profile: "strength" },
       { id: "cricket", group: "ㅋ", name: "크리켓", icon: "fa-solid fa-baseball-bat-ball", profile: "rounds" },
       { id: "climbing", group: "ㅋ", name: "클라이밍", icon: "fa-solid fa-person-hiking", profile: "elevation" },
-      { id: "kickboxing", group: "ㅋ", name: "킥복싱", icon: "fa-solid fa-person", profile: "rounds" },
-      { id: "taekwondo", group: "ㅌ", name: "태극권", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "kickboxing", group: "ㅋ", name: "킥복싱", icon: "fa-solid fa-hand-fist", profile: "rounds" },
+      { id: "taekwondo", group: "ㅌ", name: "태극권", icon: "fa-solid fa-user-ninja", profile: "basic" },
       { id: "paddle-sports", group: "ㅍ", name: "패들 스포츠", icon: "fa-solid fa-person-rowing", profile: "distance" },
-      { id: "fencing", group: "ㅍ", name: "펜싱", icon: "fa-solid fa-person", profile: "rounds" },
-      { id: "foam-rolling", group: "ㅍ", name: "폼 롤링", icon: "fa-solid fa-person", profile: "basic" },
-      { id: "pickleball", group: "ㅍ", name: "피클볼", icon: "fa-solid fa-person-running", profile: "rounds" },
+      { id: "fencing", group: "ㅍ", name: "펜싱", icon: "fa-solid fa-bolt", profile: "rounds" },
+      { id: "foam-rolling", group: "ㅍ", name: "폼 롤링", icon: "fa-solid fa-circle", profile: "basic" },
+      { id: "pickleball", group: "ㅍ", name: "피클볼", icon: "fa-solid fa-table-tennis-paddle-ball", profile: "rounds" },
       { id: "fitness-gaming", group: "ㅍ", name: "피트니스 게임", icon: "fa-solid fa-gamepad", profile: "basic" },
-      { id: "pilates", group: "ㅍ", name: "필라테스", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "pilates", group: "ㅍ", name: "필라테스", icon: "fa-solid fa-spa", profile: "basic" },
       { id: "hiking", group: "ㅎ", name: "하이킹", icon: "fa-solid fa-person-hiking", profile: "elevation" },
       { id: "hand-cycling", group: "ㅎ", name: "핸드 사이클링", icon: "fa-solid fa-wheelchair-move", profile: "distance" },
-      { id: "handball", group: "ㅎ", name: "핸드볼", icon: "fa-solid fa-person-running", profile: "rounds" },
-      { id: "aussie-rules", group: "ㅎ", name: "호주 럭비", icon: "fa-solid fa-person-running", profile: "distance" }
+      { id: "handball", group: "ㅎ", name: "핸드볼", icon: "fa-solid fa-volleyball", profile: "rounds" },
+      { id: "aussie-rules", group: "ㅎ", name: "호주 럭비", icon: "fa-solid fa-football", profile: "distance" }
     ];
 
     const workoutState = {
@@ -2801,6 +2883,42 @@
       return names[profile] || names.basic;
     }
 
+    function workoutIconTemplate(workout) {
+      return `<span class="workout-glyph" aria-hidden="true"><i class="${workout.icon}"></i></span>`;
+    }
+
+    function homeBriefingData(hasPlan, todayDay, uploaded, progress) {
+      const todayPhoto = hasPlan ? getPhoto(todayDay) : null;
+      const workoutEntries = todaysWorkoutEntries();
+      const workoutCalories = workoutTotal(workoutEntries, "calories");
+      const workoutMinutes = workoutTotal(workoutEntries, "duration");
+      const lastWorkout = workoutEntries[0] ? getWorkout(workoutEntries[0].workoutId) : null;
+      const bodyMain = hasPlan
+        ? todayPhoto
+          ? `${dayLabel(todayDay)} 사진을 남겼어요. 오늘 변화 기록은 이어졌습니다.`
+          : `${dayLabel(todayDay)}, 오늘 사진은 아직 비어 있어요.`
+        : "바디 기록을 시작하면 매일 변화 흐름을 정리해드릴게요.";
+      const workoutMain = workoutEntries.length
+        ? `${lastWorkout.name}${workoutEntries.length > 1 ? ` 외 ${workoutEntries.length - 1}개` : ""} 기록 완료. ${formatCompactNumber(workoutMinutes)}분, ${formatCompactNumber(workoutCalories)}kcal로 남겼어요.`
+        : "운동 기록을 추가하면 시간과 칼로리를 바로 요약해드릴게요.";
+
+      return {
+        headline: workoutEntries.length
+          ? "오늘 운동 기록까지 반영했어요."
+          : hasPlan && todayPhoto
+            ? "오늘 바디 기록이 저장됐어요."
+            : bodyMain,
+        bodyLine: hasPlan
+          ? `${formatDate(todayISO())} 바디 체크`
+          : "첫 바디 플랜 만들기",
+        bodyValue: hasPlan ? `${progress}%` : "시작",
+        bodyMessage: bodyMain,
+        workoutMessage: workoutMain,
+        workoutValue: workoutEntries.length ? `${formatCompactNumber(workoutCalories)}kcal` : "추가",
+        uploaded
+      };
+    }
+
     function clamp(number, min, max) {
       return Math.min(Math.max(number, min), max);
     }
@@ -2902,6 +3020,129 @@
       });
     }
 
+    function bodyBackupEnabled() {
+      return !!(
+        BODY_BACKUP_CLOUDINARY.cloudName &&
+        BODY_BACKUP_CLOUDINARY.uploadPreset &&
+        window.fetch &&
+        window.FormData
+      );
+    }
+
+    function bodyBackupBase(status) {
+      return {
+        provider: "cloudinary",
+        status,
+        cloudName: BODY_BACKUP_CLOUDINARY.cloudName,
+        folder: BODY_BACKUP_CLOUDINARY.folder
+      };
+    }
+
+    function bodyBackupFileName(photo) {
+      const rawName = photo.name || `body-day-${photo.dayIndex}.jpg`;
+      return rawName.toLowerCase().endsWith(".jpg") || rawName.toLowerCase().endsWith(".jpeg")
+        ? rawName
+        : `${rawName}.jpg`;
+    }
+
+    async function uploadBodyPhotoBackup(photo) {
+      if (!bodyBackupEnabled()) {
+        throw new Error("Cloudinary 백업 설정이 비어 있어요.");
+      }
+
+      const form = new FormData();
+      form.append("file", photo.blob, bodyBackupFileName(photo));
+      form.append("upload_preset", BODY_BACKUP_CLOUDINARY.uploadPreset);
+      form.append("folder", BODY_BACKUP_CLOUDINARY.folder);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${BODY_BACKUP_CLOUDINARY.cloudName}/image/upload`,
+        { method: "POST", body: form }
+      );
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data.error && data.error.message ? data.error.message : `Cloudinary ${response.status}`;
+        throw new Error(message);
+      }
+
+      return {
+        ...bodyBackupBase("uploaded"),
+        secureUrl: data.secure_url || "",
+        publicId: data.public_id || "",
+        resourceType: data.resource_type || "image",
+        uploadedAt: new Date().toISOString()
+      };
+    }
+
+    function updateMemoryPhotoBackup(photo, cloudBackup) {
+      const current = bodyState.photos.find((item) => item.id === photo.id && item.updatedAt === photo.updatedAt);
+      if (current) current.cloudBackup = cloudBackup;
+    }
+
+    async function updateStoredPhotoBackup(photo, cloudBackup) {
+      const db = await openBodyDb();
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, "readwrite");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(photo.id);
+
+        request.onsuccess = () => {
+          const current = request.result;
+          if (!current || current.updatedAt !== photo.updatedAt) return;
+          current.cloudBackup = cloudBackup;
+          store.put(current);
+        };
+        request.onerror = () => reject(request.error);
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
+      });
+      updateMemoryPhotoBackup(photo, cloudBackup);
+    }
+
+    async function runBodyBackup(photo) {
+      if (!photo || !photo.blob || !bodyBackupEnabled()) return;
+      if (photo.cloudBackup && photo.cloudBackup.status === "uploaded") return;
+      if (activeBodyBackups.has(photo.id)) return;
+
+      activeBodyBackups.add(photo.id);
+      try {
+        const cloudBackup = await uploadBodyPhotoBackup(photo);
+        await updateStoredPhotoBackup(photo, cloudBackup);
+      } catch (error) {
+        await updateStoredPhotoBackup(photo, {
+          ...bodyBackupBase("failed"),
+          message: error.message || "Cloudinary 백업 실패",
+          failedAt: new Date().toISOString()
+        }).catch(() => {});
+      } finally {
+        activeBodyBackups.delete(photo.id);
+      }
+    }
+
+    function scheduleBodyBackup(photo) {
+      runBodyBackup(photo);
+    }
+
+    async function schedulePendingBodyBackups() {
+      if (bodyBackupQueueRunning) return;
+      bodyBackupQueueRunning = true;
+      try {
+        const candidates = bodyState.photos.filter((photo) => !photo.cloudBackup || photo.cloudBackup.status !== "uploaded");
+        for (const photo of candidates) {
+          await runBodyBackup(photo);
+        }
+      } finally {
+        bodyBackupQueueRunning = false;
+      }
+    }
+
     async function savePhoto(blob, file) {
       const plan = bodyState.plan;
       const dayIndex = bodyState.selectedDay;
@@ -2913,6 +3154,10 @@
         blob,
         name: file.name || `day-${dayIndex}.jpg`,
         type: blob.type || file.type || "image/jpeg",
+        cloudBackup: {
+          ...bodyBackupBase(bodyBackupEnabled() ? "queued" : "disabled"),
+          queuedAt: new Date().toISOString()
+        },
         updatedAt: new Date().toISOString()
       };
 
@@ -2920,6 +3165,7 @@
       await loadPhotos();
       render();
       showToast(`${dayIndex}일차 사진을 저장했어요.`);
+      scheduleBodyBackup(item);
     }
 
     async function deleteSelectedPhoto() {
@@ -3274,6 +3520,7 @@
       const todayDay = hasPlan ? currentDayIndex(bodyState.plan) : 0;
       const uploaded = bodyState.photos.length;
       const progress = hasPlan ? Math.round((uploaded / bodyState.plan.days) * 100) : 0;
+      const briefing = homeBriefingData(hasPlan, todayDay, uploaded, progress);
 
       if (route === "food") {
         app.innerHTML = `
@@ -3330,22 +3577,22 @@
               <div class="briefing-top">
                 <div>
                   <p class="briefing-kicker">AI BRIEFING</p>
-                  <h2>${hasPlan ? `${dayLabel(todayDay)}, 오늘은 사진 ${uploaded ? "흐름을 이어가면 돼요." : "한 장으로 시작하면 돼요."}` : "바디 기록을 시작하면 매일 브리핑해드릴게요."}</h2>
+                  <h2>${briefing.headline}</h2>
                 </div>
                 <div class="briefing-mark"><i class="fa-solid fa-bolt"></i></div>
               </div>
               <div class="briefing-list">
                 <a class="briefing-line" href="#body">
-                  <span>${hasPlan ? `${formatDate(todayISO())} 바디 체크` : "첫 바디 플랜 만들기"}</span>
-                  <strong>${hasPlan ? `${progress}%` : "시작"}</strong>
+                  <span>${briefing.bodyMessage}</span>
+                  <strong>${briefing.bodyValue}</strong>
                 </a>
                 <a class="briefing-line" href="#food">
                   <span>식단은 단백질과 물만 먼저 가볍게</span>
                   <strong>푸드</strong>
                 </a>
                 <a class="briefing-line" href="#workout">
-                  <span>운동은 루틴 체크까지 짧게 연결</span>
-                  <strong>운동</strong>
+                  <span>${briefing.workoutMessage}</span>
+                  <strong>${briefing.workoutValue}</strong>
                 </a>
               </div>
             </section>
@@ -3424,7 +3671,7 @@
 
       return `
         <article class="workout-log">
-          <i class="${workout.icon}"></i>
+          ${workoutIconTemplate(workout)}
           <div>
             <strong>${workout.name}</strong>
             <p>${detail}${note}</p>
@@ -3455,10 +3702,14 @@
     }
 
     function renderWorkoutCatalog() {
-      const groups = ["인기 항목", "ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+      const groups = ["ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
 
       return `
         <div class="workout-catalog">
+          <label class="workout-search" for="workout-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="workout-search" type="search" placeholder="운동 검색" autocomplete="off" data-workout-search>
+          </label>
           ${groups.map((group) => {
             const items = workoutCatalog.filter((item) => item.group === group);
             if (!items.length) return "";
@@ -3467,21 +3718,46 @@
                 <h3>${group}</h3>
                 <div class="workout-group-card">
                   ${items.map((item) => `
-                    <button class="workout-option" type="button" data-workout-id="${item.id}">
-                      <i class="${item.icon}"></i>
+                    <button class="workout-option" type="button" data-workout-id="${item.id}" data-workout-name="${item.name}" data-workout-profile="${workoutProfileName(item.profile)}">
+                      ${workoutIconTemplate(item)}
                       <span>
                         <strong>${item.name}</strong>
                         <span>${workoutProfileName(item.profile)}</span>
                       </span>
-                      <i class="fa-solid fa-chevron-right"></i>
+                      <i class="fa-solid fa-chevron-right workout-chevron"></i>
                     </button>
                   `).join("")}
                 </div>
               </section>
             `;
           }).join("")}
+          <div class="workout-no-results">검색 결과가 없어요.</div>
         </div>
       `;
+    }
+
+    function normalizedWorkoutSearch(value) {
+      return (value || "").toLowerCase().replace(/\s+/g, "");
+    }
+
+    function filterWorkoutCatalog(query) {
+      const needle = normalizedWorkoutSearch(query);
+      let visibleCount = 0;
+
+      document.querySelectorAll(".workout-option").forEach((option) => {
+        const haystack = normalizedWorkoutSearch(`${option.dataset.workoutName || ""}${option.dataset.workoutProfile || ""}`);
+        const visible = !needle || haystack.includes(needle);
+        option.classList.toggle("is-hidden", !visible);
+        if (visible) visibleCount += 1;
+      });
+
+      document.querySelectorAll(".workout-group").forEach((group) => {
+        const hasVisibleOption = !!group.querySelector(".workout-option:not(.is-hidden)");
+        group.classList.toggle("is-hidden", !hasVisibleOption);
+      });
+
+      const empty = document.querySelector(".workout-no-results");
+      if (empty) empty.classList.toggle("is-visible", visibleCount === 0);
     }
 
     function renderWorkoutRecordForm() {
@@ -3491,7 +3767,7 @@
       return `
         <section class="workout-record-card">
           <div class="workout-record-title">
-            <i class="${workout.icon}"></i>
+            ${workoutIconTemplate(workout)}
             <span>
               <strong>${workout.name}</strong>
               <span>${workoutProfileName(workout.profile)}</span>
@@ -3968,6 +4244,12 @@
       }
     });
 
+    app.addEventListener("input", (event) => {
+      if (event.target.matches("[data-workout-search]")) {
+        filterWorkoutCatalog(event.target.value);
+      }
+    });
+
     window.addEventListener("hashchange", () => {
       haptic();
       scrollAppTop();
@@ -3988,6 +4270,7 @@
     window.addEventListener("load", () => requestAnimationFrame(updateNavContrast));
 
     loadPhotos()
+      .then(() => schedulePendingBodyBackups())
       .catch(() => showToast("사진 저장소를 열지 못했어요."))
       .finally(() => render());
   </script>
