@@ -131,7 +131,7 @@
       justify-content: space-between;
       gap: 14px;
       padding-bottom: 14px;
-      background: linear-gradient(180deg, var(--bg) 72%, rgba(0, 0, 0, 0));
+      background: var(--bg);
       position: sticky;
       top: 0;
       z-index: 10;
@@ -139,7 +139,7 @@
 
     @media (prefers-color-scheme: light) {
       .screen-header {
-        background: linear-gradient(180deg, var(--bg) 72%, rgba(242, 242, 247, 0));
+        background: var(--bg);
       }
     }
 
@@ -276,7 +276,8 @@
       width: 82px;
       aspect-ratio: 1;
       border-radius: 50%;
-      background: conic-gradient(var(--blue) var(--progress), rgba(255, 255, 255, 0.12) 0);
+      background: rgba(255, 255, 255, 0.12);
+      border: 7px solid var(--blue);
       flex: 0 0 auto;
     }
 
@@ -509,7 +510,7 @@
     .photo-preview {
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 65% 34%, rgba(49, 130, 246, 0.26), transparent 34%), #111114;
+      background: #111114;
     }
 
     .photo-preview img {
@@ -523,7 +524,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(0, 0, 0, 0.68), transparent 30%, rgba(0, 0, 0, 0.88));
+      background: rgba(0, 0, 0, 0.45);
     }
 
     .photo-empty {
@@ -777,7 +778,7 @@
       width: 100%;
       aspect-ratio: 4 / 5;
       display: block;
-      object-fit: cover;
+      object-fit: contain;
       background: var(--surface-3);
     }
 
@@ -847,9 +848,7 @@
     }
 
     .service-card.is-primary {
-      background:
-        linear-gradient(135deg, rgba(49, 130, 246, 0.28), rgba(34, 197, 94, 0.12)),
-        var(--surface);
+      background: rgba(49, 130, 246, 0.16);
       border-color: rgba(49, 130, 246, 0.38);
     }
 
@@ -934,7 +933,7 @@
       width: var(--progress, 0%);
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--blue), var(--green));
+      background: var(--blue);
     }
 
     .metric-row {
@@ -1048,7 +1047,7 @@
       place-items: center;
       flex: 0 0 auto;
       border-radius: 999px;
-      background: linear-gradient(135deg, #3182f6, #22c55e 58%, #facc15);
+      background: var(--blue);
       color: #ffffff;
       font-size: 14px;
       font-weight: 950;
@@ -1064,18 +1063,20 @@
 
     .feed-photo {
       position: relative;
-      aspect-ratio: 4 / 5;
-      background:
-        linear-gradient(135deg, rgba(49, 130, 246, 0.18), rgba(34, 197, 94, 0.08)),
-        #101114;
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+      background: #101114;
       overflow: hidden;
     }
 
     .feed-photo img {
       width: 100%;
-      height: 100%;
+      height: auto;
+      max-height: min(70dvh, 620px);
       display: block;
-      object-fit: cover;
+      object-fit: contain;
+      background: #101114;
     }
 
     .feed-empty {
@@ -1160,8 +1161,8 @@
       grid-auto-columns: 74px;
       gap: 12px;
       overflow-x: auto;
-      margin: 0 -20px;
-      padding: 10px 20px 8px;
+      margin: 0;
+      padding: 10px 0 8px;
       scroll-snap-type: x proximity;
     }
 
@@ -1188,7 +1189,7 @@
     }
 
     .story-day.has-photo .story-ring {
-      background: linear-gradient(135deg, #3182f6, #22c55e, #facc15);
+      background: var(--blue);
     }
 
     .story-day.is-selected .story-ring {
@@ -1196,6 +1197,7 @@
     }
 
     .story-thumb {
+      position: relative;
       width: 100%;
       height: 100%;
       display: grid;
@@ -1215,7 +1217,7 @@
       object-fit: cover;
     }
 
-    .story-day span {
+    .story-label {
       display: block;
       max-width: 100%;
       overflow: hidden;
@@ -1294,14 +1296,346 @@
     .status-dot.green { background: var(--green); }
     .status-dot.red { background: var(--red); }
 
+    .workout-shell,
+    .workout-summary,
+    .workout-log-list,
+    .workout-catalog,
+    .workout-record-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .workout-summary {
+      gap: 14px;
+    }
+
+    .workout-command-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .workout-command-row h2 {
+      margin: 0;
+      color: var(--text-main);
+      font-size: 20px;
+      font-weight: 950;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .workout-add-button {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 0 15px;
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .workout-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .workout-metric,
+    .workout-empty,
+    .workout-log {
+      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .workout-metric {
+      min-height: 72px;
+      padding: 13px;
+    }
+
+    .workout-metric span,
+    .workout-log span,
+    .workout-empty span {
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .workout-metric strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--text-main);
+      font-size: 18px;
+      font-weight: 950;
+      line-height: 1.1;
+    }
+
+    .workout-log {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .workout-log i,
+    .workout-option i {
+      color: #9cff1a;
+      font-size: 20px;
+    }
+
+    .workout-log strong,
+    .workout-option strong {
+      display: block;
+      color: var(--text-main);
+      font-size: 15px;
+      font-weight: 950;
+      line-height: 1.2;
+    }
+
+    .workout-log p {
+      margin: 5px 0 0;
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .workout-empty {
+      min-height: 112px;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .workout-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, 0.7);
+      color: var(--text-main);
+      animation: fadeInUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .workout-modal-shell {
+      width: min(100%, 448px);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .workout-modal-head {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 42px;
+      align-items: center;
+      gap: 10px;
+      padding: max(16px, env(safe-area-inset-top)) 18px 14px;
+    }
+
+    .workout-modal-head h2 {
+      margin: 0;
+      text-align: center;
+      color: var(--text-main);
+      font-size: 22px;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .workout-close {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      font-size: 18px;
+    }
+
+    .workout-modal-body {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 0 20px calc(28px + env(safe-area-inset-bottom));
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .workout-modal-body::-webkit-scrollbar {
+      display: none;
+    }
+
+    .workout-group {
+      margin-top: 18px;
+    }
+
+    .workout-group h3 {
+      margin: 0 0 8px;
+      padding-left: 6px;
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .workout-group-card {
+      overflow: hidden;
+      border-radius: 22px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .workout-option {
+      width: 100%;
+      min-height: 60px;
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 24px;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: transparent;
+      color: var(--text-main);
+      text-align: left;
+    }
+
+    .workout-option + .workout-option {
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .workout-option span {
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .workout-record-card {
+      display: grid;
+      gap: 18px;
+      border-radius: 24px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .workout-record-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .workout-record-title i {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: rgba(156, 255, 26, 0.12);
+      color: #9cff1a;
+      font-size: 20px;
+      flex: 0 0 auto;
+    }
+
+    .workout-record-title strong {
+      display: block;
+      color: var(--text-main);
+      font-size: 18px;
+      font-weight: 950;
+      line-height: 1.2;
+    }
+
+    .workout-record-title span {
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .workout-field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .workout-field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .workout-field label {
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .workout-input-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      min-height: 48px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.07);
+      padding: 0 12px;
+    }
+
+    .workout-input-wrap input {
+      min-width: 0;
+      width: 100%;
+      height: 46px;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 16px;
+      font-weight: 850;
+    }
+
+    .workout-input-wrap span {
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .workout-note-input {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      outline: none;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-main);
+      padding: 0 14px;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .workout-modal-actions {
+      display: grid;
+      grid-template-columns: 0.72fr 1fr;
+      gap: 10px;
+    }
+
     .ai-briefing {
       display: grid;
       gap: 14px;
       border-radius: 24px;
       padding: 20px;
-      background:
-        linear-gradient(135deg, rgba(49, 130, 246, 0.16), rgba(34, 197, 94, 0.08)),
-        var(--surface);
+      background: var(--surface);
       border: 1px solid var(--line);
       box-shadow: var(--shadow-soft);
     }
@@ -1419,7 +1753,7 @@
     .body-overview {
       display: grid;
       gap: 14px;
-      padding: 2px 4px 0;
+      padding: 0;
     }
 
     .body-overview-main {
@@ -1444,7 +1778,7 @@
 
     .body-dayline strong {
       color: var(--text-main);
-      font-size: 34px;
+      font-size: 32px;
       font-weight: 950;
       line-height: 0.95;
       letter-spacing: 0;
@@ -1454,13 +1788,13 @@
       display: flex;
       align-items: flex-end;
       justify-content: flex-end;
-      gap: 18px;
+      gap: 20px;
       flex: 0 0 auto;
     }
 
     .body-stat {
       display: grid;
-      gap: 3px;
+      gap: 5px;
       text-align: right;
     }
 
@@ -1496,7 +1830,7 @@
       width: var(--progress, 0%);
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--blue), var(--green));
+      background: var(--blue);
     }
 
     .body-record-strip {
@@ -1504,7 +1838,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      padding: 2px 4px 0;
+      padding: 0;
     }
 
     .body-record-copy {
@@ -1528,6 +1862,25 @@
       line-height: 1.25;
     }
 
+    .body-storage-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin: 8px 0 0;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 750;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .body-storage-warning i {
+      margin-top: 1px;
+      color: #facc15;
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
     .body-record-actions {
       display: flex;
       align-items: center;
@@ -1535,40 +1888,173 @@
       flex: 0 0 auto;
     }
 
-    .body-tabs {
+    .body-setup-panel {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      border-bottom: 1px solid var(--line);
-      margin: 2px -20px 0;
-      padding: 0 20px;
+      gap: 20px;
+      border-radius: 24px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
     }
 
-    .body-tab {
-      height: 48px;
+    .body-setup-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .body-setup-head h2 {
+      margin: 0;
+      color: var(--text-main);
+      font-size: 22px;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .body-setup-head p {
+      margin: 6px 0 0;
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 750;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .body-setup-mark {
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
-      color: var(--text-sub);
-      border-bottom: 2px solid transparent;
-      font-size: 20px;
+      border-radius: 16px;
+      background: rgba(49, 130, 246, 0.15);
+      color: #60a5fa;
+      flex: 0 0 auto;
     }
 
-    .body-tab.is-active {
+    .body-period-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .body-period-card {
+      min-height: 74px;
+      display: grid;
+      align-content: center;
+      gap: 7px;
+      border-radius: 18px;
+      padding: 12px 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
       color: var(--text-main);
-      border-bottom-color: var(--text-main);
+      text-align: left;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
+    }
+
+    .body-period-card strong {
+      color: var(--text-main);
+      font-size: 18px;
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .body-period-card span {
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .body-period-card.is-selected {
+      background: rgba(49, 130, 246, 0.18);
+      border-color: rgba(49, 130, 246, 0.82);
+    }
+
+    .body-setup-fields {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(104px, 0.45fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .body-setup-field {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .body-setup-field label {
+      color: var(--text-sub);
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .body-setup-input,
+    .body-days-input {
+      width: 100%;
+      min-width: 0;
+      height: 50px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-main);
+      outline: none;
+      font-size: 15px;
+      font-weight: 850;
+    }
+
+    .body-setup-input {
+      padding: 0 13px;
+    }
+
+    .body-days-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      height: 50px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.07);
+      padding: 0 12px;
+    }
+
+    .body-days-input {
+      height: 48px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    .body-days-wrap span {
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .body-setup-start {
+      width: 100%;
     }
 
     .body-gallery {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 2px;
-      margin: 0 -20px;
+      margin: 0;
       background: var(--line-soft);
     }
 
     .body-tile {
       position: relative;
       width: 100%;
-      aspect-ratio: 1;
+      aspect-ratio: 3 / 4;
+      display: grid;
+      place-items: center;
       overflow: hidden;
       background: #101114;
       color: rgba(255, 255, 255, 0.86);
@@ -1586,7 +2072,8 @@
       width: 100%;
       height: 100%;
       display: block;
-      object-fit: cover;
+      object-fit: contain;
+      background: #101114;
     }
 
     .body-tile-empty {
@@ -1594,9 +2081,7 @@
       inset: 0;
       display: grid;
       place-items: center;
-      background:
-        linear-gradient(135deg, rgba(49, 130, 246, 0.16), rgba(34, 197, 94, 0.08)),
-        #101114;
+      background: #111216;
     }
 
     .body-tile-empty span {
@@ -1616,24 +2101,23 @@
       left: 8px;
       top: 8px;
       z-index: 1;
+      max-width: calc(100% - 16px);
+      overflow: hidden;
+      border-radius: 999px;
+      padding: 4px 6px;
+      background: rgba(0, 0, 0, 0.56);
       color: #ffffff;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 950;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow: none;
     }
 
-    .body-tile.has-photo::after {
-      content: "\f08d";
-      position: absolute;
-      right: 8px;
-      top: 7px;
-      z-index: 1;
-      font-family: "Font Awesome 6 Free";
-      font-weight: 900;
-      color: #ffffff;
-      font-size: 13px;
-      text-shadow: 0 1px 7px rgba(0, 0, 0, 0.55);
-      transform: rotate(36deg);
+    .body-tile-day.is-on-light {
+      background: rgba(255, 255, 255, 0.78);
+      color: #141414;
     }
 
     .body-tile.is-future {
@@ -1644,11 +2128,20 @@
       position: fixed;
       inset: 0;
       z-index: 90;
-      display: flex;
-      flex-direction: column;
-      background: rgba(0, 0, 0, 0.92);
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, 0.86);
       color: #ffffff;
       animation: fadeInUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .body-viewer-shell {
+      width: min(100%, 448px);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: #000000;
+      overflow: hidden;
     }
 
     .body-viewer-head {
@@ -1702,12 +2195,23 @@
       min-height: 0;
       display: grid;
       place-items: center;
-      padding: 0 0 calc(22px + env(safe-area-inset-bottom));
+      overflow: hidden;
+      padding: 8px 16px calc(22px + env(safe-area-inset-bottom));
+    }
+
+    .body-viewer-frame {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      display: grid;
+      place-items: center;
     }
 
     .body-viewer-stage img {
-      width: 100%;
-      height: 100%;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
       display: block;
       object-fit: contain;
     }
@@ -1868,7 +2372,8 @@
     }
 
     .bottom-nav-inner {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(5, 62px);
       align-items: center;
       gap: 4px;
       border-radius: 999px;
@@ -1895,7 +2400,7 @@
       appearance: none;
       position: relative;
       z-index: 1;
-      width: 62px;
+      width: 100%;
       min-height: 54px;
       display: flex;
       flex-direction: column;
@@ -1911,6 +2416,10 @@
     }
 
     .nav-item i {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
       font-size: 16px;
       line-height: 1;
     }
@@ -1939,14 +2448,23 @@
         padding-inline: 17px;
       }
 
-      .nav-item {
-        width: 58px;
+      .body-period-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .body-setup-fields,
+      .workout-field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-nav-inner {
+        grid-template-columns: repeat(5, 58px);
       }
     }
 
     @media (max-width: 360px) {
-      .nav-item {
-        width: 52px;
+      .bottom-nav-inner {
+        grid-template-columns: repeat(5, 52px);
       }
 
       .nav-item span {
@@ -1956,8 +2474,14 @@
       .field-row,
       .button-row,
       .photo-actions,
-      .compare-lead {
+      .compare-lead,
+      .workout-metrics {
         grid-template-columns: 1fr;
+      }
+
+      .workout-command-row {
+        align-items: flex-start;
+        flex-direction: column;
       }
     }
   </style>
@@ -1999,6 +2523,7 @@
 
   <script>
     const PLAN_KEY = "enjoy.body.plan.v2";
+    const WORKOUT_KEY = "enjoy.workouts.v1";
     const DB_NAME = "enjoy-body-photos";
     const STORE_NAME = "photos";
     const app = document.querySelector("#app");
@@ -2020,6 +2545,140 @@
       { days: 90, title: "3개월", note: "90일 기록" }
     ];
 
+    const workoutFieldProfiles = {
+      basic: [
+        { key: "duration", label: "시간", unit: "분" },
+        { key: "calories", label: "칼로리", unit: "kcal" }
+      ],
+      distance: [
+        { key: "duration", label: "시간", unit: "분" },
+        { key: "distance", label: "거리", unit: "km" },
+        { key: "calories", label: "칼로리", unit: "kcal" },
+        { key: "pace", label: "페이스", unit: "분/km" }
+      ],
+      strength: [
+        { key: "duration", label: "시간", unit: "분" },
+        { key: "calories", label: "칼로리", unit: "kcal" },
+        { key: "sets", label: "세트", unit: "세트" },
+        { key: "reps", label: "반복", unit: "회" },
+        { key: "weight", label: "중량", unit: "kg" }
+      ],
+      swim: [
+        { key: "duration", label: "시간", unit: "분" },
+        { key: "distance", label: "거리", unit: "m" },
+        { key: "calories", label: "칼로리", unit: "kcal" },
+        { key: "laps", label: "랩", unit: "랩" },
+        { key: "pool", label: "풀 길이", unit: "m" }
+      ],
+      elevation: [
+        { key: "duration", label: "시간", unit: "분" },
+        { key: "distance", label: "거리", unit: "km" },
+        { key: "calories", label: "칼로리", unit: "kcal" },
+        { key: "elevation", label: "고도", unit: "m" }
+      ],
+      steps: [
+        { key: "duration", label: "시간", unit: "분" },
+        { key: "calories", label: "칼로리", unit: "kcal" },
+        { key: "floors", label: "층", unit: "층" },
+        { key: "steps", label: "스텝", unit: "회" }
+      ],
+      rounds: [
+        { key: "duration", label: "시간", unit: "분" },
+        { key: "calories", label: "칼로리", unit: "kcal" },
+        { key: "rounds", label: "라운드", unit: "회" }
+      ]
+    };
+
+    const workoutCatalog = [
+      { id: "other", group: "인기 항목", name: "기타", icon: "fa-solid fa-forward", profile: "basic", popular: true },
+      { id: "strength", group: "인기 항목", name: "근력 강화 운동", icon: "fa-solid fa-dumbbell", profile: "strength", popular: true },
+      { id: "downhill-ski", group: "인기 항목", name: "다운힐 스키", icon: "fa-solid fa-person-skiing", profile: "elevation", popular: true },
+      { id: "barre", group: "ㅂ", name: "발레 바", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "badminton", group: "ㅂ", name: "배드민턴", icon: "fa-solid fa-table-tennis-paddle-ball", profile: "rounds" },
+      { id: "mixed-cardio", group: "ㅂ", name: "복합 유산소 운동", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "snowboarding", group: "ㅅ", name: "스노보딩", icon: "fa-solid fa-person-snowboarding", profile: "elevation", popular: true },
+      { id: "outdoor-soccer", group: "ㅅ", name: "실외 축구", icon: "fa-solid fa-person-running", profile: "distance", popular: true },
+      { id: "cross-training", group: "ㅋ", name: "크로스 트레이닝", icon: "fa-solid fa-person-running", profile: "basic", popular: true },
+      { id: "cross-country-ski", group: "ㅋ", name: "크로스컨트리 스키", icon: "fa-solid fa-person-skiing-nordic", profile: "elevation", popular: true },
+      { id: "table-tennis", group: "ㅌ", name: "탁구", icon: "fa-solid fa-table-tennis-paddle-ball", profile: "rounds", popular: true },
+      { id: "tennis", group: "ㅌ", name: "테니스", icon: "fa-solid fa-person-running", profile: "rounds", popular: true },
+      { id: "play", group: "ㄱ", name: "각종 놀이", icon: "fa-solid fa-person-snowboarding", profile: "basic" },
+      { id: "stairs", group: "ㄱ", name: "계단 오르기", icon: "fa-solid fa-person-walking", profile: "steps" },
+      { id: "hiit", group: "ㄱ", name: "고강도 인터벌 트레이닝", icon: "fa-solid fa-person-running", profile: "basic" },
+      { id: "golf", group: "ㄱ", name: "골프", icon: "fa-solid fa-golf-ball-tee", profile: "rounds" },
+      { id: "boxing", group: "ㄱ", name: "권투", icon: "fa-solid fa-person", profile: "rounds" },
+      { id: "functional-strength", group: "ㄱ", name: "기능성 근력 강화 운동", icon: "fa-solid fa-dumbbell", profile: "strength" },
+      { id: "fishing", group: "ㄴ", name: "낚시", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "basketball", group: "ㄴ", name: "농구", icon: "fa-solid fa-basketball", profile: "rounds" },
+      { id: "dance", group: "ㄷ", name: "댄스", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "racquetball", group: "ㄹ", name: "라켓볼", icon: "fa-solid fa-person-running", profile: "rounds" },
+      { id: "lacrosse", group: "ㄹ", name: "라크로스", icon: "fa-solid fa-person-running", profile: "rounds" },
+      { id: "rugby", group: "ㄹ", name: "럭비", icon: "fa-solid fa-person-running", profile: "distance" },
+      { id: "wrestling", group: "ㄹ", name: "레슬링", icon: "fa-solid fa-person", profile: "rounds" },
+      { id: "martial-arts", group: "ㅁ", name: "무술", icon: "fa-solid fa-person", profile: "rounds" },
+      { id: "baseball", group: "ㅁ", name: "미식축구", icon: "fa-solid fa-person-running", profile: "rounds" },
+      { id: "volleyball", group: "ㅂ", name: "배구", icon: "fa-solid fa-volleyball", profile: "rounds" },
+      { id: "bowling", group: "ㅂ", name: "볼링", icon: "fa-solid fa-bowling-ball", profile: "rounds" },
+      { id: "social-dance", group: "ㅅ", name: "사교 댄스", icon: "fa-solid fa-people-arrows", profile: "basic" },
+      { id: "hunting", group: "ㅅ", name: "사냥", icon: "fa-solid fa-person-hiking", profile: "basic" },
+      { id: "surfing", group: "ㅅ", name: "서핑", icon: "fa-solid fa-person-swimming", profile: "distance" },
+      { id: "snow-sports", group: "ㅅ", name: "설상 스포츠", icon: "fa-regular fa-snowflake", profile: "elevation" },
+      { id: "sailing", group: "ㅅ", name: "세일링", icon: "fa-solid fa-sailboat", profile: "distance" },
+      { id: "softball", group: "ㅅ", name: "소프트볼", icon: "fa-solid fa-baseball", profile: "rounds" },
+      { id: "water-polo", group: "ㅅ", name: "수구", icon: "fa-solid fa-person-swimming", profile: "swim" },
+      { id: "water-sports", group: "ㅅ", name: "수상 스포츠", icon: "fa-solid fa-water", profile: "distance" },
+      { id: "pool-swim", group: "ㅅ", name: "수영(수영장)", icon: "fa-solid fa-person-swimming", profile: "swim" },
+      { id: "open-water-swim", group: "ㅅ", name: "수영(야외)", icon: "fa-solid fa-person-swimming", profile: "swim" },
+      { id: "water-fitness", group: "ㅅ", name: "수중 운동", icon: "fa-solid fa-person-swimming", profile: "swim" },
+      { id: "skating", group: "ㅅ", name: "스케이팅", icon: "fa-solid fa-person-skating", profile: "distance" },
+      { id: "step-training", group: "ㅅ", name: "스텝 트레이닝", icon: "fa-solid fa-person-walking", profile: "steps" },
+      { id: "stair-stepper", group: "ㅅ", name: "스텝퍼 운동", icon: "fa-solid fa-person-walking", profile: "steps" },
+      { id: "equestrian", group: "ㅅ", name: "승마", icon: "fa-solid fa-horse", profile: "distance" },
+      { id: "indoor-walk", group: "ㅅ", name: "실내 걷기", icon: "fa-solid fa-person-walking", profile: "distance" },
+      { id: "indoor-run", group: "ㅅ", name: "실내 달리기", icon: "fa-solid fa-person-running", profile: "distance" },
+      { id: "indoor-rowing", group: "ㅅ", name: "실내 로잉", icon: "fa-solid fa-person-rowing", profile: "distance" },
+      { id: "indoor-cycling", group: "ㅅ", name: "실내 사이클링", icon: "fa-solid fa-person-biking", profile: "distance" },
+      { id: "indoor-skating", group: "ㅅ", name: "실내 스케이팅", icon: "fa-solid fa-person-skating", profile: "distance" },
+      { id: "indoor-hockey", group: "ㅅ", name: "실내 하키", icon: "fa-solid fa-person-skating", profile: "rounds" },
+      { id: "outdoor-walk", group: "ㅅ", name: "실외 걷기", icon: "fa-solid fa-person-walking", profile: "distance" },
+      { id: "outdoor-run", group: "ㅅ", name: "실외 달리기", icon: "fa-solid fa-person-running", profile: "distance" },
+      { id: "outdoor-rowing", group: "ㅅ", name: "실외 로잉", icon: "fa-solid fa-person-rowing", profile: "distance" },
+      { id: "outdoor-cycling", group: "ㅅ", name: "실외 사이클링", icon: "fa-solid fa-bicycle", profile: "distance" },
+      { id: "outdoor-skating", group: "ㅅ", name: "실외 스케이팅", icon: "fa-solid fa-person-skating", profile: "distance" },
+      { id: "outdoor-hockey", group: "ㅅ", name: "실외 하키", icon: "fa-solid fa-person-skating", profile: "rounds" },
+      { id: "mind-body", group: "ㅅ", name: "심신수련 운동", icon: "fa-solid fa-spa", profile: "basic" },
+      { id: "baseball", group: "ㅇ", name: "야구", icon: "fa-solid fa-baseball", profile: "rounds" },
+      { id: "archery", group: "ㅇ", name: "양궁", icon: "fa-solid fa-bullseye", profile: "rounds" },
+      { id: "yoga", group: "ㅇ", name: "요가", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "track-field", group: "ㅇ", name: "육상 운동", icon: "fa-solid fa-person-running", profile: "distance" },
+      { id: "elliptical", group: "ㅇ", name: "일립티컬", icon: "fa-solid fa-person-walking", profile: "distance" },
+      { id: "cooldown", group: "ㅈ", name: "정리 운동", icon: "fa-solid fa-person-walking", profile: "basic" },
+      { id: "jump-rope", group: "ㅈ", name: "줄넘기", icon: "fa-solid fa-person-running", profile: "steps" },
+      { id: "gymnastics", group: "ㅊ", name: "체조", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "curling", group: "ㅋ", name: "컬링", icon: "fa-solid fa-person-skiing", profile: "rounds" },
+      { id: "core-training", group: "ㅋ", name: "코어 트레이닝", icon: "fa-solid fa-person-praying", profile: "strength" },
+      { id: "cricket", group: "ㅋ", name: "크리켓", icon: "fa-solid fa-baseball-bat-ball", profile: "rounds" },
+      { id: "climbing", group: "ㅋ", name: "클라이밍", icon: "fa-solid fa-person-hiking", profile: "elevation" },
+      { id: "kickboxing", group: "ㅋ", name: "킥복싱", icon: "fa-solid fa-person", profile: "rounds" },
+      { id: "taekwondo", group: "ㅌ", name: "태극권", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "paddle-sports", group: "ㅍ", name: "패들 스포츠", icon: "fa-solid fa-person-rowing", profile: "distance" },
+      { id: "fencing", group: "ㅍ", name: "펜싱", icon: "fa-solid fa-person", profile: "rounds" },
+      { id: "foam-rolling", group: "ㅍ", name: "폼 롤링", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "pickleball", group: "ㅍ", name: "피클볼", icon: "fa-solid fa-person-running", profile: "rounds" },
+      { id: "fitness-gaming", group: "ㅍ", name: "피트니스 게임", icon: "fa-solid fa-gamepad", profile: "basic" },
+      { id: "pilates", group: "ㅍ", name: "필라테스", icon: "fa-solid fa-person", profile: "basic" },
+      { id: "hiking", group: "ㅎ", name: "하이킹", icon: "fa-solid fa-person-hiking", profile: "elevation" },
+      { id: "hand-cycling", group: "ㅎ", name: "핸드 사이클링", icon: "fa-solid fa-wheelchair-move", profile: "distance" },
+      { id: "handball", group: "ㅎ", name: "핸드볼", icon: "fa-solid fa-person-running", profile: "rounds" },
+      { id: "aussie-rules", group: "ㅎ", name: "호주 럭비", icon: "fa-solid fa-person-running", profile: "distance" }
+    ];
+
+    const workoutState = {
+      entries: loadWorkoutEntries(),
+      modalMode: null,
+      selectedWorkoutId: null
+    };
+
     function haptic() {
       if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(8);
     }
@@ -2040,6 +2699,20 @@
 
     function savePlan(plan) {
       localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
+    }
+
+    function loadWorkoutEntries() {
+      try {
+        const saved = localStorage.getItem(WORKOUT_KEY);
+        const entries = saved ? JSON.parse(saved) : [];
+        return Array.isArray(entries) ? entries : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveWorkoutEntries() {
+      localStorage.setItem(WORKOUT_KEY, JSON.stringify(workoutState.entries));
     }
 
     function todayISO() {
@@ -2067,6 +2740,65 @@
         month: "long",
         day: "numeric"
       }).format(date);
+    }
+
+    function dayLabel(dayIndex) {
+      return `Day ${dayIndex}`;
+    }
+
+    function getWorkout(workoutId) {
+      return workoutCatalog.find((item) => item.id === workoutId) || workoutCatalog[0];
+    }
+
+    function getWorkoutFields(workout) {
+      return workoutFieldProfiles[workout.profile] || workoutFieldProfiles.basic;
+    }
+
+    function todaysWorkoutEntries() {
+      const today = todayISO();
+      return workoutState.entries.filter((entry) => entry.date === today);
+    }
+
+    function numberValue(value) {
+      const parsed = parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function workoutTotal(entries, key) {
+      return entries.reduce((sum, entry) => sum + numberValue(entry.values[key]), 0);
+    }
+
+    function formatCompactNumber(value) {
+      if (!value) return "0";
+      return Number.isInteger(value) ? String(value) : value.toFixed(1);
+    }
+
+    function formatWorkoutField(field, value) {
+      const number = numberValue(value);
+      if (!number && field.key !== "note") return "";
+      return `${formatCompactNumber(number)}${field.unit}`;
+    }
+
+    function workoutSummaryText(entry) {
+      const workout = getWorkout(entry.workoutId);
+      return getWorkoutFields(workout)
+        .map((field) => formatWorkoutField(field, entry.values[field.key]))
+        .filter(Boolean)
+        .slice(0, 4)
+        .join(" · ");
+    }
+
+    function workoutProfileName(profile) {
+      const names = {
+        basic: "시간 · 칼로리",
+        distance: "거리 · 페이스",
+        strength: "세트 · 반복 · 중량",
+        swim: "거리 · 랩 · 풀",
+        elevation: "거리 · 고도",
+        steps: "층 · 스텝",
+        rounds: "라운드"
+      };
+      return names[profile] || names.basic;
     }
 
     function clamp(number, min, max) {
@@ -2301,6 +3033,7 @@
 
       if (route === "body") {
         renderBody();
+        schedulePhotoLabelContrast();
       } else {
         bodyState.viewerDay = null;
         renderSimpleScreen(route);
@@ -2444,11 +3177,11 @@
             }
           }
 
-          const gradientColors = Array.from((style.backgroundImage || "").matchAll(/rgba?\([^)]+\)/g))
+          const backgroundImageColors = Array.from((style.backgroundImage || "").matchAll(/rgba?\([^)]+\)/g))
             .map((matchItem) => parseRgb(matchItem[0]))
             .filter(Boolean);
-          if (gradientColors.length) {
-            const value = gradientColors.reduce((sum, color) => sum + colorBrightness(color), 0) / gradientColors.length;
+          if (backgroundImageColors.length) {
+            const value = backgroundImageColors.reduce((sum, color) => sum + colorBrightness(color), 0) / backgroundImageColors.length;
             layers.push({ value, alpha: 0.55 * opacity });
           }
 
@@ -2499,6 +3232,29 @@
         ? values.reduce((sum, value) => sum + value, 0) / values.length
         : (matchMedia("(prefers-color-scheme: light)").matches ? 242 : 0);
       nav.classList.toggle("nav-on-light", average > 154);
+    }
+
+    function updatePhotoLabelContrast() {
+      document.querySelectorAll(".auto-contrast-label").forEach((label) => {
+        label.classList.remove("is-on-light");
+
+        const photoWrap = label.closest(".body-tile, .feed-photo, .compare-item");
+        const image = photoWrap ? photoWrap.querySelector("img") : null;
+        if (!image || !image.complete || !image.naturalWidth) return;
+
+        const rect = label.getBoundingClientRect();
+        const brightness = imageBrightnessAt(image, rect.left + rect.width / 2, rect.top + rect.height / 2);
+        label.classList.toggle("is-on-light", brightness !== null && brightness > 156);
+      });
+    }
+
+    function schedulePhotoLabelContrast() {
+      requestAnimationFrame(() => {
+        updatePhotoLabelContrast();
+        document.querySelectorAll(".body-tile img, .feed-photo img, .compare-item img").forEach((image) => {
+          if (!image.complete) image.addEventListener("load", updatePhotoLabelContrast, { once: true });
+        });
+      });
     }
 
     function headerTemplate(title, subtitle, chip = "") {
@@ -2562,44 +3318,7 @@
       }
 
       if (route === "workout") {
-        app.innerHTML = `
-          <div class="screen pb-safe">
-            ${headerTemplate("운동", "루틴과 체크인을 가볍게 묶어요.")}
-            <div class="content-stack">
-              <section class="workout-grid fade-in-up">
-                ${[
-                  ["상체", "푸시 · 풀", "fa-solid fa-dumbbell", "blue"],
-                  ["하체", "스쿼트 · 런지", "fa-solid fa-person-running", "green"],
-                  ["유산소", "걷기 · 러닝", "fa-solid fa-heart-pulse", "red"]
-                ].map((item) => `
-                  <button class="routine-card" type="button">
-                    <span class="service-icon"><i class="${item[2]}"></i></span>
-                    <span style="display:grid; gap:3px;">
-                      <strong>${item[0]}</strong>
-                      <span>${item[1]}</span>
-                    </span>
-                    <span class="status-dot ${item[3]}"></span>
-                  </button>
-                `).join("")}
-              </section>
-
-              <section>
-                <div class="section-heading">
-                  <div>
-                    <h2>오늘의 루틴</h2>
-                    <p>세트 체크</p>
-                  </div>
-                </div>
-                <div class="metric-row">
-                  <div class="metric-pill"><span>운동</span><strong>0개</strong></div>
-                  <div class="metric-pill"><span>세트</span><strong>0</strong></div>
-                  <div class="metric-pill"><span>시간</span><strong>0분</strong></div>
-                </div>
-              </section>
-              <p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
-            </div>
-          </div>
-        `;
+        renderWorkoutScreen();
         return;
       }
 
@@ -2611,7 +3330,7 @@
               <div class="briefing-top">
                 <div>
                   <p class="briefing-kicker">AI BRIEFING</p>
-                  <h2>${hasPlan ? `D+${todayDay}, 오늘은 사진 ${uploaded ? "흐름을 이어가면 돼요." : "한 장으로 시작하면 돼요."}` : "바디 기록을 시작하면 매일 브리핑해드릴게요."}</h2>
+                  <h2>${hasPlan ? `${dayLabel(todayDay)}, 오늘은 사진 ${uploaded ? "흐름을 이어가면 돼요." : "한 장으로 시작하면 돼요."}` : "바디 기록을 시작하면 매일 브리핑해드릴게요."}</h2>
                 </div>
                 <div class="briefing-mark"><i class="fa-solid fa-bolt"></i></div>
               </div>
@@ -2652,6 +3371,157 @@
       `;
     }
 
+    function renderWorkoutScreen() {
+      const entries = todaysWorkoutEntries();
+      const totalMinutes = workoutTotal(entries, "duration");
+      const totalCalories = workoutTotal(entries, "calories");
+
+      app.innerHTML = `
+        <div class="screen pb-safe">
+          ${headerTemplate("운동", "오늘 기록")}
+          <div class="content-stack">
+            <section class="workout-shell fade-in-up">
+              <div class="workout-command-row">
+                <h2>운동 기록</h2>
+                <button class="workout-add-button" type="button" data-action="open-workout-picker">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>운동 추가</span>
+                </button>
+              </div>
+              <div class="workout-metrics">
+                <div class="workout-metric"><span>운동</span><strong>${entries.length}개</strong></div>
+                <div class="workout-metric"><span>시간</span><strong>${formatCompactNumber(totalMinutes)}분</strong></div>
+                <div class="workout-metric"><span>칼로리</span><strong>${formatCompactNumber(totalCalories)}kcal</strong></div>
+              </div>
+            </section>
+
+            <section>
+              <div class="section-heading">
+                <div>
+                  <h2>오늘의 루틴</h2>
+                  <p>${entries.length ? `${entries.length}개 기록` : "기록 없음"}</p>
+                </div>
+              </div>
+              <div class="workout-log-list">
+                ${entries.length ? entries.map(renderWorkoutLog).join("") : `
+                  <div class="workout-empty">
+                    <span>아직 기록된 운동이 없어요.</span>
+                  </div>
+                `}
+              </div>
+            </section>
+            <p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
+          </div>
+        </div>
+        ${renderWorkoutModal()}
+      `;
+    }
+
+    function renderWorkoutLog(entry) {
+      const workout = getWorkout(entry.workoutId);
+      const detail = workoutSummaryText(entry) || "기록 완료";
+      const note = entry.values.note ? ` · ${entry.values.note}` : "";
+
+      return `
+        <article class="workout-log">
+          <i class="${workout.icon}"></i>
+          <div>
+            <strong>${workout.name}</strong>
+            <p>${detail}${note}</p>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderWorkoutModal() {
+      if (!workoutState.modalMode) return "";
+
+      return `
+        <div class="workout-modal" role="dialog" aria-modal="true" aria-label="운동 추가">
+          <div class="workout-modal-shell">
+            <div class="workout-modal-head">
+              <button class="workout-close" type="button" data-action="close-workout-modal" aria-label="닫기">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <h2>운동 추가</h2>
+              <span></span>
+            </div>
+            <div class="workout-modal-body">
+              ${workoutState.modalMode === "record" ? renderWorkoutRecordForm() : renderWorkoutCatalog()}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWorkoutCatalog() {
+      const groups = ["인기 항목", "ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+
+      return `
+        <div class="workout-catalog">
+          ${groups.map((group) => {
+            const items = workoutCatalog.filter((item) => item.group === group);
+            if (!items.length) return "";
+            return `
+              <section class="workout-group">
+                <h3>${group}</h3>
+                <div class="workout-group-card">
+                  ${items.map((item) => `
+                    <button class="workout-option" type="button" data-workout-id="${item.id}">
+                      <i class="${item.icon}"></i>
+                      <span>
+                        <strong>${item.name}</strong>
+                        <span>${workoutProfileName(item.profile)}</span>
+                      </span>
+                      <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                  `).join("")}
+                </div>
+              </section>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function renderWorkoutRecordForm() {
+      const workout = getWorkout(workoutState.selectedWorkoutId);
+      const fields = getWorkoutFields(workout);
+
+      return `
+        <section class="workout-record-card">
+          <div class="workout-record-title">
+            <i class="${workout.icon}"></i>
+            <span>
+              <strong>${workout.name}</strong>
+              <span>${workoutProfileName(workout.profile)}</span>
+            </span>
+          </div>
+          <div class="workout-record-form">
+            <div class="workout-field-grid">
+              ${fields.map((field) => `
+                <div class="workout-field">
+                  <label for="workout-${field.key}">${field.label}</label>
+                  <span class="workout-input-wrap">
+                    <input id="workout-${field.key}" data-workout-field="${field.key}" type="number" min="0" step="0.1" inputmode="decimal">
+                    <span>${field.unit}</span>
+                  </span>
+                </div>
+              `).join("")}
+            </div>
+            <div class="workout-field">
+              <label for="workout-note">메모</label>
+              <input class="workout-note-input" id="workout-note" data-workout-field="note" type="text" maxlength="36">
+            </div>
+          </div>
+          <div class="workout-modal-actions">
+            <button class="ghost-button" type="button" data-action="back-workout-picker">목록</button>
+            <button class="pill-button blue" type="button" data-action="save-workout-entry">저장</button>
+          </div>
+        </section>
+      `;
+    }
+
     function renderBody() {
       if (!bodyState.plan) {
         renderBodySetup();
@@ -2670,18 +3540,18 @@
 
       app.innerHTML = `
         <div class="screen pb-safe">
-          ${headerTemplate("바디", `D+${todayDay} / ${plan.days} · ${uploaded}장`)}
+          ${headerTemplate("바디", `${dayLabel(todayDay)} / ${plan.days} · ${uploaded}장`)}
           <div class="content-stack">
             <section class="body-overview fade-in-up">
               <div class="body-overview-main">
                 <div class="body-dayline">
                   <span>${formatDate(plan.startDate)} - ${formatDate(endDate)}</span>
-                  <strong>D+${todayDay}</strong>
+                  <strong>${dayLabel(todayDay)}</strong>
                 </div>
                 <div class="body-stats">
-                  <div class="body-stat"><strong>${uploaded}</strong><span>사진</span></div>
-                  <div class="body-stat"><strong>${remaining}</strong><span>남은 날</span></div>
-                  <div class="body-stat"><strong>${progress}%</strong><span>진행</span></div>
+                  <div class="body-stat"><span>사진</span><strong>${uploaded}</strong></div>
+                  <div class="body-stat"><span>남은 날</span><strong>${remaining}</strong></div>
+                  <div class="body-stat"><span>진행</span><strong>${progress}%</strong></div>
                 </div>
               </div>
               <div class="body-progress-track" style="--progress:${progress}%"><span></span></div>
@@ -2695,8 +3565,12 @@
 
             <section class="body-record-strip">
               <div class="body-record-copy">
-                <strong>D${bodyState.selectedDay} 기록</strong>
+                <strong>${dayLabel(bodyState.selectedDay)} 기록</strong>
                 <span>${formatDate(selectedDate)} · ${selectedPhoto ? "사진 변경 가능" : "아직 사진 없음"}</span>
+                <p class="body-storage-warning">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>사진은 각자 기기에 저장되는 것이기에 앱 삭제시 모든 데이터가 사라집니다.</span>
+                </p>
               </div>
               <div class="body-record-actions">
                 <button class="icon-action primary" type="button" data-action="open-camera" aria-label="바로 촬영" ${bodyState.busy ? "disabled" : ""}>
@@ -2712,11 +3586,6 @@
             </section>
 
             <section>
-              <div class="body-tabs" aria-label="바디 보기">
-                <div class="body-tab is-active"><i class="fa-solid fa-table-cells"></i></div>
-                <div class="body-tab"><i class="fa-regular fa-circle-play"></i></div>
-                <div class="body-tab"><i class="fa-solid fa-repeat"></i></div>
-              </div>
               <div class="body-gallery">
                 ${renderBodyGallery(plan, todayDay)}
               </div>
@@ -2737,33 +3606,36 @@
         <div class="screen pb-safe">
           ${headerTemplate("바디", "같은 구도로 남기는 변화 기록.")}
           <div class="content-stack">
-            <section class="plan-panel fade-in-up">
-              <div class="plan-head">
+            <section class="body-setup-panel fade-in-up">
+              <div class="body-setup-head">
                 <div>
                   <h2>시작 설정</h2>
                   <p>기간을 고르고 첫 사진부터 남겨요.</p>
                 </div>
-                <div class="plan-mark"><i class="fa-solid fa-person"></i></div>
+                <div class="body-setup-mark"><i class="fa-solid fa-person"></i></div>
               </div>
-              <div class="period-grid">
+              <div class="body-period-grid">
                 ${periodOptions.map((option) => `
-                  <button class="period-card ${bodyState.selectedPeriod === option.days ? "is-selected" : ""}" type="button" data-period="${option.days}">
+                  <button class="body-period-card ${bodyState.selectedPeriod === option.days ? "is-selected" : ""}" type="button" data-period="${option.days}">
                     <strong>${option.title}</strong>
                     <span>${option.note}</span>
                   </button>
                 `).join("")}
               </div>
-              <div class="field-row">
-                <div class="field">
+              <div class="body-setup-fields">
+                <div class="body-setup-field">
                   <label for="start-date">시작일</label>
-                  <input class="text-input" id="start-date" type="date" value="${today}">
+                  <input class="body-setup-input" id="start-date" type="date" value="${today}">
                 </div>
-                <div class="field">
+                <div class="body-setup-field">
                   <label for="custom-days">직접</label>
-                  <input class="text-input" id="custom-days" type="number" min="1" max="365" inputmode="numeric" placeholder="일">
+                  <span class="body-days-wrap">
+                    <input class="body-days-input" id="custom-days" type="number" min="1" max="365" inputmode="numeric">
+                    <span>일</span>
+                  </span>
                 </div>
               </div>
-              <button class="pill-button blue" style="width:100%; margin-top:16px;" type="button" data-action="create-plan">바디 기록 시작</button>
+              <button class="pill-button blue body-setup-start" type="button" data-action="create-plan">바디 기록 시작</button>
             </section>
 
             <p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
@@ -2787,9 +3659,11 @@
         return `
           <button class="${classes}" type="button" data-view-day="${dayIndex}" aria-label="${dayIndex}일차 크게 보기">
             <span class="story-ring">
-              <span class="story-thumb">${photo ? `<img src="${makePhotoUrl(photo)}" alt="">` : dayIndex}</span>
+              <span class="story-thumb ${photo ? "has-image" : ""}">
+                ${photo ? `<img src="${makePhotoUrl(photo)}" alt="">` : ""}
+              </span>
             </span>
-            <span>D${dayIndex}</span>
+            <span class="story-label">${dayLabel(dayIndex)}</span>
           </button>
         `;
       }).join("");
@@ -2808,7 +3682,7 @@
 
         return `
           <button class="${classes}" type="button" data-view-day="${dayIndex}" aria-label="${dayIndex}일차 크게 보기">
-            <span class="body-tile-day">D${dayIndex}</span>
+            <span class="body-tile-day auto-contrast-label">${dayLabel(dayIndex)}</span>
             ${photo ? `<img src="${makePhotoUrl(photo)}" alt="${dayIndex}일차 바디 사진">` : `<span class="body-tile-empty"><span>${dayIndex}</span></span>`}
           </button>
         `;
@@ -2824,23 +3698,27 @@
 
       return `
         <div class="body-viewer" role="dialog" aria-modal="true" aria-label="${dayIndex}일차 사진 크게 보기">
-          <div class="body-viewer-head">
-            <div class="body-viewer-title">
-              <strong>D${dayIndex}</strong>
-              <span>${formatDate(date)} · ${photo ? "기록 완료" : "사진 없음"}</span>
+          <div class="body-viewer-shell">
+            <div class="body-viewer-head">
+              <div class="body-viewer-title">
+                <strong>${dayLabel(dayIndex)}</strong>
+                <span>${formatDate(date)} · ${photo ? "기록 완료" : "사진 없음"}</span>
+              </div>
+              <button class="viewer-close" type="button" data-view-close aria-label="닫기">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
             </div>
-            <button class="viewer-close" type="button" data-view-close aria-label="닫기">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-          <div class="body-viewer-stage">
-            <button class="viewer-nav prev" type="button" data-view-step="-1" aria-label="이전 사진">
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            ${photo ? `<img src="${makePhotoUrl(photo)}" alt="${dayIndex}일차 바디 사진">` : `<div class="viewer-empty"><i class="fa-solid fa-camera"></i><span>D${dayIndex} 사진이 아직 없어요</span></div>`}
-            <button class="viewer-nav next" type="button" data-view-step="1" aria-label="다음 사진">
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
+            <div class="body-viewer-stage">
+              <button class="viewer-nav prev" type="button" data-view-step="-1" aria-label="이전 사진">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <div class="body-viewer-frame">
+                ${photo ? `<img src="${makePhotoUrl(photo)}" alt="${dayIndex}일차 바디 사진">` : `<div class="viewer-empty"><i class="fa-solid fa-camera"></i><span>${dayLabel(dayIndex)} 사진이 아직 없어요</span></div>`}
+              </div>
+              <button class="viewer-nav next" type="button" data-view-step="1" aria-label="다음 사진">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
           </div>
         </div>
       `;
@@ -2881,7 +3759,7 @@
                 <p>처음과 마지막</p>
               </div>
             </div>
-            <div class="insight-row"><span>최종 비교</span><strong>D-${remaining}</strong></div>
+            <div class="insight-row"><span>최종 비교</span><strong>${remaining}일 남음</strong></div>
           </section>
         `;
       }
@@ -2920,7 +3798,7 @@
           <div class="compare-card">
             ${beforeAfter}
             <div class="compare-strip scrollbar-hide">
-              ${photos.map((photo) => renderCompareItem(photo, `${photo.dayIndex}일차`)).join("")}
+              ${photos.map((photo) => renderCompareItem(photo, dayLabel(photo.dayIndex))).join("")}
             </div>
           </div>
         </section>
@@ -2981,11 +3859,67 @@
         return;
       }
 
+      const workoutOption = event.target.closest("[data-workout-id]");
+      if (workoutOption) {
+        haptic();
+        workoutState.selectedWorkoutId = workoutOption.dataset.workoutId;
+        workoutState.modalMode = "record";
+        render();
+        return;
+      }
+
       const actionButton = event.target.closest("[data-action]");
       if (!actionButton) return;
 
       haptic();
       const action = actionButton.dataset.action;
+
+      if (action === "open-workout-picker") {
+        workoutState.modalMode = "pick";
+        workoutState.selectedWorkoutId = null;
+        render();
+        return;
+      }
+
+      if (action === "close-workout-modal") {
+        workoutState.modalMode = null;
+        workoutState.selectedWorkoutId = null;
+        render();
+        return;
+      }
+
+      if (action === "back-workout-picker") {
+        workoutState.modalMode = "pick";
+        workoutState.selectedWorkoutId = null;
+        render();
+        return;
+      }
+
+      if (action === "save-workout-entry") {
+        const workout = getWorkout(workoutState.selectedWorkoutId);
+        const values = {};
+        document.querySelectorAll("[data-workout-field]").forEach((field) => {
+          values[field.dataset.workoutField] = field.value.trim();
+        });
+        const hasValue = Object.values(values).some((value) => value);
+        if (!hasValue) {
+          showToast("기록할 값을 입력해 주세요.");
+          return;
+        }
+        workoutState.entries.unshift({
+          id: `workout-${Date.now()}`,
+          date: todayISO(),
+          workoutId: workout.id,
+          values,
+          createdAt: new Date().toISOString()
+        });
+        saveWorkoutEntries();
+        workoutState.modalMode = null;
+        workoutState.selectedWorkoutId = null;
+        render();
+        showToast(`${workout.name} 기록을 저장했어요.`);
+        return;
+      }
 
       if (action === "create-plan") {
         const startDate = document.querySelector("#start-date").value || todayISO();
@@ -3044,9 +3978,13 @@
 
     window.addEventListener("resize", () => {
       updateNav(getRoute());
+      schedulePhotoLabelContrast();
       requestAnimationFrame(updateNavContrast);
     });
-    window.addEventListener("orientationchange", () => requestAnimationFrame(updateNavContrast));
+    window.addEventListener("orientationchange", () => {
+      schedulePhotoLabelContrast();
+      requestAnimationFrame(updateNavContrast);
+    });
     window.addEventListener("load", () => requestAnimationFrame(updateNavContrast));
 
     loadPhotos()
