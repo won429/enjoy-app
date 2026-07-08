@@ -1523,6 +1523,103 @@
             background: rgba(255,255,255,.045);
             border: 1px solid rgba(255,255,255,.07);
         }
+        .ledger-ai-card {
+            position: relative;
+            margin-top: 12px;
+            padding: 1.5px;
+            border-radius: 26px;
+            overflow: hidden;
+            isolation: isolate;
+            box-shadow:
+                0 18px 34px rgba(129, 108, 255, .22),
+                0 10px 26px rgba(56, 189, 248, .16);
+        }
+        .ledger-ai-card::before {
+            content: "";
+            position: absolute;
+            inset: -45%;
+            z-index: 0;
+            background: conic-gradient(from 0deg, #7C3AED, #38BDF8, #34D399, #60A5FA, #A78BFA, #7C3AED);
+            animation: ledger-ai-border-spin 4.8s linear infinite;
+            will-change: transform;
+        }
+        .ledger-ai-card-inner {
+            position: relative;
+            z-index: 1;
+            border-radius: 24px;
+            background: #FFFFFF;
+            color: #0F1115;
+            padding: 20px 18px 18px;
+        }
+        .ledger-ai-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: #111318;
+            font-size: 15px;
+            font-weight: 950;
+            line-height: 1.2;
+        }
+        .ledger-ai-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            background: linear-gradient(135deg, #2563EB 0%, #38BDF8 45%, #22C55E 100%);
+            box-shadow: 0 8px 18px rgba(37, 99, 235, .24);
+            font-size: 12px;
+            transform: rotate(-8deg);
+        }
+        .ledger-ai-headline {
+            margin: 16px 0 18px;
+            color: #080A0F;
+            font-size: 24px;
+            font-weight: 950;
+            line-height: 1.28;
+            word-break: keep-all;
+        }
+        .ledger-ai-headline span { color: #3B6FF6; }
+        .ledger-ai-chip {
+            display: inline-block;
+            max-width: 100%;
+            margin-top: 10px;
+            padding: 12px 15px;
+            border-radius: 999px;
+            background: #F1F2F4;
+            color: #111318;
+            font-size: 14px;
+            font-weight: 850;
+            line-height: 1.35;
+            word-break: keep-all;
+        }
+        .ledger-ai-chip:first-child { margin-top: 0; }
+        .ledger-ai-chip b {
+            color: #080A0F;
+            font-weight: 950;
+        }
+        .ledger-ai-disclaimer {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 16px;
+            color: #777D86;
+            font-size: 11px;
+            font-weight: 750;
+            line-height: 1.35;
+        }
+        .ledger-ai-disclaimer i {
+            font-size: 14px;
+            color: #858B94;
+        }
+        @keyframes ledger-ai-border-spin {
+            to { transform: rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ledger-ai-card::before { animation: none; }
+        }
         .ledger-forecast-list {
             margin-top: 14px;
             border-top: 1px solid rgba(255,255,255,.09);
@@ -3758,8 +3855,7 @@
                         '<img src="' + vlogEsc(program.image) + '" class="absolute inset-0 w-full h-full object-contain" alt="' + vlogEsc(program.title) + '" onerror="this.style.display=\'none\'">' +
                     '</div>' +
                     '<div class="px-5 pt-5">' +
-                        '<p class="text-[10px] font-black tracking-[0.14em] text-[#3182F6]">' + vlogEsc(program.category) + '</p>' +
-                        '<h1 class="text-[27px] font-black text-white tracking-tight mt-1 leading-tight break-keep">' + vlogEsc(program.title) + '</h1>' +
+                        '<h1 class="text-[27px] font-black text-white tracking-tight leading-tight break-keep">' + vlogEsc(program.title) + '</h1>' +
                         '<p class="text-[12px] font-semibold text-gray-500 mt-2">엔조이 오리지널 · 에피소드 ' + episodes.length + '개</p>' +
                         '<p class="text-[13px] leading-relaxed text-gray-300 mt-6 break-keep">' + vlogEsc(program.description) + '</p>' +
                         '<p class="text-[11px] leading-relaxed text-gray-500 mt-4 break-keep"><strong class="text-gray-400">출연:</strong> ' + (program.cast || []).map(vlogEsc).join(', ') + '</p>' +
@@ -5291,12 +5387,65 @@
             };
 
             // 시간대별 인사 헤드라인
-            let greeting, sub;
-            if (hh >= 5 && hh < 12)       { greeting = '활기찬 오전이에요'; sub = '오늘 소식은 내가 먼저 알려줄게!'; }
-            else if (hh >= 12 && hh < 18) { greeting = '편안한 오후예요';   sub = '지금 알아둘 소식만 골라왔어.'; }
-            else if (hh >= 18 && hh < 23) { greeting = '나른한 저녁이에요'; sub = '오늘 남은 소식은 내가 정리해줄게.'; }
-            else                          { greeting = '고요한 밤이에요';   sub = '잠들기 전 소식만 살펴볼까?'; }
-            setTxt('assistant-greeting', greeting);
+            const rawProfileName = String(window.enjoyProfileName || ((window.enjoyUser && window.enjoyUser.displayName) || '') || '').trim();
+            const profileName = rawProfileName.replace(/\s*\(스페셜\)\s*$/, '');
+            const pickSeed = `${todayKey}-${hh}-${profileName || 'guest'}`;
+            const pick = (items, salt) => {
+                let hash = 0;
+                const source = `${pickSeed}-${salt}`;
+                for (let i = 0; i < source.length; i++) hash = ((hash * 31) + source.charCodeAt(i)) >>> 0;
+                return items[hash % items.length];
+            };
+            const greetings = {
+                morning: [
+                    '활기찬 오전이에요', '상쾌한 오전이에요', '좋은 아침이에요', '가볍게 시작하는 오전이에요',
+                    '오늘도 기분 좋은 출발이에요', '맑은 오전이에요', '천천히 몸을 깨우는 오전이에요',
+                    '새로운 하루가 열렸어요', '든든하게 시작해볼까요', '아침 공기가 좋은 날이에요'
+                ],
+                afternoon: [
+                    '편안한 오후예요', '차분한 오후예요', '여유로운 오후예요', '기분 좋은 오후예요',
+                    '잠깐 숨 고르는 오후예요', '햇살처럼 부드러운 오후예요', '나른하지만 괜찮은 오후예요',
+                    '작은 여유가 필요한 오후예요', '오늘도 잘 흘러가는 오후예요', '든든하게 이어가는 오후예요',
+                    '커피 한 모금 같은 오후예요', '조금만 더 힘내면 좋은 오후예요'
+                ],
+                evening: [
+                    '나른한 저녁이에요', '하루를 정리하는 저녁이에요', '편하게 내려놓는 저녁이에요',
+                    '오늘도 고생한 저녁이에요', '따뜻한 저녁이에요', '천천히 쉬어가는 저녁이에요',
+                    '남은 하루도 부드럽게 가볼까요', '가볍게 마무리하는 저녁이에요',
+                    '조용히 숨 돌리는 저녁이에요', '오늘의 끝자락에 왔어요'
+                ],
+                night: [
+                    '고요한 밤이에요', '차분히 쉬어갈 밤이에요', '잠들기 전 조용한 밤이에요',
+                    '오늘을 덮어두기 좋은 밤이에요', '늦은 시간도 함께할게요', '편히 쉬어도 좋은 밤이에요',
+                    '조용히 정리하는 밤이에요', '내일을 준비하는 밤이에요', '하루 끝의 작은 여유예요',
+                    '느긋하게 마무리할 시간이에요'
+                ]
+            };
+            const subs = {
+                morning: [
+                    '오늘 소식은 내가 먼저 알려줄게.', '필요한 것만 가볍게 챙겨볼게.', '오늘 일정부터 차근차근 볼게.',
+                    '시작 전에 알아두면 좋은 것만 모았어.', '아침 브리핑은 내가 맡을게.'
+                ],
+                afternoon: [
+                    '지금 알아둘 소식만 골라왔어.', '오후 흐름에 맞춰 필요한 것만 정리했어.', '잠깐 쉬면서 확인하기 좋게 모았어.',
+                    '오늘 남은 일정과 모임비를 같이 볼게.', '복잡한 건 내가 덜어내고 핵심만 보여줄게.', '오후 체크포인트를 준비했어.'
+                ],
+                evening: [
+                    '오늘 남은 소식은 내가 정리해줄게.', '하루 마무리 전에 필요한 것만 확인해보자.', '저녁에는 가볍게 핵심만 볼게.',
+                    '놓친 일정이 없는지 살펴볼게.', '오늘 기록을 차분히 훑어볼게.'
+                ],
+                night: [
+                    '잠들기 전 소식만 살펴볼까?', '늦은 밤에는 꼭 필요한 것만 볼게.', '내일을 위해 조용히 정리해둘게.',
+                    '오늘의 마지막 확인을 도와줄게.', '부담 없이 짧게 훑어보자.'
+                ]
+            };
+            let period = 'night';
+            if (hh >= 5 && hh < 12) period = 'morning';
+            else if (hh >= 12 && hh < 18) period = 'afternoon';
+            else if (hh >= 18 && hh < 23) period = 'evening';
+            const greeting = pick(greetings[period], 'greeting');
+            const sub = pick(subs[period], 'sub');
+            setTxt('assistant-greeting', (profileName ? `${profileName}님, ` : '') + greeting);
             setTxt('assistant-sub', sub);
             setTxt('assistant-date', `${m}월 ${d}일 ${dow}요일`);
 
@@ -5434,8 +5583,8 @@
             const meetingSelect = document.getElementById('ledger-meeting-select');
             const meetingPeriod = document.getElementById('ledger-meeting-period');
             if (!meetingWindows.some(item => item.key === window.selectedLedgerMeetingKey)) {
-                const current = meetingWindows.find(item => item.end >= today) || meetingWindows[meetingWindows.length - 1];
-                window.selectedLedgerMeetingKey = current ? current.key : '';
+                const latest = meetingWindows[meetingWindows.length - 1];
+                window.selectedLedgerMeetingKey = latest ? latest.key : '';
             }
             const targetMeeting = meetingWindows.find(item => item.key === window.selectedLedgerMeetingKey) || null;
             if (meetingSelect) {
@@ -5563,35 +5712,24 @@
             }
             const expectedFutureDues = averageMonthlyDues * expectedCollectionMonths;
             const expectedNextExpense = averageMeetingExpense || periodExpense;
-            const expenseBasis = pastMeetingExpenses.length
-                ? `완료된 모임 ${pastMeetingExpenses.length}회 평균`
-                : '현재 등록된 지출 참고';
 
-            const forecastHtml = `<section class="ledger-surface rounded-[22px] p-4 mt-3">
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                        <p class="text-[11px] font-bold text-gray-400">엔조이 비서실장의 다음 모임비 관련 예측</p>
-                        <h4 class="text-[17px] font-black text-white mt-1">${predictedMeetingLabel}</h4>
-                        <p class="text-[10px] text-gray-500 mt-1">과거 일정 간격 ${scheduleGaps.length || 1}건 · 보통 약 ${Math.round(typicalGapDays / 30)}개월 간격</p>
+            const forecastHtml = `<section class="ledger-ai-card" aria-label="다음 모임비 예측">
+                <div class="ledger-ai-card-inner">
+                    <div class="ledger-ai-brand">
+                        <span class="ledger-ai-logo"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                        <span>AI 모임비 에이전트</span>
                     </div>
+                    <h4 class="ledger-ai-headline"><span>다음 모임비</span>를 미리 계산해드릴까요?</h4>
+                    <div>
+                        <p class="ledger-ai-chip">다음 모임은 <b>${predictedMeetingLabel}</b> 같아요</p>
+                        <p class="ledger-ai-chip">그때까지 회비는 <b>약 ${expectedFutureDues.toLocaleString()}원</b> 모일 수 있어요</p>
+                        <p class="ledger-ai-chip">다음 모임 지출은 <b>약 ${expectedNextExpense.toLocaleString()}원</b> 정도로 잡아볼게요</p>
+                    </div>
+                    <p class="ledger-ai-disclaimer">
+                        <span>AI가 생성한 예측은 정확하지 않을 수 있어요.</span>
+                        <i class="fa-regular fa-circle-question"></i>
+                    </p>
                 </div>
-                <div class="ledger-forecast-list">
-                    <div class="ledger-forecast-row">
-                        <div class="min-w-0">
-                            <p class="ledger-forecast-label">그때까지 모일 회비</p>
-                            <span class="ledger-forecast-note">월평균 ${averageMonthlyDues.toLocaleString()}원 × ${expectedCollectionMonths}개월</span>
-                        </div>
-                        <strong class="ledger-forecast-value">약 ${expectedFutureDues.toLocaleString()}원</strong>
-                    </div>
-                    <div class="ledger-forecast-row">
-                        <div class="min-w-0">
-                            <p class="ledger-forecast-label">다음 모임 예상 지출</p>
-                            <span class="ledger-forecast-note">${expenseBasis}</span>
-                        </div>
-                        <strong class="ledger-forecast-value">약 ${expectedNextExpense.toLocaleString()}원</strong>
-                    </div>
-                </div>
-                <p class="text-[9.5px] text-gray-600 mt-3 leading-relaxed">일정과 실제 납부 상황에 따라 달라질 수 있는 참고 예상치예요.</p>
             </section>`;
 
             insights.innerHTML = `
@@ -8200,6 +8338,7 @@
                     startMemberSync();     // 멤버 동기화 시작
                     updateProfileCard();
                     renderMembers();
+                    try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
                 } catch (e) { if (st) st.textContent = '저장에 실패했어요. 다시 시도해 주세요.'; }
                 return;
             }
@@ -8212,6 +8351,7 @@
             window.enjoyEnterLocalMode && window.enjoyEnterLocalMode();
             updateProfileCard();
             renderMembers();
+            try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
         };
 
         /* ----- 더보기: 내 프로필 카드 (원형 사진/단색, 글자 없음) ----- */
@@ -8352,6 +8492,7 @@
                 startMemberSync();
                 updateProfileCard();
                 renderMembers();
+                try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
                 return;
             }
             // 멤버가 아니면 로컬(스페셜) 모드 — 본인 기기에만 저장
@@ -8360,6 +8501,7 @@
             window.enjoyEnterLocalMode && window.enjoyEnterLocalMode();
             updateProfileCard();
             renderMembers();
+            try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
             if (!localName) openProfileModal(false);   // 이름 없으면 필수 입력 ('(스페셜)' 자동 부착)
         }
         window.enjoyOnLogin = start;
