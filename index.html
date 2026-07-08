@@ -254,6 +254,73 @@
             border: 3px solid rgba(0,0,0,0.15); box-shadow: 0 2px 6px rgba(0,0,0,0.4); cursor: pointer; }
         .story-zoom-chip { background: rgba(0,0,0,0.45); color: #fff; }
         .story-zoom-chip.on { background: #fff; color: #141414; }
+        .story-camera-focus-ring {
+            position: absolute;
+            z-index: 18;
+            width: 78px;
+            height: 78px;
+            border: 2px solid rgba(255, 214, 10, .95);
+            border-radius: 999px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,.22), 0 0 24px rgba(255,214,10,.28);
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.24);
+            transition: opacity .16s ease, transform .2s cubic-bezier(.22,1,.36,1);
+        }
+        .story-camera-focus-ring.is-on {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .story-camera-zoom-dial {
+            position: absolute;
+            left: 50%;
+            bottom: max(132px, calc(env(safe-area-inset-bottom) + 116px));
+            z-index: 19;
+            width: min(72vw, 258px);
+            height: 58px;
+            transform: translateX(-50%);
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .story-camera-zoom-window {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.13);
+            border-radius: 999px;
+            background: rgba(0,0,0,.34);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 26px rgba(0,0,0,.22);
+            -webkit-backdrop-filter: blur(18px) saturate(1.35);
+            backdrop-filter: blur(18px) saturate(1.35);
+        }
+        #story-dial-track {
+            position: absolute;
+            left: 50%;
+            top: 9px;
+            width: 190px;
+            height: 40px;
+            will-change: transform;
+        }
+        .story-camera-zoom-value {
+            position: absolute;
+            left: 50%;
+            bottom: 8px;
+            transform: translateX(-50%);
+            min-width: 38px;
+            height: 23px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            color: #111;
+            background: rgba(255,214,10,.96);
+            font-size: 12px;
+            font-weight: 900;
+            line-height: 1;
+            box-shadow: 0 3px 10px rgba(0,0,0,.28);
+            pointer-events: none;
+        }
 
         /* 엔조이 스토리: 인스타그램형 원형 트레이 */
         .story-strip { margin: 0 -20px; overflow: hidden; }
@@ -3567,6 +3634,7 @@
     <div id="story-camera" class="hidden fixed inset-0 z-[150] bg-black flex-col">
         <video id="story-cam-video" autoplay playsinline muted class="story-camera-media"></video>
         <canvas id="story-cam-canvas" class="hidden"></canvas>
+        <div id="story-camera-focus-ring" class="story-camera-focus-ring" aria-hidden="true"></div>
         <div class="story-top-scrim"></div>
         <div class="story-bottom-scrim"></div>
 
@@ -3575,6 +3643,13 @@
                 <i class="fa-solid fa-xmark text-[28px]"></i>
             </button>
             <span aria-hidden="true"></span>
+        </div>
+
+        <div id="story-dial" class="story-camera-zoom-dial" aria-label="카메라 줌">
+            <div class="story-camera-zoom-window">
+                <div id="story-dial-track"></div>
+            </div>
+            <div id="story-zoom-label" class="story-camera-zoom-value">1x</div>
         </div>
 
         <!-- 하단에는 갤러리 · 촬영 · 카메라 전환만 표시 -->
@@ -4090,15 +4165,16 @@
     (function () {
         const STORY_TTL   = 24 * 60 * 60 * 1000; // 24시간
         const VIDEO_MAX_MS = 5000;               // 영상 최대 5초
-        const PHOTO_MAX    = 1080;               // 사진 최대 변(일반화질)
-        const PHOTO_Q      = 0.7;                // 사진 압축 품질
+        const PHOTO_MAX    = 2160;               // 사진 최대 변(확대/크롭 후에도 선명도 보존)
+        const PHOTO_Q      = 0.9;                // 사진 압축 품질
         const DB_NAME = 'enjoyStoryDB', STORE = 'stories';
 
         let stories = [];                  // createdAt 오름차순(과거→최신)
         let pending = null;                // { type, blob, thumb, text }
-        let camStream = null, facing = 'environment';
+        let camStream = null, facing = 'environment', cameraDevices = [];
         let mediaRec = null, recChunks = [], recording = false, recTimer = null, holdTimer = null, didRecord = false;
-        let camZoom = 1; const ZOOM_MIN = 1, MAX_ZOOM = 4;   // 다이얼 1x~4x (기본 1x = 네이티브 화각)
+        let camZoom = 1, nativeZoomCap = null, nativeZoomValue = 1, zoomApplyTimer = null, takingPhoto = false;
+        const ZOOM_MIN = 1, MAX_ZOOM = 4;        // 다이얼 1x~4x, native zoom 지원 시 우선 사용
         const DIAL_PX = 92;                              // 줌 다이얼 log2 1단위당 픽셀
         let recCanvas = null, recRAF = 0, recThumbSrc = null; // 디지털 줌 영상 녹화 파이프라인
         let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
@@ -4260,38 +4336,157 @@
         }
 
         /* ---------- 카메라 ---------- */
+        function getVideoTrack() {
+            return camStream && camStream.getVideoTracks ? camStream.getVideoTracks()[0] : null;
+        }
+        function supportedMode(caps, key, value) {
+            return caps && Array.isArray(caps[key]) && caps[key].indexOf(value) >= 0;
+        }
+        function pushModeConstraint(advanced, caps, key, value) {
+            if (supportedMode(caps, key, value)) {
+                const item = {}; item[key] = value; advanced.push(item);
+            }
+        }
+        async function refreshCameraDevices() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return cameraDevices;
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                cameraDevices = devices.filter(d => d.kind === 'videoinput');
+            } catch (e) {}
+            return cameraDevices;
+        }
+        function cameraLabelScore(device) {
+            const label = ((device && device.label) || '').toLowerCase();
+            let score = 0;
+            const rear = /(back|rear|environment|후면|뒷|뒤|외부)/.test(label);
+            const front = /(front|user|face|전면|앞)/.test(label);
+            if (facing === 'user') {
+                if (front) score += 90;
+                if (rear) score -= 70;
+            } else {
+                if (rear) score += 90;
+                if (front) score -= 70;
+                if (/(wide|광각)/.test(label)) score += 8;
+                if (/(ultra|초광각|0\.5)/.test(label)) score -= 10;
+                if (/(tele|망원|2x|3x)/.test(label)) score -= 14;
+            }
+            return score;
+        }
+        function preferredCameraDeviceId() {
+            if (!cameraDevices.length) return '';
+            const ranked = cameraDevices.slice().sort((a, b) => cameraLabelScore(b) - cameraLabelScore(a));
+            return cameraLabelScore(ranked[0]) > 0 ? ranked[0].deviceId : '';
+        }
+        function buildVideoConstraints(deviceId, highQuality) {
+            const video = {
+                facingMode: { exact: facing },
+                width: { ideal: highQuality ? 3840 : 1920 },
+                height: { ideal: highQuality ? 2160 : 1080 },
+                frameRate: { ideal: 30, max: 60 },
+                resizeMode: 'none'
+            };
+            if (deviceId) {
+                delete video.facingMode;
+                video.deviceId = { exact: deviceId };
+            }
+            return video;
+        }
+        function cameraConstraintAttempts() {
+            const preferred = preferredCameraDeviceId();
+            const attempts = [];
+            const push = (item) => {
+                const key = JSON.stringify(item);
+                if (!attempts.some(v => JSON.stringify(v) === key)) attempts.push(item);
+            };
+            if (preferred) push({ audio: true, video: buildVideoConstraints(preferred, true) });
+            push({ audio: true, video: buildVideoConstraints('', true) });
+            if (preferred) push({ audio: true, video: buildVideoConstraints(preferred, false) });
+            push({ audio: true, video: buildVideoConstraints('', false) });
+            push({ audio: true, video: { facingMode: facing } });
+            push({ audio: true, video: true });
+            if (preferred) push({ audio: false, video: buildVideoConstraints(preferred, true) });
+            push({ audio: false, video: buildVideoConstraints('', true) });
+            push({ audio: false, video: true });
+            return attempts;
+        }
+        async function applyCameraTrackEnhancements() {
+            const track = getVideoTrack();
+            nativeZoomCap = null;
+            nativeZoomValue = 1;
+            if (!track) return;
+            let caps = {};
+            try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
+            if (caps.zoom && typeof caps.zoom.min === 'number' && typeof caps.zoom.max === 'number' && caps.zoom.max > caps.zoom.min) {
+                nativeZoomCap = {
+                    min: Math.max(ZOOM_MIN, caps.zoom.min || ZOOM_MIN),
+                    max: Math.max(ZOOM_MIN, Math.min(MAX_ZOOM, caps.zoom.max || MAX_ZOOM)),
+                    step: caps.zoom.step || 0.1
+                };
+            }
+            const advanced = [];
+            pushModeConstraint(advanced, caps, 'focusMode', 'continuous');
+            pushModeConstraint(advanced, caps, 'exposureMode', 'continuous');
+            pushModeConstraint(advanced, caps, 'whiteBalanceMode', 'continuous');
+            if (advanced.length && track.applyConstraints) {
+                try { await track.applyConstraints({ advanced }); } catch (e) {}
+            }
+        }
         async function startCamera() {
             stopStream();
-            const v = { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } };
+            await refreshCameraDevices();
             const gum = (c) => navigator.mediaDevices.getUserMedia(c);
-            // 영상 녹화에 소리가 함께 담기도록 가능한 한 오디오(마이크)를 유지한다.
-            try { camStream = await gum({ audio: true, video: v }); }                       // 영상 + 소리(기본)
-            catch (e) {
-                try { camStream = await gum({ audio: true, video: { facingMode: facing } }); } // 해상도 제약 완화(소리 유지)
-                catch (e2) {
-                    try { camStream = await gum({ audio: true, video: true }); }              // 아무 카메라나(소리 유지)
-                    catch (e3) {
-                        try { camStream = await gum({ audio: false, video: v }); }            // 최후: 소리 없이 영상만
-                        catch (e4) { try { camStream = await gum({ audio: false, video: true }); } catch (e5) { return false; } }
-                    }
-                }
+            camStream = null;
+            for (const constraints of cameraConstraintAttempts()) {
+                try { camStream = await gum(constraints); break; } catch (e) {}
             }
+            if (!camStream) return false;
             const vid = $('story-cam-video');
             vid.srcObject = camStream;
             try { await vid.play(); } catch (e) {}
+            await refreshCameraDevices();
+            await applyCameraTrackEnhancements();
             setZoom(1); // 줌 초기화 + 미러 반영
+            await applyNativeZoomNow();
             return true;
         }
         /* ---------- 카메라 줌 (다이얼 + 핀치) ----------
-           기기의 기본(네이티브) 화각을 1x로 둔다. 그 위로 디지털 크롭하여 2x/4x를 만든다.
-           cssScale = camZoom (1→크롭 없음, 2→2배 크롭, 4→4배 크롭) */
-        function camScale() { return camZoom; }   // 실제 디지털 확대율(1~4)
+           지원 기기에서는 MediaTrack native zoom을 먼저 쓰고, 남는 배율만 디지털 크롭한다. */
+        function nativeZoomTarget(z) {
+            if (!nativeZoomCap) return 1;
+            return Math.max(nativeZoomCap.min, Math.min(nativeZoomCap.max, z || ZOOM_MIN));
+        }
+        function camScale() {
+            const nativePart = nativeZoomTarget(camZoom);
+            return Math.max(1, (camZoom || ZOOM_MIN) / nativePart);
+        }
+        function applyNativeZoomNow() {
+            const track = getVideoTrack();
+            if (!nativeZoomCap || !track || !track.applyConstraints) return Promise.resolve();
+            const next = nativeZoomTarget(camZoom);
+            nativeZoomValue = next;
+            return track.applyConstraints({ advanced: [{ zoom: next }] }).catch(() =>
+                track.applyConstraints({ zoom: next })
+            ).catch(() => {
+                nativeZoomCap = null;
+                nativeZoomValue = 1;
+                applyPreviewZoom();
+            });
+        }
+        function scheduleNativeZoom() {
+            if (!nativeZoomCap) return;
+            if (zoomApplyTimer) clearTimeout(zoomApplyTimer);
+            zoomApplyTimer = setTimeout(() => {
+                zoomApplyTimer = null;
+                applyNativeZoomNow();
+            }, 35);
+        }
         function applyPreviewZoom() {
             const vid = $('story-cam-video'); if (!vid) return;
             vid.style.transform = ((facing === 'user') ? 'scaleX(-1) ' : '') + 'scale(' + camScale() + ')';
         }
         function setZoom(z) {
             camZoom = Math.max(ZOOM_MIN, Math.min(MAX_ZOOM, z || ZOOM_MIN));
+            scheduleNativeZoom();
             applyPreviewZoom();
             updateZoomUI();
         }
@@ -4357,11 +4552,67 @@
             const boxA = boxW / boxH, vidA = vw / vh;
             let cw, ch;
             if (vidA > boxA) { ch = vh; cw = vh * boxA; } else { cw = vw; ch = vw / boxA; }
+            z = Math.max(1, z || 1);
             cw /= z; ch /= z;
             return { sx: (vw - cw) / 2, sy: (vh - ch) / 2, sw: cw, sh: ch };
         }
+        let focusRingTimer = null, focusRestoreTimer = null;
+        function showFocusRing(clientX, clientY) {
+            const ring = $('story-camera-focus-ring');
+            if (!ring) return;
+            ring.style.left = clientX + 'px';
+            ring.style.top = clientY + 'px';
+            ring.classList.add('is-on');
+            clearTimeout(focusRingTimer);
+            focusRingTimer = setTimeout(() => ring.classList.remove('is-on'), 760);
+        }
+        async function restoreContinuousFocus() {
+            const track = getVideoTrack();
+            if (!track || !track.applyConstraints) return;
+            let caps = {};
+            try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
+            const advanced = [];
+            pushModeConstraint(advanced, caps, 'focusMode', 'continuous');
+            pushModeConstraint(advanced, caps, 'exposureMode', 'continuous');
+            pushModeConstraint(advanced, caps, 'whiteBalanceMode', 'continuous');
+            if (advanced.length) {
+                try { await track.applyConstraints({ advanced }); } catch (e) {}
+            }
+        }
+        async function focusCameraAt(clientX, clientY) {
+            const vid = $('story-cam-video'), track = getVideoTrack();
+            if (!vid) return;
+            showFocusRing(clientX, clientY);
+            if (!track || !track.applyConstraints) return;
+            const rect = vid.getBoundingClientRect();
+            const x = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width)));
+            const y = Math.max(0, Math.min(1, (clientY - rect.top) / Math.max(1, rect.height)));
+            let caps = {};
+            try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
+            const focusMode = supportedMode(caps, 'focusMode', 'single-shot') ? 'single-shot'
+                : (supportedMode(caps, 'focusMode', 'continuous') ? 'continuous' : '');
+            const base = {};
+            if (focusMode) base.focusMode = focusMode;
+            if (supportedMode(caps, 'exposureMode', 'continuous')) base.exposureMode = 'continuous';
+            if (supportedMode(caps, 'whiteBalanceMode', 'continuous')) base.whiteBalanceMode = 'continuous';
+            let applied = false;
+            try {
+                const withPoint = Object.assign({}, base, { pointsOfInterest: [{ x, y }] });
+                await track.applyConstraints({ advanced: [withPoint] });
+                applied = true;
+            } catch (e) {}
+            if (!applied && Object.keys(base).length) {
+                try { await track.applyConstraints({ advanced: [base] }); } catch (e) {}
+            }
+            clearTimeout(focusRestoreTimer);
+            focusRestoreTimer = setTimeout(restoreContinuousFocus, 1200);
+        }
         function stopStream() {
+            if (zoomApplyTimer) { clearTimeout(zoomApplyTimer); zoomApplyTimer = null; }
+            clearTimeout(focusRestoreTimer);
             if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+            nativeZoomCap = null;
+            nativeZoomValue = 1;
         }
         async function openCamera() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -4382,20 +4633,92 @@
             await startCamera();
         }
 
-        function takePhoto() {
+        function waitMs(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+        function waitNextVideoFrame() {
+            const v = $('story-cam-video');
+            if (v && v.requestVideoFrameCallback) return new Promise(resolve => v.requestVideoFrameCallback(() => resolve()));
+            return waitMs(80);
+        }
+        async function prepareStillCapture() {
+            await applyNativeZoomNow();
+            const track = getVideoTrack();
+            if (track && track.applyConstraints) {
+                let caps = {};
+                try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
+                const advanced = [];
+                pushModeConstraint(advanced, caps, 'focusMode', 'single-shot');
+                pushModeConstraint(advanced, caps, 'exposureMode', 'continuous');
+                pushModeConstraint(advanced, caps, 'whiteBalanceMode', 'continuous');
+                if (advanced.length) {
+                    try { await track.applyConstraints({ advanced }); } catch (e) {}
+                    await waitMs(90);
+                }
+            }
+            await waitNextVideoFrame();
+        }
+        function renderStoryPhotoFromSource(src, sw0, sh0) {
+            return new Promise((resolve) => {
+                const sw0n = sw0 || src.videoWidth || src.naturalWidth || src.width;
+                const sh0n = sh0 || src.videoHeight || src.naturalHeight || src.height;
+                if (!sw0n || !sh0n) { resolve(null); return; }
+                const { sx, sy, sw, sh } = coverCrop(sw0n, sh0n, camScale()); // 미리보기와 동일한 프레이밍으로 촬영
+                const scale = Math.min(1, PHOTO_MAX / Math.max(sw, sh));
+                const cw = Math.round(sw * scale), ch = Math.round(sh * scale);
+                const c = $('story-cam-canvas'); c.width = cw; c.height = ch;
+                const ctx = c.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                if (facing === 'user') { ctx.translate(cw, 0); ctx.scale(-1, 1); } // 셀카 좌우반전 보정
+                ctx.drawImage(src, sx, sy, sw, sh, 0, 0, cw, ch);
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                const thumb = makeThumb(c, cw, ch);
+                c.toBlob((b) => resolve(b ? { blob: b, thumb } : null), 'image/jpeg', PHOTO_Q);
+            });
+        }
+        function loadImageElement(blob) {
+            return new Promise((resolve) => {
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+                img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+                img.src = url;
+            });
+        }
+        async function captureImageCapturePhoto() {
+            const track = getVideoTrack();
+            if (!window.ImageCapture || !track) return null;
+            try {
+                const capture = new ImageCapture(track);
+                const blob = await capture.takePhoto();
+                if (!blob || !blob.size) return null;
+                const img = await loadImageElement(blob);
+                if (!img) return null;
+                return await renderStoryPhotoFromSource(img, img.naturalWidth, img.naturalHeight);
+            } catch (e) {
+                return null;
+            }
+        }
+        async function captureVideoFramePhoto() {
             const v = $('story-cam-video');
             const vw = v.videoWidth, vh = v.videoHeight;
-            if (!vw) return;
-            const { sx, sy, sw, sh } = coverCrop(vw, vh, camScale()); // 미리보기와 동일한 프레이밍으로 촬영
-            const scale = Math.min(1, PHOTO_MAX / Math.max(sw, sh));
-            const cw = Math.round(sw * scale), ch = Math.round(sh * scale);
-            const c = $('story-cam-canvas'); c.width = cw; c.height = ch;
-            const ctx = c.getContext('2d');
-            if (facing === 'user') { ctx.translate(cw, 0); ctx.scale(-1, 1); } // 셀카 좌우반전 보정
-            ctx.drawImage(v, sx, sy, sw, sh, 0, 0, cw, ch);
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            const thumb = makeThumb(c, cw, ch);
-            c.toBlob((b) => { if (!b) return; pending = { type: 'image', blob: b, thumb }; showPreview(); }, 'image/jpeg', PHOTO_Q);
+            if (!vw) return null;
+            return renderStoryPhotoFromSource(v, vw, vh);
+        }
+        async function takePhoto() {
+            if (takingPhoto) return;
+            const v = $('story-cam-video');
+            if (!v || !v.videoWidth) return;
+            takingPhoto = true;
+            try {
+                await prepareStillCapture();
+                const result = await captureImageCapturePhoto() || await captureVideoFramePhoto();
+                if (!result || !result.blob) return;
+                pending = { type: 'image', blob: result.blob, thumb: result.thumb };
+                showPreview();
+            } finally {
+                takingPhoto = false;
+                restoreContinuousFocus();
+            }
         }
 
         function pickMime() {
@@ -4430,7 +4753,7 @@
                 } catch (e) { recCanvas = null; recStream = camStream; recThumbSrc = v; } // captureStream 미지원(예: 일부 iOS) → 직접 녹화
             }
             const mime = pickMime();
-            try { mediaRec = new MediaRecorder(recStream, mime ? { mimeType: mime, videoBitsPerSecond: 2000000 } : undefined); }
+            try { mediaRec = new MediaRecorder(recStream, mime ? { mimeType: mime, videoBitsPerSecond: 5000000 } : undefined); }
             catch (e) { try { mediaRec = new MediaRecorder(recStream); } catch (e2) { recStartFailed(); return false; } }
             mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
             mediaRec.onstop = () => {
@@ -4546,7 +4869,7 @@
                     try {
                         const stream = c.captureStream(30);
                         const mime = pickMime();
-                        rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2000000 } : undefined);
+                        rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 5000000 } : undefined);
                     } catch (e) {
                         // 재인코딩 불가 → 원본 그대로 저장
                         URL.revokeObjectURL(url);
@@ -4978,9 +5301,10 @@
             const area = $('story-cam-video');
             if (!area || area.dataset.zwired) return; area.dataset.zwired = '1';
             let pinching = false, startDist = 0, startZoom = 1;
+            let tapStart = null;
             const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
             area.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) { pinching = true; startDist = dist(e.touches); startZoom = camZoom; e.preventDefault(); }
+                if (e.touches.length === 2) { tapStart = null; pinching = true; startDist = dist(e.touches); startZoom = camZoom; e.preventDefault(); }
             }, { passive: false });
             area.addEventListener('touchmove', (e) => {
                 if (pinching && e.touches.length === 2) { setZoom(startZoom * dist(e.touches) / startDist); e.preventDefault(); }
@@ -4988,6 +5312,17 @@
             const end = (e) => { if (pinching && e.touches.length < 2) pinching = false; };
             area.addEventListener('touchend', end);
             area.addEventListener('touchcancel', end);
+            area.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                tapStart = { x: e.clientX, y: e.clientY, t: Date.now() };
+            });
+            area.addEventListener('pointerup', (e) => {
+                if (!tapStart || pinching) { tapStart = null; return; }
+                const moved = Math.hypot(e.clientX - tapStart.x, e.clientY - tapStart.y);
+                if (moved < 12 && Date.now() - tapStart.t < 420) focusCameraAt(e.clientX, e.clientY);
+                tapStart = null;
+            });
+            area.addEventListener('pointercancel', () => { tapStart = null; });
         }
 
         /* ---------- 핀치 확대/축소 (두 손가락 줌 + 한 손가락 이동) ---------- */
