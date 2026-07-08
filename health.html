@@ -2534,6 +2534,11 @@
       -webkit-backdrop-filter: blur(2px);
       backdrop-filter: blur(2px);
       transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      will-change: transform, width;
+    }
+
+    #bottom-nav.nav-tracking .nav-indicator {
+      transition: none;
     }
 
     .nav-item {
@@ -3412,27 +3417,46 @@
         else item.removeAttribute("aria-current");
       });
 
-      requestAnimationFrame(() => {
-        const active = document.querySelector(`[data-route="${route}"]`);
-        const indicator = document.querySelector(".nav-indicator");
-        const inner = document.querySelector(".bottom-nav-inner");
-        if (!active || !indicator || !inner) return;
-        const activeRect = active.getBoundingClientRect();
-        const innerRect = inner.getBoundingClientRect();
-        indicator.style.width = `${Math.round(activeRect.width)}px`;
-        indicator.style.transform = `translateX(${Math.round(activeRect.left - innerRect.left - 6)}px)`;
-      });
+      requestAnimationFrame(() => positionNavIndicator(route));
     }
 
     let healthNavCompact = false;
+    let navTrackFrame = null;
+    function positionNavIndicator(route) {
+      const active = document.querySelector(`[data-route="${route}"]`);
+      const indicator = document.querySelector(".nav-indicator");
+      const inner = document.querySelector(".bottom-nav-inner");
+      if (!active || !indicator || !inner) return;
+      const activeRect = active.getBoundingClientRect();
+      const innerRect = inner.getBoundingClientRect();
+      indicator.style.width = `${Math.round(activeRect.width)}px`;
+      indicator.style.transform = `translateX(${Math.round(activeRect.left - innerRect.left - 6)}px)`;
+    }
+    function trackNavIndicator(duration) {
+      const nav = document.querySelector("#bottom-nav");
+      if (!nav) return;
+      if (navTrackFrame) cancelAnimationFrame(navTrackFrame);
+      nav.classList.add("nav-tracking");
+      const start = performance.now();
+      const tick = (now) => {
+        positionNavIndicator(getRoute());
+        if (now - start < duration) {
+          navTrackFrame = requestAnimationFrame(tick);
+          return;
+        }
+        navTrackFrame = null;
+        nav.classList.remove("nav-tracking");
+        requestAnimationFrame(() => positionNavIndicator(getRoute()));
+      };
+      navTrackFrame = requestAnimationFrame(tick);
+    }
     function setHealthNavCompact(compact) {
       if (compact === healthNavCompact) return;
       healthNavCompact = compact;
       const nav = document.querySelector("#bottom-nav");
       if (!nav) return;
       nav.classList.toggle("nav-compact", compact);
-      requestAnimationFrame(() => updateNav(getRoute()));
-      window.setTimeout(() => updateNav(getRoute()), 430);
+      trackNavIndicator(520);
     }
 
     function parseRgb(value) {
