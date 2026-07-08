@@ -33,6 +33,76 @@
             overscroll-behavior-y: none;
             touch-action: pan-y;
         }
+        html {
+            width: 100%;
+            min-height: 100%;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+            letter-spacing: 0 !important;
+        }
+        img, video, canvas, svg {
+            max-width: 100%;
+        }
+        button, input, select, textarea {
+            min-width: 0;
+            max-width: 100%;
+            font: inherit;
+        }
+        .app-frame,
+        #home-screen,
+        #schedule-screen,
+        #meeting-screen,
+        #community-write-screen,
+        #community-detail-screen,
+        #vlog-detail-screen {
+            width: min(100%, 448px);
+        }
+        #home-screen,
+        #schedule-screen,
+        #meeting-screen {
+            min-height: 100dvh;
+        }
+        #bottom-nav > .liquid-glass,
+        #schedule-subnav {
+            max-width: calc(100vw - 20px);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        @media (max-width: 380px) {
+            #home-screen,
+            #sched-panel-calendar,
+            #sched-panel-availability,
+            #sched-panel-community,
+            #meeting-screen > div {
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+            #bottom-nav button {
+                width: 58px !important;
+            }
+            #bottom-nav.nav-compact button {
+                width: 42px !important;
+            }
+            .home-upcoming-cards > div,
+            #home-screen [data-home-card] {
+                height: clamp(176px, 52vw, 210px) !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .app-frame,
+            #home-screen,
+            #schedule-screen,
+            #meeting-screen,
+            #community-write-screen,
+            #community-detail-screen,
+            #vlog-detail-screen {
+                width: min(100%, 480px);
+                max-width: 480px;
+            }
+        }
 
         /* 유리 재질 공통 클래스 (다크 테마) */
         .toss-card {
@@ -197,267 +267,10 @@
             0%   { opacity: 0; transform: translateY(10px) scale(0.92); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes story-activity-bg-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes story-activity-bg-out {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        @keyframes story-activity-hero-in {
-            0% { opacity: 0; transform: translateY(-14px) scale(.9); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes story-activity-panel-in {
-            0% { transform: translateY(102%); }
-            70% { transform: translateY(-8px); }
-            100% { transform: translateY(0); }
-        }
-        @keyframes story-activity-panel-out {
-            from { transform: translateY(0); }
-            to { transform: translateY(102%); }
-        }
-        @keyframes story-activity-content-in {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* 엔조이 스토리: 길게 누를 때 복사/선택 커서·콜아웃 방지 */
-        #story-camera, #story-camera *,
-        #story-preview, #story-preview *,
-        #story-viewer, #story-viewer * {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-user-drag: none;
-        }
-        #story-shutter { -webkit-tap-highlight-color: transparent; }
-        #story-cam-video, #story-preview-img, #story-preview-video,
-        #story-viewer-img, #story-viewer-video { -webkit-user-drag: none; }
-
-        /* 핀치 제스처가 브라우저 기본 동작에 막히지 않고 JS로 전달되도록 */
-        #story-viewer, #story-viewer *, #story-preview, #story-preview * { touch-action: none; }
-        #story-cam-video { touch-action: none; }
-
-        /* 카메라 줌 다이얼(슬라이더) — 아이폰 카메라 느낌 */
-        .story-zoom-range { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px;
-            background: rgba(255,255,255,0.35); outline: none; }
-        .story-zoom-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 26px; height: 26px;
-            border-radius: 9999px; background: #fff; border: 3px solid rgba(0,0,0,0.15);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4); cursor: pointer; }
-        .story-zoom-range::-moz-range-thumb { width: 26px; height: 26px; border-radius: 9999px; background: #fff;
-            border: 3px solid rgba(0,0,0,0.15); box-shadow: 0 2px 6px rgba(0,0,0,0.4); cursor: pointer; }
-        .story-zoom-chip { background: rgba(0,0,0,0.45); color: #fff; }
-        .story-zoom-chip.on { background: #fff; color: #141414; }
-        .story-camera-focus-ring {
-            position: absolute;
-            z-index: 18;
-            width: 78px;
-            height: 78px;
-            border: 2px solid rgba(255, 214, 10, .95);
-            border-radius: 999px;
-            box-shadow: 0 0 0 1px rgba(0,0,0,.22), 0 0 24px rgba(255,214,10,.28);
-            pointer-events: none;
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(1.24);
-            transition: opacity .16s ease, transform .2s cubic-bezier(.22,1,.36,1);
-        }
-        .story-camera-focus-ring.is-on {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-        .story-camera-zoom-dial {
-            position: absolute;
-            left: 50%;
-            bottom: max(132px, calc(env(safe-area-inset-bottom) + 116px));
-            z-index: 19;
-            width: min(72vw, 258px);
-            height: 58px;
-            transform: translateX(-50%);
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .story-camera-zoom-window {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,.13);
-            border-radius: 999px;
-            background: rgba(0,0,0,.34);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 26px rgba(0,0,0,.22);
-            -webkit-backdrop-filter: blur(18px) saturate(1.35);
-            backdrop-filter: blur(18px) saturate(1.35);
-        }
-        #story-dial-track {
-            position: absolute;
-            left: 50%;
-            top: 9px;
-            width: 190px;
-            height: 40px;
-            will-change: transform;
-        }
-        .story-camera-zoom-value {
-            position: absolute;
-            left: 50%;
-            bottom: 8px;
-            transform: translateX(-50%);
-            min-width: 38px;
-            height: 23px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 999px;
-            color: #111;
-            background: rgba(255,214,10,.96);
-            font-size: 12px;
-            font-weight: 900;
-            line-height: 1;
-            box-shadow: 0 3px 10px rgba(0,0,0,.28);
-            pointer-events: none;
-        }
-
-        /* 엔조이 스토리: 인스타그램형 원형 트레이 */
-        .story-strip { margin: 0 -20px; overflow: hidden; }
-        .story-strip-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px 12px;
-        }
-        .story-strip-title {
-            color: #fff;
-            font-size: 19px;
-            font-weight: 800;
-            line-height: 1.2;
-            letter-spacing: -.025em;
-        }
-        .story-strip-note { color: rgba(255,255,255,.38); font-size: 10.5px; font-weight: 650; }
-        #story-tray {
-            gap: 14px;
-            padding: 2px 20px 8px;
-            scroll-padding-inline: 20px;
-            scroll-snap-type: x proximity;
-            overscroll-behavior-inline: contain;
-        }
-        .story-person {
-            flex: 0 0 74px;
-            width: 74px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            scroll-snap-align: start;
-            transition: transform .16s ease;
-        }
-        button.story-person:active { transform: scale(.94); }
-        .story-avatar-holder, .story-avatar-shell, .story-add-shell {
-            position: relative;
-            display: block;
-            width: 72px;
-            height: 72px;
-            border-radius: 999px;
-        }
-        .story-avatar-shell { padding: 3px; }
-        .story-avatar-shell.is-live {
-            background: conic-gradient(from 215deg, #FFD600, #FF7A00, #FF0169, #D300C5, #7638FA, #FFD600);
-        }
-        .story-avatar-shell.is-empty {
-            padding: 2px;
-            background: rgba(255,255,255,.2);
-        }
-        .story-avatar-gap {
-            display: block;
-            width: 100%;
-            height: 100%;
-            padding: 2px;
-            border-radius: inherit;
-            background: #000;
-        }
-        .story-avatar {
-            display: block;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            border-radius: inherit;
-            background: #262A31;
-        }
-        .story-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .story-avatar-fallback {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: inherit;
-            color: rgba(255,255,255,.92);
-            font-size: 22px;
-            font-weight: 800;
-        }
-        .story-avatar-fallback.is-waiting { opacity: .48; filter: saturate(.7); }
-        .story-add-shell { background: #E5E7EB; }
-        .story-add-inner {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border-radius: inherit;
-            color: #8B95A1;
-            background: linear-gradient(180deg, #F8FAFC 0 57%, #949BA6 57% 100%);
-        }
-        .story-add-inner::before {
-            content: "";
-            position: absolute;
-            top: 15px;
-            width: 24px;
-            height: 24px;
-            border-radius: 999px;
-            background: #9299A4;
-        }
-        .story-add-inner::after {
-            content: "";
-            position: absolute;
-            bottom: -7px;
-            width: 54px;
-            height: 32px;
-            border-radius: 50% 50% 0 0;
-            background: #9299A4;
-        }
-        .story-add-badge {
-            position: absolute;
-            right: -1px;
-            bottom: -1px;
-            z-index: 2;
-            width: 25px;
-            height: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid #000;
-            border-radius: 999px;
-            color: #fff;
-            background: #3182F6;
-            font-size: 11px;
-        }
-        .story-person-name {
-            width: 100%;
-            margin-top: 8px;
-            overflow: hidden;
-            color: rgba(255,255,255,.92);
-            font-size: 11.5px;
-            font-weight: 600;
-            line-height: 1.25;
-            text-align: center;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        /* 홈 스토리 트레이는 저장소 원본 간격을 유지 */
+        /* 엔조이 멤버 트레이 */
         #story-tray {
             gap: 1rem;
             padding: .25rem;
@@ -895,589 +708,6 @@
             backdrop-filter: blur(14px) saturate(1.45);
         }
 
-        /* 엔조이 스토리: 카메라·미리보기·뷰어 공통 */
-        .story-top-scrim {
-            position: absolute;
-            inset: 0 0 auto;
-            height: 170px;
-            z-index: 2;
-            pointer-events: none;
-            background: linear-gradient(180deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.2) 58%, transparent 100%);
-        }
-        .story-bottom-scrim {
-            position: absolute;
-            inset: auto 0 0;
-            height: 260px;
-            z-index: 2;
-            pointer-events: none;
-            background: linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.34) 58%, transparent 100%);
-        }
-        .story-glass-control {
-            border: 1px solid rgba(255,255,255,.15);
-            background: rgba(18,18,18,.42);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 22px rgba(0,0,0,.16);
-            -webkit-backdrop-filter: blur(18px) saturate(1.45);
-            backdrop-filter: blur(18px) saturate(1.45);
-        }
-        .story-screen-title {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            height: 34px;
-            padding: 0 12px;
-            border: 1px solid rgba(255,255,255,.12);
-            border-radius: 999px;
-            color: #fff;
-            background: rgba(18,18,18,.34);
-            -webkit-backdrop-filter: blur(16px);
-            backdrop-filter: blur(16px);
-            font-size: 12px;
-            font-weight: 750;
-            letter-spacing: -.01em;
-        }
-        .story-screen-title i { color: #E879F9; font-size: 9px; }
-        .story-camera-hint {
-            display: table;
-            margin: 0 auto 17px;
-            padding: 8px 12px;
-            border: 1px solid rgba(255,255,255,.1);
-            border-radius: 999px;
-            color: rgba(255,255,255,.78);
-            background: rgba(0,0,0,.36);
-            -webkit-backdrop-filter: blur(14px);
-            backdrop-filter: blur(14px);
-            font-size: 11.5px;
-            font-weight: 650;
-            text-shadow: 0 1px 5px rgba(0,0,0,.5);
-        }
-        .story-camera-side-label {
-            position: absolute;
-            left: 50%;
-            top: calc(100% + 6px);
-            transform: translateX(-50%);
-            color: rgba(255,255,255,.58);
-            font-size: 9.5px;
-            font-weight: 650;
-            white-space: nowrap;
-        }
-        .story-preview-copy {
-            margin-bottom: 14px;
-            text-align: center;
-            text-shadow: 0 2px 8px rgba(0,0,0,.5);
-        }
-        .story-preview-copy strong { display: block; color: #fff; font-size: 15px; font-weight: 800; }
-        .story-preview-copy span { display: block; margin-top: 4px; color: rgba(255,255,255,.58); font-size: 11px; font-weight: 550; }
-        .story-post-button {
-            min-height: 54px;
-            border: 1px solid rgba(255,255,255,.75);
-            background: rgba(255,255,255,.96);
-            box-shadow: 0 12px 32px rgba(0,0,0,.28), 0 0 24px rgba(255,255,255,.12);
-        }
-        /* 스토리 만들기: 첨부된 인스타그램형 카메라/미리보기 UI */
-        .story-camera-media, .story-preview-media {
-            position: absolute;
-            top: max(8px, env(safe-area-inset-top));
-            left: 0;
-            width: 100%;
-            height: calc(100% - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
-            border-radius: clamp(22px, 7vw, 34px);
-            overflow: hidden;
-            object-fit: cover;
-            background: #000;
-        }
-        .story-create-top {
-            position: relative;
-            z-index: 20;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: max(18px, env(safe-area-inset-top)) 20px 0;
-            pointer-events: none;
-        }
-        .story-create-top > button { pointer-events: auto; }
-        .story-create-circle {
-            width: 54px;
-            height: 54px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 0;
-            border-radius: 999px;
-            color: #fff;
-            background: rgba(28,28,28,.62);
-            box-shadow: 0 5px 18px rgba(0,0,0,.2);
-            -webkit-backdrop-filter: blur(14px);
-            backdrop-filter: blur(14px);
-            text-shadow: 0 1px 5px rgba(0,0,0,.25);
-        }
-        .story-camera-bottom {
-            position: relative;
-            z-index: 20;
-            margin-top: auto;
-            padding: 0 24px max(34px, calc(env(safe-area-inset-bottom) + 18px));
-        }
-        .story-camera-actions {
-            position: relative;
-            min-height: 88px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .story-camera-secondary {
-            position: absolute;
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 0;
-            border-radius: 999px;
-            color: #fff;
-            background: rgba(38,41,46,.8);
-            box-shadow: 0 6px 20px rgba(0,0,0,.2);
-            -webkit-backdrop-filter: blur(14px);
-            backdrop-filter: blur(14px);
-        }
-        .story-camera-secondary.gallery { left: 0; }
-        .story-camera-secondary.flip { right: 0; }
-        #story-shutter {
-            width: 86px;
-            height: 86px;
-            border-radius: 999px;
-            filter: drop-shadow(0 4px 12px rgba(0,0,0,.18));
-        }
-        .story-preview-text {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            z-index: 15;
-            width: min(84vw, 390px);
-            min-height: 1.25em;
-            padding: 8px 12px;
-            transform: translate(-50%, -50%);
-            border: 0;
-            outline: 0;
-            color: #fff;
-            background: transparent;
-            font-size: clamp(28px, 9vw, 46px);
-            font-weight: 800;
-            line-height: 1.15;
-            letter-spacing: -.035em;
-            text-align: center;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            text-shadow: 0 2px 10px rgba(0,0,0,.7);
-            caret-color: #fff;
-            touch-action: manipulation;
-            -webkit-user-select: text;
-            user-select: text;
-        }
-        .story-preview-text:empty::before {
-            content: attr(data-placeholder);
-            color: rgba(255,255,255,.64);
-        }
-        .story-preview-bottom {
-            position: relative;
-            z-index: 20;
-            margin-top: auto;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 20px max(28px, calc(env(safe-area-inset-bottom) + 16px));
-        }
-        .story-my-story {
-            min-width: 0;
-            height: 58px;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border: 0;
-            border-radius: 999px;
-            color: #fff;
-            background: rgba(57,61,67,.94);
-            font-size: 15px;
-            font-weight: 800;
-        }
-        .story-my-story-avatar {
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid #fff;
-            border-radius: 999px;
-            color: #9CA3AF;
-            background: #F3F4F6;
-            font-size: 15px;
-        }
-        .story-send-button {
-            width: 58px;
-            height: 58px;
-            flex: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 0;
-            border-radius: 999px;
-            color: #fff;
-            background: #4357F7;
-            box-shadow: 0 8px 24px rgba(67,87,247,.3);
-            font-size: 24px;
-        }
-        .story-viewer-text {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            z-index: 12;
-            width: min(84vw, 390px);
-            transform: translate(-50%, -50%);
-            color: #fff;
-            font-size: clamp(28px, 9vw, 46px);
-            font-weight: 800;
-            line-height: 1.15;
-            letter-spacing: -.035em;
-            text-align: center;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            text-shadow: 0 2px 10px rgba(0,0,0,.7);
-            pointer-events: none;
-        }
-        .story-viewer-media {
-            position: absolute;
-            top: max(6px, env(safe-area-inset-top));
-            right: 0;
-            bottom: calc(92px + env(safe-area-inset-bottom));
-            left: 0;
-            width: 100%;
-            height: calc(100% - 92px - env(safe-area-inset-bottom) - max(6px, env(safe-area-inset-top)));
-            border-radius: 0 0 24px 24px;
-            object-fit: cover;
-            background: #000;
-        }
-        .story-viewer-header {
-            position: absolute;
-            inset: 0 0 auto;
-            z-index: 20;
-            pointer-events: none;
-        }
-        .story-viewer-author-wrap {
-            min-width: 0;
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 4px;
-        }
-        .story-viewer-adaptive {
-            display: flex;
-            align-items: center;
-            min-width: 0;
-            gap: 7px;
-            color: #fff;
-            text-shadow: 0 1px 5px rgba(0,0,0,.48);
-            transition: color .18s ease, text-shadow .18s ease;
-        }
-        #story-viewer .story-top-scrim {
-            height: 150px;
-            background: linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.08) 62%, transparent 100%);
-        }
-        #story-viewer.story-ui-on-light .story-viewer-adaptive,
-        #story-viewer.story-ui-on-light .story-viewer-action {
-            color: #111418;
-            text-shadow: 0 1px 5px rgba(255,255,255,.36);
-            filter: none;
-        }
-        .story-viewer-action {
-            width: 42px;
-            height: 42px;
-            border: 0;
-            color: #fff;
-            background: transparent;
-            filter: drop-shadow(0 1px 5px rgba(0,0,0,.55));
-        }
-        .story-viewer-footer {
-            position: absolute;
-            inset: auto 0 0;
-            z-index: 20;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(92px + env(safe-area-inset-bottom));
-            padding: 10px 24px max(10px, env(safe-area-inset-bottom));
-            background: #090D12;
-            pointer-events: auto;
-        }
-        .story-viewer-footer-actions {
-            width: min(100%, 270px);
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-        }
-        .story-viewer-footer-action {
-            min-width: 84px;
-            min-height: 68px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            border: 0;
-            color: #fff;
-            background: transparent;
-            font-size: 11.5px;
-            font-weight: 750;
-        }
-        .story-viewer-footer-action i {
-            font-size: 24px;
-        }
-        .story-viewer-footer-action .story-action-count {
-            margin-left: 2px;
-            color: rgba(255,255,255,.48);
-            font-size: 10px;
-            font-weight: 650;
-        }
-        .story-viewer-pill {
-            min-height: 42px;
-            padding: 0 14px;
-            border: 1px solid rgba(255,255,255,.14);
-            border-radius: 999px;
-            color: #fff;
-            background: rgba(0,0,0,.38);
-            -webkit-backdrop-filter: blur(16px);
-            backdrop-filter: blur(16px);
-            font-size: 12px;
-            font-weight: 750;
-            pointer-events: auto;
-        }
-        .story-media-kind {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            min-height: 34px;
-            padding: 0 11px;
-            border: 1px solid rgba(255,255,255,.1);
-            border-radius: 999px;
-            color: rgba(255,255,255,.62);
-            background: rgba(0,0,0,.28);
-            -webkit-backdrop-filter: blur(14px);
-            backdrop-filter: blur(14px);
-            font-size: 10.5px;
-            font-weight: 650;
-            pointer-events: none;
-        }
-        .story-sheet-panel {
-            border: 1px solid rgba(255,255,255,.1);
-            border-bottom: 0;
-            background: rgba(27,27,29,.96);
-            -webkit-backdrop-filter: blur(28px) saturate(1.3);
-            backdrop-filter: blur(28px) saturate(1.3);
-            box-shadow: 0 -20px 60px rgba(0,0,0,.45);
-        }
-        .story-sheet-handle {
-            width: 38px;
-            height: 4px;
-            margin: 0 auto 15px;
-            border-radius: 999px;
-            background: rgba(255,255,255,.18);
-        }
-        .story-activity-sheet {
-            background:
-                radial-gradient(circle at 50% 18%, rgba(64,78,112,.2), transparent 34%),
-                #090D12;
-            opacity: 1;
-        }
-        .story-activity-sheet.is-opening {
-            animation: story-activity-bg-in .24s ease-out both;
-        }
-        .story-activity-sheet.is-closing {
-            animation: story-activity-bg-out .22s ease-in both;
-            pointer-events: none;
-        }
-        .story-activity-sheet.is-opening .story-activity-preview {
-            animation: story-activity-hero-in .42s cubic-bezier(.22,1,.36,1) .05s both;
-        }
-        .story-activity-sheet.is-opening .story-activity-panel {
-            animation: story-activity-panel-in .48s cubic-bezier(.22,1,.36,1) both;
-        }
-        .story-activity-sheet.is-closing .story-activity-panel {
-            animation: story-activity-panel-out .22s ease-in both;
-        }
-        .story-activity-sheet.is-opening .story-activity-tab,
-        .story-activity-sheet.is-opening #story-viewers-list {
-            animation: story-activity-content-in .3s ease-out .23s both;
-        }
-        .story-activity-hero {
-            position: relative;
-            flex: none;
-            height: min(36vh, 300px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: max(28px, env(safe-area-inset-top)) 20px 18px;
-        }
-        .story-activity-label {
-            position: absolute;
-            top: max(22px, env(safe-area-inset-top));
-            left: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: rgba(255,255,255,.72);
-            font-size: 12px;
-            font-weight: 750;
-        }
-        .story-activity-preview {
-            position: relative;
-            width: 106px;
-            height: 184px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,.14);
-            border-radius: 18px;
-            background: #000;
-            box-shadow: 0 16px 38px rgba(0,0,0,.46), 0 0 0 5px rgba(255,255,255,.025);
-        }
-        .story-activity-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .story-activity-close {
-            position: absolute;
-            top: max(18px, env(safe-area-inset-top));
-            right: 18px;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 0;
-            color: #fff;
-            background: transparent;
-            font-size: 27px;
-        }
-        .story-activity-panel {
-            position: relative;
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,.055);
-            border-bottom: 0;
-            border-radius: 28px 28px 0 0;
-            color: #fff;
-            background: linear-gradient(180deg, #191E24 0%, #15191E 100%);
-            box-shadow: 0 -18px 44px rgba(0,0,0,.3);
-        }
-        .story-activity-panel::before {
-            content: "";
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            width: 22px;
-            height: 22px;
-            transform: translateX(-50%) rotate(45deg);
-            border-radius: 4px;
-            background: #191E24;
-        }
-        .story-activity-tab {
-            height: 76px;
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            padding: 0 20px;
-            border-bottom: 1px solid rgba(255,255,255,.07);
-        }
-        .story-activity-tab-icon {
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6F8CFF;
-            border-radius: 15px;
-            background: rgba(89,113,255,.13);
-            font-size: 22px;
-        }
-        .story-viewer-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 4px;
-            border-bottom: 1px solid rgba(255,255,255,.06);
-        }
-        .story-more-panel {
-            position: absolute;
-            right: 18px;
-            bottom: calc(100px + env(safe-area-inset-bottom));
-            width: 250px;
-            padding: 9px;
-            border: 1px solid rgba(255,255,255,.13);
-            border-radius: 25px;
-            color: #fff;
-            background: rgba(18,20,24,.48);
-            box-shadow: 0 18px 52px rgba(0,0,0,.38), 0 6px 16px rgba(0,0,0,.25);
-            -webkit-backdrop-filter: blur(22px) saturate(1.55);
-            backdrop-filter: blur(22px) saturate(1.55);
-            transform-origin: calc(100% - 56px) 100%;
-            pointer-events: auto;
-        }
-        .story-more-action {
-            width: 100%;
-            min-height: 58px;
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            padding: 7px 9px;
-            border: 0;
-            border-radius: 16px;
-            color: #fff;
-            background: transparent;
-            text-align: left;
-        }
-        .story-more-action:active { background: rgba(255,255,255,.07); }
-        .story-more-action.danger { color: #FF5A66; }
-        .story-more-icon {
-            width: 38px;
-            height: 38px;
-            flex: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 13px;
-            background: rgba(49,130,246,.15);
-            color: #65A2FF;
-            font-size: 15px;
-        }
-        .story-more-action.danger .story-more-icon {
-            color: #FF6672;
-            background: rgba(240,68,82,.15);
-        }
-        .story-more-title {
-            color: #fff;
-            font-size: 14px;
-            font-weight: 750;
-            line-height: 1.15;
-        }
-        .story-more-action.danger .story-more-title { color: #FF6672; }
-        .story-more-sub {
-            margin-top: 3px;
-            color: rgba(255,255,255,.62);
-            font-size: 10.5px;
-            font-weight: 600;
-            line-height: 1.2;
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .story-activity-sheet,
-            .story-activity-sheet *,
-            .story-more-panel,
-            .story-more-panel * {
-                animation-duration: .01ms !important;
-                animation-delay: 0s !important;
-            }
-        }
-
         /* 공지사항 롤링 애니메이션 수정: 무한 루프 구현 */
         @keyframes marquee {
             0% { transform: translateX(0); }
@@ -1635,21 +865,21 @@
             position: relative;
             z-index: 1;
             border-radius: 20.8px;
-            background: #FFFFFF;
-            color: #0F1115;
+            background: linear-gradient(180deg, #1C1C1E 0%, #14161A 100%);
+            color: #FFFFFF;
             padding: 15px 14px 14px;
         }
         .ledger-ai-brand {
             display: flex;
             align-items: center;
-            color: #111318;
+            color: rgba(255,255,255,.92);
             font-size: 13px;
             font-weight: 900;
             line-height: 1.2;
         }
         .ledger-ai-headline {
             margin: 9px 0 12px;
-            color: #080A0F;
+            color: #FFFFFF;
             font-size: 17px;
             font-weight: 900;
             line-height: 1.35;
@@ -1662,8 +892,8 @@
             margin-top: 7px;
             padding: 9px 12px;
             border-radius: 999px;
-            background: #F1F2F4;
-            color: #111318;
+            background: rgba(255,255,255,.08);
+            color: rgba(255,255,255,.88);
             font-size: 12.5px;
             font-weight: 800;
             line-height: 1.35;
@@ -1671,7 +901,7 @@
         }
         .ledger-ai-chip:first-child { margin-top: 0; }
         .ledger-ai-chip b {
-            color: #080A0F;
+            color: #FFFFFF;
             font-weight: 950;
         }
         .ledger-ai-disclaimer {
@@ -1679,14 +909,14 @@
             align-items: center;
             gap: 6px;
             margin-top: 11px;
-            color: #777D86;
+            color: rgba(255,255,255,.44);
             font-size: 9.8px;
             font-weight: 750;
             line-height: 1.35;
         }
         .ledger-ai-disclaimer i {
             font-size: 12px;
-            color: #858B94;
+            color: rgba(255,255,255,.48);
         }
         @property --ledger-ai-angle {
             syntax: '<angle>';
@@ -1795,7 +1025,7 @@
         .pf-submit { width: 100%; margin-top: 14px; padding: 15px 0; border-radius: 9999px; font-size: 15px; font-weight: 700;
             color: #fff; background: #3182F6; transition: transform .15s, opacity .15s; }
         .pf-submit:active { transform: scale(0.96); opacity: 0.92; }
-        /* 스토리 원 링 간격/배지 테두리: 페이지 배경색과 동일하게(테두리 안 보이게) */
+        /* 멤버 상태 배지 테두리: 페이지 배경색과 동일하게(테두리 안 보이게) */
         .enjoy-page-bg { background-color: #000; }
         .enjoy-page-border { border-color: #000 !important; }
 
@@ -2422,6 +1652,13 @@
             .ledger-forecast-note { color: #8B95A1; }
             .ledger-forecast-value { color: #191F28; }
             .ledger-bar-track { background: rgba(0,0,0,.07); }
+            .ledger-ai-card-inner { background: #FFFFFF; color: #0F1115; }
+            .ledger-ai-brand { color: #111318; }
+            .ledger-ai-headline { color: #080A0F; }
+            .ledger-ai-chip { background: #F1F2F4; color: #111318; }
+            .ledger-ai-chip b { color: #080A0F; }
+            .ledger-ai-disclaimer { color: #777D86; }
+            .ledger-ai-disclaimer i { color: #858B94; }
             #ledger-meeting-select { color-scheme: light !important; }
             .vlog-detail-screen { background-color: #F2F2F7; }
             .vlog-episode-card { border-color: rgba(0,0,0,.10); }
@@ -2449,13 +1686,7 @@
             #calendar-grid .bg-white { background-color: #141414 !important; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important; }
             #calendar-grid .text-black { color: #FFFFFF !important; }
 
-            /* 엔조이 스토리 전체화면(카메라/미리보기/뷰어)은 항상 검은 배경 → 글자/아이콘 흰색 유지 */
-            #story-camera .text-white, #story-camera [class*="text-white/"],
-            #story-preview .text-white, #story-preview [class*="text-white/"],
-            #story-viewer .text-white, #story-viewer [class*="text-white/"] { color: #FFFFFF !important; }
-            #story-camera .bg-white, #story-preview .bg-white, #story-viewer .bg-white { background-color: #FFFFFF !important; }
-            #story-camera .text-black, #story-preview .text-black, #story-viewer .text-black { color: #141414 !important; }
-            /* 홈 스토리 트레이: 라이트 모드에서 잘 보이도록 보정 */
+            /* 홈 멤버 트레이: 라이트 모드에서 잘 보이도록 보정 */
             #story-tray .border-white\/30 { border-color: rgba(0, 0, 0, 0.28) !important; }
             #story-tray .bg-white\/5 { background-color: rgba(0, 0, 0, 0.05) !important; }
             #story-tray .text-white\/85, #story-tray [class*="text-white/"] { color: #141414 !important; }
@@ -2547,7 +1778,7 @@
                 <div class="lg-card">
                     <div class="lg-card-ic"><i class="fa-solid fa-sliders"></i></div>
                     <h3>내가 관리하는 우리 모임</h3>
-                    <p>일정, 모임통장, 스토리를 한곳에서 직접 관리하고 멤버들과 함께 나눠요.</p>
+                    <p>일정, 모임통장, 멤버 현황을 한곳에서 직접 관리하고 멤버들과 함께 나눠요.</p>
                 </div>
                 <div class="lg-card">
                     <div class="lg-card-ic"><i class="fa-solid fa-shield-halved"></i></div>
@@ -2557,7 +1788,7 @@
                 <div class="lg-card">
                     <div class="lg-card-ic"><i class="fa-regular fa-comments"></i></div>
                     <h3>엔조이 계정이란 무엇인가요?</h3>
-                    <p>엔조이 계정은 스토리, 일정, 모임통장, 위치 공유, 여행 기록 등 엔조이의 모든 서비스에 사용하는 계정이에요.</p>
+                    <p>엔조이 계정은 일정, 모임통장, 멤버 현황, 위치 공유, 여행 기록 등 엔조이의 모든 서비스에 사용하는 계정이에요.</p>
                 </div>
             </div>
 
@@ -2583,7 +1814,7 @@
     <div id="profile-modal" class="hidden fixed inset-0 z-[290] flex items-center justify-center px-8">
         <div class="lp-card w-full max-w-[330px] rounded-[26px] p-7 text-center" onclick="event.stopPropagation()">
             <h3 class="lp-title" id="profile-title">프로필 이름을 입력해주세요</h3>
-            <p class="lp-desc" id="profile-desc">스토리에 표시될 내 이름이에요.<br><b>한 번 정하면 바꿀 수 없어요.</b></p>
+            <p class="lp-desc" id="profile-desc">멤버 현황에 표시될 내 이름이에요.<br><b>한 번 정하면 바꿀 수 없어요.</b></p>
             <input id="profile-input" type="text" class="pf-input" placeholder="이름 입력" autocomplete="off" autocapitalize="off" spellcheck="false"
                    onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.enjoySubmitProfile && window.enjoySubmitProfile(); }">
             <p id="profile-status" class="pf-status"></p>
@@ -2702,14 +1933,14 @@
 
             <div class="flex flex-col gap-9">
 
-                <!-- 0. 엔조이 스토리 + 현재현황 (멤버별 스토리 링 + 활동 상태 통합) -->
+                <!-- 0. 엔조이 멤버 + 현재현황 (가입 여부 + 활동 상태) -->
                 <section>
                     <div class="px-1 mb-2.5">
-                        <p class="text-[12px] font-medium text-gray-400 tracking-tight">오늘의 일상을 엔조이에게만 공유해보아요.</p>
-                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이 스토리</h3>
+                        <p class="text-[12px] font-medium text-gray-400 tracking-tight">멤버들의 현재 활동 상태를 한눈에 확인해요.</p>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이 멤버</h3>
                     </div>
                     <div id="story-tray" class="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch;">
-                        <!-- 멤버/스토리 항목은 JS가 채웁니다 -->
+                        <!-- 멤버 항목은 JS가 채웁니다 -->
                     </div>
                 </section>
 
@@ -3629,158 +2860,6 @@
         </div>
     </div>
 
-    <!-- ===================== 엔조이 스토리 (인스타그램 스토리형) ===================== -->
-    <!-- 카메라 (사진: 탭 / 영상: 길게 눌러 최대 5초, 720p) -->
-    <div id="story-camera" class="hidden fixed inset-0 z-[150] bg-black flex-col">
-        <video id="story-cam-video" autoplay playsinline muted class="story-camera-media"></video>
-        <canvas id="story-cam-canvas" class="hidden"></canvas>
-        <div id="story-camera-focus-ring" class="story-camera-focus-ring" aria-hidden="true"></div>
-        <div class="story-top-scrim"></div>
-        <div class="story-bottom-scrim"></div>
-
-        <div class="story-create-top">
-            <button aria-label="카메라 닫기" title="닫기" onclick="window.haptic(); window.EnjoyStory.closeCamera()" class="story-create-circle active:scale-90 transition-transform">
-                <i class="fa-solid fa-xmark text-[28px]"></i>
-            </button>
-            <span aria-hidden="true"></span>
-        </div>
-
-        <div id="story-dial" class="story-camera-zoom-dial" aria-label="카메라 줌">
-            <div class="story-camera-zoom-window">
-                <div id="story-dial-track"></div>
-            </div>
-            <div id="story-zoom-label" class="story-camera-zoom-value">1x</div>
-        </div>
-
-        <!-- 하단에는 갤러리 · 촬영 · 카메라 전환만 표시 -->
-        <div class="story-camera-bottom">
-            <div class="story-camera-actions">
-                <button aria-label="갤러리에서 선택" title="갤러리" onclick="window.haptic(); window.EnjoyStory.pickGallery()" class="story-camera-secondary gallery active:scale-90 transition-transform">
-                    <i class="fa-regular fa-images text-[21px]"></i>
-                </button>
-                <button id="story-shutter" aria-label="촬영" class="relative flex items-center justify-center active:scale-95 transition-transform" style="touch-action:none; -webkit-touch-callout:none;">
-                    <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 86 86">
-                        <circle cx="43" cy="43" r="39" fill="none" stroke="rgba(255,255,255,0.98)" stroke-width="5"></circle>
-                        <circle id="story-rec-ring" cx="43" cy="43" r="39" fill="none" stroke="#F04452" stroke-width="6" stroke-linecap="round" stroke-dasharray="245" stroke-dashoffset="245"></circle>
-                    </svg>
-                    <div id="story-shutter-dot" class="w-[68px] h-[68px] rounded-full bg-white transition-all duration-200"></div>
-                </button>
-                <button aria-label="카메라 전환" title="카메라 전환" onclick="window.haptic(); window.EnjoyStory.flipCamera()" class="story-camera-secondary flip active:scale-90 transition-transform">
-                    <i class="fa-solid fa-camera-rotate text-[21px]"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- 갤러리에서 선택 (촬영 아님) -->
-        <input id="story-file-gallery" type="file" accept="image/*,video/*" class="hidden">
-        <!-- getUserMedia 미지원 기기용 숨김 입력 (폴백) -->
-        <input id="story-file-photo" type="file" accept="image/*" capture="environment" class="hidden">
-        <input id="story-file-video" type="file" accept="video/*" capture="environment" class="hidden">
-    </div>
-
-    <!-- 촬영 미리보기 (올리기 / 다시) -->
-    <div id="story-preview" class="hidden fixed inset-0 z-[151] bg-black flex-col">
-        <img id="story-preview-img" class="story-preview-media hidden">
-        <video id="story-preview-video" class="story-preview-media hidden" playsinline autoplay loop></video>
-        <div class="story-top-scrim"></div>
-        <div class="story-bottom-scrim"></div>
-        <div class="story-create-top">
-            <button aria-label="다시 촬영" title="닫기" onclick="window.haptic(); window.EnjoyStory.retake()" class="story-create-circle active:scale-90 transition-transform">
-                <i class="fa-solid fa-xmark text-[28px]"></i>
-            </button>
-            <button aria-label="텍스트 추가" title="텍스트 추가" onclick="window.haptic(); window.EnjoyStory.toggleTextEditor()" class="story-create-circle active:scale-90 transition-transform">
-                <span class="text-[27px] font-medium tracking-[-.08em] pr-0.5">Aa</span>
-            </button>
-        </div>
-        <div id="story-preview-text" class="story-preview-text hidden" contenteditable="true" role="textbox" aria-label="스토리에 표시할 텍스트" data-placeholder="텍스트 입력..." spellcheck="false"></div>
-        <div class="story-preview-bottom">
-            <button id="story-post-btn" onclick="window.haptic(); window.EnjoyStory.post()" class="story-my-story active:scale-[0.97] transition-transform">
-                <span class="story-my-story-avatar"><i class="fa-solid fa-user"></i></span>
-                <span>내 스토리</span>
-            </button>
-            <button aria-label="스토리에 공유" title="스토리에 공유" onclick="window.haptic(); window.EnjoyStory.post()" class="story-send-button active:scale-90 transition-transform">
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- 스토리 뷰어 (전체화면, 진행바, 탭 이동) -->
-    <div id="story-viewer" class="hidden fixed inset-0 z-[152] bg-[#090D12] flex-col select-none">
-        <img id="story-viewer-img" class="story-viewer-media hidden">
-        <video id="story-viewer-video" class="story-viewer-media hidden" playsinline></video>
-        <div id="story-viewer-text" class="story-viewer-text hidden"></div>
-        <div id="story-viewer-loading" class="hidden absolute inset-0 z-[5] flex items-center justify-center pointer-events-none"><i class="fa-solid fa-circle-notch fa-spin text-white/80 text-2xl"></i></div>
-        <div class="story-top-scrim"></div>
-        <div class="story-bottom-scrim"></div>
-
-        <!-- 탭 이동 영역 (좌: 이전 / 우: 다음) -->
-        <div class="absolute inset-y-0 left-0 w-[35%] z-10" onclick="window.EnjoyStory.prev()"></div>
-        <div class="absolute inset-y-0 right-0 w-[35%] z-10" onclick="window.EnjoyStory.next()"></div>
-
-        <!-- 상단 진행바 + 작성자 + 컨트롤 -->
-        <div class="story-viewer-header">
-            <div class="pt-safe px-3 pt-2.5">
-                <div id="story-viewer-bars" class="flex gap-1 mb-3"></div>
-                <div class="flex items-center justify-between">
-                    <div class="story-viewer-author-wrap pointer-events-none">
-                        <div id="story-viewer-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-400 flex items-center justify-center text-white text-[11px] font-black">E</div>
-                        <div class="story-viewer-adaptive">
-                            <div id="story-viewer-author" class="max-w-[126px] truncate text-[13px] font-extrabold">엔조이 스토리</div>
-                            <div id="story-viewer-time" class="text-[11px] font-semibold opacity-70"></div>
-                        </div>
-                    </div>
-                    <button aria-label="스토리 닫기" title="닫기" onclick="window.haptic(); window.EnjoyStory.closeViewer()" class="story-viewer-action flex items-center justify-center pointer-events-auto active:scale-90 transition-transform"><i class="fa-solid fa-xmark text-[25px]"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <div class="story-viewer-footer">
-            <div class="story-viewer-footer-actions">
-                <button id="story-viewers-btn" onclick="window.haptic(); window.EnjoyStory.openViewersSheet()" class="story-viewer-footer-action hidden active:scale-95 transition-transform">
-                    <i class="fa-solid fa-user-group"></i>
-                    <span>활동 <span id="story-viewers-count" class="story-action-count">0</span></span>
-                </button>
-                <button onclick="window.haptic(); window.EnjoyStory.openMoreSheet()" class="story-viewer-footer-action active:scale-95 transition-transform">
-                    <i class="fa-solid fa-ellipsis"></i>
-                    <span>더보기</span>
-                </button>
-            </div>
-        </div>
-
-        <div id="story-viewers-sheet" class="story-activity-sheet hidden absolute inset-0 z-40 flex-col">
-            <div class="story-activity-hero">
-                <div class="story-activity-label"><i class="fa-solid fa-chart-simple"></i><span>스토리 활동</span></div>
-                <button aria-label="활동 닫기" onclick="window.haptic(); window.EnjoyStory.closeViewersSheet(true)" class="story-activity-close active:scale-90 transition-transform"><i class="fa-solid fa-xmark"></i></button>
-                <div class="story-activity-preview">
-                    <img id="story-activity-preview-img" alt="현재 스토리 미리보기">
-                </div>
-            </div>
-            <div class="story-activity-panel">
-                <div class="story-activity-tab">
-                    <div class="story-activity-tab-icon"><i class="fa-solid fa-user-group"></i></div>
-                    <div class="min-w-0">
-                        <h3 class="text-[16px] font-extrabold leading-tight">활동</h3>
-                        <p id="story-viewers-subtitle" class="text-white/45 text-[11px] font-medium mt-1">조회 0</p>
-                    </div>
-                </div>
-                <div id="story-viewers-list" class="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-5 pb-safe-area"></div>
-            </div>
-        </div>
-
-        <div id="story-more-sheet" class="hidden absolute inset-0 z-40 bg-black/10" onclick="window.EnjoyStory.closeMoreSheet(true)">
-            <div class="story-more-panel" onclick="event.stopPropagation()">
-                <button data-story-more-item onclick="window.haptic(); window.EnjoyStory.saveCurrentFromMore()" class="story-more-action active:scale-[0.96] transition-transform">
-                    <span class="story-more-icon"><i class="fa-solid fa-download"></i></span>
-                    <span class="min-w-0"><span class="story-more-title block">기기에 저장</span><span class="story-more-sub block">사진 또는 영상으로 보관</span></span>
-                </button>
-                <button id="story-more-delete" data-story-more-item onclick="window.haptic(); window.EnjoyStory.deleteCurrentFromMore()" class="story-more-action danger hidden active:scale-[0.96] transition-transform">
-                    <span class="story-more-icon"><i class="fa-regular fa-trash-can"></i></span>
-                    <span class="min-w-0"><span class="story-more-title block">스토리 삭제</span><span class="story-more-sub block">모든 멤버에게서 삭제</span></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
     /* 홈 인스타형 피드: 좋아요·저장·공유·캐러셀 표시 */
     (function () {
@@ -4160,1265 +3239,6 @@
         else initHomeContent();
     })();
 
-    /* 엔조이 스토리: 사진/영상 촬영 → 기기 로컬(IndexedDB)에만 저장 → 24시간 후 완전 자동 삭제.
-       Firebase 등 서버에는 전송/저장하지 않습니다. */
-    (function () {
-        const STORY_TTL   = 24 * 60 * 60 * 1000; // 24시간
-        const VIDEO_MAX_MS = 5000;               // 영상 최대 5초
-        const PHOTO_MAX    = 2160;               // 사진 최대 변(확대/크롭 후에도 선명도 보존)
-        const PHOTO_Q      = 0.9;                // 사진 압축 품질
-        const DB_NAME = 'enjoyStoryDB', STORE = 'stories';
-
-        let stories = [];                  // createdAt 오름차순(과거→최신)
-        let pending = null;                // { type, blob, thumb, text }
-        let camStream = null, facing = 'environment', cameraDevices = [];
-        let mediaRec = null, recChunks = [], recording = false, recTimer = null, holdTimer = null, didRecord = false;
-        let camZoom = 1, nativeZoomCap = null, nativeZoomValue = 1, zoomApplyTimer = null, takingPhoto = false;
-        const ZOOM_MIN = 1, MAX_ZOOM = 4;        // 다이얼 1x~4x, native zoom 지원 시 우선 사용
-        const DIAL_PX = 92;                              // 줌 다이얼 log2 1단위당 픽셀
-        let recCanvas = null, recRAF = 0, recThumbSrc = null; // 디지털 줌 영상 녹화 파이프라인
-        let purgeTimer = null, viewerTimer = null, viewerIdx = 0, viewerUrl = null, prevUrl = null;
-        let viewerZoom = null, previewZoom = null; // 확대/축소 컨트롤러
-        let viewList = [], viewUid = null;         // 현재 보고 있는 스토리 묶음(멤버별)
-        let activityCloseTimer = null, storyMoreCloseTimer = null;
-        const viewedStoryKeys = {};
-
-        const $ = (id) => document.getElementById(id);
-        const openOverlay  = (el) => { el.classList.remove('hidden'); el.classList.add('flex'); };
-        const closeOverlay = (el) => { el.classList.add('hidden'); el.classList.remove('flex'); };
-        const mShow = (el) => el.classList.remove('hidden');
-        const mHide = (el) => el.classList.add('hidden');
-        const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-        /* ---------- 공유 저장소 (Cloudinary 미디어 + Firestore 색인) ----------
-           미디어 파일은 Cloudinary(무료 25GB)에 업로드, 공유용 메타데이터/URL만 Firestore에.
-           24시간 뒤: Firestore TTL로 색인 삭제(앱에서 사라짐). Cloudinary 원본은 무료 용량이
-           넉넉하며, 완전 삭제하려면 Cloudinary 자동정리 또는 주기적 정리 필요(아래 안내 참고). */
-        // ▼▼▼ Cloudinary 설정: 본인 값으로 채워주세요 ▼▼▼
-        const CLOUD_NAME = 'dpnljgudv';      // 예: 'dxxxxxx' (Cloudinary 대시보드의 Cloud name)
-        const UPLOAD_PRESET = 'stories_unsigned';   // 예: 'enjoy_stories' (Unsigned 업로드 프리셋 이름)
-        // ▲▲▲ 두 값을 채우기 전엔 업로드 시 안내 메시지가 뜹니다 ▲▲▲
-
-        let storiesUnsub = null; const cleaning = {};
-        function fbReady() { return !!(window.meetingDb && window.fsOnSnapshot && window.fsSetDoc && window.meetingAuthed); }
-        async function ensureFirebase() {
-            for (let i = 0; i < 150 && !fbReady(); i++) await new Promise(r => setTimeout(r, 100));
-            return fbReady();
-        }
-        function refilterView() { viewList = viewUid ? stories.filter(s => (s.authorUid || '') === viewUid) : stories.slice(); }
-        function pruneLocal() {
-            const now = Date.now(), before = stories.length;
-            stories = stories.filter(v => now - (v.createdAt || 0) < STORY_TTL);
-            if (stories.length !== before) {
-                renderTray();
-                if (!$('story-viewer').classList.contains('hidden')) {
-                    refilterView();
-                    if (!viewList.length) closeViewer();
-                    else { if (viewerIdx > viewList.length - 1) viewerIdx = viewList.length - 1; buildBars(); }
-                }
-            }
-        }
-        function applySnapshot(arr) {
-            const now = Date.now(), live = [];
-            arr.forEach(v => {
-                if (now - (v.createdAt || 0) < STORY_TTL) live.push(v);
-                else cleanupExpired(v);
-            });
-            stories = live.sort((a, b) => a.createdAt - b.createdAt);
-            renderTray();
-            if (!$('story-viewer').classList.contains('hidden')) {
-                refilterView();
-                if (!viewList.length) { closeViewer(); return; }
-                // 보는 중에는 개수가 바뀐 경우에만 진행바를 다시 구성(진행 중 끊김 방지)
-                if (viewList.length !== $('story-viewer-bars').children.length) {
-                    if (viewerIdx > viewList.length - 1) viewerIdx = viewList.length - 1;
-                    buildBars(); showSegment(viewerIdx);
-                }
-                updateViewersButton(viewList[viewerIdx]);
-            }
-        }
-        function subscribeStories() {
-            if (!fbReady()) return;
-            try {
-                const q = window.fsQuery(window.fsCol('stories'), window.fsOrderBy('createdAt', 'asc'));
-                storiesUnsub = window.fsOnSnapshot(q, (snap) => {
-                    const arr = []; snap.forEach(d => { const v = d.data() || {}; v._id = d.id; if (v.ready) arr.push(v); });
-                    applySnapshot(arr);
-                }, (err) => { console.warn('stories snapshot', err); });
-            } catch (e) { console.warn('subscribeStories', e); }
-        }
-        // [임시] 게스트/스페셜용 로컬 스토리 저장소 (파이어베이스/Cloudinary 미사용)
-        const LS_STORIES = 'enjoy_local_stories';
-        function blobToDataURL(b) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
-        function saveLocalStories() {
-            try {
-                const now = Date.now();
-                const keep = stories.filter(v => v._local && now - (v.createdAt || 0) < STORY_TTL);
-                localStorage.setItem(LS_STORIES, JSON.stringify(keep));
-            } catch (e) {}
-        }
-        function loadLocalStories() {
-            try {
-                const arr = JSON.parse(localStorage.getItem(LS_STORIES) || '[]') || [];
-                const now = Date.now();
-                stories = arr.filter(v => now - (v.createdAt || 0) < STORY_TTL).sort((a, b) => a.createdAt - b.createdAt);
-            } catch (e) { stories = []; }
-            renderTray();
-        }
-        async function putStoryLocal(p) {
-            const url = await blobToDataURL(p.blob);
-            const createdAt = Date.now();
-            stories.push({
-                type: p.type, url, thumb: p.thumb, text: p.text || '', ready: true, createdAt,
-                author: window.enjoyProfileName || '나',
-                authorUid: (window.enjoyUser && window.enjoyUser.uid) || 'local',
-                _id: 'loc_' + createdAt + '_' + Math.random().toString(36).slice(2, 6), _local: true
-            });
-            stories.sort((a, b) => a.createdAt - b.createdAt);
-            saveLocalStories();
-            renderTray();
-        }
-        window.enjoyLoadLocalStories = loadLocalStories;
-        window.enjoySubscribeStories = subscribeStories;
-
-        async function putStory(p) {
-            if (!window.enjoySync) return putStoryLocal(p);   // 본인 기기에만 저장
-            if (!CLOUD_NAME || !UPLOAD_PRESET) throw new Error('Cloudinary 설정(CLOUD_NAME / UPLOAD_PRESET)을 코드 상단에 먼저 입력해 주세요.');
-            if (!fbReady()) throw new Error('서버 연결을 기다리는 중이에요. 잠시 후 다시 시도해 주세요.');
-            const rt = (p.type === 'video') ? 'video' : 'image';
-            // 1) Cloudinary 업로드 (비서명/Unsigned)
-            const ext = (rt === 'video') ? (((p.blob.type || '').indexOf('mp4') >= 0) ? 'mp4' : 'webm') : 'jpg';
-            const fd = new FormData();
-            fd.append('file', p.blob, 'story.' + ext);
-            fd.append('upload_preset', UPLOAD_PRESET);
-            fd.append('folder', 'enjoy_stories');
-            const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/' + rt + '/upload', { method: 'POST', body: fd });
-            if (!res.ok) {
-                let msg = ''; try { msg = (await res.json()).error.message || ''; } catch (e) {}
-                throw new Error('Cloudinary 업로드 실패 (' + res.status + ') ' + msg);
-            }
-            const data = await res.json();
-            // 2) Firestore에 공유 색인(메타+URL)만 기록 — 용량 거의 0
-            const id = 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-            const createdAt = Date.now();
-            await window.fsSetDoc(window.fsDoc('stories', id), {
-                type: p.type, url: data.secure_url, publicId: data.public_id || '',
-                resourceType: data.resource_type || rt, thumb: p.thumb, text: p.text || '', ready: true, createdAt,
-                author: window.enjoyProfileName || '미가입',   // 올린 사람의 프로필 이름
-                authorUid: (window.enjoyUser && window.enjoyUser.uid) || '',
-                expireAt: window.fsTimestampFromMillis(createdAt + STORY_TTL)
-            });
-        }
-        async function removeStory(s) {
-            // [임시] 로컬 스토리는 기기 저장소만 갱신 (deleteCurrent가 stories 배열에서 이미 제거함)
-            if (!window.enjoySync || (s && s._local)) { saveLocalStories(); return; }
-            // Firestore 색인만 삭제(앱에서 사라짐). Cloudinary 원본 삭제는 API 시크릿 필요 → 서버/자동정리 권장.
-            try { if (s && s._id) await window.fsDeleteDoc(window.fsDoc('stories', s._id)); } catch (e) {}
-        }
-        function cleanupExpired(v) {
-            if (!v || !v._id || cleaning[v._id]) return;
-            cleaning[v._id] = 1; removeStory(v).catch(() => {});
-        }
-        // 멤버+스토리 통합 트레이는 멤버 스크립트(enjoyRenderMembers)가 그린다.
-        function renderTray() {
-            window.enjoyStories = stories;
-            if (typeof window.enjoyRenderMembers === 'function') window.enjoyRenderMembers();
-        }
-
-        /* ---------- 썸네일 / 사진 압축 ---------- */
-        function makeThumb(src, sw, sh) {
-            const max = 150, scale = Math.min(1, max / Math.max(sw || max, sh || max));
-            const c = document.createElement('canvas');
-            c.width = Math.max(1, Math.round((sw || max) * scale));
-            c.height = Math.max(1, Math.round((sh || max) * scale));
-            try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); } catch (e) {}
-            return c.toDataURL('image/jpeg', 0.6);
-        }
-
-        /* ---------- 카메라 ---------- */
-        function getVideoTrack() {
-            return camStream && camStream.getVideoTracks ? camStream.getVideoTracks()[0] : null;
-        }
-        function supportedMode(caps, key, value) {
-            return caps && Array.isArray(caps[key]) && caps[key].indexOf(value) >= 0;
-        }
-        function pushModeConstraint(advanced, caps, key, value) {
-            if (supportedMode(caps, key, value)) {
-                const item = {}; item[key] = value; advanced.push(item);
-            }
-        }
-        async function refreshCameraDevices() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return cameraDevices;
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                cameraDevices = devices.filter(d => d.kind === 'videoinput');
-            } catch (e) {}
-            return cameraDevices;
-        }
-        function cameraLabelScore(device) {
-            const label = ((device && device.label) || '').toLowerCase();
-            let score = 0;
-            const rear = /(back|rear|environment|후면|뒷|뒤|외부)/.test(label);
-            const front = /(front|user|face|전면|앞)/.test(label);
-            if (facing === 'user') {
-                if (front) score += 90;
-                if (rear) score -= 70;
-            } else {
-                if (rear) score += 90;
-                if (front) score -= 70;
-                if (/(wide|광각)/.test(label)) score += 8;
-                if (/(ultra|초광각|0\.5)/.test(label)) score -= 10;
-                if (/(tele|망원|2x|3x)/.test(label)) score -= 14;
-            }
-            return score;
-        }
-        function preferredCameraDeviceId() {
-            if (!cameraDevices.length) return '';
-            const ranked = cameraDevices.slice().sort((a, b) => cameraLabelScore(b) - cameraLabelScore(a));
-            return cameraLabelScore(ranked[0]) > 0 ? ranked[0].deviceId : '';
-        }
-        function buildVideoConstraints(deviceId, highQuality) {
-            const video = {
-                facingMode: { exact: facing },
-                width: { ideal: highQuality ? 3840 : 1920 },
-                height: { ideal: highQuality ? 2160 : 1080 },
-                frameRate: { ideal: 30, max: 60 },
-                resizeMode: 'none'
-            };
-            if (deviceId) {
-                delete video.facingMode;
-                video.deviceId = { exact: deviceId };
-            }
-            return video;
-        }
-        function cameraConstraintAttempts() {
-            const preferred = preferredCameraDeviceId();
-            const attempts = [];
-            const push = (item) => {
-                const key = JSON.stringify(item);
-                if (!attempts.some(v => JSON.stringify(v) === key)) attempts.push(item);
-            };
-            if (preferred) push({ audio: true, video: buildVideoConstraints(preferred, true) });
-            push({ audio: true, video: buildVideoConstraints('', true) });
-            if (preferred) push({ audio: true, video: buildVideoConstraints(preferred, false) });
-            push({ audio: true, video: buildVideoConstraints('', false) });
-            push({ audio: true, video: { facingMode: facing } });
-            push({ audio: true, video: true });
-            if (preferred) push({ audio: false, video: buildVideoConstraints(preferred, true) });
-            push({ audio: false, video: buildVideoConstraints('', true) });
-            push({ audio: false, video: true });
-            return attempts;
-        }
-        async function applyCameraTrackEnhancements() {
-            const track = getVideoTrack();
-            nativeZoomCap = null;
-            nativeZoomValue = 1;
-            if (!track) return;
-            let caps = {};
-            try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
-            if (caps.zoom && typeof caps.zoom.min === 'number' && typeof caps.zoom.max === 'number' && caps.zoom.max > caps.zoom.min) {
-                nativeZoomCap = {
-                    min: Math.max(ZOOM_MIN, caps.zoom.min || ZOOM_MIN),
-                    max: Math.max(ZOOM_MIN, Math.min(MAX_ZOOM, caps.zoom.max || MAX_ZOOM)),
-                    step: caps.zoom.step || 0.1
-                };
-            }
-            const advanced = [];
-            pushModeConstraint(advanced, caps, 'focusMode', 'continuous');
-            pushModeConstraint(advanced, caps, 'exposureMode', 'continuous');
-            pushModeConstraint(advanced, caps, 'whiteBalanceMode', 'continuous');
-            if (advanced.length && track.applyConstraints) {
-                try { await track.applyConstraints({ advanced }); } catch (e) {}
-            }
-        }
-        async function startCamera() {
-            stopStream();
-            await refreshCameraDevices();
-            const gum = (c) => navigator.mediaDevices.getUserMedia(c);
-            camStream = null;
-            for (const constraints of cameraConstraintAttempts()) {
-                try { camStream = await gum(constraints); break; } catch (e) {}
-            }
-            if (!camStream) return false;
-            const vid = $('story-cam-video');
-            vid.srcObject = camStream;
-            try { await vid.play(); } catch (e) {}
-            await refreshCameraDevices();
-            await applyCameraTrackEnhancements();
-            setZoom(1); // 줌 초기화 + 미러 반영
-            await applyNativeZoomNow();
-            return true;
-        }
-        /* ---------- 카메라 줌 (다이얼 + 핀치) ----------
-           지원 기기에서는 MediaTrack native zoom을 먼저 쓰고, 남는 배율만 디지털 크롭한다. */
-        function nativeZoomTarget(z) {
-            if (!nativeZoomCap) return 1;
-            return Math.max(nativeZoomCap.min, Math.min(nativeZoomCap.max, z || ZOOM_MIN));
-        }
-        function camScale() {
-            const nativePart = nativeZoomTarget(camZoom);
-            return Math.max(1, (camZoom || ZOOM_MIN) / nativePart);
-        }
-        function applyNativeZoomNow() {
-            const track = getVideoTrack();
-            if (!nativeZoomCap || !track || !track.applyConstraints) return Promise.resolve();
-            const next = nativeZoomTarget(camZoom);
-            nativeZoomValue = next;
-            return track.applyConstraints({ advanced: [{ zoom: next }] }).catch(() =>
-                track.applyConstraints({ zoom: next })
-            ).catch(() => {
-                nativeZoomCap = null;
-                nativeZoomValue = 1;
-                applyPreviewZoom();
-            });
-        }
-        function scheduleNativeZoom() {
-            if (!nativeZoomCap) return;
-            if (zoomApplyTimer) clearTimeout(zoomApplyTimer);
-            zoomApplyTimer = setTimeout(() => {
-                zoomApplyTimer = null;
-                applyNativeZoomNow();
-            }, 35);
-        }
-        function applyPreviewZoom() {
-            const vid = $('story-cam-video'); if (!vid) return;
-            vid.style.transform = ((facing === 'user') ? 'scaleX(-1) ' : '') + 'scale(' + camScale() + ')';
-        }
-        function setZoom(z) {
-            camZoom = Math.max(ZOOM_MIN, Math.min(MAX_ZOOM, z || ZOOM_MIN));
-            scheduleNativeZoom();
-            applyPreviewZoom();
-            updateZoomUI();
-        }
-        function updateZoomUI() {
-            const lbl = $('story-zoom-label');
-            if (lbl) lbl.textContent = (Math.abs(camZoom - Math.round(camZoom)) < 0.05 ? String(Math.round(camZoom)) : camZoom.toFixed(1)) + 'x';
-            updateDialPosition();
-        }
-        function updateDialPosition() {
-            const track = $('story-dial-track'); if (!track) return;
-            // 1x(log2=0)가 왼쪽 끝(0px) 기준 → translate = -(log2(zoom))*DIAL_PX
-            track.style.transform = 'translateX(' + (-(Math.log2(camZoom)) * DIAL_PX) + 'px)';
-            track.querySelectorAll('[data-major]').forEach((lb) => {
-                const on = Math.abs(parseFloat(lb.dataset.major) - camZoom) < 0.04;
-                lb.style.color = on ? '#FFD60A' : '#fff';
-            });
-        }
-        function buildDial() {
-            const track = $('story-dial-track'); if (!track || track.dataset.built) return;
-            track.dataset.built = '1';
-            const stops = { '0': '1×', '1': '2×', '2': '4×' }; // log2 위치 → 라벨
-            for (let i = 0; i <= 20; i++) {
-                const t = i / 10;                         // log2 값 0 ~ 2 (1x~4x)
-                const x = Math.round(t * DIAL_PX);        // 1x를 0px 기준으로
-                const key = (Math.abs(t - Math.round(t)) < 0.001) ? String(Math.round(t)) : null;
-                const isMajor = key && stops[key];
-                const tick = document.createElement('div');
-                tick.style.cssText = 'position:absolute;bottom:6px;left:' + x + 'px;transform:translateX(-50%);width:2px;border-radius:2px;' +
-                    'height:' + (isMajor ? 17 : 9) + 'px;background:' + (isMajor ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)') + ';';
-                track.appendChild(tick);
-                if (isMajor) {
-                    const lb = document.createElement('div');
-                    lb.textContent = stops[key];
-                    lb.dataset.major = Math.pow(2, Math.round(t));
-                    lb.style.cssText = 'position:absolute;top:0;left:' + x + 'px;transform:translateX(-50%);font-size:12px;font-weight:800;color:#fff;';
-                    track.appendChild(lb);
-                }
-            }
-            updateDialPosition();
-        }
-        function wireDial() {
-            const el = $('story-dial'); if (!el || el.dataset.w) return; el.dataset.w = '1';
-            let dragging = false, startX = 0, startP = 0;
-            const getX = (e) => e.touches ? e.touches[0].clientX : e.clientX;
-            const down = (e) => { dragging = true; startX = getX(e); startP = Math.log2(camZoom); if (e.cancelable) e.preventDefault(); };
-            const move = (e) => {
-                if (!dragging) return;
-                const dp = (startX - getX(e)) / DIAL_PX;          // 왼쪽으로 끌면 확대
-                setZoom(Math.pow(2, Math.min(2, Math.max(0, startP + dp))));  // log2 범위 0~2 (1x~4x)
-                if (e.cancelable) e.preventDefault();
-            };
-            const up = () => { dragging = false; };
-            el.addEventListener('touchstart', down, { passive: false });
-            el.addEventListener('touchmove', move, { passive: false });
-            el.addEventListener('touchend', up); el.addEventListener('touchcancel', up);
-            el.addEventListener('mousedown', down);
-            window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
-        }
-        // 화면에 보이는 미리보기(object-cover) 영역 그대로 잘라내기 + 디지털 줌
-        function coverCrop(vw, vh, z) {
-            const el = $('story-cam-video');
-            const boxW = el.clientWidth || window.innerWidth, boxH = el.clientHeight || window.innerHeight;
-            const boxA = boxW / boxH, vidA = vw / vh;
-            let cw, ch;
-            if (vidA > boxA) { ch = vh; cw = vh * boxA; } else { cw = vw; ch = vw / boxA; }
-            z = Math.max(1, z || 1);
-            cw /= z; ch /= z;
-            return { sx: (vw - cw) / 2, sy: (vh - ch) / 2, sw: cw, sh: ch };
-        }
-        let focusRingTimer = null, focusRestoreTimer = null;
-        function showFocusRing(clientX, clientY) {
-            const ring = $('story-camera-focus-ring');
-            if (!ring) return;
-            ring.style.left = clientX + 'px';
-            ring.style.top = clientY + 'px';
-            ring.classList.add('is-on');
-            clearTimeout(focusRingTimer);
-            focusRingTimer = setTimeout(() => ring.classList.remove('is-on'), 760);
-        }
-        async function restoreContinuousFocus() {
-            const track = getVideoTrack();
-            if (!track || !track.applyConstraints) return;
-            let caps = {};
-            try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
-            const advanced = [];
-            pushModeConstraint(advanced, caps, 'focusMode', 'continuous');
-            pushModeConstraint(advanced, caps, 'exposureMode', 'continuous');
-            pushModeConstraint(advanced, caps, 'whiteBalanceMode', 'continuous');
-            if (advanced.length) {
-                try { await track.applyConstraints({ advanced }); } catch (e) {}
-            }
-        }
-        async function focusCameraAt(clientX, clientY) {
-            const vid = $('story-cam-video'), track = getVideoTrack();
-            if (!vid) return;
-            showFocusRing(clientX, clientY);
-            if (!track || !track.applyConstraints) return;
-            const rect = vid.getBoundingClientRect();
-            const x = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width)));
-            const y = Math.max(0, Math.min(1, (clientY - rect.top) / Math.max(1, rect.height)));
-            let caps = {};
-            try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
-            const focusMode = supportedMode(caps, 'focusMode', 'single-shot') ? 'single-shot'
-                : (supportedMode(caps, 'focusMode', 'continuous') ? 'continuous' : '');
-            const base = {};
-            if (focusMode) base.focusMode = focusMode;
-            if (supportedMode(caps, 'exposureMode', 'continuous')) base.exposureMode = 'continuous';
-            if (supportedMode(caps, 'whiteBalanceMode', 'continuous')) base.whiteBalanceMode = 'continuous';
-            let applied = false;
-            try {
-                const withPoint = Object.assign({}, base, { pointsOfInterest: [{ x, y }] });
-                await track.applyConstraints({ advanced: [withPoint] });
-                applied = true;
-            } catch (e) {}
-            if (!applied && Object.keys(base).length) {
-                try { await track.applyConstraints({ advanced: [base] }); } catch (e) {}
-            }
-            clearTimeout(focusRestoreTimer);
-            focusRestoreTimer = setTimeout(restoreContinuousFocus, 1200);
-        }
-        function stopStream() {
-            if (zoomApplyTimer) { clearTimeout(zoomApplyTimer); zoomApplyTimer = null; }
-            clearTimeout(focusRestoreTimer);
-            if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
-            nativeZoomCap = null;
-            nativeZoomValue = 1;
-        }
-        async function openCamera() {
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                openOverlay($('story-camera'));
-                const ok = await startCamera();
-                if (!ok) { closeOverlay($('story-camera')); fallbackPick(); }
-            } else {
-                fallbackPick();
-            }
-        }
-        function closeCamera() {
-            if (recording) stopRec();
-            stopStream();
-            closeOverlay($('story-camera'));
-        }
-        async function flipCamera() {
-            facing = (facing === 'user') ? 'environment' : 'user';
-            await startCamera();
-        }
-
-        function waitMs(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-        function waitNextVideoFrame() {
-            const v = $('story-cam-video');
-            if (v && v.requestVideoFrameCallback) return new Promise(resolve => v.requestVideoFrameCallback(() => resolve()));
-            return waitMs(80);
-        }
-        async function prepareStillCapture() {
-            await applyNativeZoomNow();
-            const track = getVideoTrack();
-            if (track && track.applyConstraints) {
-                let caps = {};
-                try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
-                const advanced = [];
-                pushModeConstraint(advanced, caps, 'focusMode', 'single-shot');
-                pushModeConstraint(advanced, caps, 'exposureMode', 'continuous');
-                pushModeConstraint(advanced, caps, 'whiteBalanceMode', 'continuous');
-                if (advanced.length) {
-                    try { await track.applyConstraints({ advanced }); } catch (e) {}
-                    await waitMs(90);
-                }
-            }
-            await waitNextVideoFrame();
-        }
-        function renderStoryPhotoFromSource(src, sw0, sh0) {
-            return new Promise((resolve) => {
-                const sw0n = sw0 || src.videoWidth || src.naturalWidth || src.width;
-                const sh0n = sh0 || src.videoHeight || src.naturalHeight || src.height;
-                if (!sw0n || !sh0n) { resolve(null); return; }
-                const { sx, sy, sw, sh } = coverCrop(sw0n, sh0n, camScale()); // 미리보기와 동일한 프레이밍으로 촬영
-                const scale = Math.min(1, PHOTO_MAX / Math.max(sw, sh));
-                const cw = Math.round(sw * scale), ch = Math.round(sh * scale);
-                const c = $('story-cam-canvas'); c.width = cw; c.height = ch;
-                const ctx = c.getContext('2d');
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                if (facing === 'user') { ctx.translate(cw, 0); ctx.scale(-1, 1); } // 셀카 좌우반전 보정
-                ctx.drawImage(src, sx, sy, sw, sh, 0, 0, cw, ch);
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                const thumb = makeThumb(c, cw, ch);
-                c.toBlob((b) => resolve(b ? { blob: b, thumb } : null), 'image/jpeg', PHOTO_Q);
-            });
-        }
-        function loadImageElement(blob) {
-            return new Promise((resolve) => {
-                const url = URL.createObjectURL(blob);
-                const img = new Image();
-                img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-                img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
-                img.src = url;
-            });
-        }
-        async function captureImageCapturePhoto() {
-            const track = getVideoTrack();
-            if (!window.ImageCapture || !track) return null;
-            try {
-                const capture = new ImageCapture(track);
-                const blob = await capture.takePhoto();
-                if (!blob || !blob.size) return null;
-                const img = await loadImageElement(blob);
-                if (!img) return null;
-                return await renderStoryPhotoFromSource(img, img.naturalWidth, img.naturalHeight);
-            } catch (e) {
-                return null;
-            }
-        }
-        async function captureVideoFramePhoto() {
-            const v = $('story-cam-video');
-            const vw = v.videoWidth, vh = v.videoHeight;
-            if (!vw) return null;
-            return renderStoryPhotoFromSource(v, vw, vh);
-        }
-        async function takePhoto() {
-            if (takingPhoto) return;
-            const v = $('story-cam-video');
-            if (!v || !v.videoWidth) return;
-            takingPhoto = true;
-            try {
-                await prepareStillCapture();
-                const result = await captureImageCapturePhoto() || await captureVideoFramePhoto();
-                if (!result || !result.blob) return;
-                pending = { type: 'image', blob: result.blob, thumb: result.thumb };
-                showPreview();
-            } finally {
-                takingPhoto = false;
-                restoreContinuousFocus();
-            }
-        }
-
-        function pickMime() {
-            const list = ['video/mp4;codecs=h264,aac', 'video/mp4', 'video/webm;codecs=vp9,opus',
-                          'video/webm;codecs=vp8,opus', 'video/webm'];
-            for (const m of list) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} }
-            return '';
-        }
-        // MediaRecorder를 못 쓰는 기기 → 기기 기본 카메라로 영상 촬영(폴백)
-        function startRec() {
-            if (!camStream || !window.MediaRecorder) { recStartFailed(); return false; }
-            recChunks = [];
-            recCanvas = null; recThumbSrc = $('story-cam-video');
-            let recStream = camStream;
-            const digital = camScale() > 1.01;   // 1x(네이티브) 초과 줌일 때만 디지털 크롭 녹화
-            if (digital) {
-                // 캔버스로 미리보기와 동일 프레이밍 크롭하여 720p로 녹화
-                const v = $('story-cam-video');
-                const vw = v.videoWidth, vh = v.videoHeight;
-                const { sx, sy, sw, sh } = coverCrop(vw, vh, camScale());
-                const scale = Math.min(1, 1280 / Math.max(sw, sh));
-                recCanvas = document.createElement('canvas');
-                recCanvas.width = Math.round(sw * scale); recCanvas.height = Math.round(sh * scale);
-                const cx = recCanvas.getContext('2d');
-                const draw = () => { if (!recording) return; cx.drawImage(v, sx, sy, sw, sh, 0, 0, recCanvas.width, recCanvas.height); recRAF = requestAnimationFrame(draw); };
-                try {
-                    cx.drawImage(v, sx, sy, sw, sh, 0, 0, recCanvas.width, recCanvas.height); // 첫 프레임 미리 그려 빈 스트림 방지
-                    const cs = recCanvas.captureStream(30);
-                    const at = camStream.getAudioTracks()[0]; if (at) cs.addTrack(at);
-                    recStream = cs; recThumbSrc = recCanvas;
-                    recDrawStart = draw;
-                } catch (e) { recCanvas = null; recStream = camStream; recThumbSrc = v; } // captureStream 미지원(예: 일부 iOS) → 직접 녹화
-            }
-            const mime = pickMime();
-            try { mediaRec = new MediaRecorder(recStream, mime ? { mimeType: mime, videoBitsPerSecond: 5000000 } : undefined); }
-            catch (e) { try { mediaRec = new MediaRecorder(recStream); } catch (e2) { recStartFailed(); return false; } }
-            mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
-            mediaRec.onstop = () => {
-                if (recRAF) { cancelAnimationFrame(recRAF); recRAF = 0; }
-                const src = recThumbSrc || $('story-cam-video');
-                let thumb = ''; try { thumb = makeThumb(src, src.videoWidth || src.width, src.videoHeight || src.height); } catch (e) {}
-                const blob = new Blob(recChunks, { type: (recChunks[0] && recChunks[0].type) || (mime || 'video/webm') });
-                recCanvas = null;
-                if (blob.size > 1000) { pending = { type: 'video', blob, thumb }; showPreview(); }
-                else { alert('영상이 너무 짧게 찍혔어요. 셔터를 1초 이상 길게 눌러 주세요.'); } // 빈 녹화 방지
-            };
-            try { mediaRec.start(250); } catch (e) { recStartFailed(); return false; } // timeslice=250ms로 데이터 확보
-            recording = true;
-            if (recDrawStart) { recRAF = requestAnimationFrame(recDrawStart); recDrawStart = null; }
-            startRing();
-            recTimer = setTimeout(stopRec, VIDEO_MAX_MS);
-            return true;
-        }
-        let recDrawStart = null;
-        function recStartFailed() {
-            recording = false; resetRing();
-            const vi = $('story-file-video'); if (vi) vi.click();  // 기기 기본 카메라로 폴백
-        }
-        function stopRec() {
-            clearTimeout(recTimer);
-            if (mediaRec && mediaRec.state !== 'inactive') { try { mediaRec.requestData(); } catch (e) {} try { mediaRec.stop(); } catch (e) {} }
-            recording = false; resetRing();
-        }
-        function startRing() {
-            const ring = $('story-rec-ring'), dot = $('story-shutter-dot');
-            ring.style.transition = 'none'; ring.style.strokeDashoffset = '245';
-            void ring.getBoundingClientRect();
-            requestAnimationFrame(() => {
-                ring.style.transition = 'stroke-dashoffset ' + VIDEO_MAX_MS + 'ms linear';
-                ring.style.strokeDashoffset = '0';
-            });
-            dot.style.width = '34px'; dot.style.height = '34px'; dot.style.borderRadius = '10px'; dot.style.background = '#F04452';
-        }
-        function resetRing() {
-            const ring = $('story-rec-ring'), dot = $('story-shutter-dot');
-            ring.style.transition = 'none'; ring.style.strokeDashoffset = '245';
-            dot.style.width = '68px'; dot.style.height = '68px'; dot.style.borderRadius = '9999px'; dot.style.background = '#fff';
-        }
-
-        /* 셔터: 탭 = 사진, 길게 = 영상 */
-        function wireShutter() {
-            const sh = $('story-shutter');
-            if (!sh || sh.dataset.wired) return; sh.dataset.wired = '1';
-            const down = (e) => {
-                if (e.cancelable) e.preventDefault();
-                try { sh.setPointerCapture(e.pointerId); } catch (er) {}
-                didRecord = false;
-                holdTimer = setTimeout(() => { didRecord = true; window.haptic(); startRec(); }, 260);
-            };
-            const up = (e) => {
-                if (e && e.cancelable) e.preventDefault();
-                if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-                if (recording) stopRec();
-                else if (!didRecord) takePhoto();
-            };
-            sh.addEventListener('pointerdown', down);
-            sh.addEventListener('pointerup', up);
-            sh.addEventListener('pointercancel', up);
-        }
-
-        /* ---------- 폴백 (getUserMedia 미지원) ---------- */
-        function fallbackPick() {
-            const ph = $('story-file-photo'), vi = $('story-file-video');
-            const choice = confirm('사진을 촬영하려면 [확인], 영상을 촬영하려면 [취소]를 누르세요.');
-            (choice ? ph : vi).click();
-        }
-        function wireFallback() {
-            const ph = $('story-file-photo'), vi = $('story-file-video'), ga = $('story-file-gallery');
-            if (ph) ph.onchange = async () => { const f = ph.files[0]; ph.value = ''; if (f) await compressPhotoFile(f); };
-            if (vi) vi.onchange = async () => { const f = vi.files[0]; vi.value = ''; if (f) await compressVideoFile(f); };
-            if (ga) ga.onchange = async () => {
-                const f = ga.files[0]; ga.value = ''; if (!f) return;
-                if ((f.type || '').indexOf('video') === 0) await compressVideoFile(f); // 갤러리 영상도 720p·5초로
-                else await compressPhotoFile(f);                                       // 갤러리 사진은 일반화질 압축
-            };
-        }
-        // 갤러리(앨범)에서 사진/영상 선택 — 촬영이 아니라 기존 미디어 불러오기
-        function pickGallery() { const g = $('story-file-gallery'); if (g) g.click(); }
-        function compressPhotoFile(file) {
-            return new Promise((res) => {
-                const url = URL.createObjectURL(file);
-                const img = new Image();
-                img.onload = () => {
-                    const scale = Math.min(1, PHOTO_MAX / Math.max(img.width, img.height));
-                    const cw = Math.round(img.width * scale), ch = Math.round(img.height * scale);
-                    const c = document.createElement('canvas'); c.width = cw; c.height = ch;
-                    c.getContext('2d').drawImage(img, 0, 0, cw, ch);
-                    URL.revokeObjectURL(url);
-                    const thumb = makeThumb(c, cw, ch);
-                    c.toBlob((b) => { pending = { type: 'image', blob: b || file, thumb }; showPreview(); res(); }, 'image/jpeg', PHOTO_Q);
-                };
-                img.onerror = () => { URL.revokeObjectURL(url); res(); };
-                img.src = url;
-            });
-        }
-        // 폴백 영상: 캔버스로 720p·최대 5초로 재인코딩(오디오 없음, 최선의 노력)
-        function compressVideoFile(file) {
-            return new Promise((res) => {
-                const url = URL.createObjectURL(file);
-                const v = document.createElement('video');
-                v.muted = true; v.playsInline = true; v.src = url;
-                v.onloadedmetadata = () => {
-                    const scale = Math.min(1, 720 / Math.min(v.videoWidth, v.videoHeight));
-                    const cw = Math.round(v.videoWidth * scale), ch = Math.round(v.videoHeight * scale);
-                    const c = document.createElement('canvas'); c.width = cw; c.height = ch;
-                    const ctx = c.getContext('2d');
-                    let rec, chunks = [];
-                    try {
-                        const stream = c.captureStream(30);
-                        const mime = pickMime();
-                        rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 5000000 } : undefined);
-                    } catch (e) {
-                        // 재인코딩 불가 → 원본 그대로 저장
-                        URL.revokeObjectURL(url);
-                        const thumb = makeThumb(v, v.videoWidth, v.videoHeight);
-                        pending = { type: 'video', blob: file, thumb }; showPreview(); res(); return;
-                    }
-                    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-                    rec.onstop = () => {
-                        URL.revokeObjectURL(url);
-                        const thumb = makeThumb(c, cw, ch);
-                        const blob = new Blob(chunks, { type: (chunks[0] && chunks[0].type) || 'video/webm' });
-                        pending = { type: 'video', blob: blob.size ? blob : file, thumb }; showPreview(); res();
-                    };
-                    rec.start();
-                    const stopAt = Math.min(VIDEO_MAX_MS / 1000, v.duration || VIDEO_MAX_MS / 1000);
-                    const draw = () => {
-                        if (v.currentTime >= stopAt || v.ended) { try { rec.stop(); } catch (e) {} v.pause(); return; }
-                        ctx.drawImage(v, 0, 0, cw, ch);
-                        requestAnimationFrame(draw);
-                    };
-                    v.onplay = () => requestAnimationFrame(draw);
-                    v.play().catch(() => { try { rec.stop(); } catch (e) {} });
-                };
-                v.onerror = () => { URL.revokeObjectURL(url); res(); };
-            });
-        }
-
-        /* ---------- 미리보기 ---------- */
-        function showPreview() {
-            if (!pending) return;
-            const pv = $('story-preview'), img = $('story-preview-img'), vid = $('story-preview-video');
-            const text = $('story-preview-text');
-            pending.text = pending.text || '';
-            if (text) {
-                text.textContent = pending.text;
-                text.classList.toggle('hidden', !pending.text);
-            }
-            if (previewZoom) previewZoom.reset();
-            if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
-            prevUrl = URL.createObjectURL(pending.blob);
-            if (pending.type === 'image') {
-                vid.pause(); vid.removeAttribute('src'); mHide(vid);
-                img.src = prevUrl; mShow(img);
-            } else {
-                mHide(img); img.removeAttribute('src');
-                vid.src = prevUrl; mShow(vid); vid.play().catch(() => {});
-            }
-            openOverlay(pv);
-        }
-        function syncPreviewText() {
-            const text = $('story-preview-text');
-            if (pending && text) pending.text = text.textContent.trim();
-        }
-        function toggleTextEditor() {
-            const text = $('story-preview-text');
-            if (!text || !pending) return;
-            text.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                text.focus();
-                const range = document.createRange();
-                range.selectNodeContents(text);
-                range.collapse(false);
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-            });
-        }
-        function retake() {
-            const pv = $('story-preview'), vid = $('story-preview-video'), text = $('story-preview-text');
-            vid.pause();
-            if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
-            if (text) { text.textContent = ''; text.classList.add('hidden'); text.blur(); }
-            pending = null;
-            closeOverlay(pv);
-            // 카메라는 그대로 열려 있음 → 바로 재촬영
-        }
-        let posting = false;
-        async function post() {
-            if (!pending || posting) return;
-            syncPreviewText();
-            posting = true;
-            const btn = $('story-post-btn'); const old = btn ? btn.innerHTML : '';
-            if (btn) { btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>올리는 중...</span>'; btn.style.opacity = '0.7'; }
-            try { await putStory(pending); }
-            catch (e) { if (btn) { btn.innerHTML = old; btn.style.opacity = '1'; } posting = false; alert('업로드에 실패했어요: ' + ((e && e.message) || e)); return; }
-            const pv = $('story-preview'), vid = $('story-preview-video'), text = $('story-preview-text');
-            vid.pause();
-            if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = null; }
-            if (text) { text.textContent = ''; text.classList.add('hidden'); text.blur(); }
-            pending = null;
-            if (btn) { btn.innerHTML = old; btn.style.opacity = '1'; }
-            posting = false;
-            closeOverlay(pv);
-            closeCamera();
-            // 업로드되면 onSnapshot이 트레이/뷰어를 자동 갱신합니다.
-        }
-
-        /* ---------- 뷰어 ---------- */
-        function buildBars() {
-            const bars = $('story-viewer-bars');
-            bars.innerHTML = viewList.map(() =>
-                '<div class="flex-1 h-[2.5px] bg-white/30 rounded-full overflow-hidden"><div class="story-bar-fill h-full bg-white rounded-full" style="width:0%"></div></div>'
-            ).join('');
-        }
-        function isMyStory(s) {
-            if (s && s._local) return true;
-            const u = window.enjoyUser;
-            return !!(u && s && ((s.authorUid && s.authorUid === u.uid) || (!s.authorUid && s.author === window.enjoyProfileName)));
-        }
-        function viewerEntries(s) {
-            const raw = (s && s.viewers) || {};
-            const authorUid = s && s.authorUid;
-            let arr = [];
-            if (Array.isArray(raw)) arr = raw;
-            else if (raw && typeof raw === 'object') arr = Object.keys(raw).map(uid => Object.assign({ uid }, raw[uid] || {}));
-            return arr
-                .filter(v => v && v.uid !== authorUid)
-                .sort((a, b) => (b.viewedAt || 0) - (a.viewedAt || 0));
-        }
-        function viewedAtText(t) {
-            const diff = Math.max(0, Date.now() - (t || 0));
-            const m = Math.floor(diff / 60000);
-            if (m < 1) return '방금 봄';
-            if (m < 60) return m + '분 전';
-            const h = Math.floor(m / 60);
-            if (h < 24) return h + '시간 전';
-            return Math.floor(h / 24) + '일 전';
-        }
-        function renderViewersSheet(s) {
-            const list = $('story-viewers-list'), sub = $('story-viewers-subtitle');
-            if (!list || !sub) return;
-            const entries = viewerEntries(s || viewList[viewerIdx]);
-            sub.textContent = '조회 ' + entries.length;
-            if (!entries.length) {
-                list.innerHTML = '<div class="h-full min-h-[180px] flex flex-col items-center justify-center text-center text-white/40">' +
-                    '<div class="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mb-3"><i class="fa-solid fa-user-group text-[18px]"></i></div>' +
-                    '<div class="text-[13px] font-semibold">아직 본 사람이 없어요</div>' +
-                    '<div class="text-[11px] mt-1">스토리를 보면 여기에 표시돼요</div></div>';
-                return;
-            }
-            list.innerHTML = entries.map(v => {
-                const name = v.name || v.email || '알 수 없음';
-                const col = (window.enjoyMemberColor && v.name) ? window.enjoyMemberColor(v.name) : null;
-                const avatar = v.photoURL
-                    ? '<img src="' + esc(v.photoURL) + '" class="w-full h-full object-cover" referrerpolicy="no-referrer">'
-                    : '<div class="w-full h-full rounded-full ' + (col ? col.solid : 'bg-gray-500') + '"></div>';
-                return '<div class="story-viewer-row">' +
-                        '<div class="w-10 h-10 rounded-full overflow-hidden shrink-0">' + avatar + '</div>' +
-                        '<div class="flex-1 min-w-0">' +
-                            '<div class="text-white text-[14px] font-bold truncate">' + esc(name) + '</div>' +
-                            '<div class="text-white/45 text-[11px] font-medium mt-0.5">' + viewedAtText(v.viewedAt) + '</div>' +
-                        '</div>' +
-                    '</div>';
-            }).join('');
-        }
-        function updateViewersButton(s) {
-            const btn = $('story-viewers-btn'), cnt = $('story-viewers-count'), moreDelete = $('story-more-delete');
-            const mine = !!(s && isMyStory(s));
-            if (moreDelete) {
-                moreDelete.classList.toggle('hidden', !mine);
-            }
-            if (!btn || !cnt) return;
-            if (!s || !mine) {
-                btn.classList.add('hidden');
-                btn.classList.remove('flex');
-                closeViewersSheet(false);
-                return;
-            }
-            cnt.textContent = viewerEntries(s).length;
-            btn.classList.remove('hidden');
-            btn.classList.add('flex');
-            renderViewersSheet(s);
-        }
-        async function markStoryViewed(s) {
-            const u = window.enjoyUser;
-            if (!s || s._local || !s._id || !u || !window.enjoySync || !fbReady() || isMyStory(s)) return;
-            if (s.viewers && s.viewers[u.uid]) return;
-            const key = s._id + ':' + u.uid;
-            if (viewedStoryKeys[key]) return;
-            viewedStoryKeys[key] = 1;
-            const viewer = {
-                uid: u.uid,
-                name: window.enjoyProfileName || u.displayName || '이름 없음',
-                email: u.email || '',
-                photoURL: u.photoURL || '',
-                viewedAt: Date.now()
-            };
-            if (!s.viewers || Array.isArray(s.viewers)) s.viewers = {};
-            s.viewers[u.uid] = viewer;
-            try {
-                const viewers = {};
-                viewers[u.uid] = viewer;
-                await window.fsSetDoc(window.fsDoc('stories', s._id), { viewers }, { merge: true });
-            } catch (e) {
-                delete viewedStoryKeys[key];
-            }
-        }
-        function openViewersSheet() {
-            const s = viewList[viewerIdx];
-            if (!s || !isMyStory(s)) return;
-            clearTimeout(viewerTimer);
-            const vid = $('story-viewer-video');
-            if (vid && !vid.classList.contains('hidden')) vid.pause();
-            const preview = $('story-activity-preview-img');
-            if (preview) {
-                preview.src = s.thumb || (s.type === 'image' ? s.url : '');
-                preview.classList.toggle('opacity-0', !preview.getAttribute('src'));
-            }
-            renderViewersSheet(s);
-            const sheet = $('story-viewers-sheet');
-            clearTimeout(activityCloseTimer);
-            sheet.classList.remove('is-opening', 'is-closing');
-            openOverlay(sheet);
-            void sheet.offsetWidth;
-            sheet.classList.add('is-opening');
-        }
-        function closeViewersSheet(resume) {
-            const sheet = $('story-viewers-sheet');
-            if (!sheet || sheet.classList.contains('hidden')) return;
-            clearTimeout(activityCloseTimer);
-            sheet.classList.remove('is-opening');
-            sheet.classList.add('is-closing');
-            activityCloseTimer = setTimeout(function () {
-                closeOverlay(sheet);
-                sheet.classList.remove('is-closing');
-                if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
-            }, 220);
-        }
-        function openMoreSheet() {
-            const s = viewList[viewerIdx];
-            if (!s) return;
-            clearTimeout(viewerTimer);
-            const vid = $('story-viewer-video');
-            if (vid && !vid.classList.contains('hidden')) vid.pause();
-            const del = $('story-more-delete');
-            if (del) del.classList.toggle('hidden', !isMyStory(s));
-            const sheet = $('story-more-sheet');
-            const panel = sheet && sheet.querySelector('.story-more-panel');
-            if (!sheet || !panel) return;
-            clearTimeout(storyMoreCloseTimer);
-            openOverlay(sheet);
-            panel.style.animation = 'none';
-            void panel.offsetWidth;
-            panel.style.animation = 'more-pop-in 0.46s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
-            panel.querySelectorAll('[data-story-more-item]').forEach(function (item, i) {
-                if (item.classList.contains('hidden')) return;
-                item.style.animation = 'none';
-                void item.offsetWidth;
-                item.style.animation = 'more-item-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ' + (0.06 + i * 0.055) + 's both';
-            });
-        }
-        function closeMoreSheet(resume) {
-            const sheet = $('story-more-sheet');
-            if (!sheet || sheet.classList.contains('hidden')) return;
-            const panel = sheet.querySelector('.story-more-panel');
-            clearTimeout(storyMoreCloseTimer);
-            if (panel) panel.style.animation = 'more-pop-out 0.2s cubic-bezier(0.4, 0, 1, 1) forwards';
-            storyMoreCloseTimer = setTimeout(function () {
-                closeOverlay(sheet);
-                if (panel) panel.style.animation = '';
-                if (resume && !$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx);
-            }, 195);
-        }
-        // 멤버별 스토리 보기 (uid 없으면 전체)
-        function openViewerByUid(uid) {
-            viewUid = uid || null;
-            refilterView();
-            if (!viewList.length) return;
-            openOverlay($('story-viewer'));
-            buildBars();
-            showSegment(0);
-        }
-        function openViewer(start) {
-            viewUid = null; refilterView();
-            if (!viewList.length) return;
-            openOverlay($('story-viewer'));
-            buildBars();
-            showSegment(start || 0);
-        }
-        function updateStoryUiContrast(media) {
-            const viewer = $('story-viewer');
-            if (!viewer || !media) return;
-            try {
-                const w = media.naturalWidth || media.videoWidth || 0;
-                const h = media.naturalHeight || media.videoHeight || 0;
-                if (!w || !h) return;
-                const canvas = document.createElement('canvas');
-                canvas.width = 24;
-                canvas.height = 8;
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                ctx.drawImage(media, 0, 0, w, Math.max(1, Math.round(h * 0.28)), 0, 0, canvas.width, canvas.height);
-                const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-                let luminance = 0, count = 0;
-                for (let i = 0; i < pixels.length; i += 4) {
-                    if (pixels[i + 3] < 32) continue;
-                    luminance += pixels[i] * 0.2126 + pixels[i + 1] * 0.7152 + pixels[i + 2] * 0.0722;
-                    count++;
-                }
-                viewer.classList.toggle('story-ui-on-light', !!count && luminance / count > 158);
-            } catch (e) {
-                viewer.classList.remove('story-ui-on-light');
-            }
-        }
-        let segToken = 0;
-        function showSegment(idx) {
-            clearTimeout(viewerTimer);
-            closeViewersSheet(false);
-            closeMoreSheet(false);
-            if (idx < 0) idx = 0;
-            if (idx > viewList.length - 1) { closeViewer(); return; }
-            viewerIdx = idx;
-            if (viewerZoom) viewerZoom.reset();
-            const s = viewList[idx];
-            $('story-viewer').classList.remove('story-ui-on-light');
-            const fills = $('story-viewer-bars').querySelectorAll('.story-bar-fill');
-            fills.forEach((f, i) => { f.style.transition = 'none'; f.style.width = i < idx ? '100%' : '0%'; });
-            const fill = fills[idx];
-            const img = $('story-viewer-img'), vid = $('story-viewer-video'), tl = $('story-viewer-time'), ld = $('story-viewer-loading');
-            const viewerText = $('story-viewer-text');
-            const ageMs = Math.max(0, Date.now() - s.createdAt);
-            const ageSeconds = Math.max(1, Math.floor(ageMs / 1000));
-            const ageMinutes = Math.floor(ageMs / 60000);
-            tl.textContent = ageSeconds < 60 ? ageSeconds + '초' : (ageMinutes < 60 ? ageMinutes + '분' : Math.floor(ageMinutes / 60) + '시간');
-            // 올린 사람(프로필 이름) 표시 + 모임통장과 통일된 프로필 색상
-            const author = s.author || '엔조이 스토리';
-            const au = $('story-viewer-author'); if (au) au.textContent = isMyStory(s) ? '내 스토리' : author;
-            const av = $('story-viewer-avatar');
-            if (av) {
-                const photo = (window.enjoyMemberPhoto && s.authorUid) ? window.enjoyMemberPhoto(s.authorUid) : '';
-                const col = (window.enjoyMemberColor && s.author) ? window.enjoyMemberColor(s.author) : null;
-                if (photo) { av.className = 'w-7 h-7 rounded-full overflow-hidden'; av.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover" referrerpolicy="no-referrer">'; }
-                else { av.innerHTML = ''; av.className = 'w-7 h-7 rounded-full ' + (col ? col.solid : 'bg-gray-500'); }
-            }
-            updateViewersButton(s);
-            markStoryViewed(s);
-            if (viewerText) {
-                viewerText.textContent = s.text || '';
-                viewerText.classList.toggle('hidden', !s.text);
-            }
-
-            const token = ++segToken;
-            vid.pause(); vid.onended = null; vid.onloadedmetadata = null; vid.oncanplay = null; vid.onerror = null; vid.removeAttribute('src'); mHide(vid);
-            mHide(img); img.onload = null; img.onerror = null; img.removeAttribute('src');
-            if (ld) mShow(ld);
-            const url = s.url;
-            if (!url) { if (ld) mHide(ld); viewerTimer = setTimeout(next, 1200); return; }
-
-            const startBar = (ms) => { if (!fill) return; fill.style.transition = 'none'; fill.style.width = '0%'; requestAnimationFrame(() => { fill.style.transition = 'width ' + ms + 'ms linear'; fill.style.width = '100%'; }); };
-
-            if (s.type === 'image') {
-                img.onload = () => { if (token !== segToken) return; updateStoryUiContrast(img); if (ld) mHide(ld); startBar(VIDEO_MAX_MS); viewerTimer = setTimeout(next, VIDEO_MAX_MS); };
-                img.onerror = () => { if (token !== segToken) return; if (ld) mHide(ld); viewerTimer = setTimeout(next, 1200); };
-                img.crossOrigin = 'anonymous';
-                img.src = url; mShow(img);
-            } else {
-                vid.oncanplay = () => { if (token !== segToken) return; updateStoryUiContrast(vid); if (ld) mHide(ld); };
-                vid.onloadedmetadata = () => { if (token !== segToken) return; startBar((vid.duration && isFinite(vid.duration)) ? vid.duration * 1000 : VIDEO_MAX_MS); };
-                vid.onerror = () => { if (token !== segToken) return; if (ld) mHide(ld); viewerTimer = setTimeout(next, 1200); };
-                vid.onended = next;
-                vid.crossOrigin = 'anonymous';
-                vid.src = url; mShow(vid); vid.currentTime = 0; vid.play().catch(() => {});
-            }
-        }
-        function next() { (viewerIdx < viewList.length - 1) ? showSegment(viewerIdx + 1) : closeViewer(); }
-        function prev() { showSegment(viewerIdx > 0 ? viewerIdx - 1 : 0); }
-        function closeViewer() {
-            clearTimeout(viewerTimer);
-            closeViewersSheet(false);
-            closeMoreSheet(false);
-            if (viewerZoom) viewerZoom.reset();
-            const vid = $('story-viewer-video');
-            vid.pause(); vid.onended = null; vid.removeAttribute('src');
-            if (viewerUrl) { URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
-            closeOverlay($('story-viewer'));
-        }
-        async function deleteCurrent() {
-            const s = viewList[viewerIdx];
-            if (!s || !isMyStory(s)) return;
-            if (!confirm('이 스토리를 모두에게서 삭제할까요?')) return;
-            clearTimeout(viewerTimer);
-            closeViewersSheet(false);
-            closeMoreSheet(false);
-            viewList.splice(viewerIdx, 1);                 // 보기 목록에서 즉시 제거
-            const gi = stories.indexOf(s); if (gi >= 0) stories.splice(gi, 1); // 전체 목록에서도 제거
-            removeStory(s);                                // 서버(Firestore)에서 삭제
-            renderTray();
-            if (!viewList.length) { closeViewer(); return; }
-            if (viewerIdx > viewList.length - 1) viewerIdx = viewList.length - 1;
-            buildBars();
-            showSegment(viewerIdx);
-        }
-
-        /* ---------- 폰에 저장 (다운로드 / 공유시트) ---------- */
-        async function saveMedia(blob, type) {
-            if (!blob) return;
-            const ext = (type === 'video') ? ((blob.type || '').indexOf('mp4') >= 0 ? 'mp4' : 'webm') : 'jpg';
-            const fname = 'enjoy_' + Date.now() + '.' + ext;
-            try {
-                const file = new File([blob], fname, { type: blob.type || (type === 'video' ? 'video/mp4' : 'image/jpeg') });
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file] }); // iOS: 공유시트 → '이미지/비디오 저장'
-                    return;
-                }
-            } catch (e) { if (e && e.name === 'AbortError') return; }
-            // 폴백: 다운로드 링크
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = fname;
-            document.body.appendChild(a); a.click(); a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-        }
-        function savePreview() { if (pending) saveMedia(pending.blob, pending.type); }
-        async function saveCurrent() {
-            const s = viewList[viewerIdx]; if (!s || !s.url) return;
-            try { const r = await fetch(s.url); const b = await r.blob(); await saveMedia(b, s.type); }
-            catch (e) { window.open(s.url, '_blank'); } // CORS 등 실패 시 새 탭으로 열어 저장
-        }
-        async function saveCurrentFromMore() {
-            await saveCurrent();
-            closeMoreSheet(true);
-        }
-        function deleteCurrentFromMore() {
-            closeMoreSheet(false);
-            deleteCurrent();
-        }
-
-        /* ---------- 카메라 핀치 줌 ---------- */
-        function wireCameraZoom() {
-            const area = $('story-cam-video');
-            if (!area || area.dataset.zwired) return; area.dataset.zwired = '1';
-            let pinching = false, startDist = 0, startZoom = 1;
-            let tapStart = null;
-            const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-            area.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) { tapStart = null; pinching = true; startDist = dist(e.touches); startZoom = camZoom; e.preventDefault(); }
-            }, { passive: false });
-            area.addEventListener('touchmove', (e) => {
-                if (pinching && e.touches.length === 2) { setZoom(startZoom * dist(e.touches) / startDist); e.preventDefault(); }
-            }, { passive: false });
-            const end = (e) => { if (pinching && e.touches.length < 2) pinching = false; };
-            area.addEventListener('touchend', end);
-            area.addEventListener('touchcancel', end);
-            area.addEventListener('pointerdown', (e) => {
-                if (e.pointerType === 'mouse' && e.button !== 0) return;
-                tapStart = { x: e.clientX, y: e.clientY, t: Date.now() };
-            });
-            area.addEventListener('pointerup', (e) => {
-                if (!tapStart || pinching) { tapStart = null; return; }
-                const moved = Math.hypot(e.clientX - tapStart.x, e.clientY - tapStart.y);
-                if (moved < 12 && Date.now() - tapStart.t < 420) focusCameraAt(e.clientX, e.clientY);
-                tapStart = null;
-            });
-            area.addEventListener('pointercancel', () => { tapStart = null; });
-        }
-
-        /* ---------- 핀치 확대/축소 (두 손가락 줌 + 한 손가락 이동) ---------- */
-        function attachPinchZoom(container, getMedia, hooks) {
-            hooks = hooks || {};
-            let scale = 1, tx = 0, ty = 0, startDist = 0, startScale = 1, panX = 0, panY = 0, sx = 0, sy = 0, mode = null;
-            const apply = (anim) => {
-                const el = getMedia(); if (!el) return;
-                el.style.transformOrigin = 'center center';
-                el.style.transition = anim ? 'transform .2s ease' : 'none';
-                el.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
-            };
-            const reset = (anim, silent) => {
-                scale = 1; tx = 0; ty = 0; mode = null; apply(anim);
-                if (!silent && hooks.onReset) hooks.onReset();
-            };
-            const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-            const clamp = () => {
-                const maxX = container.clientWidth * (scale - 1) / 2;
-                const maxY = container.clientHeight * (scale - 1) / 2;
-                tx = Math.max(-maxX, Math.min(maxX, tx));
-                ty = Math.max(-maxY, Math.min(maxY, ty));
-            };
-            container.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    if (scale <= 1.02 && hooks.onZoomStart) hooks.onZoomStart();
-                    mode = 'pinch'; startDist = dist(e.touches); startScale = scale; e.preventDefault();
-                } else if (e.touches.length === 1 && scale > 1.02) {
-                    mode = 'pan'; sx = e.touches[0].clientX; sy = e.touches[0].clientY; panX = tx; panY = ty; e.preventDefault();
-                } else { mode = null; }
-            }, { passive: false });
-            container.addEventListener('touchmove', (e) => {
-                if (mode === 'pinch' && e.touches.length === 2) {
-                    scale = Math.max(1, Math.min(4, startScale * dist(e.touches) / startDist));
-                    clamp(); apply(false); e.preventDefault();
-                } else if (mode === 'pan' && e.touches.length === 1) {
-                    tx = panX + (e.touches[0].clientX - sx); ty = panY + (e.touches[0].clientY - sy);
-                    clamp(); apply(false); e.preventDefault();
-                }
-            }, { passive: false });
-            const onEnd = (e) => {
-                if (mode === 'pinch' && e.touches.length < 2) {
-                    if (scale <= 1.05) { reset(true); }
-                    else if (e.touches.length === 1) { mode = 'pan'; sx = e.touches[0].clientX; sy = e.touches[0].clientY; panX = tx; panY = ty; }
-                    else { mode = null; }
-                } else if (mode === 'pan' && e.touches.length === 0) {
-                    if (scale <= 1.05) reset(true); else mode = null;
-                }
-            };
-            container.addEventListener('touchend', onEnd, { passive: false });
-            container.addEventListener('touchcancel', onEnd, { passive: false });
-            return { reset: () => reset(false, true), isZoomed: () => scale > 1.02 };
-        }
-
-        /* ---------- 초기화 ---------- */
-        function init() {
-            wireShutter();
-            wireFallback();
-            wireCameraZoom();
-            buildDial();
-            wireDial();
-            const previewText = $('story-preview-text');
-            if (previewText) {
-                previewText.addEventListener('input', syncPreviewText);
-                ['pointerdown', 'touchstart', 'click'].forEach((name) => {
-                    previewText.addEventListener(name, (e) => e.stopPropagation());
-                });
-            }
-            // 확대/축소: 뷰어는 줌 시작 시 자동 넘김 일시정지, 원래 크기로 돌아오면 재생 재개
-            viewerZoom = attachPinchZoom($('story-viewer'),
-                () => $('story-viewer-img').classList.contains('hidden') ? $('story-viewer-video') : $('story-viewer-img'),
-                {
-                    onZoomStart: () => { clearTimeout(viewerTimer); const v = $('story-viewer-video'); if (!v.classList.contains('hidden')) v.pause(); },
-                    onReset: () => { if (!$('story-viewer').classList.contains('hidden')) showSegment(viewerIdx); }
-                });
-            previewZoom = attachPinchZoom($('story-preview'),
-                () => $('story-preview-img').classList.contains('hidden') ? $('story-preview-video') : $('story-preview-img'), {});
-            // 길게 누를 때 복사/선택 메뉴(컨텍스트 메뉴) 방지
-            ['story-camera', 'story-preview', 'story-viewer'].forEach((id) => {
-                const el = $(id); if (el) el.addEventListener('contextmenu', (e) => e.preventDefault());
-            });
-            // 스토리 트레이 먼저 그림. 멤버는 enjoySubscribeStories()로 Firebase 구독,
-            // 게스트/스페셜은 enjoyLoadLocalStories()로 본인 기기 스토리 로드(로그인 흐름에서 호출).
-            renderTray();
-            setInterval(pruneLocal, 30000); // 24시간 지난 스토리 화면에서 정리
-            document.addEventListener('visibilitychange', () => { if (!document.hidden) pruneLocal(); });
-        }
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-        else init();
-
-        window.EnjoyStory = { openCamera, closeCamera, flipCamera, retake, post, pickGallery, toggleTextEditor,
-                              setZoom, savePreview, saveCurrent, saveCurrentFromMore,
-                              openViewer, openViewerByUid, prev, next, closeViewer, deleteCurrent,
-                              deleteCurrentFromMore, openViewersSheet, closeViewersSheet,
-                              openMoreSheet, closeMoreSheet };
-    })();
     </script>
 
     <!-- UI Logic Scripts -->
@@ -8548,8 +6368,6 @@
             // + 일정 추가·수정·삭제 (일정/모임통장 화면 자체는 둘러보기로 구경 가능)
             ['openBrowser', 'goToTravel', 'showSecretModal',
              'openAddScheduleModal', 'openEditScheduleModal', 'saveScheduleToFirebase', 'deleteSchedule'].forEach(function (n) { gateFn(window, n); });
-            // 스토리(카메라/뷰어)
-            if (window.EnjoyStory) { ['openCamera', 'openViewer', 'openViewerByUid'].forEach(function (n) { gateFn(window.EnjoyStory, n); }); }
         }
         applyGates();
         window.addEventListener('load', function () { setTimeout(applyGates, 200); });
@@ -8584,18 +6402,17 @@
         window.enjoyEnterLocalMode = function () {
             window.enjoySync = false;
             window.enjoyLoadLocalSchedule();
-            try { window.enjoyLoadLocalStories && window.enjoyLoadLocalStories(); } catch (e) {}
             var ld = document.getElementById('app-loader');
             if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
         };
     })();
     </script>
 
-    <!-- [New] 엔조이 멤버: 프로필 이름(스토리 표시) + 멤버별 스토리/활동상태 통합 트레이 -->
+    <!-- [New] 엔조이 멤버: 프로필 이름 + 멤버별 활동상태 트레이 -->
     <script>
     (function () {
         const MEMBERS = window.ENJOY_MEMBERS;
-        // 모임통장과 통일된 멤버 프로필 색상 (solid = 사진/스토리 없을 때 단색 원)
+        // 모임통장과 통일된 멤버 프로필 색상 (solid = 사진 없을 때 단색 원)
         const MEMBER_COLORS = {
             '홍박사': { bg: 'bg-blue-500/20',   text: 'text-blue-400',   solid: 'bg-blue-500',   char: '홍' },
             '류짱':   { bg: 'bg-purple-500/20', text: 'text-purple-400', solid: 'bg-purple-500', char: '류' },
@@ -8646,7 +6463,7 @@
             renameMode = !!isRename;
             const t = $('profile-title'), d = $('profile-desc'), c = $('profile-cancel'), inp = $('profile-input'), st = $('profile-status');
             if (t) t.textContent = isRename ? '프로필 이름 변경' : '프로필 이름을 입력해주세요';
-            if (d) d.innerHTML = isRename ? '새 이름을 입력해주세요. (이미 쓰는 이름은 불가)' : '스토리에 표시될 내 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(스페셜)</b>이 붙고, 기록은 본인 기기에만 저장돼요.';
+            if (d) d.innerHTML = isRename ? '새 이름을 입력해주세요. (이미 쓰는 이름은 불가)' : '멤버 현황에 표시될 내 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(스페셜)</b>이 붙고, 기록은 본인 기기에만 저장돼요.';
             if (c) c.classList.toggle('hidden', !isRename);     // 변경 모드에서만 취소 가능
             if (inp) inp.value = isRename ? (window.enjoyProfileName || '') : '';
             if (st) st.textContent = '';
@@ -8718,76 +6535,32 @@
             if (wd) wd.classList.toggle('hidden', false);              // 로그인 사용자는 탈퇴 가능
         }
 
-        /* ----- 스토리 트레이: 기존 스토리 모습 + 6명 멤버 항상 표시 + 활동 상태 ----- */
-        function agoText(ms) {
-            const m = Math.floor(ms / 60000);
-            if (m < 1) return '방금';
-            if (m < 60) return m + '분 전';
-            const h = Math.floor(m / 60);
-            if (h < 24) return h + '시간 전';
-            return Math.floor(h / 24) + '일 전';
-        }
+        /* ----- 멤버 트레이: 6명 멤버 항상 표시 + 활동 상태 ----- */
         function renderMembers() {
             const wrap = $('story-tray'); if (!wrap) return;
             const now = Date.now();
-            const stories = window.enjoyStories || [];
             // 이름 → 멤버 문서(가입자)
             const byName = {}; lastMembers.forEach(m => { if (m.name) byName[m.name] = m; });
-            // 이름 → 최신 스토리(썸네일/uid)
-            const storyByName = {};
-            stories.forEach(s => {
-                if (!s.author) return;
-                const e = storyByName[s.author] || (storyByName[s.author] = { uid: s.authorUid || '', thumb: '', t: -1 });
-                if ((s.createdAt || 0) >= e.t) { e.t = s.createdAt || 0; e.thumb = s.thumb || e.thumb; if (s.authorUid) e.uid = s.authorUid; }
-            });
-
-            // 맨 앞: 스토리 추가 버튼 (기존 모습 그대로)
-            let html = '<button onclick="window.haptic && window.haptic(); window.EnjoyStory.openCamera()" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">' +
-                    '<div class="w-[64px] h-[64px] rounded-full border-2 border-dashed border-white/30 flex items-center justify-center bg-white/5"><i class="fa-solid fa-plus text-white/85 text-[20px]"></i></div>' +
-                    '<span class="text-[11px] text-gray-400 font-medium w-full text-center truncate">스토리 추가</span>' +
-                    '<span class="text-[10px] -mt-1">&nbsp;</span>' +
-                '</button>';
-
-            // [임시] 게스트/스페셜이 올린 로컬 스토리 → '내 스토리'로 표시
-            const myLocal = (window.enjoyStories || []).filter(s => s._local);
-            if (myLocal.length) {
-                const last = myLocal[myLocal.length - 1];
-                const luid = last.authorUid || 'local';
-                const lthumb = last.thumb;
-                const linner = lthumb ? '<img src="' + lthumb + '" class="w-full h-full object-cover rounded-full">' : '<div class="w-full h-full rounded-full bg-gray-500"></div>';
-                html += '<button onclick="window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid(\'' + luid + '\')" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] active:scale-95 transition-transform">' +
-                        '<div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[1.5px] enjoy-page-bg">' + linner + '</div></div>' +
-                        '<span class="text-[11px] text-gray-400 font-medium w-full text-center truncate">내 스토리</span>' +
-                        '<span class="text-[10px] -mt-1">&nbsp;</span>' +
-                    '</button>';
-            }
 
             // 멤버 6명 항상 고정 표시
-            html += MEMBERS.map(name => {
+            const html = MEMBERS.map(name => {
                 const mem = byName[name];                 // 가입자면 존재
                 const registered = !!mem;
                 const active = registered && (now - (mem.lastActive || 0) < ACTIVE_MS);
                 const col = window.enjoyMemberColor(name);
-                const st = storyByName[name];
-                const hasStory = !!(st && st.uid);
                 const photo = registered ? (mem.photoURL || '') : '';
 
-                // 원 안: 스토리 썸네일 > 구글 사진 > 단색 원 (글자 없음)
+                // 원 안: 구글 사진 > 단색 원 (글자 없음)
                 let inner;
-                if (hasStory && st.thumb) inner = '<img src="' + st.thumb + '" class="w-full h-full object-cover rounded-full">';
-                else if (photo) inner = '<img src="' + photo + '" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer">';
+                if (photo) inner = '<img src="' + photo + '" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer">';
                 else inner = '<div class="w-full h-full rounded-full ' + col.solid + (registered ? '' : ' opacity-30') + '"></div>';
 
-                // 스토리 있으면 알록달록 링(간격은 페이지색=거의 안 보임), 없으면 옅은 테두리
-                const circle = hasStory
-                    ? '<div class="w-[64px] h-[64px] rounded-full p-[2.5px]" style="background:linear-gradient(135deg,#f9ce34 0%,#ee2a7b 50%,#6228d7 100%)"><div class="w-full h-full rounded-full p-[1.5px] enjoy-page-bg">' + inner + '</div></div>'
-                    : '<div class="w-[64px] h-[64px] rounded-full p-[2px] bg-white/10"><div class="w-full h-full rounded-full overflow-hidden">' + inner + '</div></div>';
+                const circle = '<div class="w-[64px] h-[64px] rounded-full p-[2px] bg-white/10"><div class="w-full h-full rounded-full overflow-hidden">' + inner + '</div></div>';
                 const dot = active ? '<span class="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 enjoy-page-border"></span>' : '';
                 const sub = registered
-                    ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-1 w-full text-center truncate">' + (active ? '활동 중' : agoText(now - (mem.lastActive || 0))) + '</span>'
+                    ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-1 w-full text-center truncate">' + (active ? '활동 중' : '비활동') + '</span>'
                     : '<span class="text-[10px] text-gray-500 -mt-1 w-full text-center truncate">미가입자</span>';
-                const onclick = hasStory ? "window.haptic && window.haptic(); window.EnjoyStory.openViewerByUid('" + st.uid + "')" : "";
-                return '<div onclick="' + onclick + '" class="shrink-0 flex flex-col items-center gap-1.5 w-[68px] ' + (hasStory ? 'active:scale-95 transition-transform cursor-pointer' : '') + '">' +
+                return '<div class="shrink-0 flex flex-col items-center gap-1.5 w-[68px]">' +
                             '<div class="relative">' + circle + dot + '</div>' +
                             '<span class="text-[11px] font-semibold ' + (registered ? 'text-white' : 'text-gray-500') + ' w-full text-center truncate">' + name + '</span>' +
                             sub +
@@ -8817,7 +6590,7 @@
             return (lastMembers || []).filter(m => m && m.name).map(m => ({ uid: m.uid, name: m.name, photoURL: m.photoURL || '', avail: m.avail || {} }));
         };
 
-        // 정식 멤버 전용 서비스 시작 (활동 하트비트 + 멤버/일정/모임통장/스토리 파이어베이스 동기화)
+        // 정식 멤버 전용 서비스 시작 (활동 하트비트 + 멤버/일정/모임통장 파이어베이스 동기화)
         function startMemberSync() {
             window.enjoySync = true;
             beat();
@@ -8826,7 +6599,6 @@
             window.addEventListener('focus', beat);
             subscribeMembers();
             if (window.enjoyEnableSync) window.enjoyEnableSync();             // 일정/모임통장
-            if (window.enjoySubscribeStories) window.enjoySubscribeStories(); // 스토리
         }
         window.enjoyStartMemberSync = startMemberSync;
 
@@ -8873,7 +6645,7 @@
         window.limit = limit;
         window.getDocs = getDocs;
         window.arrayUnion = arrayUnion;
-        // 엔조이 스토리(모두 공유)용 헬퍼 — Storage 없이 Firestore에만 저장(무료 요금제 OK)
+        // 멤버/모임 데이터 동기화용 Firebase 헬퍼
         window.fsOnSnapshot = onSnapshot;
         window.fsTimestampFromMillis = (ms) => Timestamp.fromMillis(ms);
         window.fsDoc = (...p) => doc(window.meetingDb, ...p);
@@ -9011,7 +6783,7 @@
                     hideLogin();
                     const emailEl = document.getElementById('more-account-email');
                     if (emailEl && user.email) emailEl.textContent = user.email;
-                    window.meetingAuthed = true; // 엔조이 스토리 구독 신호
+                    window.meetingAuthed = true; // 멤버/모임 데이터 동기화 신호
                     // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
                     try {
