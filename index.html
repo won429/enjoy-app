@@ -1536,15 +1536,18 @@
             content: "";
             position: absolute;
             inset: -3px;
-            z-index: 0;
+            z-index: -1;
             border-radius: 25px;
-            background: conic-gradient(from 0deg, #7C3AED, #38BDF8, #34D399, #60A5FA, #A78BFA, #7C3AED);
+            padding: 4px;
+            background: conic-gradient(from var(--ledger-ai-angle), #7C3AED, #38BDF8, #34D399, #60A5FA, #A78BFA, #7C3AED);
             filter: blur(4px);
-            opacity: .38;
-            animation: ledger-ai-border-spin 4.8s linear infinite;
+            opacity: .42;
+            animation: ledger-ai-gradient-spin 4.8s linear infinite;
             pointer-events: none;
-            transform-origin: 50% 50%;
-            will-change: transform;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
         }
         .ledger-ai-card::after {
             content: "";
@@ -1552,11 +1555,14 @@
             inset: 0;
             z-index: 0;
             border-radius: inherit;
-            background: conic-gradient(from 0deg, #7C3AED, #38BDF8, #34D399, #60A5FA, #A78BFA, #7C3AED);
-            animation: ledger-ai-border-spin 4.8s linear infinite;
+            padding: 1.2px;
+            background: conic-gradient(from var(--ledger-ai-angle), #7C3AED, #38BDF8, #34D399, #60A5FA, #A78BFA, #7C3AED);
+            animation: ledger-ai-gradient-spin 4.8s linear infinite;
             pointer-events: none;
-            transform-origin: 50% 50%;
-            will-change: transform;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
         }
         .ledger-ai-card-inner {
             position: relative;
@@ -1615,8 +1621,13 @@
             font-size: 12px;
             color: #858B94;
         }
-        @keyframes ledger-ai-border-spin {
-            to { transform: rotate(360deg); }
+        @property --ledger-ai-angle {
+            syntax: '<angle>';
+            inherits: false;
+            initial-value: 0deg;
+        }
+        @keyframes ledger-ai-gradient-spin {
+            to { --ledger-ai-angle: 360deg; }
         }
         @media (prefers-reduced-motion: reduce) {
             .ledger-ai-card::before,
