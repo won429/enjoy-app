@@ -65,11 +65,17 @@
         #meeting-screen {
             min-height: 100dvh;
         }
-        #bottom-nav > .liquid-glass,
-        #schedule-subnav {
+        #bottom-nav > .liquid-glass {
             max-width: calc(100vw - 20px);
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+        }
+        #schedule-subnav {
+            max-width: calc(100vw - 20px);
+            overflow: visible;
+        }
+        #schedule-subnav > .liquid-glass {
+            max-width: 100%;
         }
         @media (max-width: 380px) {
             #home-screen,
@@ -86,9 +92,12 @@
             #bottom-nav.nav-compact button {
                 width: 42px !important;
             }
-            .home-upcoming-cards > div,
             #home-screen [data-home-card] {
                 height: clamp(176px, 52vw, 210px) !important;
+            }
+            #home-screen .home-upcoming-cards > div[data-home-card] {
+                height: auto !important;
+                aspect-ratio: 16 / 9;
             }
         }
         @media (min-width: 768px) {
@@ -679,6 +688,11 @@
             -webkit-backdrop-filter: blur(16px) saturate(1.35);
             backdrop-filter: blur(16px) saturate(1.35);
             isolation: isolate;
+        }
+        #home-screen .home-upcoming-cards > div[data-home-card] {
+            height: auto !important;
+            min-height: 0 !important;
+            aspect-ratio: 16 / 9;
         }
         .home-upcoming-cards > div::after {
             content: "";
@@ -1453,6 +1467,11 @@
             -webkit-backdrop-filter: blur(14px) saturate(1.35);
             backdrop-filter: blur(14px) saturate(1.35);
         }
+        @supports not (-webkit-touch-callout: none) {
+            #community-comment-bar {
+                padding-bottom: 10px !important;
+            }
+        }
         .community-like-profile { box-shadow: 0 0 0 2px #000; }
         .vlog-detail-screen { background-color: #000; }
         .vlog-episode-card {
@@ -1498,6 +1517,10 @@
         #bottom-nav > .liquid-glass, #schedule-subnav > .liquid-glass {
             transition: transform .54s cubic-bezier(0.18, 1.42, 0.32, 1), opacity .28s ease, filter .32s ease;
             transform-origin: left center;
+        }
+        #schedule-subnav > .liquid-glass {
+            -webkit-mask-image: -webkit-radial-gradient(white, black);
+            clip-path: inset(0 round 999px);
         }
         .liquid-glass.nav-collapsed { opacity: 0; transform: scaleX(0.34); filter: blur(7px); pointer-events: none; }
         /* 접힌(숨겨진) 메뉴 래퍼는 클릭을 가로채지 않게 (탭 씹힘 방지) */
