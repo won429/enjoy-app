@@ -1528,15 +1528,30 @@
             margin-top: 10px;
             padding: 1.2px;
             border-radius: 22px;
-            overflow: hidden;
+            overflow: visible;
             isolation: isolate;
-            background: #FFFFFF;
+            background: transparent;
         }
         .ledger-ai-card::before {
             content: "";
             position: absolute;
-            inset: -58%;
+            inset: -3px;
             z-index: 0;
+            border-radius: 25px;
+            background: conic-gradient(from 0deg, #7C3AED, #38BDF8, #34D399, #60A5FA, #A78BFA, #7C3AED);
+            filter: blur(4px);
+            opacity: .38;
+            animation: ledger-ai-border-spin 4.8s linear infinite;
+            pointer-events: none;
+            transform-origin: 50% 50%;
+            will-change: transform;
+        }
+        .ledger-ai-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            border-radius: inherit;
             background: conic-gradient(from 0deg, #7C3AED, #38BDF8, #34D399, #60A5FA, #A78BFA, #7C3AED);
             animation: ledger-ai-border-spin 4.8s linear infinite;
             pointer-events: none;
@@ -1604,7 +1619,8 @@
             to { transform: rotate(360deg); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .ledger-ai-card::before { animation: none; }
+            .ledger-ai-card::before,
+            .ledger-ai-card::after { animation: none; }
         }
         .ledger-forecast-list {
             margin-top: 14px;
