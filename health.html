@@ -13,6 +13,10 @@
   <style>
     :root {
       color-scheme: dark;
+      --app-height: 100dvh;
+      --screen-max: 448px;
+      --screen-pad: clamp(16px, 4.8vw, 20px);
+      --nav-reserved: max(110px, calc(92px + env(safe-area-inset-bottom)));
       --bg: #000000;
       --surface: #1c1c1e;
       --surface-2: #26262b;
@@ -51,7 +55,9 @@
       }
     }
 
-    * {
+    *,
+    *::before,
+    *::after {
       box-sizing: border-box;
     }
 
@@ -60,6 +66,9 @@
       width: 100%;
       height: 100%;
       margin: 0;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     body {
@@ -73,7 +82,16 @@
 
     button,
     input {
+      min-width: 0;
+      max-width: 100%;
       font: inherit;
+    }
+
+    img,
+    video,
+    canvas,
+    svg {
+      max-width: 100%;
     }
 
     button {
@@ -89,7 +107,7 @@
 
     #app {
       width: 100%;
-      height: 100dvh;
+      height: var(--app-height);
       overflow-y: auto;
       overflow-x: hidden;
       background: var(--bg);
@@ -112,16 +130,16 @@
     }
 
     .pb-safe {
-      padding-bottom: max(110px, calc(92px + env(safe-area-inset-bottom)));
+      padding-bottom: var(--nav-reserved);
     }
 
     .screen {
-      width: min(100%, 448px);
-      min-height: 100dvh;
+      width: min(100%, var(--screen-max));
+      min-height: var(--app-height);
       display: flex;
       flex-direction: column;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 var(--screen-pad);
     }
 
     .screen-header {
@@ -1466,8 +1484,8 @@
     }
 
     .workout-modal-shell {
-      width: min(100%, 448px);
-      height: 100dvh;
+      width: min(100%, var(--screen-max));
+      height: var(--app-height);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -2275,8 +2293,8 @@
     }
 
     .body-viewer-shell {
-      width: min(100%, 448px);
-      height: 100dvh;
+      width: min(100%, var(--screen-max));
+      height: var(--app-height);
       display: flex;
       flex-direction: column;
       background: #000000;
@@ -2645,6 +2663,224 @@
       .workout-command-row {
         align-items: flex-start;
         flex-direction: column;
+      }
+    }
+
+    @media (min-width: 768px) {
+      :root {
+        --screen-max: 480px;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .content-stack {
+        gap: clamp(20px, 6vw, 28px);
+      }
+
+      .screen-title h1 {
+        font-size: clamp(23px, 6.5vw, 26px);
+      }
+
+      .screen-title p,
+      .section-heading p,
+      .plan-head p,
+      .feed-head p {
+        font-size: clamp(12px, 3.4vw, 14px);
+      }
+
+      .card-pad,
+      .compare-card,
+      .plan-panel,
+      .ai-briefing,
+      .body-setup-panel {
+        padding: clamp(16px, 5vw, 22px);
+      }
+
+      .photo-card,
+      .simple-card {
+        min-height: clamp(310px, 56dvh, 420px);
+      }
+
+      .status-number {
+        font-size: clamp(32px, 9vw, 38px);
+      }
+
+      .progress-circle {
+        width: clamp(72px, 22vw, 82px);
+      }
+
+      .service-card,
+      .mini-panel {
+        min-height: clamp(108px, 31vw, 128px);
+        padding: clamp(13px, 4vw, 16px);
+      }
+
+      .service-card strong,
+      .mini-panel strong,
+      .meal-card strong,
+      .routine-card strong {
+        font-size: clamp(15px, 4.5vw, 17px);
+      }
+
+      .body-period-card {
+        min-height: clamp(66px, 19vw, 74px);
+        padding: 11px 9px;
+      }
+
+      .feed-photo {
+        min-height: clamp(210px, 54dvh, 280px);
+      }
+
+      .workout-modal-body {
+        padding-inline: var(--screen-pad);
+      }
+    }
+
+    @media (max-width: 360px) {
+      .screen-header {
+        gap: 10px;
+      }
+
+      .icon-chip {
+        height: 34px;
+        padding: 0 10px;
+        font-size: 11px;
+      }
+
+      .service-grid,
+      .briefing-actions,
+      .metric-row {
+        gap: 8px;
+      }
+
+      .service-card,
+      .briefing-action,
+      .metric-pill {
+        padding: 12px;
+      }
+
+      .body-period-card strong {
+        font-size: 16px;
+      }
+
+      .body-period-card span {
+        font-size: 10px;
+      }
+
+      .body-record-strip {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .body-record-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .story-rail {
+        grid-auto-columns: 68px;
+      }
+
+      .story-ring {
+        width: 60px;
+        height: 60px;
+      }
+    }
+
+    @media (max-width: 340px) {
+      :root {
+        --screen-pad: 14px;
+      }
+
+      .bottom-nav-inner {
+        grid-template-columns: repeat(5, 48px);
+        gap: 2px;
+        padding: 5px;
+      }
+
+      .nav-item {
+        min-height: 50px;
+      }
+
+      .nav-item span {
+        font-size: 8.5px;
+      }
+    }
+
+    @media (max-height: 700px) {
+      :root {
+        --nav-reserved: max(96px, calc(82px + env(safe-area-inset-bottom)));
+      }
+
+      .screen-header {
+        padding-bottom: 10px;
+      }
+
+      .content-stack {
+        gap: 20px;
+      }
+
+      .photo-card,
+      .simple-card {
+        min-height: clamp(280px, 52dvh, 360px);
+      }
+
+      .body-setup-panel {
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .body-setup-head p {
+        display: none;
+      }
+
+      .body-period-card {
+        min-height: 54px;
+        gap: 4px;
+        padding: 8px;
+      }
+
+      .body-setup-fields {
+        gap: 9px;
+      }
+
+      .body-setup-field {
+        gap: 5px;
+      }
+
+      .body-setup-input,
+      .body-days-wrap {
+        height: 44px;
+      }
+
+      .body-setup-input,
+      .body-setup-input[type="date"]::-webkit-date-and-time-value {
+        line-height: 44px;
+      }
+
+      .body-setup-input[type="date"]::-webkit-date-and-time-value,
+      .body-setup-input[type="date"]::-webkit-datetime-edit,
+      .body-setup-input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+        min-height: 44px;
+      }
+
+      .body-days-input {
+        height: 42px;
+        line-height: 42px;
+      }
+
+      .pill-button,
+      .ghost-button {
+        min-height: 44px;
+      }
+
+      .workout-modal-head,
+      .body-viewer-head {
+        padding-bottom: 10px;
+      }
+
+      .workout-option {
+        min-height: 56px;
       }
     }
   </style>
