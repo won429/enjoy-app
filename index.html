@@ -6607,6 +6607,20 @@
 
         function fbReady() { return !!(window.meetingDb && window.fsOnSnapshot && window.fsSetDoc && window.meetingAuthed && window.enjoyUser); }
 
+        function notifyAndroidMemberTopic(name) {
+    try {
+        if (
+            name &&
+            window.AndroidLogin &&
+            typeof window.AndroidLogin.subscribeMemberTopic === 'function'
+        ) {
+            window.AndroidLogin.subscribeMemberTopic(name);
+        }
+    } catch (e) {
+        console.log('Android 개인 알림 토픽 연결 실패:', e);
+    }
+}
+
         async function beat() {
             if (!fbReady()) return;
             const u = window.enjoyUser;
