@@ -6666,7 +6666,7 @@
     <!-- Firebase Module -->
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, increment, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global functions for firebase interaction
@@ -6756,15 +6756,35 @@
                 // 구글 로그인/로그아웃 전역 함수
                 const provider = new GoogleAuthProvider();
                 provider.setCustomParameters({ prompt: 'select_account' });
+
+                window.loginWithNativeGoogle = async function (idToken) {
+                    try {
+                        const credential = GoogleAuthProvider.credential(idToken);
+                        const result = await signInWithCredential(meetingAuth, credential);
+
+                        console.log('앱 구글 로그인 성공:', result.user);
+
+                        // 로그인 성공 후 화면 갱신
+                        location.reload();
+                    } catch (error) {
+                        console.error('앱 구글 로그인 실패:', error);
+                        alert('앱 구글 로그인에 실패했어요.');
+                    }
+                };
+
                 window.enjoyLogin = async function () {
                     if (loginStatus) loginStatus.textContent = '로그인 창을 여는 중…';
+
+                    // Android WebView 앱 안이면 앱의 네이티브 구글 로그인 호출
+                    if (window.AndroidLogin && typeof window.AndroidLogin.googleLogin === 'function') {
+                        window.AndroidLogin.googleLogin();
+                        return;
+                    }
+
+                    // 일반 브라우저에서는 Firebase 웹 로그인
                     try {
-                        await signInWithPopup(meetingAuth, provider);
+                        await signInWithRedirect(meetingAuth, provider);
                     } catch (e) {
-                        // 팝업 차단/모바일 인앱 브라우저 → 리다이렉트 방식으로 폴백
-                        if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/operation-not-supported-in-this-environment' || e.code === 'auth/popup-closed-by-user')) {
-                            try { await signInWithRedirect(meetingAuth, provider); return; } catch (e2) { e = e2; }
-                        }
                         if (loginStatus) loginStatus.textContent = '로그인에 실패했어요. 다시 시도해 주세요.';
                         console.error('Login error:', e);
                     }
