@@ -92,10 +92,6 @@
             #bottom-nav.nav-compact button {
                 width: 42px !important;
             }
-            #home-screen .home-upcoming-cards > div[data-home-card] {
-                height: auto !important;
-                aspect-ratio: 16 / 9;
-            }
         }
         @media (min-width: 768px) {
             .app-frame,
@@ -602,7 +598,7 @@
         .home-rail > :last-child { margin-right: 20px; }
         .home-rail > .home-content-item {
             flex: none;
-            width: min(58vw, 226px);
+            width: 226px;
             scroll-snap-align: start;
         }
         .home-rail .home-content-item:not(.home-featured) {
@@ -639,9 +635,9 @@
         .home-rail .home-content-item:not(.home-featured) > div:nth-child(2) {
             order: 1;
             width: 100% !important;
-            height: auto !important;
+            height: 127px !important;
             min-height: 0 !important;
-            aspect-ratio: 16 / 9;
+            aspect-ratio: auto;
             border-radius: 18px !important;
             border: 1px solid rgba(255,255,255,.15);
             background: rgba(255,255,255,.06);
@@ -675,9 +671,9 @@
         }
         .home-upcoming-cards > div {
             flex: none;
-            width: min(58vw, 226px) !important;
-            height: auto !important;
-            aspect-ratio: 16 / 9;
+            width: 226px !important;
+            height: 127px !important;
+            aspect-ratio: auto;
             border-radius: 18px !important;
             border: 1px solid rgba(255,255,255,.15);
             scroll-snap-align: start;
@@ -687,12 +683,8 @@
             isolation: isolate;
         }
         #home-screen .home-upcoming-cards > div[data-home-card] {
-            height: auto !important;
+            height: 127px !important;
             min-height: 0 !important;
-            aspect-ratio: 16 / 9;
-        }
-        .home-rail.home-rail-mixed > div[data-home-card] {
-            align-self: stretch;
             aspect-ratio: auto;
         }
         .home-upcoming-cards > div::after {
@@ -719,6 +711,24 @@
             border: 1px solid rgba(255,255,255,.24);
             background: rgba(255,255,255,.18) !important;
             box-shadow: inset 0 1px 1px rgba(255,255,255,.42), 0 8px 18px rgba(0,0,0,.22);
+            -webkit-backdrop-filter: blur(14px) saturate(1.45);
+            backdrop-filter: blur(14px) saturate(1.45);
+        }
+        .home-standalone-item > div:nth-child(2) > .absolute.bottom-4 {
+            left: 13px;
+            right: 13px;
+            bottom: 11px;
+            z-index: 10;
+            justify-content: flex-end;
+        }
+        .home-standalone-item > div:nth-child(2) > .absolute.bottom-4 h3 {
+            display: none;
+        }
+        .home-standalone-item > div:nth-child(2) > .absolute.bottom-4 span {
+            border: 1px solid rgba(255,255,255,.24);
+            background: rgba(255,255,255,.18) !important;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,.42), 0 8px 18px rgba(0,0,0,.22);
+            font-size: 8px;
             -webkit-backdrop-filter: blur(14px) saturate(1.45);
             backdrop-filter: blur(14px) saturate(1.45);
         }
@@ -3323,18 +3333,34 @@
                 rail.setAttribute('aria-label', collection.title);
                 collection.cards.forEach(function (cardId) {
                     const card = cardStore[cardId];
-                    if (card) rail.appendChild(card);
+                    if (!card) return;
+                    if (!card.matches('div[data-home-card]')) {
+                        rail.appendChild(card);
+                        return;
+                    }
+
+                    const titleSource = card.querySelector('h3');
+                    const title = titleSource ? titleSource.textContent : collection.title;
+                    const wrapper = document.createElement('section');
+                    wrapper.className = 'home-content-item home-standalone-item';
+                    wrapper.dataset.homeCard = cardId;
+                    wrapper.setAttribute('role', 'button');
+                    wrapper.setAttribute('tabindex', '0');
+                    wrapper.setAttribute('aria-label', title);
+                    wrapper.setAttribute('onclick', card.getAttribute('onclick') || '');
+                    wrapper.setAttribute('onkeydown', "if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}");
+
+                    const caption = document.createElement('div');
+                    const captionTitle = document.createElement('h3');
+                    captionTitle.textContent = title;
+                    caption.appendChild(captionTitle);
+
+                    card.removeAttribute('data-home-card');
+                    card.removeAttribute('onclick');
+                    wrapper.appendChild(caption);
+                    wrapper.appendChild(card);
+                    rail.appendChild(wrapper);
                 });
-                const railCards = Array.from(rail.children);
-                const hasCaptionedCard = railCards.some(function (card) {
-                    return card.classList.contains('home-content-item');
-                });
-                const hasStandaloneCard = railCards.some(function (card) {
-                    return card.matches('div[data-home-card]');
-                });
-                if (hasCaptionedCard && hasStandaloneCard) {
-                    rail.classList.add('home-rail-mixed');
-                }
 
                 group.appendChild(heading);
                 group.appendChild(rail);
