@@ -6585,6 +6585,26 @@
         const $ = (id) => document.getElementById(id);
         let beatTimer = null, membersUnsub = null, started = false, lastMembers = [], decayTimer = null;
 
+        function memberActivityText(lastActive, now) {
+            const time = Number(lastActive || 0);
+            if (!time) return '활동 기록 없음';
+
+            const elapsed = Math.max(0, now - time);
+            if (elapsed < ACTIVE_MS) return '활동 중';
+
+            const minutes = Math.max(1, Math.floor(elapsed / 60000));
+            if (minutes < 60) return minutes + '분 전';
+
+            const hours = Math.floor(minutes / 60);
+            if (hours < 6) return hours + '시간 전';
+
+            const date = new Date(time);
+            const year = String(date.getFullYear()).slice(-2);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return year + '.' + month + '.' + day;
+        }
+
         function fbReady() { return !!(window.meetingDb && window.fsOnSnapshot && window.fsSetDoc && window.meetingAuthed && window.enjoyUser); }
 
         async function beat() {
@@ -6702,6 +6722,7 @@
                 const mem = byName[name];                 // 가입자면 존재
                 const registered = !!mem;
                 const active = registered && (now - (mem.lastActive || 0) < ACTIVE_MS);
+                const activityText = registered ? memberActivityText(mem.lastActive, now) : '';
                 const col = window.enjoyMemberColor(name);
                 const photo = registered ? (mem.photoURL || '') : '';
 
@@ -6713,7 +6734,7 @@
                 const circle = '<div class="w-[64px] h-[64px] rounded-full p-[2px] bg-white/10"><div class="w-full h-full rounded-full overflow-hidden">' + inner + '</div></div>';
                 const dot = active ? '<span class="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 enjoy-page-border"></span>' : '';
                 const sub = registered
-                    ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-1 w-full text-center truncate">' + (active ? '활동 중' : '비활동') + '</span>'
+                    ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-1 w-full text-center truncate">' + activityText + '</span>'
                     : '<span class="text-[10px] text-gray-500 -mt-1 w-full text-center truncate">미가입자</span>';
                 return '<div class="shrink-0 flex flex-col items-center gap-1.5 w-[68px]">' +
                             '<div class="relative">' + circle + dot + '</div>' +
@@ -6736,7 +6757,7 @@
                     try { if (window._schedSub === 'availability' && window.renderAvailability) window.renderAvailability(); } catch (e) {}
                 }, () => {});
             } catch (e) {}
-            // 시간 경과(활동→비활동)를 반영하기 위해 주기적으로 다시 그린다.
+            // 시간 경과에 따른 마지막 활동 표시를 반영하기 위해 주기적으로 다시 그린다.
             if (!decayTimer) decayTimer = setInterval(() => { if (lastMembers.length) renderMembers(); }, 30000);
         }
 
