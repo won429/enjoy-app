@@ -1030,6 +1030,27 @@
         #login-prompt .lp-cancel, #profile-modal .lp-cancel { margin-top: 10px; width: 100%; padding: 12px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
             background: transparent; transition: opacity .15s; }
         #login-prompt .lp-cancel:active, #profile-modal .lp-cancel:active { opacity: 0.6; }
+        #enjoy-dialog { z-index: 400; background: rgba(0,0,0,0.68); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+        #enjoy-dialog .ed-card { width: min(100%, 360px); border: 1px solid rgba(255,255,255,0.10); border-radius: 26px; padding: 24px;
+            background: #1c1c1e; box-shadow: 0 24px 70px rgba(0,0,0,0.55); text-align: center;
+            animation: enjoyDialogIn .28s cubic-bezier(.16,1,.3,1) both; }
+        #enjoy-dialog .ed-icon { width: 48px; height: 48px; display: grid; place-items: center; margin: 0 auto 16px;
+            border-radius: 16px; background: rgba(49,130,246,.15); color: #3182F6; font-size: 20px; }
+        #enjoy-dialog .ed-icon.is-danger { background: rgba(240,68,82,.15); color: #F04452; }
+        #enjoy-dialog .ed-title { margin: 0; color: #fff; font-size: 20px; font-weight: 800; line-height: 1.3; letter-spacing: -.02em; }
+        #enjoy-dialog .ed-message { margin: 9px 0 22px; color: rgba(255,255,255,.62); font-size: 14px; font-weight: 500;
+            line-height: 1.55; white-space: pre-line; word-break: keep-all; }
+        #enjoy-dialog .ed-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #enjoy-dialog .ed-actions.is-alert { grid-template-columns: 1fr; }
+        #enjoy-dialog .ed-button { min-height: 50px; border-radius: 16px; background: #2c2c2e; color: #fff; font-size: 15px; font-weight: 700;
+            transition: transform .15s, opacity .15s; }
+        #enjoy-dialog .ed-button:active { transform: scale(.96); opacity: .9; }
+        #enjoy-dialog .ed-button.primary { background: #3182F6; }
+        #enjoy-dialog .ed-button.danger { background: #F04452; }
+        @keyframes enjoyDialogIn {
+            from { opacity: 0; transform: translateY(12px) scale(.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
         /* 프로필 이름 입력 */
         .pf-input { width: 100%; margin-top: 18px; padding: 14px 16px; border-radius: 16px; font-size: 16px; font-weight: 600; text-align: center;
             color: #fff; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.12); outline: none; transition: border-color .15s; }
@@ -1542,6 +1563,12 @@
             #login-prompt .lp-card, #profile-modal .lp-card { background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
             #login-prompt .lp-title, #profile-modal .lp-title { color: #141414; }
             #login-prompt .lp-desc, #login-prompt .lp-cancel, #profile-modal .lp-desc, #profile-modal .lp-cancel { color: #8B95A1; }
+            #enjoy-dialog { background: rgba(0,0,0,.38); }
+            #enjoy-dialog .ed-card { background: #fff; border-color: rgba(0,0,0,.08); box-shadow: 0 24px 70px rgba(0,0,0,.2); }
+            #enjoy-dialog .ed-title { color: #141414; }
+            #enjoy-dialog .ed-message { color: #6e6e73; }
+            #enjoy-dialog .ed-button { background: #e9e9eb; color: #141414; }
+            #enjoy-dialog .ed-button.primary, #enjoy-dialog .ed-button.danger { color: #fff; }
             .pf-input { background: rgba(0,0,0,0.04); color: #141414; border-color: rgba(0,0,0,0.10); }
             .pf-input::placeholder { color: rgba(0,0,0,0.3); }
             .enjoy-page-bg { background-color: #F2F2F7; }
@@ -1774,6 +1801,95 @@
                 if (lf) { lf.classList.remove('hidden'); lf.style.display = 'block'; }
             }
         }, 3500);
+    </script>
+
+    <div id="enjoy-dialog" class="hidden fixed inset-0 z-[400] items-center justify-center px-5" aria-hidden="true">
+        <div class="ed-card" role="alertdialog" aria-modal="true" aria-labelledby="enjoy-dialog-title" aria-describedby="enjoy-dialog-message" onclick="event.stopPropagation()">
+            <div id="enjoy-dialog-icon" class="ed-icon" aria-hidden="true"><i class="fa-solid fa-circle-info"></i></div>
+            <h3 id="enjoy-dialog-title" class="ed-title">알림</h3>
+            <p id="enjoy-dialog-message" class="ed-message"></p>
+            <div id="enjoy-dialog-actions" class="ed-actions is-alert">
+                <button id="enjoy-dialog-cancel" class="ed-button" type="button">취소</button>
+                <button id="enjoy-dialog-ok" class="ed-button primary" type="button">확인</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function () {
+        const dialog = document.getElementById('enjoy-dialog');
+        const dialogTitle = document.getElementById('enjoy-dialog-title');
+        const dialogMessage = document.getElementById('enjoy-dialog-message');
+        const dialogIcon = document.getElementById('enjoy-dialog-icon');
+        const dialogActions = document.getElementById('enjoy-dialog-actions');
+        const dialogCancel = document.getElementById('enjoy-dialog-cancel');
+        const dialogOk = document.getElementById('enjoy-dialog-ok');
+        let dialogResolve = null;
+        let dialogPreviousFocus = null;
+
+        function closeEnjoyDialog(result) {
+            if (dialog.classList.contains('hidden')) return;
+            dialog.classList.add('hidden');
+            dialog.classList.remove('flex');
+            dialog.setAttribute('aria-hidden', 'true');
+            const resolve = dialogResolve;
+            dialogResolve = null;
+            if (resolve) resolve(result);
+            if (dialogPreviousFocus && dialogPreviousFocus.focus) dialogPreviousFocus.focus();
+            dialogPreviousFocus = null;
+        }
+
+        function openEnjoyDialog(message, options, isConfirm) {
+            options = options || {};
+            if (dialogResolve) closeEnjoyDialog(false);
+            dialogPreviousFocus = document.activeElement;
+            dialogTitle.textContent = options.title || (isConfirm ? '확인' : '알림');
+            dialogMessage.textContent = String(message == null ? '' : message);
+            dialogCancel.classList.toggle('hidden', !isConfirm);
+            dialogActions.classList.toggle('is-alert', !isConfirm);
+            dialogOk.textContent = options.confirmText || '확인';
+            dialogOk.classList.toggle('danger', !!options.danger);
+            dialogOk.classList.toggle('primary', !options.danger);
+            dialogIcon.classList.toggle('is-danger', !!options.danger);
+            dialogIcon.innerHTML = options.danger
+                ? '<i class="fa-solid fa-triangle-exclamation"></i>'
+                : '<i class="fa-solid fa-circle-info"></i>';
+            dialog.classList.remove('hidden');
+            dialog.classList.add('flex');
+            dialog.setAttribute('aria-hidden', 'false');
+
+            return new Promise(function (resolve) {
+                dialogResolve = resolve;
+                requestAnimationFrame(function () {
+                    (isConfirm ? dialogCancel : dialogOk).focus();
+                });
+            });
+        }
+
+        window.enjoyAlert = function (message, options) {
+            return openEnjoyDialog(message, options, false);
+        };
+        window.enjoyConfirm = function (message, options) {
+            return openEnjoyDialog(message, options, true);
+        };
+
+        dialogCancel.addEventListener('click', function () {
+            window.haptic && window.haptic();
+            closeEnjoyDialog(false);
+        });
+        dialogOk.addEventListener('click', function () {
+            window.haptic && window.haptic();
+            closeEnjoyDialog(true);
+        });
+        dialog.addEventListener('click', function (event) {
+            if (event.target === dialog) closeEnjoyDialog(false);
+        });
+        window.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !dialog.classList.contains('hidden')) {
+                event.preventDefault();
+                closeEnjoyDialog(false);
+            }
+        });
+    })();
     </script>
 
     <!-- [New] 로그인 화면 — 엔조이 계정 로그인 전에는 서비스 이용 불가 (기본 표시) -->
@@ -2156,11 +2272,11 @@
                         </header>
                         <div class="relative">
                             <div class="ig-carousel" aria-label="공개 예정 콘텐츠">
-                                <button type="button" class="ig-carousel-slide" onclick="window.haptic(); alert('올 여름 공개됩니다! 🔒')">
+                                <button type="button" class="ig-carousel-slide" onclick="window.haptic(); window.enjoyAlert('올 여름 공개됩니다! 🔒')">
                                     <img src="banner_5.jpg" alt="엔조이 브이로그" onerror="this.style.display='none'">
                                     <span class="ig-coming-art" style="background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,.08));"><i class="fa-solid fa-lock"></i><strong>엔조이 브이로그</strong><span>올 여름 공개</span></span>
                                 </button>
-                                <button type="button" class="ig-carousel-slide" onclick="window.haptic(); alert('곧 공개됩니다! 🔒')">
+                                <button type="button" class="ig-carousel-slide" onclick="window.haptic(); window.enjoyAlert('곧 공개됩니다! 🔒')">
                                     <span class="ig-coming-art is-racing"><i class="fa-solid fa-flag-checkered"></i><strong>F1 더 엔조이 무비</strong><span>COMING SOON</span></span>
                                 </button>
                             </div>
@@ -2345,7 +2461,7 @@
                     </div>
                     <div class="home-upcoming-cards home-rail" aria-label="공개 예정 콘텐츠">
                         <!-- 엔조이 브이로그 -->
-                        <div data-home-card="enjoy-vlog" class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[22px] h-[200px] shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-transform" onclick="window.haptic(); alert('올 여름 공개됩니다! 🔒')">
+                        <div data-home-card="enjoy-vlog" class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[22px] h-[200px] shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-transform" onclick="window.haptic(); window.enjoyAlert('올 여름 공개됩니다! 🔒')">
                             <div class="absolute inset-0">
                                 <img src="banner_5.jpg" class="w-full h-full object-cover opacity-55" onerror="this.src='https://placehold.co/640x360/E0F2F1/teal?text=Coming+Soon'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/50"></div>
@@ -2359,7 +2475,7 @@
                             </div>
                         </div>
                         <!-- 전남광주 브이로그 -->
-                        <div data-home-card="gwangju-2027" class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[22px] h-[200px] shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-transform" style="background:linear-gradient(145deg,#172033,#080A10);" onclick="window.haptic(); alert('2027년에 공개됩니다! 🔒')">
+                        <div data-home-card="gwangju-2027" class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[22px] h-[200px] shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-transform" style="background:linear-gradient(145deg,#172033,#080A10);" onclick="window.haptic(); window.enjoyAlert('2027년에 공개됩니다! 🔒')">
                             <div class="absolute inset-0">
                                 <img src="gwangju_2027.jpg" class="w-full h-full object-cover opacity-55" onerror="this.style.display='none'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/45"></div>
@@ -2373,7 +2489,7 @@
                             </div>
                         </div>
                         <!-- F1 더 엔조이 무비 -->
-                        <div data-home-card="f1-movie" class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[22px] h-[200px] shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-transform" onclick="window.haptic(); alert('곧 공개됩니다! 🔒')">
+                        <div data-home-card="f1-movie" class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[22px] h-[200px] shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-transform" onclick="window.haptic(); window.enjoyAlert('곧 공개됩니다! 🔒')">
                             <div class="absolute inset-0">
                                 <img src="coming_2.jpg" class="w-full h-full object-cover opacity-55" onerror="this.src='https://placehold.co/640x360/FEE2E2/red?text=Coming+Soon'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/50"></div>
@@ -2778,7 +2894,7 @@
                 </button>
                 <div class="h-px bg-white/10 my-1 mx-2"></div>
                 <!-- 로그아웃 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(confirm('로그아웃 하시겠어요?')) window.enjoyLogout && window.enjoyLogout();" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.enjoyConfirm('로그아웃 하시겠어요?', { title: '로그아웃', confirmText: '로그아웃' }).then(function (confirmed) { if (confirmed) window.enjoyLogout && window.enjoyLogout(); });" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
                     <div class="w-9 h-9 rounded-[12px] bg-gray-500/15 text-gray-300 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">로그아웃</div>
@@ -2794,7 +2910,7 @@
                     </div>
                 </button>
                 <!-- 탈퇴 -->
-                <button id="more-withdraw" data-pop-item onclick="window.haptic(); window.closeMorePopover(); if(confirm('정말 탈퇴하시겠어요?\n계정과 프로필 연결이 해제되고, 다시 로그인하면 프로필을 새로 입력해야 해요.')) window.enjoyWithdraw && window.enjoyWithdraw();" class="hidden w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                <button id="more-withdraw" data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.enjoyConfirm('정말 탈퇴하시겠어요?\n계정과 프로필 연결이 해제되고, 다시 로그인하면 프로필을 새로 입력해야 해요.', { title: '회원 탈퇴', confirmText: '탈퇴', danger: true }).then(function (confirmed) { if (confirmed) window.enjoyWithdraw && window.enjoyWithdraw(); });" class="hidden w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
                     <div class="w-9 h-9 rounded-[12px] bg-red-500/15 text-red-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-user-xmark"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">탈퇴</div>
@@ -2923,7 +3039,7 @@
                 }
                 if (navigator.clipboard) {
                     await navigator.clipboard.writeText(url);
-                    alert('링크를 복사했어요.');
+                    window.enjoyAlert('링크를 복사했어요.');
                 }
             } catch (e) {
                 if (e && e.name !== 'AbortError') console.warn('feed share', e);
@@ -3374,7 +3490,7 @@
         
         window.saveScheduleToFirebase = async function() {
             // 멤버(동기화 모드)일 때만 DB 연결 필요. 게스트/스페셜은 로컬 저장이므로 통과.
-            if (window.enjoySync && !window.meetingDb) { alert('DB 연결 확인 중...'); return; }
+            if (window.enjoySync && !window.meetingDb) { window.enjoyAlert('DB 연결 확인 중...'); return; }
 
             const category = document.getElementById('add-sch-category').value;
             const startDateStr = document.getElementById('add-sch-start-date').value; 
@@ -3385,9 +3501,9 @@
             const editIdx = document.getElementById('sch-edit-index').value; 
             const isEdit = (editKey && editIdx !== ''); 
 
-            if (!startDateStr || !title) { alert('시작일과 내용을 입력해주세요.'); return; }
+            if (!startDateStr || !title) { window.enjoyAlert('시작일과 내용을 입력해주세요.'); return; }
             if (!endDateStr) endDateStr = startDateStr;
-            if (endDateStr < startDateStr) { alert('종료일이 시작일보다 빠를 수 없습니다.'); return; }
+            if (endDateStr < startDateStr) { window.enjoyAlert('종료일이 시작일보다 빠를 수 없습니다.'); return; }
 
             const newEvent = { type: category, title: title, time: time };
 
@@ -3407,7 +3523,7 @@
                 window.enjoySaveLocalSchedule && window.enjoySaveLocalSchedule();
                 if (typeof window.renderCalendar === 'function') window.renderCalendar(window.viewYear, window.viewMonth);
                 try { window.renderEnjoyToday(); } catch (e) {}
-                alert(isEdit ? '수정되었습니다!' : '등록되었습니다!');
+                window.enjoyAlert(isEdit ? '수정되었습니다!' : '등록되었습니다!');
                 window.closeModal('schedule-modal');
                 return;
             }
@@ -3439,16 +3555,16 @@
                 }
 
                 await window.setDoc(docRef, data); 
-                alert(isEdit ? '수정되었습니다!' : '등록되었습니다!'); 
+                window.enjoyAlert(isEdit ? '수정되었습니다!' : '등록되었습니다!');
                 window.closeModal('schedule-modal'); 
             } catch (e) { 
                 console.error(e); 
-                alert('처리 실패'); 
+                window.enjoyAlert('처리 실패');
             } 
         };
 
         window.deleteSchedule = async function() { 
-            if(!confirm('정말 삭제하시겠습니까?')) return; 
+            if (!await window.enjoyConfirm('정말 삭제하시겠습니까?', { title: '일정 삭제', confirmText: '삭제', danger: true })) return;
             
             const dateKey = document.getElementById('sch-edit-date-key').value;
             const index = document.getElementById('sch-edit-index').value;
@@ -3464,7 +3580,7 @@
                     window.enjoySaveLocalSchedule && window.enjoySaveLocalSchedule();
                     if (typeof window.renderCalendar === 'function') window.renderCalendar(window.viewYear, window.viewMonth);
                     try { window.renderEnjoyToday(); } catch (e) {}
-                    alert('삭제되었습니다.');
+                    window.enjoyAlert('삭제되었습니다.');
                     window.closeModal('schedule-modal');
                 }
                 return;
@@ -3481,13 +3597,13 @@
                         else data[dateKey] = list; 
                         
                         await window.setDoc(window.doc(window.meetingDb, ...window.SCHEDULE_PATH), data); 
-                        alert('삭제되었습니다.'); 
+                        window.enjoyAlert('삭제되었습니다.');
                         window.closeModal('schedule-modal'); 
                     } 
                 } 
             } catch(e) { 
                 console.error(e); 
-                alert('삭제 실패'); 
+                window.enjoyAlert('삭제 실패');
             } 
         }
         
@@ -4557,7 +4673,7 @@
             const user = communityUser();
             if (user) return user;
             if (window.showLoginPrompt) window.showLoginPrompt();
-            else alert('Google 로그인이 필요합니다.');
+            else window.enjoyAlert('Google 로그인이 필요합니다.');
             return null;
         }
 
@@ -4753,8 +4869,11 @@
             }, 120);
         };
 
-        window.closeCommunityComposer = function (force) {
-            if (!force && !confirm(window._communityEditingPostId ? '수정 중인 내용이 사라집니다. 수정을 종료할까요?' : '작성 중인 내용이 사라집니다. 글쓰기를 종료할까요?')) return;
+        window.closeCommunityComposer = async function (force) {
+            if (!force && !await window.enjoyConfirm(
+                window._communityEditingPostId ? '수정 중인 내용이 사라집니다. 수정을 종료할까요?' : '작성 중인 내용이 사라집니다. 글쓰기를 종료할까요?',
+                { title: '작성 종료', confirmText: '종료', danger: true }
+            )) return;
             const screen = document.getElementById('community-write-screen');
             if (screen) { screen.classList.add('hidden'); screen.classList.remove('flex'); }
             const returnToDetail = window._communityComposerReturnView === 'detail' && !!window._communityActivePostId;
@@ -4862,7 +4981,7 @@
                 post.likedBy = likedBy;
                 window.renderCommunity();
                 if (window._communityActivePostId === postId) renderCommunityDetail();
-                alert(error && error.code === 'permission-denied' ? '좋아요 권한 설정이 필요해요.' : '좋아요를 반영하지 못했어요.');
+                window.enjoyAlert(error && error.code === 'permission-denied' ? '좋아요 권한 설정이 필요해요.' : '좋아요를 반영하지 못했어요.');
             }
         };
 
@@ -4871,7 +4990,7 @@
             if (!user) return;
             const post = window._communityPosts.find(function (item) { return item._id === postId; });
             if (!post || post.authorUid !== user.uid) return;
-            if (!confirm('이 여행계획과 댓글을 삭제할까요?')) return;
+            if (!await window.enjoyConfirm('이 여행계획과 댓글을 삭제할까요?', { title: '여행계획 삭제', confirmText: '삭제', danger: true })) return;
             try {
                 const comments = await window.fsGetDocs(window.fsCol('community_posts', postId, 'comments'));
                 const deletes = [];
@@ -4881,7 +5000,7 @@
                 if (window._communityActivePostId === postId) window.closeCommunityDetail();
             } catch (error) {
                 console.error('community delete', error);
-                alert(error && error.code === 'permission-denied' ? '본인이 작성한 글만 삭제할 수 있어요.' : '삭제하지 못했어요.');
+                window.enjoyAlert(error && error.code === 'permission-denied' ? '본인이 작성한 글만 삭제할 수 있어요.' : '삭제하지 못했어요.');
             }
         };
 
@@ -5030,7 +5149,7 @@
                 if (input) input.value = '';
             } catch (error) {
                 console.error('community comment', error);
-                alert(error && error.code === 'permission-denied' ? '댓글 쓰기 권한 설정이 필요해요.' : '댓글을 등록하지 못했어요.');
+                window.enjoyAlert(error && error.code === 'permission-denied' ? '댓글 쓰기 권한 설정이 필요해요.' : '댓글을 등록하지 못했어요.');
             } finally {
                 if (button) { button.disabled = false; button.style.opacity = '1'; }
             }
@@ -5041,7 +5160,8 @@
             const postId = window._communityActivePostId;
             if (!user || !postId || !commentId) return;
             const comment = window._communityComments.find(function (item) { return item._id === commentId; });
-            if (!comment || comment.authorUid !== user.uid || !confirm('댓글을 삭제할까요?')) return;
+            if (!comment || comment.authorUid !== user.uid) return;
+            if (!await window.enjoyConfirm('댓글을 삭제할까요?', { title: '댓글 삭제', confirmText: '삭제', danger: true })) return;
             try {
                 await window.fsDeleteDoc(window.fsDoc('community_posts', postId, 'comments', commentId));
                 await window.fsUpdateDoc(window.fsDoc('community_posts', postId), {
@@ -5049,7 +5169,7 @@
                 });
             } catch (error) {
                 console.error('community comment delete', error);
-                alert('댓글을 삭제하지 못했어요.');
+                window.enjoyAlert('댓글을 삭제하지 못했어요.');
             }
         };
 
@@ -5893,7 +6013,7 @@
                         showPen = true;
                     }
                 } else if(e.type === 'holiday') {
-                    onclickAttr = `onclick="window.haptic(); alert('${e.title}은 공휴일이에요 🇰🇷')"`;
+                    onclickAttr = `onclick="window.haptic(); window.enjoyAlert('${e.title}은 공휴일이에요 🇰🇷')"`;
                 }
 
                 const penHtml = showPen
@@ -6768,7 +6888,7 @@
                         location.reload();
                     } catch (error) {
                         console.error('앱 구글 로그인 실패:', error);
-                        alert('앱 구글 로그인에 실패했어요.');
+                        window.enjoyAlert('앱 구글 로그인에 실패했어요.');
                     }
                 };
 
