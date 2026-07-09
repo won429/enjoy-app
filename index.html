@@ -92,9 +92,6 @@
             #bottom-nav.nav-compact button {
                 width: 42px !important;
             }
-            #home-screen [data-home-card] {
-                height: clamp(176px, 52vw, 210px) !important;
-            }
             #home-screen .home-upcoming-cards > div[data-home-card] {
                 height: auto !important;
                 aspect-ratio: 16 / 9;
@@ -693,6 +690,10 @@
             height: auto !important;
             min-height: 0 !important;
             aspect-ratio: 16 / 9;
+        }
+        .home-rail.home-rail-mixed > div[data-home-card] {
+            align-self: stretch;
+            aspect-ratio: auto;
         }
         .home-upcoming-cards > div::after {
             content: "";
@@ -3324,6 +3325,16 @@
                     const card = cardStore[cardId];
                     if (card) rail.appendChild(card);
                 });
+                const railCards = Array.from(rail.children);
+                const hasCaptionedCard = railCards.some(function (card) {
+                    return card.classList.contains('home-content-item');
+                });
+                const hasStandaloneCard = railCards.some(function (card) {
+                    return card.matches('div[data-home-card]');
+                });
+                if (hasCaptionedCard && hasStandaloneCard) {
+                    rail.classList.add('home-rail-mixed');
+                }
 
                 group.appendChild(heading);
                 group.appendChild(rail);
