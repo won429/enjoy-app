@@ -691,6 +691,15 @@
             if (navigator.vibrate) navigator.vibrate(10);
         };
 
+        function returnToEnjoyHome() {
+            if (window.parent !== window) {
+                const targetOrigin = window.location.origin === 'null' ? '*' : window.location.origin;
+                window.parent.postMessage({ type: 'enjoy:navigate-home' }, targetOrigin);
+                return;
+            }
+            window.location.href = 'index.html';
+        }
+
         const ACCOUNT_KEY = 'enjoy_chat_account_v1';
         const ACCOUNT_LABEL_KEY = 'enjoy_chat_account_label_v1';
         const LEGACY_KEY = 'enjoy-secretary-chat-v1';
@@ -1153,7 +1162,7 @@
         });
         document.getElementById('back-button').addEventListener('click', function () {
             window.haptic();
-            location.href = 'index.html';
+            returnToEnjoyHome();
         });
         document.getElementById('thread-list-button').addEventListener('click', openThreadDrawer);
         document.getElementById('new-chat-button').addEventListener('click', function () {

@@ -2863,7 +2863,7 @@
         <div id="more-popover-panel" class="liquid-glass ml-auto w-[252px] origin-bottom-right rounded-[26px] p-2.5 pointer-events-auto">
             <div class="relative z-10 flex flex-col gap-0.5">
                 <!-- 엔조이 비서실장 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.location.href='biseo.html';" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('biseo.html');" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
                     <div class="w-9 h-9 rounded-[12px] bg-blue-500/15 text-blue-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-user-tie"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">엔조이 비서 실장과 대화하기</div>
@@ -2882,7 +2882,7 @@
                     </div>
                 </button>
                 <!-- 헬스 : 몸 만들자 제대로 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.location.href='health.html';" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('health.html');" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
                     <div class="w-9 h-9 rounded-[12px] bg-lime-500/15 text-lime-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-dumbbell"></i></div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5">
@@ -3432,8 +3432,12 @@
                 const screen = document.getElementById('browser-screen');
                 const frame = document.getElementById('internal-browser-frame');
                 const loader = document.getElementById('browser-loader');
-                
-                window.history.pushState({modal: 'browser'}, '', '');
+
+                frame.addEventListener('load', function addBrowserHistory() {
+                    if (!screen.classList.contains('hidden')) {
+                        window.history.pushState({modal: 'browser'}, '', '');
+                    }
+                }, { once: true });
                 loader.style.display = 'flex';
                 frame.src = url;
                 screen.classList.remove('hidden');
@@ -3448,6 +3452,25 @@
             screen.classList.remove('flex');
             frame.src = '';
         };
+
+        window.addEventListener('message', function(event) {
+            const frame = document.getElementById('internal-browser-frame');
+            if (
+                event.origin !== window.location.origin ||
+                !frame ||
+                event.source !== frame.contentWindow ||
+                !event.data ||
+                event.data.type !== 'enjoy:navigate-home'
+            ) {
+                return;
+            }
+
+            if (window.history.state && window.history.state.modal === 'browser') {
+                window.history.back();
+            } else {
+                window.closeBrowser();
+            }
+        });
 
         window.onpopstate = function(event) {
             const screen = document.getElementById('browser-screen');

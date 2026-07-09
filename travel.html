@@ -964,7 +964,7 @@
                 <!-- 활성화 표시 배경 -->
                 <div id="nav-indicator" class="absolute top-1 bottom-1 rounded-full z-0 nav-transition" style="left: 4px; width: 66px;"></div>
                 
-                <a href="https://won429.github.io/enjoy-app/" class="nav-item relative py-1.5 flex-1 rounded-full" style="text-decoration: none;" aria-label="홈으로 이동">
+                <a href="index.html" onclick="event.preventDefault(); returnToEnjoyHome();" class="nav-item relative py-1.5 flex-1 rounded-full" style="text-decoration: none;" aria-label="홈으로 이동">
                     <div class="flex flex-col items-center gap-0.5 pointer-events-none">
                         <i class="adaptive-contrast fa-solid fa-house text-base"></i>
                         <span class="nav-label adaptive-contrast text-[10px] font-medium whitespace-nowrap">홈</span>
@@ -1005,6 +1005,15 @@
         let isSatellite = false; // 위성 지도 상태
         let activeTabIndex = 0;
         const deviceThemeQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+        function returnToEnjoyHome() {
+            if (window.parent !== window) {
+                const targetOrigin = window.location.origin === 'null' ? '*' : window.location.origin;
+                window.parent.postMessage({ type: 'enjoy:navigate-home' }, targetOrigin);
+                return;
+            }
+            window.location.href = 'index.html';
+        }
 
         function isDeviceDarkMode() {
             return Boolean(deviceThemeQuery && deviceThemeQuery.matches);

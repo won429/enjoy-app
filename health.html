@@ -3229,6 +3229,15 @@
       if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(8);
     }
 
+    function returnToEnjoyHome() {
+      if (window.parent !== window) {
+        const targetOrigin = window.location.origin === "null" ? "*" : window.location.origin;
+        window.parent.postMessage({ type: "enjoy:navigate-home" }, targetOrigin);
+        return;
+      }
+      window.location.href = "index.html";
+    }
+
     function closeConfirmModal(confirmed) {
       if (confirmModal.hidden) return;
 
@@ -3280,7 +3289,7 @@
 
     function goBack() {
       haptic();
-      window.location.href = "index.html";
+      returnToEnjoyHome();
     }
 
     function readHealthAccountId() {
