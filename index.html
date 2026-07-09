@@ -6823,7 +6823,7 @@
     <!-- Firebase Module -->
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, increment, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global functions for firebase interaction
@@ -6913,6 +6913,10 @@
                 // 구글 로그인/로그아웃 전역 함수
                 const provider = new GoogleAuthProvider();
                 provider.setCustomParameters({ prompt: 'select_account' });
+                // iOS의 모든 브라우저는 WebKit을 사용하며, Safari의 교차 사이트
+                // 저장소 차단으로 redirect 로그인 결과가 유실될 수 있어 popup을 사용한다.
+                const isIOSBrowser = /iPad|iPhone|iPod/.test(navigator.userAgent)
+                    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
                 window.loginWithNativeGoogle = async function (idToken) {
                     try {
@@ -6938,8 +6942,13 @@
                         return;
                     }
 
-                    // 일반 브라우저에서는 Firebase 웹 로그인
+                    // iPhone/iPad에서는 Safari 저장소 제한을 피하도록 popup 로그인 사용.
+                    // 그 외 브라우저는 기존 redirect 로그인 흐름을 그대로 유지한다.
                     try {
+                        if (isIOSBrowser) {
+                            await signInWithPopup(meetingAuth, provider);
+                            return;
+                        }
                         await signInWithRedirect(meetingAuth, provider);
                     } catch (e) {
                         if (loginStatus) loginStatus.textContent = '로그인에 실패했어요. 다시 시도해 주세요.';
