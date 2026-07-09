@@ -399,7 +399,7 @@
             <div class="flex items-center justify-between rounded-full p-1.5 gap-1 relative transition-all duration-300">
                 <div id="nav-indicator" class="absolute top-1.5 bottom-1.5 rounded-full z-0 nav-transition" style="left: 6px; width: 70px; background-color: #0054A6;"></div>
 
-                <button id="tab-back" onclick="window.location.href='https://won429.github.io/enjoy-app/'" class="relative py-2 flex-1 rounded-full group z-10 active:scale-90 transition-transform">
+                <button id="tab-back" onclick="returnToEnjoyHome()" class="relative py-2 flex-1 rounded-full group z-10 active:scale-90 transition-transform">
                     <div class="flex flex-col items-center gap-[3px] pointer-events-none">
                         <i class="fa-solid fa-chevron-left text-[15px] text-gray-400 transition-colors"></i>
                         <span class="text-[9px] font-semibold text-gray-400 whitespace-nowrap transition-colors">뒤로</span>
@@ -470,6 +470,15 @@
         let THEME_COLOR = "#0054A6";
         let DOWN_COLOR = "#5998D6";
         const STOP_DURATION = 25; 
+
+        function returnToEnjoyHome() {
+            if (window.parent !== window) {
+                const targetOrigin = window.location.origin === 'null' ? '*' : window.location.origin;
+                window.parent.postMessage({ type: 'enjoy:navigate-home' }, targetOrigin);
+                return;
+            }
+            window.location.href = 'index.html';
+        }
 
         const STATIONS_ALL = {
             'daegyeong': {
