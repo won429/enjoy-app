@@ -515,6 +515,9 @@
         </div>
     </div>
 
+    <!-- 대경선 통합 시간표 데이터 -->
+    <script src="./daegyeong_timetable.js"></script>
+
     <!-- 스크립트 (통합 로직) -->
     <script>
         let favoriteStation = localStorage.getItem('subway_fav_station') || null;
@@ -877,14 +880,6 @@
         ];
 
         const FILE_URLS = {
-            'daegyeong': {
-                weekday_up: 'dae_up.csv',
-                weekday_down: 'dae_down.csv',
-                saturday_up: 'daew_up.csv',
-                saturday_down: 'daew_down.csv',
-                holiday_up: 'daew_up.csv',
-                holiday_down: 'daew_down.csv'
-            },
             'line1': {
                 weekday_up: 'dae_line1_up.csv',
                 weekday_down: 'dae_line1_down.csv',
@@ -1065,6 +1060,119 @@
             const ampm = h >= 12 ? '오후' : '오전';
             h = h % 12 || 12;
             return `${ampm} ${h}:${m.toString().padStart(2, '0')}`;
+        };
+
+        const daegyeongTimetableCache = new Map();
+
+        const parseDaegyeongTimetable = (dayType, direction) => {
+            const source = window.DAEGYEONG_TIMETABLE;
+            if (!source || !Array.isArray(source.stations) || !source.calendars?.[dayType]) return [];
+            if (direction !== 'up' && direction !== 'down') return [];
+
+            const cacheKey = `${dayType}:${direction}`;
+            if (daegyeongTimetableCache.has(cacheKey)) return daegyeongTimetableCache.get(cacheKey);
+
+            const stationOrder = source.stations.map(station => station.name);
+            const stationIndex = new Map(stationOrder.map((name, index) => [name, index]));
+            const pairKey = (first, second) => {
+                const firstIndex = stationIndex.get(first);
+                const secondIndex = stationIndex.get(second);
+                if (firstIndex === undefined || secondIndex === undefined) return '';
+                return firstIndex < secondIndex ? `${first}|${second}` : `${second}|${first}`;
+            };
+
+            // 원본 API가 종착역 도착 행을 방향 배열에서 생략하므로,
+            // 양방향의 실제 인접역 운행시간 중앙값을 종착 시각 보완에 사용한다.
+            const segmentSamples = new Map();
+            ['up', 'down'].forEach(sampleDirection => {
+                const sampleTrains = new Map();
+                source.stations.forEach(station => {
+                    const rows = station.timetable?.[dayType]?.[sampleDirection] || [];
+                    rows.forEach(row => {
+                        const time = row.departureTime || row.time || row.arrivalTime;
+                        if (!row.trainNo || !time) return;
+                        if (!sampleTrains.has(row.trainNo)) sampleTrains.set(row.trainNo, []);
+                        sampleTrains.get(row.trainNo).push({ name: station.name, sec: timeToSeconds(time) });
+                    });
+                });
+
+                sampleTrains.forEach(schedule => {
+                    schedule.sort((a, b) => a.sec - b.sec);
+                    for (let index = 1; index < schedule.length; index++) {
+                        const previous = schedule[index - 1];
+                        const current = schedule[index];
+                        if (Math.abs(stationIndex.get(previous.name) - stationIndex.get(current.name)) !== 1) continue;
+                        const duration = current.sec - previous.sec;
+                        if (duration <= 0 || duration > 3600) continue;
+                        const key = pairKey(previous.name, current.name);
+                        if (!segmentSamples.has(key)) segmentSamples.set(key, []);
+                        segmentSamples.get(key).push(duration);
+                    }
+                });
+            });
+
+            const segmentDurations = new Map();
+            segmentSamples.forEach((samples, key) => {
+                samples.sort((a, b) => a - b);
+                segmentDurations.set(key, samples[Math.floor(samples.length / 2)]);
+            });
+
+            const groupedTrains = new Map();
+            source.stations.forEach(station => {
+                const stationMeta = STATIONS[station.name];
+                if (!stationMeta) return;
+                const rows = station.timetable?.[dayType]?.[direction] || [];
+                rows.forEach(row => {
+                    const time = row.departureTime || row.time || row.arrivalTime;
+                    if (!row.trainNo || !time) return;
+                    const groupKey = `${row.trainNo}:${row.startStationId || row.startStation}:${row.destinationId || row.destination}`;
+                    if (!groupedTrains.has(groupKey)) {
+                        groupedTrains.set(groupKey, {
+                            id: String(row.trainNo),
+                            startStation: row.startStation,
+                            destination: row.destination,
+                            schedule: []
+                        });
+                    }
+                    const train = groupedTrains.get(groupKey);
+                    if (!train.schedule.some(stop => stop.name === station.name)) {
+                        train.schedule.push({
+                            name: station.name,
+                            time,
+                            sec: timeToSeconds(time),
+                            progress: stationMeta.progress
+                        });
+                    }
+                });
+            });
+
+            const trains = Array.from(groupedTrains.values()).map(train => {
+                train.schedule.sort((a, b) => a.sec - b.sec);
+
+                const addEndpoint = (stationName, isStart) => {
+                    if (!stationName || !STATIONS[stationName] || train.schedule.some(stop => stop.name === stationName)) return;
+                    const edgeStop = isStart ? train.schedule[0] : train.schedule[train.schedule.length - 1];
+                    if (!edgeStop || Math.abs(stationIndex.get(edgeStop.name) - stationIndex.get(stationName)) !== 1) return;
+                    const duration = segmentDurations.get(pairKey(edgeStop.name, stationName)) || 600;
+                    const sec = edgeStop.sec + (isStart ? -duration : duration);
+                    train.schedule.push({
+                        name: stationName,
+                        time: secondsToTime(sec),
+                        sec,
+                        progress: STATIONS[stationName].progress,
+                        estimatedTerminalTime: true
+                    });
+                };
+
+                addEndpoint(train.startStation, true);
+                addEndpoint(train.destination, false);
+                train.schedule.sort((a, b) => a.sec - b.sec);
+                return { id: train.id, schedule: train.schedule };
+            }).filter(train => train.schedule.length >= 2)
+              .sort((a, b) => a.schedule[0].sec - b.schedule[0].sec);
+
+            daegyeongTimetableCache.set(cacheKey, trains);
+            return trains;
         };
 
         const safeFetch = async (urls) => {
@@ -1470,17 +1578,34 @@
             return trains.filter(t => t.id && t.schedule.length >= 2);
         };
 
+        const loadLineTimetableData = async (dayType) => {
+            if (currentLineId === 'daegyeong') {
+                return {
+                    up: parseDaegyeongTimetable(dayType, 'up'),
+                    down: parseDaegyeongTimetable(dayType, 'down')
+                };
+            }
+
+            const lineFiles = FILE_URLS[currentLineId];
+            if (!lineFiles) return { up: [], down: [] };
+            const [upText, downText] = await Promise.all([
+                safeFetch(lineFiles[dayType + '_up']),
+                safeFetch(lineFiles[dayType + '_down'])
+            ]);
+            return {
+                up: parseCsv(upText, 'up', dayType),
+                down: parseCsv(downText, 'down', dayType)
+            };
+        };
+
         const loadTimetable = async () => {
             const statusDisplay = document.getElementById('data-status-display');
             const statusHome = document.getElementById('data-status-home');
 
-            let targetUpUrl = FILE_URLS[currentLineId][currentDayType + '_up'];
-            let targetDownUrl = FILE_URLS[currentLineId][currentDayType + '_down'];
-
             try {
-                const [upText, downText] = await Promise.all([safeFetch(targetUpUrl), safeFetch(targetDownUrl)]);
-                parsedTrainsUp = parseCsv(upText, 'up', currentDayType);
-                parsedTrainsDown = parseCsv(downText, 'down', currentDayType);
+                const timetableData = await loadLineTimetableData(currentDayType);
+                parsedTrainsUp = timetableData.up;
+                parsedTrainsDown = timetableData.down;
                 timetableLoaded = {
                     up: parsedTrainsUp.length > 0,
                     down: parsedTrainsDown.length > 0
@@ -2095,14 +2220,11 @@
             if (forcedDayType) modalDayType = forcedDayType;
             else if (!modalDayType) modalDayType = currentDayType;
 
-            let targetUpUrl = FILE_URLS[currentLineId][modalDayType + '_up'];
-            let targetDownUrl = FILE_URLS[currentLineId][modalDayType + '_down'];
-            
             dom.modalContent.innerHTML = `<div class="flex justify-center items-center py-12 text-gray-400 font-bold text-[13px]"><i class="fa-solid fa-spinner fa-spin mr-2 text-[15px]"></i>시간표를 불러오는 중입니다...</div>`;
 
-            const [upText, downText] = await Promise.all([safeFetch(targetUpUrl), safeFetch(targetDownUrl)]);
-            let mUp = parseCsv(upText, 'up', modalDayType);
-            let mDown = parseCsv(downText, 'down', modalDayType);
+            const timetableData = await loadLineTimetableData(modalDayType);
+            const mUp = timetableData.up;
+            const mDown = timetableData.down;
 
             const getStationTimes = (trains) => {
                 return trains.map(t => {
