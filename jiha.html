@@ -515,9 +515,6 @@
         </div>
     </div>
 
-    <!-- 대경선 통합 시간표 데이터 -->
-    <script src="./daegyeong_timetable.js"></script>
-
     <!-- 스크립트 (통합 로직) -->
     <script>
         let favoriteStation = localStorage.getItem('subway_fav_station') || null;
@@ -880,14 +877,6 @@
         ];
 
         const FILE_URLS = {
-            'line1': {
-                weekday_up: 'dae_line1_up.csv',
-                weekday_down: 'dae_line1_down.csv',
-                saturday_up: 'dae_line1_sat_up.csv',
-                saturday_down: 'dae_line1_sat_down.csv',
-                holiday_up: 'dae_line1_w_up.csv',
-                holiday_down: 'dae_line1_w_down.csv'
-            },
             'line2': {
                 weekday_up: 'dae_line2_up.csv',
                 weekday_down: 'dae_line2_down.csv',
@@ -903,14 +892,6 @@
                 saturday_down: 'dae_line3_down.csv',
                 holiday_up: 'dae_line3_up.csv',
                 holiday_down: 'dae_line3_down.csv'
-            },
-            'daejeon_line1': {
-                weekday_up: 'jeon_line1_up.csv',
-                weekday_down: 'jeon_line1_down.csv',
-                saturday_up: 'jeon_line1_w_up.csv',
-                saturday_down: 'jeon_line1_w_down.csv',
-                holiday_up: 'jeon_line1_w_up.csv',
-                holiday_down: 'jeon_line1_w_down.csv'
             },
             'busan_line1': {
                 weekday_up: ['busan.csv', '부산교통공사_부산도시철도 운행 정보_20250714.csv'],
@@ -959,14 +940,6 @@
                 saturday_down: 'dong_w_down.csv',
                 holiday_up: 'dong_w_up.csv',
                 holiday_down: 'dong_w_down.csv'
-            },
-            'gwangju_line1': {
-                weekday_up: 'gwangju.csv',
-                weekday_down: 'gwangju.csv',
-                saturday_up: 'gwangju.csv',
-                saturday_down: 'gwangju.csv',
-                holiday_up: 'gwangju.csv',
-                holiday_down: 'gwangju.csv'
             }
         };
 
@@ -1062,17 +1035,64 @@
             return `${ampm} ${h}:${m.toString().padStart(2, '0')}`;
         };
 
-        const daegyeongTimetableCache = new Map();
+        const STATION_TIMETABLE_FILES = {
+            daegyeong: { src: './daegyeong_timetable.js', globalName: 'DAEGYEONG_TIMETABLE' },
+            daejeon_line1: { src: './daejeon_line1_timetable.js', globalName: 'DAEJEON_LINE1_TIMETABLE' },
+            line1: { src: './daegu_line1_timetable.js', globalName: 'DAEGU_LINE1_TIMETABLE' },
+            gwangju_line1: { src: './gwangju_line1_timetable.js', globalName: 'GWANGJU_LINE1_TIMETABLE' }
+        };
 
-        const parseDaegyeongTimetable = (dayType, direction) => {
-            const source = window.DAEGYEONG_TIMETABLE;
+        const STATION_TIMETABLE_ALIASES = {
+            line1: {
+                '대구역': '대구'
+            },
+            gwangju_line1: {
+                '학동.증심사입구': '학동 중심사입구',
+                '광주송정': '광주송정역'
+            }
+        };
+
+        const stationTimetableLoadPromises = new Map();
+        const stationTimetableCache = new Map();
+
+        const loadStationTimetableSource = async (lineId) => {
+            const config = STATION_TIMETABLE_FILES[lineId];
+            if (!config) return null;
+            if (window[config.globalName]) return window[config.globalName];
+            if (stationTimetableLoadPromises.has(lineId)) return stationTimetableLoadPromises.get(lineId);
+
+            const loadPromise = new Promise(resolve => {
+                const script = document.createElement('script');
+                script.src = config.src;
+                script.async = true;
+                script.dataset.timetableLine = lineId;
+                script.onload = () => {
+                    const source = window[config.globalName] || null;
+                    if (!source) stationTimetableLoadPromises.delete(lineId);
+                    resolve(source);
+                };
+                script.onerror = () => {
+                    stationTimetableLoadPromises.delete(lineId);
+                    script.remove();
+                    resolve(null);
+                };
+                document.head.appendChild(script);
+            });
+
+            stationTimetableLoadPromises.set(lineId, loadPromise);
+            return loadPromise;
+        };
+
+        const parseStationTimetable = (source, cacheNamespace, dayType, direction) => {
             if (!source || !Array.isArray(source.stations) || !source.calendars?.[dayType]) return [];
             if (direction !== 'up' && direction !== 'down') return [];
 
-            const cacheKey = `${dayType}:${direction}`;
-            if (daegyeongTimetableCache.has(cacheKey)) return daegyeongTimetableCache.get(cacheKey);
+            const cacheKey = `${cacheNamespace}:${dayType}:${direction}`;
+            if (stationTimetableCache.has(cacheKey)) return stationTimetableCache.get(cacheKey);
 
-            const stationOrder = source.stations.map(station => station.name);
+            const aliases = STATION_TIMETABLE_ALIASES[cacheNamespace] || {};
+            const normalizeStationName = (name) => aliases[name] || name;
+            const stationOrder = source.stations.map(station => normalizeStationName(station.name));
             const stationIndex = new Map(stationOrder.map((name, index) => [name, index]));
             const pairKey = (first, second) => {
                 const firstIndex = stationIndex.get(first);
@@ -1092,7 +1112,7 @@
                         const time = row.departureTime || row.time || row.arrivalTime;
                         if (!row.trainNo || !time) return;
                         if (!sampleTrains.has(row.trainNo)) sampleTrains.set(row.trainNo, []);
-                        sampleTrains.get(row.trainNo).push({ name: station.name, sec: timeToSeconds(time) });
+                        sampleTrains.get(row.trainNo).push({ name: normalizeStationName(station.name), sec: timeToSeconds(time) });
                     });
                 });
 
@@ -1119,7 +1139,8 @@
 
             const groupedTrains = new Map();
             source.stations.forEach(station => {
-                const stationMeta = STATIONS[station.name];
+                const stationName = normalizeStationName(station.name);
+                const stationMeta = STATIONS[stationName];
                 if (!stationMeta) return;
                 const rows = station.timetable?.[dayType]?.[direction] || [];
                 rows.forEach(row => {
@@ -1129,15 +1150,15 @@
                     if (!groupedTrains.has(groupKey)) {
                         groupedTrains.set(groupKey, {
                             id: String(row.trainNo),
-                            startStation: row.startStation,
-                            destination: row.destination,
+                            startStation: normalizeStationName(row.startStation),
+                            destination: normalizeStationName(row.destination),
                             schedule: []
                         });
                     }
                     const train = groupedTrains.get(groupKey);
-                    if (!train.schedule.some(stop => stop.name === station.name)) {
+                    if (!train.schedule.some(stop => stop.name === stationName)) {
                         train.schedule.push({
-                            name: station.name,
+                            name: stationName,
                             time,
                             sec: timeToSeconds(time),
                             progress: stationMeta.progress
@@ -1171,7 +1192,7 @@
             }).filter(train => train.schedule.length >= 2)
               .sort((a, b) => a.schedule[0].sec - b.schedule[0].sec);
 
-            daegyeongTimetableCache.set(cacheKey, trains);
+            stationTimetableCache.set(cacheKey, trains);
             return trains;
         };
 
@@ -1579,10 +1600,11 @@
         };
 
         const loadLineTimetableData = async (dayType) => {
-            if (currentLineId === 'daegyeong') {
+            const stationTimetableSource = await loadStationTimetableSource(currentLineId);
+            if (stationTimetableSource) {
                 return {
-                    up: parseDaegyeongTimetable(dayType, 'up'),
-                    down: parseDaegyeongTimetable(dayType, 'down')
+                    up: parseStationTimetable(stationTimetableSource, currentLineId, dayType, 'up'),
+                    down: parseStationTimetable(stationTimetableSource, currentLineId, dayType, 'down')
                 };
             }
 
