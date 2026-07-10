@@ -234,12 +234,13 @@
                     <h2 class="sect-title text-[20px] font-extrabold text-[#0B1220] tracking-tight">대구권 대경선 지하철역</h2>
                     <div class="flex items-center gap-2">
                         <!-- 내 위치에서 가까운 역 찾기 -->
-                        <button id="locate-btn" onclick="findNearestStation()" class="w-9 h-9 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-500 hover:text-[#0054A6] active:scale-95 transition-all">
+                        <button id="locate-btn" onclick="findNearestStation()" class="w-9 h-9 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-500 hover:text-[#0054A6] active:scale-95 transition-all" aria-label="현재 위치에서 가장 가까운 역 찾기">
                             <i id="locate-icon" class="fa-solid fa-location-crosshairs text-[15px]"></i>
                         </button>
                         <!-- 즐겨찾기 버튼 -->
-                        <button id="favorite-toggle-btn" onclick="toggleFavorite()" class="w-9 h-9 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-400 hover:text-yellow-400 active:scale-95 transition-all">
+                        <button id="favorite-toggle-btn" onclick="toggleFavorite()" class="relative w-9 h-9 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-400 hover:text-yellow-400 active:scale-95 transition-all" aria-label="현재 역 즐겨찾기 전환">
                             <i id="favorite-icon" class="fa-regular fa-star text-[15px]"></i>
+                            <span id="favorite-count-badge" class="hidden absolute -right-1 -top-1 min-w-[17px] h-[17px] px-1 items-center justify-center rounded-full bg-amber-400 text-[9px] font-black text-white border-2 border-white shadow-sm">0</span>
                         </button>
                     </div>
                 </div>
@@ -277,6 +278,17 @@
                     </div>
                     <div id="line-tabs-gwangju" class="hidden gap-1.5 overflow-x-auto hide-scrollbar mb-4 pb-1">
                         <button id="btn-line-gwangju1" onclick="switchLine('gwangju_line1')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-[#009088] text-white shadow-[0_2px_8px_rgba(0,144,136,0.3)] shrink-0 border border-[#009088] transition-all">1호선</button>
+                    </div>
+
+                    <!-- 여러 역 즐겨찾기 바로가기 -->
+                    <div id="favorite-shortcuts-container" class="hidden mb-4 rounded-[18px] border border-amber-100 bg-amber-50/80 p-3 shadow-sm">
+                        <div class="mb-2 flex items-center justify-between px-0.5">
+                            <div class="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-800">
+                                <i class="fa-solid fa-star text-[10px] text-amber-400"></i> 즐겨찾기
+                            </div>
+                            <span class="text-[9px] font-semibold text-amber-700/70">마지막 선택 역이 위치 실패 시 기본값</span>
+                        </div>
+                        <div id="favorite-shortcuts" class="flex gap-1.5 overflow-x-auto hide-scrollbar pb-0.5"></div>
                     </div>
 
                     <!-- 코레일 스타일 역명판 -->
@@ -517,7 +529,8 @@
 
     <!-- 스크립트 (통합 로직) -->
     <script>
-        let favoriteStation = localStorage.getItem('subway_fav_station') || null;
+        let favoriteStations = [];
+        let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
 
         let currentRegion = 'daegu';
         let currentLineId = 'daegyeong';
@@ -978,6 +991,9 @@
             stationSelectorModal: document.getElementById('station-selector-modal'),
             selectorListContainer: document.getElementById('selector-list-container'),
             favoriteIcon: document.getElementById('favorite-icon'),
+            favoriteCountBadge: document.getElementById('favorite-count-badge'),
+            favoriteShortcutsContainer: document.getElementById('favorite-shortcuts-container'),
+            favoriteShortcuts: document.getElementById('favorite-shortcuts'),
             svgWrapper: document.getElementById('svg-wrapper'),
             countUp: document.getElementById('count-up'),
             countDown: document.getElementById('count-down'),
@@ -1991,14 +2007,133 @@
             }
         };
 
-        window.toggleFavorite = () => {
-            const newFav = (favoriteStation === homeSelectedStation) ? null : homeSelectedStation;
-            favoriteStation = newFav;
-            if (newFav) {
-                localStorage.setItem('subway_fav_station', newFav);
-            } else {
+        const FAVORITES_STORAGE_KEY = 'subway_favorites_v2';
+        const FAVORITE_LINE_ORDER = ['line1', 'line2', 'line3', 'daegyeong', 'daejeon_line1', 'busan_line1', 'busan_line2', 'busan_line3', 'busan_line4', 'busan_bglrt', 'busan_donghae', 'gwangju_line1'];
+        const FAVORITE_LINE_META = {
+            daegyeong: { label: '대경선', color: '#0054A6' },
+            line1: { label: '대구 1호선', color: '#D93F5C' },
+            line2: { label: '대구 2호선', color: '#00AA80' },
+            line3: { label: '대구 3호선', color: '#ffb100' },
+            daejeon_line1: { label: '대전 1호선', color: '#007448' },
+            gwangju_line1: { label: '광주 1호선', color: '#009088' },
+            busan_line1: { label: '부산 1호선', color: '#F06A00' },
+            busan_line2: { label: '부산 2호선', color: '#81C147' },
+            busan_line3: { label: '부산 3호선', color: '#B07C4A' },
+            busan_line4: { label: '부산 4호선', color: '#217DCB' },
+            busan_bglrt: { label: '부산김해', color: '#8652A1' },
+            busan_donghae: { label: '동해선', color: '#003DA5' }
+        };
+        const makeFavoriteKey = (lineId, station) => `${lineId}|${station}`;
+        const isFavorite = (lineId, station) => favoriteStations.some(item => item.lineId === lineId && item.station === station);
+
+        const persistFavorites = () => {
+            localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoriteStations));
+            if (lastFavoriteKey) localStorage.setItem('subway_last_favorite_v2', lastFavoriteKey);
+            else localStorage.removeItem('subway_last_favorite_v2');
+        };
+
+        const initializeFavorites = () => {
+            let stored = [];
+            try {
+                const parsed = JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) || '[]');
+                if (Array.isArray(parsed)) stored = parsed;
+            } catch (error) { }
+
+            const seen = new Set();
+            favoriteStations = stored.filter(item => {
+                if (!item || !STATIONS_ALL[item.lineId]?.[item.station]) return false;
+                const key = makeFavoriteKey(item.lineId, item.station);
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            }).map(item => ({ lineId: item.lineId, station: item.station }));
+
+            // 기존 단일 즐겨찾기를 새 다중 즐겨찾기 형식으로 한 번만 이전한다.
+            const legacyStation = localStorage.getItem('subway_fav_station');
+            if (legacyStation) {
+                const legacyLine = FAVORITE_LINE_ORDER.find(lineId => STATIONS_ALL[lineId]?.[legacyStation]);
+                if (legacyLine && !isFavorite(legacyLine, legacyStation)) {
+                    favoriteStations.push({ lineId: legacyLine, station: legacyStation });
+                }
                 localStorage.removeItem('subway_fav_station');
             }
+
+            if (!favoriteStations.some(item => makeFavoriteKey(item.lineId, item.station) === lastFavoriteKey)) {
+                const fallback = favoriteStations[favoriteStations.length - 1];
+                lastFavoriteKey = fallback ? makeFavoriteKey(fallback.lineId, fallback.station) : null;
+            }
+            persistFavorites();
+        };
+
+        const markFavoriteAsLast = (lineId, station) => {
+            if (!isFavorite(lineId, station)) return;
+            lastFavoriteKey = makeFavoriteKey(lineId, station);
+            persistFavorites();
+        };
+
+        const getLastFavorite = () => favoriteStations.find(item => makeFavoriteKey(item.lineId, item.station) === lastFavoriteKey) || favoriteStations[favoriteStations.length - 1] || null;
+
+        window.renderFavoriteShortcuts = () => {
+            if (!dom.favoriteShortcutsContainer || !dom.favoriteShortcuts) return;
+            if (!favoriteStations.length) {
+                dom.favoriteShortcutsContainer.classList.add('hidden');
+                dom.favoriteShortcuts.innerHTML = '';
+                return;
+            }
+            dom.favoriteShortcutsContainer.classList.remove('hidden');
+            dom.favoriteShortcuts.innerHTML = favoriteStations.map(item => {
+                const meta = FAVORITE_LINE_META[item.lineId] || { label: item.lineId, color: '#64748B' };
+                const key = makeFavoriteKey(item.lineId, item.station);
+                const isDefault = key === lastFavoriteKey;
+                const isActive = item.lineId === currentLineId && item.station === homeSelectedStation;
+                return `<div class="flex shrink-0 overflow-hidden rounded-full border ${isActive ? 'border-amber-300 bg-white shadow-sm' : 'border-amber-100 bg-white/75'}">
+                    <button onclick="openFavoriteStation('${item.lineId}', '${item.station}')" class="flex items-center gap-1.5 py-1.5 pl-2.5 pr-2 text-left active:bg-amber-50" aria-label="${meta.label} ${item.station}역으로 이동">
+                        <span class="h-2 w-2 rounded-full" style="background-color:${meta.color}"></span>
+                        <span class="text-[11px] font-extrabold text-slate-700">${item.station}</span>
+                        <span class="text-[8px] font-bold text-slate-400">${meta.label}</span>
+                        ${isDefault ? '<i class="fa-solid fa-house text-[8px] text-amber-500" title="기본 즐겨찾기"></i>' : ''}
+                    </button>
+                    <button onclick="removeFavorite('${item.lineId}', '${item.station}', event)" class="flex w-6 items-center justify-center border-l border-amber-100 text-amber-300 hover:bg-amber-50 hover:text-amber-600" aria-label="${item.station}역 즐겨찾기 삭제"><i class="fa-solid fa-xmark text-[8px]"></i></button>
+                </div>`;
+            }).join('');
+        };
+
+        window.openFavoriteStation = async (lineId, station) => {
+            if (!STATIONS_ALL[lineId]?.[station]) return;
+            lastFavoriteKey = makeFavoriteKey(lineId, station);
+            persistFavorites();
+            await window.switchRegion(LINE_REGION[lineId], true);
+            if (currentLineId !== lineId) await window.switchLine(lineId);
+            homeSelectedStation = station;
+            if (activeTab !== 'home') window.switchTab('home');
+            window.updateHomeUI();
+            window.renderHomeArrivalInfo();
+        };
+
+        window.removeFavorite = (lineId, station, event) => {
+            event?.stopPropagation();
+            favoriteStations = favoriteStations.filter(item => !(item.lineId === lineId && item.station === station));
+            if (lastFavoriteKey === makeFavoriteKey(lineId, station)) {
+                const fallback = favoriteStations[favoriteStations.length - 1];
+                lastFavoriteKey = fallback ? makeFavoriteKey(fallback.lineId, fallback.station) : null;
+            }
+            persistFavorites();
+            window.updateHomeUI();
+        };
+
+        window.toggleFavorite = () => {
+            const key = makeFavoriteKey(currentLineId, homeSelectedStation);
+            if (isFavorite(currentLineId, homeSelectedStation)) {
+                favoriteStations = favoriteStations.filter(item => makeFavoriteKey(item.lineId, item.station) !== key);
+                if (lastFavoriteKey === key) {
+                    const fallback = favoriteStations[favoriteStations.length - 1];
+                    lastFavoriteKey = fallback ? makeFavoriteKey(fallback.lineId, fallback.station) : null;
+                }
+            } else {
+                favoriteStations.push({ lineId: currentLineId, station: homeSelectedStation });
+                lastFavoriteKey = key;
+            }
+            persistFavorites();
             window.updateHomeUI();
         };
 
@@ -2013,11 +2148,17 @@
             if (nextStation) { dom.homeNextStation.textContent = `${nextStation} >`; dom.homeNextStationContainer.classList.replace('opacity-0', 'opacity-100'); } 
             else { dom.homeNextStationContainer.classList.replace('opacity-100', 'opacity-0'); }
             
-            if (favoriteStation === homeSelectedStation) {
+            if (isFavorite(currentLineId, homeSelectedStation)) {
                 dom.favoriteIcon.className = "fa-solid fa-star text-yellow-400";
             } else {
                 dom.favoriteIcon.className = "fa-regular fa-star";
             }
+            if (dom.favoriteCountBadge) {
+                dom.favoriteCountBadge.textContent = favoriteStations.length;
+                dom.favoriteCountBadge.classList.toggle('hidden', favoriteStations.length === 0);
+                dom.favoriteCountBadge.classList.toggle('flex', favoriteStations.length > 0);
+            }
+            window.renderFavoriteShortcuts();
 
             const s = STATIONS[homeSelectedStation];
             const transferContainer = document.getElementById('home-transfer-container');
@@ -2093,24 +2234,23 @@
         };
 
         window.closeStationSelector = () => dom.stationSelectorModal.classList.add('hidden');
-        window.selectHomeStation = (name) => { homeSelectedStation = name; window.updateHomeUI(); window.renderHomeArrivalInfo(); window.closeStationSelector(); };
+        window.selectHomeStation = (name) => {
+            homeSelectedStation = name;
+            markFavoriteAsLast(currentLineId, name);
+            window.updateHomeUI();
+            window.renderHomeArrivalInfo();
+            window.closeStationSelector();
+        };
         window.openHomeTimetable = (mode = 'all') => { modalViewMode = mode; window.handleStationClick(homeSelectedStation); window.openModal(); };
 
         /* ===== 위치 기반 가까운 역 찾기 =====
-           역별 [위도, 경도] 좌표. 현재 대경선 전 역을 지원하며,
-           다른 노선도 좌표를 채우면 자동으로 검색 대상에 포함됩니다. */
-        const STATION_COORDS = {
-            'daegyeong': {
-                "구미":   [36.1287, 128.3320],
-                "사곡":   [36.0900, 128.3700],
-                "북삼":   [36.0540, 128.4290],
-                "왜관":   [35.9920, 128.4010],
-                "서대구": [35.8800, 128.5340],
-                "대구":   [35.8758, 128.5950],
-                "동대구": [35.8797, 128.6285],
-                "경산":   [35.8170, 128.7410]
-            }
-        };
+           국가철도공단 도시광역철도 역사정보의 [위도, 경도]를
+           STATIONS_ALL의 역 순서에 맞춰 압축 저장한다. */
+        const STATION_COORD_LISTS = {"daegyeong":[[36.128278,128.331071],[36.098508,128.356416],[36.0560326479866,128.345278],[35.991821,128.400391],[35.881734,128.540121],[35.876,128.5961],[35.879376,128.628807],[35.8192,128.7276]],"line1":[[35.7986179,128.4893927],[35.804349,128.500409],[35.809571,128.51257],[35.813815,128.522374],[35.816123,128.530119],[35.8188583,128.5375588],[35.823695,128.545465],[35.831092,128.551755],[35.8373375,128.5570702],[35.8392924,128.5652846],[35.8392,128.574],[35.84072,128.58085],[35.8442516,128.5882407],[35.8510953,128.590643],[35.857382,128.59088],[35.86389,128.593312],[35.870873,128.593888],[35.876379,128.596919],[35.876159,128.604885],[35.874527,128.617244],[35.877626,128.627152],[35.884485,128.632295],[35.887208,128.639572],[35.886039,128.650455],[35.883765,128.659079],[35.879929,128.669767],[35.876256,128.681414],[35.869751,128.692775],[35.866761,128.701724],[35.865948,128.713663],[35.867852,128.723843],[35.8712,128.7338],[35.8717089,128.7508237],[35.9002809,128.8031144],[35.9094258,128.8175403]],"line2":[[35.86414313,128.4370043],[35.86495301,128.4582876],[35.8573333,128.4656264],[35.8531116,128.4789997],[35.85146491,128.491969],[35.8518236,128.5071662],[35.85062003,128.5157686],[35.84912,128.5287686],[35.8503505,128.537089],[35.8543251,128.547905],[35.8572405,128.555509],[35.860194,128.564593],[35.8623,128.572817],[35.865,128.58232271],[35.865592,128.593334],[35.863102,128.60316],[35.859868,128.613975],[35.8591,128.6257],[35.85874022,128.6359517],[35.858841,128.644951],[35.854841,128.654151],[35.8465,128.67185],[35.842718,128.67999],[35.842955,128.69335],[35.8408,128.705],[35.837066,128.715173],[35.83407,128.728695],[35.834131,128.741076],[35.836373,128.752966]],"line3":[[35.95838748,128.5598908],[35.95155512,128.5591934],[35.94404716,128.5583366],[35.93770658,128.556683],[35.93145534,128.5545305],[35.92574223,128.5503415],[35.9196172,128.547388],[35.91265,128.5434],[35.90443,128.545755],[35.89777,128.5468],[35.892,128.5536],[35.889893,128.561002],[35.88883085,128.5678716],[35.887886,128.574392],[35.88381395,128.5814483],[35.87573001,128.5821218],[35.86966429,128.582241],[35.86419437,128.5823758],[35.85668979,128.5834576],[35.85694518,128.5900469],[35.85538252,128.5996903],[35.85499783,128.6063685],[35.85431676,128.6160292],[35.85240979,128.6251246],[35.84516989,128.6244677],[35.83907838,128.6239185],[35.83135605,128.6232167],[35.82515322,128.6319513],[35.82083917,128.6401127],[35.8182678,128.6465345]],"daejeon_line1":[[36.316896,127.458264],[36.319652,127.448792],[36.329532,127.442848],[36.331583,127.433118],[36.328664,127.425842],[36.324831,127.419627],[36.322416,127.412518],[36.328582,127.405046],[36.338252,127.393317],[36.34544,127.384603],[36.351673,127.386739],[36.357661,127.381047],[36.357522,127.372632],[36.358272,127.364382],[36.354578,127.354467],[36.353689,127.341524],[36.356605,127.33083],[36.359021,127.321525],[36.366825,127.317859],[36.37415,127.317835],[36.384106,127.319501],[36.392128,127.314581]],"gwangju_line1":[[35.107028,126.933932],[35.124108,126.932013],[35.133023,126.928382],[35.1389849,126.92318],[35.14661,126.92005],[35.150976,126.914446],[35.153658,126.910033],[35.154176,126.901089],[35.152047,126.895637],[35.153363,126.883973],[35.152085,126.876698],[35.151793,126.869519],[35.150486,126.858694],[35.146784,126.848641],[35.143214,126.841442],[35.144179,126.81153],[35.143565,126.799245],[35.137529,126.791488],[35.131713,126.787942],[35.1247,126.769586]],"busan_line1":[[35.048229,128.965919],[35.057288,128.971151],[35.065179,128.979702],[35.074222,128.976538],[35.081555,128.9773083],[35.089819,128.974029],[35.09556,128.96056],[35.10611,128.96667],[35.10333,128.97417],[35.09972,128.98333],[35.1,128.9925],[35.10306,128.99972],[35.11083,129.01194],[35.11056,129.01757],[35.10083,129.01972],[35.0975,129.02694],[35.09778,129.03472],[35.10389,129.03639],[35.11528,129.03972],[35.12111,129.04296],[35.12778,129.04778],[35.13417,129.05417],[35.14139,129.05944],[35.14722,129.05917],[35.15778,129.05917],[35.1625,129.06278],[35.17304,129.07119],[35.17972,129.07667],[35.18611,129.08167],[35.19583,129.08],[35.20556,129.078461],[35.21222,129.07944],[35.22056,129.08667],[35.23,129.08944],[35.23806,129.08806],[35.247407,129.091327],[35.25694,129.09139],[35.26528,129.0925],[35.27333,129.09268],[35.28361,129.095]],"busan_line2":[[35.17,129.17694],[35.16669,129.16887],[35.163518,129.158584],[35.16147,129.147887],[35.16911,129.138431],[35.16892,129.131764],[35.16722,129.121878],[35.16578,129.114842],[35.15792,129.113197],[35.14989,129.111008],[35.14217,129.10797],[35.13757,129.10055],[35.13512,129.09218],[35.13472,129.08442],[35.13558,129.07436],[35.13911,129.06736],[35.14583,129.06672],[35.15311,129.06533],[35.15768,129.058517],[35.15744,129.05019],[35.15589,129.04283],[35.15411,129.0325],[35.15325,129.02056],[35.15125,129.01228],[35.1505,129.00306],[35.15553,128.99114],[35.16218,128.98467],[35.17378,128.98394],[35.18036,128.98561],[35.18967,128.98864],[35.19681,128.99492],[35.20253,128.99931],[35.21011,129.00533],[35.22336,129.00922],[35.23585,129.01387],[35.24672,129.01292],[35.25864,129.01242],[35.26733,129.01686],[35.281,129.017525],[35.30828,129.01028],[35.31697,129.01383],[35.32533,129.01942],[35.33851,129.02643]],"busan_line3":[[35.16775,129.11458],[35.17153,129.10822],[35.1735,129.0955],[35.17681,129.08575],[35.18614,129.08147],[35.18858,129.07394],[35.19125,129.0675],[35.199,129.065],[35.2055,129.06806],[35.213,129.0365],[35.21333,129.02392],[35.21197,129.01275],[35.210139,129.005545],[35.20644,128.99631],[35.21125,128.98175],[35.21261,128.96894],[35.21343,128.96074]],"busan_line4":[[35.20643,129.06868],[35.20466,129.07741],[35.20183,129.08378],[35.20025,129.09078],[35.19986,129.09764],[35.20503,129.10161],[35.21331,129.10769],[35.21583,129.11517],[35.21778,129.12397],[35.21825,129.13717],[35.22578,129.14617],[35.2325,129.15403],[35.23603,129.1605],[35.23733,129.17183]],"busan_bglrt":[[35.1623018,128.9859408],[35.1632616,128.9776836],[35.16640204,128.9548881],[35.171906,128.948586],[35.182001,128.954198],[35.196143,128.963599],[35.213066,128.960562],[35.214105,128.950825],[35.217657,128.938417],[35.222162,128.927893],[35.2275,128.923721],[35.22899,128.915612],[35.228099,128.901736],[35.227103,128.89041],[35.22646624,128.8838997],[35.22726757,128.8743069],[35.2328215,128.8721409],[35.24006467,128.8718628],[35.24965763,128.8692908],[35.25955642,128.8671142],[35.26672721,128.8650703]],"busan_donghae":[[35.164668,129.06011],[35.181197,129.069015],[35.18958,129.074385],[35.1938,129.07958],[35.204714,129.0773502],[35.196007,129.101062],[35.1938,129.113709],[35.188,129.120109],[35.1793,129.1245],[35.1717,129.135958],[35.181832,129.176696],[35.187832,129.202069],[35.196256,129.208291],[35.244627,129.2188951],[35.2675565,129.2330307],[35.311838,129.245197],[35.328177,129.276626],[35.346121,129.29304],[35.419713,129.28223],[35.456519,129.287856],[35.494007,129.303094],[35.507884,129.321097],[35.538669,129.353269]]};
+        const STATION_COORDS = Object.fromEntries(Object.entries(STATION_COORD_LISTS).map(([lineId, coords]) => {
+            const stationNames = Object.keys(STATIONS_ALL[lineId] || {});
+            return [lineId, Object.fromEntries(stationNames.map((stationName, index) => [stationName, coords[index]]).filter(([, coord]) => Array.isArray(coord)))];
+        }));
         const LINE_REGION = {
             daegyeong: 'daegu', line1: 'daegu', line2: 'daegu', line3: 'daegu',
             daejeon_line1: 'daejeon', gwangju_line1: 'gwangju',
@@ -2125,44 +2265,61 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         };
 
-        window.findNearestStation = () => {
+        const getNearestStation = (latitude, longitude) => {
+            let best = null;
+            for (const lid in STATION_COORDS) {
+                for (const st in STATION_COORDS[lid]) {
+                    const [la, lo] = STATION_COORDS[lid][st];
+                    const distance = haversine(latitude, longitude, la, lo);
+                    if (!best || distance < best.d) best = { lid, st, d: distance };
+                }
+            }
+            return best;
+        };
+
+        window.findNearestStation = (options = {}) => {
+            const silent = options?.silent === true;
             const btn = document.getElementById('locate-btn');
-            if (!navigator.geolocation) { alert('이 브라우저는 위치 기능을 지원하지 않습니다.'); return; }
+            if (!navigator.geolocation) {
+                if (!silent) alert('이 브라우저는 위치 기능을 지원하지 않습니다.');
+                return Promise.resolve(null);
+            }
             if (btn) btn.classList.add('loc-loading');
 
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const { latitude, longitude } = pos.coords;
-                let best = null;
-                for (const lid in STATION_COORDS) {
-                    for (const st in STATION_COORDS[lid]) {
-                        const [la, lo] = STATION_COORDS[lid][st];
-                        const d = haversine(latitude, longitude, la, lo);
-                        if (!best || d < best.d) best = { lid, st, d };
+            return new Promise(resolve => {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    const best = getNearestStation(latitude, longitude);
+                    if (btn) btn.classList.remove('loc-loading');
+                    if (!best) {
+                        if (!silent) alert('가까운 역을 찾을 수 없습니다.');
+                        resolve(null);
+                        return;
                     }
-                }
-                if (btn) btn.classList.remove('loc-loading');
-                if (!best) { alert('가까운 역을 찾을 수 없습니다.'); return; }
 
-                if (best.lid !== currentLineId) {
-                    await window.switchRegion(LINE_REGION[best.lid]);
-                    await window.switchLine(best.lid);
-                }
-                window.selectHomeStation(best.st);
+                    await window.switchRegion(LINE_REGION[best.lid], true);
+                    if (best.lid !== currentLineId) await window.switchLine(best.lid);
+                    window.selectHomeStation(best.st);
 
-                const distTxt = best.d < 1 ? `${Math.round(best.d * 1000)}m` : `${best.d.toFixed(1)}km`;
-                if (btn) {
-                    const ic = document.getElementById('locate-icon');
-                    if (ic) { ic.className = 'fa-solid fa-check text-[15px] text-[#16a34a]'; setTimeout(() => ic.className = 'fa-solid fa-location-crosshairs text-[15px]', 1600); }
-                }
-                if (dom.homeCurrentTime) {
-                    const prev = dom.homeCurrentTime.textContent;
-                    dom.homeCurrentTime.textContent = `${best.st} · ${distTxt}`;
-                    setTimeout(() => window.renderHomeArrivalInfo(), 2200);
-                }
-            }, (err) => {
-                if (btn) btn.classList.remove('loc-loading');
-                alert(err.code === 1 ? '위치 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.' : '현재 위치를 가져오지 못했습니다.');
-            }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+                    const distTxt = best.d < 1 ? `${Math.round(best.d * 1000)}m` : `${best.d.toFixed(1)}km`;
+                    if (btn) {
+                        const ic = document.getElementById('locate-icon');
+                        if (ic) {
+                            ic.className = 'fa-solid fa-check text-[15px] text-[#16a34a]';
+                            setTimeout(() => ic.className = 'fa-solid fa-location-crosshairs text-[15px]', 1600);
+                        }
+                    }
+                    if (dom.homeCurrentTime) {
+                        dom.homeCurrentTime.textContent = `${best.st} · ${distTxt}`;
+                        setTimeout(() => window.renderHomeArrivalInfo(), 2200);
+                    }
+                    resolve(best);
+                }, (err) => {
+                    if (btn) btn.classList.remove('loc-loading');
+                    if (!silent) alert(err.code === 1 ? '위치 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.' : '현재 위치를 가져오지 못했습니다.');
+                    resolve(null);
+                }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 });
+            });
         };
 
         window.switchTab = (tabId) => {
@@ -2484,6 +2641,7 @@
         };
 
         window.onload = async () => {
+            initializeFavorites();
             const urlParams = new URLSearchParams(window.location.search);
             const urlRegion = urlParams.get('region');
             const supportedRegions = ['daegu', 'daejeon', 'busan', 'gwangju'];
@@ -2497,72 +2655,13 @@
                 else if (urlRegion === 'busan') await window.switchLine('busan_line1', true);
                 else if (urlRegion === 'gwangju') await window.switchLine('gwangju_line1', true);
             } else {
-                // 직접 접속한 경우 기존처럼 즐겨찾기 또는 기본값(대구권) 적용
-                let foundFav = false;
-                if (favoriteStation) {
-                    if (STATIONS_ALL['line1'][favoriteStation]) {
-                        await window.switchRegion('daegu', true);
-                        await window.switchLine('line1', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['line2'] && STATIONS_ALL['line2'][favoriteStation]) {
-                        await window.switchRegion('daegu', true);
-                        await window.switchLine('line2', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['line3'] && STATIONS_ALL['line3'][favoriteStation]) {
-                        await window.switchRegion('daegu', true);
-                        await window.switchLine('line3', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['daegyeong'][favoriteStation]) {
-                        await window.switchRegion('daegu', true);
-                        await window.switchLine('daegyeong', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['daejeon_line1'][favoriteStation]) {
-                        await window.switchRegion('daejeon', true);
-                        await window.switchLine('daejeon_line1', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['busan_line1'] && STATIONS_ALL['busan_line1'][favoriteStation]) {
-                        await window.switchRegion('busan', true);
-                        await window.switchLine('busan_line1', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['busan_line2'] && STATIONS_ALL['busan_line2'][favoriteStation]) {
-                        await window.switchRegion('busan', true);
-                        await window.switchLine('busan_line2', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['busan_line3'] && STATIONS_ALL['busan_line3'][favoriteStation]) {
-                        await window.switchRegion('busan', true);
-                        await window.switchLine('busan_line3', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['busan_line4'] && STATIONS_ALL['busan_line4'][favoriteStation]) {
-                        await window.switchRegion('busan', true);
-                        await window.switchLine('busan_line4', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['busan_bglrt'] && STATIONS_ALL['busan_bglrt'][favoriteStation]) {
-                        await window.switchRegion('busan', true);
-                        await window.switchLine('busan_bglrt', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['busan_donghae'] && STATIONS_ALL['busan_donghae'][favoriteStation]) {
-                        await window.switchRegion('busan', true);
-                        await window.switchLine('busan_donghae', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    } else if (STATIONS_ALL['gwangju_line1'] && STATIONS_ALL['gwangju_line1'][favoriteStation]) {
-                        await window.switchRegion('gwangju', true);
-                        await window.switchLine('gwangju_line1', true);
-                        homeSelectedStation = favoriteStation;
-                        foundFav = true;
-                    }
-                }
-                if (!foundFav) {
+                // 위치 권한 확인 전에는 마지막 즐겨찾기를 빠른 기본값으로 사용한다.
+                const fallbackFavorite = getLastFavorite();
+                if (fallbackFavorite) {
+                    await window.switchRegion(LINE_REGION[fallbackFavorite.lineId], true);
+                    await window.switchLine(fallbackFavorite.lineId, true);
+                    homeSelectedStation = fallbackFavorite.station;
+                } else {
                     await window.switchRegion('daegu', true);
                     await window.switchLine('daegyeong', true);
                 }
@@ -2573,6 +2672,7 @@
             setTimeout(() => {
                 window.switchTab('home');
                 if (shouldShowCapitalPopup) setTimeout(() => window.showCapitalPopup(), 180);
+                else if (!urlRegion) setTimeout(() => window.findNearestStation({ silent: true }), 280);
                 setInterval(() => {
                     const now = new Date(); let h = now.getHours(); if(h<4) h+=24;
                     currentSec = h*3600 + now.getMinutes()*60 + now.getSeconds();
