@@ -1071,10 +1071,13 @@
         let mapTrainMotionEnabled = true;
         let mapAnimationFrameId = null;
         let mapLastFullUpdateTime = 0;
+        let mapLastFollowUpdateTime = 0;
         let mapActiveTrainSources = [];
         let mapActiveTrainSourceKey = '';
         let lastUserLocation = null;
         const railPathMetricCache = new Map();
+        const MAP_FOLLOW_FRAME_INTERVAL = 1000 / 100;
+        const MAP_TRAIN_HALF_LENGTH_METERS = 16;
 
         const dom = {
             mainHeader: document.getElementById('main-header'),
@@ -2727,6 +2730,7 @@
                 selectedTrainId = train.id;
                 selectedMapTrainKey = key;
                 mapFollowTrainKey = key;
+                mapLastFollowUpdateTime = 0;
                 selectedStation = null;
                 isAutoScroll = false;
                 if (subwayMap?.getLevel?.() > 4) subwayMap.setLevel(4, { animate:{ duration:500 } });
@@ -2737,8 +2741,11 @@
 
         window.updateSubwayMapTrains = (trains, options = {}) => {
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps || activeTab !== 'map') return;
-            const activeKeys = new Set();
-            const targetTrains = options.onlyKey ? trains.filter(train => `${train.lineId || currentLineId}:${train.direction}:${train.id}` === options.onlyKey) : trains;
+            const activeKeys = new Set(trains.map(train => `${train.lineId || currentLineId}:${train.direction}:${train.id}`));
+            const targetTrains = trains.filter(train => {
+                const key = `${train.lineId || currentLineId}:${train.direction}:${train.id}`;
+                return (!options.onlyKey || key === options.onlyKey) && (!options.skipKey || key !== options.skipKey);
+            });
             const positioned = targetTrains.map(train => {
                 const metric = getRailPathMetric(train.lineId || currentLineId);
                 const fromDistance = metric.stationDistances[train.curr?.name];
@@ -2749,16 +2756,14 @@
                 const distance = fromDistance + (toDistance - fromDistance) * fraction;
                 const point = pointOnRailPath(metric, distance);
                 if (!point) return null;
-                const movesWithPath = toDistance >= fromDistance;
-                const tangentStart = pointOnRailPath(metric, distance - 110) || point;
-                const tangentEnd = pointOnRailPath(metric, distance + 110) || point;
-                const canonicalAngle = bearingBetweenRailPoints(tangentStart, tangentEnd);
-                const angle = canonicalAngle + (movesWithPath ? 0 : 180);
+                const movementSign = Math.sign(toDistance - fromDistance) || (train.direction === 'up' ? -1 : 1);
+                const rearPoint = pointOnRailPath(metric, distance - movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
+                const frontPoint = pointOnRailPath(metric, distance + movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
+                const angle = bearingBetweenRailPoints(rearPoint, frontPoint);
                 const lanePoint = offsetRailPoint(point, angle, 2.2);
                 const key = `${train.lineId || currentLineId}:${train.direction}:${train.id}`;
                 return { train, point, lanePoint, key, distance, angle };
             }).filter(Boolean);
-            positioned.forEach(item => activeKeys.add(item.key));
             positioned.forEach(({ train, point, lanePoint, key, angle }) => {
                 if (options.onlyKey && key !== options.onlyKey) return;
                 let entry = subwayMapTrainOverlays.get(key);
@@ -2768,7 +2773,7 @@
                     const element = createSubwayMapTrainElement(train, color, key);
                     const overlay = new kakao.maps.CustomOverlay({ map: subwayMap, position: new kakao.maps.LatLng(lanePoint[0], lanePoint[1]), content: element, xAnchor: 0.5, yAnchor: 0.5, zIndex: 8 });
                     entry = {
-                        element, overlay, angle,
+                        element, overlay, angle, angleUpdatedAt:options.timestamp || performance.now(),
                         body:element.querySelector('.subway-map-train-body'),
                         badge:element.querySelector('.subway-map-train-badge'),
                         leftSide:element.querySelector('.train-side-left'),
@@ -2792,7 +2797,11 @@
                 let angleDelta = angle - entry.angle;
                 while (angleDelta > 180) angleDelta -= 360;
                 while (angleDelta < -180) angleDelta += 360;
-                if (Math.abs(angleDelta) > .08) entry.angle += angleDelta * .18;
+                const angleNow = options.timestamp || performance.now();
+                const angleElapsed = Math.max(1, Math.min(64, angleNow - entry.angleUpdatedAt));
+                const angleBlend = 1 - Math.exp(-angleElapsed / 72);
+                if (Math.abs(angleDelta) > .05) entry.angle += angleDelta * angleBlend;
+                entry.angleUpdatedAt = angleNow;
                 entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${laneOffset}px)`;
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
                 entry.badge.setAttribute('transform', `rotate(${-entry.angle} 16 33.5)`);
@@ -2813,12 +2822,20 @@
                 mapAnimationFrameId = null;
                 if (activeTab !== 'map' || !subwayMap || !mapTrainMotionEnabled) return;
                 const liveSeconds = getLiveCurrentSeconds();
+                const followElapsed = timestamp - mapLastFollowUpdateTime;
+                const followDue = !!mapFollowTrainKey && followElapsed >= MAP_FOLLOW_FRAME_INTERVAL;
+                let didFullUpdate = false;
                 if (timestamp - mapLastFullUpdateTime >= 33) {
                     mapLastFullUpdateTime = timestamp;
-                    window.updateSubwayMapTrains(getRegionMapTrains(liveSeconds));
-                } else if (mapFollowTrainKey) {
-                    const followedTrain = getMapTrainByKey(liveSeconds, mapFollowTrainKey);
-                    if (followedTrain) window.updateSubwayMapTrains([followedTrain], { onlyKey:mapFollowTrainKey, cleanup:false });
+                    window.updateSubwayMapTrains(getRegionMapTrains(liveSeconds), { timestamp, skipKey:mapFollowTrainKey && !followDue ? mapFollowTrainKey : null });
+                    didFullUpdate = true;
+                }
+                if (followDue) {
+                    mapLastFollowUpdateTime = timestamp - (followElapsed % MAP_FOLLOW_FRAME_INTERVAL);
+                    if (!didFullUpdate) {
+                        const followedTrain = getMapTrainByKey(liveSeconds, mapFollowTrainKey);
+                        if (followedTrain) window.updateSubwayMapTrains([followedTrain], { onlyKey:mapFollowTrainKey, cleanup:false, timestamp });
+                    }
                 }
                 mapAnimationFrameId = requestAnimationFrame(animate);
             };
