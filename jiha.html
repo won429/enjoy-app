@@ -2554,6 +2554,16 @@
             return Math.atan2(dLng, to[0] - from[0]) * 180 / Math.PI;
         };
 
+        const offsetRailPoint = (point, movementAngle, meters) => {
+            const normal = (movementAngle + 90) * Math.PI / 180;
+            const latitudeScale = 111320;
+            const longitudeScale = Math.max(1, latitudeScale * Math.cos(point[0] * Math.PI / 180));
+            return [
+                point[0] + Math.cos(normal) * meters / latitudeScale,
+                point[1] + Math.sin(normal) * meters / longitudeScale
+            ];
+        };
+
         const REGION_LINE_IDS = {
             daegu: ['daegyeong', 'line1', 'line2', 'line3'],
             daejeon: ['daejeon_line1'],
@@ -2594,7 +2604,7 @@
             }
             return { ...train, curr, next, overallProgress: progress, timeRemaining: Math.max(0, Math.ceil(next.sec - atSec)), isStopped, direction, lineId, stopRemaining: isStopped ? Math.max(0, Math.ceil(STOP_DURATION - (atSec - curr.sec))) : 0 };
         }).filter(Boolean);
-        const getRegionMapTrains = (atSec = currentSec) => {
+        const refreshMapActiveTrainSources = atSec => {
             const lineIds = getVisibleMapLineIds();
             const sourceKey = `${currentRegion}:${currentDayType}:${lineIds.join(',')}:${Math.floor(atSec)}`;
             if (sourceKey !== mapActiveTrainSourceKey) {
@@ -2608,7 +2618,15 @@
                     }).map(train => ({ train, direction, lineId })));
                 });
             }
+        };
+        const getRegionMapTrains = (atSec = currentSec) => {
+            refreshMapActiveTrainSources(atSec);
             return mapActiveTrainSources.map(({ train, direction, lineId }) => getActiveTrainItems([train], direction, lineId, atSec)[0]).filter(Boolean);
+        };
+        const getMapTrainByKey = (atSec, key) => {
+            refreshMapActiveTrainSources(atSec);
+            const source = mapActiveTrainSources.find(({ train, direction, lineId }) => `${lineId}:${direction}:${train.id}` === key);
+            return source ? getActiveTrainItems([source.train], source.direction, source.lineId, atSec)[0] : null;
         };
         const loadRegionMapTimetables = async () => {
             const lineIds = REGION_LINE_IDS[currentRegion] || [currentLineId];
@@ -2731,21 +2749,24 @@
                 const distance = fromDistance + (toDistance - fromDistance) * fraction;
                 const point = pointOnRailPath(metric, distance);
                 if (!point) return null;
-                const direction = Math.sign(toDistance - fromDistance) || (train.direction === 'up' ? -1 : 1);
-                const behind = pointOnRailPath(metric, distance - direction * 240) || point;
-                const ahead = pointOnRailPath(metric, distance + direction * 240) || point;
+                const movesWithPath = toDistance >= fromDistance;
+                const tangentStart = pointOnRailPath(metric, distance - 110) || point;
+                const tangentEnd = pointOnRailPath(metric, distance + 110) || point;
+                const canonicalAngle = bearingBetweenRailPoints(tangentStart, tangentEnd);
+                const angle = canonicalAngle + (movesWithPath ? 0 : 180);
+                const lanePoint = offsetRailPoint(point, angle, 2.2);
                 const key = `${train.lineId || currentLineId}:${train.direction}:${train.id}`;
-                return { train, point, ahead, key, distance, angle: bearingBetweenRailPoints(behind, ahead) };
+                return { train, point, lanePoint, key, distance, angle };
             }).filter(Boolean);
             positioned.forEach(item => activeKeys.add(item.key));
-            positioned.forEach(({ train, point, ahead, key, angle }) => {
+            positioned.forEach(({ train, point, lanePoint, key, angle }) => {
                 if (options.onlyKey && key !== options.onlyKey) return;
                 let entry = subwayMapTrainOverlays.get(key);
                 if (!entry) {
                     const colors = getLineColors(train.lineId || currentLineId);
                     const color = train.direction === 'down' ? colors.down : colors.up;
                     const element = createSubwayMapTrainElement(train, color, key);
-                    const overlay = new kakao.maps.CustomOverlay({ map: subwayMap, position: new kakao.maps.LatLng(point[0], point[1]), content: element, xAnchor: 0.5, yAnchor: 0.5, zIndex: 8 });
+                    const overlay = new kakao.maps.CustomOverlay({ map: subwayMap, position: new kakao.maps.LatLng(lanePoint[0], lanePoint[1]), content: element, xAnchor: 0.5, yAnchor: 0.5, zIndex: 8 });
                     entry = {
                         element, overlay, angle,
                         body:element.querySelector('.subway-map-train-body'),
@@ -2755,14 +2776,23 @@
                     };
                     subwayMapTrainOverlays.set(key, entry);
                 }
-                const position = new kakao.maps.LatLng(point[0], point[1]);
+                const trackPosition = new kakao.maps.LatLng(point[0], point[1]);
+                const position = new kakao.maps.LatLng(lanePoint[0], lanePoint[1]);
                 entry.overlay.setPosition(position);
                 if (entry.element.parentElement) entry.element.parentElement.style.transition = 'none';
-                const laneOffset = 7;
+                let laneOffset = 0;
+                try {
+                    const projection = subwayMap.getProjection();
+                    const trackPixel = projection.pointFromCoords(trackPosition);
+                    const lanePixel = projection.pointFromCoords(position);
+                    const geographicPixelOffset = Math.hypot(lanePixel.x - trackPixel.x, lanePixel.y - trackPixel.y);
+                    const minimumPixelOffset = 9.5;
+                    laneOffset = Math.max(0, minimumPixelOffset - geographicPixelOffset);
+                } catch (_) { laneOffset = 2; }
                 let angleDelta = angle - entry.angle;
                 while (angleDelta > 180) angleDelta -= 360;
                 while (angleDelta < -180) angleDelta += 360;
-                if (Math.abs(angleDelta) > .15) entry.angle += angleDelta * .12;
+                if (Math.abs(angleDelta) > .08) entry.angle += angleDelta * .18;
                 entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${laneOffset}px)`;
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
                 entry.badge.setAttribute('transform', `rotate(${-entry.angle} 16 33.5)`);
@@ -2782,12 +2812,13 @@
             const animate = timestamp => {
                 mapAnimationFrameId = null;
                 if (activeTab !== 'map' || !subwayMap || !mapTrainMotionEnabled) return;
-                const trains = getRegionMapTrains(getLiveCurrentSeconds());
-                if (timestamp - mapLastFullUpdateTime >= 16) {
+                const liveSeconds = getLiveCurrentSeconds();
+                if (timestamp - mapLastFullUpdateTime >= 33) {
                     mapLastFullUpdateTime = timestamp;
-                    window.updateSubwayMapTrains(trains);
+                    window.updateSubwayMapTrains(getRegionMapTrains(liveSeconds));
                 } else if (mapFollowTrainKey) {
-                    window.updateSubwayMapTrains(trains, { onlyKey:mapFollowTrainKey, cleanup:false });
+                    const followedTrain = getMapTrainByKey(liveSeconds, mapFollowTrainKey);
+                    if (followedTrain) window.updateSubwayMapTrains([followedTrain], { onlyKey:mapFollowTrainKey, cleanup:false });
                 }
                 mapAnimationFrameId = requestAnimationFrame(animate);
             };
