@@ -386,9 +386,9 @@
                         </div>
                     </div>
 
-                    <div id="home-station-address-container" class="mt-5 flex w-full items-center justify-start gap-1.5 px-1 text-left text-[11px] font-semibold text-slate-500" aria-live="polite">
-                        <i id="home-station-address-icon" class="fa-solid fa-location-dot text-[10px] text-[#0054A6]"></i>
-                        <span id="home-station-address" class="block min-w-0 max-w-full truncate">역 주소를 불러오는 중입니다.</span>
+                    <div id="home-station-address-container" class="mt-5 flex w-full items-center justify-between gap-3 px-1 text-left text-[11px] font-semibold text-slate-500" aria-live="polite">
+                        <div class="flex min-w-0 items-center gap-1.5"><i id="home-station-address-icon" class="fa-solid fa-location-dot text-[10px] text-[#0054A6]"></i><span id="home-station-address" class="block min-w-0 truncate">역 주소를 불러오는 중입니다.</span></div>
+                        <span id="home-station-distance" class="hidden shrink-0 rounded-full bg-white/65 px-2 py-1 text-[10px] font-extrabold shadow-sm backdrop-blur"></span>
                     </div>
 
                     <!-- 환승 정보 섹션 -->
@@ -516,7 +516,7 @@
                     </div>
                     <div class="flex items-center gap-2"><span id="subway-map-status" class="text-[9px] font-bold text-gray-400">Kakao Map</span><button id="map-motion-toggle" onclick="toggleMapTrainMotion()" class="flex h-7 items-center gap-1 rounded-full bg-gray-100 px-2.5 text-[9px] font-extrabold text-gray-600"><i class="fa-solid fa-pause text-[8px]"></i><span>움직임</span></button></div>
                 </div>
-                <div id="map-line-tabs" class="map-line-tabs pointer-events-auto mt-2 flex gap-1.5 overflow-x-auto rounded-[20px] border border-white/70 bg-white/55 p-1.5 shadow-lg backdrop-blur-xl" style="scrollbar-width:none"></div>
+                <div id="map-line-tabs" class="map-line-tabs pointer-events-auto mt-2 flex gap-1.5 overflow-x-auto px-0.5 py-1" style="scrollbar-width:none"></div>
             </header>
         </main>
 
@@ -1070,8 +1070,10 @@
         const mapVisibleLinesByRegion = new Map();
         let mapTrainMotionEnabled = true;
         let mapAnimationFrameId = null;
+        let mapLastFullUpdateTime = 0;
         let mapActiveTrainSources = [];
         let mapActiveTrainSourceKey = '';
+        let lastUserLocation = null;
         const railPathMetricCache = new Map();
 
         const dom = {
@@ -1113,6 +1115,7 @@
             homeNextStationContainer: document.getElementById('home-next-station-container'),
             homeStationAddress: document.getElementById('home-station-address'),
             homeStationAddressIcon: document.getElementById('home-station-address-icon'),
+            homeStationDistance: document.getElementById('home-station-distance'),
             homeCurrentTime: document.getElementById('home-current-time'),
             homeUpInfo: document.getElementById('home-up-info'),
             homeDownInfo: document.getElementById('home-down-info'),
@@ -2151,7 +2154,7 @@
                 window.renderHomeArrivalInfo();
                 window.render();
             }
-            if (activeTab === 'map' && window.updateSubwayMap) requestAnimationFrame(window.updateSubwayMap);
+            if (activeTab === 'map' && window.updateSubwayMap) requestAnimationFrame(() => window.updateSubwayMap({ fitBounds:false }));
         };
 
         const FAVORITES_STORAGE_KEY = 'subway_favorites_v2';
@@ -2319,6 +2322,19 @@
 
         window.addEventListener('resize', () => requestAnimationFrame(updateStationPlateLayout));
 
+        const updateHomeStationDistance = () => {
+            if (!dom.homeStationDistance) return;
+            const coord = STATION_COORDS[currentLineId]?.[homeSelectedStation];
+            if (!lastUserLocation || !coord) {
+                dom.homeStationDistance.classList.add('hidden');
+                return;
+            }
+            const distance = haversine(lastUserLocation.latitude, lastUserLocation.longitude, coord[0], coord[1]);
+            dom.homeStationDistance.textContent = distance < 1 ? `현재 위치 ${Math.round(distance * 1000)}m` : `현재 위치 ${distance.toFixed(1)}km`;
+            dom.homeStationDistance.style.color = THEME_COLOR;
+            dom.homeStationDistance.classList.remove('hidden');
+        };
+
         window.updateHomeUI = () => {
             const stationNames = Object.keys(STATIONS);
             const idx = stationNames.indexOf(homeSelectedStation);
@@ -2336,6 +2352,7 @@
                 dom.homeStationAddress.title = stationAddress;
             }
             if (dom.homeStationAddressIcon) dom.homeStationAddressIcon.style.color = THEME_COLOR;
+            updateHomeStationDistance();
             requestAnimationFrame(updateStationPlateLayout);
             
             if (isFavorite(currentLineId, homeSelectedStation)) {
@@ -2611,7 +2628,7 @@
             dom.mapLineTabs.innerHTML = (REGION_LINE_IDS[currentRegion] || [currentLineId]).map(lineId => {
                 const meta = FAVORITE_LINE_META[lineId] || { label:lineId, color:'#64748B' };
                 const enabled = visible.has(lineId);
-                return `<div class="flex shrink-0 items-center rounded-full border p-0.5 ${enabled ? 'bg-white/85 shadow-sm' : 'bg-white/30 opacity-60'}" style="border-color:${enabled ? meta.color + '55' : 'rgba(255,255,255,.55)'}"><button onclick="focusMapLine('${lineId}')" class="rounded-full px-2.5 py-1.5 text-[10px] font-extrabold" style="color:${enabled ? meta.color : '#6B7280'}">${meta.label.replace('대구 ', '').replace('부산 ', '').replace('광주 ', '').replace('대전 ', '')}</button><button onclick="toggleMapLine('${lineId}', event)" aria-label="${meta.label} ${enabled ? '끄기' : '켜기'}" class="flex h-6 w-6 items-center justify-center rounded-full" style="background:${enabled ? meta.color + '18' : 'rgba(148,163,184,.15)'};color:${enabled ? meta.color : '#94A3B8'}"><i class="fa-solid ${enabled ? 'fa-eye' : 'fa-eye-slash'} text-[8px]"></i></button></div>`;
+                return `<div class="flex shrink-0 items-center overflow-hidden rounded-full border shadow-sm transition-all ${enabled ? '' : 'bg-white/75 opacity-65'}" style="background:${enabled ? meta.color : 'rgba(255,255,255,.75)'};border-color:${enabled ? meta.color : 'rgba(148,163,184,.3)'}"><button onclick="focusMapLine('${lineId}')" class="px-3 py-2 text-[10px] font-extrabold" style="color:${enabled ? '#fff' : '#64748B'}">${meta.label.replace('대구 ', '').replace('부산 ', '').replace('광주 ', '').replace('대전 ', '')}</button><button onclick="toggleMapLine('${lineId}', event)" aria-label="${meta.label} ${enabled ? '끄기' : '켜기'}" class="mr-1 flex h-6 w-6 items-center justify-center rounded-full" style="background:${enabled ? 'rgba(255,255,255,.22)' : 'rgba(148,163,184,.12)'};color:${enabled ? '#fff' : '#94A3B8'}"><i class="fa-solid ${enabled ? 'fa-eye' : 'fa-eye-slash'} text-[8px]"></i></button></div>`;
             }).join('');
             if (dom.mapMotionToggle) dom.mapMotionToggle.innerHTML = `<i class="fa-solid ${mapTrainMotionEnabled ? 'fa-pause' : 'fa-play'} text-[8px]"></i><span>${mapTrainMotionEnabled ? '움직임' : '멈춤'}</span>`;
         };
@@ -2700,10 +2717,11 @@
             return element;
         };
 
-        window.updateSubwayMapTrains = (trains) => {
+        window.updateSubwayMapTrains = (trains, options = {}) => {
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps || activeTab !== 'map') return;
             const activeKeys = new Set();
-            const positioned = trains.map(train => {
+            const targetTrains = options.onlyKey ? trains.filter(train => `${train.lineId || currentLineId}:${train.direction}:${train.id}` === options.onlyKey) : trains;
+            const positioned = targetTrains.map(train => {
                 const metric = getRailPathMetric(train.lineId || currentLineId);
                 const fromDistance = metric.stationDistances[train.curr?.name];
                 const toDistance = metric.stationDistances[train.next?.name];
@@ -2717,13 +2735,11 @@
                 const behind = pointOnRailPath(metric, distance - direction * 240) || point;
                 const ahead = pointOnRailPath(metric, distance + direction * 240) || point;
                 const key = `${train.lineId || currentLineId}:${train.direction}:${train.id}`;
-                return { train, point, ahead, key, distance, angle: bearingBetweenRailPoints(behind, ahead), collision: false };
+                return { train, point, ahead, key, distance, angle: bearingBetweenRailPoints(behind, ahead) };
             }).filter(Boolean);
-            positioned.forEach((item, index) => {
-                item.collision = positioned.some((other, otherIndex) => otherIndex !== index && other.train.lineId === item.train.lineId && other.train.direction !== item.train.direction && Math.abs(other.distance - item.distance) < 85);
-            });
-            positioned.forEach(({ train, point, ahead, key, angle, collision }) => {
-                activeKeys.add(key);
+            positioned.forEach(item => activeKeys.add(item.key));
+            positioned.forEach(({ train, point, ahead, key, angle }) => {
+                if (options.onlyKey && key !== options.onlyKey) return;
                 let entry = subwayMapTrainOverlays.get(key);
                 if (!entry) {
                     const colors = getLineColors(train.lineId || currentLineId);
@@ -2742,7 +2758,7 @@
                 const position = new kakao.maps.LatLng(point[0], point[1]);
                 entry.overlay.setPosition(position);
                 if (entry.element.parentElement) entry.element.parentElement.style.transition = 'none';
-                const laneOffset = collision ? (train.direction === 'up' ? -8 : 8) : 0;
+                const laneOffset = 7;
                 let angleDelta = angle - entry.angle;
                 while (angleDelta > 180) angleDelta -= 360;
                 while (angleDelta < -180) angleDelta += 360;
@@ -2750,13 +2766,13 @@
                 entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${laneOffset}px)`;
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
                 entry.badge.setAttribute('transform', `rotate(${-entry.angle} 16 33.5)`);
-                const showRightSide = train.direction === 'up';
+                const showRightSide = false;
                 entry.leftSide.style.display = showRightSide ? 'none' : '';
                 entry.rightSide.style.display = showRightSide ? '' : 'none';
                 entry.position = position;
                 if (mapFollowTrainKey === key) subwayMap.setCenter(position);
             });
-            subwayMapTrainOverlays.forEach((entry, key) => {
+            if (options.cleanup !== false) subwayMapTrainOverlays.forEach((entry, key) => {
                 if (!activeKeys.has(key)) { entry.overlay.setMap(null); subwayMapTrainOverlays.delete(key); }
             });
         };
@@ -2766,13 +2782,19 @@
             const animate = timestamp => {
                 mapAnimationFrameId = null;
                 if (activeTab !== 'map' || !subwayMap || !mapTrainMotionEnabled) return;
-                window.updateSubwayMapTrains(getRegionMapTrains(getLiveCurrentSeconds()));
+                const trains = getRegionMapTrains(getLiveCurrentSeconds());
+                if (timestamp - mapLastFullUpdateTime >= 16) {
+                    mapLastFullUpdateTime = timestamp;
+                    window.updateSubwayMapTrains(trains);
+                } else if (mapFollowTrainKey) {
+                    window.updateSubwayMapTrains(trains, { onlyKey:mapFollowTrainKey, cleanup:false });
+                }
                 mapAnimationFrameId = requestAnimationFrame(animate);
             };
             mapAnimationFrameId = requestAnimationFrame(animate);
         };
 
-        window.updateSubwayMap = () => {
+        window.updateSubwayMap = (options = {}) => {
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps) return;
             clearSubwayMapTrains();
             subwayMapOverlays.forEach(entry => (entry.overlay || entry).setMap(null));
@@ -2802,7 +2824,7 @@
             window.renderMapLineControls();
             requestAnimationFrame(() => {
                 subwayMap.relayout();
-                subwayMap.setBounds(bounds);
+                if (options.fitBounds !== false) subwayMap.setBounds(bounds);
             });
         };
 
@@ -2877,6 +2899,7 @@
             return new Promise(resolve => {
                 navigator.geolocation.getCurrentPosition(async (pos) => {
                     const { latitude, longitude } = pos.coords;
+                    lastUserLocation = { latitude, longitude };
                     const best = getNearestStation(latitude, longitude);
                     if (btn) btn.classList.remove('loc-loading');
                     if (!best) {
@@ -2888,6 +2911,7 @@
                     await window.switchRegion(LINE_REGION[best.lid], true);
                     if (best.lid !== currentLineId) await window.switchLine(best.lid);
                     window.selectHomeStation(best.st);
+                    updateHomeStationDistance();
 
                     const distTxt = best.d < 1 ? `${Math.round(best.d * 1000)}m` : `${best.d.toFixed(1)}km`;
                     if (btn) {
