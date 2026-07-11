@@ -215,17 +215,13 @@
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
             border-color: rgba(0, 0, 0, 0.06) !important;
         }
-        /* 더보기 팝오버: 밝은 배경 위에서 글자색 자동 보정 (항목별 개별) */
-        #more-popover-panel [data-pop-item] .text-white,
-        #more-popover-panel [data-pop-item] span { transition: color 0.12s ease; }
-        #more-popover-panel [data-pop-item] .text-\[\#8B95A1\] {
-            color: rgba(255, 255, 255, 0.76) !important;
-            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.28);
+        /* 더보기 팝오버: 글자마다 바로 뒤 배경 밝기를 읽어 흰색/검정으로 개별 보정 */
+        #more-popover-panel [data-contrast-glyph] {
+            color: #FFFFFF !important;
+            transition: color 0.12s ease;
         }
-        #more-popover-panel [data-pop-item].item-on-light .text-white { color: #141414 !important; }
-        #more-popover-panel [data-pop-item].item-on-light .text-\[\#8B95A1\] {
-            color: rgba(20, 20, 20, 0.74) !important;
-            text-shadow: 0 1px 4px rgba(255, 255, 255, 0.32);
+        #more-popover-panel [data-contrast-glyph].glyph-on-light {
+            color: #141414 !important;
         }
 
         /* === Liquid Glass (색 없는 완전 투명 유리 / 뒷배경 그대로 비침) === */
@@ -5329,13 +5325,24 @@
             window.setMorePopoverOrigin();
             window.morePopoverOpen = true;
 
-            // 배경 밝기에 따라 팝오버 글자색 자동 보정 (항목마다 따로)
-            // 등장 애니메이션(스케일) 적용 전에, 항목들이 최종 위치에 있을 때 측정해야
-            // 각 항목 뒤의 실제 배경을 정확히 읽고, 한 박자 늦지 않게 즉시 반영된다.
+            // 배경 밝기에 따라 팝오버 글자색 자동 보정 (글자마다 따로)
+            // 한 줄 안에서 밝고 어두운 배경이 갈려도 각 글자가 자기 뒤의 밝기를 사용한다.
             try {
                 if (window.detectBgLight) {
-                    panel.querySelectorAll('[data-pop-item]').forEach(it => {
-                        it.classList.toggle('item-on-light', window.detectBgLight(it));
+                    panel.querySelectorAll('[data-pop-item] .text-white, [data-pop-item] .text-\\[\\#8B95A1\\]').forEach(textEl => {
+                        if (!textEl.querySelector('[data-contrast-glyph]')) {
+                            const text = textEl.textContent;
+                            textEl.textContent = '';
+                            Array.from(text).forEach(char => {
+                                const glyph = document.createElement('span');
+                                glyph.dataset.contrastGlyph = '';
+                                glyph.textContent = char;
+                                textEl.appendChild(glyph);
+                            });
+                        }
+                    });
+                    panel.querySelectorAll('[data-contrast-glyph]').forEach(glyph => {
+                        glyph.classList.toggle('glyph-on-light', window.detectBgLight(glyph));
                     });
                 }
             } catch (e) {}
