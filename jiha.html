@@ -290,7 +290,7 @@
             width: 100%;
             height: 100%;
             transform-origin: 50% 50%;
-            transition: none;
+            transition: transform 34ms linear;
             overflow: visible;
         }
         .subway-map-train:active { transform: scale(.94); }
@@ -1072,12 +1072,15 @@
         let mapTrainMotionEnabled = true;
         let mapAnimationFrameId = null;
         let mapLastFullUpdateTime = 0;
-        let mapLastFollowUpdateTime = 0;
+        let mapLastCameraUpdateTime = 0;
+        let mapViewportChanging = false;
+        let mapTransitionResumeTimer = null;
         let mapActiveTrainSources = [];
         let mapActiveTrainSourceKey = '';
         let lastUserLocation = null;
         const railPathMetricCache = new Map();
-        const MAP_FOLLOW_FRAME_INTERVAL = 1000 / 120;
+        const MAP_TRAIN_TARGET_INTERVAL = 1000 / 30;
+        const MAP_CAMERA_FRAME_INTERVAL = 1000 / 60;
         const MAP_TRAIN_HALF_LENGTH_METERS = 16;
 
         const dom = {
@@ -2731,13 +2734,31 @@
                 selectedTrainId = train.id;
                 selectedMapTrainKey = key;
                 mapFollowTrainKey = key;
-                mapLastFollowUpdateTime = 0;
+                mapLastCameraUpdateTime = 0;
                 selectedStation = null;
                 isAutoScroll = false;
                 if (subwayMap?.getLevel?.() > 4) subwayMap.setLevel(4, { animate:{ duration:500 } });
                 window.render();
             });
             return element;
+        };
+
+        const getSubwayMapTrainPlacement = train => {
+            const metric = getRailPathMetric(train.lineId || currentLineId);
+            const fromDistance = metric.stationDistances[train.curr?.name];
+            const toDistance = metric.stationDistances[train.next?.name];
+            if (!Number.isFinite(fromDistance) || !Number.isFinite(toDistance)) return null;
+            const denominator = (train.next?.progress || 0) - (train.curr?.progress || 0);
+            const fraction = train.isStopped || train.isWaiting || !denominator ? 0 : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
+            const distance = fromDistance + (toDistance - fromDistance) * fraction;
+            const point = pointOnRailPath(metric, distance);
+            if (!point) return null;
+            const movementSign = Math.sign(toDistance - fromDistance) || (train.direction === 'up' ? -1 : 1);
+            const rearPoint = pointOnRailPath(metric, distance - movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
+            const frontPoint = pointOnRailPath(metric, distance + movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
+            const angle = bearingBetweenRailPoints(rearPoint, frontPoint);
+            const lanePoint = offsetRailPoint(point, angle, 2.2);
+            return { train, point, lanePoint, key:`${train.lineId || currentLineId}:${train.direction}:${train.id}`, distance, angle };
         };
 
         window.updateSubwayMapTrains = (trains, options = {}) => {
@@ -2747,24 +2768,7 @@
                 const key = `${train.lineId || currentLineId}:${train.direction}:${train.id}`;
                 return (!options.onlyKey || key === options.onlyKey) && (!options.skipKey || key !== options.skipKey);
             });
-            const positioned = targetTrains.map(train => {
-                const metric = getRailPathMetric(train.lineId || currentLineId);
-                const fromDistance = metric.stationDistances[train.curr?.name];
-                const toDistance = metric.stationDistances[train.next?.name];
-                if (!Number.isFinite(fromDistance) || !Number.isFinite(toDistance)) return null;
-                const denominator = (train.next?.progress || 0) - (train.curr?.progress || 0);
-                const fraction = train.isStopped || train.isWaiting || !denominator ? 0 : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
-                const distance = fromDistance + (toDistance - fromDistance) * fraction;
-                const point = pointOnRailPath(metric, distance);
-                if (!point) return null;
-                const movementSign = Math.sign(toDistance - fromDistance) || (train.direction === 'up' ? -1 : 1);
-                const rearPoint = pointOnRailPath(metric, distance - movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
-                const frontPoint = pointOnRailPath(metric, distance + movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
-                const angle = bearingBetweenRailPoints(rearPoint, frontPoint);
-                const lanePoint = offsetRailPoint(point, angle, 2.2);
-                const key = `${train.lineId || currentLineId}:${train.direction}:${train.id}`;
-                return { train, point, lanePoint, key, distance, angle };
-            }).filter(Boolean);
+            const positioned = targetTrains.map(getSubwayMapTrainPlacement).filter(Boolean);
             positioned.forEach(({ train, point, lanePoint, key, angle }) => {
                 if (options.onlyKey && key !== options.onlyKey) return;
                 let entry = subwayMapTrainOverlays.get(key);
@@ -2785,7 +2789,8 @@
                 const trackPosition = new kakao.maps.LatLng(point[0], point[1]);
                 const position = new kakao.maps.LatLng(lanePoint[0], lanePoint[1]);
                 entry.overlay.setPosition(position);
-                if (entry.element.parentElement) entry.element.parentElement.style.transition = 'none';
+                if (entry.element.parentElement) entry.element.parentElement.style.transition = mapViewportChanging ? 'none' : 'left 34ms linear, top 34ms linear';
+                entry.body.style.transition = mapViewportChanging ? 'none' : 'transform 34ms linear';
                 let laneOffset = 0;
                 try {
                     const projection = subwayMap.getProjection();
@@ -2811,11 +2816,27 @@
                 entry.leftSide.style.display = showRightSide ? 'none' : '';
                 entry.rightSide.style.display = showRightSide ? '' : 'none';
                 entry.position = position;
-                if (mapFollowTrainKey === key) subwayMap.setCenter(position);
             });
             if (options.cleanup !== false) subwayMapTrainOverlays.forEach((entry, key) => {
                 if (!activeKeys.has(key)) { entry.overlay.setMap(null); subwayMapTrainOverlays.delete(key); }
             });
+        };
+
+        const setMapTrainInterpolationEnabled = enabled => {
+            mapViewportChanging = !enabled;
+            subwayMapTrainOverlays.forEach(entry => {
+                if (entry.element.parentElement) entry.element.parentElement.style.transition = enabled ? 'left 34ms linear, top 34ms linear' : 'none';
+                entry.body.style.transition = enabled ? 'transform 34ms linear' : 'none';
+            });
+        };
+
+        const updateMapFollowCamera = (liveSeconds, timestamp) => {
+            if (!mapFollowTrainKey || timestamp - mapLastCameraUpdateTime < MAP_CAMERA_FRAME_INTERVAL) return;
+            const elapsed = timestamp - mapLastCameraUpdateTime;
+            mapLastCameraUpdateTime = timestamp - (elapsed % MAP_CAMERA_FRAME_INTERVAL);
+            const followedTrain = getMapTrainByKey(liveSeconds, mapFollowTrainKey);
+            const placement = followedTrain ? getSubwayMapTrainPlacement(followedTrain) : null;
+            if (placement) subwayMap.setCenter(new kakao.maps.LatLng(placement.lanePoint[0], placement.lanePoint[1]));
         };
 
         window.ensureMapAnimationLoop = () => {
@@ -2824,21 +2845,12 @@
                 mapAnimationFrameId = null;
                 if (activeTab !== 'map' || !subwayMap || !mapTrainMotionEnabled) return;
                 const liveSeconds = getLiveCurrentSeconds();
-                const followElapsed = timestamp - mapLastFollowUpdateTime;
-                const followDue = !!mapFollowTrainKey && followElapsed >= MAP_FOLLOW_FRAME_INTERVAL;
-                let didFullUpdate = false;
-                if (timestamp - mapLastFullUpdateTime >= 33) {
-                    mapLastFullUpdateTime = timestamp;
-                    window.updateSubwayMapTrains(getRegionMapTrains(liveSeconds), { timestamp, skipKey:mapFollowTrainKey && !followDue ? mapFollowTrainKey : null });
-                    didFullUpdate = true;
+                const trainElapsed = timestamp - mapLastFullUpdateTime;
+                if (trainElapsed >= MAP_TRAIN_TARGET_INTERVAL) {
+                    mapLastFullUpdateTime = timestamp - (trainElapsed % MAP_TRAIN_TARGET_INTERVAL);
+                    window.updateSubwayMapTrains(getRegionMapTrains(liveSeconds), { timestamp });
                 }
-                if (followDue) {
-                    mapLastFollowUpdateTime = timestamp - (followElapsed % MAP_FOLLOW_FRAME_INTERVAL);
-                    if (!didFullUpdate) {
-                        const followedTrain = getMapTrainByKey(liveSeconds, mapFollowTrainKey);
-                        if (followedTrain) window.updateSubwayMapTrains([followedTrain], { onlyKey:mapFollowTrainKey, cleanup:false, timestamp });
-                    }
-                }
+                updateMapFollowCamera(liveSeconds, timestamp);
                 mapAnimationFrameId = requestAnimationFrame(animate);
             };
             mapAnimationFrameId = requestAnimationFrame(animate);
@@ -2892,7 +2904,22 @@
                 center: new kakao.maps.LatLng(firstCoord[0], firstCoord[1]),
                 level: 8
             });
-            kakao.maps.event.addListener(subwayMap, 'dragstart', () => { mapFollowTrainKey = null; });
+            const pauseTrainInterpolation = () => {
+                if (mapTransitionResumeTimer) clearTimeout(mapTransitionResumeTimer);
+                mapTransitionResumeTimer = null;
+                setMapTrainInterpolationEnabled(false);
+            };
+            const resumeTrainInterpolation = () => {
+                if (mapTransitionResumeTimer) clearTimeout(mapTransitionResumeTimer);
+                mapTransitionResumeTimer = setTimeout(() => {
+                    mapTransitionResumeTimer = null;
+                    setMapTrainInterpolationEnabled(true);
+                }, 70);
+            };
+            kakao.maps.event.addListener(subwayMap, 'zoom_start', pauseTrainInterpolation);
+            kakao.maps.event.addListener(subwayMap, 'zoom_changed', resumeTrainInterpolation);
+            kakao.maps.event.addListener(subwayMap, 'dragstart', () => { mapFollowTrainKey = null; pauseTrainInterpolation(); });
+            kakao.maps.event.addListener(subwayMap, 'dragend', resumeTrainInterpolation);
             const fallback = document.getElementById('subway-map-fallback');
             if (fallback) fallback.classList.add('hidden');
             window.updateSubwayMap();
