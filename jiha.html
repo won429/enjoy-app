@@ -276,32 +276,27 @@
         }
         .subway-map-train {
             position: relative;
-            width: 32px;
-            height: 66px;
-            pointer-events: none;
-            filter: drop-shadow(0 3px 3px rgba(15,23,42,.28));
+            width: 23px;
+            height: 52px;
+            pointer-events: auto;
+            cursor: pointer;
+            filter: drop-shadow(0 2px 2px rgba(15,23,42,.25));
+            transition: width .2s ease, height .2s ease, filter .2s ease;
+            -webkit-tap-highlight-color: transparent;
         }
-        .subway-map-train-number {
-            position: absolute;
-            left: 50%;
-            top: -13px;
-            transform: translateX(-50%);
-            padding: 2px 5px;
-            border: 1px solid rgba(15,23,42,.12);
-            border-radius: 999px;
-            background: rgba(255,255,255,.96);
-            color: #111827;
-            font: 900 8px/1 'Pretendard', sans-serif;
-            white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(15,23,42,.14);
+        .subway-map-train.is-selected {
+            width: 29px;
+            height: 65px;
+            filter: drop-shadow(0 5px 6px rgba(15,23,42,.34));
         }
         .subway-map-train-body {
-            width: 32px;
-            height: 66px;
+            width: 100%;
+            height: 100%;
             transform-origin: 50% 50%;
             transition: transform .85s linear;
             overflow: visible;
         }
+        .subway-map-train:active { transform: scale(.94); }
     </style>
 </head>
 <body class="w-full h-[100dvh] flex justify-center items-center overflow-hidden">
@@ -1070,6 +1065,8 @@
         let subwayMap = null;
         let subwayMapOverlays = [];
         let subwayMapTrainOverlays = new Map();
+        let selectedMapTrainKey = null;
+        let mapFollowTrainKey = null;
         const railPathMetricCache = new Map();
 
         const dom = {
@@ -2537,21 +2534,57 @@
             subwayMapTrainOverlays.clear();
         };
 
-        const createSubwayMapTrainElement = (train, color) => {
+        const getMapScreenAngle = (point, ahead) => {
+            try {
+                const projection = subwayMap?.getProjection?.();
+                if (projection) {
+                    const from = projection.pointFromCoords(new kakao.maps.LatLng(point[0], point[1]));
+                    const to = projection.pointFromCoords(new kakao.maps.LatLng(ahead[0], ahead[1]));
+                    const dx = to.x - from.x, dy = to.y - from.y;
+                    if (Number.isFinite(dx) && Number.isFinite(dy) && (Math.abs(dx) > .01 || Math.abs(dy) > .01)) {
+                        return Math.atan2(dx, -dy) * 180 / Math.PI;
+                    }
+                }
+            } catch (_) {}
+            return bearingBetweenRailPoints(point, ahead);
+        };
+
+        const createSubwayMapTrainElement = (train, color, key) => {
             const element = document.createElement('div');
             element.className = 'subway-map-train';
-            element.innerHTML = `<span class="subway-map-train-number">${train.id}</span><svg class="subway-map-train-body" viewBox="0 0 32 66" aria-hidden="true">
-                <path d="M6 29V9Q6 2 16 1Q26 2 26 9V29Z" fill="#fff" stroke="${color}" stroke-width="1.4"/>
-                <rect x="6" y="36" width="20" height="29" rx="5" fill="#fff" stroke="${color}" stroke-width="1.4"/>
-                <rect x="13.5" y="30" width="5" height="6" rx="1.5" fill="#64748b"/>
-                <path d="M10 7Q16 3 22 7V13H10Z" fill="#1f2937"/>
-                <rect x="9" y="20" width="14" height="6" rx="2" fill="${color}"/>
-                <rect x="9" y="40" width="14" height="7" rx="2" fill="#334155"/>
-                <rect x="9" y="51" width="14" height="6" rx="2" fill="#1f2937"/>
-                <rect x="6.8" y="58" width="18.4" height="4" rx="2" fill="${color}"/>
-                <circle cx="16" cy="22.8" r="6" fill="${color}" stroke="#fff" stroke-width="1.5"/>
-                <text class="subway-map-train-badge" x="16" y="25.6" text-anchor="middle" fill="#fff" font-size="8.5" font-weight="900">${getTrainLineBadge()}</text>
+            element.setAttribute('role', 'button');
+            element.setAttribute('aria-label', `${train.id} 열차 따라가기`);
+            element.innerHTML = `<svg class="subway-map-train-body" viewBox="0 -12 32 90" aria-hidden="true">
+                <g class="subway-map-train-number-group">
+                    <rect x="5" y="-10" width="22" height="10" rx="5" fill="white" stroke="${color}" stroke-width="1.1"/>
+                    <text x="16" y="-3" text-anchor="middle" fill="#111827" font-size="6.2" font-weight="900">${train.id}</text>
+                </g>
+                <path d="M6 34V10Q6 2 16 1Q26 2 26 10V34Z" fill="#fff" stroke="${color}" stroke-width="1.6"/>
+                <rect x="6" y="41" width="20" height="34" rx="5.5" fill="#fff" stroke="${color}" stroke-width="1.6"/>
+                <rect x="13.5" y="35" width="5" height="6" rx="1.5" fill="#64748b"/>
+                <path d="M10 7Q16 3 22 7V14H10Z" fill="#202631"/>
+                <path d="M6.8 25H25.2V35H6.8Z" fill="${color}"/>
+                <rect x="8.5" y="47" width="15" height="8" rx="2.2" fill="#273344"/>
+                <rect x="8.5" y="59" width="15" height="8" rx="2.2" fill="#18202b"/>
+                <rect x="7" y="69" width="18" height="3.8" rx="1.9" fill="${color}"/>
+                <g class="train-side-left">
+                    <rect x="5" y="15" width="3" height="8" rx="1" fill="#111827"/><rect x="5" y="47" width="3" height="10" rx="1" fill="#111827"/>
+                </g>
+                <g class="train-side-right">
+                    <rect x="24" y="15" width="3" height="8" rx="1" fill="#111827"/><rect x="24" y="47" width="3" height="10" rx="1" fill="#111827"/>
+                </g>
+                <circle cx="16" cy="30" r="6" fill="${color}" stroke="#fff" stroke-width="1.5"/>
+                <text class="subway-map-train-badge" x="16" y="32.8" text-anchor="middle" fill="#fff" font-size="8.5" font-weight="900">${getTrainLineBadge()}</text>
             </svg>`;
+            element.addEventListener('click', event => {
+                event.preventDefault(); event.stopPropagation();
+                selectedTrainId = train.id;
+                selectedMapTrainKey = key;
+                mapFollowTrainKey = key;
+                selectedStation = null;
+                isAutoScroll = false;
+                window.render();
+            });
             return element;
         };
 
@@ -2559,34 +2592,48 @@
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps || activeTab !== 'map') return;
             const metric = getRailPathMetric(currentLineId);
             const activeKeys = new Set();
-            trains.forEach(train => {
+            const positioned = trains.map(train => {
                 const fromDistance = metric.stationDistances[train.curr?.name];
                 const toDistance = metric.stationDistances[train.next?.name];
-                if (!Number.isFinite(fromDistance) || !Number.isFinite(toDistance)) return;
+                if (!Number.isFinite(fromDistance) || !Number.isFinite(toDistance)) return null;
                 const denominator = (train.next?.progress || 0) - (train.curr?.progress || 0);
                 const fraction = train.isStopped || train.isWaiting || !denominator ? 0 : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
                 const distance = fromDistance + (toDistance - fromDistance) * fraction;
                 const point = pointOnRailPath(metric, distance);
-                if (!point) return;
+                if (!point) return null;
                 const direction = Math.sign(toDistance - fromDistance) || (train.direction === 'up' ? -1 : 1);
                 const ahead = pointOnRailPath(metric, distance + direction * 12) || point;
-                const angle = bearingBetweenRailPoints(point, ahead);
                 const key = `${train.direction}:${train.id}`;
+                return { train, point, ahead, key, distance, angle: getMapScreenAngle(point, ahead), collision: false };
+            }).filter(Boolean);
+            positioned.forEach((item, index) => {
+                item.collision = positioned.some((other, otherIndex) => otherIndex !== index && other.train.direction !== item.train.direction && Math.abs(other.distance - item.distance) < 85);
+            });
+            positioned.forEach(({ train, point, ahead, key, angle, collision }) => {
                 activeKeys.add(key);
                 let entry = subwayMapTrainOverlays.get(key);
                 if (!entry) {
                     const color = train.direction === 'down' ? DOWN_COLOR : THEME_COLOR;
-                    const element = createSubwayMapTrainElement(train, color);
+                    const element = createSubwayMapTrainElement(train, color, key);
                     const overlay = new kakao.maps.CustomOverlay({ map: subwayMap, position: new kakao.maps.LatLng(point[0], point[1]), content: element, xAnchor: 0.5, yAnchor: 0.5, zIndex: 8 });
                     entry = { element, overlay };
                     subwayMapTrainOverlays.set(key, entry);
                 }
-                entry.overlay.setPosition(new kakao.maps.LatLng(point[0], point[1]));
+                const position = new kakao.maps.LatLng(point[0], point[1]);
+                entry.overlay.setPosition(position);
                 requestAnimationFrame(() => {
                     if (entry.element.parentElement) entry.element.parentElement.style.transition = 'left .9s linear, top .9s linear';
                 });
-                entry.element.querySelector('.subway-map-train-body').style.transform = `rotate(${angle}deg)`;
-                entry.element.querySelector('.subway-map-train-badge').setAttribute('transform', `rotate(${-angle} 16 22.8)`);
+                const laneOffset = collision ? (train.direction === 'up' ? -8 : 8) : 0;
+                const body = entry.element.querySelector('.subway-map-train-body');
+                body.style.transform = `rotate(${angle}deg) translateX(${laneOffset}px)`;
+                entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
+                entry.element.querySelector('.subway-map-train-number-group').setAttribute('transform', `rotate(${-angle} 16 -5)`);
+                entry.element.querySelector('.subway-map-train-badge').setAttribute('transform', `rotate(${-angle} 16 30)`);
+                const showRightSide = Math.sin(angle * Math.PI / 180) >= 0;
+                entry.element.querySelector('.train-side-left').style.display = showRightSide ? 'none' : '';
+                entry.element.querySelector('.train-side-right').style.display = showRightSide ? '' : 'none';
+                if (mapFollowTrainKey === key) subwayMap.panTo(position);
             });
             subwayMapTrainOverlays.forEach((entry, key) => {
                 if (!activeKeys.has(key)) { entry.overlay.setMap(null); subwayMapTrainOverlays.delete(key); }
@@ -2634,6 +2681,7 @@
                 center: new kakao.maps.LatLng(firstCoord[0], firstCoord[1]),
                 level: 8
             });
+            kakao.maps.event.addListener(subwayMap, 'dragstart', () => { mapFollowTrainKey = null; });
             const fallback = document.getElementById('subway-map-fallback');
             if (fallback) fallback.classList.add('hidden');
             window.updateSubwayMap();
@@ -2714,7 +2762,7 @@
 
         window.switchTab = (tabId) => {
             activeTab = tabId;
-            selectedStation = null; selectedTrainId = null; modalDayType = null; modalViewMode = 'all';
+            selectedStation = null; selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; modalDayType = null; modalViewMode = 'all';
             dom.timetableModal.classList.add('hidden'); dom.stationSelectorModal.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
             if (tabId === 'home') {
                 dom.homeScreen.classList.remove('hidden'); dom.homeScreen.classList.add('flex');
@@ -2772,7 +2820,8 @@
         }
 
         window.handleStationClick = (n) => { selectedStation = n; if(n) stationDetailDirection = currentDirection; window.render(); };
-        window.handleTrainClick = (id) => { selectedTrainId = id; isAutoScroll = true; selectedStation = null; window.render(); };
+        window.handleTrainClick = (id) => { selectedTrainId = id; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = true; selectedStation = null; window.render(); };
+        window.closeTrainDetail = () => { selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = false; dom.floatingPanel.classList.add('hidden'); window.render(); };
         window.setStationDetailDirection = (d) => { stationDetailDirection = d; window.render(); };
 
         window.openModal = async (forcedDayType = null) => {
@@ -2968,7 +3017,9 @@
                 return { ...t, point: p, angle };
             });
             if (activeTab === 'map') window.updateSubwayMapTrains(activeT);
-            const selectedData = renderedT.find(t => t.id === selectedTrainId);
+            const selectedData = selectedMapTrainKey
+                ? renderedT.find(t => `${t.direction}:${t.id}` === selectedMapTrainKey)
+                : renderedT.find(t => t.id === selectedTrainId);
             let btnHtml = activeT.length === 0 ? `<span class="text-xs text-gray-400 font-medium py-1">운행 종료</span>` : '';
             activeT.forEach(t => {
                 const isSel = t.id === selectedTrainId; const tColor = t.direction === 'down' ? DOWN_COLOR : THEME_COLOR;
@@ -3023,10 +3074,10 @@
                 lineHTML += `<g transform="translate(200, ${lineY})" onclick="handleStationClick('${stationName}')" class="cursor-pointer"><path d="M -80 0 L 80 0" stroke="#E5E7EB" stroke-width="2" stroke-dasharray="4" />${ringHtml}<circle r="${isSel ? '8' : '6'}" fill="${dotFill}" stroke="${dotStroke}" stroke-width="${isSel ? '4' : '3'}" /><text x="0" y="-12" text-anchor="middle" fill="${isSel || stopColor ? (stopColor || THEME_COLOR) : '#111827'}" class="text-[12px] font-bold">${stationName}</text>${transferHtml}${ktxSrtHtml}</g>`;
             }
             dom.lineStations.innerHTML = lineHTML;
-            if (isAutoScroll && selectedData && !selectedStation && activeTab !== 'home') {
+            if (isAutoScroll && selectedData && !selectedStation && activeTab === 'line') {
                 dom.scrollContainer.scrollTo({ top: selectedData.point.y + 120 - (dom.scrollContainer.clientHeight - 150) / 2, behavior: 'auto' });
                 dom.autoScrollBtn.classList.add('hidden');
-            } else if (selectedData && !selectedStation && activeTab !== 'home') dom.autoScrollBtn.classList.remove('hidden'); else dom.autoScrollBtn.classList.add('hidden');
+            } else if (selectedData && !selectedStation && activeTab === 'line') dom.autoScrollBtn.classList.remove('hidden'); else dom.autoScrollBtn.classList.add('hidden');
             let panelHtml = ''; if (selectedStation) {
                 dom.floatingPanel.classList.remove('hidden'); let target = stationDetailDirection === 'up' ? parsedTrainsUp : parsedTrainsDown;
                 let upcoming = target.map(t => { const s = t.schedule.find(st => st.name === selectedStation); return s && s.sec >= currentSec ? { id: t.id, sec: s.sec, time: s.time, dest: t.schedule[t.schedule.length-1].name } : null; }).filter(t => t).sort((a,b) => a.sec-b.sec).slice(0, 4);
@@ -3068,7 +3119,21 @@
                 </div></div>`;
                 const arrivalTime = selectedData.next?.time ? `${selectedData.next.time.slice(0,5)} 도착` : '';
                 const arrivalSummary = `<div class="flex justify-between items-center px-2"><div><div class="flex items-center gap-2 mb-1"><span style="background-color: ${pColor}" class="text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold shadow-sm">${selectedData.id}</span><span class="text-[11px] font-semibold text-gray-500">${selectedData.isWaiting ? '대기중' : selectedData.isStopped ? '도착' : `(${selectedData.curr.name} 출발)`}</span></div><h2 class="text-[18px] font-extrabold text-[#111827] tracking-tight flex items-baseline gap-1.5">${selectedData.isStopped || selectedData.isWaiting ? selectedData.curr.name : selectedData.next.name}역<span class="text-[12px] font-medium text-gray-500">${selectedData.isWaiting ? '출발 예정' : selectedData.isStopped ? '정차중' : '도착 예정'}</span></h2></div>${!selectedData.isStopped && !selectedData.isWaiting ? `<div class="text-right flex flex-col items-end"><div class="flex items-baseline gap-0.5"><p class="text-[28px] font-black tracking-tighter" style="color: ${pColor}">${selectedData.timeRemaining < 60 ? selectedData.timeRemaining : Math.ceil(selectedData.timeRemaining / 60)}</p><span class="text-[11px] text-gray-500 ml-0.5 font-bold">${selectedData.timeRemaining < 60 ? '초 전' : '분 전'}</span></div><span class="mt-0.5 text-[9px] font-semibold text-gray-400">${arrivalTime}</span></div>` : (selectedData.isStopped && !selectedData.isWaiting ? `<div class="text-right flex items-baseline gap-0.5"><p class="text-[28px] font-black tracking-tighter" style="color: ${pColor}">${selectedData.stopRemaining}</p><span class="text-[11px] text-gray-500 ml-0.5 font-bold">초 후 출발</span></div>` : '')}</div>`;
-                panelHtml = `<div class="bg-white/95 backdrop-blur-md border border-black/5 rounded-[36px] p-4 pt-4 mx-auto w-full max-w-[360px] shadow-2xl flex flex-col justify-center relative overflow-hidden">${arrivalSummary}${segHtml}</div>`;
+                if (activeTab === 'map') {
+                    const compactStatus = selectedData.isWaiting ? '출발 대기' : selectedData.isStopped ? `${selectedData.stopRemaining}초 후 출발` : `${selectedData.timeRemaining < 60 ? selectedData.timeRemaining + '초' : Math.ceil(selectedData.timeRemaining / 60) + '분'} 전`;
+                    const compactTarget = selectedData.isStopped || selectedData.isWaiting ? selectedData.curr.name : selectedData.next.name;
+                    panelHtml = `<div class="bg-white/95 backdrop-blur-md border border-black/5 rounded-[24px] px-4 py-3 mx-auto w-full max-w-[300px] shadow-2xl relative overflow-hidden">
+                        <button onclick="closeTrainDetail()" aria-label="열차 정보 닫기" class="absolute right-3 top-3 z-10 text-gray-400 bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center hover:text-black hover:bg-gray-200 transition-all"><i class="fa-solid fa-xmark text-[11px]"></i></button>
+                        <div class="flex items-center justify-between pr-9">
+                            <div class="min-w-0"><div class="flex items-center gap-2 mb-1"><span style="background-color:${pColor}" class="text-white text-[10px] px-2.5 py-0.5 rounded-full font-extrabold">${selectedData.id}</span><span class="text-[10px] font-semibold text-gray-400 truncate">${selectedData.curr.name} 출발</span></div><div class="flex items-baseline gap-1.5"><strong class="text-[17px] text-[#111827] tracking-tight">${compactTarget}역</strong><span class="text-[11px] font-semibold text-gray-500">${selectedData.isWaiting ? '출발 예정' : selectedData.isStopped ? '정차중' : '도착 예정'}</span></div></div>
+                            <div class="text-right flex-none"><strong class="text-[20px] font-black tracking-tighter" style="color:${pColor}">${compactStatus}</strong>${arrivalTime ? `<div class="text-[9px] text-gray-400 font-semibold mt-0.5">${arrivalTime}</div>` : ''}</div>
+                        </div>
+                        <div class="mt-2.5 h-1.5 rounded-full bg-gray-200 overflow-hidden"><div class="h-full rounded-full transition-all duration-700" style="width:${Math.max(5, segFrac * 100)}%; background-color:${pColor}"></div></div>
+                        <div class="mt-1.5 flex justify-between text-[9px] font-bold"><span class="text-gray-500">${sdCurr.name}</span><span style="color:${pColor}">${sdNext.name}</span></div>
+                    </div>`;
+                } else {
+                    panelHtml = `<div class="bg-white/95 backdrop-blur-md border border-black/5 rounded-[36px] p-4 pt-4 mx-auto w-full max-w-[360px] shadow-2xl flex flex-col justify-center relative overflow-hidden"><button onclick="closeTrainDetail()" aria-label="열차 정보 닫기" class="absolute right-3 top-3 z-30 text-gray-400 bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center hover:text-black hover:bg-gray-200 transition-all"><i class="fa-solid fa-xmark text-[11px]"></i></button><div class="pr-7">${arrivalSummary}</div>${segHtml}</div>`;
+                }
             } else dom.floatingPanel.classList.add('hidden');
             if(dom.floatingPanel.innerHTML !== panelHtml && activeTab !== 'home') dom.floatingPanel.innerHTML = panelHtml;
         };
