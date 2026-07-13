@@ -757,6 +757,68 @@
             pointer-events: none;
         }
 
+        #draw-obstacle-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 62;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .dart-obstacle {
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            opacity: 0;
+            will-change: transform, opacity;
+            filter: drop-shadow(0 5px 5px rgba(15, 23, 42, 0.34));
+        }
+
+        .dart-obstacle i {
+            color: #1f2937;
+            font-size: 31px;
+        }
+
+        .dart-obstacle.is-wind i {
+            color: #f8fafc;
+            font-size: 38px;
+            text-shadow: 0 1px 8px rgba(15, 23, 42, 0.64);
+        }
+
+        .dart-obstacle-label {
+            padding: 5px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(15, 23, 42, 0.76);
+            font-size: 9px;
+            font-weight: 850;
+            white-space: nowrap;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .dart-obstacle.is-wind::before,
+        .dart-obstacle.is-wind::after {
+            content: "";
+            position: absolute;
+            right: 44px;
+            width: 86px;
+            height: 2px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.84);
+            box-shadow: 18px 11px 0 rgba(255, 255, 255, 0.55), -8px -10px 0 rgba(255, 255, 255, 0.45);
+        }
+
+        .dart-obstacle.is-wind::after {
+            right: 72px;
+            width: 54px;
+            opacity: 0.62;
+        }
+
         #draw-island-insets {
             position: absolute;
             top: max(104px, calc(env(safe-area-inset-top) + 92px));
@@ -801,6 +863,16 @@
             font-size: 9px;
             font-weight: 750;
             line-height: 1;
+        }
+
+        .draw-island-inset.is-winner {
+            border: 2px solid #e21d2f;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 0 0 4px rgba(226, 29, 47, 0.15), 0 7px 20px rgba(15, 23, 42, 0.14);
+        }
+
+        .draw-island-inset.is-winner span {
+            color: #b91c1c;
         }
 
         .dart-impact-ring,
@@ -1218,17 +1290,18 @@
             </header>
 
             <div id="draw-island-insets" aria-label="울릉도와 독도 별도 표시">
-                <div class="draw-island-inset" aria-label="울릉도">
+                <div class="draw-island-inset" data-island="ulleungdo" aria-label="울릉도">
                     <canvas id="draw-ulleungdo-canvas" width="104" height="84"></canvas>
                     <span>울릉도</span>
                 </div>
-                <div class="draw-island-inset" aria-label="독도">
+                <div class="draw-island-inset" data-island="dokdo" aria-label="독도">
                     <canvas id="draw-dokdo-canvas" width="104" height="84"></canvas>
                     <span>독도</span>
                 </div>
             </div>
 
             <div id="dart-impact-layer" aria-hidden="true"></div>
+            <div id="draw-obstacle-layer" aria-hidden="true"></div>
             <div id="aim-line"></div>
             <div id="pull-meter" class="pull-meter">0 km</div>
 
@@ -5778,6 +5851,12 @@
             document.getElementById('draw-island-insets')?.classList.toggle('is-hidden', !visible);
         }
 
+        function setDrawIslandWinner(islandId = '') {
+            document.querySelectorAll('.draw-island-inset').forEach(inset => {
+                inset.classList.toggle('is-winner', inset.dataset.island === islandId);
+            });
+        }
+
         function drawIslandInset(canvas, polygons) {
             if (!canvas || !Array.isArray(polygons) || !polygons.length) return;
             const context = canvas.getContext('2d');
@@ -6063,6 +6142,52 @@
             });
         }
 
+        function playDartObstacleSound(type) {
+            const context = getDartAudioContext();
+            if (!context) return;
+            const now = context.currentTime;
+
+            if (type === 'bird') {
+                [1320, 1760, 1480].forEach((frequency, index) => {
+                    const oscillator = context.createOscillator();
+                    const gain = context.createGain();
+                    const start = now + index * 0.09;
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, start);
+                    oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.18, start + 0.08);
+                    gain.gain.setValueAtTime(0.0001, start);
+                    gain.gain.exponentialRampToValueAtTime(0.075, start + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.11);
+                    oscillator.connect(gain).connect(context.destination);
+                    oscillator.start(start);
+                    oscillator.stop(start + 0.12);
+                });
+                return;
+            }
+
+            const duration = 0.82;
+            const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i += 1) {
+                const progress = i / data.length;
+                data[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * progress);
+            }
+            const source = context.createBufferSource();
+            const filter = context.createBiquadFilter();
+            const gain = context.createGain();
+            source.buffer = buffer;
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(360, now);
+            filter.frequency.exponentialRampToValueAtTime(1250, now + duration * 0.72);
+            filter.Q.value = 0.6;
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.19, now + 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            source.connect(filter).connect(gain).connect(context.destination);
+            source.start(now);
+            source.stop(now + duration);
+        }
+
         function startDartPull(event) {
             if (isDartFlying || activeTabIndex !== 1) return;
             const launcher = event.currentTarget;
@@ -6182,6 +6307,68 @@
             return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
+        function clearDartObstacle() {
+            const layer = document.getElementById('draw-obstacle-layer');
+            if (layer) layer.innerHTML = '';
+        }
+
+        function createDartObstacleVisual(type) {
+            const layer = document.getElementById('draw-obstacle-layer');
+            if (!layer) return null;
+            layer.innerHTML = '';
+            const obstacle = document.createElement('div');
+            obstacle.className = `dart-obstacle is-${type}`;
+
+            const icon = document.createElement('i');
+            icon.className = type === 'bird' ? 'fa-solid fa-dove' : 'fa-solid fa-wind';
+            const label = document.createElement('span');
+            label.className = 'dart-obstacle-label';
+            label.textContent = type === 'bird' ? '새가 다트를 낚아챘다' : '갑작스러운 돌풍 발생';
+            obstacle.append(icon, label);
+            layer.appendChild(obstacle);
+            return obstacle;
+        }
+
+        function applyRandomDartObstacle(plan) {
+            if (!plan || Math.random() >= 0.875) return plan;
+            const screen = document.getElementById('draw-screen');
+            const mapElement = document.getElementById('draw-map');
+            if (!screen || !mapElement || !drawMap) return plan;
+
+            const type = Math.random() < 0.5 ? 'bird' : 'wind';
+            const direction = Math.random() < 0.5 ? -1 : 1;
+            const originalTargetX = plan.targetX;
+            const originalTargetY = plan.targetY;
+            const horizontalShift = type === 'bird'
+                ? plan.screenWidth * (0.22 + Math.random() * 0.16)
+                : plan.screenWidth * (0.4 + Math.random() * 0.2);
+            const verticalShift = type === 'bird'
+                ? plan.screenHeight * (-0.1 + Math.random() * 0.16)
+                : -plan.screenHeight * (0.12 + Math.random() * 0.14);
+
+            plan.targetX = Math.max(12, Math.min(plan.screenWidth - 12, originalTargetX + direction * horizontalShift));
+            plan.targetY = Math.max(plan.topLimit, Math.min(plan.homeY - 44, originalTargetY + verticalShift));
+
+            const screenRect = screen.getBoundingClientRect();
+            const mapRect = mapElement.getBoundingClientRect();
+            const destination = drawMap.getProjection().coordsFromContainerPoint(new kakao.maps.Point(
+                plan.targetX + screenRect.left - mapRect.left,
+                plan.targetY + screenRect.top - mapRect.top
+            ));
+            plan.lat = destination.getLat();
+            plan.lng = destination.getLng();
+            plan.distanceKm = calculateDistanceKm(plan.originLat, plan.originLng, plan.lat, plan.lng);
+            plan.obstacle = {
+                type,
+                direction,
+                originalTargetX,
+                originalTargetY,
+                turnAt: 0.37,
+                announced: false
+            };
+            return plan;
+        }
+
         function getDartFlightPlan(dx, dy, pull) {
             const screen = document.getElementById('draw-screen');
             const mapElement = document.getElementById('draw-map');
@@ -6224,7 +6411,9 @@
 
             return {
                 homeX, homeY, startX, startY, targetX, targetY, power,
-                lat: destination.getLat(), lng: destination.getLng(), distanceKm
+                lat: destination.getLat(), lng: destination.getLng(), distanceKm,
+                originLat: origin.getLat(), originLng: origin.getLng(),
+                screenWidth: screenRect.width, screenHeight: screenRect.height, topLimit
             };
         }
 
@@ -6238,14 +6427,15 @@
             const dart = launcher?.querySelector('.dart-visual');
             const aimLine = document.getElementById('aim-line');
             const meter = document.getElementById('pull-meter');
-            const plan = getDartFlightPlan(dx, dy, pull);
+            const plan = applyRandomDartObstacle(getDartFlightPlan(dx, dy, pull));
             if (!plan) {
                 isDartFlying = false;
                 resetDartVisual();
                 return;
             }
-            const flightDuration = 680;
+            const flightDuration = plan.obstacle ? 1420 : 680;
 
+            clearDartObstacle();
             preloadDrawMapTiles(plan.lat, plan.lng, 10);
             if (navigator.vibrate) navigator.vibrate([12, 28, 18]);
             playDartThrowSound();
@@ -6273,23 +6463,72 @@
                 const startedAt = performance.now();
                 const launcher = document.getElementById('dart-launcher');
                 const dart = launcher?.querySelector('.dart-visual');
-                const dx = plan.targetX - plan.startX;
-                const dy = plan.targetY - plan.startY;
-                const bow = Math.hypot(dx, dy) * 0.1;
+                const obstacle = plan.obstacle;
+                const obstacleElement = obstacle ? createDartObstacleVisual(obstacle.type) : null;
+                const originalTargetX = obstacle?.originalTargetX ?? plan.targetX;
+                const originalTargetY = obstacle?.originalTargetY ?? plan.targetY;
+                const originalDx = originalTargetX - plan.startX;
+                const originalDy = originalTargetY - plan.startY;
+                const originalBow = Math.hypot(originalDx, originalDy) * 0.1;
+
+                const originalPointAt = progress => {
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    return {
+                        x: plan.startX + originalDx * eased,
+                        y: plan.startY + originalDy * eased - Math.sin(Math.PI * progress) * originalBow
+                    };
+                };
+
+                const turnPoint = obstacle ? originalPointAt(obstacle.turnAt) : null;
+                const pointAt = progress => {
+                    if (!obstacle || progress <= obstacle.turnAt) return originalPointAt(progress);
+                    const afterProgress = (progress - obstacle.turnAt) / (1 - obstacle.turnAt);
+                    const eased = afterProgress * afterProgress * (3 - 2 * afterProgress);
+                    const arc = Math.sin(Math.PI * afterProgress);
+                    const turbulence = obstacle.type === 'wind'
+                        ? Math.sin(afterProgress * Math.PI * 5) * 28 * (1 - afterProgress)
+                        : 0;
+                    return {
+                        x: turnPoint.x + (plan.targetX - turnPoint.x) * eased + turbulence,
+                        y: turnPoint.y + (plan.targetY - turnPoint.y) * eased - arc * (obstacle.type === 'bird' ? 46 : 82)
+                    };
+                };
 
                 const step = now => {
                     const progress = Math.min(1, (now - startedAt) / duration);
                     const eased = 1 - Math.pow(1 - progress, 3);
-                    const x = plan.startX + dx * eased;
-                    const y = plan.startY + dy * eased - Math.sin(Math.PI * progress) * bow;
-                    const velocityY = dy - Math.PI * bow * Math.cos(Math.PI * progress);
-                    const angle = Math.atan2(dx, -velocityY) * 180 / Math.PI;
+                    const point = pointAt(progress);
+                    const previousPoint = pointAt(Math.max(0, progress - 0.008));
+                    const velocityX = point.x - previousPoint.x;
+                    const velocityY = point.y - previousPoint.y;
+                    const angle = Math.atan2(velocityX, -velocityY) * 180 / Math.PI;
                     const scale = 1 - eased * 0.7;
 
                     if (launcher) {
-                        launcher.style.transform = `translate(calc(-50% + ${x - plan.homeX}px), ${y - plan.homeY}px) scale(${scale})`;
+                        launcher.style.transform = `translate(calc(-50% + ${point.x - plan.homeX}px), ${point.y - plan.homeY}px) scale(${scale})`;
                     }
                     if (dart) dart.style.transform = `rotate(${angle}deg)`;
+
+                    if (obstacle && obstacleElement && progress >= obstacle.turnAt - 0.15) {
+                        const approach = Math.min(1, (progress - obstacle.turnAt + 0.15) / 0.15);
+                        const offsetX = progress < obstacle.turnAt
+                            ? -obstacle.direction * (150 * (1 - approach))
+                            : -obstacle.direction * 22;
+                        const offsetY = obstacle.type === 'bird' ? -31 : -25;
+                        obstacleElement.style.opacity = `${Math.min(1, approach * 1.8)}`;
+                        obstacleElement.style.transform = `translate3d(${point.x + offsetX}px, ${point.y + offsetY}px, 0)`;
+                    }
+
+                    if (obstacle && progress >= obstacle.turnAt && !obstacle.announced) {
+                        obstacle.announced = true;
+                        playDartObstacleSound(obstacle.type);
+                        setDrawTopbar(
+                            obstacle.type === 'bird' ? '새가 다트를 물고 갔다' : '돌풍이 다트를 밀어냈다',
+                            obstacle.type === 'bird' ? '예상 경로에서 크게 벗어나는 중' : '다트가 엉뚱한 방향으로 날아가는 중',
+                            false
+                        );
+                        if (navigator.vibrate) navigator.vibrate(obstacle.type === 'bird' ? [28, 35, 28] : [18, 20, 18, 20, 18]);
+                    }
 
                     if (progress < 1) {
                         drawFlightAnimationFrame = window.requestAnimationFrame(step);
@@ -6368,7 +6607,7 @@
         async function showDrawLanding(lat, lng, distance, impactX, impactY) {
             if (!drawMap || typeof kakao === 'undefined' || !kakao.maps) return;
             clearDrawLanding();
-            setDrawIslandInsetsVisible(false);
+            clearDartObstacle();
             if (dartFlightSoundStop) dartFlightSoundStop();
 
             const position = new kakao.maps.LatLng(lat, lng);
@@ -6394,15 +6633,20 @@
             playDartLandingSound();
 
             const northKorea = isNorthKorea(lat, lng);
-            const hasLandHighlight = !northKorea && highlightDrawLanding(lat, lng);
+            const islandPrize = !northKorea ? getEastSeaIslandPrize(lat, lng) : null;
+            const hasLandHighlight = !northKorea && !islandPrize && highlightDrawLanding(lat, lng);
+            setDrawIslandWinner(islandPrize?.id || '');
+            setDrawIslandInsetsVisible(Boolean(islandPrize));
             let title = northKorea
                 ? '북한이 나왔는데, 진짜 갈 수 있겠어?'
-                : (findSigunguName(lat, lng) || findRegionName(lat, lng) || getUnmappedLandingInfo(lat, lng).title);
+                : (islandPrize?.title || findSigunguName(lat, lng) || findRegionName(lat, lng) || getUnmappedLandingInfo(lat, lng).title);
             let detail = '';
 
             setDrawTopbar(
                 title,
-                northKorea ? '진짜 갈 수 있을 것 같아? 다시 던질 준비 중' : '착지 충격 확인 중',
+                northKorea
+                    ? '진짜 갈 수 있을 것 같아? 다시 던질 준비 중'
+                    : (islandPrize ? '경북 동해 해역 특별 당첨 확인 중' : '착지 충격 확인 중'),
                 false
             );
             if (northKorea && navigator.vibrate) navigator.vibrate([60, 35, 60]);
@@ -6431,6 +6675,8 @@
                 playDartRevealSound();
                 if (northKorea) {
                     setDrawTopbar(title, '그 여행은 무리니까 다시 던지세요', true);
+                } else if (islandPrize) {
+                    setDrawTopbar(title, '경북 동해 해역 특별 당첨 · 다시 던지기 가능', true);
                 } else if (hasLandHighlight) {
                     const detailPrefix = detail ? `${detail} · ` : '';
                     setDrawTopbar(title, `${detailPrefix}여행지 당첨 · 약 ${Math.round(distance)} km`, true);
@@ -6442,7 +6688,7 @@
                 drawZoomFinishTimer = null;
             }, hasLandHighlight ? 1280 : 380);
 
-            if (!northKorea) {
+            if (!northKorea && !islandPrize) {
                 const region = await getDetailedRegionInfo(lat, lng);
                 if (drawLandingOverlay !== landingOverlay) return;
                 title = region.title;
@@ -6507,6 +6753,14 @@
 
         function findSigunguName(lat, lng) {
             return findSigunguBoundary(lat, lng)?.n || '';
+        }
+
+        function getEastSeaIslandPrize(lat, lng) {
+            const isGyeongbukEastSea = lat >= 35.35 && lat <= 37.45 && lng >= 129.12 && lng <= 132.2;
+            if (!isGyeongbukEastSea || findSigunguBoundary(lat, lng)) return null;
+            return Math.random() < 0.5
+                ? { id: 'ulleungdo', title: '경상북도 울릉군 울릉도' }
+                : { id: 'dokdo', title: '경상북도 울릉군 독도' };
         }
 
         function getDetailedRegionInfo(lat, lng) {
@@ -6614,6 +6868,8 @@
             drawLandingHighlights = [];
             const impactLayer = document.getElementById('dart-impact-layer');
             if (impactLayer) impactLayer.innerHTML = '';
+            clearDartObstacle();
+            setDrawIslandWinner('');
             document.getElementById('draw-map')?.classList.remove('dart-impact-shake');
         }
 
