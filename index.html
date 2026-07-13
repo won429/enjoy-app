@@ -6949,7 +6949,9 @@
                 const loginScreen   = document.getElementById('login-screen');
                 const loginChecking = document.getElementById('login-checking');
                 const loginContent  = document.getElementById('login-content');
+                const loginButton   = document.getElementById('login-google-btn');
                 const loginStatus   = document.getElementById('login-status');
+                let nativeGoogleLoginTimeoutId = null;
                 // 카카오 애드핏: 로그인 화면(컨테이너)이 보이게 된 뒤 광고를 (재)요청한다.
                 // 숨겨진 상태에서 최초 스캔되면 렌더되지 않을 수 있어, 노출 시점에 새로 그린다.
                 const renderLoginAd = () => {
@@ -6982,6 +6984,11 @@
                 provider.setCustomParameters({ prompt: 'select_account' });
 
                 window.loginWithNativeGoogle = async function (idToken) {
+                    if (nativeGoogleLoginTimeoutId) {
+                        clearTimeout(nativeGoogleLoginTimeoutId);
+                        nativeGoogleLoginTimeoutId = null;
+                    }
+
                     try {
                         const credential = GoogleAuthProvider.credential(idToken);
                         const result = await signInWithCredential(meetingAuth, credential);
@@ -6996,12 +7003,54 @@
                     }
                 };
 
+                window.nativeGoogleLoginFailed = function (message, errorCode) {
+                    if (nativeGoogleLoginTimeoutId) {
+                        clearTimeout(nativeGoogleLoginTimeoutId);
+                        nativeGoogleLoginTimeoutId = null;
+                    }
+
+                    if (loginButton) loginButton.disabled = false;
+                    if (loginStatus) {
+                        loginStatus.textContent = message || '구글 로그인 창을 열지 못했어요.';
+                    }
+
+                    console.error('네이티브 구글 로그인 실패:', errorCode, message);
+                };
+
+                window.addEventListener('native-google-login-failed', function (event) {
+                    const detail = event.detail || {};
+
+                    window.nativeGoogleLoginFailed(detail.message, detail.errorCode);
+                });
+
                 window.enjoyLogin = async function () {
+                    if (loginButton) loginButton.disabled = true;
                     if (loginStatus) loginStatus.textContent = '로그인 창을 여는 중…';
 
                     // Android WebView 앱 안이면 앱의 네이티브 구글 로그인 호출
                     if (window.AndroidLogin && typeof window.AndroidLogin.googleLogin === 'function') {
-                        window.AndroidLogin.googleLogin();
+                        if (nativeGoogleLoginTimeoutId) {
+                            clearTimeout(nativeGoogleLoginTimeoutId);
+                        }
+
+                        nativeGoogleLoginTimeoutId = setTimeout(function () {
+                            if (loginButton) loginButton.disabled = false;
+                            if (loginStatus) {
+                                loginStatus.textContent = '로그인 창을 열지 못했어요. 다시 시도해 주세요.';
+                            }
+
+                            nativeGoogleLoginTimeoutId = null;
+                        }, 15000);
+
+                        try {
+                            window.AndroidLogin.googleLogin();
+                        } catch (error) {
+                            clearTimeout(nativeGoogleLoginTimeoutId);
+                            nativeGoogleLoginTimeoutId = null;
+
+                            if (loginButton) loginButton.disabled = false;
+                            if (loginStatus) loginStatus.textContent = '구글 로그인을 시작하지 못했어요.';
+                        }
                         return;
                     }
 
@@ -7010,6 +7059,7 @@
                     try {
                         await signInWithPopup(meetingAuth, provider);
                     } catch (e) {
+                        if (loginButton) loginButton.disabled = false;
                         if (loginStatus) loginStatus.textContent = '로그인에 실패했어요. 다시 시도해 주세요.';
                         console.error('Login error:', e);
                     }
