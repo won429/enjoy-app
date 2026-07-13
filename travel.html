@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- 카카오 지도 API: YOUR_KAKAO_JAVASCRIPT_KEY를 카카오 JavaScript 키로 교체하세요. -->
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0be88f46eb39dabeacc3414f5af0bb5f"></script>
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0be88f46eb39dabeacc3414f5af0bb5f&libraries=services"></script>
 
     <style>
         :root {
@@ -627,6 +627,8 @@
         }
 
         #draw-retry-btn {
+            position: relative;
+            z-index: 2;
             min-width: 54px;
             height: 30px;
             border-radius: 999px;
@@ -635,7 +637,7 @@
             gap: 5px;
             font-size: 10px;
             font-weight: 800;
-            color: #fff;
+            color: #fff !important;
             background: rgba(49, 130, 246, 0.92);
             box-shadow: 0 5px 14px rgba(49, 130, 246, 0.24);
             transition: transform 150ms ease, opacity 150ms ease;
@@ -664,6 +666,11 @@
         #dart-launcher:active,
         #dart-launcher.is-dragging {
             cursor: grabbing;
+        }
+
+        #dart-launcher.is-flying {
+            z-index: 60;
+            pointer-events: none;
         }
 
         #dart-launcher:focus-visible {
@@ -1081,7 +1088,7 @@
                     <div class="draw-guide topbar-capsule liquid-glass-control flex items-center flex-1 px-4 py-2">
                         <div class="topbar-title-content min-w-0 flex-1" role="status" aria-live="polite">
                             <h1 id="draw-title" class="adaptive-contrast text-[13px] font-extrabold tracking-tight truncate">다트 여행지 뽑기</h1>
-                            <p id="draw-instruction" class="adaptive-contrast adaptive-muted mt-1 text-[10px] font-medium truncate">가고 싶은 방향의 반대로 당겼다가 놓으세요</p>
+                            <p id="draw-instruction" class="adaptive-contrast adaptive-muted mt-1 text-[10px] font-medium truncate">가고 싶은 방향으로 당겼다가 놓으세요</p>
                         </div>
                         <button id="draw-retry-btn" type="button" onclick="resetDraw()" class="hidden shrink-0 ml-2" aria-label="다시 던지기">
                             <i class="fa-solid fa-rotate-right"></i><span>다시</span>
@@ -1093,7 +1100,7 @@
             <div id="aim-line"></div>
             <div id="pull-meter" class="pull-meter">0 km</div>
 
-            <button id="dart-launcher" type="button" aria-label="다트. 가고 싶은 방향의 반대로 당겼다가 놓으세요">
+            <button id="dart-launcher" type="button" aria-label="다트. 가고 싶은 방향으로 당겼다가 놓으세요">
                 <span class="dart-visual" aria-hidden="true">
                     <img class="dart-image" src="dart.png" alt="">
                 </span>
@@ -5705,6 +5712,26 @@
             oscillator.stop(now + 0.3);
         }
 
+        function playDartRevealSound() {
+            const context = getDartAudioContext();
+            if (!context) return;
+
+            const now = context.currentTime;
+            [523.25, 659.25, 783.99].forEach((frequency, index) => {
+                const oscillator = context.createOscillator();
+                const gain = context.createGain();
+                const start = now + index * 0.075;
+                oscillator.type = 'sine';
+                oscillator.frequency.value = frequency;
+                gain.gain.setValueAtTime(0.0001, start);
+                gain.gain.exponentialRampToValueAtTime(0.09, start + 0.025);
+                gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.34);
+                oscillator.connect(gain).connect(context.destination);
+                oscillator.start(start);
+                oscillator.stop(start + 0.36);
+            });
+        }
+
         function startDartPull(event) {
             if (isDartFlying || activeTabIndex !== 1) return;
             const launcher = event.currentTarget;
@@ -5726,7 +5753,7 @@
             dartDrag.pull = 0;
             launcher.classList.add('is-dragging');
             launcher.setPointerCapture(event.pointerId);
-            updateDrawInstruction('반대편으로 쭉 당겨서 비거리를 정하세요');
+            updateDrawInstruction('가고 싶은 방향으로 쭉 당겨서 비거리를 정하세요');
             event.preventDefault();
         }
 
@@ -5756,8 +5783,8 @@
             const dart = launcher?.querySelector('.dart-visual');
             const aimLine = document.getElementById('aim-line');
             const meter = document.getElementById('pull-meter');
-            const aimDx = -dx;
-            const aimDy = -dy;
+            const aimDx = dx;
+            const aimDy = dy;
             const angle = Math.atan2(aimDx, -aimDy) * 180 / Math.PI;
             const distance = getThrowDistance(pull);
 
@@ -5815,11 +5842,13 @@
             const dart = launcher?.querySelector('.dart-visual');
             const aimLine = document.getElementById('aim-line');
             const meter = document.getElementById('pull-meter');
-            const aimDx = -dx;
-            const aimDy = -dy;
+            const aimDx = dx;
+            const aimDy = dy;
             const bearing = Math.atan2(aimDx, -aimDy) * 180 / Math.PI;
             const distance = getThrowDistance(pull);
             const destination = calculateDestination(36.3504, 127.3845, bearing, distance);
+            const flightOffset = getDartFlightOffset(aimDx, aimDy, pull);
+            const flightDuration = 920;
 
             if (navigator.vibrate) navigator.vibrate([12, 28, 18]);
             playDartThrowSound();
@@ -5828,8 +5857,9 @@
             meter?.classList.remove('show');
 
             if (launcher) {
-                launcher.style.transition = 'transform 460ms cubic-bezier(0.18, 0.72, 0.2, 1), opacity 260ms ease 150ms';
-                launcher.style.transform = `translate(calc(-50% + ${aimDx * 3.6}px), ${aimDy * 3.6}px) scale(0.38)`;
+                launcher.classList.add('is-flying');
+                launcher.style.transition = `transform ${flightDuration}ms cubic-bezier(0.16, 0.72, 0.18, 1), opacity 80ms linear ${flightDuration - 80}ms`;
+                launcher.style.transform = `translate(calc(-50% + ${flightOffset.x}px), ${flightOffset.y}px) scale(0.52)`;
                 launcher.style.opacity = '0';
             }
             if (dart) dart.style.transform = `rotate(${bearing}deg)`;
@@ -5838,7 +5868,37 @@
                 resetDartVisual();
                 showDrawLanding(destination.lat, destination.lng, distance);
                 isDartFlying = false;
-            }, 500);
+            }, flightDuration);
+        }
+
+        function getDartFlightOffset(dx, dy, pull) {
+            const screen = document.getElementById('draw-screen');
+            const launcher = document.getElementById('dart-launcher');
+            const screenRect = screen?.getBoundingClientRect();
+            const launcherRect = launcher?.getBoundingClientRect();
+            const length = Math.hypot(dx, dy) || 1;
+            const unitX = dx / length;
+            const unitY = dy / length;
+
+            if (!screenRect || !launcherRect) {
+                return { x: unitX * 380, y: unitY * 380 };
+            }
+
+            const originX = dartDrag.originX || (launcherRect.left + launcherRect.width / 2);
+            const originY = dartDrag.originY || (launcherRect.top + launcherRect.height / 2);
+            const left = screenRect.left + 18;
+            const right = screenRect.right - 18;
+            const top = screenRect.top + 82;
+            const bottom = screenRect.bottom - 18;
+            const distanceX = unitX > 0
+                ? (right - originX) / unitX
+                : (unitX < 0 ? (left - originX) / unitX : Infinity);
+            const distanceY = unitY > 0
+                ? (bottom - originY) / unitY
+                : (unitY < 0 ? (top - originY) / unitY : Infinity);
+            const edgeDistance = Math.max(pull + 34, Math.min(distanceX, distanceY) - 24);
+
+            return { x: unitX * edgeDistance, y: unitY * edgeDistance };
         }
 
         function calculateDestination(startLat, startLng, bearingDegrees, distanceKm) {
@@ -5859,7 +5919,7 @@
             return { lat: lat2 * 180 / Math.PI, lng: lng2 * 180 / Math.PI };
         }
 
-        function showDrawLanding(lat, lng, distance) {
+        async function showDrawLanding(lat, lng, distance) {
             if (!drawMap || typeof kakao === 'undefined' || !kakao.maps) return;
             clearDrawLanding();
 
@@ -5875,31 +5935,51 @@
                 yAnchor: 1,
                 zIndex: 20
             });
+            const landingOverlay = drawLandingOverlay;
 
-            drawMap.panTo(position);
+            drawMap.setCenter(position);
             playDartLandingSound();
 
             const northKorea = isNorthKorea(lat, lng);
-            const regionName = findRegionName(lat, lng);
-            const title = northKorea
+            let title = northKorea
                 ? '북한이 나왔는데, 진짜 갈 수 있겠어?'
-                : (regionName || '지도 위의 새로운 좌표');
-            const resultMeta = northKorea
-                ? '그 여행은 무리니까 다시 던지세요'
-                : `이번 여행지 · 약 ${Math.round(distance)} km · 3초 뒤 확대`;
+                : (findRegionName(lat, lng) || '도착 지역 확인 중');
+            let detail = '';
 
-            setDrawTopbar(title, resultMeta, true);
+            setDrawTopbar(
+                title,
+                northKorea ? '그 여행은 무리니까 다시 던지세요' : '도착 완료 · 지역 확인 중 · 천천히 확대 중',
+                true
+            );
             if (northKorea && navigator.vibrate) navigator.vibrate([60, 35, 60]);
 
+            drawMap.setLevel(9, {
+                anchor: position,
+                animate: { duration: 3000 }
+            });
+
             drawZoomTimer = window.setTimeout(() => {
-                if (!drawMap || !drawLandingOverlay) return;
-                drawMap.setLevel(8);
-                drawMap.panTo(position);
+                if (!drawMap || drawLandingOverlay !== landingOverlay) return;
+                drawMap.setLevel(8, {
+                    anchor: position,
+                    animate: { duration: 320 }
+                });
+                playDartRevealSound();
                 if (!northKorea) {
-                    setDrawTopbar(title, `이번 여행지 · 약 ${Math.round(distance)} km`, true);
+                    const detailPrefix = detail ? `${detail} · ` : '';
+                    setDrawTopbar(title, `짜잔 · ${detailPrefix}이번 여행지 · 약 ${Math.round(distance)} km`, true);
                 }
                 drawZoomTimer = null;
             }, 3000);
+
+            if (!northKorea) {
+                const region = await getDetailedRegionInfo(lat, lng);
+                if (drawLandingOverlay !== landingOverlay) return;
+                title = region.title;
+                detail = region.detail;
+                const detailPrefix = detail ? `${detail} · ` : '';
+                setDrawTopbar(title, `${detailPrefix}이번 여행지 · 약 ${Math.round(distance)} km · 확대 중`, true);
+            }
         }
 
         function pointInRing(lng, lat, ring) {
@@ -5940,6 +6020,45 @@
             return matches[0]?.properties.name || '';
         }
 
+        function getDetailedRegionInfo(lat, lng) {
+            const fallback = {
+                title: findRegionName(lat, lng) || '지도 위의 새로운 좌표',
+                detail: `${lat.toFixed(3)}, ${lng.toFixed(3)}`
+            };
+
+            if (!kakao.maps.services?.Geocoder) return Promise.resolve(fallback);
+
+            return new Promise(resolve => {
+                let settled = false;
+                const finish = value => {
+                    if (settled) return;
+                    settled = true;
+                    resolve(value);
+                };
+                const timeout = window.setTimeout(() => finish(fallback), 1500);
+                const geocoder = new kakao.maps.services.Geocoder();
+
+                geocoder.coord2RegionCode(lng, lat, (result, status) => {
+                    if (status !== kakao.maps.services.Status.OK || !result?.length) {
+                        finish(fallback);
+                        return;
+                    }
+
+                    window.clearTimeout(timeout);
+                    const region = result.find(item => item.region_type === 'H') || result[0];
+                    const title = [region.region_1depth_name, region.region_2depth_name]
+                        .filter(Boolean)
+                        .join(' ');
+                    const detail = [
+                        region.region_3depth_h_name || region.region_3depth_name,
+                        region.region_4depth_name
+                    ].filter(Boolean).join(' ');
+
+                    finish({ title: title || region.address_name || fallback.title, detail });
+                });
+            });
+        }
+
         function isNorthKorea(lat, lng) {
             const northKoreaOutline = [
                 [124.05, 39.75], [124.55, 40.55], [126.05, 41.55],
@@ -5962,7 +6081,7 @@
         }
 
         function hideDrawResult() {
-            setDrawTopbar('다트 여행지 뽑기', '가고 싶은 방향의 반대로 당겼다가 놓으세요', false);
+            setDrawTopbar('다트 여행지 뽑기', '가고 싶은 방향으로 당겼다가 놓으세요', false);
         }
 
         function setDrawTopbar(title, instruction, showRetry) {
@@ -5989,6 +6108,7 @@
             const meter = document.getElementById('pull-meter');
 
             if (launcher) {
+                launcher.classList.remove('is-flying');
                 launcher.style.transition = 'transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 160ms ease';
                 launcher.style.transform = 'translateX(-50%)';
                 launcher.style.opacity = '1';
@@ -6017,22 +6137,25 @@
 
         function loadDrawRegionBoundaries() {
             drawRegionPolygons.forEach(polygon => polygon.setMap(null));
-            drawRegionPolygons = renderRegionBoundaries(drawMap);
+            drawRegionPolygons = renderRegionBoundaries(drawMap, { neutral: true });
         }
 
-        function renderRegionBoundaries(targetMap) {
+        function renderRegionBoundaries(targetMap, options = {}) {
             if (!targetMap || typeof kakao === 'undefined' || !kakao.maps) return [];
 
             const renderedBoundaries = [];
+            const neutral = Boolean(options.neutral);
 
             currentRegionBoundaries.forEach(feature => {
                 const theme = colorThemes[feature.properties.colorKey];
                 const color = theme?.markerBg;
                 if (!color) return;
                 const isProvinceBoundary = feature.properties.boundaryLevel === 'province';
-                const fillOpacity = feature.properties.fillOpacity ?? 0.18;
-                const strokeColor = feature.properties.strokeColor || color;
-                const strokeOpacity = feature.properties.strokeOpacity ?? 0.48;
+                const fillOpacity = neutral ? 0 : (feature.properties.fillOpacity ?? 0.18);
+                const strokeColor = neutral ? '#64748b' : (feature.properties.strokeColor || color);
+                const strokeOpacity = neutral
+                    ? (isProvinceBoundary ? 0.34 : 0.24)
+                    : (feature.properties.strokeOpacity ?? 0.48);
                 const strokeWeight = feature.properties.strokeWeight ?? 1.2;
                 const zIndex = feature.properties.zIndex ?? (isProvinceBoundary ? 2 : 1);
 
