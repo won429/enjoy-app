@@ -1104,6 +1104,8 @@
         let mapAnimationFrameId = null;
         let mapLastFullUpdateTime = 0;
         let mapLastCameraUpdateTime = 0;
+        let mapCameraLat = null;
+        let mapCameraLng = null;
         let mapViewportChanging = false;
         let mapTransitionResumeTimer = null;
         let mapActiveTrainSources = [];
@@ -1111,14 +1113,14 @@
         let lastUserLocation = null;
         const railPathMetricCache = new Map();
         const MAP_TRAIN_TARGET_INTERVAL = 1000 / 60;
-        const MAP_CAMERA_PAN_INTERVAL = 240;
-        const MAP_CAMERA_DEAD_ZONE_PX = 3;
+        const MAP_CAMERA_FRAME_INTERVAL = 1000 / 60;
         const MAP_TRAIN_HALF_LENGTH_METERS = 130;
         const MAP_TRAIN_LANE_OFFSET_METERS = 4.2;
         const MAP_TRAIN_LANE_OFFSET_PX = 6;
         const MAP_TRAIN_POSITION_SMOOTHING_MS = 64;
         const MAP_TRAIN_SUBPIXEL_SMOOTHING_MS = 46;
         const MAP_TRAIN_MAX_SUBPIXEL_OFFSET = 1.05;
+        const MAP_CAMERA_SMOOTHING_MS = 90;
 
         const dom = {
             mainHeader: document.getElementById('main-header'),
@@ -2900,6 +2902,8 @@
                 selectedMapTrainKey = key;
                 mapFollowTrainKey = key;
                 mapLastCameraUpdateTime = 0;
+                mapCameraLat = null;
+                mapCameraLng = null;
                 selectedStation = null;
                 isAutoScroll = false;
                 const meta = FAVORITE_LINE_META[train.lineId || currentLineId];
@@ -3043,23 +3047,37 @@
 
         const updateMapFollowCamera = timestamp => {
             if (!mapFollowTrainKey) {
+                mapCameraLat = null;
+                mapCameraLng = null;
                 mapLastCameraUpdateTime = 0;
                 return;
             }
+            if (mapLastCameraUpdateTime && timestamp - mapLastCameraUpdateTime < MAP_CAMERA_FRAME_INTERVAL) return;
             const followedEntry = subwayMapTrainOverlays.get(mapFollowTrainKey);
             if (!followedEntry?.position) return;
-            if (!mapLastCameraUpdateTime) {
-                mapLastCameraUpdateTime = timestamp;
-                subwayMap.setCenter(followedEntry.position);
-                return;
+            const targetLat = followedEntry.position.getLat();
+            const targetLng = followedEntry.position.getLng();
+            if (mapCameraLat === null || mapCameraLng === null) {
+                mapCameraLat = targetLat;
+                mapCameraLng = targetLng;
+            } else {
+                const elapsed = Math.max(1, Math.min(64, timestamp - mapLastCameraUpdateTime));
+                const blend = 1 - Math.exp(-elapsed / MAP_CAMERA_SMOOTHING_MS);
+                const remainingMeters = haversine(mapCameraLat, mapCameraLng, targetLat, targetLng) * 1000;
+                if (remainingMeters < .002) {
+                    mapLastCameraUpdateTime = timestamp;
+                    return;
+                }
+                if (remainingMeters < .06) {
+                    mapCameraLat = targetLat;
+                    mapCameraLng = targetLng;
+                } else {
+                    mapCameraLat += (targetLat - mapCameraLat) * blend;
+                    mapCameraLng += (targetLng - mapCameraLng) * blend;
+                }
             }
-            if (mapViewportChanging || timestamp - mapLastCameraUpdateTime < MAP_CAMERA_PAN_INTERVAL) return;
-            const projected = subwayMap.getProjection().containerPointFromCoords(followedEntry.position);
-            const centerX = dom.mapContainer.clientWidth / 2;
-            const centerY = dom.mapContainer.clientHeight / 2;
-            if (Math.hypot(projected.x - centerX, projected.y - centerY) < MAP_CAMERA_DEAD_ZONE_PX) return;
             mapLastCameraUpdateTime = timestamp;
-            subwayMap.panTo(followedEntry.position);
+            subwayMap.setCenter(new kakao.maps.LatLng(mapCameraLat, mapCameraLng));
         };
 
         window.ensureMapAnimationLoop = () => {
