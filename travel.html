@@ -714,6 +714,18 @@
 
         #aim-line.show { opacity: 1; }
 
+        #aim-line::after {
+            content: "";
+            position: absolute;
+            top: -8px;
+            left: -4px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 9px solid rgba(49, 130, 246, 0.94);
+        }
+
         .pull-meter {
             position: absolute;
             left: 50%;
@@ -1088,7 +1100,7 @@
                     <div class="draw-guide topbar-capsule liquid-glass-control flex items-center flex-1 px-4 py-2">
                         <div class="topbar-title-content min-w-0 flex-1" role="status" aria-live="polite">
                             <h1 id="draw-title" class="adaptive-contrast text-[13px] font-extrabold tracking-tight truncate">다트 여행지 뽑기</h1>
-                            <p id="draw-instruction" class="adaptive-contrast adaptive-muted mt-1 text-[10px] font-medium truncate">가고 싶은 방향으로 당겼다가 놓으세요</p>
+                            <p id="draw-instruction" class="adaptive-contrast adaptive-muted mt-1 text-[10px] font-medium truncate">가고 싶은 방향으로 움직여 조준하고 놓으세요</p>
                         </div>
                         <button id="draw-retry-btn" type="button" onclick="resetDraw()" class="hidden shrink-0 ml-2" aria-label="다시 던지기">
                             <i class="fa-solid fa-rotate-right"></i><span>다시</span>
@@ -1100,7 +1112,7 @@
             <div id="aim-line"></div>
             <div id="pull-meter" class="pull-meter">0 km</div>
 
-            <button id="dart-launcher" type="button" aria-label="다트. 가고 싶은 방향으로 당겼다가 놓으세요">
+            <button id="dart-launcher" type="button" aria-label="다트. 가고 싶은 방향으로 움직여 조준하고 놓으세요">
                 <span class="dart-visual" aria-hidden="true">
                     <img class="dart-image" src="dart.png" alt="">
                 </span>
@@ -1196,7 +1208,8 @@
         let regionPolygons = [];
         let drawRegionPolygons = [];
         let drawLandingOverlay = null;
-        let drawZoomTimer = null;
+        let drawZoomStartTimer = null;
+        let drawZoomFinishTimer = null;
         let dartAudioContext = null;
         let isDartFlying = false;
         let activeMarkerIndex = -1;
@@ -5632,8 +5645,10 @@
 
         const dartDrag = {
             pointerId: null,
-            originX: 0,
-            originY: 0,
+            pointerStartX: 0,
+            pointerStartY: 0,
+            launcherX: 0,
+            launcherY: 0,
             dx: 0,
             dy: 0,
             pull: 0,
@@ -5746,22 +5761,24 @@
             }
 
             dartDrag.pointerId = event.pointerId;
-            dartDrag.originX = rect.left + rect.width / 2;
-            dartDrag.originY = rect.top + rect.height / 2;
+            dartDrag.pointerStartX = event.clientX;
+            dartDrag.pointerStartY = event.clientY;
+            dartDrag.launcherX = rect.left + rect.width / 2;
+            dartDrag.launcherY = rect.top + rect.height / 2;
             dartDrag.dx = 0;
             dartDrag.dy = 0;
             dartDrag.pull = 0;
             launcher.classList.add('is-dragging');
             launcher.setPointerCapture(event.pointerId);
-            updateDrawInstruction('가고 싶은 방향으로 쭉 당겨서 비거리를 정하세요');
+            updateDrawInstruction('가고 싶은 방향으로 움직여 조준하고 거리를 정하세요');
             event.preventDefault();
         }
 
         function moveDartPull(event) {
             if (dartDrag.pointerId !== event.pointerId || isDartFlying) return;
 
-            let dx = event.clientX - dartDrag.originX;
-            let dy = event.clientY - dartDrag.originY;
+            let dx = event.clientX - dartDrag.pointerStartX;
+            let dy = event.clientY - dartDrag.pointerStartY;
             const rawPull = Math.hypot(dx, dy);
             const pull = Math.min(rawPull, dartDrag.maxPull);
 
@@ -5787,12 +5804,15 @@
             const aimDy = dy;
             const angle = Math.atan2(aimDx, -aimDy) * 180 / Math.PI;
             const distance = getThrowDistance(pull);
+            const unitX = pull > 0 ? aimDx / pull : 0;
+            const unitY = pull > 0 ? aimDy / pull : -1;
+            const tension = Math.min(28, (pull / dartDrag.maxPull) * 28);
 
             if (launcher) {
                 launcher.style.transition = 'none';
-                launcher.style.transform = `translate(calc(-50% + ${dx}px), ${dy}px)`;
+                launcher.style.transform = `translate(calc(-50% + ${-unitX * tension}px), ${-unitY * tension}px)`;
             }
-            if (dart) dart.style.transform = `rotate(${angle}deg)`;
+            if (dart && pull > 5) dart.style.transform = `rotate(${angle}deg)`;
             if (aimLine) {
                 aimLine.classList.toggle('show', pull > 5);
                 aimLine.style.height = `${Math.min(158, 36 + pull * 0.92)}px`;
@@ -5884,8 +5904,8 @@
                 return { x: unitX * 380, y: unitY * 380 };
             }
 
-            const originX = dartDrag.originX || (launcherRect.left + launcherRect.width / 2);
-            const originY = dartDrag.originY || (launcherRect.top + launcherRect.height / 2);
+            const originX = dartDrag.launcherX || (launcherRect.left + launcherRect.width / 2);
+            const originY = dartDrag.launcherY || (launcherRect.top + launcherRect.height / 2);
             const left = screenRect.left + 18;
             const right = screenRect.right - 18;
             const top = screenRect.top + 82;
@@ -5948,17 +5968,25 @@
 
             setDrawTopbar(
                 title,
-                northKorea ? '그 여행은 무리니까 다시 던지세요' : '도착 완료 · 지역 확인 중 · 천천히 확대 중',
+                northKorea ? '그 여행은 무리니까 다시 던지세요' : '도착 완료 · 지역 확인 중 · 1초 뒤 확대 시작',
                 true
             );
             if (northKorea && navigator.vibrate) navigator.vibrate([60, 35, 60]);
 
-            drawMap.setLevel(9, {
-                anchor: position,
-                animate: { duration: 3000 }
-            });
+            drawZoomStartTimer = window.setTimeout(() => {
+                if (!drawMap || drawLandingOverlay !== landingOverlay) return;
+                drawMap.setLevel(9, {
+                    anchor: position,
+                    animate: { duration: 3000 }
+                });
+                if (!northKorea) {
+                    const detailPrefix = detail ? `${detail} · ` : '';
+                    setDrawTopbar(title, `${detailPrefix}3초 동안 천천히 확대 중`, true);
+                }
+                drawZoomStartTimer = null;
+            }, 1000);
 
-            drawZoomTimer = window.setTimeout(() => {
+            drawZoomFinishTimer = window.setTimeout(() => {
                 if (!drawMap || drawLandingOverlay !== landingOverlay) return;
                 drawMap.setLevel(8, {
                     anchor: position,
@@ -5969,8 +5997,8 @@
                     const detailPrefix = detail ? `${detail} · ` : '';
                     setDrawTopbar(title, `짜잔 · ${detailPrefix}이번 여행지 · 약 ${Math.round(distance)} km`, true);
                 }
-                drawZoomTimer = null;
-            }, 3000);
+                drawZoomFinishTimer = null;
+            }, 4000);
 
             if (!northKorea) {
                 const region = await getDetailedRegionInfo(lat, lng);
@@ -5978,7 +6006,8 @@
                 title = region.title;
                 detail = region.detail;
                 const detailPrefix = detail ? `${detail} · ` : '';
-                setDrawTopbar(title, `${detailPrefix}이번 여행지 · 약 ${Math.round(distance)} km · 확대 중`, true);
+                const zoomStatus = drawZoomStartTimer ? '1초 뒤 확대 시작' : '3초 동안 천천히 확대 중';
+                setDrawTopbar(title, `${detailPrefix}이번 여행지 · 약 ${Math.round(distance)} km · ${zoomStatus}`, true);
             }
         }
 
@@ -6070,9 +6099,13 @@
         }
 
         function clearDrawLanding() {
-            if (drawZoomTimer) {
-                window.clearTimeout(drawZoomTimer);
-                drawZoomTimer = null;
+            if (drawZoomStartTimer) {
+                window.clearTimeout(drawZoomStartTimer);
+                drawZoomStartTimer = null;
+            }
+            if (drawZoomFinishTimer) {
+                window.clearTimeout(drawZoomFinishTimer);
+                drawZoomFinishTimer = null;
             }
             if (drawLandingOverlay) {
                 drawLandingOverlay.setMap(null);
@@ -6081,7 +6114,7 @@
         }
 
         function hideDrawResult() {
-            setDrawTopbar('다트 여행지 뽑기', '가고 싶은 방향으로 당겼다가 놓으세요', false);
+            setDrawTopbar('다트 여행지 뽑기', '가고 싶은 방향으로 움직여 조준하고 놓으세요', false);
         }
 
         function setDrawTopbar(title, instruction, showRetry) {
