@@ -104,6 +104,7 @@
         }
 
         #map-screen,
+        #draw-screen,
         .map-fallback {
             background: var(--map-fallback) !important;
         }
@@ -561,17 +562,20 @@
             opacity: 0.64;
         }
 
-        #map-topbar .topbar-capsule {
+        #map-topbar .topbar-capsule,
+        #draw-topbar .topbar-capsule {
             min-height: 46px;
             border-radius: 999px;
         }
 
-        #map-topbar .topbar-title-content {
+        #map-topbar .topbar-title-content,
+        #draw-topbar .topbar-title-content {
             min-width: 0;
             line-height: 1.1;
         }
 
         #map-topbar .topbar-capsule > div,
+        #draw-topbar .topbar-capsule > div,
         #map-topbar .topbar-action,
         #bottom-nav .nav-item {
             position: relative;
@@ -608,6 +612,145 @@
             transition:
                 width 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
                 max-width 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* 여행지 뽑기 */
+        #draw-map {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+        }
+
+        .draw-guide {
+            border-radius: 999px;
+            min-height: 46px;
+        }
+
+        #draw-retry-btn {
+            min-width: 54px;
+            height: 30px;
+            border-radius: 999px;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 10px;
+            font-weight: 800;
+            color: #fff;
+            background: rgba(49, 130, 246, 0.92);
+            box-shadow: 0 5px 14px rgba(49, 130, 246, 0.24);
+            transition: transform 150ms ease, opacity 150ms ease;
+        }
+
+        #draw-retry-btn:active {
+            transform: scale(0.92);
+        }
+
+        #dart-launcher {
+            position: absolute;
+            left: 50%;
+            bottom: max(91px, calc(env(safe-area-inset-bottom) + 75px));
+            width: 74px;
+            height: 106px;
+            transform: translateX(-50%);
+            z-index: 34;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            cursor: grab;
+            outline: none;
+        }
+
+        #dart-launcher:active,
+        #dart-launcher.is-dragging {
+            cursor: grabbing;
+        }
+
+        #dart-launcher:focus-visible {
+            outline: 3px solid rgba(49, 130, 246, 0.72);
+            outline-offset: 4px;
+            border-radius: 12px;
+        }
+
+        .dart-visual {
+            position: relative;
+            width: 32px;
+            height: 102px;
+            transform-origin: 50% 50%;
+            filter: drop-shadow(0 6px 5px rgba(15, 23, 42, 0.36));
+        }
+
+        .dart-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: rotate(180deg);
+            user-select: none;
+            -webkit-user-drag: none;
+            pointer-events: none;
+        }
+
+        #aim-line {
+            position: absolute;
+            left: 50%;
+            bottom: max(139px, calc(env(safe-area-inset-bottom) + 123px));
+            width: 2px;
+            height: 0;
+            z-index: 32;
+            transform-origin: 50% 100%;
+            border-radius: 999px;
+            opacity: 0;
+            background: linear-gradient(to top, rgba(49, 130, 246, 0.18), rgba(49, 130, 246, 0.94));
+            box-shadow: 0 0 10px rgba(49, 130, 246, 0.5);
+            pointer-events: none;
+        }
+
+        #aim-line.show { opacity: 1; }
+
+        .pull-meter {
+            position: absolute;
+            left: 50%;
+            bottom: max(183px, calc(env(safe-area-inset-bottom) + 167px));
+            transform: translateX(-50%);
+            z-index: 33;
+            padding: 5px 10px;
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(10, 15, 25, 0.72);
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-size: 10px;
+            font-weight: 800;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 140ms ease;
+        }
+
+        .pull-meter.show { opacity: 1; }
+
+        .lottery-pin {
+            width: 30px;
+            height: 104px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: dartLand 520ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+            filter: drop-shadow(0 7px 5px rgba(15, 23, 42, 0.42));
+        }
+
+        .lottery-pin img {
+            width: 24px;
+            height: 100px;
+            object-fit: contain;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        @keyframes dartLand {
+            0% { opacity: 0; transform: translateY(-90px) scale(1.35) rotate(18deg); }
+            70% { opacity: 1; transform: translateY(4px) scale(0.94) rotate(-3deg); }
+            100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
         }
 
         #bottom-nav.is-compact {
@@ -921,7 +1064,43 @@
             </div>
         </main>
 
-        <!-- 2. 목록 화면 -->
+        <!-- 2. 여행지 뽑기 화면 -->
+        <main id="draw-screen" class="hidden flex-1 relative w-full flex-col bg-[#111] overflow-hidden">
+            <div class="map-fallback absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-0">
+                <i class="map-fallback-icon fa-solid fa-location-crosshairs text-4xl mb-4"></i>
+                <p class="text-sm break-keep leading-relaxed">
+                    <span class="theme-accent-blue font-bold">뽑기 지도를 준비하고 있어요...</span><br><br>
+                    지도가 계속 보이지 않으면<br>카카오 지도 설정을 확인해 주세요.
+                </p>
+            </div>
+
+            <div id="draw-map" aria-label="다트를 던져 여행지를 뽑는 지도"></div>
+
+            <header id="draw-topbar" class="absolute top-0 left-0 right-0 pt-safe px-4 pb-4 z-20 pointer-events-none">
+                <div class="mt-3 flex items-center gap-2 w-full pointer-events-auto pb-2">
+                    <div class="draw-guide topbar-capsule liquid-glass-control flex items-center flex-1 px-4 py-2">
+                        <div class="topbar-title-content min-w-0 flex-1" role="status" aria-live="polite">
+                            <h1 id="draw-title" class="adaptive-contrast text-[13px] font-extrabold tracking-tight truncate">다트 여행지 뽑기</h1>
+                            <p id="draw-instruction" class="adaptive-contrast adaptive-muted mt-1 text-[10px] font-medium truncate">가고 싶은 방향의 반대로 당겼다가 놓으세요</p>
+                        </div>
+                        <button id="draw-retry-btn" type="button" onclick="resetDraw()" class="hidden shrink-0 ml-2" aria-label="다시 던지기">
+                            <i class="fa-solid fa-rotate-right"></i><span>다시</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div id="aim-line"></div>
+            <div id="pull-meter" class="pull-meter">0 km</div>
+
+            <button id="dart-launcher" type="button" aria-label="다트. 가고 싶은 방향의 반대로 당겼다가 놓으세요">
+                <span class="dart-visual" aria-hidden="true">
+                    <img class="dart-image" src="dart.png" alt="">
+                </span>
+            </button>
+        </main>
+
+        <!-- 3. 목록 화면 -->
         <main id="list-screen" class="hidden flex-1 relative w-full flex-col overflow-y-auto scrollbar-hide pb-28">
             <header class="screen-header flex-none pt-safe z-10 sticky top-0">
                 <div class="px-5 pt-4 pb-5 flex justify-between items-end gap-4">
@@ -942,7 +1121,7 @@
             </div>
         </main>
 
-        <!-- 3. 통계 화면 -->
+        <!-- 4. 통계 화면 -->
         <main id="stats-screen" class="hidden flex-1 relative w-full flex-col overflow-y-auto scrollbar-hide pb-28">
             <header class="screen-header flex-none pt-safe z-10 sticky top-0">
                 <div class="px-5 pt-4 pb-5">
@@ -959,7 +1138,7 @@
         </main>
 
         <!-- 하단 플로팅 메뉴 -->
-        <nav id="bottom-nav" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[88%] max-w-[300px] px-2 touch-pan-x select-none">
+        <nav id="bottom-nav" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-[360px] px-2 touch-pan-x select-none">
             <div class="bottom-nav-glass liquid-glass-control flex items-center justify-between p-1 gap-0.5 relative transition-all duration-300">
                 <!-- 활성화 표시 배경 -->
                 <div id="nav-indicator" class="absolute top-1 bottom-1 rounded-full z-0 nav-transition" style="left: 4px; width: 66px;"></div>
@@ -978,14 +1157,21 @@
                     </div>
                 </button>
 
-                <button class="nav-item relative py-1.5 flex-1 rounded-full" onclick="switchTab(1)" aria-label="목록">
+                <button class="nav-item relative py-1.5 flex-1 rounded-full" onclick="switchTab(1)" aria-label="뽑기">
+                    <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                        <i class="adaptive-contrast fa-solid fa-bullseye text-base"></i>
+                        <span class="nav-label adaptive-contrast text-[10px] font-medium whitespace-nowrap">뽑기</span>
+                    </div>
+                </button>
+
+                <button class="nav-item relative py-1.5 flex-1 rounded-full" onclick="switchTab(2)" aria-label="목록">
                     <div class="flex flex-col items-center gap-0.5 pointer-events-none">
                         <i class="adaptive-contrast fa-solid fa-list-ul text-base"></i>
                         <span class="nav-label adaptive-contrast text-[10px] font-medium whitespace-nowrap">목록</span>
                     </div>
                 </button>
                 
-                <button class="nav-item relative py-1.5 flex-1 rounded-full" onclick="switchTab(2)" aria-label="통계">
+                <button class="nav-item relative py-1.5 flex-1 rounded-full" onclick="switchTab(3)" aria-label="통계">
                     <div class="flex flex-col items-center gap-0.5 pointer-events-none">
                         <i class="adaptive-contrast fa-solid fa-chart-pie text-base"></i>
                         <span class="nav-label adaptive-contrast text-[10px] font-medium whitespace-nowrap">통계</span>
@@ -998,8 +1184,14 @@
     <script>
         // 전역 변수
         let map = null;
+        let drawMap = null;
         let markers = [];
         let regionPolygons = [];
+        let drawRegionPolygons = [];
+        let drawLandingOverlay = null;
+        let drawZoomTimer = null;
+        let dartAudioContext = null;
+        let isDartFlying = false;
         let activeMarkerIndex = -1;
         let isMarkerVisible = false; // 마커 표시 상태
         let isSatellite = false; // 위성 지도 상태
@@ -5296,8 +5488,9 @@
             const wrapper = document.getElementById('mobile-wrapper');
             if (!wrapper) return;
 
-            // 지도에서는 지도 종류를, 목록/통계에서는 기기의 색상 모드를 기준으로 대비를 맞춘다.
-            const useLightInk = activeTabIndex === 0 ? isSatellite : isDeviceDarkMode();
+            // 지도/뽑기에서는 지도 종류를, 목록/통계에서는 기기의 색상 모드를 기준으로 대비를 맞춘다.
+            const isMapSurface = activeTabIndex === 0 || activeTabIndex === 1;
+            const useLightInk = isMapSurface ? (activeTabIndex === 0 && isSatellite) : isDeviceDarkMode();
             wrapper.dataset.chromeInk = useLightInk ? 'light' : 'dark';
         }
 
@@ -5321,12 +5514,12 @@
         }
 
         function syncBottomNavForActiveScreen() {
-            if (activeTabIndex === 0) {
+            if (activeTabIndex === 0 || activeTabIndex === 1) {
                 setBottomNavCompact(false);
                 return;
             }
 
-            const activeScreen = activeTabIndex === 1
+            const activeScreen = activeTabIndex === 2
                 ? document.getElementById('list-screen')
                 : document.getElementById('stats-screen');
             setBottomNavCompact(Boolean(activeScreen && activeScreen.scrollTop > 28));
@@ -5340,6 +5533,7 @@
 
             const screens = [
                 document.getElementById('map-screen'),
+                document.getElementById('draw-screen'),
                 document.getElementById('list-screen'),
                 document.getElementById('stats-screen')
             ];
@@ -5373,10 +5567,20 @@
             if (index === 0 && map) {
                 requestAnimationFrame(() => map.relayout());
             }
-            
+
             if (index === 1) {
+                requestAnimationFrame(() => {
+                    if (!drawMap) {
+                        initDrawMap();
+                    } else {
+                        drawMap.relayout();
+                    }
+                });
+            }
+            
+            if (index === 2) {
                 renderTravelList();
-            } else if (index === 2) {
+            } else if (index === 3) {
                 renderStats(); // 통계 탭을 누르면 통계 데이터 렌더링
             }
 
@@ -5409,12 +5613,417 @@
             createMarkers();
         }
 
+        function initDrawMap() {
+            if (drawMap || typeof kakao === 'undefined' || !kakao.maps) return;
+
+            drawMap = new kakao.maps.Map(document.getElementById('draw-map'), {
+                center: new kakao.maps.LatLng(36.3504, 127.3845),
+                level: 13
+            });
+            loadDrawRegionBoundaries();
+        }
+
+        const dartDrag = {
+            pointerId: null,
+            originX: 0,
+            originY: 0,
+            dx: 0,
+            dy: 0,
+            pull: 0,
+            maxPull: 132
+        };
+
+        function setupDartLauncher() {
+            const launcher = document.getElementById('dart-launcher');
+            if (!launcher) return;
+
+            launcher.addEventListener('pointerdown', startDartPull);
+            launcher.addEventListener('pointermove', moveDartPull);
+            launcher.addEventListener('pointerup', releaseDartPull);
+            launcher.addEventListener('pointercancel', cancelDartPull);
+            launcher.addEventListener('keydown', event => {
+                if ((event.key === 'Enter' || event.key === ' ') && !isDartFlying) {
+                    event.preventDefault();
+                    const angle = Math.random() * Math.PI * 2;
+                    const pull = 62 + Math.random() * 66;
+                    launchDart(Math.sin(angle) * pull, -Math.cos(angle) * pull, pull);
+                }
+            });
+        }
+
+        function getDartAudioContext() {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return null;
+            if (!dartAudioContext) dartAudioContext = new AudioContextClass();
+            if (dartAudioContext.state === 'suspended') dartAudioContext.resume();
+            return dartAudioContext;
+        }
+
+        function playDartThrowSound() {
+            const context = getDartAudioContext();
+            if (!context) return;
+
+            const now = context.currentTime;
+            const duration = 0.44;
+            const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i += 1) {
+                const progress = i / data.length;
+                data[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * progress) * (1 - progress * 0.45);
+            }
+
+            const source = context.createBufferSource();
+            const filter = context.createBiquadFilter();
+            const gain = context.createGain();
+            source.buffer = buffer;
+            filter.type = 'bandpass';
+            filter.Q.value = 0.8;
+            filter.frequency.setValueAtTime(280, now);
+            filter.frequency.exponentialRampToValueAtTime(1900, now + duration);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.18, now + 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            source.connect(filter).connect(gain).connect(context.destination);
+            source.start(now);
+            source.stop(now + duration);
+        }
+
+        function playDartLandingSound() {
+            const context = getDartAudioContext();
+            if (!context) return;
+
+            const now = context.currentTime;
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(150, now);
+            oscillator.frequency.exponentialRampToValueAtTime(52, now + 0.22);
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+            oscillator.connect(gain).connect(context.destination);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+        }
+
+        function startDartPull(event) {
+            if (isDartFlying || activeTabIndex !== 1) return;
+            const launcher = event.currentTarget;
+            const rect = launcher.getBoundingClientRect();
+
+            getDartAudioContext();
+            hideDrawResult();
+            clearDrawLanding();
+            if (drawMap) {
+                drawMap.setLevel(13);
+                drawMap.setCenter(new kakao.maps.LatLng(36.3504, 127.3845));
+            }
+
+            dartDrag.pointerId = event.pointerId;
+            dartDrag.originX = rect.left + rect.width / 2;
+            dartDrag.originY = rect.top + rect.height / 2;
+            dartDrag.dx = 0;
+            dartDrag.dy = 0;
+            dartDrag.pull = 0;
+            launcher.classList.add('is-dragging');
+            launcher.setPointerCapture(event.pointerId);
+            updateDrawInstruction('반대편으로 쭉 당겨서 비거리를 정하세요');
+            event.preventDefault();
+        }
+
+        function moveDartPull(event) {
+            if (dartDrag.pointerId !== event.pointerId || isDartFlying) return;
+
+            let dx = event.clientX - dartDrag.originX;
+            let dy = event.clientY - dartDrag.originY;
+            const rawPull = Math.hypot(dx, dy);
+            const pull = Math.min(rawPull, dartDrag.maxPull);
+
+            if (rawPull > dartDrag.maxPull) {
+                const scale = dartDrag.maxPull / rawPull;
+                dx *= scale;
+                dy *= scale;
+            }
+
+            dartDrag.dx = dx;
+            dartDrag.dy = dy;
+            dartDrag.pull = pull;
+            renderDartPull(dx, dy, pull);
+            event.preventDefault();
+        }
+
+        function renderDartPull(dx, dy, pull) {
+            const launcher = document.getElementById('dart-launcher');
+            const dart = launcher?.querySelector('.dart-visual');
+            const aimLine = document.getElementById('aim-line');
+            const meter = document.getElementById('pull-meter');
+            const aimDx = -dx;
+            const aimDy = -dy;
+            const angle = Math.atan2(aimDx, -aimDy) * 180 / Math.PI;
+            const distance = getThrowDistance(pull);
+
+            if (launcher) {
+                launcher.style.transition = 'none';
+                launcher.style.transform = `translate(calc(-50% + ${dx}px), ${dy}px)`;
+            }
+            if (dart) dart.style.transform = `rotate(${angle}deg)`;
+            if (aimLine) {
+                aimLine.classList.toggle('show', pull > 5);
+                aimLine.style.height = `${Math.min(158, 36 + pull * 0.92)}px`;
+                aimLine.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+            }
+            if (meter) {
+                meter.classList.toggle('show', pull > 5);
+                meter.textContent = pull < 18 ? '조금 더 당겨!' : `약 ${Math.round(distance)} km`;
+            }
+        }
+
+        function releaseDartPull(event) {
+            if (dartDrag.pointerId !== event.pointerId) return;
+            const launcher = event.currentTarget;
+            launcher.classList.remove('is-dragging');
+            if (launcher.hasPointerCapture(event.pointerId)) launcher.releasePointerCapture(event.pointerId);
+            dartDrag.pointerId = null;
+
+            if (dartDrag.pull < 18) {
+                resetDartVisual();
+                updateDrawInstruction('조금 더 힘껏 당겨야 날아가요');
+                return;
+            }
+
+            launchDart(dartDrag.dx, dartDrag.dy, dartDrag.pull);
+        }
+
+        function cancelDartPull(event) {
+            if (dartDrag.pointerId !== event.pointerId) return;
+            dartDrag.pointerId = null;
+            event.currentTarget.classList.remove('is-dragging');
+            resetDartVisual();
+        }
+
+        function getThrowDistance(pull) {
+            const ratio = Math.max(0, Math.min(1, pull / dartDrag.maxPull));
+            return 5 + Math.pow(ratio, 2.35) * 520;
+        }
+
+        function launchDart(dx, dy, pull) {
+            if (isDartFlying) return;
+            if (!drawMap) initDrawMap();
+            if (!drawMap) return;
+
+            isDartFlying = true;
+            const launcher = document.getElementById('dart-launcher');
+            const dart = launcher?.querySelector('.dart-visual');
+            const aimLine = document.getElementById('aim-line');
+            const meter = document.getElementById('pull-meter');
+            const aimDx = -dx;
+            const aimDy = -dy;
+            const bearing = Math.atan2(aimDx, -aimDy) * 180 / Math.PI;
+            const distance = getThrowDistance(pull);
+            const destination = calculateDestination(36.3504, 127.3845, bearing, distance);
+
+            if (navigator.vibrate) navigator.vibrate([12, 28, 18]);
+            playDartThrowSound();
+            setDrawTopbar('다트 여행지 뽑기', '다트가 날아가는 중...', false);
+            aimLine?.classList.remove('show');
+            meter?.classList.remove('show');
+
+            if (launcher) {
+                launcher.style.transition = 'transform 460ms cubic-bezier(0.18, 0.72, 0.2, 1), opacity 260ms ease 150ms';
+                launcher.style.transform = `translate(calc(-50% + ${aimDx * 3.6}px), ${aimDy * 3.6}px) scale(0.38)`;
+                launcher.style.opacity = '0';
+            }
+            if (dart) dart.style.transform = `rotate(${bearing}deg)`;
+
+            window.setTimeout(() => {
+                resetDartVisual();
+                showDrawLanding(destination.lat, destination.lng, distance);
+                isDartFlying = false;
+            }, 500);
+        }
+
+        function calculateDestination(startLat, startLng, bearingDegrees, distanceKm) {
+            const earthRadius = 6371;
+            const angularDistance = distanceKm / earthRadius;
+            const bearing = bearingDegrees * Math.PI / 180;
+            const lat1 = startLat * Math.PI / 180;
+            const lng1 = startLng * Math.PI / 180;
+            const lat2 = Math.asin(
+                Math.sin(lat1) * Math.cos(angularDistance) +
+                Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearing)
+            );
+            const lng2 = lng1 + Math.atan2(
+                Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat1),
+                Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2)
+            );
+
+            return { lat: lat2 * 180 / Math.PI, lng: lng2 * 180 / Math.PI };
+        }
+
+        function showDrawLanding(lat, lng, distance) {
+            if (!drawMap || typeof kakao === 'undefined' || !kakao.maps) return;
+            clearDrawLanding();
+
+            const position = new kakao.maps.LatLng(lat, lng);
+            const markerElement = document.createElement('div');
+            markerElement.className = 'lottery-pin';
+            markerElement.innerHTML = '<img src="dart.png" alt="다트 착지 지점">';
+            drawLandingOverlay = new kakao.maps.CustomOverlay({
+                position,
+                map: drawMap,
+                content: markerElement,
+                xAnchor: 0.5,
+                yAnchor: 1,
+                zIndex: 20
+            });
+
+            drawMap.panTo(position);
+            playDartLandingSound();
+
+            const northKorea = isNorthKorea(lat, lng);
+            const regionName = findRegionName(lat, lng);
+            const title = northKorea
+                ? '북한이 나왔는데, 진짜 갈 수 있겠어?'
+                : (regionName || '지도 위의 새로운 좌표');
+            const resultMeta = northKorea
+                ? '그 여행은 무리니까 다시 던지세요'
+                : `이번 여행지 · 약 ${Math.round(distance)} km · 3초 뒤 확대`;
+
+            setDrawTopbar(title, resultMeta, true);
+            if (northKorea && navigator.vibrate) navigator.vibrate([60, 35, 60]);
+
+            drawZoomTimer = window.setTimeout(() => {
+                if (!drawMap || !drawLandingOverlay) return;
+                drawMap.setLevel(8);
+                drawMap.panTo(position);
+                if (!northKorea) {
+                    setDrawTopbar(title, `이번 여행지 · 약 ${Math.round(distance)} km`, true);
+                }
+                drawZoomTimer = null;
+            }, 3000);
+        }
+
+        function pointInRing(lng, lat, ring) {
+            let inside = false;
+            for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+                const xi = ring[i][0];
+                const yi = ring[i][1];
+                const xj = ring[j][0];
+                const yj = ring[j][1];
+                const intersects = ((yi > lat) !== (yj > lat)) &&
+                    (lng < (xj - xi) * (lat - yi) / ((yj - yi) || Number.EPSILON) + xi);
+                if (intersects) inside = !inside;
+            }
+            return inside;
+        }
+
+        function pointInPolygonCoordinates(lng, lat, coordinates) {
+            if (!coordinates.length || !pointInRing(lng, lat, coordinates[0])) return false;
+            return !coordinates.slice(1).some(hole => pointInRing(lng, lat, hole));
+        }
+
+        function findRegionName(lat, lng) {
+            const matches = currentRegionBoundaries.filter(feature => {
+                if (feature.geometry.type === 'Polygon') {
+                    return pointInPolygonCoordinates(lng, lat, feature.geometry.coordinates);
+                }
+                if (feature.geometry.type === 'MultiPolygon') {
+                    return feature.geometry.coordinates.some(polygon => pointInPolygonCoordinates(lng, lat, polygon));
+                }
+                return false;
+            });
+
+            matches.sort((a, b) => {
+                const aLocal = a.properties.boundaryLevel === 'local' ? 1 : 0;
+                const bLocal = b.properties.boundaryLevel === 'local' ? 1 : 0;
+                return bLocal - aLocal;
+            });
+            return matches[0]?.properties.name || '';
+        }
+
+        function isNorthKorea(lat, lng) {
+            const northKoreaOutline = [
+                [124.05, 39.75], [124.55, 40.55], [126.05, 41.55],
+                [128.25, 42.15], [129.75, 41.05], [129.65, 39.55],
+                [128.55, 38.05], [127.45, 38.25], [126.95, 38.65],
+                [126.60, 37.78], [125.70, 38.05], [124.35, 38.15]
+            ];
+            return pointInRing(lng, lat, northKoreaOutline);
+        }
+
+        function clearDrawLanding() {
+            if (drawZoomTimer) {
+                window.clearTimeout(drawZoomTimer);
+                drawZoomTimer = null;
+            }
+            if (drawLandingOverlay) {
+                drawLandingOverlay.setMap(null);
+                drawLandingOverlay = null;
+            }
+        }
+
+        function hideDrawResult() {
+            setDrawTopbar('다트 여행지 뽑기', '가고 싶은 방향의 반대로 당겼다가 놓으세요', false);
+        }
+
+        function setDrawTopbar(title, instruction, showRetry) {
+            const titleElement = document.getElementById('draw-title');
+            const instructionElement = document.getElementById('draw-instruction');
+            const retryButton = document.getElementById('draw-retry-btn');
+            if (titleElement) titleElement.textContent = title;
+            if (instructionElement) instructionElement.textContent = instruction;
+            if (retryButton) {
+                retryButton.classList.toggle('hidden', !showRetry);
+                retryButton.classList.toggle('flex', Boolean(showRetry));
+            }
+        }
+
+        function updateDrawInstruction(message) {
+            const instruction = document.getElementById('draw-instruction');
+            if (instruction) instruction.textContent = message;
+        }
+
+        function resetDartVisual() {
+            const launcher = document.getElementById('dart-launcher');
+            const dart = launcher?.querySelector('.dart-visual');
+            const aimLine = document.getElementById('aim-line');
+            const meter = document.getElementById('pull-meter');
+
+            if (launcher) {
+                launcher.style.transition = 'transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 160ms ease';
+                launcher.style.transform = 'translateX(-50%)';
+                launcher.style.opacity = '1';
+            }
+            if (dart) dart.style.transform = 'rotate(0deg)';
+            aimLine?.classList.remove('show');
+            meter?.classList.remove('show');
+        }
+
+        function resetDraw() {
+            isDartFlying = false;
+            clearDrawLanding();
+            resetDartVisual();
+            hideDrawResult();
+            if (drawMap && typeof kakao !== 'undefined' && kakao.maps) {
+                drawMap.setLevel(13);
+                drawMap.setCenter(new kakao.maps.LatLng(36.3504, 127.3845));
+            }
+        }
+
         // --- 행정구역 GeoJSON 좌표를 카카오 폴리곤으로 변환해 그립니다 ---
         function loadRegionBoundaries() {
-            if (!map || typeof kakao === 'undefined' || !kakao.maps) return;
-
             regionPolygons.forEach(polygon => polygon.setMap(null));
-            regionPolygons = [];
+            regionPolygons = renderRegionBoundaries(map);
+        }
+
+        function loadDrawRegionBoundaries() {
+            drawRegionPolygons.forEach(polygon => polygon.setMap(null));
+            drawRegionPolygons = renderRegionBoundaries(drawMap);
+        }
+
+        function renderRegionBoundaries(targetMap) {
+            if (!targetMap || typeof kakao === 'undefined' || !kakao.maps) return [];
+
+            const renderedBoundaries = [];
 
             currentRegionBoundaries.forEach(feature => {
                 const theme = colorThemes[feature.properties.colorKey];
@@ -5437,7 +6046,7 @@
                         if (path.length < 2) return;
 
                         const polyline = new kakao.maps.Polyline({
-                            map,
+                            map: targetMap,
                             path,
                             strokeWeight,
                             strokeColor,
@@ -5445,7 +6054,7 @@
                             zIndex
                         });
 
-                        regionPolygons.push(polyline);
+                        renderedBoundaries.push(polyline);
                     });
                     return;
                 }
@@ -5462,7 +6071,7 @@
                     if (!paths.length) return;
 
                     const polygon = new kakao.maps.Polygon({
-                        map,
+                        map: targetMap,
                         path: paths.length === 1 ? paths[0] : paths,
                         fillColor: color,
                         fillOpacity,
@@ -5473,9 +6082,11 @@
                         zIndex
                     });
 
-                    regionPolygons.push(polygon);
+                    renderedBoundaries.push(polygon);
                 });
             });
+
+            return renderedBoundaries;
         }
 
         function getTripLogoMarkup(trip, imageClass = 'w-full h-full object-cover rounded-full') {
@@ -5854,6 +6465,7 @@
         // 초기 실행
         window.onload = () => {
             syncDeviceTheme();
+            setupDartLauncher();
             switchTab(0);
             initMap();
         };
