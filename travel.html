@@ -765,114 +765,216 @@
             pointer-events: none;
         }
 
+        #draw-obstacle-layer::before {
+            content: "";
+            position: absolute;
+            inset: -20%;
+            opacity: 0;
+            background: repeating-linear-gradient(
+                164deg,
+                transparent 0 30px,
+                rgba(255, 255, 255, 0.2) 31px 33px,
+                transparent 34px 62px
+            );
+            transform: translateX(-35%);
+        }
+
+        #draw-obstacle-layer.is-wind-active::before {
+            opacity: 0.72;
+            animation: dartWindCurtain 300ms linear infinite;
+        }
+
         .dart-obstacle {
             position: absolute;
             left: 0;
             top: 0;
-            display: flex;
-            align-items: center;
-            gap: 7px;
             opacity: 0;
             will-change: transform, opacity;
             filter: drop-shadow(0 5px 5px rgba(15, 23, 42, 0.34));
         }
 
-        .dart-obstacle i {
-            color: #1f2937;
-            font-size: 31px;
+        .dart-obstacle.is-bird {
+            width: 86px;
+            height: 72px;
         }
 
-        .dart-obstacle.is-wind i {
-            color: #f8fafc;
-            font-size: 38px;
-            text-shadow: 0 1px 8px rgba(15, 23, 42, 0.64);
+        .obstacle-bird-body {
+            position: absolute;
+            left: 20px;
+            top: 23px;
+            width: 43px;
+            height: 18px;
+            border-radius: 58% 72% 48% 62%;
+            background: linear-gradient(150deg, #4b5563 0%, #111827 72%);
+            transform: rotate(-7deg);
         }
 
-        .dart-obstacle-label {
-            padding: 5px 8px;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            border-radius: 999px;
-            color: #fff;
-            background: rgba(15, 23, 42, 0.76);
-            font-size: 9px;
-            font-weight: 850;
-            white-space: nowrap;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+        .dart-obstacle.to-left .obstacle-bird-body {
+            transform: rotate(7deg) scaleX(-1);
         }
 
-        .dart-obstacle.is-wind::before,
-        .dart-obstacle.is-wind::after {
+        .obstacle-bird-head {
+            position: absolute;
+            right: -7px;
+            top: -8px;
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            background: #1f2937;
+        }
+
+        .obstacle-bird-head::before {
             content: "";
             position: absolute;
-            right: 44px;
-            width: 86px;
-            height: 2px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.84);
-            box-shadow: 18px 11px 0 rgba(255, 255, 255, 0.55), -8px -10px 0 rgba(255, 255, 255, 0.45);
+            right: -10px;
+            top: 7px;
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left: 12px solid #d97706;
         }
 
-        .dart-obstacle.is-wind::after {
-            right: 72px;
-            width: 54px;
-            opacity: 0.62;
-        }
-
-        #draw-island-insets {
+        .obstacle-bird-head::after {
+            content: "";
             position: absolute;
-            top: max(104px, calc(env(safe-area-inset-top) + 92px));
-            right: 14px;
-            z-index: 16;
-            display: flex;
-            gap: 7px;
-            opacity: 1;
-            visibility: visible;
-            pointer-events: none;
-            transition: opacity 180ms ease, visibility 180ms ease;
+            right: 5px;
+            top: 4px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #f8fafc;
+            box-shadow: 0 0 0 1px #020617;
         }
 
-        #draw-island-insets.is-hidden {
-            opacity: 0;
-            visibility: hidden;
+        .obstacle-bird-wing {
+            position: absolute;
+            left: 7px;
+            top: -9px;
+            width: 35px;
+            height: 23px;
+            border-radius: 80% 15% 75% 15%;
+            background: linear-gradient(145deg, #64748b, #1f2937 74%);
+            transform-origin: 82% 82%;
+            animation: obstacleBirdWing 170ms ease-in-out infinite alternate;
         }
 
-        .draw-island-inset {
-            width: 60px;
-            height: 66px;
-            padding: 5px 4px 4px;
-            border: 1px dashed rgba(71, 85, 105, 0.42);
-            border-radius: 11px;
-            background: rgba(248, 250, 252, 0.7);
-            box-shadow: 0 5px 16px rgba(15, 23, 42, 0.08);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            text-align: center;
+        .obstacle-bird-tail {
+            position: absolute;
+            left: -14px;
+            top: 5px;
+            width: 24px;
+            height: 13px;
+            background: #1f2937;
+            clip-path: polygon(100% 22%, 0 0, 34% 47%, 0 100%, 100% 72%);
         }
 
-        .draw-island-inset canvas {
-            display: block;
-            width: 52px;
-            height: 42px;
+        .obstacle-bird-claw {
+            position: absolute;
+            left: 38px;
+            top: 38px;
+            width: 17px;
+            height: 13px;
+            border-left: 2px solid #a16207;
+            border-right: 2px solid #a16207;
+            transform: skewX(-10deg);
         }
 
-        .draw-island-inset span {
-            display: block;
-            margin-top: 2px;
-            color: #475569;
-            font-size: 9px;
-            font-weight: 750;
-            line-height: 1;
+        .obstacle-caught-dart {
+            position: absolute;
+            left: 41px;
+            top: 44px;
+            width: 10px;
+            height: 38px;
+            object-fit: contain;
+            transform: rotate(78deg);
+            transform-origin: 50% 0;
+            animation: obstacleCaughtDart 360ms ease-in-out infinite alternate;
         }
 
-        .draw-island-inset.is-winner {
-            border: 2px solid #e21d2f;
-            background: rgba(255, 255, 255, 0.92);
-            box-shadow: 0 0 0 4px rgba(226, 29, 47, 0.15), 0 7px 20px rgba(15, 23, 42, 0.14);
+        .dart-obstacle.to-left .obstacle-caught-dart {
+            left: 34px;
+            animation-name: obstacleCaughtDartReverse;
         }
 
-        .draw-island-inset.is-winner span {
-            color: #b91c1c;
+        .dart-obstacle.is-wind {
+            width: 172px;
+            height: 96px;
+        }
+
+        .obstacle-wind-streak {
+            position: absolute;
+            right: 0;
+            top: var(--wind-y);
+            width: var(--wind-width);
+            height: 3px;
+            border-radius: 999px;
+            opacity: var(--wind-opacity);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.96));
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.26);
+            animation: obstacleWindStreak var(--wind-speed) linear infinite;
+        }
+
+        .obstacle-wind-debris {
+            position: absolute;
+            left: var(--debris-x);
+            top: var(--debris-y);
+            width: 5px;
+            height: 2px;
+            border-radius: 50%;
+            background: rgba(71, 85, 105, 0.78);
+            animation: obstacleWindDebris 520ms linear infinite;
+        }
+
+        .dart-obstacle.to-left .obstacle-wind-streak {
+            right: auto;
+            left: 0;
+            background: linear-gradient(270deg, transparent, rgba(255, 255, 255, 0.96));
+            animation-name: obstacleWindStreakReverse;
+        }
+
+        .dart-obstacle.to-left .obstacle-wind-debris {
+            animation-name: obstacleWindDebrisReverse;
+        }
+
+        @keyframes obstacleBirdWing {
+            from { transform: rotate(-42deg) scaleY(0.82); }
+            to { transform: rotate(38deg) scaleY(1.08); }
+        }
+
+        @keyframes obstacleCaughtDart {
+            from { transform: rotate(72deg); }
+            to { transform: rotate(87deg); }
+        }
+
+        @keyframes obstacleCaughtDartReverse {
+            from { transform: rotate(-72deg); }
+            to { transform: rotate(-87deg); }
+        }
+
+        @keyframes obstacleWindStreak {
+            from { transform: translateX(-18px) scaleX(0.72); }
+            to { transform: translateX(38px) scaleX(1.18); }
+        }
+
+        @keyframes obstacleWindStreakReverse {
+            from { transform: translateX(18px) scaleX(0.72); }
+            to { transform: translateX(-38px) scaleX(1.18); }
+        }
+
+        @keyframes obstacleWindDebris {
+            from { transform: translate(0, 0) rotate(0deg); }
+            to { transform: translate(74px, -28px) rotate(330deg); }
+        }
+
+        @keyframes obstacleWindDebrisReverse {
+            from { transform: translate(0, 0) rotate(0deg); }
+            to { transform: translate(-74px, -28px) rotate(-330deg); }
+        }
+
+        @keyframes dartWindCurtain {
+            from { transform: translateX(-35%); }
+            to { transform: translateX(2%); }
         }
 
         .dart-impact-ring,
@@ -1288,17 +1390,6 @@
                     </div>
                 </div>
             </header>
-
-            <div id="draw-island-insets" aria-label="울릉도와 독도 별도 표시">
-                <div class="draw-island-inset" data-island="ulleungdo" aria-label="울릉도">
-                    <canvas id="draw-ulleungdo-canvas" width="104" height="84"></canvas>
-                    <span>울릉도</span>
-                </div>
-                <div class="draw-island-inset" data-island="dokdo" aria-label="독도">
-                    <canvas id="draw-dokdo-canvas" width="104" height="84"></canvas>
-                    <span>독도</span>
-                </div>
-            </div>
 
             <div id="dart-impact-layer" aria-hidden="true"></div>
             <div id="draw-obstacle-layer" aria-hidden="true"></div>
@@ -5844,97 +5935,6 @@
             });
             kakao.maps.event.addListener(drawMap, 'idle', keepDrawLandingVisible);
             loadDrawRegionBoundaries();
-            renderDrawIslandInsets();
-        }
-
-        function setDrawIslandInsetsVisible(visible) {
-            document.getElementById('draw-island-insets')?.classList.toggle('is-hidden', !visible);
-        }
-
-        function setDrawIslandWinner(islandId = '') {
-            document.querySelectorAll('.draw-island-inset').forEach(inset => {
-                inset.classList.toggle('is-winner', inset.dataset.island === islandId);
-            });
-        }
-
-        function drawIslandInset(canvas, polygons) {
-            if (!canvas || !Array.isArray(polygons) || !polygons.length) return;
-            const context = canvas.getContext('2d');
-            const points = polygons.flat(2);
-            if (!context || !points.length) return;
-
-            const lngs = points.map(point => point[0]);
-            const lats = points.map(point => point[1]);
-            const minLng = Math.min(...lngs);
-            const maxLng = Math.max(...lngs);
-            const minLat = Math.min(...lats);
-            const maxLat = Math.max(...lats);
-            const padding = 11;
-            const spanLng = Math.max(maxLng - minLng, Number.EPSILON);
-            const spanLat = Math.max(maxLat - minLat, Number.EPSILON);
-            const scale = Math.min(
-                (canvas.width - padding * 2) / spanLng,
-                (canvas.height - padding * 2) / spanLat
-            );
-            const drawnWidth = spanLng * scale;
-            const drawnHeight = spanLat * scale;
-            const offsetX = (canvas.width - drawnWidth) / 2;
-            const offsetY = (canvas.height - drawnHeight) / 2;
-
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.beginPath();
-            polygons.forEach(polygon => {
-                polygon.forEach(ring => {
-                    ring.forEach(([lng, lat], index) => {
-                        const x = offsetX + (lng - minLng) * scale;
-                        const y = offsetY + (maxLat - lat) * scale;
-                        if (index === 0) context.moveTo(x, y);
-                        else context.lineTo(x, y);
-                    });
-                    context.closePath();
-                });
-            });
-            context.fillStyle = '#efb266';
-            context.strokeStyle = '#b85c2e';
-            context.lineWidth = 2.2;
-            context.lineJoin = 'round';
-            context.fill('evenodd');
-            context.stroke();
-        }
-
-        function drawDokdoInset(canvas) {
-            const context = canvas?.getContext('2d');
-            if (!context) return;
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#efb266';
-            context.strokeStyle = '#b85c2e';
-            context.lineWidth = 2.2;
-
-            const drawRock = (x, y, radiusX, radiusY, rotation) => {
-                context.save();
-                context.translate(x, y);
-                context.rotate(rotation);
-                context.beginPath();
-                context.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
-                context.fill();
-                context.stroke();
-                context.restore();
-            };
-
-            drawRock(40, 45, 11, 19, -0.25);
-            drawRock(66, 38, 8, 14, 0.3);
-            drawRock(25, 59, 3.2, 4.2, -0.4);
-            drawRock(80, 56, 2.7, 3.7, 0.2);
-        }
-
-        function renderDrawIslandInsets() {
-            const ulleungBoundary = (window.currentSigunguBoundaries || [])
-                .find(boundary => boundary.n === '경상북도 울릉군');
-            if (ulleungBoundary) {
-                drawIslandInset(document.getElementById('draw-ulleungdo-canvas'), ulleungBoundary.p);
-            }
-            drawDokdoInset(document.getElementById('draw-dokdo-canvas'));
-            setDrawIslandInsetsVisible(true);
         }
 
         function clearDrawTilePreload() {
@@ -6142,50 +6142,95 @@
             });
         }
 
-        function playDartObstacleSound(type) {
+        function playDartObstacleSound(type, direction = 1) {
             const context = getDartAudioContext();
             if (!context) return;
             const now = context.currentTime;
 
             if (type === 'bird') {
-                [1320, 1760, 1480].forEach((frequency, index) => {
-                    const oscillator = context.createOscillator();
-                    const gain = context.createGain();
-                    const start = now + index * 0.09;
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(frequency, start);
-                    oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.18, start + 0.08);
-                    gain.gain.setValueAtTime(0.0001, start);
-                    gain.gain.exponentialRampToValueAtTime(0.075, start + 0.015);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.11);
-                    oscillator.connect(gain).connect(context.destination);
-                    oscillator.start(start);
-                    oscillator.stop(start + 0.12);
+                const duration = 0.95;
+                const wingBuffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
+                const wingData = wingBuffer.getChannelData(0);
+                for (let i = 0; i < wingData.length; i += 1) {
+                    const progress = i / wingData.length;
+                    const flap = Math.max(0, Math.sin(progress * Math.PI * 10)) ** 4;
+                    wingData[i] = (Math.random() * 2 - 1) * flap * (1 - progress * 0.5);
+                }
+                const wingSource = context.createBufferSource();
+                const wingFilter = context.createBiquadFilter();
+                const wingGain = context.createGain();
+                wingSource.buffer = wingBuffer;
+                wingFilter.type = 'lowpass';
+                wingFilter.frequency.value = 950;
+                wingGain.gain.setValueAtTime(0.16, now);
+                wingGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                wingSource.connect(wingFilter).connect(wingGain).connect(context.destination);
+                wingSource.start(now);
+                wingSource.stop(now + duration);
+
+                [0, 0.16].forEach((offset, index) => {
+                    const chirp = context.createOscillator();
+                    const chirpGain = context.createGain();
+                    const start = now + 0.06 + offset;
+                    chirp.type = 'triangle';
+                    chirp.frequency.setValueAtTime(index ? 1180 : 860, start);
+                    chirp.frequency.exponentialRampToValueAtTime(index ? 780 : 1520, start + 0.13);
+                    chirpGain.gain.setValueAtTime(0.0001, start);
+                    chirpGain.gain.exponentialRampToValueAtTime(0.055, start + 0.025);
+                    chirpGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+                    chirp.connect(chirpGain).connect(context.destination);
+                    chirp.start(start);
+                    chirp.stop(start + 0.17);
                 });
                 return;
             }
 
-            const duration = 0.82;
+            const duration = 1.35;
             const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < data.length; i += 1) {
                 const progress = i / data.length;
-                data[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * progress);
+                const gust = Math.min(1, progress * 6) * Math.sin(Math.PI * progress) ** 0.7;
+                data[i] = (Math.random() * 2 - 1) * gust;
             }
             const source = context.createBufferSource();
             const filter = context.createBiquadFilter();
             const gain = context.createGain();
+            const rumble = context.createOscillator();
+            const rumbleGain = context.createGain();
+            const panner = typeof context.createStereoPanner === 'function' ? context.createStereoPanner() : null;
             source.buffer = buffer;
             filter.type = 'bandpass';
-            filter.frequency.setValueAtTime(360, now);
-            filter.frequency.exponentialRampToValueAtTime(1250, now + duration * 0.72);
-            filter.Q.value = 0.6;
+            filter.frequency.setValueAtTime(260, now);
+            filter.frequency.exponentialRampToValueAtTime(1750, now + duration * 0.48);
+            filter.frequency.exponentialRampToValueAtTime(430, now + duration);
+            filter.Q.value = 0.52;
             gain.gain.setValueAtTime(0.0001, now);
-            gain.gain.exponentialRampToValueAtTime(0.19, now + 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.21, now + 0.16);
             gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-            source.connect(filter).connect(gain).connect(context.destination);
+            rumble.type = 'sine';
+            rumble.frequency.setValueAtTime(58, now);
+            rumble.frequency.exponentialRampToValueAtTime(92, now + duration * 0.72);
+            rumbleGain.gain.setValueAtTime(0.0001, now);
+            rumbleGain.gain.exponentialRampToValueAtTime(0.07, now + 0.18);
+            rumbleGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+            const windOutput = source.connect(filter).connect(gain);
+            const rumbleOutput = rumble.connect(rumbleGain);
+            if (panner) {
+                panner.pan.setValueAtTime(-direction * 0.8, now);
+                panner.pan.linearRampToValueAtTime(direction * 0.8, now + duration);
+                windOutput.connect(panner);
+                rumbleOutput.connect(panner);
+                panner.connect(context.destination);
+            } else {
+                windOutput.connect(context.destination);
+                rumbleOutput.connect(context.destination);
+            }
             source.start(now);
+            rumble.start(now);
             source.stop(now + duration);
+            rumble.stop(now + duration);
         }
 
         function startDartPull(event) {
@@ -6309,22 +6354,57 @@
 
         function clearDartObstacle() {
             const layer = document.getElementById('draw-obstacle-layer');
-            if (layer) layer.innerHTML = '';
+            if (layer) {
+                layer.innerHTML = '';
+                layer.classList.remove('is-wind-active');
+            }
         }
 
-        function createDartObstacleVisual(type) {
+        function createDartObstacleVisual(type, direction = 1) {
             const layer = document.getElementById('draw-obstacle-layer');
             if (!layer) return null;
             layer.innerHTML = '';
+            layer.classList.toggle('is-wind-active', type === 'wind');
             const obstacle = document.createElement('div');
-            obstacle.className = `dart-obstacle is-${type}`;
+            obstacle.className = `dart-obstacle is-${type}${direction < 0 ? ' to-left' : ''}`;
 
-            const icon = document.createElement('i');
-            icon.className = type === 'bird' ? 'fa-solid fa-dove' : 'fa-solid fa-wind';
-            const label = document.createElement('span');
-            label.className = 'dart-obstacle-label';
-            label.textContent = type === 'bird' ? '새가 다트를 낚아챘다' : '갑작스러운 돌풍 발생';
-            obstacle.append(icon, label);
+            if (type === 'bird') {
+                const body = document.createElement('span');
+                body.className = 'obstacle-bird-body';
+                const head = document.createElement('span');
+                head.className = 'obstacle-bird-head';
+                const wing = document.createElement('span');
+                wing.className = 'obstacle-bird-wing';
+                const tail = document.createElement('span');
+                tail.className = 'obstacle-bird-tail';
+                const claw = document.createElement('span');
+                claw.className = 'obstacle-bird-claw';
+                body.append(head, wing, tail, claw);
+
+                const caughtDart = document.createElement('img');
+                caughtDart.className = 'obstacle-caught-dart';
+                caughtDart.src = 'dart.png';
+                caughtDart.alt = '';
+                obstacle.append(body, caughtDart);
+            } else {
+                [12, 27, 43, 60, 76].forEach((top, index) => {
+                    const streak = document.createElement('span');
+                    streak.className = 'obstacle-wind-streak';
+                    streak.style.setProperty('--wind-y', `${top}px`);
+                    streak.style.setProperty('--wind-width', `${88 + index * 14}px`);
+                    streak.style.setProperty('--wind-opacity', `${0.48 + index * 0.09}`);
+                    streak.style.setProperty('--wind-speed', `${260 + index * 35}ms`);
+                    obstacle.appendChild(streak);
+                });
+                for (let index = 0; index < 7; index += 1) {
+                    const debris = document.createElement('span');
+                    debris.className = 'obstacle-wind-debris';
+                    debris.style.setProperty('--debris-x', `${14 + Math.random() * 84}px`);
+                    debris.style.setProperty('--debris-y', `${16 + Math.random() * 64}px`);
+                    debris.style.animationDelay = `${-Math.random() * 500}ms`;
+                    obstacle.appendChild(debris);
+                }
+            }
             layer.appendChild(obstacle);
             return obstacle;
         }
@@ -6433,7 +6513,9 @@
                 resetDartVisual();
                 return;
             }
-            const flightDuration = plan.obstacle ? 1420 : 680;
+            const flightDuration = plan.obstacle
+                ? (plan.obstacle.type === 'bird' ? 2250 : 1950)
+                : 680;
 
             clearDartObstacle();
             preloadDrawMapTiles(plan.lat, plan.lng, 10);
@@ -6449,7 +6531,10 @@
                 launcher.style.transition = 'none';
                 launcher.style.opacity = '1';
             }
-            if (dart) dart.style.transition = 'none';
+            if (dart) {
+                dart.style.transition = 'none';
+                dart.style.opacity = '1';
+            }
 
             animateDartJourney(plan, flightDuration).then(() => {
                 if (launcher) launcher.style.opacity = '0';
@@ -6464,7 +6549,7 @@
                 const launcher = document.getElementById('dart-launcher');
                 const dart = launcher?.querySelector('.dart-visual');
                 const obstacle = plan.obstacle;
-                const obstacleElement = obstacle ? createDartObstacleVisual(obstacle.type) : null;
+                const obstacleElement = obstacle ? createDartObstacleVisual(obstacle.type, obstacle.direction) : null;
                 const originalTargetX = obstacle?.originalTargetX ?? plan.targetX;
                 const originalTargetY = obstacle?.originalTargetY ?? plan.targetY;
                 const originalDx = originalTargetX - plan.startX;
@@ -6507,24 +6592,31 @@
                     if (launcher) {
                         launcher.style.transform = `translate(calc(-50% + ${point.x - plan.homeX}px), ${point.y - plan.homeY}px) scale(${scale})`;
                     }
-                    if (dart) dart.style.transform = `rotate(${angle}deg)`;
+                    if (dart) {
+                        const windTumble = obstacle?.type === 'wind' && progress >= obstacle.turnAt
+                            ? Math.sin(progress * Math.PI * 13) * 105
+                            : 0;
+                        dart.style.transform = `rotate(${angle + windTumble}deg)`;
+                    }
 
                     if (obstacle && obstacleElement && progress >= obstacle.turnAt - 0.15) {
                         const approach = Math.min(1, (progress - obstacle.turnAt + 0.15) / 0.15);
-                        const offsetX = progress < obstacle.turnAt
-                            ? -obstacle.direction * (150 * (1 - approach))
-                            : -obstacle.direction * 22;
-                        const offsetY = obstacle.type === 'bird' ? -31 : -25;
+                        const approachOffset = progress < obstacle.turnAt
+                            ? -obstacle.direction * (190 * (1 - approach))
+                            : 0;
+                        const offsetX = obstacle.type === 'bird' ? -43 + approachOffset : -86 + approachOffset;
+                        const offsetY = obstacle.type === 'bird' ? -58 : -48;
                         obstacleElement.style.opacity = `${Math.min(1, approach * 1.8)}`;
                         obstacleElement.style.transform = `translate3d(${point.x + offsetX}px, ${point.y + offsetY}px, 0)`;
                     }
 
                     if (obstacle && progress >= obstacle.turnAt && !obstacle.announced) {
                         obstacle.announced = true;
-                        playDartObstacleSound(obstacle.type);
+                        playDartObstacleSound(obstacle.type, obstacle.direction);
+                        if (obstacle.type === 'bird' && dart) dart.style.opacity = '0';
                         setDrawTopbar(
-                            obstacle.type === 'bird' ? '새가 다트를 물고 갔다' : '돌풍이 다트를 밀어냈다',
-                            obstacle.type === 'bird' ? '예상 경로에서 크게 벗어나는 중' : '다트가 엉뚱한 방향으로 날아가는 중',
+                            obstacle.type === 'bird' ? '새가 다트를 낚아챘다' : '강한 돌풍이 덮쳤다',
+                            obstacle.type === 'bird' ? '다트를 물고 전혀 다른 곳으로 날아가는 중' : '다트가 회전하며 경로 밖으로 밀려나는 중',
                             false
                         );
                         if (navigator.vibrate) navigator.vibrate(obstacle.type === 'bird' ? [28, 35, 28] : [18, 20, 18, 20, 18]);
@@ -6635,8 +6727,6 @@
             const northKorea = isNorthKorea(lat, lng);
             const islandPrize = !northKorea ? getEastSeaIslandPrize(lat, lng) : null;
             const hasLandHighlight = !northKorea && !islandPrize && highlightDrawLanding(lat, lng);
-            setDrawIslandWinner(islandPrize?.id || '');
-            setDrawIslandInsetsVisible(Boolean(islandPrize));
             let title = northKorea
                 ? '북한이 나왔는데, 진짜 갈 수 있겠어?'
                 : (islandPrize?.title || findSigunguName(lat, lng) || findRegionName(lat, lng) || getUnmappedLandingInfo(lat, lng).title);
@@ -6869,7 +6959,6 @@
             const impactLayer = document.getElementById('dart-impact-layer');
             if (impactLayer) impactLayer.innerHTML = '';
             clearDartObstacle();
-            setDrawIslandWinner('');
             document.getElementById('draw-map')?.classList.remove('dart-impact-shake');
         }
 
@@ -6906,7 +6995,10 @@
                 launcher.style.transform = 'translateX(-50%)';
                 launcher.style.opacity = '1';
             }
-            if (dart) dart.style.transform = 'rotate(0deg)';
+            if (dart) {
+                dart.style.transform = 'rotate(0deg)';
+                dart.style.opacity = '1';
+            }
             aimLine?.classList.remove('show');
             meter?.classList.remove('show');
         }
@@ -6922,7 +7014,6 @@
             clearDrawLanding();
             resetDartVisual();
             hideDrawResult();
-            setDrawIslandInsetsVisible(true);
             if (drawMap && typeof kakao !== 'undefined' && kakao.maps) {
                 drawMap.setLevel(drawMapOverview.level);
                 drawMap.setCenter(new kakao.maps.LatLng(drawMapOverview.lat, drawMapOverview.lng));
@@ -6937,7 +7028,37 @@
 
         function loadDrawRegionBoundaries() {
             drawRegionPolygons.forEach(polygon => polygon.setMap(null));
-            drawRegionPolygons = renderRegionBoundaries(drawMap, { neutral: true });
+            drawRegionPolygons = [
+                ...renderRegionBoundaries(drawMap, { neutral: true }),
+                ...renderDrawJeonnamSigunguBoundaries()
+            ];
+        }
+
+        function renderDrawJeonnamSigunguBoundaries() {
+            if (!drawMap || typeof kakao === 'undefined' || !kakao.maps) return [];
+            const renderedLines = [];
+            const jeonnamBoundaries = (window.currentSigunguBoundaries || []).filter(boundary => {
+                const code = Number(boundary.c);
+                return (code >= 12110 && code <= 12190) || (code >= 12710 && code <= 12870);
+            });
+
+            jeonnamBoundaries.forEach(boundary => {
+                boundary.p.forEach(polygon => {
+                    polygon.forEach(ring => {
+                        if (!Array.isArray(ring) || ring.length < 2) return;
+                        const line = new kakao.maps.Polyline({
+                            map: drawMap,
+                            path: ring.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng)),
+                            strokeWeight: 1.35,
+                            strokeColor: '#64748b',
+                            strokeOpacity: 0.34,
+                            zIndex: 4
+                        });
+                        renderedLines.push(line);
+                    });
+                });
+            });
+            return renderedLines;
         }
 
         function renderRegionBoundaries(targetMap, options = {}) {
