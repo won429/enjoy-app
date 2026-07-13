@@ -1092,9 +1092,10 @@
         const railPathMetricCache = new Map();
         const MAP_TRAIN_TARGET_INTERVAL = 1000 / 60;
         const MAP_CAMERA_FRAME_INTERVAL = 1000 / 60;
-        const MAP_TRAIN_HALF_LENGTH_METERS = 85;
-        const MAP_TRAIN_LANE_OFFSET_PX = 7;
-        const MAP_TRAIN_POSITION_SMOOTHING_MS = 48;
+        const MAP_TRAIN_HALF_LENGTH_METERS = 130;
+        const MAP_TRAIN_LANE_OFFSET_METERS = 4.2;
+        const MAP_TRAIN_LANE_OFFSET_PX = 6;
+        const MAP_TRAIN_POSITION_SMOOTHING_MS = 64;
 
         const dom = {
             mainHeader: document.getElementById('main-header'),
@@ -2522,9 +2523,47 @@
             }
         };
 
+        // OSM 선형에는 간혹 수십 m를 되짚는 짧은 스파이크가 섞여 있다. 그대로 보간하면
+        // 열차가 순간적으로 뒤로 움직이고 방향도 튀므로, 실제 진행을 해치지 않는 범위에서 제거한다.
+        const buildStableRailPath = sourcePath => {
+            const path = [];
+            (sourcePath || []).forEach(point => {
+                if (!Array.isArray(point) || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return;
+                const previous = path[path.length - 1];
+                if (!previous || haversine(previous[0], previous[1], point[0], point[1]) * 1000 >= 1.25) path.push(point);
+            });
+            if (path.length < 3) return path;
+
+            const stable = [];
+            path.forEach(point => {
+                stable.push(point);
+                let changed = true;
+                while (changed && stable.length >= 3) {
+                    changed = false;
+                    const a = stable[stable.length - 3], b = stable[stable.length - 2], c = stable[stable.length - 1];
+                    const scale = Math.cos(b[0] * Math.PI / 180);
+                    const ab = [(b[1] - a[1]) * scale, b[0] - a[0]];
+                    const bc = [(c[1] - b[1]) * scale, c[0] - b[0]];
+                    const abLength = Math.hypot(ab[0], ab[1]);
+                    const bcLength = Math.hypot(bc[0], bc[1]);
+                    if (!abLength || !bcLength) continue;
+                    const directionDot = (ab[0] * bc[0] + ab[1] * bc[1]) / (abLength * bcLength);
+                    const abMeters = haversine(a[0], a[1], b[0], b[1]) * 1000;
+                    const bcMeters = haversine(b[0], b[1], c[0], c[1]) * 1000;
+                    const directMeters = haversine(a[0], a[1], c[0], c[1]) * 1000;
+                    const isShortBacktrack = directionDot < -0.2 && Math.min(abMeters, bcMeters) < 140 && directMeters < (abMeters + bcMeters) * 0.82;
+                    if (isShortBacktrack) {
+                        stable.splice(stable.length - 2, 1);
+                        changed = true;
+                    }
+                }
+            });
+            return stable;
+        };
+
         const getRailPathMetric = (lineId) => {
             if (railPathMetricCache.has(lineId)) return railPathMetricCache.get(lineId);
-            const path = RAIL_ROUTE_PATHS[lineId] || [];
+            const path = buildStableRailPath(RAIL_ROUTE_PATHS[lineId] || []);
             const cumulative = [0];
             for (let i = 1; i < path.length; i++) {
                 cumulative.push(cumulative[i - 1] + haversine(path[i - 1][0], path[i - 1][1], path[i][0], path[i][1]) * 1000);
@@ -2572,6 +2611,16 @@
         const bearingBetweenRailPoints = (from, to) => {
             const dLng = (to[1] - from[1]) * Math.cos((from[0] + to[0]) * Math.PI / 360);
             return Math.atan2(dLng, to[0] - from[0]) * 180 / Math.PI;
+        };
+
+        const offsetRailPointByMeters = (point, pathAngle, signedMeters) => {
+            const normal = (pathAngle + 90) * Math.PI / 180;
+            const latMeters = 111320;
+            const lngMeters = Math.max(1, latMeters * Math.cos(point[0] * Math.PI / 180));
+            return [
+                point[0] + Math.cos(normal) * signedMeters / latMeters,
+                point[1] + Math.sin(normal) * signedMeters / lngMeters
+            ];
         };
 
         const REGION_LINE_IDS = {
@@ -2798,11 +2847,13 @@
             const point = pointOnRailPath(metric, distance);
             if (!point) return null;
             const movementSign = Math.sign(toDistance - fromDistance) || (train.direction === 'up' ? -1 : 1);
-            const rearPoint = pointOnRailPath(metric, distance - movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
-            const frontPoint = pointOnRailPath(metric, distance + movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
-            const angle = bearingBetweenRailPoints(rearPoint, frontPoint);
-            // 위·경도 오프셋은 선로 꺾임마다 방향이 튀므로, 화면상의 고정 픽셀 오프셋만 사용한다.
-            const lanePoint = point;
+            // 진행 방향과 무관한 긴 접선으로 선로 방향을 먼저 구하면 짧은 좌표 구간의 각도 떨림이 사라진다.
+            const pathRear = pointOnRailPath(metric, distance - MAP_TRAIN_HALF_LENGTH_METERS) || point;
+            const pathFront = pointOnRailPath(metric, distance + MAP_TRAIN_HALF_LENGTH_METERS) || point;
+            const pathAngle = bearingBetweenRailPoints(pathRear, pathFront);
+            const angle = pathAngle + (movementSign < 0 ? 180 : 0);
+            // 두 진행 방향을 실제 위·경도상 평행 차선으로 분리한다. 화면 확대/축소와 관계없이 간격이 유지된다.
+            const lanePoint = offsetRailPointByMeters(point, pathAngle, movementSign * MAP_TRAIN_LANE_OFFSET_METERS);
             return { train, point, lanePoint, key:`${train.lineId || currentLineId}:${train.direction}:${train.id}`, distance, angle };
         };
 
@@ -2834,14 +2885,20 @@
                 const positionNow = options.timestamp || performance.now();
                 const positionElapsed = Math.max(1, Math.min(64, positionNow - entry.positionUpdatedAt));
                 const positionBlend = 1 - Math.exp(-positionElapsed / MAP_TRAIN_POSITION_SMOOTHING_MS);
-                entry.smoothedLat += (lanePoint[0] - entry.smoothedLat) * positionBlend;
-                entry.smoothedLng += (lanePoint[1] - entry.smoothedLng) * positionBlend;
+                const targetGapMeters = haversine(entry.smoothedLat, entry.smoothedLng, lanePoint[0], lanePoint[1]) * 1000;
+                if (mapViewportChanging || targetGapMeters > 180) {
+                    entry.smoothedLat = lanePoint[0];
+                    entry.smoothedLng = lanePoint[1];
+                } else {
+                    entry.smoothedLat += (lanePoint[0] - entry.smoothedLat) * positionBlend;
+                    entry.smoothedLng += (lanePoint[1] - entry.smoothedLng) * positionBlend;
+                }
                 entry.positionUpdatedAt = positionNow;
                 const position = new kakao.maps.LatLng(entry.smoothedLat, entry.smoothedLng);
                 entry.overlay.setPosition(position);
                 const isFollowed = key === mapFollowTrainKey;
                 if (entry.element.parentElement) {
-                    entry.element.parentElement.style.transition = mapViewportChanging || isFollowed ? 'none' : 'left 42ms linear, top 42ms linear';
+                    entry.element.parentElement.style.transition = mapViewportChanging || isFollowed ? 'none' : 'left 80ms linear, top 80ms linear';
                     entry.element.parentElement.style.willChange = 'left, top';
                 }
                 let angleDelta = angle - entry.angle;
@@ -2849,11 +2906,12 @@
                 while (angleDelta < -180) angleDelta += 360;
                 const angleNow = options.timestamp || performance.now();
                 const angleElapsed = Math.max(1, Math.min(64, angleNow - entry.angleUpdatedAt));
-                const angleBlend = 1 - Math.exp(-angleElapsed / 185);
-                if (Math.abs(angleDelta) > .18) entry.angle += angleDelta * angleBlend;
+                const angleBlend = 1 - Math.exp(-angleElapsed / 240);
+                if (Math.abs(angleDelta) > .25) entry.angle += angleDelta * angleBlend;
                 entry.angleUpdatedAt = angleNow;
                 // 추적 중에는 열차 중심을 화면 중심에 고정해 회전으로 인한 원형 미세 떨림을 없앤다.
-                entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${isFollowed ? 0 : MAP_TRAIN_LANE_OFFSET_PX}px)`;
+                const pixelLaneOffset = isFollowed ? 0 : (mapNationwideMode ? 2 : MAP_TRAIN_LANE_OFFSET_PX);
+                entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${pixelLaneOffset}px)`;
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
                 entry.element.classList.toggle('is-nationwide', mapNationwideMode);
                 entry.badge.setAttribute('transform', `rotate(${-entry.angle} 18 28.5)`);
@@ -2866,8 +2924,9 @@
 
         const setMapTrainInterpolationEnabled = enabled => {
             mapViewportChanging = !enabled;
-            subwayMapTrainOverlays.forEach(entry => {
-                if (entry.element.parentElement) entry.element.parentElement.style.transition = enabled ? 'left 42ms linear, top 42ms linear' : 'none';
+            subwayMapTrainOverlays.forEach((entry, key) => {
+                const isFollowed = key === mapFollowTrainKey;
+                if (entry.element.parentElement) entry.element.parentElement.style.transition = enabled && !isFollowed ? 'left 80ms linear, top 80ms linear' : 'none';
             });
         };
 
