@@ -270,6 +270,24 @@
         .subway-map-station-dot {
             display: none;
         }
+        .subway-map-train-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 8;
+            overflow: hidden;
+            pointer-events: none;
+            contain: layout paint;
+        }
+        .subway-map-train-anchor {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            will-change: transform;
+            backface-visibility: hidden;
+        }
         .subway-map-train {
             position: relative;
             width: 23px;
@@ -279,7 +297,7 @@
             filter: drop-shadow(0 4px 5px rgba(15,23,42,.28));
             transition: filter .2s ease, transform .16s ease;
             -webkit-tap-highlight-color: transparent;
-            transform: translateZ(0);
+            transform: translate(-50%, -50%) translateZ(0);
             backface-visibility: hidden;
         }
         .subway-map-train.is-selected {
@@ -303,7 +321,7 @@
             transform: translateZ(0);
             backface-visibility: hidden;
         }
-        .subway-map-train:active { transform: scale(.94); }
+        .subway-map-train:active { transform: translate(-50%, -50%) scale(.94) translateZ(0); }
         .map-line-tabs::-webkit-scrollbar { display:none; }
     </style>
 </head>
@@ -1074,6 +1092,7 @@
         let subwayMap = null;
         let subwayMapOverlays = [];
         let subwayMapTrainOverlays = new Map();
+        let subwayMapTrainLayer = null;
         let selectedMapTrainKey = null;
         let mapFollowTrainKey = null;
         let selectedMapStationLineId = null;
@@ -1096,6 +1115,7 @@
         const MAP_TRAIN_LANE_OFFSET_METERS = 4.2;
         const MAP_TRAIN_LANE_OFFSET_PX = 6;
         const MAP_TRAIN_POSITION_SMOOTHING_MS = 64;
+        const MAP_TRAIN_SCREEN_SMOOTHING_MS = 38;
 
         const dom = {
             mainHeader: document.getElementById('main-header'),
@@ -2779,8 +2799,17 @@
             if (visible.has(lineId)) requestAnimationFrame(() => window.focusMapLine(lineId));
         };
         const clearSubwayMapTrains = () => {
-            subwayMapTrainOverlays.forEach(entry => entry.overlay.setMap(null));
+            subwayMapTrainOverlays.forEach(entry => entry.anchor.remove());
             subwayMapTrainOverlays.clear();
+        };
+
+        const ensureSubwayMapTrainLayer = () => {
+            if (subwayMapTrainLayer?.isConnected) return subwayMapTrainLayer;
+            subwayMapTrainLayer = document.createElement('div');
+            subwayMapTrainLayer.className = 'subway-map-train-layer';
+            subwayMapTrainLayer.setAttribute('aria-label', '운행 열차');
+            dom.mapContainer.appendChild(subwayMapTrainLayer);
+            return subwayMapTrainLayer;
         };
 
         const getMapScreenAngle = (point, ahead) => {
@@ -2859,6 +2888,7 @@
 
         window.updateSubwayMapTrains = (trains, options = {}) => {
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps || activeTab !== 'map') return;
+            const trainLayer = ensureSubwayMapTrainLayer();
             const activeKeys = new Set(trains.map(train => `${train.lineId || currentLineId}:${train.direction}:${train.id}`));
             const targetTrains = trains.filter(train => {
                 const key = `${train.lineId || currentLineId}:${train.direction}:${train.id}`;
@@ -2872,11 +2902,15 @@
                     const colors = getLineColors(train.lineId || currentLineId);
                     const color = train.direction === 'down' ? colors.down : colors.up;
                     const element = createSubwayMapTrainElement(train, color, key);
-                    const overlay = new kakao.maps.CustomOverlay({ map: subwayMap, position: new kakao.maps.LatLng(lanePoint[0], lanePoint[1]), content: element, xAnchor: 0.5, yAnchor: 0.5, zIndex: 8 });
+                    const anchor = document.createElement('div');
+                    anchor.className = 'subway-map-train-anchor';
+                    anchor.appendChild(element);
+                    trainLayer.appendChild(anchor);
                     entry = {
-                        element, overlay, angle, angleUpdatedAt:options.timestamp || performance.now(),
+                        element, anchor, angle, angleUpdatedAt:options.timestamp || performance.now(),
                         positionUpdatedAt:options.timestamp || performance.now(),
                         smoothedLat:lanePoint[0], smoothedLng:lanePoint[1],
+                        screenX:null, screenY:null,
                         body:element.querySelector('.subway-map-train-body'),
                         badge:element.querySelector('.subway-map-train-badge')
                     };
@@ -2895,12 +2929,7 @@
                 }
                 entry.positionUpdatedAt = positionNow;
                 const position = new kakao.maps.LatLng(entry.smoothedLat, entry.smoothedLng);
-                entry.overlay.setPosition(position);
                 const isFollowed = key === mapFollowTrainKey;
-                if (entry.element.parentElement) {
-                    entry.element.parentElement.style.transition = mapViewportChanging || isFollowed ? 'none' : 'left 80ms linear, top 80ms linear';
-                    entry.element.parentElement.style.willChange = 'left, top';
-                }
                 let angleDelta = angle - entry.angle;
                 while (angleDelta > 180) angleDelta -= 360;
                 while (angleDelta < -180) angleDelta += 360;
@@ -2918,16 +2947,34 @@
                 entry.position = position;
             });
             if (options.cleanup !== false) subwayMapTrainOverlays.forEach((entry, key) => {
-                if (!activeKeys.has(key)) { entry.overlay.setMap(null); subwayMapTrainOverlays.delete(key); }
+                if (!activeKeys.has(key)) { entry.anchor.remove(); subwayMapTrainOverlays.delete(key); }
+            });
+            // 카메라를 먼저 이동한 뒤 새 투영 좌표를 계산해야 추적 중 한 프레임씩 뒤처지는 현상이 없다.
+            updateMapFollowCamera(options.timestamp || performance.now());
+            const projection = subwayMap.getProjection();
+            subwayMapTrainOverlays.forEach(entry => {
+                if (!entry.position) return;
+                const screenPoint = projection.containerPointFromCoords(entry.position);
+                const screenNow = options.timestamp || performance.now();
+                const screenElapsed = Math.max(1, Math.min(64, screenNow - (entry.screenUpdatedAt || screenNow)));
+                const screenGap = entry.screenX === null ? Infinity : Math.hypot(screenPoint.x - entry.screenX, screenPoint.y - entry.screenY);
+                const canSmoothOnScreen = !mapViewportChanging && !mapFollowTrainKey && screenGap < 80;
+                if (!canSmoothOnScreen) {
+                    entry.screenX = screenPoint.x;
+                    entry.screenY = screenPoint.y;
+                } else {
+                    const screenBlend = 1 - Math.exp(-screenElapsed / MAP_TRAIN_SCREEN_SMOOTHING_MS);
+                    entry.screenX += (screenPoint.x - entry.screenX) * screenBlend;
+                    entry.screenY += (screenPoint.y - entry.screenY) * screenBlend;
+                }
+                entry.screenUpdatedAt = screenNow;
+                entry.anchor.style.transform = `translate3d(${entry.screenX.toFixed(3)}px, ${entry.screenY.toFixed(3)}px, 0)`;
             });
         };
 
         const setMapTrainInterpolationEnabled = enabled => {
             mapViewportChanging = !enabled;
-            subwayMapTrainOverlays.forEach((entry, key) => {
-                const isFollowed = key === mapFollowTrainKey;
-                if (entry.element.parentElement) entry.element.parentElement.style.transition = enabled && !isFollowed ? 'left 80ms linear, top 80ms linear' : 'none';
-            });
+            if (!enabled) subwayMapTrainOverlays.forEach(entry => { entry.screenX = null; entry.screenY = null; });
         };
 
         const updateMapFollowCamera = timestamp => {
@@ -2949,8 +2996,6 @@
                 if (trainElapsed >= targetInterval) {
                     mapLastFullUpdateTime = timestamp - (trainElapsed % targetInterval);
                     window.updateSubwayMapTrains(getRegionMapTrains(liveSeconds), { timestamp });
-                    // 열차와 카메라를 같은 시간 샘플·같은 프레임에서 갱신해 추적 시 흔들림을 막는다.
-                    updateMapFollowCamera(timestamp);
                 }
                 mapAnimationFrameId = requestAnimationFrame(animate);
             };
