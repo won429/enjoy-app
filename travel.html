@@ -757,6 +757,52 @@
             pointer-events: none;
         }
 
+        #draw-island-insets {
+            position: absolute;
+            top: max(104px, calc(env(safe-area-inset-top) + 92px));
+            right: 14px;
+            z-index: 16;
+            display: flex;
+            gap: 7px;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: none;
+            transition: opacity 180ms ease, visibility 180ms ease;
+        }
+
+        #draw-island-insets.is-hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .draw-island-inset {
+            width: 60px;
+            height: 66px;
+            padding: 5px 4px 4px;
+            border: 1px dashed rgba(71, 85, 105, 0.42);
+            border-radius: 11px;
+            background: rgba(248, 250, 252, 0.7);
+            box-shadow: 0 5px 16px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            text-align: center;
+        }
+
+        .draw-island-inset canvas {
+            display: block;
+            width: 52px;
+            height: 42px;
+        }
+
+        .draw-island-inset span {
+            display: block;
+            margin-top: 2px;
+            color: #475569;
+            font-size: 9px;
+            font-weight: 750;
+            line-height: 1;
+        }
+
         .dart-impact-ring,
         .dart-impact-spark {
             position: absolute;
@@ -1171,6 +1217,17 @@
                 </div>
             </header>
 
+            <div id="draw-island-insets" aria-label="울릉도와 독도 별도 표시">
+                <div class="draw-island-inset" aria-label="울릉도">
+                    <canvas id="draw-ulleungdo-canvas" width="104" height="84"></canvas>
+                    <span>울릉도</span>
+                </div>
+                <div class="draw-island-inset" aria-label="독도">
+                    <canvas id="draw-dokdo-canvas" width="104" height="84"></canvas>
+                    <span>독도</span>
+                </div>
+            </div>
+
             <div id="dart-impact-layer" aria-hidden="true"></div>
             <div id="aim-line"></div>
             <div id="pull-meter" class="pull-meter">0 km</div>
@@ -1275,6 +1332,9 @@
         let drawZoomStartTimer = null;
         let drawZoomFinishTimer = null;
         let drawFlightAnimationFrame = null;
+        let drawTilePreloadMap = null;
+        let drawTilePreloadContainer = null;
+        let drawTilePreloadTimer = null;
         let dartAudioContext = null;
         let dartFlightSoundStop = null;
         let isDartFlying = false;
@@ -5703,17 +5763,141 @@
             if (drawMap || typeof kakao === 'undefined' || !kakao.maps) return;
 
             drawMap = new kakao.maps.Map(document.getElementById('draw-map'), {
-                center: new kakao.maps.LatLng(35.35, 127.45),
-                level: 14
+                center: new kakao.maps.LatLng(35.75, 127.65),
+                level: 13
             });
             kakao.maps.event.addListener(drawMap, 'zoom_changed', () => {
                 window.requestAnimationFrame(keepDrawLandingVisible);
             });
             kakao.maps.event.addListener(drawMap, 'idle', keepDrawLandingVisible);
             loadDrawRegionBoundaries();
+            renderDrawIslandInsets();
         }
 
-        const drawMapOverview = { lat: 35.35, lng: 127.45, level: 14 };
+        function setDrawIslandInsetsVisible(visible) {
+            document.getElementById('draw-island-insets')?.classList.toggle('is-hidden', !visible);
+        }
+
+        function drawIslandInset(canvas, polygons) {
+            if (!canvas || !Array.isArray(polygons) || !polygons.length) return;
+            const context = canvas.getContext('2d');
+            const points = polygons.flat(2);
+            if (!context || !points.length) return;
+
+            const lngs = points.map(point => point[0]);
+            const lats = points.map(point => point[1]);
+            const minLng = Math.min(...lngs);
+            const maxLng = Math.max(...lngs);
+            const minLat = Math.min(...lats);
+            const maxLat = Math.max(...lats);
+            const padding = 11;
+            const spanLng = Math.max(maxLng - minLng, Number.EPSILON);
+            const spanLat = Math.max(maxLat - minLat, Number.EPSILON);
+            const scale = Math.min(
+                (canvas.width - padding * 2) / spanLng,
+                (canvas.height - padding * 2) / spanLat
+            );
+            const drawnWidth = spanLng * scale;
+            const drawnHeight = spanLat * scale;
+            const offsetX = (canvas.width - drawnWidth) / 2;
+            const offsetY = (canvas.height - drawnHeight) / 2;
+
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.beginPath();
+            polygons.forEach(polygon => {
+                polygon.forEach(ring => {
+                    ring.forEach(([lng, lat], index) => {
+                        const x = offsetX + (lng - minLng) * scale;
+                        const y = offsetY + (maxLat - lat) * scale;
+                        if (index === 0) context.moveTo(x, y);
+                        else context.lineTo(x, y);
+                    });
+                    context.closePath();
+                });
+            });
+            context.fillStyle = '#efb266';
+            context.strokeStyle = '#b85c2e';
+            context.lineWidth = 2.2;
+            context.lineJoin = 'round';
+            context.fill('evenodd');
+            context.stroke();
+        }
+
+        function drawDokdoInset(canvas) {
+            const context = canvas?.getContext('2d');
+            if (!context) return;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#efb266';
+            context.strokeStyle = '#b85c2e';
+            context.lineWidth = 2.2;
+
+            const drawRock = (x, y, radiusX, radiusY, rotation) => {
+                context.save();
+                context.translate(x, y);
+                context.rotate(rotation);
+                context.beginPath();
+                context.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
+                context.fill();
+                context.stroke();
+                context.restore();
+            };
+
+            drawRock(40, 45, 11, 19, -0.25);
+            drawRock(66, 38, 8, 14, 0.3);
+            drawRock(25, 59, 3.2, 4.2, -0.4);
+            drawRock(80, 56, 2.7, 3.7, 0.2);
+        }
+
+        function renderDrawIslandInsets() {
+            const ulleungBoundary = (window.currentSigunguBoundaries || [])
+                .find(boundary => boundary.n === '경상북도 울릉군');
+            if (ulleungBoundary) {
+                drawIslandInset(document.getElementById('draw-ulleungdo-canvas'), ulleungBoundary.p);
+            }
+            drawDokdoInset(document.getElementById('draw-dokdo-canvas'));
+            setDrawIslandInsetsVisible(true);
+        }
+
+        function clearDrawTilePreload() {
+            if (drawTilePreloadTimer) {
+                window.clearTimeout(drawTilePreloadTimer);
+                drawTilePreloadTimer = null;
+            }
+            if (drawTilePreloadContainer) {
+                drawTilePreloadContainer.remove();
+                drawTilePreloadContainer = null;
+            }
+            drawTilePreloadMap = null;
+        }
+
+        function preloadDrawMapTiles(lat, lng, level = 10) {
+            if (typeof kakao === 'undefined' || !kakao.maps) return;
+            clearDrawTilePreload();
+
+            const drawMapElement = document.getElementById('draw-map');
+            const width = Math.max(320, drawMapElement?.clientWidth || 430);
+            const height = Math.max(560, drawMapElement?.clientHeight || 700);
+            drawTilePreloadContainer = document.createElement('div');
+            drawTilePreloadContainer.setAttribute('aria-hidden', 'true');
+            Object.assign(drawTilePreloadContainer.style, {
+                position: 'fixed',
+                left: '-10000px',
+                top: '0',
+                width: `${width}px`,
+                height: `${height}px`,
+                opacity: '0.01',
+                pointerEvents: 'none',
+                zIndex: '-1'
+            });
+            document.body.appendChild(drawTilePreloadContainer);
+            drawTilePreloadMap = new kakao.maps.Map(drawTilePreloadContainer, {
+                center: new kakao.maps.LatLng(lat, lng),
+                level
+            });
+            drawTilePreloadTimer = window.setTimeout(clearDrawTilePreload, 3200);
+        }
+
+        const drawMapOverview = { lat: 35.75, lng: 127.65, level: 13 };
         const drawThrowOrigin = { lat: 32.65, lng: 127.25 };
 
         const dartDrag = {
@@ -6062,6 +6246,7 @@
             }
             const flightDuration = 680;
 
+            preloadDrawMapTiles(plan.lat, plan.lng, 10);
             if (navigator.vibrate) navigator.vibrate([12, 28, 18]);
             playDartThrowSound();
             startDartFlightSound(flightDuration + 100);
@@ -6168,11 +6353,11 @@
                 const polygon = new kakao.maps.Polygon({
                     map: drawMap,
                     path,
-                    fillColor: '#ffffff',
-                    fillOpacity: 0.16,
-                    strokeColor: '#ffffff',
-                    strokeOpacity: 0.92,
-                    strokeWeight: 2.2,
+                    fillColor: '#ff3b30',
+                    fillOpacity: 0.08,
+                    strokeColor: '#e21d2f',
+                    strokeOpacity: 0.96,
+                    strokeWeight: 2.8,
                     zIndex: 18
                 });
                 drawLandingHighlights.push(polygon);
@@ -6183,6 +6368,7 @@
         async function showDrawLanding(lat, lng, distance, impactX, impactY) {
             if (!drawMap || typeof kakao === 'undefined' || !kakao.maps) return;
             clearDrawLanding();
+            setDrawIslandInsetsVisible(false);
             if (dartFlightSoundStop) dartFlightSoundStop();
 
             const position = new kakao.maps.LatLng(lat, lng);
@@ -6472,6 +6658,7 @@
         function resetDraw() {
             isDartFlying = false;
             if (dartFlightSoundStop) dartFlightSoundStop();
+            clearDrawTilePreload();
             if (drawFlightAnimationFrame) {
                 window.cancelAnimationFrame(drawFlightAnimationFrame);
                 drawFlightAnimationFrame = null;
@@ -6479,6 +6666,7 @@
             clearDrawLanding();
             resetDartVisual();
             hideDrawResult();
+            setDrawIslandInsetsVisible(true);
             if (drawMap && typeof kakao !== 'undefined' && kakao.maps) {
                 drawMap.setLevel(drawMapOverview.level);
                 drawMap.setCenter(new kakao.maps.LatLng(drawMapOverview.lat, drawMapOverview.lng));
