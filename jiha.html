@@ -272,26 +272,36 @@
         }
         .subway-map-train {
             position: relative;
-            width: 18px;
-            height: 43px;
+            width: 23px;
+            height: 53px;
             pointer-events: auto;
             cursor: pointer;
-            filter: drop-shadow(0 2px 2px rgba(15,23,42,.25));
-            transition: width .2s ease, height .2s ease, filter .2s ease;
+            filter: drop-shadow(0 4px 5px rgba(15,23,42,.28));
+            transition: filter .2s ease, transform .16s ease;
             -webkit-tap-highlight-color: transparent;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
-        .subway-map-train.is-selected,
-        .subway-map-train.is-focus-sized {
-            width: 29px;
-            height: 65px;
-            filter: drop-shadow(0 5px 6px rgba(15,23,42,.34));
+        .subway-map-train.is-selected {
+            filter: drop-shadow(0 5px 7px rgba(15,23,42,.38)) drop-shadow(0 0 5px rgba(255,255,255,.9));
+        }
+        .subway-map-train.is-nationwide {
+            width: 13px;
+            height: 30px;
+            filter: drop-shadow(0 2px 2px rgba(15,23,42,.24));
+            opacity: .9;
+        }
+        .subway-map-train.is-nationwide.is-selected {
+            filter: drop-shadow(0 3px 4px rgba(15,23,42,.38)) drop-shadow(0 0 4px rgba(255,255,255,.9));
         }
         .subway-map-train-body {
             width: 100%;
             height: 100%;
             transform-origin: 50% 50%;
-            transition: transform 34ms linear;
             overflow: visible;
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         .subway-map-train:active { transform: scale(.94); }
         .map-line-tabs::-webkit-scrollbar { display:none; }
@@ -515,7 +525,7 @@
                         <span id="subway-map-line-dot" class="h-3 w-3 rounded-full bg-[#0054A6]"></span>
                         <h2 id="subway-map-title" class="text-[14px] font-extrabold text-[#111827]">대경선 지도</h2>
                     </div>
-                    <div class="flex items-center gap-2"><span id="subway-map-status" class="text-[9px] font-bold text-gray-400">Kakao Map</span><button id="map-motion-toggle" onclick="toggleMapTrainMotion()" class="flex h-7 items-center gap-1 rounded-full bg-gray-100 px-2.5 text-[9px] font-extrabold text-gray-600"><i class="fa-solid fa-pause text-[8px]"></i><span>움직임</span></button></div>
+                    <div class="flex items-center gap-2"><span id="subway-map-status" class="text-[9px] font-bold text-gray-400">Kakao Map</span><button id="map-country-view" onclick="toggleNationwideMapView()" class="flex h-7 items-center gap-1 rounded-full bg-gray-100 px-2.5 text-[9px] font-extrabold text-gray-600 transition-colors hover:bg-gray-200" aria-label="전국 운행 지도 보기"><i class="fa-solid fa-earth-asia text-[8px]"></i><span>전국보기</span></button></div>
                 </div>
                 <div id="map-line-tabs" class="map-line-tabs pointer-events-auto mt-2 flex gap-1.5 overflow-x-auto px-0.5 py-1" style="scrollbar-width:none"></div>
             </header>
@@ -1069,7 +1079,8 @@
         let selectedMapStationLineId = null;
         const regionMapTimetables = new Map();
         const mapVisibleLinesByRegion = new Map();
-        let mapTrainMotionEnabled = true;
+        const mapVisibleNationwideLines = new Set();
+        let mapNationwideMode = false;
         let mapAnimationFrameId = null;
         let mapLastFullUpdateTime = 0;
         let mapLastCameraUpdateTime = 0;
@@ -1079,9 +1090,11 @@
         let mapActiveTrainSourceKey = '';
         let lastUserLocation = null;
         const railPathMetricCache = new Map();
-        const MAP_TRAIN_TARGET_INTERVAL = 1000 / 30;
+        const MAP_TRAIN_TARGET_INTERVAL = 1000 / 60;
         const MAP_CAMERA_FRAME_INTERVAL = 1000 / 60;
-        const MAP_TRAIN_HALF_LENGTH_METERS = 16;
+        const MAP_TRAIN_HALF_LENGTH_METERS = 85;
+        const MAP_TRAIN_LANE_OFFSET_PX = 7;
+        const MAP_TRAIN_POSITION_SMOOTHING_MS = 48;
 
         const dom = {
             mainHeader: document.getElementById('main-header'),
@@ -1107,7 +1120,7 @@
             mapTitle: document.getElementById('subway-map-title'),
             mapLineDot: document.getElementById('subway-map-line-dot'),
             mapStatus: document.getElementById('subway-map-status'),
-            mapMotionToggle: document.getElementById('map-motion-toggle'),
+            mapCountryView: document.getElementById('map-country-view'),
             mapLineTabs: document.getElementById('map-line-tabs'),
             navIndicator: document.getElementById('nav-indicator'),
             timetableModal: document.getElementById('timetable-modal'),
@@ -2561,22 +2574,14 @@
             return Math.atan2(dLng, to[0] - from[0]) * 180 / Math.PI;
         };
 
-        const offsetRailPoint = (point, movementAngle, meters) => {
-            const normal = (movementAngle + 90) * Math.PI / 180;
-            const latitudeScale = 111320;
-            const longitudeScale = Math.max(1, latitudeScale * Math.cos(point[0] * Math.PI / 180));
-            return [
-                point[0] + Math.cos(normal) * meters / latitudeScale,
-                point[1] + Math.sin(normal) * meters / longitudeScale
-            ];
-        };
-
         const REGION_LINE_IDS = {
             daegu: ['daegyeong', 'line1', 'line2', 'line3'],
             daejeon: ['daejeon_line1'],
             gwangju: ['gwangju_line1'],
             busan: ['busan_line1', 'busan_line2', 'busan_line3', 'busan_line4', 'busan_bglrt', 'busan_donghae']
         };
+        const REGION_LABELS = { daegu:'대구권', daejeon:'대전', busan:'부산권', gwangju:'광주' };
+        const ALL_MAP_LINE_IDS = Object.values(REGION_LINE_IDS).flat();
         const LINE_DOWN_COLORS = {
             daegyeong:'#5998D6', line1:'#FF7EB3', line2:'#74C96E', line3:'#FFCC4D', daejeon_line1:'#009F62',
             gwangju_line1:'#38B2AC', busan_line1:'#F58A33', busan_line2:'#97D86B', busan_line3:'#C5A67C',
@@ -2587,6 +2592,10 @@
             down: LINE_DOWN_COLORS[lineId] || FAVORITE_LINE_META[lineId]?.color || '#5998D6'
         });
         const getVisibleMapLineIds = () => {
+            if (mapNationwideMode) {
+                if (!mapVisibleNationwideLines.size) ALL_MAP_LINE_IDS.forEach(lineId => mapVisibleNationwideLines.add(lineId));
+                return ALL_MAP_LINE_IDS.filter(lineId => mapVisibleNationwideLines.has(lineId));
+            }
             const regionLines = REGION_LINE_IDS[currentRegion] || [currentLineId];
             if (!mapVisibleLinesByRegion.has(currentRegion)) mapVisibleLinesByRegion.set(currentRegion, new Set(regionLines));
             return regionLines.filter(lineId => mapVisibleLinesByRegion.get(currentRegion).has(lineId));
@@ -2613,7 +2622,7 @@
         }).filter(Boolean);
         const refreshMapActiveTrainSources = atSec => {
             const lineIds = getVisibleMapLineIds();
-            const sourceKey = `${currentRegion}:${currentDayType}:${lineIds.join(',')}:${Math.floor(atSec)}`;
+            const sourceKey = `${mapNationwideMode ? 'nationwide' : currentRegion}:${currentDayType}:${lineIds.join(',')}:${Math.floor(atSec)}`;
             if (sourceKey !== mapActiveTrainSourceKey) {
                 mapActiveTrainSourceKey = sourceKey;
                 mapActiveTrainSources = lineIds.flatMap(lineId => {
@@ -2630,13 +2639,8 @@
             refreshMapActiveTrainSources(atSec);
             return mapActiveTrainSources.map(({ train, direction, lineId }) => getActiveTrainItems([train], direction, lineId, atSec)[0]).filter(Boolean);
         };
-        const getMapTrainByKey = (atSec, key) => {
-            refreshMapActiveTrainSources(atSec);
-            const source = mapActiveTrainSources.find(({ train, direction, lineId }) => `${lineId}:${direction}:${train.id}` === key);
-            return source ? getActiveTrainItems([source.train], source.direction, source.lineId, atSec)[0] : null;
-        };
         const loadRegionMapTimetables = async () => {
-            const lineIds = REGION_LINE_IDS[currentRegion] || [currentLineId];
+            const lineIds = mapNationwideMode ? ALL_MAP_LINE_IDS : (REGION_LINE_IDS[currentRegion] || [currentLineId]);
             await Promise.all(lineIds.map(async lineId => {
                 const key = `${lineId}:${currentDayType}`;
                 if (!regionMapTimetables.has(key)) regionMapTimetables.set(key, await loadLineTimetableData(currentDayType, lineId));
@@ -2647,15 +2651,38 @@
             daegyeong:'대구', line1:'반월당', line2:'반월당', line3:'서문시장', daejeon_line1:'시청', gwangju_line1:'금남로4가',
             busan_line1:'서면', busan_line2:'서면', busan_line3:'연산', busan_line4:'동래', busan_bglrt:'공항', busan_donghae:'벡스코'
         };
+        const renderMapViewToggle = () => {
+            if (!dom.mapCountryView) return;
+            const regionLabel = REGION_LABELS[currentRegion] || '지역';
+            dom.mapCountryView.setAttribute('aria-label', mapNationwideMode ? `${regionLabel} 지도 보기` : '전국 운행 지도 보기');
+            dom.mapCountryView.innerHTML = mapNationwideMode
+                ? `<i class="fa-solid fa-location-dot text-[8px]"></i><span>${regionLabel}보기</span>`
+                : '<i class="fa-solid fa-earth-asia text-[8px]"></i><span>전국보기</span>';
+        };
+        const setMapRegionHeader = () => {
+            renderMapViewToggle();
+            if (mapNationwideMode) {
+                if (dom.mapTitle) dom.mapTitle.textContent = '전국 실시간 운행 지도';
+                if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = '#2563EB';
+                if (dom.mapStatus) dom.mapStatus.textContent = `${Object.keys(REGION_LINE_IDS).length}개 권역 · ${getVisibleMapLineIds().length}개 노선`;
+                return;
+            }
+            const regionLabel = REGION_LABELS[currentRegion] || '지역';
+            if (dom.mapTitle) dom.mapTitle.textContent = `${regionLabel} 전노선 지도`;
+            if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = THEME_COLOR;
+            if (dom.mapStatus) dom.mapStatus.textContent = `© OSM · ${getVisibleMapLineIds().length}개 노선`;
+        };
         window.renderMapLineControls = () => {
             if (!dom.mapLineTabs) return;
             const visible = new Set(getVisibleMapLineIds());
-            dom.mapLineTabs.innerHTML = (REGION_LINE_IDS[currentRegion] || [currentLineId]).map(lineId => {
+            const controlLineIds = mapNationwideMode ? ALL_MAP_LINE_IDS : (REGION_LINE_IDS[currentRegion] || [currentLineId]);
+            dom.mapLineTabs.innerHTML = controlLineIds.map(lineId => {
                 const meta = FAVORITE_LINE_META[lineId] || { label:lineId, color:'#64748B' };
                 const enabled = visible.has(lineId);
-                return `<div class="flex shrink-0 items-center overflow-hidden rounded-full border shadow-sm transition-all ${enabled ? '' : 'bg-white/75 opacity-65'}" style="background:${enabled ? meta.color : 'rgba(255,255,255,.75)'};border-color:${enabled ? meta.color : 'rgba(148,163,184,.3)'}"><button onclick="focusMapLine('${lineId}')" class="px-3 py-2 text-[10px] font-extrabold" style="color:${enabled ? '#fff' : '#64748B'}">${meta.label.replace('대구 ', '').replace('부산 ', '').replace('광주 ', '').replace('대전 ', '')}</button><button onclick="toggleMapLine('${lineId}', event)" aria-label="${meta.label} ${enabled ? '끄기' : '켜기'}" class="mr-1 flex h-6 w-6 items-center justify-center rounded-full" style="background:${enabled ? 'rgba(255,255,255,.22)' : 'rgba(148,163,184,.12)'};color:${enabled ? '#fff' : '#94A3B8'}"><i class="fa-solid ${enabled ? 'fa-eye' : 'fa-eye-slash'} text-[8px]"></i></button></div>`;
+                const label = mapNationwideMode ? meta.label : meta.label.replace('대구 ', '').replace('부산 ', '').replace('광주 ', '').replace('대전 ', '');
+                return `<div class="flex shrink-0 items-center overflow-hidden rounded-full border shadow-sm transition-all ${enabled ? '' : 'bg-white/75 opacity-65'}" style="background:${enabled ? meta.color : 'rgba(255,255,255,.75)'};border-color:${enabled ? meta.color : 'rgba(148,163,184,.3)'}"><button onclick="focusMapLine('${lineId}')" class="px-3 py-2 text-[10px] font-extrabold" style="color:${enabled ? '#fff' : '#64748B'}">${label}</button><button onclick="toggleMapLine('${lineId}', event)" aria-label="${meta.label} ${enabled ? '끄기' : '켜기'}" class="mr-1 flex h-6 w-6 items-center justify-center rounded-full" style="background:${enabled ? 'rgba(255,255,255,.22)' : 'rgba(148,163,184,.12)'};color:${enabled ? '#fff' : '#94A3B8'}"><i class="fa-solid ${enabled ? 'fa-eye' : 'fa-eye-slash'} text-[8px]"></i></button></div>`;
             }).join('');
-            if (dom.mapMotionToggle) dom.mapMotionToggle.innerHTML = `<i class="fa-solid ${mapTrainMotionEnabled ? 'fa-pause' : 'fa-play'} text-[8px]"></i><span>${mapTrainMotionEnabled ? '움직임' : '멈춤'}</span>`;
+            renderMapViewToggle();
         };
         window.focusMapLine = lineId => {
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps) return;
@@ -2668,26 +2695,40 @@
             const center = new kakao.maps.LatLng(coord[0], coord[1]);
             subwayMap.setLevel(5, { anchor:center, animate:{ duration:450 } });
             subwayMap.panTo(center);
+            const meta = FAVORITE_LINE_META[lineId];
+            if (dom.mapTitle) dom.mapTitle.textContent = `${meta?.label || lineId} 지도`;
+            if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = meta?.color || THEME_COLOR;
+            if (dom.mapStatus) dom.mapStatus.textContent = '노선 집중 보기';
+        };
+        window.toggleNationwideMapView = async () => {
+            if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps) return;
+            mapFollowTrainKey = null;
+            selectedTrainId = null;
+            selectedMapTrainKey = null;
+            selectedStation = null;
+            selectedMapStationLineId = null;
+            mapNationwideMode = !mapNationwideMode;
+            mapActiveTrainSourceKey = '';
+            await loadRegionMapTimetables();
+            window.updateSubwayMap();
+            window.render();
         };
         window.toggleMapLine = (lineId, event) => {
             event?.stopPropagation?.();
-            const visible = mapVisibleLinesByRegion.get(currentRegion) || new Set(REGION_LINE_IDS[currentRegion] || [currentLineId]);
+            const visible = mapNationwideMode
+                ? mapVisibleNationwideLines
+                : (mapVisibleLinesByRegion.get(currentRegion) || new Set(REGION_LINE_IDS[currentRegion] || [currentLineId]));
             if (visible.has(lineId)) {
                 if (visible.size === 1) return;
                 visible.delete(lineId);
             } else visible.add(lineId);
-            mapVisibleLinesByRegion.set(currentRegion, visible);
+            if (!mapNationwideMode) mapVisibleLinesByRegion.set(currentRegion, visible);
+            mapActiveTrainSourceKey = '';
             selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null;
             window.updateSubwayMap();
             window.renderMapLineControls();
             if (visible.has(lineId)) requestAnimationFrame(() => window.focusMapLine(lineId));
         };
-        window.toggleMapTrainMotion = () => {
-            mapTrainMotionEnabled = !mapTrainMotionEnabled;
-            window.renderMapLineControls();
-            if (mapTrainMotionEnabled) window.ensureMapAnimationLoop();
-        };
-
         const clearSubwayMapTrains = () => {
             subwayMapTrainOverlays.forEach(entry => entry.overlay.setMap(null));
             subwayMapTrainOverlays.clear();
@@ -2713,21 +2754,20 @@
             element.className = 'subway-map-train';
             element.setAttribute('role', 'button');
             element.setAttribute('aria-label', `${train.id} 열차 따라가기`);
-            element.innerHTML = `<svg class="subway-map-train-body" viewBox="0 0 32 82" aria-hidden="true">
-                <path d="M8 9Q8 2 16 1Q24 2 24 9V74Q24 80 16 81Q8 80 8 74Z" fill="${color}" opacity=".28" transform="translate(2 0)"/>
-                <path d="M7 9Q7 2 16 1Q25 2 25 9V74Q25 80 16 81Q7 80 7 74Z" fill="#fff" stroke="${color}" stroke-width="1.5"/>
-                <path d="M10 7Q16 3.5 22 7V14.5Q16 12.5 10 14.5Z" fill="#202631"/>
-                <rect x="7.7" y="27" width="16.6" height="13" rx="1.4" fill="${color}"/>
-                <path d="M8 42H24" stroke="#CBD5E1" stroke-width="1.1"/>
-                <path d="M10 76Q16 78.5 22 76" stroke="#E2E8F0" stroke-width="1.2" stroke-linecap="round"/>
-                <g class="train-side-left">
-                    <rect x="6" y="17" width="3" height="8" rx="1" fill="#1F2937"/><rect x="6" y="48" width="3" height="10" rx="1" fill="#1F2937"/><rect x="6" y="62" width="3" height="8" rx="1" fill="#1F2937"/>
-                </g>
-                <g class="train-side-right">
-                    <rect x="23" y="17" width="3" height="8" rx="1" fill="#1F2937"/><rect x="23" y="48" width="3" height="10" rx="1" fill="#1F2937"/><rect x="23" y="62" width="3" height="8" rx="1" fill="#1F2937"/>
-                </g>
-                <circle cx="16" cy="33.5" r="6.2" fill="${color}" stroke="#fff" stroke-width="1.5"/>
-                <text class="subway-map-train-badge" x="16" y="36.4" text-anchor="middle" fill="#fff" font-size="8.5" font-weight="900">${getTrainLineBadge(train.lineId)}</text>
+            element.innerHTML = `<svg class="subway-map-train-body" viewBox="0 0 36 80" aria-hidden="true">
+                <path d="M9 12C9 4.8 12.8 1.5 18 1.5S27 4.8 27 12v56c0 6.8-3.7 10.5-9 10.5S9 74.8 9 68Z" fill="${color}" opacity=".22" transform="translate(2 0)"/>
+                <path d="M7.5 12C7.5 4.8 12 1.5 18 1.5S28.5 4.8 28.5 12v56c0 6.8-4.2 10.5-10.5 10.5S7.5 74.8 7.5 68Z" fill="#fff" stroke="${color}" stroke-width="1.6"/>
+                <path d="M10.5 10.8C10.5 6.6 13.5 4.4 18 4.4s7.5 2.2 7.5 6.4v7.1c-4.8-1.7-10.2-1.7-15 0Z" fill="#172033"/>
+                <path d="M12.2 12.2c3.7-1.1 7.9-1.1 11.6 0" fill="none" stroke="#6F819B" stroke-width="1.1" stroke-linecap="round"/>
+                <circle cx="12" cy="20.7" r="1.25" fill="#FFF4B5" stroke="#EAB308" stroke-width=".45"/><circle cx="24" cy="20.7" r="1.25" fill="#FFF4B5" stroke="#EAB308" stroke-width=".45"/>
+                <rect x="7.8" y="26" width="20.4" height="5" fill="${color}"/>
+                <path d="M11.2 35.5h13.6v22.8H11.2Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width=".9"/>
+                <path d="M18 35.8v22.1M11.7 47h12.6" stroke="#CBD5E1" stroke-width=".75"/>
+                <rect x="8.6" y="37" width="2.2" height="8.5" rx="1.1" fill="#253247"/><rect x="25.2" y="37" width="2.2" height="8.5" rx="1.1" fill="#253247"/>
+                <rect x="8.6" y="51" width="2.2" height="8.5" rx="1.1" fill="#253247"/><rect x="25.2" y="51" width="2.2" height="8.5" rx="1.1" fill="#253247"/>
+                <path d="M11 68.4c4.4 2 9.6 2 14 0v3.6c-4.4 3.5-9.6 3.5-14 0Z" fill="#E2E8F0"/>
+                <circle cx="18" cy="28.5" r="6.1" fill="${color}" stroke="#fff" stroke-width="1.45"/>
+                <text class="subway-map-train-badge" x="18" y="31.4" text-anchor="middle" fill="#fff" font-size="8.5" font-weight="900">${getTrainLineBadge(train.lineId)}</text>
             </svg>`;
             element.addEventListener('click', event => {
                 event.preventDefault(); event.stopPropagation();
@@ -2737,6 +2777,10 @@
                 mapLastCameraUpdateTime = 0;
                 selectedStation = null;
                 isAutoScroll = false;
+                const meta = FAVORITE_LINE_META[train.lineId || currentLineId];
+                if (dom.mapTitle) dom.mapTitle.textContent = `${meta?.label || train.lineId || currentLineId} 열차 추적`;
+                if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = meta?.color || color;
+                if (dom.mapStatus) dom.mapStatus.textContent = `${train.id} 따라가는 중`;
                 if (subwayMap?.getLevel?.() > 4) subwayMap.setLevel(4, { animate:{ duration:500 } });
                 window.render();
             });
@@ -2757,7 +2801,8 @@
             const rearPoint = pointOnRailPath(metric, distance - movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
             const frontPoint = pointOnRailPath(metric, distance + movementSign * MAP_TRAIN_HALF_LENGTH_METERS) || point;
             const angle = bearingBetweenRailPoints(rearPoint, frontPoint);
-            const lanePoint = offsetRailPoint(point, angle, 2.2);
+            // 위·경도 오프셋은 선로 꺾임마다 방향이 튀므로, 화면상의 고정 픽셀 오프셋만 사용한다.
+            const lanePoint = point;
             return { train, point, lanePoint, key:`${train.lineId || currentLineId}:${train.direction}:${train.id}`, distance, angle };
         };
 
@@ -2779,42 +2824,39 @@
                     const overlay = new kakao.maps.CustomOverlay({ map: subwayMap, position: new kakao.maps.LatLng(lanePoint[0], lanePoint[1]), content: element, xAnchor: 0.5, yAnchor: 0.5, zIndex: 8 });
                     entry = {
                         element, overlay, angle, angleUpdatedAt:options.timestamp || performance.now(),
+                        positionUpdatedAt:options.timestamp || performance.now(),
+                        smoothedLat:lanePoint[0], smoothedLng:lanePoint[1],
                         body:element.querySelector('.subway-map-train-body'),
-                        badge:element.querySelector('.subway-map-train-badge'),
-                        leftSide:element.querySelector('.train-side-left'),
-                        rightSide:element.querySelector('.train-side-right')
+                        badge:element.querySelector('.subway-map-train-badge')
                     };
                     subwayMapTrainOverlays.set(key, entry);
                 }
-                const trackPosition = new kakao.maps.LatLng(point[0], point[1]);
-                const position = new kakao.maps.LatLng(lanePoint[0], lanePoint[1]);
+                const positionNow = options.timestamp || performance.now();
+                const positionElapsed = Math.max(1, Math.min(64, positionNow - entry.positionUpdatedAt));
+                const positionBlend = 1 - Math.exp(-positionElapsed / MAP_TRAIN_POSITION_SMOOTHING_MS);
+                entry.smoothedLat += (lanePoint[0] - entry.smoothedLat) * positionBlend;
+                entry.smoothedLng += (lanePoint[1] - entry.smoothedLng) * positionBlend;
+                entry.positionUpdatedAt = positionNow;
+                const position = new kakao.maps.LatLng(entry.smoothedLat, entry.smoothedLng);
                 entry.overlay.setPosition(position);
-                if (entry.element.parentElement) entry.element.parentElement.style.transition = mapViewportChanging ? 'none' : 'left 34ms linear, top 34ms linear';
-                entry.body.style.transition = mapViewportChanging ? 'none' : 'transform 34ms linear';
-                let laneOffset = 0;
-                try {
-                    const projection = subwayMap.getProjection();
-                    const trackPixel = projection.pointFromCoords(trackPosition);
-                    const lanePixel = projection.pointFromCoords(position);
-                    const geographicPixelOffset = Math.hypot(lanePixel.x - trackPixel.x, lanePixel.y - trackPixel.y);
-                    const minimumPixelOffset = 9.5;
-                    laneOffset = Math.max(0, minimumPixelOffset - geographicPixelOffset);
-                } catch (_) { laneOffset = 2; }
+                const isFollowed = key === mapFollowTrainKey;
+                if (entry.element.parentElement) {
+                    entry.element.parentElement.style.transition = mapViewportChanging || isFollowed ? 'none' : 'left 42ms linear, top 42ms linear';
+                    entry.element.parentElement.style.willChange = 'left, top';
+                }
                 let angleDelta = angle - entry.angle;
                 while (angleDelta > 180) angleDelta -= 360;
                 while (angleDelta < -180) angleDelta += 360;
                 const angleNow = options.timestamp || performance.now();
                 const angleElapsed = Math.max(1, Math.min(64, angleNow - entry.angleUpdatedAt));
-                const angleBlend = 1 - Math.exp(-angleElapsed / 72);
-                if (Math.abs(angleDelta) > .05) entry.angle += angleDelta * angleBlend;
+                const angleBlend = 1 - Math.exp(-angleElapsed / 185);
+                if (Math.abs(angleDelta) > .18) entry.angle += angleDelta * angleBlend;
                 entry.angleUpdatedAt = angleNow;
-                entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${laneOffset}px)`;
+                // 추적 중에는 열차 중심을 화면 중심에 고정해 회전으로 인한 원형 미세 떨림을 없앤다.
+                entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${isFollowed ? 0 : MAP_TRAIN_LANE_OFFSET_PX}px)`;
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
-                entry.element.classList.toggle('is-focus-sized', !!selectedMapTrainKey);
-                entry.badge.setAttribute('transform', `rotate(${-entry.angle} 16 33.5)`);
-                const showRightSide = false;
-                entry.leftSide.style.display = showRightSide ? 'none' : '';
-                entry.rightSide.style.display = showRightSide ? '' : 'none';
+                entry.element.classList.toggle('is-nationwide', mapNationwideMode);
+                entry.badge.setAttribute('transform', `rotate(${-entry.angle} 18 28.5)`);
                 entry.position = position;
             });
             if (options.cleanup !== false) subwayMapTrainOverlays.forEach((entry, key) => {
@@ -2825,32 +2867,32 @@
         const setMapTrainInterpolationEnabled = enabled => {
             mapViewportChanging = !enabled;
             subwayMapTrainOverlays.forEach(entry => {
-                if (entry.element.parentElement) entry.element.parentElement.style.transition = enabled ? 'left 34ms linear, top 34ms linear' : 'none';
-                entry.body.style.transition = enabled ? 'transform 34ms linear' : 'none';
+                if (entry.element.parentElement) entry.element.parentElement.style.transition = enabled ? 'left 42ms linear, top 42ms linear' : 'none';
             });
         };
 
-        const updateMapFollowCamera = (liveSeconds, timestamp) => {
+        const updateMapFollowCamera = timestamp => {
             if (!mapFollowTrainKey || timestamp - mapLastCameraUpdateTime < MAP_CAMERA_FRAME_INTERVAL) return;
             const elapsed = timestamp - mapLastCameraUpdateTime;
             mapLastCameraUpdateTime = timestamp - (elapsed % MAP_CAMERA_FRAME_INTERVAL);
-            const followedTrain = getMapTrainByKey(liveSeconds, mapFollowTrainKey);
-            const placement = followedTrain ? getSubwayMapTrainPlacement(followedTrain) : null;
-            if (placement) subwayMap.setCenter(new kakao.maps.LatLng(placement.lanePoint[0], placement.lanePoint[1]));
+            const followedEntry = subwayMapTrainOverlays.get(mapFollowTrainKey);
+            if (followedEntry?.position) subwayMap.setCenter(followedEntry.position);
         };
 
         window.ensureMapAnimationLoop = () => {
             if (mapAnimationFrameId !== null) return;
             const animate = timestamp => {
                 mapAnimationFrameId = null;
-                if (activeTab !== 'map' || !subwayMap || !mapTrainMotionEnabled) return;
+                if (activeTab !== 'map' || !subwayMap) return;
                 const liveSeconds = getLiveCurrentSeconds();
                 const trainElapsed = timestamp - mapLastFullUpdateTime;
-                if (trainElapsed >= MAP_TRAIN_TARGET_INTERVAL) {
-                    mapLastFullUpdateTime = timestamp - (trainElapsed % MAP_TRAIN_TARGET_INTERVAL);
+                const targetInterval = mapNationwideMode && !mapFollowTrainKey ? 1000 / 30 : MAP_TRAIN_TARGET_INTERVAL;
+                if (trainElapsed >= targetInterval) {
+                    mapLastFullUpdateTime = timestamp - (trainElapsed % targetInterval);
                     window.updateSubwayMapTrains(getRegionMapTrains(liveSeconds), { timestamp });
+                    // 열차와 카메라를 같은 시간 샘플·같은 프레임에서 갱신해 추적 시 흔들림을 막는다.
+                    updateMapFollowCamera(timestamp);
                 }
-                updateMapFollowCamera(liveSeconds, timestamp);
                 mapAnimationFrameId = requestAnimationFrame(animate);
             };
             mapAnimationFrameId = requestAnimationFrame(animate);
@@ -2879,14 +2921,11 @@
                 subwayMapOverlays.push({ lineId, overlay:new kakao.maps.CustomOverlay({ map: subwayMap, position, content, yAnchor: 0.5, zIndex: lineId === currentLineId ? 5 : 3 }) });
             });
 
-            const regionLabel = { daegu:'대구권', daejeon:'대전', busan:'부산권', gwangju:'광주' }[currentRegion] || '지역';
-            if (dom.mapTitle) dom.mapTitle.textContent = `${regionLabel} 전노선 지도`;
-            if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = THEME_COLOR;
-            if (dom.mapStatus) dom.mapStatus.textContent = `© OSM · ${lineIds.length}개 노선`;
+            setMapRegionHeader();
             window.renderMapLineControls();
             requestAnimationFrame(() => {
                 subwayMap.relayout();
-                if (options.fitBounds !== false) subwayMap.setBounds(bounds);
+                if (options.fitBounds !== false) subwayMap.setBounds(bounds, mapNationwideMode ? 104 : 92, 24, mapNationwideMode ? 124 : 112, 24);
             });
         };
 
@@ -2918,7 +2957,7 @@
             };
             kakao.maps.event.addListener(subwayMap, 'zoom_start', pauseTrainInterpolation);
             kakao.maps.event.addListener(subwayMap, 'zoom_changed', resumeTrainInterpolation);
-            kakao.maps.event.addListener(subwayMap, 'dragstart', () => { mapFollowTrainKey = null; pauseTrainInterpolation(); });
+            kakao.maps.event.addListener(subwayMap, 'dragstart', () => { mapFollowTrainKey = null; setMapRegionHeader(); pauseTrainInterpolation(); });
             kakao.maps.event.addListener(subwayMap, 'dragend', resumeTrainInterpolation);
             const fallback = document.getElementById('subway-map-fallback');
             if (fallback) fallback.classList.add('hidden');
@@ -3076,7 +3115,7 @@
 
         window.handleStationClick = (n) => { selectedStation = n; if(n) stationDetailDirection = currentDirection; else selectedMapStationLineId = null; window.render(); };
         window.handleTrainClick = (id) => { selectedTrainId = id; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = true; selectedStation = null; window.render(); };
-        window.closeTrainDetail = () => { selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = false; dom.floatingPanel.classList.add('hidden'); window.render(); };
+        window.closeTrainDetail = () => { selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = false; dom.floatingPanel.classList.add('hidden'); if (activeTab === 'map') setMapRegionHeader(); window.render(); };
         window.setStationDetailDirection = (d) => { stationDetailDirection = d; window.render(); };
 
         window.openModal = async (forcedDayType = null) => {
@@ -3273,8 +3312,7 @@
             });
             const mapTrains = activeTab === 'map' ? getRegionMapTrains() : [];
             if (activeTab === 'map') {
-                if (!mapTrainMotionEnabled && subwayMapTrainOverlays.size === 0) window.updateSubwayMapTrains(mapTrains);
-                if (mapTrainMotionEnabled) window.ensureMapAnimationLoop();
+                window.ensureMapAnimationLoop();
             }
             const selectedData = selectedMapTrainKey
                 ? mapTrains.find(t => `${t.lineId}:${t.direction}:${t.id}` === selectedMapTrainKey)
