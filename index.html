@@ -615,7 +615,8 @@
             font-weight: 800;
             transition: transform .16s ease, opacity .16s ease;
         }
-        .home-baseball-more:active { transform: scale(.94); opacity: .78; }
+        .home-baseball-more:not(:disabled):active { transform: scale(.94); opacity: .78; }
+        .home-baseball-more:disabled { cursor: default; }
         .home-baseball-match {
             position: relative;
             height: 58px;
@@ -626,7 +627,12 @@
             overflow: hidden;
             border-radius: 999px;
             color: #fff;
-            background: rgba(255,255,255,.08);
+            background: linear-gradient(
+                100deg,
+                color-mix(in srgb, var(--away-color, #64748B) 28%, #171719) 0%,
+                #171719 49%,
+                color-mix(in srgb, var(--home-color, #64748B) 28%, #171719) 100%
+            );
             border: 1px solid rgba(255,255,255,.10);
             cursor: pointer;
             transition: transform .16s ease, opacity .16s ease;
@@ -638,8 +644,7 @@
             width: 78px;
             height: 78px;
             object-fit: contain;
-            opacity: .09;
-            filter: grayscale(1);
+            opacity: .13;
             pointer-events: none;
             transform: translateY(-50%);
         }
@@ -740,8 +745,6 @@
             display: grid;
             grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
             align-items: center;
-            border-top: 1px solid rgba(255,255,255,.10);
-            background: rgba(0,0,0,.08);
         }
         .home-baseball-personnel {
             overflow: hidden;
@@ -764,7 +767,6 @@
             font-size: 8.5px;
             font-weight: 900;
             white-space: nowrap;
-            border-inline: 1px solid rgba(255,255,255,.08);
         }
         .home-baseball-out-dots { display: flex; gap: 2px; }
         .home-baseball-out-dot {
@@ -1940,9 +1942,17 @@
             .home-upcoming-cards > div .absolute.bottom-4 span { color: #FFFFFF !important; }
             .home-baseball-match,
             .home-baseball-more {
-                background: #FFFFFF;
                 border-color: rgba(0,0,0,.06);
                 box-shadow: 0 5px 14px rgba(15,23,42,.06);
+            }
+            .home-baseball-more { background: #FFFFFF; }
+            .home-baseball-match {
+                background: linear-gradient(
+                    100deg,
+                    color-mix(in srgb, var(--away-color, #64748B) 17%, #FFFFFF) 0%,
+                    #FFFFFF 49%,
+                    color-mix(in srgb, var(--home-color, #64748B) 17%, #FFFFFF) 100%
+                );
             }
             .home-baseball-team { color: #191F28; }
             .home-baseball-versus strong { color: #191F28; }
@@ -1956,15 +1966,13 @@
             .home-baseball-base { background: #B8C0C8; }
             .home-baseball-base.is-on { background: #34D399; }
             .home-baseball-score-sub {
-                border-top-color: rgba(15,23,42,.08);
-                background: rgba(242,242,247,.38);
+                background: transparent;
             }
             .home-baseball-personnel { color: #344054; }
             .home-baseball-sub-center {
                 color: #344054;
-                border-inline-color: rgba(15,23,42,.07);
             }
-            .home-baseball-watermark { opacity: .09; }
+            .home-baseball-watermark { opacity: .13; }
 
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
@@ -2674,12 +2682,12 @@
                 <section class="home-baseball-strip" aria-label="KBO 야구 점수판">
                     <div class="home-baseball-heading">
                         <span class="home-baseball-heading-label"><i class="fa-solid fa-baseball"></i> KBO 경기</span>
-                        <button type="button" class="home-baseball-more" onclick="window.openKboScoreboard()" aria-label="전체 KBO 구단 점수판 보기">
+                        <button type="button" class="home-baseball-more" disabled aria-disabled="true" aria-label="전체 KBO 구단 점수판 보기 준비 중">
                             <span>더보기</span><i class="fa-solid fa-chevron-right text-[7px]"></i>
                         </button>
                     </div>
 
-                    <div class="home-baseball-match" data-kbo-featured-team="samsung" role="button" tabindex="0" aria-label="삼성 경기 정보 보기" onclick="window.openEnjoyBaseballFeatured('samsung')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                    <div class="home-baseball-match" style="--away-color:#074CA1;--home-color:#570514;" data-kbo-featured-team="samsung" role="button" tabindex="0" aria-label="삼성 경기 정보 보기" onclick="window.openEnjoyBaseballFeatured('samsung')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                         <img class="home-baseball-watermark is-away" src="https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png" alt="" aria-hidden="true">
                         <img class="home-baseball-watermark is-home" src="https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kiwoom.png" alt="" aria-hidden="true">
                         <span class="home-baseball-score-main">
@@ -2696,7 +2704,7 @@
                         </span>
                     </div>
 
-                    <div class="home-baseball-match" data-kbo-featured-team="kia" role="button" tabindex="0" aria-label="KIA 경기 정보 보기" onclick="window.openEnjoyBaseballFeatured('kia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                    <div class="home-baseball-match" style="--away-color:#F37321;--home-color:#EA0029;" data-kbo-featured-team="kia" role="button" tabindex="0" aria-label="KIA 경기 정보 보기" onclick="window.openEnjoyBaseballFeatured('kia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                         <img class="home-baseball-watermark is-away" src="https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/hanwha_logo.png" alt="" aria-hidden="true">
                         <img class="home-baseball-watermark is-home" src="https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kia_logoo.png" alt="" aria-hidden="true">
                         <span class="home-baseball-score-main">
@@ -3797,6 +3805,8 @@
         function renderEnjoyBaseballFeatured(teamKey, game) {
             const card = document.querySelector('[data-kbo-featured-team="' + teamKey + '"]');
             if (!card || !game) return;
+            card.style.setProperty('--away-color', enjoyBaseballTeamColors[game.team1] || '#64748B');
+            card.style.setProperty('--home-color', enjoyBaseballTeamColors[game.team2] || '#64748B');
             const status = String(game.gameStatus || '경기전');
             const inning = String(game.inning || '');
             const canceled = status.includes('취소') || status.includes('우취') || inning.includes('취소') || inning.includes('우취');
