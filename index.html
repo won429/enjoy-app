@@ -2082,17 +2082,6 @@
                 }
             </style>
 
-            <!-- 0. 엔조이 멤버 + 현재현황 (가입 여부 + 활동 상태) -->
-            <section>
-                <div class="px-1 mb-2.5">
-                    <p class="text-[12px] font-medium text-gray-400 tracking-tight">멤버들의 현재 활동 상태를 한눈에 확인해요.</p>
-                    <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이 멤버</h3>
-                </div>
-                <div id="story-tray" class="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch;">
-                    <!-- 멤버 항목은 JS가 채웁니다 -->
-                </div>
-            </section>
-
             <!-- 상단: 한 명의 엔조이 비서가 오늘의 소식을 요약 -->
             <div id="enjoy-assistant" class="mb-9 mt-2 fade-in-up delay-100">
                 <div class="assistant-stage">
@@ -2102,6 +2091,16 @@
                             <h2 id="assistant-greeting" class="text-[23px] font-black text-white tracking-tight leading-tight mb-1.5">오늘도 반가워요</h2>
                         </div>
                     </div>
+
+                    <!-- 0. 엔조이 멤버 + 현재현황 (가입 여부 + 활동 상태) -->
+                    <section>
+                        <div class="px-1 mb-2.5">
+                            <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">엔조이 멤버</h3>
+                        </div>
+                        <div id="story-tray" class="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch;">
+                            <!-- 멤버 항목은 JS가 채웁니다 -->
+                        </div>
+                    </section>
 
                     <div class="assistant-conversation">
                         <img alt="엔조이 수달 비서" src="https://raw.githubusercontent.com/won429/enjoy-app/main/dhkfodshf.png"
@@ -6825,8 +6824,14 @@
             // 이름 → 멤버 문서(가입자)
             const byName = {}; lastMembers.forEach(m => { if (m.name) byName[m.name] = m; });
 
-            // 멤버 6명 항상 고정 표시
-            const html = MEMBERS.map(name => {
+            // 최근 활동 순서로 정렬하고, 활동 기록이 없거나 같으면 기존 순서를 유지
+            const orderedMembers = MEMBERS.slice().sort((a, b) => {
+                const aTime = Number((byName[a] && byName[a].lastActive) || 0);
+                const bTime = Number((byName[b] && byName[b].lastActive) || 0);
+                return (bTime - aTime) || (MEMBERS.indexOf(a) - MEMBERS.indexOf(b));
+            });
+
+            const html = orderedMembers.map(name => {
                 const mem = byName[name];                 // 가입자면 존재
                 const registered = !!mem;
                 const active = registered && (now - (mem.lastActive || 0) < ACTIVE_MS);
