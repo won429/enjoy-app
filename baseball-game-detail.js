@@ -1091,8 +1091,12 @@
                     inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">종료</span>`; 
                     centerArea = `<span class="text-[12px] font-bold text-gray-400 tracking-widest mt-px">경기결과</span>`;
                 } else if (l.gameStatus === '경기전' || iC) {
-                    aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aPitcher !== '-' ? '선발 ' + aPitcher : '-'}</span>`;
-                    hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hPitcher !== '-' ? '선발 ' + hPitcher : '-'}</span>`;
+                    let awayExpectedStarter = _starterForLineup(m, l, 'away');
+                    let homeExpectedStarter = _starterForLineup(m, l, 'home');
+                    let awayStarterText = awayExpectedStarter.name ? `${awayExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${awayExpectedStarter.name}` : '예상 선발 미정';
+                    let homeStarterText = homeExpectedStarter.name ? `${homeExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${homeExpectedStarter.name}` : '예상 선발 미정';
+                    aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${awayStarterText}</span>`;
+                    hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${homeStarterText}</span>`;
                     let centerTxt = iC ? '우천취소' : m.time;
                     inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">${centerTxt}</span>`;
                     centerArea = `<span class="text-[11px] font-bold text-gray-400 tracking-widest mt-px">${m.stadium}</span>`;
@@ -1278,8 +1282,12 @@
                     inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">종료</span>`; 
                     centerArea = `<span class="text-[12px] font-bold text-gray-400 tracking-widest mt-px">경기결과</span>`;
                 } else if (l.gameStatus === '경기전' || iC) {
-                    aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aPitcher !== '-' ? '선발 ' + aPitcher : '-'}</span>`;
-                    hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hPitcher !== '-' ? '선발 ' + hPitcher : '-'}</span>`;
+                    let awayExpectedStarter = _starterForLineup(m, l, 'away');
+                    let homeExpectedStarter = _starterForLineup(m, l, 'home');
+                    let awayStarterText = awayExpectedStarter.name ? `${awayExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${awayExpectedStarter.name}` : '예상 선발 미정';
+                    let homeStarterText = homeExpectedStarter.name ? `${homeExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${homeExpectedStarter.name}` : '예상 선발 미정';
+                    aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${awayStarterText}</span>`;
+                    hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${homeStarterText}</span>`;
                     let centerTxt = iC ? '우천취소' : m.time;
                     inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">${centerTxt}</span>`;
                     centerArea = `<span class="text-[11px] font-bold text-gray-400 tracking-widest mt-px">${m.stadium}</span>`;

@@ -635,12 +635,21 @@
             );
             border: 1px solid rgba(255,255,255,.10);
             cursor: pointer;
-            transition: transform .16s ease, opacity .42s ease;
+            transition: transform .16s ease, opacity .16s ease;
         }
         .home-baseball-match:active { transform: scale(.985); opacity: .84; }
         .home-baseball-match.is-fading {
-            opacity: 0;
             pointer-events: none;
+        }
+        .home-baseball-match > .home-baseball-watermark,
+        .home-baseball-match > .home-baseball-score-main,
+        .home-baseball-match > .home-baseball-score-sub {
+            transition: opacity .42s ease;
+        }
+        .home-baseball-match.is-fading > .home-baseball-watermark,
+        .home-baseball-match.is-fading > .home-baseball-score-main,
+        .home-baseball-match.is-fading > .home-baseball-score-sub {
+            opacity: 0;
         }
         .home-baseball-watermark {
             position: absolute;
@@ -3664,6 +3673,10 @@
         const enjoyBaseballFeaturedGames = { samsung: null, kia: null };
         const enjoyBaseballFeaturedRotations = { samsung: [], kia: [] };
         const enjoyBaseballFeaturedRotationIndexes = { samsung: 0, kia: 0 };
+        let enjoyBaseballScheduleGames = [];
+        let enjoyBaseballStarterHistoryGames = [];
+        let enjoyBaseballStarterHistoryDate = '';
+        let enjoyBaseballStarterHistoryPromise = null;
         const enjoyBaseballTeamLogos = {
             '삼성': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png',
             'KIA': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kia_logoo.png',
@@ -3679,6 +3692,18 @@
         const enjoyBaseballTeamColors = {
             '삼성': '#074CA1', 'KIA': '#EA0029', 'LG': '#C30452', '두산': '#131230', 'SSG': '#CE0E2D',
             '롯데': '#041E42', '한화': '#F37321', 'KT': '#181818', 'NC': '#315288', '키움': '#570514'
+        };
+        const enjoyBaseballStarterRotationFallback = {
+            'LG': ['웰스', '임찬규', '송승기', '장현식', '톨허스트'],
+            '두산': ['최민석', '잭로그', '최승용', '벤자민', '곽빈'],
+            'KIA': ['시라카와', '네일', '양현종', '황동하', '올러'],
+            '삼성': ['양창섭', '페덱', '원태인', '최원태', '김백산'],
+            'SSG': ['김민준', '해치', '김건우', '타케다', '아빌라'],
+            '롯데': ['로드리게스', '나균안', '김진욱', '비슬리', '박세웅'],
+            '한화': ['왕옌청', '에르난데스', '류현진', '박준영', '화이트'],
+            'KT': ['소형준', '사우어', '고영표', '오원석', '로건'],
+            'NC': ['테일러', '구창모', '토다', '원종해', '라일리'],
+            '키움': ['하영민', '안우진', '박준현', '배동현', '알칸타라']
         };
 
         function enjoyBaseballDecode(value) {
@@ -3712,6 +3737,34 @@
         }
         function enjoyBaseballMonthKey(date) {
             return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+        }
+        function enjoyBaseballLoadStarterHistory(now) {
+            const today = enjoyBaseballDateKey(now);
+            if (enjoyBaseballStarterHistoryDate === today && enjoyBaseballStarterHistoryGames.length) {
+                return Promise.resolve(enjoyBaseballStarterHistoryGames);
+            }
+            if (enjoyBaseballStarterHistoryPromise) return enjoyBaseballStarterHistoryPromise;
+            const dates = [];
+            for (let offset = 1; offset <= 14; offset += 1) {
+                const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
+                dates.push(enjoyBaseballDateKey(date));
+            }
+            enjoyBaseballStarterHistoryPromise = Promise.all(dates.map(function (date) {
+                return enjoyBaseballGetDocument('games/' + date).catch(function () { return null; });
+            })).then(function (documents) {
+                const history = [];
+                documents.forEach(function (documentData) {
+                    ((documentData && documentData.games) || []).forEach(function (rawGame) {
+                        history.push(enjoyBaseballNormalizeGame(rawGame));
+                    });
+                });
+                enjoyBaseballStarterHistoryDate = today;
+                enjoyBaseballStarterHistoryGames = history;
+                return history;
+            }).finally(function () {
+                enjoyBaseballStarterHistoryPromise = null;
+            });
+            return enjoyBaseballStarterHistoryPromise;
         }
         function enjoyBaseballNormalizeGame(raw) {
             const game = Object.assign({}, raw || {});
@@ -3844,11 +3897,63 @@
             const countText = count == null || count === '' ? '' : ' <i class="fa-solid fa-baseball"></i> ' + enjoyBaseballEscape(count);
             return 'P.' + enjoyBaseballEscape(pitcher) + countText;
         }
+        function enjoyBaseballOfficialStarter(game, side) {
+            const candidates = [
+                game[side + 'StarterDetail'], game[side + 'Starter'],
+                game[side + 'PitcherDetail'], game[side + 'Pitcher']
+            ];
+            for (let index = 0; index < candidates.length; index += 1) {
+                const name = enjoyBaseballPlayerName(candidates[index]);
+                if (name && name !== '-') return name;
+            }
+            return '';
+        }
+        function enjoyBaseballStarterInfo(game, side) {
+            const official = enjoyBaseballOfficialStarter(game, side);
+            if (official) return { name: official, predicted: false };
+            const today = enjoyBaseballDateKey(new Date());
+            const gameDate = String(game.date || '');
+            const dayDistance = Math.round((new Date(gameDate + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86400000);
+            if (!gameDate || dayDistance < 0 || dayDistance > 14 || String(game.gameStatus || '경기전') !== '경기전') {
+                return { name: '', predicted: false };
+            }
+
+            const team = side === 'away' ? game.team1 : game.team2;
+            const history = enjoyBaseballStarterHistoryGames.concat(enjoyBaseballScheduleGames).filter(function (item) {
+                return String(item.date || '') < today && (item.team1 === team || item.team2 === team);
+            }).sort(function (first, second) {
+                return String(first.date || '').localeCompare(String(second.date || '')) ||
+                    String(first.time || '').localeCompare(String(second.time || ''));
+            });
+            const starts = history.map(function (item) {
+                const itemSide = item.team1 === team ? 'away' : 'home';
+                return enjoyBaseballOfficialStarter(item, itemSide);
+            }).filter(function (name) { return name && name !== '-'; });
+            const recentUnique = [];
+            for (let index = starts.length - 1; index >= 0 && recentUnique.length < 5; index -= 1) {
+                if (!recentUnique.includes(starts[index])) recentUnique.push(starts[index]);
+            }
+            recentUnique.reverse();
+            const starterRotation = recentUnique.length >= 3
+                ? recentUnique
+                : (enjoyBaseballStarterRotationFallback[team] || []);
+            if (!starterRotation.length) return { name: '', predicted: true };
+
+            const upcoming = enjoyBaseballScheduleGames.filter(function (item) {
+                return String(item.date || '') >= today && String(item.date || '') <= gameDate &&
+                    (item.team1 === team || item.team2 === team) && !enjoyBaseballIsCanceled(item);
+            }).sort(function (first, second) {
+                return String(first.date || '').localeCompare(String(second.date || '')) ||
+                    String(first.time || '').localeCompare(String(second.time || ''));
+            });
+            let gameIndex = upcoming.findIndex(function (item) { return enjoyBaseballSameGame(item, game); });
+            if (gameIndex < 0) gameIndex = Math.max(0, upcoming.length - 1);
+            return { name: starterRotation[gameIndex % starterRotation.length], predicted: true };
+        }
         function enjoyBaseballStarterPersonnel(game, side) {
-            const starter = enjoyBaseballPlayerName(game[side + 'StarterDetail']) ||
-                enjoyBaseballPlayerName(game[side + 'Starter']) ||
-                enjoyBaseballCurrentPitcher(game, side);
-            return starter && starter !== '-' ? '선발 ' + enjoyBaseballEscape(starter) : '-';
+            const starter = enjoyBaseballStarterInfo(game, side);
+            const label = starter.predicted ? '예상 선발 ' : '선발 ';
+            return label + enjoyBaseballEscape(starter.name || '미정');
         }
         function enjoyBaseballLiveCenter(game, inning) {
             const inningNumber = (inning.match(/\d+/) || [''])[0] || '1';
@@ -3932,7 +4037,8 @@
                 const results = await Promise.all([
                     enjoyBaseballGetDocument('live/today'),
                     enjoyBaseballGetDocument('schedule/' + enjoyBaseballMonthKey(now)),
-                    enjoyBaseballGetDocument('schedule/' + enjoyBaseballMonthKey(nextMonth))
+                    enjoyBaseballGetDocument('schedule/' + enjoyBaseballMonthKey(nextMonth)),
+                    enjoyBaseballLoadStarterHistory(now)
                 ]);
                 const merged = new Map();
                 [results[1], results[2], results[0]].forEach(function (documentData) {
@@ -3943,6 +4049,7 @@
                     });
                 });
                 const games = Array.from(merged.values());
+                enjoyBaseballScheduleGames = games;
                 const today = enjoyBaseballDateKey(now);
                 enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today));
                 enjoyBaseballSetRotation('kia', enjoyBaseballChooseRotation(games, 'KIA', today));
