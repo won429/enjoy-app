@@ -635,9 +635,13 @@
             );
             border: 1px solid rgba(255,255,255,.10);
             cursor: pointer;
-            transition: transform .16s ease, opacity .16s ease;
+            transition: transform .16s ease, opacity .42s ease;
         }
         .home-baseball-match:active { transform: scale(.985); opacity: .84; }
+        .home-baseball-match.is-fading {
+            opacity: 0;
+            pointer-events: none;
+        }
         .home-baseball-watermark {
             position: absolute;
             top: 50%;
@@ -653,16 +657,16 @@
         .home-baseball-score-main {
             position: relative;
             z-index: 1;
-            height: 32px;
+            height: 31px;
             display: grid;
-            grid-template-columns: minmax(44px, 1fr) 24px 46px 24px minmax(44px, 1fr);
+            grid-template-columns: minmax(44px, 1fr) 26px 50px 26px minmax(44px, 1fr);
             align-items: center;
             column-gap: 3px;
         }
         .home-baseball-club {
             overflow: hidden;
             color: #fff;
-            font-size: 13.5px;
+            font-size: 15px;
             font-weight: 950;
             letter-spacing: -.04em;
             text-overflow: ellipsis;
@@ -671,7 +675,7 @@
         .home-baseball-club.is-home { text-align: right; }
         .home-baseball-score {
             color: #fff;
-            font-size: 19px;
+            font-size: 21px;
             font-weight: 950;
             line-height: 1;
             text-align: center;
@@ -686,7 +690,7 @@
         }
         .home-baseball-pregame-time,
         .home-baseball-final-state {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 950;
             letter-spacing: -.02em;
             white-space: nowrap;
@@ -701,13 +705,13 @@
         }
         .home-baseball-bases {
             position: relative;
-            width: 22px;
-            height: 13px;
+            width: 25px;
+            height: 15px;
         }
         .home-baseball-base {
             position: absolute;
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             border-radius: 1px;
             background: #D1D6DB;
             transform: rotate(45deg);
@@ -716,26 +720,26 @@
             background: #34D399;
             box-shadow: 0 0 5px rgba(52,211,153,.42);
         }
-        .home-baseball-base.is-second { top: 0; left: 8px; }
-        .home-baseball-base.is-third { top: 6px; left: 2px; }
-        .home-baseball-base.is-first { top: 6px; right: 2px; }
+        .home-baseball-base.is-second { top: 0; left: 9px; }
+        .home-baseball-base.is-third { top: 7px; left: 2px; }
+        .home-baseball-base.is-first { top: 7px; right: 2px; }
         .home-baseball-inning {
             display: flex;
             align-items: center;
             gap: 3px;
             color: #fff;
-            font-size: 8.5px;
+            font-size: 9.5px;
             font-weight: 900;
             line-height: 1;
         }
         .home-baseball-inning-arrow {
             width: 0;
             height: 0;
-            border-left: 3px solid transparent;
-            border-right: 3px solid transparent;
+            border-left: 3.5px solid transparent;
+            border-right: 3.5px solid transparent;
         }
-        .home-baseball-inning-arrow.is-top { border-bottom: 4px solid #34D399; }
-        .home-baseball-inning-arrow.is-bottom { border-top: 4px solid #34D399; }
+        .home-baseball-inning-arrow.is-top { border-bottom: 5px solid #34D399; }
+        .home-baseball-inning-arrow.is-bottom { border-top: 5px solid #34D399; }
         .home-baseball-score-sub {
             position: relative;
             z-index: 1;
@@ -749,7 +753,7 @@
         .home-baseball-personnel {
             overflow: hidden;
             color: rgba(255,255,255,.76);
-            font-size: 8.5px;
+            font-size: 9.5px;
             font-weight: 800;
             letter-spacing: -.025em;
             text-overflow: ellipsis;
@@ -764,14 +768,14 @@
             justify-content: center;
             gap: 4px;
             color: rgba(255,255,255,.65);
-            font-size: 8.5px;
+            font-size: 9.5px;
             font-weight: 900;
             white-space: nowrap;
         }
         .home-baseball-out-dots { display: flex; gap: 2px; }
         .home-baseball-out-dot {
-            width: 4px;
-            height: 4px;
+            width: 5px;
+            height: 5px;
             border-radius: 999px;
             background: #AEB5BC;
         }
@@ -3658,6 +3662,8 @@
         });
         const enjoyBaseballFirestoreBase = 'https://firestore.googleapis.com/v1/projects/' + enjoyBaseballFirebase.projectId + '/databases/(default)/documents';
         const enjoyBaseballFeaturedGames = { samsung: null, kia: null };
+        const enjoyBaseballFeaturedRotations = { samsung: [], kia: [] };
+        const enjoyBaseballFeaturedRotationIndexes = { samsung: 0, kia: 0 };
         const enjoyBaseballTeamLogos = {
             '삼성': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png',
             'KIA': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kia_logoo.png',
@@ -3714,16 +3720,70 @@
             game.time = game.gameTime || game.time || '';
             return game;
         }
-        function enjoyBaseballChooseGame(games, team, today) {
+        function enjoyBaseballIsCanceled(game) {
+            const status = String((game && game.gameStatus) || '');
+            const inning = String((game && game.inning) || '');
+            return status.includes('취소') || status.includes('우취') || inning.includes('취소') || inning.includes('우취');
+        }
+        function enjoyBaseballChooseRotation(games, team, today) {
             const teamGames = games.filter(function (game) {
                 return game.team1 === team || game.team2 === team;
             }).sort(function (a, b) {
                 return String(a.date || '').localeCompare(String(b.date || '')) || String(a.time || '').localeCompare(String(b.time || ''));
             });
-            const todayGame = teamGames.find(function (game) { return game.date === today; });
-            if (todayGame) return todayGame;
+
+            const todayGames = teamGames.filter(function (game) { return game.date === today; });
+            const liveGame = todayGames.find(function (game) { return String(game.gameStatus || '') === '경기중'; });
+            const waitingGame = todayGames.find(function (game) {
+                return String(game.gameStatus || '경기전') === '경기전' && !enjoyBaseballIsCanceled(game);
+            });
+            if (liveGame) return [liveGame];
+
+            const finishedGame = todayGames.slice().reverse().find(function (game) {
+                return String(game.gameStatus || '') === '종료';
+            });
+            if (finishedGame) {
+                const finishedIndex = teamGames.indexOf(finishedGame);
+                const nextGame = teamGames.slice(finishedIndex + 1).find(function (game) {
+                    return String(game.date || '') >= today && !enjoyBaseballIsCanceled(game);
+                });
+                return nextGame ? [finishedGame, nextGame] : [finishedGame];
+            }
+            if (waitingGame) return [waitingGame];
+
             const upcoming = teamGames.find(function (game) { return String(game.date || '') > today; });
-            return upcoming || teamGames[teamGames.length - 1] || null;
+            return upcoming ? [upcoming] : (teamGames.length ? [teamGames[teamGames.length - 1]] : []);
+        }
+        function enjoyBaseballSameGame(first, second) {
+            if (!first || !second) return false;
+            if (first.id != null && second.id != null) return String(first.id) === String(second.id);
+            return first.date === second.date && first.team1 === second.team1 && first.team2 === second.team2 && first.time === second.time;
+        }
+        function enjoyBaseballSetRotation(teamKey, rotation) {
+            const previous = enjoyBaseballFeaturedGames[teamKey];
+            let index = rotation.findIndex(function (game) { return enjoyBaseballSameGame(game, previous); });
+            if (index < 0) index = 0;
+            enjoyBaseballFeaturedRotations[teamKey] = rotation;
+            enjoyBaseballFeaturedRotationIndexes[teamKey] = index;
+            enjoyBaseballFeaturedGames[teamKey] = rotation[index] || null;
+            renderEnjoyBaseballFeatured(teamKey, enjoyBaseballFeaturedGames[teamKey]);
+        }
+        function rotateEnjoyBaseballFeatured() {
+            Object.keys(enjoyBaseballFeaturedRotations).forEach(function (teamKey) {
+                const rotation = enjoyBaseballFeaturedRotations[teamKey];
+                const card = document.querySelector('[data-kbo-featured-team="' + teamKey + '"]');
+                if (!card || rotation.length < 2 || card.classList.contains('is-fading')) return;
+                card.classList.add('is-fading');
+                window.setTimeout(function () {
+                    const nextIndex = (enjoyBaseballFeaturedRotationIndexes[teamKey] + 1) % rotation.length;
+                    enjoyBaseballFeaturedRotationIndexes[teamKey] = nextIndex;
+                    enjoyBaseballFeaturedGames[teamKey] = rotation[nextIndex];
+                    renderEnjoyBaseballFeatured(teamKey, rotation[nextIndex]);
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () { card.classList.remove('is-fading'); });
+                    });
+                }, 420);
+            });
         }
         function enjoyBaseballEscape(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
@@ -3837,7 +3897,7 @@
                 const homeWon = Number(game.homeScore || 0) > Number(game.awayScore || 0);
                 awaySub = awayWon ? '<b>승</b> ' + enjoyBaseballEscape(game.winPitcher || '-') : (homeWon ? '패 ' + enjoyBaseballEscape(game.losePitcher || '-') : '무승부');
                 homeSub = homeWon ? '<b>승</b> ' + enjoyBaseballEscape(game.winPitcher || '-') : (awayWon ? '패 ' + enjoyBaseballEscape(game.losePitcher || '-') : '무승부');
-                centerSub = 'FINAL';
+                centerSub = '경기결과';
             } else {
                 centerMain = '<span class="home-baseball-pregame-time">' + enjoyBaseballEscape(canceled ? '취소' : (game.time || '미정')) + '</span>';
                 awaySub = enjoyBaseballStarterPersonnel(game, 'away');
@@ -3884,10 +3944,8 @@
                 });
                 const games = Array.from(merged.values());
                 const today = enjoyBaseballDateKey(now);
-                enjoyBaseballFeaturedGames.samsung = enjoyBaseballChooseGame(games, '삼성', today);
-                enjoyBaseballFeaturedGames.kia = enjoyBaseballChooseGame(games, 'KIA', today);
-                renderEnjoyBaseballFeatured('samsung', enjoyBaseballFeaturedGames.samsung);
-                renderEnjoyBaseballFeatured('kia', enjoyBaseballFeaturedGames.kia);
+                enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today));
+                enjoyBaseballSetRotation('kia', enjoyBaseballChooseRotation(games, 'KIA', today));
             } catch (error) {
                 console.warn('엔조이 야구 점수판을 불러오지 못했습니다.', error);
             }
@@ -3935,6 +3993,7 @@
             frame.classList.remove('opacity-0');
         });
         refreshEnjoyBaseballFeatured();
+        setInterval(rotateEnjoyBaseballFeatured, 3000);
         setInterval(refreshEnjoyBaseballFeatured, 30000);
 
         function vlogYoutubeId(url) {

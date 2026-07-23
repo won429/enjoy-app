@@ -1089,7 +1089,7 @@
                     aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aText}</span>`; 
                     hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hText}</span>`;
                     inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">종료</span>`; 
-                    centerArea = `<span class="text-[12px] font-bold text-gray-400 tracking-widest mt-px">FINAL</span>`;
+                    centerArea = `<span class="text-[12px] font-bold text-gray-400 tracking-widest mt-px">경기결과</span>`;
                 } else if (l.gameStatus === '경기전' || iC) {
                     aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aPitcher !== '-' ? '선발 ' + aPitcher : '-'}</span>`;
                     hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hPitcher !== '-' ? '선발 ' + hPitcher : '-'}</span>`;
@@ -1276,7 +1276,7 @@
                     aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aText}</span>`; 
                     hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hText}</span>`;
                     inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">종료</span>`; 
-                    centerArea = `<span class="text-[12px] font-bold text-gray-400 tracking-widest mt-px">FINAL</span>`;
+                    centerArea = `<span class="text-[12px] font-bold text-gray-400 tracking-widest mt-px">경기결과</span>`;
                 } else if (l.gameStatus === '경기전' || iC) {
                     aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aPitcher !== '-' ? '선발 ' + aPitcher : '-'}</span>`;
                     hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hPitcher !== '-' ? '선발 ' + hPitcher : '-'}</span>`;
