@@ -33,6 +33,9 @@
     <!-- 카카오 지도 API: YOUR_KAKAO_JAVASCRIPT_KEY를 카카오 JavaScript 키로 교체하세요. -->
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0be88f46eb39dabeacc3414f5af0bb5f&amp;libraries=services"></script>
     <script type="text/javascript" src="sgg-boundaries.js"></script>
+    <link rel="preload" as="image" href="bird-flight-v2.png">
+    <link rel="preload" as="image" href="mole-dig-v3.png">
+    <link rel="preload" as="image" href="mole-hole-v3.png">
 
     <style>
         :root {
@@ -765,25 +768,6 @@
             pointer-events: none;
         }
 
-        #draw-obstacle-layer::before {
-            content: "";
-            position: absolute;
-            inset: -20%;
-            opacity: 0;
-            background: repeating-linear-gradient(
-                164deg,
-                transparent 0 30px,
-                rgba(255, 255, 255, 0.2) 31px 33px,
-                transparent 34px 62px
-            );
-            transform: translateX(-35%);
-        }
-
-        #draw-obstacle-layer.is-wind-active::before {
-            opacity: 0.72;
-            animation: dartWindCurtain 300ms linear infinite;
-        }
-
         .dart-obstacle {
             position: absolute;
             left: 0;
@@ -794,98 +778,30 @@
         }
 
         .dart-obstacle.is-bird {
-            width: 86px;
-            height: 72px;
+            width: 122px;
+            height: 92px;
+            overflow: visible;
         }
 
-        .obstacle-bird-body {
+        .obstacle-bird-sprite {
             position: absolute;
-            left: 20px;
-            top: 23px;
-            width: 43px;
-            height: 18px;
-            border-radius: 58% 72% 48% 62%;
-            background: linear-gradient(150deg, #4b5563 0%, #111827 72%);
-            transform: rotate(-7deg);
+            inset: 0;
+            display: block;
+            background: url('bird-flight-v2.png') 0 50% / 400% 100% no-repeat;
+            animation: obstacleBirdFlap 420ms steps(1, end) infinite;
+            filter: drop-shadow(0 6px 5px rgba(15, 23, 42, 0.32));
         }
 
-        .dart-obstacle.to-left .obstacle-bird-body {
-            transform: rotate(7deg) scaleX(-1);
-        }
-
-        .obstacle-bird-head {
-            position: absolute;
-            right: -7px;
-            top: -8px;
-            width: 21px;
-            height: 21px;
-            border-radius: 50%;
-            background: #1f2937;
-        }
-
-        .obstacle-bird-head::before {
-            content: "";
-            position: absolute;
-            right: -10px;
-            top: 7px;
-            width: 0;
-            height: 0;
-            border-top: 4px solid transparent;
-            border-bottom: 4px solid transparent;
-            border-left: 12px solid #d97706;
-        }
-
-        .obstacle-bird-head::after {
-            content: "";
-            position: absolute;
-            right: 5px;
-            top: 4px;
-            width: 3px;
-            height: 3px;
-            border-radius: 50%;
-            background: #f8fafc;
-            box-shadow: 0 0 0 1px #020617;
-        }
-
-        .obstacle-bird-wing {
-            position: absolute;
-            left: 7px;
-            top: -9px;
-            width: 35px;
-            height: 23px;
-            border-radius: 80% 15% 75% 15%;
-            background: linear-gradient(145deg, #64748b, #1f2937 74%);
-            transform-origin: 82% 82%;
-            animation: obstacleBirdWing 170ms ease-in-out infinite alternate;
-        }
-
-        .obstacle-bird-tail {
-            position: absolute;
-            left: -14px;
-            top: 5px;
-            width: 24px;
-            height: 13px;
-            background: #1f2937;
-            clip-path: polygon(100% 22%, 0 0, 34% 47%, 0 100%, 100% 72%);
-        }
-
-        .obstacle-bird-claw {
-            position: absolute;
-            left: 38px;
-            top: 38px;
-            width: 17px;
-            height: 13px;
-            border-left: 2px solid #a16207;
-            border-right: 2px solid #a16207;
-            transform: skewX(-10deg);
+        .dart-obstacle.to-left .obstacle-bird-sprite {
+            transform: scaleX(-1);
         }
 
         .obstacle-caught-dart {
             position: absolute;
-            left: 41px;
-            top: 44px;
-            width: 10px;
-            height: 38px;
+            left: 58px;
+            top: 60px;
+            width: 11px;
+            height: 44px;
             object-fit: contain;
             transform: rotate(78deg);
             transform-origin: 50% 0;
@@ -893,53 +809,155 @@
         }
 
         .dart-obstacle.to-left .obstacle-caught-dart {
-            left: 34px;
+            left: 51px;
             animation-name: obstacleCaughtDartReverse;
         }
 
-        .dart-obstacle.is-wind {
-            width: 172px;
-            height: 96px;
+        .dart-obstacle.is-mole {
+            width: 164px;
+            height: 164px;
+            overflow: visible;
+            filter: none;
         }
 
-        .obstacle-wind-streak {
+        .obstacle-mole-hole {
             position: absolute;
-            right: 0;
-            top: var(--wind-y);
-            width: var(--wind-width);
-            height: 3px;
-            border-radius: 999px;
-            opacity: var(--wind-opacity);
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.96));
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.26);
-            animation: obstacleWindStreak var(--wind-speed) linear infinite;
-        }
-
-        .obstacle-wind-debris {
-            position: absolute;
-            left: var(--debris-x);
-            top: var(--debris-y);
-            width: 5px;
-            height: 2px;
-            border-radius: 50%;
-            background: rgba(71, 85, 105, 0.78);
-            animation: obstacleWindDebris 520ms linear infinite;
-        }
-
-        .dart-obstacle.to-left .obstacle-wind-streak {
-            right: auto;
             left: 0;
-            background: linear-gradient(270deg, transparent, rgba(255, 255, 255, 0.96));
-            animation-name: obstacleWindStreakReverse;
+            bottom: 0;
+            width: 100%;
+            height: 94px;
+            object-fit: contain;
+            transform-origin: 50% 65%;
+            filter: drop-shadow(0 5px 5px rgba(69, 38, 10, 0.28));
         }
 
-        .dart-obstacle.to-left .obstacle-wind-debris {
-            animation-name: obstacleWindDebrisReverse;
+        .obstacle-mole-hole-back {
+            z-index: 1;
         }
 
-        @keyframes obstacleBirdWing {
-            from { transform: rotate(-42deg) scaleY(0.82); }
-            to { transform: rotate(38deg) scaleY(1.08); }
+        .obstacle-mole-hole-front {
+            z-index: 4;
+            clip-path: inset(48% 0 0);
+            filter: drop-shadow(0 4px 3px rgba(69, 38, 10, 0.22));
+        }
+
+        .obstacle-mole-riser {
+            position: absolute;
+            z-index: 3;
+            left: 13px;
+            top: 9px;
+            width: 138px;
+            height: 122px;
+            transform-origin: 50% 92%;
+            will-change: transform, opacity;
+        }
+
+        .obstacle-mole-character {
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: block;
+            width: 138px;
+            height: 104px;
+            background: url('mole-dig-v3.png') 0 50% / 400% 100% no-repeat;
+            animation: obstacleMoleDigFrames 460ms steps(1, end) infinite;
+            filter: drop-shadow(0 7px 6px rgba(69, 38, 10, 0.36));
+        }
+
+        .obstacle-mole-dart {
+            position: absolute;
+            left: 63px;
+            top: 35px;
+            width: 13px;
+            height: 66px;
+            object-fit: contain;
+            opacity: 0;
+            transform: rotate(-8deg);
+            transform-origin: 50% 78%;
+            transition: opacity 90ms ease;
+            animation: obstacleMoleDart 220ms ease-in-out infinite alternate;
+        }
+
+        .dart-obstacle.is-mole.has-dart .obstacle-mole-dart {
+            opacity: 1;
+        }
+
+        .obstacle-mole-dirt {
+            position: absolute;
+            z-index: 6;
+            left: 82px;
+            top: 118px;
+            width: var(--dirt-size);
+            height: var(--dirt-height);
+            margin: var(--dirt-margin-y) 0 0 var(--dirt-margin-x);
+            border-radius: 48% 42% 55% 38%;
+            background: var(--dirt-color);
+            box-shadow: inset -1px -1px 1px rgba(48, 25, 7, 0.4);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .obstacle-mole-soil-clod {
+            position: absolute;
+            z-index: 5;
+            left: 82px;
+            top: 118px;
+            width: var(--pile-size);
+            height: var(--pile-height);
+            margin: var(--pile-margin-y) 0 0 var(--pile-margin-x);
+            border-radius: 46% 58% 43% 55%;
+            background:
+                radial-gradient(circle at 32% 28%, rgba(255, 205, 130, 0.18), transparent 32%),
+                var(--pile-color);
+            box-shadow:
+                inset -2px -2px 2px rgba(47, 24, 7, 0.42),
+                0 2px 2px rgba(47, 24, 7, 0.24);
+            opacity: 0;
+            pointer-events: none;
+            will-change: transform, opacity;
+        }
+
+        .obstacle-mole-soil-clod.is-back {
+            z-index: 2;
+        }
+
+        .dart-obstacle.is-mole.is-digging .obstacle-mole-hole {
+            animation: obstacleMoleHoleOpen 560ms cubic-bezier(0.18, 0.72, 0.22, 1) both;
+        }
+
+        .dart-obstacle.is-mole.is-digging .obstacle-mole-dirt,
+        .dart-obstacle.is-mole.is-burrowing .obstacle-mole-dirt {
+            animation: obstacleMoleDirtBurst 760ms cubic-bezier(0.16, 0.72, 0.22, 1) var(--dirt-delay) both;
+        }
+
+        .dart-obstacle.is-mole.is-burrowing .obstacle-mole-dirt {
+            animation-duration: 520ms;
+        }
+
+        .dart-obstacle.is-mole.is-digging .obstacle-mole-soil-clod {
+            animation: obstacleMoleSoilSettle 790ms cubic-bezier(0.16, 0.76, 0.24, 1)
+                var(--pile-delay) both;
+        }
+
+        .dart-obstacle.is-mole.has-soil-pile .obstacle-mole-soil-clod {
+            opacity: 1;
+            transform: translate3d(var(--pile-x), var(--pile-y), 0)
+                rotate(var(--pile-rotate)) scale(1);
+        }
+
+        .dart-obstacle.is-mole.is-burrowing .obstacle-mole-soil-clod {
+            animation: obstacleMoleSoilCollapse 440ms ease-in 80ms both;
+        }
+
+        .dart-obstacle.is-mole.is-burrowing .obstacle-mole-hole {
+            animation: obstacleMoleHoleClose 430ms ease-in 120ms both;
+        }
+
+        @keyframes obstacleBirdFlap {
+            0%, 100% { background-position: 0% 50%; }
+            25% { background-position: 33.333% 50%; }
+            50% { background-position: 66.666% 50%; }
+            75% { background-position: 100% 50%; }
         }
 
         @keyframes obstacleCaughtDart {
@@ -952,29 +970,81 @@
             to { transform: rotate(-87deg); }
         }
 
-        @keyframes obstacleWindStreak {
-            from { transform: translateX(-18px) scaleX(0.72); }
-            to { transform: translateX(38px) scaleX(1.18); }
+        @keyframes obstacleMoleDart {
+            from { transform: rotate(-11deg) translateY(0); }
+            to { transform: rotate(-5deg) translateY(-3px); }
         }
 
-        @keyframes obstacleWindStreakReverse {
-            from { transform: translateX(18px) scaleX(0.72); }
-            to { transform: translateX(-38px) scaleX(1.18); }
+        @keyframes obstacleMoleDigFrames {
+            0%, 100% { background-position: 0% 50%; }
+            25% { background-position: 33.333% 50%; }
+            50% { background-position: 66.666% 50%; }
+            75% { background-position: 100% 50%; }
         }
 
-        @keyframes obstacleWindDebris {
-            from { transform: translate(0, 0) rotate(0deg); }
-            to { transform: translate(74px, -28px) rotate(330deg); }
+        @keyframes obstacleMoleHoleOpen {
+            0% { opacity: 0; transform: scale(0.18, 0.1); }
+            55% { opacity: 1; transform: scale(1.08, 0.94); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
-        @keyframes obstacleWindDebrisReverse {
-            from { transform: translate(0, 0) rotate(0deg); }
-            to { transform: translate(-74px, -28px) rotate(-330deg); }
+        @keyframes obstacleMoleHoleClose {
+            0% { opacity: 1; transform: scale(1); }
+            60% { opacity: 1; transform: scale(0.9, 0.72); }
+            100% { opacity: 0; transform: scale(0.14, 0.07); }
         }
 
-        @keyframes dartWindCurtain {
-            from { transform: translateX(-35%); }
-            to { transform: translateX(2%); }
+        @keyframes obstacleMoleDirtBurst {
+            0% {
+                opacity: 0;
+                transform: translate3d(0, 0, 0) rotate(0deg) scale(0.3);
+            }
+            12% { opacity: 1; }
+            48% {
+                opacity: 1;
+                transform: translate3d(var(--dirt-mid-x), var(--dirt-y), 0)
+                    rotate(var(--dirt-mid-rotate)) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(var(--dirt-x), 22px, 0)
+                    rotate(var(--dirt-rotate)) scale(0.72);
+            }
+        }
+
+        @keyframes obstacleMoleSoilSettle {
+            0% {
+                opacity: 0;
+                transform: translate3d(0, 0, 0) rotate(0deg) scale(0.22);
+            }
+            16% { opacity: 1; }
+            48% {
+                opacity: 1;
+                transform: translate3d(var(--pile-mid-x), var(--pile-apex-y), 0)
+                    rotate(var(--pile-mid-rotate)) scale(1.08);
+            }
+            82% {
+                opacity: 1;
+                transform: translate3d(var(--pile-x), var(--pile-bounce-y), 0)
+                    rotate(var(--pile-rotate)) scale(0.94, 1.06);
+            }
+            100% {
+                opacity: 1;
+                transform: translate3d(var(--pile-x), var(--pile-y), 0)
+                    rotate(var(--pile-rotate)) scale(1);
+            }
+        }
+
+        @keyframes obstacleMoleSoilCollapse {
+            0% {
+                opacity: 1;
+                transform: translate3d(var(--pile-x), var(--pile-y), 0)
+                    rotate(var(--pile-rotate)) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(0, 4px, 0) rotate(0deg) scale(0.18);
+            }
         }
 
         .dart-impact-ring,
@@ -1012,6 +1082,10 @@
             animation: dartMapShake 220ms ease-out both;
         }
 
+        #draw-screen.mole-quake {
+            animation: moleEarthquake 1040ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
         @keyframes dartImpactRing {
             0% { opacity: 0.95; transform: scale(0.35); }
             100% { opacity: 0; transform: scale(5.2); }
@@ -1028,6 +1102,19 @@
             42% { transform: translate(4px, -3px); }
             64% { transform: translate(-3px, -1px); }
             82% { transform: translate(2px, 2px); }
+        }
+
+        @keyframes moleEarthquake {
+            0%, 100% { transform: translate3d(0, 0, 0) rotate(0); }
+            8% { transform: translate3d(-5px, 3px, 0) rotate(-0.25deg); }
+            16% { transform: translate3d(6px, -3px, 0) rotate(0.3deg); }
+            25% { transform: translate3d(-7px, -1px, 0) rotate(-0.35deg); }
+            34% { transform: translate3d(6px, 4px, 0) rotate(0.25deg); }
+            44% { transform: translate3d(-5px, -4px, 0) rotate(-0.2deg); }
+            55% { transform: translate3d(5px, 2px, 0) rotate(0.2deg); }
+            67% { transform: translate3d(-4px, 1px, 0) rotate(-0.15deg); }
+            80% { transform: translate3d(3px, -2px, 0) rotate(0.1deg); }
+            92% { transform: translate3d(-2px, 1px, 0) rotate(-0.05deg); }
         }
 
         .lottery-pin {
@@ -1502,6 +1589,7 @@
         let dartAudioContext = null;
         let dartFlightSoundStop = null;
         let isDartFlying = false;
+        let dartSequenceToken = 0;
         let activeMarkerIndex = -1;
         let isMarkerVisible = false; // 마커 표시 상태
         let isSatellite = false; // 위성 지도 상태
@@ -6185,52 +6273,38 @@
                 return;
             }
 
-            const duration = 1.35;
-            const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < data.length; i += 1) {
-                const progress = i / data.length;
-                const gust = Math.min(1, progress * 6) * Math.sin(Math.PI * progress) ** 0.7;
-                data[i] = (Math.random() * 2 - 1) * gust;
+            if (type === 'mole') {
+                const duration = 0.72;
+                const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < data.length; i += 1) {
+                    const progress = i / data.length;
+                    const digging = Math.max(0, Math.sin(progress * Math.PI * 7)) ** 3;
+                    data[i] = (Math.random() * 2 - 1) * digging * (1 - progress * 0.55);
+                }
+                const source = context.createBufferSource();
+                const filter = context.createBiquadFilter();
+                const gain = context.createGain();
+                const thump = context.createOscillator();
+                const thumpGain = context.createGain();
+                source.buffer = buffer;
+                filter.type = 'lowpass';
+                filter.frequency.value = 640;
+                gain.gain.setValueAtTime(0.13, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                thump.type = 'sine';
+                thump.frequency.setValueAtTime(105, now);
+                thump.frequency.exponentialRampToValueAtTime(48, now + 0.28);
+                thumpGain.gain.setValueAtTime(0.09, now);
+                thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+                source.connect(filter).connect(gain).connect(context.destination);
+                thump.connect(thumpGain).connect(context.destination);
+                source.start(now);
+                thump.start(now);
+                source.stop(now + duration);
+                thump.stop(now + 0.31);
+                return;
             }
-            const source = context.createBufferSource();
-            const filter = context.createBiquadFilter();
-            const gain = context.createGain();
-            const rumble = context.createOscillator();
-            const rumbleGain = context.createGain();
-            const panner = typeof context.createStereoPanner === 'function' ? context.createStereoPanner() : null;
-            source.buffer = buffer;
-            filter.type = 'bandpass';
-            filter.frequency.setValueAtTime(260, now);
-            filter.frequency.exponentialRampToValueAtTime(1750, now + duration * 0.48);
-            filter.frequency.exponentialRampToValueAtTime(430, now + duration);
-            filter.Q.value = 0.52;
-            gain.gain.setValueAtTime(0.0001, now);
-            gain.gain.exponentialRampToValueAtTime(0.21, now + 0.16);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-            rumble.type = 'sine';
-            rumble.frequency.setValueAtTime(58, now);
-            rumble.frequency.exponentialRampToValueAtTime(92, now + duration * 0.72);
-            rumbleGain.gain.setValueAtTime(0.0001, now);
-            rumbleGain.gain.exponentialRampToValueAtTime(0.07, now + 0.18);
-            rumbleGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-            const windOutput = source.connect(filter).connect(gain);
-            const rumbleOutput = rumble.connect(rumbleGain);
-            if (panner) {
-                panner.pan.setValueAtTime(-direction * 0.8, now);
-                panner.pan.linearRampToValueAtTime(direction * 0.8, now + duration);
-                windOutput.connect(panner);
-                rumbleOutput.connect(panner);
-                panner.connect(context.destination);
-            } else {
-                windOutput.connect(context.destination);
-                rumbleOutput.connect(context.destination);
-            }
-            source.start(now);
-            rumble.start(now);
-            source.stop(now + duration);
-            rumble.stop(now + duration);
         }
 
         function startDartPull(event) {
@@ -6354,59 +6428,172 @@
 
         function clearDartObstacle() {
             const layer = document.getElementById('draw-obstacle-layer');
-            if (layer) {
-                layer.innerHTML = '';
-                layer.classList.remove('is-wind-active');
-            }
+            if (layer) layer.innerHTML = '';
+            document.getElementById('draw-screen')?.classList.remove('mole-quake');
         }
 
         function createDartObstacleVisual(type, direction = 1) {
             const layer = document.getElementById('draw-obstacle-layer');
             if (!layer) return null;
             layer.innerHTML = '';
-            layer.classList.toggle('is-wind-active', type === 'wind');
             const obstacle = document.createElement('div');
             obstacle.className = `dart-obstacle is-${type}${direction < 0 ? ' to-left' : ''}`;
 
             if (type === 'bird') {
-                const body = document.createElement('span');
-                body.className = 'obstacle-bird-body';
-                const head = document.createElement('span');
-                head.className = 'obstacle-bird-head';
-                const wing = document.createElement('span');
-                wing.className = 'obstacle-bird-wing';
-                const tail = document.createElement('span');
-                tail.className = 'obstacle-bird-tail';
-                const claw = document.createElement('span');
-                claw.className = 'obstacle-bird-claw';
-                body.append(head, wing, tail, claw);
+                const sprite = document.createElement('span');
+                sprite.className = 'obstacle-bird-sprite';
 
                 const caughtDart = document.createElement('img');
                 caughtDart.className = 'obstacle-caught-dart';
                 caughtDart.src = 'dart.png';
                 caughtDart.alt = '';
-                obstacle.append(body, caughtDart);
-            } else {
-                [12, 27, 43, 60, 76].forEach((top, index) => {
-                    const streak = document.createElement('span');
-                    streak.className = 'obstacle-wind-streak';
-                    streak.style.setProperty('--wind-y', `${top}px`);
-                    streak.style.setProperty('--wind-width', `${88 + index * 14}px`);
-                    streak.style.setProperty('--wind-opacity', `${0.48 + index * 0.09}`);
-                    streak.style.setProperty('--wind-speed', `${260 + index * 35}ms`);
-                    obstacle.appendChild(streak);
-                });
-                for (let index = 0; index < 7; index += 1) {
-                    const debris = document.createElement('span');
-                    debris.className = 'obstacle-wind-debris';
-                    debris.style.setProperty('--debris-x', `${14 + Math.random() * 84}px`);
-                    debris.style.setProperty('--debris-y', `${16 + Math.random() * 64}px`);
-                    debris.style.animationDelay = `${-Math.random() * 500}ms`;
-                    obstacle.appendChild(debris);
+                obstacle.append(sprite, caughtDart);
+            } else if (type === 'mole') {
+                const holeBack = document.createElement('img');
+                holeBack.className = 'obstacle-mole-hole obstacle-mole-hole-back';
+                holeBack.src = 'mole-hole-v3.png';
+                holeBack.alt = '';
+
+                const riser = document.createElement('span');
+                riser.className = 'obstacle-mole-riser';
+
+                const character = document.createElement('span');
+                character.className = 'obstacle-mole-character';
+
+                const caughtDart = document.createElement('img');
+                caughtDart.className = 'obstacle-mole-dart';
+                caughtDart.src = 'dart.png';
+                caughtDart.alt = '';
+                riser.append(character, caughtDart);
+
+                const holeFront = document.createElement('img');
+                holeFront.className = 'obstacle-mole-hole obstacle-mole-hole-front';
+                holeFront.src = 'mole-hole-v3.png';
+                holeFront.alt = '';
+
+                obstacle.append(holeBack, riser, holeFront);
+                const dirtColors = ['#6f3d1c', '#4e2813', '#8a5127', '#5c3118'];
+                for (let i = 0; i < 30; i += 1) {
+                    const angle = (Math.PI * 2 * i / 30) + (i % 3 - 1) * 0.11;
+                    const distance = 58 + (i % 7) * 9;
+                    const dirtSize = 4.8 + (i % 5) * 1.35;
+                    const dirtX = Math.cos(angle) * distance;
+                    const dirtRotate = (i % 2 ? 1 : -1) * (115 + i * 17);
+                    const dirt = document.createElement('span');
+                    dirt.className = 'obstacle-mole-dirt';
+                    dirt.style.setProperty('--dirt-x', `${dirtX}px`);
+                    dirt.style.setProperty('--dirt-mid-x', `${dirtX * 0.56}px`);
+                    dirt.style.setProperty('--dirt-y', `${-55 - Math.abs(Math.sin(angle)) * 46 - (i % 4) * 4}px`);
+                    dirt.style.setProperty('--dirt-size', `${dirtSize}px`);
+                    dirt.style.setProperty('--dirt-height', `${dirtSize * 0.72}px`);
+                    dirt.style.setProperty('--dirt-margin-x', `${dirtSize * -0.5}px`);
+                    dirt.style.setProperty('--dirt-margin-y', `${dirtSize * -0.36}px`);
+                    dirt.style.setProperty('--dirt-rotate', `${dirtRotate}deg`);
+                    dirt.style.setProperty('--dirt-mid-rotate', `${dirtRotate * 0.55}deg`);
+                    dirt.style.setProperty('--dirt-delay', `${(i % 6) * 28 + Math.floor(i / 6) * 26}ms`);
+                    dirt.style.setProperty('--dirt-color', dirtColors[i % dirtColors.length]);
+                    obstacle.appendChild(dirt);
+                }
+
+                for (let i = 0; i < 20; i += 1) {
+                    const angle = Math.PI * 2 * i / 20;
+                    const pileX = Math.cos(angle) * (61 + (i % 3) * 6);
+                    const pileY = Math.sin(angle) * (27 + (i % 4) * 2) + 4;
+                    const pileSize = 8 + (i % 5) * 1.45;
+                    const pileRotate = (i % 2 ? 1 : -1) * (18 + i * 11);
+                    const clod = document.createElement('span');
+                    clod.className = `obstacle-mole-soil-clod${Math.sin(angle) < -0.08 ? ' is-back' : ''}`;
+                    clod.style.setProperty('--pile-x', `${pileX}px`);
+                    clod.style.setProperty('--pile-y', `${pileY}px`);
+                    clod.style.setProperty('--pile-mid-x', `${pileX * 0.58}px`);
+                    clod.style.setProperty('--pile-apex-y', `${-48 - (i % 4) * 9}px`);
+                    clod.style.setProperty('--pile-bounce-y', `${pileY - 4}px`);
+                    clod.style.setProperty('--pile-size', `${pileSize}px`);
+                    clod.style.setProperty('--pile-height', `${pileSize * 0.72}px`);
+                    clod.style.setProperty('--pile-margin-x', `${pileSize * -0.5}px`);
+                    clod.style.setProperty('--pile-margin-y', `${pileSize * -0.36}px`);
+                    clod.style.setProperty('--pile-rotate', `${pileRotate}deg`);
+                    clod.style.setProperty('--pile-mid-rotate', `${pileRotate * 0.55}deg`);
+                    clod.style.setProperty('--pile-delay', `${30 + (i % 5) * 32 + Math.floor(i / 5) * 12}ms`);
+                    clod.style.setProperty('--pile-color', dirtColors[(i + 1) % dirtColors.length]);
+                    obstacle.appendChild(clod);
                 }
             }
             layer.appendChild(obstacle);
             return obstacle;
+        }
+
+        function getRandomPointInsideBoundary(boundary) {
+            const polygons = boundary?.p || [];
+            if (!polygons.length) return null;
+
+            for (let attempt = 0; attempt < 36; attempt += 1) {
+                const polygon = polygons[Math.floor(Math.random() * polygons.length)];
+                const outerRing = polygon?.[0];
+                if (!outerRing || outerRing.length < 3) continue;
+
+                let minLng = Infinity;
+                let maxLng = -Infinity;
+                let minLat = Infinity;
+                let maxLat = -Infinity;
+                outerRing.forEach(([lng, lat]) => {
+                    minLng = Math.min(minLng, lng);
+                    maxLng = Math.max(maxLng, lng);
+                    minLat = Math.min(minLat, lat);
+                    maxLat = Math.max(maxLat, lat);
+                });
+
+                for (let pointAttempt = 0; pointAttempt < 28; pointAttempt += 1) {
+                    const lng = minLng + Math.random() * (maxLng - minLng);
+                    const lat = minLat + Math.random() * (maxLat - minLat);
+                    if (pointInPolygonCoordinates(lng, lat, polygon)) return { lat, lng };
+                }
+            }
+            return null;
+        }
+
+        function getRandomSouthKoreaCoordinate(fromLat, fromLng, minimumDistanceKm = 0) {
+            const boundaries = window.currentSigunguBoundaries || [];
+            for (let attempt = 0; attempt < 90 && boundaries.length; attempt += 1) {
+                const boundary = boundaries[Math.floor(Math.random() * boundaries.length)];
+                const coordinate = getRandomPointInsideBoundary(boundary);
+                if (!coordinate) continue;
+                if (minimumDistanceKm && calculateDistanceKm(fromLat, fromLng, coordinate.lat, coordinate.lng) < minimumDistanceKm) {
+                    continue;
+                }
+                return coordinate;
+            }
+
+            const fallbackCoordinates = [
+                { lat: 37.5665, lng: 126.9780 },
+                { lat: 37.4563, lng: 126.7052 },
+                { lat: 36.3504, lng: 127.3845 },
+                { lat: 35.1796, lng: 129.0756 },
+                { lat: 35.1595, lng: 126.8526 },
+                { lat: 35.8714, lng: 128.6014 },
+                { lat: 33.4996, lng: 126.5312 }
+            ].filter(coordinate => !minimumDistanceKm ||
+                calculateDistanceKm(fromLat, fromLng, coordinate.lat, coordinate.lng) >= minimumDistanceKm
+            );
+            return fallbackCoordinates[Math.floor(Math.random() * fallbackCoordinates.length)] ||
+                { lat: 36.3504, lng: 127.3845 };
+        }
+
+        function setPlanDestinationToCoordinate(plan, coordinate) {
+            const screen = document.getElementById('draw-screen');
+            const mapElement = document.getElementById('draw-map');
+            if (!screen || !mapElement || !drawMap || !coordinate) return;
+
+            const screenRect = screen.getBoundingClientRect();
+            const mapRect = mapElement.getBoundingClientRect();
+            const point = drawMap.getProjection().containerPointFromCoords(
+                new kakao.maps.LatLng(coordinate.lat, coordinate.lng)
+            );
+            plan.targetX = point.x + mapRect.left - screenRect.left;
+            plan.targetY = point.y + mapRect.top - screenRect.top;
+            plan.lat = coordinate.lat;
+            plan.lng = coordinate.lng;
+            plan.distanceKm = calculateDistanceKm(plan.originLat, plan.originLng, plan.lat, plan.lng);
         }
 
         function applyRandomDartObstacle(plan) {
@@ -6415,34 +6602,28 @@
             const mapElement = document.getElementById('draw-map');
             if (!screen || !mapElement || !drawMap) return plan;
 
-            const type = Math.random() < 0.5 ? 'bird' : 'wind';
-            const direction = Math.random() < 0.5 ? -1 : 1;
+            const originalLat = plan.lat;
+            const originalLng = plan.lng;
+            const originalDistanceKm = plan.distanceKm;
+            const originalLandedInKorea = Boolean(findSigunguBoundary(originalLat, originalLng));
+            const availableTypes = originalLandedInKorea
+                ? ['bird', 'mole']
+                : ['bird'];
+            const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
             const originalTargetX = plan.targetX;
             const originalTargetY = plan.targetY;
-            const horizontalShift = type === 'bird'
-                ? plan.screenWidth * (0.22 + Math.random() * 0.16)
-                : plan.screenWidth * (0.4 + Math.random() * 0.2);
-            const verticalShift = type === 'bird'
-                ? plan.screenHeight * (-0.1 + Math.random() * 0.16)
-                : -plan.screenHeight * (0.12 + Math.random() * 0.14);
-
-            plan.targetX = Math.max(12, Math.min(plan.screenWidth - 12, originalTargetX + direction * horizontalShift));
-            plan.targetY = Math.max(plan.topLimit, Math.min(plan.homeY - 44, originalTargetY + verticalShift));
-
-            const screenRect = screen.getBoundingClientRect();
-            const mapRect = mapElement.getBoundingClientRect();
-            const destination = drawMap.getProjection().coordsFromContainerPoint(new kakao.maps.Point(
-                plan.targetX + screenRect.left - mapRect.left,
-                plan.targetY + screenRect.top - mapRect.top
-            ));
-            plan.lat = destination.getLat();
-            plan.lng = destination.getLng();
-            plan.distanceKm = calculateDistanceKm(plan.originLat, plan.originLng, plan.lat, plan.lng);
+            const minimumDistanceKm = type === 'mole' ? 85 : 0;
+            const coordinate = getRandomSouthKoreaCoordinate(originalLat, originalLng, minimumDistanceKm);
+            setPlanDestinationToCoordinate(plan, coordinate);
+            const direction = plan.targetX >= originalTargetX ? 1 : -1;
             plan.obstacle = {
                 type,
                 direction,
                 originalTargetX,
                 originalTargetY,
+                originalLat,
+                originalLng,
+                originalDistanceKm,
                 turnAt: 0.37,
                 announced: false
             };
@@ -6503,6 +6684,7 @@
             if (!drawMap) return;
 
             isDartFlying = true;
+            const sequenceToken = ++dartSequenceToken;
             const launcher = document.getElementById('dart-launcher');
             const dart = launcher?.querySelector('.dart-visual');
             const aimLine = document.getElementById('aim-line');
@@ -6513,16 +6695,20 @@
                 resetDartVisual();
                 return;
             }
+            const isMoleSequence = plan.obstacle?.type === 'mole';
             const flightDuration = plan.obstacle
-                ? (plan.obstacle.type === 'bird' ? 2250 : 1950)
+                ? (plan.obstacle.type === 'bird' ? 2250 : 680)
                 : 680;
+            const firstLandingLat = isMoleSequence ? plan.obstacle.originalLat : plan.lat;
+            const firstLandingLng = isMoleSequence ? plan.obstacle.originalLng : plan.lng;
+            const firstLandingDistance = isMoleSequence ? plan.obstacle.originalDistanceKm : plan.distanceKm;
 
             clearDartObstacle();
-            preloadDrawMapTiles(plan.lat, plan.lng, 10);
+            preloadDrawMapTiles(firstLandingLat, firstLandingLng, 10);
             if (navigator.vibrate) navigator.vibrate([12, 28, 18]);
             playDartThrowSound();
             startDartFlightSound(flightDuration + 100);
-            setDrawTopbar('다트 비행 중', `당긴 힘으로 약 ${Math.round(plan.distanceKm)} km 날아갑니다`, false);
+            setDrawTopbar('다트 비행 중', `당긴 힘으로 약 ${Math.round(firstLandingDistance)} km 날아갑니다`, false);
             aimLine?.classList.remove('show');
             meter?.classList.remove('show');
 
@@ -6536,8 +6722,20 @@
                 dart.style.opacity = '1';
             }
 
-            animateDartJourney(plan, flightDuration).then(() => {
+            animateDartJourney(plan, flightDuration).then(async () => {
+                if (sequenceToken !== dartSequenceToken) return;
                 if (launcher) launcher.style.opacity = '0';
+                if (isMoleSequence) {
+                    showDrawLanding(
+                        plan.obstacle.originalLat,
+                        plan.obstacle.originalLng,
+                        plan.obstacle.originalDistanceKm,
+                        plan.obstacle.originalTargetX,
+                        plan.obstacle.originalTargetY
+                    );
+                    await runMoleRelocationSequence(plan, sequenceToken);
+                    return;
+                }
                 showDrawLanding(plan.lat, plan.lng, plan.distanceKm, plan.targetX, plan.targetY);
                 isDartFlying = false;
             });
@@ -6549,7 +6747,9 @@
                 const launcher = document.getElementById('dart-launcher');
                 const dart = launcher?.querySelector('.dart-visual');
                 const obstacle = plan.obstacle;
-                const obstacleElement = obstacle ? createDartObstacleVisual(obstacle.type, obstacle.direction) : null;
+                const obstacleElement = obstacle?.type === 'bird'
+                    ? createDartObstacleVisual(obstacle.type, obstacle.direction)
+                    : null;
                 const originalTargetX = obstacle?.originalTargetX ?? plan.targetX;
                 const originalTargetY = obstacle?.originalTargetY ?? plan.targetY;
                 const originalDx = originalTargetX - plan.startX;
@@ -6566,16 +6766,15 @@
 
                 const turnPoint = obstacle ? originalPointAt(obstacle.turnAt) : null;
                 const pointAt = progress => {
-                    if (!obstacle || progress <= obstacle.turnAt) return originalPointAt(progress);
+                    if (!obstacle) return originalPointAt(progress);
+                    if (obstacle.type === 'mole') return originalPointAt(progress);
+                    if (progress <= obstacle.turnAt) return originalPointAt(progress);
                     const afterProgress = (progress - obstacle.turnAt) / (1 - obstacle.turnAt);
                     const eased = afterProgress * afterProgress * (3 - 2 * afterProgress);
                     const arc = Math.sin(Math.PI * afterProgress);
-                    const turbulence = obstacle.type === 'wind'
-                        ? Math.sin(afterProgress * Math.PI * 5) * 28 * (1 - afterProgress)
-                        : 0;
                     return {
-                        x: turnPoint.x + (plan.targetX - turnPoint.x) * eased + turbulence,
-                        y: turnPoint.y + (plan.targetY - turnPoint.y) * eased - arc * (obstacle.type === 'bird' ? 46 : 82)
+                        x: turnPoint.x + (plan.targetX - turnPoint.x) * eased,
+                        y: turnPoint.y + (plan.targetY - turnPoint.y) * eased - arc * 46
                     };
                 };
 
@@ -6593,33 +6792,26 @@
                         launcher.style.transform = `translate(calc(-50% + ${point.x - plan.homeX}px), ${point.y - plan.homeY}px) scale(${scale})`;
                     }
                     if (dart) {
-                        const windTumble = obstacle?.type === 'wind' && progress >= obstacle.turnAt
-                            ? Math.sin(progress * Math.PI * 13) * 105
-                            : 0;
-                        dart.style.transform = `rotate(${angle + windTumble}deg)`;
+                        dart.style.transform = `rotate(${angle}deg)`;
                     }
 
-                    if (obstacle && obstacleElement && progress >= obstacle.turnAt - 0.15) {
+                    if (obstacle?.type === 'bird' && obstacleElement && progress >= obstacle.turnAt - 0.15) {
                         const approach = Math.min(1, (progress - obstacle.turnAt + 0.15) / 0.15);
                         const approachOffset = progress < obstacle.turnAt
                             ? -obstacle.direction * (190 * (1 - approach))
                             : 0;
-                        const offsetX = obstacle.type === 'bird' ? -43 + approachOffset : -86 + approachOffset;
-                        const offsetY = obstacle.type === 'bird' ? -58 : -48;
+                        const offsetX = -61 + approachOffset;
+                        const offsetY = -76;
                         obstacleElement.style.opacity = `${Math.min(1, approach * 1.8)}`;
                         obstacleElement.style.transform = `translate3d(${point.x + offsetX}px, ${point.y + offsetY}px, 0)`;
                     }
 
-                    if (obstacle && progress >= obstacle.turnAt && !obstacle.announced) {
+                    if (obstacle?.type === 'bird' && progress >= obstacle.turnAt && !obstacle.announced) {
                         obstacle.announced = true;
-                        playDartObstacleSound(obstacle.type, obstacle.direction);
-                        if (obstacle.type === 'bird' && dart) dart.style.opacity = '0';
-                        setDrawTopbar(
-                            obstacle.type === 'bird' ? '새가 다트를 낚아챘다' : '강한 돌풍이 덮쳤다',
-                            obstacle.type === 'bird' ? '다트를 물고 전혀 다른 곳으로 날아가는 중' : '다트가 회전하며 경로 밖으로 밀려나는 중',
-                            false
-                        );
-                        if (navigator.vibrate) navigator.vibrate(obstacle.type === 'bird' ? [28, 35, 28] : [18, 20, 18, 20, 18]);
+                        playDartObstacleSound('bird', obstacle.direction);
+                        if (dart) dart.style.opacity = '0';
+                        setDrawTopbar('새가 다트를 낚아챘다', '대한민국 안의 다른 곳으로 물고 가는 중', false);
+                        if (navigator.vibrate) navigator.vibrate([28, 35, 28]);
                     }
 
                     if (progress < 1) {
@@ -6632,6 +6824,173 @@
 
                 drawFlightAnimationFrame = window.requestAnimationFrame(step);
             });
+        }
+
+        function waitForDartSequence(milliseconds, sequenceToken) {
+            return new Promise(resolve => {
+                window.setTimeout(() => resolve(sequenceToken === dartSequenceToken), milliseconds);
+            });
+        }
+
+        function getDrawScreenPoint(lat, lng) {
+            const screen = document.getElementById('draw-screen');
+            const mapElement = document.getElementById('draw-map');
+            if (!screen || !mapElement || !drawMap) return null;
+            const screenRect = screen.getBoundingClientRect();
+            const mapRect = mapElement.getBoundingClientRect();
+            const point = drawMap.getProjection().containerPointFromCoords(new kakao.maps.LatLng(lat, lng));
+            return {
+                x: point.x + mapRect.left - screenRect.left,
+                y: point.y + mapRect.top - screenRect.top
+            };
+        }
+
+        function clearDrawLandingResultOnly() {
+            if (drawZoomStartTimer) {
+                window.clearTimeout(drawZoomStartTimer);
+                drawZoomStartTimer = null;
+            }
+            if (drawZoomFinishTimer) {
+                window.clearTimeout(drawZoomFinishTimer);
+                drawZoomFinishTimer = null;
+            }
+            if (drawLandingOverlay) {
+                drawLandingOverlay.setMap(null);
+                drawLandingOverlay = null;
+            }
+            drawLandingHighlights.forEach(polygon => polygon.setMap(null));
+            drawLandingHighlights = [];
+            const impactLayer = document.getElementById('dart-impact-layer');
+            if (impactLayer) impactLayer.innerHTML = '';
+            document.getElementById('draw-map')?.classList.remove('dart-impact-shake');
+        }
+
+        function animateMolePose(element, point, fromRise, toRise, duration, sequenceToken) {
+            return new Promise(resolve => {
+                const riser = element.querySelector('.obstacle-mole-riser');
+                if (!riser) {
+                    resolve(false);
+                    return;
+                }
+                const motionClass = toRise > fromRise ? 'is-digging' : 'is-burrowing';
+                element.classList.remove('is-digging', 'is-burrowing');
+                void element.offsetWidth;
+                element.classList.add(motionClass);
+                element.style.opacity = '1';
+                element.style.transform = `translate3d(${point.x - 82}px, ${point.y - 132}px, 0)`;
+                const startedAt = performance.now();
+                const isEmerging = toRise > fromRise;
+                const excavationRatio = isEmerging && fromRise === 0 ? 0.64 : 0;
+                const step = now => {
+                    if (sequenceToken !== dartSequenceToken || !element.isConnected) {
+                        resolve(false);
+                        return;
+                    }
+                    const progress = Math.min(1, (now - startedAt) / duration);
+                    const motionProgress = excavationRatio
+                        ? Math.max(0, (progress - excavationRatio) / (1 - excavationRatio))
+                        : progress;
+                    const eased = motionProgress * motionProgress * (3 - 2 * motionProgress);
+                    const rise = fromRise + (toRise - fromRise) * eased;
+                    const burrowWobble =
+                        Math.sin(motionProgress * Math.PI * 5) * (1 - motionProgress) * 2.2;
+                    riser.style.opacity = `${Math.min(1, rise * 1.8)}`;
+                    riser.style.transform =
+                        `translate3d(${burrowWobble}px, ${(1 - rise) * 86}px, 0) rotate(${burrowWobble * 0.35}deg) scale(${0.94 + rise * 0.06})`;
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        if (isEmerging) {
+                            element.classList.add('has-soil-pile');
+                        } else {
+                            element.classList.remove('has-soil-pile');
+                        }
+                        element.classList.remove(motionClass);
+                        resolve(true);
+                    }
+                };
+                window.requestAnimationFrame(step);
+            });
+        }
+
+        async function runMoleRelocationSequence(plan, sequenceToken) {
+            const obstacle = plan.obstacle;
+            if (!obstacle || obstacle.type !== 'mole') return;
+
+            if (!await waitForDartSequence(2100, sequenceToken)) return;
+            const pickupPoint = getDrawScreenPoint(obstacle.originalLat, obstacle.originalLng);
+            if (!pickupPoint || sequenceToken !== dartSequenceToken) return;
+
+            setDrawTopbar('어어?? 당첨 지역의 땅이 흔들린다!', '다트 아래에서 무언가 파고 올라오는 중', false);
+            triggerMoleEarthquake();
+            playDartObstacleSound('mole', obstacle.direction);
+            if (navigator.vibrate) navigator.vibrate([25, 18, 35, 18, 55, 25, 70]);
+
+            const pickupMole = createDartObstacleVisual('mole', obstacle.direction);
+            if (!pickupMole || !await animateMolePose(pickupMole, pickupPoint, 0, 1, 1600, sequenceToken)) return;
+            if (!await waitForDartSequence(260, sequenceToken)) return;
+
+            pickupMole.classList.add('has-dart');
+            clearDrawLandingResultOnly();
+            playDartObstacleSound('mole', obstacle.direction);
+            setDrawTopbar('두더지가 당첨 다트를 뽑아갔다!', '다트를 들고 땅속으로 들어가는 중', false);
+            if (navigator.vibrate) navigator.vibrate([38, 22, 55]);
+            if (!await waitForDartSequence(320, sequenceToken)) return;
+            if (!await animateMolePose(pickupMole, pickupPoint, 1, 0, 560, sequenceToken)) return;
+            clearDartObstacle();
+
+            setDrawTopbar('두더지가 땅속으로 이동 중', '전국 지도로 다시 축소하는 중', false);
+            const overviewPosition = new kakao.maps.LatLng(drawMapOverview.lat, drawMapOverview.lng);
+            drawMap.setLevel(drawMapOverview.level, { animate: { duration: 850 } });
+            drawMap.panTo(overviewPosition);
+            if (!await waitForDartSequence(1050, sequenceToken)) return;
+
+            const destinationPosition = new kakao.maps.LatLng(plan.lat, plan.lng);
+            preloadDrawMapTiles(plan.lat, plan.lng, 10);
+            setDrawTopbar('두더지가 다른 지역으로 이동했다', '새로운 위치로 이동한 뒤 확대하는 중', false);
+            drawMap.panTo(destinationPosition);
+            if (!await waitForDartSequence(420, sequenceToken)) return;
+            drawMap.setLevel(10, {
+                anchor: destinationPosition,
+                animate: { duration: 900 }
+            });
+            if (!await waitForDartSequence(980, sequenceToken)) return;
+
+            const destinationPoint = getDrawScreenPoint(plan.lat, plan.lng);
+            if (!destinationPoint || sequenceToken !== dartSequenceToken) return;
+            setDrawTopbar('새 위치의 땅이 다시 흔들린다!', '두더지가 다트를 들고 파고 올라오는 중', false);
+            triggerMoleEarthquake();
+            playDartObstacleSound('mole', obstacle.direction);
+            if (navigator.vibrate) navigator.vibrate([24, 18, 42, 22, 58]);
+
+            const destinationMole = createDartObstacleVisual('mole', obstacle.direction);
+            if (!destinationMole) return;
+            destinationMole.classList.add('has-dart');
+            if (!await animateMolePose(destinationMole, destinationPoint, 0, 1, 1600, sequenceToken)) return;
+            if (!await waitForDartSequence(300, sequenceToken)) return;
+
+            destinationMole.classList.remove('has-dart');
+            triggerDartImpact(destinationPoint.x, destinationPoint.y);
+            playDartLandingSound();
+            setDrawTopbar('두더지가 새 위치에 다트를 꽂았다!', '최종 여행지 당첨을 확인하는 중', false);
+            if (navigator.vibrate) navigator.vibrate([30, 20, 55]);
+            if (!await waitForDartSequence(260, sequenceToken)) return;
+            if (!await animateMolePose(destinationMole, destinationPoint, 1, 0, 460, sequenceToken)) return;
+            clearDartObstacle();
+
+            showDrawLanding(plan.lat, plan.lng, plan.distanceKm, destinationPoint.x, destinationPoint.y, {
+                skipImpact: true
+            });
+            isDartFlying = false;
+        }
+
+        function triggerMoleEarthquake() {
+            const screen = document.getElementById('draw-screen');
+            if (!screen) return;
+            screen.classList.remove('mole-quake');
+            void screen.offsetWidth;
+            screen.classList.add('mole-quake');
+            window.setTimeout(() => screen.classList.remove('mole-quake'), 1060);
         }
 
         function triggerDartImpact(x, y) {
@@ -6696,7 +7055,7 @@
             return drawLandingHighlights.length > 0;
         }
 
-        async function showDrawLanding(lat, lng, distance, impactX, impactY) {
+        async function showDrawLanding(lat, lng, distance, impactX, impactY, options = {}) {
             if (!drawMap || typeof kakao === 'undefined' || !kakao.maps) return;
             clearDrawLanding();
             clearDartObstacle();
@@ -6721,8 +7080,10 @@
                 launcher.style.opacity = '0';
             }
 
-            triggerDartImpact(impactX, impactY);
-            playDartLandingSound();
+            if (!options.skipImpact) {
+                triggerDartImpact(impactX, impactY);
+                playDartLandingSound();
+            }
 
             const northKorea = isNorthKorea(lat, lng);
             const islandPrize = !northKorea ? getEastSeaIslandPrize(lat, lng) : null;
@@ -7004,6 +7365,7 @@
         }
 
         function resetDraw() {
+            dartSequenceToken += 1;
             isDartFlying = false;
             if (dartFlightSoundStop) dartFlightSoundStop();
             clearDrawTilePreload();
