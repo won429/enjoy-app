@@ -672,6 +672,9 @@
             align-items: center;
             column-gap: 3px;
         }
+        .home-baseball-match .home-baseball-score-main {
+            grid-template-columns: minmax(44px, 1fr) 26px 60px 26px minmax(44px, 1fr);
+        }
         .home-baseball-club {
             overflow: hidden;
             color: #fff;
@@ -944,6 +947,9 @@
                 linear-gradient(145deg, rgba(255,255,255,.20), transparent 38%),
                 linear-gradient(0deg, rgba(255,255,255,.06), transparent 48%);
             box-shadow: none;
+        }
+        .home-rail .home-content-item:not(.home-featured) > div:nth-child(2) > .absolute.inset-0 > [class*="bg-gradient-to-b"] {
+            display: none;
         }
         .home-rail .home-content-item:not(.home-featured) > div:nth-child(2) > .absolute.top-6,
         .home-rail .home-content-item:not(.home-featured) > div:nth-child(2) > .absolute.bottom-5 {
@@ -3232,7 +3238,7 @@
                         <span class="home-baseball-score-main">
                             <span class="home-baseball-club is-away">삼성</span>
                             <strong class="home-baseball-score">-</strong>
-                            <span class="home-baseball-center"><span class="home-baseball-pregame-time">18:30</span></span>
+                            <span class="home-baseball-center"><span class="home-baseball-pregame-time">(화) 18:30</span></span>
                             <strong class="home-baseball-score">-</strong>
                             <span class="home-baseball-club is-home">키움</span>
                         </span>
@@ -3249,7 +3255,7 @@
                         <span class="home-baseball-score-main">
                             <span class="home-baseball-club is-away">한화</span>
                             <strong class="home-baseball-score">-</strong>
-                            <span class="home-baseball-center"><span class="home-baseball-pregame-time">18:30</span></span>
+                            <span class="home-baseball-center"><span class="home-baseball-pregame-time">(화) 18:30</span></span>
                             <strong class="home-baseball-score">-</strong>
                             <span class="home-baseball-club is-home">KIA</span>
                         </span>
@@ -4959,6 +4965,14 @@
                 '<span class="home-baseball-inning"><i class="home-baseball-inning-arrow ' + (isTop ? 'is-top' : 'is-bottom') + '"></i>' + enjoyBaseballEscape(inningNumber) + '</span>' +
             '</span>';
         }
+        function enjoyBaseballHomeGameTime(game) {
+            const time = String(game.time || '미정');
+            const parts = String(game.date || '').split('-').map(Number);
+            if (parts.length !== 3 || parts.some(function (part) { return !Number.isFinite(part); })) return time;
+            const date = new Date(parts[0], parts[1] - 1, parts[2]);
+            const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+            return weekday ? '(' + weekday + ') ' + time : time;
+        }
         function renderEnjoyBaseballFeatured(teamKey, game) {
             const card = document.querySelector('[data-kbo-featured-team="' + teamKey + '"]');
             if (!card || !game) return;
@@ -4996,7 +5010,7 @@
                 homeSub = homeWon ? '<b>승</b> ' + enjoyBaseballEscape(game.winPitcher || '-') : (awayWon ? '패 ' + enjoyBaseballEscape(game.losePitcher || '-') : '무승부');
                 centerSub = '경기결과';
             } else {
-                centerMain = '<span class="home-baseball-pregame-time">' + enjoyBaseballEscape(canceled ? '취소' : (game.time || '미정')) + '</span>';
+                centerMain = '<span class="home-baseball-pregame-time">' + enjoyBaseballEscape(canceled ? '취소' : enjoyBaseballHomeGameTime(game)) + '</span>';
                 awaySub = enjoyBaseballStarterPersonnel(game, 'away');
                 homeSub = enjoyBaseballStarterPersonnel(game, 'home');
                 centerSub = enjoyBaseballEscape(game.stadium || game.ballpark || '-');
