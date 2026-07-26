@@ -1930,35 +1930,30 @@
             font-weight: 850;
         }
         .kbo-original-control {
-            min-height: 42px;
+            height: 44px;
             margin-bottom: 15px;
-            padding: 0;
+            padding: 4px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            border: 0;
-            border-radius: 0;
-            background: transparent;
-            box-shadow: none;
+            gap: 2px;
+            border: 1px solid rgba(255,255,255,.11);
+            border-radius: 999px;
+            background: #111316;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 6px 18px rgba(0,0,0,.22);
         }
         .kbo-original-date-nav {
             min-width: 0;
-            height: 42px;
+            height: 34px;
             flex: 1;
-            padding: 4px;
+            padding: 0;
             display: grid;
             grid-template-columns: 32px minmax(0,1fr) 32px;
             align-items: center;
             gap: 2px;
-            border: 1px solid color-mix(in srgb, var(--kbo-point) 16%, rgba(255,255,255,.09));
-            border-radius: 14px;
-            background: linear-gradient(
-                100deg,
-                color-mix(in srgb, var(--kbo-point) 7%, #121419) 0%,
-                #111318 50%,
-                color-mix(in srgb, var(--kbo-point) 5%, #121419) 100%
-            );
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 6px 18px rgba(0,0,0,.24);
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            box-shadow: none;
         }
         .kbo-original-date-button {
             width: 32px;
@@ -1967,8 +1962,8 @@
             align-items: center;
             justify-content: center;
             border: 0;
-            border-radius: 10px;
-            color: color-mix(in srgb, var(--kbo-point) 74%, #A7AFBA);
+            border-radius: 999px;
+            color: #cbd2dc;
             background: transparent;
             box-shadow: none;
             font-size: 10px;
@@ -1998,31 +1993,32 @@
             font-weight: 900;
         }
         .kbo-original-tabs {
-            height: 42px;
-            padding: 4px;
+            height: 34px;
+            padding: 0 0 0 4px;
             display: flex;
             align-items: center;
             gap: 2px;
-            border: 1px solid rgba(255,255,255,.09);
-            border-radius: 14px;
-            background: #121419;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 6px 18px rgba(0,0,0,.24);
+            border: 0;
+            border-left: 1px solid rgba(255,255,255,.09);
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
         }
         .kbo-original-tab {
             position: relative;
             height: 32px;
             padding: 7px 9px;
-            border: 1px solid transparent;
-            border-radius: 10px;
+            border: 0;
+            border-radius: 999px;
             color: #9aa3af;
             font-size: 10px;
             font-weight: 600;
         }
         .kbo-original-tab.is-active {
-            color: var(--tab-color, #fff);
-            border-color: color-mix(in srgb, var(--tab-color, #fff) 24%, transparent);
-            background: color-mix(in srgb, var(--tab-color, #fff) 12%, transparent);
-            font-weight: 800;
+            color: #fff;
+            background: var(--tab-color, #fff);
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--tab-color, #fff) 22%, transparent);
+            font-weight: 900;
         }
         .kbo-original-tab.is-active::after { content: none; }
         .kbo-original-day-meta {
@@ -2038,7 +2034,8 @@
             margin: -2px 0 8px;
             overflow: hidden;
             background: #030303;
-            touch-action: pan-y;
+            touch-action: none;
+            overscroll-behavior: contain;
             user-select: none;
             -webkit-user-select: none;
             cursor: grab;
@@ -2192,8 +2189,14 @@
         }
         button.kbo-original-calendar-day:active { transform: scale(.94); }
         .kbo-original-calendar-day.is-today {
-            border-color: color-mix(in srgb, var(--kbo-point) 78%, transparent);
-            background: color-mix(in srgb, var(--kbo-point) 12%, transparent);
+            color: #fff;
+            border-color: transparent;
+            background: var(--kbo-point);
+            box-shadow: 0 5px 14px color-mix(in srgb, var(--kbo-point) 28%, transparent);
+        }
+        .kbo-original-calendar-day.is-today .kbo-original-home-label {
+            color: #fff;
+            background: rgba(255,255,255,.17);
         }
         .kbo-original-home-label {
             position: absolute;
@@ -4271,9 +4274,12 @@
             dial.querySelectorAll('.kbo-daily-dial-item').forEach(function (item) {
                 const position = Number(item.dataset.dialOffset || 0) + Number(shift || 0);
                 const distance = Math.abs(position);
-                const visibleDistance = Math.min(distance, 2);
-                const left = 50 + (position * 21.5);
-                const top = 21 - (visibleDistance * 10.5);
+                const arcPosition = Math.max(-2, Math.min(2, position));
+                const arcAngle = arcPosition * Math.PI / 6;
+                let left = 50 + (49.652 * Math.sin(arcAngle));
+                const top = (42 * Math.cos(arcAngle)) - 21;
+                if (position < -2) left -= (-2 - position) * 18;
+                if (position > 2) left += (position - 2) * 18;
                 let opacity = 0;
                 let weekdaySize = 9;
                 let daySize = 21;
@@ -4555,6 +4561,7 @@
         };
         window.moveKboMoreDailyDial = function (event) {
             if (enjoyBaseballDailyDialStartX == null) return;
+            if (event.cancelable) event.preventDefault();
             const dial = event.currentTarget;
             const dayWidth = Math.max(68, dial.clientWidth * .215);
             enjoyBaseballDailyDialShift = (event.clientX - enjoyBaseballDailyDialStartX) / dayWidth;
