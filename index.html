@@ -1876,7 +1876,7 @@
         .kbo-more-shell {
             --kbo-point: #EA0029;
             min-height: 100%;
-            padding: calc(max(20px, env(safe-area-inset-top)) + 62px) 20px 42px;
+            padding: max(16px, env(safe-area-inset-top)) 20px 42px;
             color: #f8fafc;
             background: #030303;
             font-family: 'KBO-Dia-Gothic', sans-serif;
@@ -1895,6 +1895,21 @@
             gap: 12px;
             margin-bottom: 16px;
             padding: 0 2px;
+        }
+        #kbo-more-daily-section {
+            padding-top: 0;
+            border-top: 0;
+        }
+        .kbo-original-section-head.is-community-title {
+            min-height: 44px;
+            margin-bottom: 12px;
+            padding: 0 56px;
+            justify-content: center;
+            text-align: center;
+        }
+        .kbo-original-section-head.is-community-title .kbo-original-section-title strong {
+            font-size: 17px;
+            letter-spacing: -.025em;
         }
         .kbo-original-section-title strong {
             display: block;
@@ -1915,76 +1930,101 @@
             font-weight: 850;
         }
         .kbo-original-control {
-            min-height: 38px;
+            min-height: 42px;
             margin-bottom: 15px;
-            padding: 3px 8px;
+            padding: 0;
             display: flex;
             align-items: center;
-            gap: 5px;
-            border: 1px solid rgba(255,255,255,.10);
-            border-radius: 999px;
-            background: rgba(18,20,24,.92);
-            box-shadow: 0 7px 20px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.07);
-            backdrop-filter: blur(18px) saturate(145%);
-            -webkit-backdrop-filter: blur(18px) saturate(145%);
+            gap: 8px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
         }
         .kbo-original-date-nav {
             min-width: 0;
+            height: 42px;
             flex: 1;
+            padding: 4px;
             display: grid;
-            grid-template-columns: 25px minmax(0,1fr) 25px;
+            grid-template-columns: 32px minmax(0,1fr) 32px;
             align-items: center;
+            gap: 2px;
+            border: 1px solid color-mix(in srgb, var(--kbo-point) 16%, rgba(255,255,255,.09));
+            border-radius: 14px;
+            background: linear-gradient(
+                100deg,
+                color-mix(in srgb, var(--kbo-point) 7%, #121419) 0%,
+                #111318 50%,
+                color-mix(in srgb, var(--kbo-point) 5%, #121419) 100%
+            );
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 6px 18px rgba(0,0,0,.24);
         }
         .kbo-original-date-button {
-            width: 24px;
-            height: 24px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--kbo-point);
-            font-size: 9px;
-            transition: transform .14s ease;
+            border: 0;
+            border-radius: 10px;
+            color: color-mix(in srgb, var(--kbo-point) 74%, #A7AFBA);
+            background: transparent;
+            box-shadow: none;
+            font-size: 10px;
+            transition: transform .14s ease, background .14s ease, opacity .14s ease;
         }
-        .kbo-original-date-button:active { transform: scale(.84); }
+        .kbo-original-date-button:active {
+            transform: scale(.90);
+            background: color-mix(in srgb, var(--kbo-point) 14%, rgba(255,255,255,.04));
+            opacity: .86;
+        }
         .kbo-original-date-title {
             min-width: 0;
+            height: 32px;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 0;
             color: #f8fafc;
+            background: transparent;
+            box-shadow: none;
             text-align: center;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font-size: 12px;
+            font-size: 12.5px;
             font-weight: 900;
         }
         .kbo-original-tabs {
-            height: 30px;
-            padding-left: 7px;
+            height: 42px;
+            padding: 4px;
             display: flex;
             align-items: center;
-            border-left: 1px solid rgba(255,255,255,.10);
+            gap: 2px;
+            border: 1px solid rgba(255,255,255,.09);
+            border-radius: 14px;
+            background: #121419;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 6px 18px rgba(0,0,0,.24);
         }
         .kbo-original-tab {
             position: relative;
-            height: 28px;
-            padding: 4px 7px 6px;
+            height: 32px;
+            padding: 7px 9px;
+            border: 1px solid transparent;
+            border-radius: 10px;
             color: #9aa3af;
             font-size: 10px;
             font-weight: 600;
         }
         .kbo-original-tab.is-active {
             color: var(--tab-color, #fff);
+            border-color: color-mix(in srgb, var(--tab-color, #fff) 24%, transparent);
+            background: color-mix(in srgb, var(--tab-color, #fff) 12%, transparent);
             font-weight: 800;
         }
-        .kbo-original-tab.is-active::after {
-            content: '';
-            position: absolute;
-            left: 6px;
-            right: 6px;
-            bottom: 1px;
-            height: 2px;
-            border-radius: 99px;
-            background: var(--tab-color, #fff);
-        }
+        .kbo-original-tab.is-active::after { content: none; }
         .kbo-original-day-meta {
             margin: 0 0 8px 4px;
             color: #9ca3af;
@@ -1992,6 +2032,91 @@
             font-weight: 700;
         }
         .kbo-original-day-meta b { color: #fff; font-weight: 900; }
+        .kbo-daily-dial {
+            position: relative;
+            height: 82px;
+            margin: -2px 0 8px;
+            overflow: hidden;
+            background: #030303;
+            touch-action: pan-y;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: grab;
+        }
+        .kbo-daily-dial:active { cursor: grabbing; }
+        .kbo-daily-dial::before {
+            content: '';
+            position: absolute;
+            top: -62px;
+            right: 7%;
+            left: 7%;
+            height: 116px;
+            border-bottom: 1px solid rgba(255,255,255,.11);
+            border-radius: 0 0 50% 50%;
+            pointer-events: none;
+        }
+        .kbo-daily-dial::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            width: 18px;
+            height: 2px;
+            border-radius: 99px;
+            background: rgba(255,255,255,.72);
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+        .kbo-daily-dial-track {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+        }
+        .kbo-daily-dial-item {
+            position: absolute;
+            width: 68px;
+            height: 54px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            color: #fff;
+            background: transparent;
+            line-height: 1;
+            transform: translateX(-50%);
+            will-change: left, top, opacity;
+        }
+        .kbo-daily-dial.is-settling .kbo-daily-dial-item,
+        .kbo-daily-dial.is-settling .kbo-daily-dial-weekday,
+        .kbo-daily-dial.is-settling .kbo-daily-dial-day {
+            transition: left .18s cubic-bezier(.2,.75,.25,1),
+                        top .18s cubic-bezier(.2,.75,.25,1),
+                        opacity .18s ease,
+                        font-size .18s cubic-bezier(.2,.75,.25,1);
+        }
+        .kbo-daily-dial-weekday {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 9px;
+            font-weight: 900;
+        }
+        .kbo-daily-dial-day {
+            display: block;
+            font-size: 21px;
+            font-weight: 900;
+            letter-spacing: -.05em;
+            font-variant-numeric: tabular-nums;
+        }
+        .kbo-daily-dial-item.is-near { opacity: .52; }
+        .kbo-daily-dial-item.is-far { opacity: .20; }
+        .kbo-daily-dial-item.is-selected { opacity: 1; }
+        .kbo-daily-dial-item.is-near .kbo-daily-dial-weekday { font-size: 10px; }
+        .kbo-daily-dial-item.is-near .kbo-daily-dial-day { font-size: 25px; }
+        .kbo-daily-dial-item.is-selected .kbo-daily-dial-weekday {
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        .kbo-daily-dial-item.is-selected .kbo-daily-dial-day { font-size: 36px; }
         .kbo-original-game-list { display: flex; flex-direction: column; gap: 8px; }
         .kbo-original-game-card {
             position: relative;
@@ -2015,6 +2140,10 @@
         }
         .kbo-original-game-card:active { transform: scale(.985); opacity: .84; }
         .kbo-original-game-card.is-past { opacity: 1; filter: none; }
+        .kbo-original-game-card .home-baseball-club.is-away,
+        .kbo-original-game-card .home-baseball-personnel.is-away {
+            text-align: left;
+        }
         .kbo-original-empty {
             padding: 32px 12px;
             color: #6b7280;
@@ -2089,29 +2218,48 @@
             line-height: 1;
         }
         .kbo-original-day-logo {
+            position: relative;
+            z-index: 14;
             width: 21px;
             height: 21px;
             margin: 18px 0 0;
             object-fit: contain;
+            filter: drop-shadow(0 1px 3px rgba(0,0,0,.6));
+            transition: transform .16s ease;
         }
+        .kbo-original-stamp ~ .kbo-original-day-logo { transform: translateX(-7px) scale(1.08); }
         .kbo-original-stamp {
             position: absolute;
-            right: 5px;
-            bottom: 4px;
+            right: 1px;
+            bottom: 1px;
             z-index: 20;
-            min-width: 21px;
-            padding: 2px 5px;
-            border: 0;
-            border-radius: 999px;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            border: 2px solid currentColor;
+            border-radius: 50%;
             color: var(--stamp-color);
-            background: color-mix(in srgb, var(--stamp-color) 14%, #111114);
-            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--stamp-color) 24%, transparent);
-            font-size: 7px;
+            background: color-mix(in srgb, var(--stamp-color) 8%, rgba(3,3,3,.72));
+            box-shadow: 0 0 0 1px rgba(0,0,0,.82), 0 2px 7px color-mix(in srgb, var(--stamp-color) 38%, transparent);
+            font-size: 6px;
             font-weight: 900;
             line-height: 1;
             text-align: center;
+            text-shadow: 0 1px 2px rgba(0,0,0,.85);
             white-space: nowrap;
+            transform: rotate(-12deg);
+            filter: saturate(1.18) brightness(1.08);
             pointer-events: none;
+        }
+        .kbo-original-stamp::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            border: 1.25px solid currentColor;
+            border-radius: 50%;
+            opacity: .92;
         }
         .kbo-original-ranking-head {
             display: flex;
@@ -4112,18 +4260,81 @@
                     '</span>' +
                 '</button>';
         }
+        let enjoyBaseballDailyDialStartX = null;
+        let enjoyBaseballDailyDialShift = 0;
+        let enjoyBaseballDailyDialSettleTimer = null;
+        let enjoyBaseballDailyDialSuppressClick = false;
+        function positionEnjoyBaseballDailyDial(shift, animate) {
+            const dial = document.getElementById('kbo-more-daily-dial');
+            if (!dial) return;
+            dial.classList.toggle('is-settling', Boolean(animate));
+            dial.querySelectorAll('.kbo-daily-dial-item').forEach(function (item) {
+                const position = Number(item.dataset.dialOffset || 0) + Number(shift || 0);
+                const distance = Math.abs(position);
+                const visibleDistance = Math.min(distance, 2);
+                const left = 50 + (position * 21.5);
+                const top = 21 - (visibleDistance * 10.5);
+                let opacity = 0;
+                let weekdaySize = 9;
+                let daySize = 21;
+                if (distance <= 1) {
+                    opacity = 1 - (.48 * distance);
+                    weekdaySize = 13 - (3 * distance);
+                    daySize = 36 - (11 * distance);
+                } else if (distance <= 2) {
+                    opacity = .52 - (.32 * (distance - 1));
+                    weekdaySize = 10 - (distance - 1);
+                    daySize = 25 - (4 * (distance - 1));
+                } else if (distance < 3) {
+                    opacity = .2 * (3 - distance);
+                }
+                item.style.left = left + '%';
+                item.style.top = top + 'px';
+                item.style.opacity = String(Math.max(0, opacity));
+                item.style.zIndex = String(Math.max(0, 30 - Math.round(distance * 10)));
+                item.style.pointerEvents = distance <= 2.25 ? 'auto' : 'none';
+                item.setAttribute('aria-hidden', distance > 2.25 ? 'true' : 'false');
+                const weekday = item.querySelector('.kbo-daily-dial-weekday');
+                const day = item.querySelector('.kbo-daily-dial-day');
+                if (weekday) weekday.style.fontSize = weekdaySize + 'px';
+                if (day) day.style.fontSize = daySize + 'px';
+            });
+        }
+        function renderEnjoyBaseballDailyDial() {
+            const dial = document.getElementById('kbo-more-daily-dial');
+            if (!dial) return;
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            let html = '<div class="kbo-daily-dial-track">';
+            for (let offset = -7; offset <= 7; offset += 1) {
+                const date = new Date(
+                    enjoyBaseballMoreDailyDate.getFullYear(),
+                    enjoyBaseballMoreDailyDate.getMonth(),
+                    enjoyBaseballMoreDailyDate.getDate() + offset
+                );
+                const positionClass = offset === 0 ? ' is-selected' : (Math.abs(offset) === 1 ? ' is-near' : ' is-far');
+                const label = (date.getMonth() + 1) + '월 ' + date.getDate() + '일 ' + dayNames[date.getDay()] + '요일';
+                html += '<button type="button" class="kbo-daily-dial-item' + positionClass +
+                    '" data-dial-offset="' + offset + '" onclick="window.selectKboMoreDailyDate(' + offset + ')" aria-label="' + enjoyBaseballEscape(label) + '"' +
+                    (Math.abs(offset) > 2 ? ' tabindex="-1"' : '') +
+                    (offset === 0 ? ' aria-current="date"' : '') + '>' +
+                        '<span class="kbo-daily-dial-weekday">' + dayNames[date.getDay()] + '</span>' +
+                        '<strong class="kbo-daily-dial-day">' + date.getDate() + '</strong>' +
+                    '</button>';
+            }
+            dial.innerHTML = html + '</div>';
+            enjoyBaseballDailyDialShift = 0;
+            positionEnjoyBaseballDailyDial(0, false);
+        }
         function renderEnjoyBaseballMoreDaily() {
             const list = document.getElementById('kbo-more-daily-list');
             const meta = document.getElementById('kbo-more-daily-meta');
-            const title = document.getElementById('kbo-more-daily-title');
-            if (!list || !meta || !title) return;
+            const dial = document.getElementById('kbo-more-daily-dial');
+            if (!list || !meta || !dial) return;
             const date = enjoyBaseballDateKey(enjoyBaseballMoreDailyDate);
             const games = enjoyBaseballMoreAllGames().filter(function (game) {
                 return game.date === date && String(game.id || '') !== '260711_ALLSTAR';
             });
-            const dayName = ['일', '월', '화', '수', '목', '금', '토'][enjoyBaseballMoreDailyDate.getDay()];
-            title.textContent = enjoyBaseballMoreDailyDate.getFullYear() + '년 ' +
-                (enjoyBaseballMoreDailyDate.getMonth() + 1) + '월 ' + enjoyBaseballMoreDailyDate.getDate() + '일 (' + dayName + ')';
+            renderEnjoyBaseballDailyDial();
             meta.innerHTML = games.length ? '해당 일자 <b>' + games.length + '</b>경기' : '';
             list.innerHTML = games.length
                 ? games.map(function (game) { return enjoyBaseballMoreDailyGameCard(game, date); }).join('')
@@ -4132,15 +4343,15 @@
         function enjoyBaseballMoreCalendarResult(game, team) {
             if (!game) return '';
             if (enjoyBaseballIsCanceled(game)) {
-                return '<span class="kbo-original-stamp" style="--stamp-color:#60A5FA;">취소</span>';
+                return '<span class="kbo-original-stamp" style="--stamp-color:#60A5FA;">RAIN</span>';
             }
             if (String(game.gameStatus || '') !== '종료') return '';
             const away = Number(game.awayScore || 0);
             const home = Number(game.homeScore || 0);
-            if (away === home) return '<span class="kbo-original-stamp" style="--stamp-color:#A78BFA;">무</span>';
+            if (away === home) return '<span class="kbo-original-stamp" style="--stamp-color:#A78BFA;">DRAW</span>';
             const won = (game.team1 === team && away > home) || (game.team2 === team && home > away);
             return '<span class="kbo-original-stamp" style="--stamp-color:' + (won ? '#34D399' : '#94A3B8') + ';">' +
-                (won ? '승' : '패') + '</span>';
+                (won ? 'WIN' : 'LOSE') + '</span>';
         }
         async function renderEnjoyBaseballMoreCalendar() {
             const title = document.getElementById('kbo-more-month-title');
@@ -4273,17 +4484,14 @@
             wrap.innerHTML =
                 '<div class="kbo-more-shell">' +
                     '<section id="kbo-more-daily-section" class="kbo-original-section">' +
-                        '<div class="kbo-original-section-head">' +
-                            '<div class="kbo-original-section-title"><strong>경기 일정</strong><small>해당 일자의 전체 경기를 확인하세요</small></div>' +
-                            '<span class="kbo-original-section-badge">2026 KBO</span>' +
+                        '<div class="kbo-original-section-head is-community-title">' +
+                            '<div class="kbo-original-section-title"><strong>야구 커뮤니티</strong></div>' +
                         '</div>' +
-                        '<div class="kbo-original-control" style="--kbo-point:#FFFFFF;">' +
-                            '<div class="kbo-original-date-nav">' +
-                                '<button type="button" class="kbo-original-date-button" onclick="window.changeKboMoreDailyDate(-1)" aria-label="이전 날짜"><i class="fa-solid fa-chevron-left"></i></button>' +
-                                '<strong id="kbo-more-daily-title" class="kbo-original-date-title"></strong>' +
-                                '<button type="button" class="kbo-original-date-button" onclick="window.changeKboMoreDailyDate(1)" aria-label="다음 날짜"><i class="fa-solid fa-chevron-right"></i></button>' +
-                            '</div>' +
-                        '</div>' +
+                        '<div id="kbo-more-daily-dial" class="kbo-daily-dial" role="group" aria-label="경기 날짜 선택"' +
+                            ' onpointerdown="window.startKboMoreDailyDial(event)"' +
+                            ' onpointermove="window.moveKboMoreDailyDial(event)"' +
+                            ' onpointerup="window.endKboMoreDailyDial(event)"' +
+                            ' onpointercancel="window.cancelKboMoreDailyDial(event)"></div>' +
                         '<div id="kbo-more-daily-meta" class="kbo-original-day-meta"></div>' +
                         '<div id="kbo-more-daily-list" class="kbo-original-game-list"></div>' +
                     '</section>' +
@@ -4329,9 +4537,66 @@
             if (section) section.style.setProperty('--kbo-point', enjoyBaseballTeamColors[team]);
             renderEnjoyBaseballMoreCalendar();
         };
+        window.selectKboMoreDailyDate = function (offset) {
+            if (enjoyBaseballDailyDialSuppressClick || !Number(offset)) return;
+            window.changeKboMoreDailyDate(Number(offset));
+        };
+        window.startKboMoreDailyDial = function (event) {
+            if (enjoyBaseballDailyDialSettleTimer) {
+                window.clearTimeout(enjoyBaseballDailyDialSettleTimer);
+                enjoyBaseballDailyDialSettleTimer = null;
+            }
+            enjoyBaseballDailyDialStartX = event.clientX;
+            enjoyBaseballDailyDialShift = 0;
+            const dial = event.currentTarget;
+            dial.classList.remove('is-settling');
+            dial.classList.add('is-dragging');
+            try { dial.setPointerCapture(event.pointerId); } catch (error) {}
+        };
+        window.moveKboMoreDailyDial = function (event) {
+            if (enjoyBaseballDailyDialStartX == null) return;
+            const dial = event.currentTarget;
+            const dayWidth = Math.max(68, dial.clientWidth * .215);
+            enjoyBaseballDailyDialShift = (event.clientX - enjoyBaseballDailyDialStartX) / dayWidth;
+            positionEnjoyBaseballDailyDial(enjoyBaseballDailyDialShift, false);
+        };
+        window.endKboMoreDailyDial = function (event) {
+            if (enjoyBaseballDailyDialStartX == null) return;
+            const distance = event.clientX - enjoyBaseballDailyDialStartX;
+            const dial = event.currentTarget;
+            const dayWidth = Math.max(68, dial.clientWidth * .215);
+            const delta = Math.round(-distance / dayWidth);
+            enjoyBaseballDailyDialStartX = null;
+            dial.classList.remove('is-dragging');
+            positionEnjoyBaseballDailyDial(-delta, true);
+            if (Math.abs(distance) > 6) {
+                enjoyBaseballDailyDialSuppressClick = true;
+            }
+            enjoyBaseballDailyDialSettleTimer = window.setTimeout(function () {
+                enjoyBaseballDailyDialSettleTimer = null;
+                dial.classList.remove('is-settling');
+                if (delta) {
+                    window.changeKboMoreDailyDate(delta);
+                } else {
+                    enjoyBaseballDailyDialShift = 0;
+                    positionEnjoyBaseballDailyDial(0, false);
+                }
+                window.setTimeout(function () { enjoyBaseballDailyDialSuppressClick = false; }, 0);
+            }, 180);
+        };
+        window.cancelKboMoreDailyDial = function (event) {
+            enjoyBaseballDailyDialStartX = null;
+            event.currentTarget.classList.remove('is-dragging');
+            enjoyBaseballDailyDialShift = 0;
+            positionEnjoyBaseballDailyDial(0, true);
+            window.setTimeout(function () {
+                event.currentTarget.classList.remove('is-settling');
+            }, 180);
+        };
         window.changeKboMoreDailyDate = function (delta) {
             window.haptic && window.haptic();
             enjoyBaseballMoreDailyDate.setDate(enjoyBaseballMoreDailyDate.getDate() + Number(delta || 0));
+            renderEnjoyBaseballDailyDial();
             enjoyBaseballMoreFetchMonth(enjoyBaseballMoreDailyDate).then(renderEnjoyBaseballMoreDaily);
         };
         window.changeKboMoreMonth = function (delta) {
