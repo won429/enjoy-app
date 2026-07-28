@@ -1322,6 +1322,9 @@
         /* 로그인 화면 하단 카피라이트 */
         #login-screen .lg-footer { margin-top: 36px; text-align: center; font-size: 13px; font-weight: 800;
             letter-spacing: -0.01em; color: rgba(255,255,255,0.38); }
+        #login-content { min-height: 100dvh; display: flex; flex-direction: column; }
+        #login-content.hidden { display: none; }
+        #login-screen .lg-footer { margin-top: auto; padding-top: 36px; flex-shrink: 0; }
         .lg-google { width: 100%; margin-top: 36px; background: #fff; color: #141414; font-weight: 700; font-size: 15px;
             padding: 15px 0; border-radius: 9999px; display: flex; align-items: center; justify-content: center; gap: 12px;
             border: 1px solid transparent; box-shadow: 0 6px 22px rgba(0,0,0,0.35); transition: transform .15s; cursor: pointer; }
@@ -1370,6 +1373,7 @@
         /* 화면 하단 카피라이트 (홈/일정/모임통장 공통) */
         .app-copyright { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: -0.01em;
             color: rgba(255,255,255,0.30); padding: 8px 0 4px; }
+        .app-copyright-slot { margin-top: auto; flex-shrink: 0; }
 
         /* 일정 추가 모달의 날짜 입력칸이 카드 밖으로 삐져나오는 문제 방지 (iOS WebKit) */
         #schedule-modal input[type="date"], #community-write-screen input[type="date"] { -webkit-appearance: none; appearance: none;
@@ -2967,7 +2971,7 @@
             var lf = document.getElementById('login-content');
             if (ls && ls.style.display !== 'none' && lc && lc.style.display !== 'none') {
                 lc.style.display = 'none';
-                if (lf) { lf.classList.remove('hidden'); lf.style.display = 'block'; }
+                if (lf) { lf.classList.remove('hidden'); lf.style.display = 'flex'; }
             }
         }, 3500);
     </script>
@@ -3710,7 +3714,7 @@
         </div>
 
 
-        <div class="mt-auto pt-8 pb-4"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
+        <div class="app-copyright-slot pt-8 pb-4"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
     </main>
 
     <!-- 더보기 화면은 하단 메뉴 팝오버(#more-popover)로 대체됨 -->
@@ -3778,7 +3782,7 @@
                 </button>
                 <h3 class="text-[17px] font-bold text-white tracking-tight mb-1 px-1" id="selected-date-title">이달의 일정</h3>
                 <div id="event-list" class="divide-y divide-white/5 px-1"></div>
-                <div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
+                <div class="app-copyright-slot pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
             </section>
         </div>
 
@@ -3990,7 +3994,7 @@
                     <div id="expense-list" class="flex flex-col px-1"></div>
                 </div>
             </div>
-            <div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
+            <div class="app-copyright-slot pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
         </div>
     </div>
 
@@ -6726,7 +6730,7 @@
                     '<div class="text-[12px] text-gray-400 leading-tight mt-0.5">' + sub + '</div></div></div>';
             });
             html += '</div></div>';
-            html += '<div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
+            html += '<div class="app-copyright-slot pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
             wrap.innerHTML = html;
         };
 
@@ -7519,7 +7523,7 @@
                     '</div></article>';
                 if (index === 0) html += '<div id="community-ad" class="flex justify-center mb-4 min-h-[100px]"></div>';
             });
-            html += '<div class="mt-auto pt-2 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
+            html += '<div class="app-copyright-slot pt-2 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>';
             wrap.innerHTML = html;
             requestAnimationFrame(function () {
                 if (window.enjoyShowAd) window.enjoyShowAd('community-ad', 'DAN-Y60v78Z4ID5hsdjF', 320, 100);
@@ -9429,7 +9433,7 @@
                 const showLoginForm = () => {
                     if (loginScreen)   { loginScreen.style.display = 'block'; }
                     if (loginChecking) loginChecking.style.display = 'none';
-                    if (loginContent)  { loginContent.classList.remove('hidden'); loginContent.style.display = 'block'; }
+                    if (loginContent)  { loginContent.classList.remove('hidden'); loginContent.style.display = 'flex'; }
                     // 미로그인 상태에서는 데이터 로더를 숨긴다(스피너 무한 회전 방지)
                     const ld = document.getElementById('app-loader');
                     if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
