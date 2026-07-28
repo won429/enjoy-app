@@ -2389,6 +2389,119 @@
             font-size: 11px;
             font-weight: 800;
         }
+        .schedule-dial-wrap {
+            max-height: 84px;
+            padding: 2px 20px 0;
+            overflow: hidden;
+            opacity: 1;
+            transform: none;
+            transform-origin: top center;
+            transition:
+                max-height .46s cubic-bezier(.2,1.18,.28,1),
+                padding-top .46s cubic-bezier(.2,1.18,.28,1),
+                opacity .24s ease,
+                transform .46s cubic-bezier(.2,1.28,.28,1);
+            will-change: max-height, opacity, transform;
+        }
+        #sched-panel-calendar.calendar-expanded .schedule-dial-wrap {
+            max-height: 0;
+            padding-top: 0;
+            opacity: 0;
+            transform: translateY(-14px) scale(.94);
+            pointer-events: none;
+        }
+        .schedule-date-dial {
+            margin: 0;
+            background: #000;
+        }
+        .schedule-date-dial .kbo-daily-dial-item.is-selected {
+            color: #3182F6;
+        }
+        .schedule-month-panel {
+            max-height: 0;
+            flex-shrink: 0;
+            padding: 0 20px;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-12px);
+            transition:
+                max-height .42s cubic-bezier(.2,.78,.25,1),
+                padding-bottom .42s cubic-bezier(.2,.78,.25,1),
+                opacity .22s ease,
+                transform .36s cubic-bezier(.2,.78,.25,1);
+            pointer-events: none;
+        }
+        .schedule-month-panel.is-expanded {
+            max-height: 390px;
+            padding-top: 3px;
+            padding-bottom: 14px;
+            opacity: 1;
+            transform: none;
+            pointer-events: auto;
+        }
+        .schedule-day-sheet {
+            position: relative;
+            min-height: 250px;
+            flex: 1;
+            margin-top: 26px;
+            padding: 30px 20px 0;
+            display: flex;
+            flex-direction: column;
+            border-radius: 24px 24px 0 0;
+            background: #111316;
+        }
+        .schedule-day-sheet::before {
+            content: '';
+            position: absolute;
+            top: -26px;
+            left: 50%;
+            z-index: 1;
+            width: 52px;
+            height: 52px;
+            border-radius: 999px;
+            background: #000;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+        .schedule-calendar-toggle {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            z-index: 2;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(255,255,255,.12);
+            outline: none;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,.24), 0 8px 24px rgba(0,0,0,.24);
+            -webkit-backdrop-filter: blur(18px) saturate(1.45);
+            backdrop-filter: blur(18px) saturate(1.45);
+            transform: translate(-50%, -50%);
+            transition: transform .18s ease, background-color .18s ease;
+        }
+        .schedule-calendar-toggle:active {
+            transform: translate(-50%, -50%) scale(.88);
+            background: rgba(255,255,255,.2);
+        }
+        .schedule-calendar-toggle i {
+            transition: transform .32s cubic-bezier(.2,.8,.25,1);
+        }
+        #sched-panel-calendar.calendar-expanded .schedule-calendar-toggle i {
+            transform: rotate(180deg);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .schedule-dial-wrap,
+            .schedule-month-panel,
+            .schedule-calendar-toggle,
+            .schedule-calendar-toggle i {
+                transition: none;
+            }
+        }
         .community-back-fab {
             position: absolute;
             top: max(16px, env(safe-area-inset-top));
@@ -2522,6 +2635,19 @@
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
             #schedule-screen header, #meeting-screen header { background-color: rgba(242, 242, 247, 0.9) !important; }
+            .schedule-date-dial,
+            .schedule-day-sheet::before {
+                background: #F2F2F7;
+            }
+            .schedule-day-sheet {
+                background: #FFFFFF;
+            }
+            .schedule-calendar-toggle {
+                color: #191F28;
+                background: rgba(255,255,255,.78);
+                border-color: rgba(255,255,255,.88);
+                box-shadow: inset 0 1px 1px rgba(255,255,255,.96), 0 8px 24px rgba(15,23,42,.12);
+            }
             .community-screen { background-color: #F2F2F7 !important; }
             .community-screen > header { background-color: rgba(242, 242, 247, 0.94) !important; }
             .community-back-fab {
@@ -3617,9 +3743,17 @@
         </header>
 
         <!-- 일정(달력) 패널 -->
-        <div id="sched-panel-calendar" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto">
-            <!-- 달력 (박스 없는 미니멀) -->
-            <div class="mb-1">
+        <div id="sched-panel-calendar" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide pt-2 w-full max-w-md mx-auto">
+            <div class="schedule-dial-wrap">
+                <div id="schedule-date-dial" class="kbo-daily-dial schedule-date-dial" role="group" aria-label="일정 날짜 선택"
+                    onpointerdown="window.startScheduleDateDial(event)"
+                    onpointermove="window.moveScheduleDateDial(event)"
+                    onpointerup="window.endScheduleDateDial(event)"
+                    onpointercancel="window.cancelScheduleDateDial(event)"></div>
+            </div>
+
+            <!-- 펼침형 월간 달력 -->
+            <div id="schedule-month-panel" class="schedule-month-panel" aria-hidden="true" inert>
                 <div class="grid grid-cols-7 text-center pb-2.5">
                     <div class="text-[11px] text-red-400/80 font-bold">일</div>
                     <div class="text-[11px] text-gray-600 font-semibold">월</div>
@@ -3632,12 +3766,20 @@
                 <div id="calendar-grid" class="grid grid-cols-7 text-center gap-y-1.5"></div>
             </div>
 
-            <!-- 선택한 날짜의 일정 (얇은 구분선 + 타임라인 리스트) -->
-            <div class="pt-5 mt-4 border-t border-white/5">
+            <!-- 선택한 날짜의 일정 -->
+            <section id="schedule-day-sheet" class="schedule-day-sheet"
+                onpointerdown="window.startScheduleCalendarPull(event)"
+                onpointerup="window.endScheduleCalendarPull(event)"
+                onpointercancel="window.cancelScheduleCalendarPull()">
+                <button id="schedule-calendar-toggle" type="button" class="schedule-calendar-toggle"
+                    onclick="window.haptic(); window.toggleScheduleCalendar()"
+                    aria-label="월간 달력 펼치기" aria-expanded="false" aria-controls="schedule-month-panel">
+                    <i class="fa-solid fa-chevron-down text-[12px]"></i>
+                </button>
                 <h3 class="text-[17px] font-bold text-white tracking-tight mb-1 px-1" id="selected-date-title">이달의 일정</h3>
                 <div id="event-list" class="divide-y divide-white/5 px-1"></div>
-            </div>
-            <div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
+                <div class="mt-auto pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
+            </section>
         </div>
 
         <!-- 스케줄(가능/불가능) 패널 -->
@@ -8068,6 +8210,231 @@
             }
         };
 
+        window.scheduleCalendarExpanded = false;
+        window.updateScheduleCalendarExpansion = function() {
+            const panel = document.getElementById('schedule-month-panel');
+            const wrap = document.getElementById('sched-panel-calendar');
+            const toggle = document.getElementById('schedule-calendar-toggle');
+            const dialWrap = wrap && wrap.querySelector('.schedule-dial-wrap');
+            const expanded = Boolean(window.scheduleCalendarExpanded);
+            if(panel) {
+                panel.classList.toggle('is-expanded', expanded);
+                panel.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+                if(expanded) panel.removeAttribute('inert');
+                else panel.setAttribute('inert', '');
+            }
+            if(wrap) wrap.classList.toggle('calendar-expanded', expanded);
+            if(dialWrap) {
+                dialWrap.setAttribute('aria-hidden', expanded ? 'true' : 'false');
+                if(expanded) dialWrap.setAttribute('inert', '');
+                else dialWrap.removeAttribute('inert');
+            }
+            if(toggle) {
+                toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                toggle.setAttribute('aria-label', expanded ? '월간 달력 접기' : '월간 달력 펼치기');
+            }
+        };
+        window.setScheduleCalendarExpanded = function(expanded) {
+            window.scheduleCalendarExpanded = Boolean(expanded);
+            window.updateScheduleCalendarExpansion();
+            const scroller = document.getElementById('sched-panel-calendar');
+            if(scroller && window.scheduleCalendarExpanded) {
+                scroller.scrollTop = 0;
+                requestAnimationFrame(function() { scroller.scrollTop = 0; });
+                window.setTimeout(function() {
+                    if(window.scheduleCalendarExpanded) scroller.scrollTop = 0;
+                }, 440);
+            }
+        };
+        window.toggleScheduleCalendar = function() {
+            window.setScheduleCalendarExpanded(!window.scheduleCalendarExpanded);
+        };
+
+        let scheduleCalendarPullStart = null;
+        window.startScheduleCalendarPull = function(event) {
+            const panel = document.getElementById('sched-panel-calendar');
+            scheduleCalendarPullStart = {
+                x: event.clientX,
+                y: event.clientY,
+                scrollTop: panel ? panel.scrollTop : 0
+            };
+        };
+        window.endScheduleCalendarPull = function(event) {
+            if(!scheduleCalendarPullStart) return;
+            const deltaX = event.clientX - scheduleCalendarPullStart.x;
+            const deltaY = event.clientY - scheduleCalendarPullStart.y;
+            const beganAtTop = scheduleCalendarPullStart.scrollTop <= 3;
+            scheduleCalendarPullStart = null;
+            if(Math.abs(deltaY) <= Math.abs(deltaX) || Math.abs(deltaY) < 44) return;
+            if(deltaY > 0 && beganAtTop) {
+                window.haptic && window.haptic();
+                window.setScheduleCalendarExpanded(true);
+            } else if(deltaY < 0 && window.scheduleCalendarExpanded) {
+                window.haptic && window.haptic();
+                window.setScheduleCalendarExpanded(false);
+            }
+        };
+        window.cancelScheduleCalendarPull = function() {
+            scheduleCalendarPullStart = null;
+        };
+
+        let scheduleDateDialStartX = null;
+        let scheduleDateDialStartY = null;
+        let scheduleDateDialShift = 0;
+        let scheduleDateDialDirection = null;
+        let scheduleDateDialSettleTimer = null;
+        let scheduleDateDialSuppressClick = false;
+        window.positionScheduleDateDial = function(shift, animate) {
+            const dial = document.getElementById('schedule-date-dial');
+            if(!dial) return;
+            dial.classList.toggle('is-settling', Boolean(animate));
+            dial.querySelectorAll('.kbo-daily-dial-item').forEach(function(item) {
+                const position = Number(item.dataset.dialOffset || 0) + Number(shift || 0);
+                const distance = Math.abs(position);
+                const arcPosition = Math.max(-2, Math.min(2, position));
+                const arcAngle = arcPosition * Math.PI / 6;
+                let left = 50 + (49.652 * Math.sin(arcAngle));
+                const top = (42 * Math.cos(arcAngle)) - 21;
+                if(position < -2) left -= (-2 - position) * 18;
+                if(position > 2) left += (position - 2) * 18;
+                let opacity = 0;
+                let weekdaySize = 9;
+                let daySize = 21;
+                if(distance <= 1) {
+                    opacity = 1 - (.48 * distance);
+                    weekdaySize = 13 - (3 * distance);
+                    daySize = 36 - (11 * distance);
+                } else if(distance <= 2) {
+                    opacity = .52 - (.32 * (distance - 1));
+                    weekdaySize = 10 - (distance - 1);
+                    daySize = 25 - (4 * (distance - 1));
+                } else if(distance < 3) {
+                    opacity = .2 * (3 - distance);
+                }
+                item.style.left = left + '%';
+                item.style.top = top + 'px';
+                item.style.opacity = String(Math.max(0, opacity));
+                item.style.zIndex = String(Math.max(0, 30 - Math.round(distance * 10)));
+                item.style.pointerEvents = distance <= 2.25 ? 'auto' : 'none';
+                item.setAttribute('aria-hidden', distance > 2.25 ? 'true' : 'false');
+                const weekday = item.querySelector('.kbo-daily-dial-weekday');
+                const day = item.querySelector('.kbo-daily-dial-day');
+                if(weekday) weekday.style.fontSize = weekdaySize + 'px';
+                if(day) day.style.fontSize = daySize + 'px';
+            });
+        };
+        window.renderScheduleDateDial = function() {
+            const dial = document.getElementById('schedule-date-dial');
+            if(!dial || !window.selectedScheduleKey) return;
+            const parts = window.selectedScheduleKey.split('-').map(Number);
+            const selected = new Date(parts[0], parts[1] - 1, parts[2]);
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            let html = '<div class="kbo-daily-dial-track">';
+            for(let offset = -7; offset <= 7; offset += 1) {
+                const date = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate() + offset);
+                const positionClass = offset === 0 ? ' is-selected' : (Math.abs(offset) === 1 ? ' is-near' : ' is-far');
+                const label = (date.getMonth() + 1) + '월 ' + date.getDate() + '일 ' + dayNames[date.getDay()] + '요일';
+                html += '<button type="button" class="kbo-daily-dial-item' + positionClass +
+                    '" data-dial-offset="' + offset + '" onclick="window.selectScheduleDateDial(' + offset + ')" aria-label="' + label + '"' +
+                    (Math.abs(offset) > 2 ? ' tabindex="-1"' : '') +
+                    (offset === 0 ? ' aria-current="date"' : '') + '>' +
+                        '<span class="kbo-daily-dial-weekday">' + dayNames[date.getDay()] + '</span>' +
+                        '<strong class="kbo-daily-dial-day">' + date.getDate() + '</strong>' +
+                    '</button>';
+            }
+            dial.innerHTML = html + '</div>';
+            scheduleDateDialShift = 0;
+            window.positionScheduleDateDial(0, false);
+        };
+        window.changeScheduleDateDial = function(delta) {
+            if(!Number(delta) || !window.selectedScheduleKey) return;
+            const parts = window.selectedScheduleKey.split('-').map(Number);
+            const next = new Date(parts[0], parts[1] - 1, parts[2] + Number(delta));
+            window.viewYear = next.getFullYear();
+            window.viewMonth = next.getMonth();
+            window.selectedScheduleKey =
+                next.getFullYear() + '-' +
+                String(next.getMonth() + 1).padStart(2, '0') + '-' +
+                String(next.getDate()).padStart(2, '0');
+            window.renderCalendar(window.viewYear, window.viewMonth);
+        };
+        window.selectScheduleDateDial = function(offset) {
+            if(scheduleDateDialSuppressClick || !Number(offset)) return;
+            window.haptic && window.haptic();
+            window.changeScheduleDateDial(Number(offset));
+        };
+        window.startScheduleDateDial = function(event) {
+            if(scheduleDateDialSettleTimer) {
+                window.clearTimeout(scheduleDateDialSettleTimer);
+                scheduleDateDialSettleTimer = null;
+            }
+            scheduleDateDialStartX = event.clientX;
+            scheduleDateDialStartY = event.clientY;
+            scheduleDateDialShift = 0;
+            scheduleDateDialDirection = null;
+            const dial = event.currentTarget;
+            dial.classList.remove('is-settling');
+            dial.classList.add('is-dragging');
+            try { dial.setPointerCapture(event.pointerId); } catch(error) {}
+        };
+        window.moveScheduleDateDial = function(event) {
+            if(scheduleDateDialStartX == null || scheduleDateDialStartY == null) return;
+            const deltaX = event.clientX - scheduleDateDialStartX;
+            const deltaY = event.clientY - scheduleDateDialStartY;
+            if(!scheduleDateDialDirection && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 5) {
+                scheduleDateDialDirection = Math.abs(deltaY) > Math.abs(deltaX) ? 'vertical' : 'horizontal';
+            }
+            if(scheduleDateDialDirection !== 'horizontal') return;
+            if(event.cancelable) event.preventDefault();
+            const dial = event.currentTarget;
+            const dayWidth = Math.max(68, dial.clientWidth * .215);
+            scheduleDateDialShift = deltaX / dayWidth;
+            window.positionScheduleDateDial(scheduleDateDialShift, false);
+        };
+        window.endScheduleDateDial = function(event) {
+            if(scheduleDateDialStartX == null || scheduleDateDialStartY == null) return;
+            const distanceX = event.clientX - scheduleDateDialStartX;
+            const distanceY = event.clientY - scheduleDateDialStartY;
+            const direction = scheduleDateDialDirection;
+            const dial = event.currentTarget;
+            scheduleDateDialStartX = null;
+            scheduleDateDialStartY = null;
+            scheduleDateDialDirection = null;
+            dial.classList.remove('is-dragging');
+            if(direction === 'vertical') {
+                scheduleDateDialShift = 0;
+                window.positionScheduleDateDial(0, false);
+                if(distanceY > 44 && Math.abs(distanceY) > Math.abs(distanceX)) {
+                    window.haptic && window.haptic();
+                    window.setScheduleCalendarExpanded(true);
+                }
+                return;
+            }
+            const dayWidth = Math.max(68, dial.clientWidth * .215);
+            const delta = Math.round(-distanceX / dayWidth);
+            window.positionScheduleDateDial(-delta, true);
+            if(Math.abs(distanceX) > 6) scheduleDateDialSuppressClick = true;
+            scheduleDateDialSettleTimer = window.setTimeout(function() {
+                scheduleDateDialSettleTimer = null;
+                dial.classList.remove('is-settling');
+                if(delta) {
+                    window.changeScheduleDateDial(delta);
+                } else {
+                    scheduleDateDialShift = 0;
+                    window.positionScheduleDateDial(0, false);
+                }
+                window.setTimeout(function() { scheduleDateDialSuppressClick = false; }, 0);
+            }, 180);
+        };
+        window.cancelScheduleDateDial = function(event) {
+            scheduleDateDialStartX = null;
+            scheduleDateDialStartY = null;
+            scheduleDateDialDirection = null;
+            scheduleDateDialShift = 0;
+            event.currentTarget.classList.remove('is-dragging');
+            window.positionScheduleDateDial(0, true);
+        };
+
         window.renderCalendar = function(year, month) {
             const grid = document.getElementById('calendar-grid');
             const title = document.getElementById('cal-title');
@@ -8123,6 +8490,8 @@
                 </button>`;
             }
 
+            window.renderScheduleDateDial();
+            window.updateScheduleCalendarExpansion();
             window.renderDayDetail(events);
         };
 
@@ -8188,6 +8557,7 @@
         // 날짜 선택
         window.selectDay = function(dKey) {
             window.selectedScheduleKey = dKey;
+            window.setScheduleCalendarExpanded(false);
             window.renderCalendar(window.viewYear, window.viewMonth);
         };
 
