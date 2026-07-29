@@ -1898,6 +1898,48 @@
             border-bottom: 1px solid rgba(255,255,255,.085);
         }
         .kbo-original-section + .kbo-original-section { margin-top: 24px; }
+        #kbo-more-ranking-section {
+            margin-inline: -20px;
+        }
+        #kbo-more-ranking-section .kbo-original-section-head {
+            padding-inline: 22px;
+        }
+        #kbo-more-ranking-section .kbo-original-section-head.is-ranking-head {
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 7px;
+        }
+        .is-ranking-head .kbo-original-section-title {
+            flex: none;
+            white-space: nowrap;
+        }
+        .kbo-ranking-legend {
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            column-gap: 9px;
+            row-gap: 4px;
+            color: #9ca3af;
+            font-size: 9px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        .kbo-ranking-legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .kbo-ranking-legend i {
+            width: 6px;
+            height: 6px;
+            flex: none;
+            border-radius: 50%;
+            background: var(--ranking-color);
+        }
         .kbo-original-section-head {
             display: flex;
             align-items: center;
@@ -2052,7 +2094,7 @@
         }
         .kbo-daily-dial:active { cursor: grabbing; }
         .kbo-daily-dial::before {
-            content: '';
+            content: none;
             position: absolute;
             top: -62px;
             right: 7%;
@@ -2419,6 +2461,9 @@
             background: #000;
         }
         .schedule-date-dial .kbo-daily-dial-item.is-selected {
+            color: #3182F6;
+        }
+        #kbo-more-daily-dial .kbo-daily-dial-item.is-selected {
             color: #3182F6;
         }
         .schedule-month-panel {
@@ -4396,7 +4441,15 @@
         }
         const enjoyBaseballMoreTeams = ['LG', '두산', 'KIA', '삼성', 'SSG', '롯데', '한화', 'KT', 'NC', '키움'];
         const enjoyBaseballMoreMonthCache = new Map();
-        let enjoyBaseballMoreTeam = 'KIA';
+        const enjoyBaseballMoreTeamStorageKey = 'enjoy_kbo_more_team';
+        let enjoyBaseballMoreTeam = (function () {
+            try {
+                const savedTeam = localStorage.getItem(enjoyBaseballMoreTeamStorageKey);
+                return savedTeam === 'KIA' || savedTeam === '삼성' ? savedTeam : 'KIA';
+            } catch (error) {
+                return 'KIA';
+            }
+        })();
         let enjoyBaseballMoreDailyDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
         let enjoyBaseballMoreMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         let enjoyBaseballMoreHistoryPromise = null;
@@ -4728,7 +4781,7 @@
             const body = document.getElementById('kbo-more-ranking-body');
             if (!body) return;
             body.innerHTML = enjoyBaseballMoreRankings().map(function (row) {
-                const rankColors = ['#FACC15', '#94A3B8', '#D97706', '#2DD4BF', '#38BDF8'];
+                const rankColors = ['#4C75F6', '#7BDBE5', '#61C684', '#B2DA67', '#B2DA67'];
                 const rankColor = rankColors[row.rank - 1] || '#9CA3AF';
                 const streakColor = row.streak.includes('승') ? '#EA0029' : (row.streak.includes('패') ? '#074CA1' : '#9CA3AF');
                 const logo = enjoyBaseballTeamLogos[row.team] || '';
@@ -4783,9 +4836,15 @@
                         '<div class="kbo-original-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>' +
                         '<div id="kbo-more-calendar-grid" class="kbo-original-calendar-grid"></div>' +
                     '</section>' +
-                    '<section class="kbo-original-section">' +
-                        '<div class="kbo-original-section-head">' +
+                    '<section id="kbo-more-ranking-section" class="kbo-original-section">' +
+                        '<div class="kbo-original-section-head is-ranking-head">' +
                             '<div class="kbo-original-section-title"><strong>정규리그 순위 <span style="color:#9ca3af;font-size:10px;">· 2026시즌</span></strong></div>' +
+                            '<div class="kbo-ranking-legend" aria-label="포스트시즌 진출 기준">' +
+                                '<span><i style="--ranking-color:#4C75F6;"></i>한국시리즈 진출</span>' +
+                                '<span><i style="--ranking-color:#7BDBE5;"></i>플레이오프 진출</span>' +
+                                '<span><i style="--ranking-color:#61C684;"></i>준플레이오프 진출</span>' +
+                                '<span><i style="--ranking-color:#B2DA67;"></i>와일드카드 결정전 진출</span>' +
+                            '</div>' +
                         '</div>' +
                         '<div class="kbo-original-ranking-head">' +
                             '<span class="kbo-original-rank-col">순위</span><span class="kbo-original-team-col">팀명</span>' +
@@ -4802,6 +4861,9 @@
             if (team !== 'KIA' && team !== '삼성') return;
             window.haptic && window.haptic();
             enjoyBaseballMoreTeam = team;
+            try {
+                localStorage.setItem(enjoyBaseballMoreTeamStorageKey, team);
+            } catch (error) {}
             const section = document.getElementById('kbo-more-calendar-section');
             if (section) section.style.setProperty('--kbo-point', enjoyBaseballTeamColors[team]);
             renderEnjoyBaseballMoreCalendar();
