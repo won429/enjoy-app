@@ -36,6 +36,7 @@
     <link rel="preload" as="image" href="bird-flight-v2.png">
     <link rel="preload" as="image" href="mole-dig-v3.png">
     <link rel="preload" as="image" href="mole-hole-v3.png">
+    <link rel="preload" as="audio" href="apple-pay-sound.mp3" type="audio/mpeg">
 
     <style>
         :root {
@@ -860,8 +861,16 @@
             width: 138px;
             height: 104px;
             background: url('mole-dig-v3.png') 0 50% / 400% 100% no-repeat;
-            animation: obstacleMoleDigFrames 460ms steps(1, end) infinite;
+            transform-origin: 50% 88%;
             filter: drop-shadow(0 7px 6px rgba(69, 38, 10, 0.36));
+        }
+
+        .dart-obstacle.is-mole.is-digging .obstacle-mole-character {
+            animation: obstacleMoleDigFrames 310ms steps(1, end) infinite;
+        }
+
+        .dart-obstacle.is-mole.is-burrowing .obstacle-mole-character {
+            animation: obstacleMoleDigFrames 230ms steps(1, end) infinite reverse;
         }
 
         .obstacle-mole-dart {
@@ -892,9 +901,13 @@
             margin: var(--dirt-margin-y) 0 0 var(--dirt-margin-x);
             border-radius: 48% 42% 55% 38%;
             background: var(--dirt-color);
-            box-shadow: inset -1px -1px 1px rgba(48, 25, 7, 0.4);
+            box-shadow:
+                inset -1px -1px 1px rgba(48, 25, 7, 0.4),
+                0 2px 2px rgba(47, 24, 7, 0.18);
+            filter: blur(0.15px);
             opacity: 0;
             pointer-events: none;
+            will-change: transform, opacity;
         }
 
         .obstacle-mole-soil-clod {
@@ -917,25 +930,54 @@
             will-change: transform, opacity;
         }
 
+        .obstacle-mole-dust {
+            position: absolute;
+            z-index: 7;
+            left: 82px;
+            top: 116px;
+            width: var(--dust-size);
+            height: var(--dust-size);
+            margin: var(--dust-margin) 0 0 var(--dust-margin);
+            border-radius: 50%;
+            background: radial-gradient(
+                circle,
+                rgba(118, 75, 40, 0.3) 0 28%,
+                rgba(118, 75, 40, 0.14) 48%,
+                transparent 72%
+            );
+            opacity: 0;
+            pointer-events: none;
+            will-change: transform, opacity;
+        }
+
         .obstacle-mole-soil-clod.is-back {
             z-index: 2;
         }
 
         .dart-obstacle.is-mole.is-digging .obstacle-mole-hole {
-            animation: obstacleMoleHoleOpen 560ms cubic-bezier(0.18, 0.72, 0.22, 1) both;
+            animation: obstacleMoleHoleOpen 700ms cubic-bezier(0.18, 0.72, 0.22, 1) both;
         }
 
         .dart-obstacle.is-mole.is-digging .obstacle-mole-dirt,
         .dart-obstacle.is-mole.is-burrowing .obstacle-mole-dirt {
-            animation: obstacleMoleDirtBurst 760ms cubic-bezier(0.16, 0.72, 0.22, 1) var(--dirt-delay) both;
+            animation: obstacleMoleDirtBurst 900ms cubic-bezier(0.16, 0.72, 0.22, 1) var(--dirt-delay) both;
         }
 
         .dart-obstacle.is-mole.is-burrowing .obstacle-mole-dirt {
-            animation-duration: 520ms;
+            animation-duration: 460ms;
+            animation-delay: var(--burrow-delay);
+        }
+
+        .dart-obstacle.is-mole.is-digging .obstacle-mole-dust {
+            animation: obstacleMoleDustPuff 1050ms ease-out var(--dust-delay) both;
+        }
+
+        .dart-obstacle.is-mole.is-burrowing .obstacle-mole-dust {
+            animation: obstacleMoleDustPuff 580ms ease-out var(--burrow-delay) both;
         }
 
         .dart-obstacle.is-mole.is-digging .obstacle-mole-soil-clod {
-            animation: obstacleMoleSoilSettle 790ms cubic-bezier(0.16, 0.76, 0.24, 1)
+            animation: obstacleMoleSoilSettle 960ms cubic-bezier(0.16, 0.76, 0.24, 1)
                 var(--pile-delay) both;
         }
 
@@ -950,7 +992,7 @@
         }
 
         .dart-obstacle.is-mole.is-burrowing .obstacle-mole-hole {
-            animation: obstacleMoleHoleClose 430ms ease-in 120ms both;
+            animation: obstacleMoleHoleClose 500ms cubic-bezier(0.48, 0.02, 0.78, 0.32) 50ms both;
         }
 
         @keyframes obstacleBirdFlap {
@@ -983,15 +1025,18 @@
         }
 
         @keyframes obstacleMoleHoleOpen {
-            0% { opacity: 0; transform: scale(0.18, 0.1); }
-            55% { opacity: 1; transform: scale(1.08, 0.94); }
-            100% { opacity: 1; transform: scale(1); }
+            0% { opacity: 0; transform: translateY(5px) scale(0.14, 0.06); }
+            28% { opacity: 0.75; transform: translateY(2px) scale(0.64, 0.38); }
+            68% { opacity: 1; transform: translateY(-1px) scale(1.07, 0.91); }
+            84% { transform: translateY(1px) scale(0.97, 1.04); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         @keyframes obstacleMoleHoleClose {
             0% { opacity: 1; transform: scale(1); }
-            60% { opacity: 1; transform: scale(0.9, 0.72); }
-            100% { opacity: 0; transform: scale(0.14, 0.07); }
+            35% { opacity: 1; transform: translateY(2px) scale(1.04, 0.82); }
+            72% { opacity: 0.78; transform: translateY(4px) scale(0.58, 0.3); }
+            100% { opacity: 0; transform: translateY(6px) scale(0.12, 0.05); }
         }
 
         @keyframes obstacleMoleDirtBurst {
@@ -1005,10 +1050,15 @@
                 transform: translate3d(var(--dirt-mid-x), var(--dirt-y), 0)
                     rotate(var(--dirt-mid-rotate)) scale(1);
             }
+            72% {
+                opacity: 0.92;
+                transform: translate3d(var(--dirt-late-x), var(--dirt-late-y), 0)
+                    rotate(var(--dirt-late-rotate)) scale(0.9);
+            }
             100% {
                 opacity: 0;
-                transform: translate3d(var(--dirt-x), 22px, 0)
-                    rotate(var(--dirt-rotate)) scale(0.72);
+                transform: translate3d(var(--dirt-x), var(--dirt-fall-y), 0)
+                    rotate(var(--dirt-rotate)) scale(0.58);
             }
         }
 
@@ -1044,6 +1094,22 @@
             100% {
                 opacity: 0;
                 transform: translate3d(0, 4px, 0) rotate(0deg) scale(0.18);
+            }
+        }
+
+        @keyframes obstacleMoleDustPuff {
+            0% {
+                opacity: 0;
+                transform: translate3d(0, 4px, 0) scale(0.18);
+            }
+            18% { opacity: 0.72; }
+            62% {
+                opacity: 0.38;
+                transform: translate3d(var(--dust-x), var(--dust-y), 0) scale(1.1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(var(--dust-end-x), var(--dust-end-y), 0) scale(1.65);
             }
         }
 
@@ -1588,6 +1654,8 @@
         let drawTilePreloadTimer = null;
         let dartAudioContext = null;
         let dartFlightSoundStop = null;
+        let dartRevealAudio = null;
+        let isDartRevealAudioPrimed = false;
         let isDartFlying = false;
         let dartSequenceToken = 0;
         let activeMarkerIndex = -1;
@@ -6098,6 +6166,7 @@
             launcher.addEventListener('keydown', event => {
                 if ((event.key === 'Enter' || event.key === ' ') && !isDartFlying) {
                     event.preventDefault();
+                    primeDartRevealSound();
                     const pull = 62 + Math.random() * 66;
                     const steer = -0.72 + Math.random() * 1.44;
                     const dx = steer * pull;
@@ -6113,6 +6182,39 @@
             if (!dartAudioContext) dartAudioContext = new AudioContextClass();
             if (dartAudioContext.state === 'suspended') dartAudioContext.resume();
             return dartAudioContext;
+        }
+
+        function getDartRevealAudio() {
+            if (!dartRevealAudio) {
+                dartRevealAudio = new Audio('apple-pay-sound.mp3');
+                dartRevealAudio.preload = 'auto';
+                dartRevealAudio.playsInline = true;
+            }
+            return dartRevealAudio;
+        }
+
+        function primeDartRevealSound() {
+            if (isDartRevealAudioPrimed) return;
+            isDartRevealAudioPrimed = true;
+            const audio = getDartRevealAudio();
+            audio.volume = 0;
+            const playback = audio.play();
+            if (playback && typeof playback.then === 'function') {
+                playback.then(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.volume = 1;
+                    isDartRevealAudioPrimed = true;
+                }).catch(() => {
+                    audio.volume = 1;
+                    isDartRevealAudioPrimed = false;
+                });
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = 1;
+                isDartRevealAudioPrimed = true;
+            }
         }
 
         function playDartThrowSound() {
@@ -6219,26 +6321,19 @@
         }
 
         function playDartRevealSound() {
-            const context = getDartAudioContext();
-            if (!context) return;
-
-            const now = context.currentTime;
-            [523.25, 659.25, 783.99].forEach((frequency, index) => {
-                const oscillator = context.createOscillator();
-                const gain = context.createGain();
-                const start = now + index * 0.075;
-                oscillator.type = 'sine';
-                oscillator.frequency.value = frequency;
-                gain.gain.setValueAtTime(0.0001, start);
-                gain.gain.exponentialRampToValueAtTime(0.09, start + 0.025);
-                gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.34);
-                oscillator.connect(gain).connect(context.destination);
-                oscillator.start(start);
-                oscillator.stop(start + 0.36);
-            });
+            const audio = getDartRevealAudio();
+            audio.pause();
+            audio.currentTime = 0;
+            audio.volume = 1;
+            const playback = audio.play();
+            if (playback && typeof playback.catch === 'function') {
+                playback.catch(() => {
+                    isDartRevealAudioPrimed = false;
+                });
+            }
         }
 
-        function playDartObstacleSound(type, direction = 1) {
+        function playDartObstacleSound(type, direction = 1, phase = 'emerge') {
             const context = getDartAudioContext();
             if (!context) return;
             const now = context.currentTime;
@@ -6282,35 +6377,79 @@
             }
 
             if (type === 'mole') {
-                const duration = 0.72;
+                const isBurrowing = phase === 'burrow';
+                const duration = isBurrowing ? 0.78 : 1.18;
                 const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < data.length; i += 1) {
                     const progress = i / data.length;
-                    const digging = Math.max(0, Math.sin(progress * Math.PI * 7)) ** 3;
-                    data[i] = (Math.random() * 2 - 1) * digging * (1 - progress * 0.55);
+                    const scrapeCount = isBurrowing ? 9 : 12;
+                    const digging = Math.max(0, Math.sin(progress * Math.PI * scrapeCount)) ** 2.4;
+                    const body = 0.24 + digging * 0.76;
+                    data[i] = (Math.random() * 2 - 1) * body * (1 - progress * 0.38);
                 }
                 const source = context.createBufferSource();
-                const filter = context.createBiquadFilter();
-                const gain = context.createGain();
-                const thump = context.createOscillator();
-                const thumpGain = context.createGain();
+                const earthFilter = context.createBiquadFilter();
+                const earthGain = context.createGain();
+                const gravelFilter = context.createBiquadFilter();
+                const gravelGain = context.createGain();
                 source.buffer = buffer;
-                filter.type = 'lowpass';
-                filter.frequency.value = 640;
-                gain.gain.setValueAtTime(0.13, now);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-                thump.type = 'sine';
-                thump.frequency.setValueAtTime(105, now);
-                thump.frequency.exponentialRampToValueAtTime(48, now + 0.28);
-                thumpGain.gain.setValueAtTime(0.09, now);
-                thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-                source.connect(filter).connect(gain).connect(context.destination);
-                thump.connect(thumpGain).connect(context.destination);
+                earthFilter.type = 'lowpass';
+                earthFilter.frequency.setValueAtTime(isBurrowing ? 720 : 580, now);
+                earthFilter.frequency.linearRampToValueAtTime(isBurrowing ? 430 : 820, now + duration);
+                earthGain.gain.setValueAtTime(0.0001, now);
+                earthGain.gain.exponentialRampToValueAtTime(isBurrowing ? 0.16 : 0.14, now + 0.035);
+                earthGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+                gravelFilter.type = 'bandpass';
+                gravelFilter.frequency.value = isBurrowing ? 1250 : 1550;
+                gravelFilter.Q.value = 0.75;
+                gravelGain.gain.setValueAtTime(0.0001, now);
+                gravelGain.gain.exponentialRampToValueAtTime(isBurrowing ? 0.055 : 0.045, now + 0.04);
+                gravelGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.92);
+
+                source.connect(earthFilter).connect(earthGain).connect(context.destination);
+                source.connect(gravelFilter).connect(gravelGain).connect(context.destination);
                 source.start(now);
-                thump.start(now);
                 source.stop(now + duration);
-                thump.stop(now + 0.31);
+
+                const thumpOffsets = isBurrowing
+                    ? [0, 0.16, 0.34, 0.52]
+                    : [0.02, 0.24, 0.5, 0.76];
+                thumpOffsets.forEach((offset, index) => {
+                    const thump = context.createOscillator();
+                    const thumpGain = context.createGain();
+                    const start = now + offset;
+                    thump.type = 'sine';
+                    thump.frequency.setValueAtTime(112 - index * 8, start);
+                    thump.frequency.exponentialRampToValueAtTime(42, start + 0.18);
+                    thumpGain.gain.setValueAtTime(0.0001, start);
+                    thumpGain.gain.exponentialRampToValueAtTime(
+                        (isBurrowing ? 0.085 : 0.07) * (1 - index * 0.1),
+                        start + 0.012
+                    );
+                    thumpGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+                    thump.connect(thumpGain).connect(context.destination);
+                    thump.start(start);
+                    thump.stop(start + 0.21);
+                });
+
+                const pebbleOffsets = isBurrowing
+                    ? [0.1, 0.22, 0.37, 0.49]
+                    : [0.16, 0.31, 0.47, 0.64, 0.82];
+                pebbleOffsets.forEach((offset, index) => {
+                    const pebble = context.createOscillator();
+                    const pebbleGain = context.createGain();
+                    const start = now + offset;
+                    pebble.type = 'triangle';
+                    pebble.frequency.setValueAtTime(1480 + index * 170, start);
+                    pebble.frequency.exponentialRampToValueAtTime(520, start + 0.045);
+                    pebbleGain.gain.setValueAtTime(0.025 - index * 0.0025, start);
+                    pebbleGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.055);
+                    pebble.connect(pebbleGain).connect(context.destination);
+                    pebble.start(start);
+                    pebble.stop(start + 0.06);
+                });
                 return;
             }
         }
@@ -6321,6 +6460,7 @@
             const rect = launcher.getBoundingClientRect();
 
             getDartAudioContext();
+            primeDartRevealSound();
             hideDrawResult();
             clearDrawLanding();
             if (drawMap) {
@@ -6483,24 +6623,48 @@
                 const dirtColors = ['#6f3d1c', '#4e2813', '#8a5127', '#5c3118'];
                 for (let i = 0; i < 30; i += 1) {
                     const angle = (Math.PI * 2 * i / 30) + (i % 3 - 1) * 0.11;
-                    const distance = 58 + (i % 7) * 9;
-                    const dirtSize = 4.8 + (i % 5) * 1.35;
+                    const distance = 48 + (i % 7) * 9;
+                    const dirtSize = 3.2 + (i % 6) * 1.28;
                     const dirtX = Math.cos(angle) * distance;
+                    const dirtY = -48 - Math.abs(Math.sin(angle)) * 52 - (i % 4) * 5;
                     const dirtRotate = (i % 2 ? 1 : -1) * (115 + i * 17);
                     const dirt = document.createElement('span');
                     dirt.className = 'obstacle-mole-dirt';
                     dirt.style.setProperty('--dirt-x', `${dirtX}px`);
                     dirt.style.setProperty('--dirt-mid-x', `${dirtX * 0.56}px`);
-                    dirt.style.setProperty('--dirt-y', `${-55 - Math.abs(Math.sin(angle)) * 46 - (i % 4) * 4}px`);
+                    dirt.style.setProperty('--dirt-y', `${dirtY}px`);
+                    dirt.style.setProperty('--dirt-late-x', `${dirtX * 0.82}px`);
+                    dirt.style.setProperty('--dirt-late-y', `${dirtY * 0.32}px`);
+                    dirt.style.setProperty('--dirt-fall-y', `${18 + (i % 5) * 4}px`);
                     dirt.style.setProperty('--dirt-size', `${dirtSize}px`);
                     dirt.style.setProperty('--dirt-height', `${dirtSize * 0.72}px`);
                     dirt.style.setProperty('--dirt-margin-x', `${dirtSize * -0.5}px`);
                     dirt.style.setProperty('--dirt-margin-y', `${dirtSize * -0.36}px`);
                     dirt.style.setProperty('--dirt-rotate', `${dirtRotate}deg`);
                     dirt.style.setProperty('--dirt-mid-rotate', `${dirtRotate * 0.55}deg`);
+                    dirt.style.setProperty('--dirt-late-rotate', `${dirtRotate * 0.78}deg`);
                     dirt.style.setProperty('--dirt-delay', `${(i % 6) * 28 + Math.floor(i / 6) * 26}ms`);
+                    dirt.style.setProperty('--burrow-delay', `${(i % 5) * 12}ms`);
                     dirt.style.setProperty('--dirt-color', dirtColors[i % dirtColors.length]);
                     obstacle.appendChild(dirt);
+                }
+
+                for (let i = 0; i < 14; i += 1) {
+                    const side = i % 2 ? 1 : -1;
+                    const dustX = side * (24 + (i % 5) * 13);
+                    const dustY = -12 - (i % 4) * 9;
+                    const dustSize = 18 + (i % 5) * 6;
+                    const dust = document.createElement('span');
+                    dust.className = 'obstacle-mole-dust';
+                    dust.style.setProperty('--dust-x', `${dustX}px`);
+                    dust.style.setProperty('--dust-y', `${dustY}px`);
+                    dust.style.setProperty('--dust-end-x', `${dustX * 1.28}px`);
+                    dust.style.setProperty('--dust-end-y', `${dustY - 8}px`);
+                    dust.style.setProperty('--dust-size', `${dustSize}px`);
+                    dust.style.setProperty('--dust-margin', `${dustSize * -0.5}px`);
+                    dust.style.setProperty('--dust-delay', `${60 + (i % 7) * 48}ms`);
+                    dust.style.setProperty('--burrow-delay', `${(i % 5) * 18}ms`);
+                    obstacle.appendChild(dust);
                 }
 
                 for (let i = 0; i < 20; i += 1) {
@@ -6888,7 +7052,7 @@
                 element.style.transform = `translate3d(${point.x - 82}px, ${point.y - 132}px, 0)`;
                 const startedAt = performance.now();
                 const isEmerging = toRise > fromRise;
-                const excavationRatio = isEmerging && fromRise === 0 ? 0.64 : 0;
+                const excavationRatio = isEmerging && fromRise === 0 ? 0.28 : 0;
                 const step = now => {
                     if (sequenceToken !== dartSequenceToken || !element.isConnected) {
                         resolve(false);
@@ -6898,13 +7062,29 @@
                     const motionProgress = excavationRatio
                         ? Math.max(0, (progress - excavationRatio) / (1 - excavationRatio))
                         : progress;
-                    const eased = motionProgress * motionProgress * (3 - 2 * motionProgress);
-                    const rise = fromRise + (toRise - fromRise) * eased;
-                    const burrowWobble =
-                        Math.sin(motionProgress * Math.PI * 5) * (1 - motionProgress) * 2.2;
-                    riser.style.opacity = `${Math.min(1, rise * 1.8)}`;
+                    const emergeEase = 1 - (1 - motionProgress) ** 3;
+                    const burrowEase = motionProgress ** 2.25;
+                    const anticipation = isEmerging
+                        ? 0
+                        : Math.sin(Math.min(1, motionProgress / 0.2) * Math.PI) * 0.035;
+                    const overshoot = isEmerging
+                        ? Math.sin(motionProgress * Math.PI) * (1 - motionProgress) * 0.08
+                        : 0;
+                    const rise = isEmerging
+                        ? fromRise + (toRise - fromRise) * emergeEase + overshoot
+                        : Math.max(0, fromRise + (toRise - fromRise) * burrowEase + anticipation);
+                    const digWobble = Math.sin(motionProgress * Math.PI * (isEmerging ? 6 : 8))
+                        * (isEmerging ? 1 - motionProgress : 0.35 + motionProgress * 0.65);
+                    const wobbleX = digWobble * (isEmerging ? 2.6 : 3.4);
+                    const squash = Math.sin(motionProgress * Math.PI) * (isEmerging ? 0.035 : 0.055);
+                    const opacity = isEmerging
+                        ? Math.min(1, Math.max(0, motionProgress * 3.4))
+                        : (motionProgress < 0.82 ? 1 : Math.max(0, (1 - motionProgress) / 0.18));
+                    riser.style.opacity = `${opacity}`;
                     riser.style.transform =
-                        `translate3d(${burrowWobble}px, ${(1 - rise) * 86}px, 0) rotate(${burrowWobble * 0.35}deg) scale(${0.94 + rise * 0.06})`;
+                        `translate3d(${wobbleX}px, ${(1 - rise) * 90}px, 0) ` +
+                        `rotate(${digWobble * 0.72}deg) ` +
+                        `scale(${0.94 + rise * 0.06 + squash}, ${0.92 + rise * 0.08 - squash})`;
                     if (progress < 1) {
                         window.requestAnimationFrame(step);
                     } else {
@@ -6931,7 +7111,7 @@
 
             setDrawTopbar('어어?? 당첨 지역의 땅이 흔들린다!', '다트 아래에서 무언가 파고 올라오는 중', false);
             triggerMoleEarthquake();
-            playDartObstacleSound('mole', obstacle.direction);
+            playDartObstacleSound('mole', obstacle.direction, 'emerge');
             if (navigator.vibrate) navigator.vibrate([25, 18, 35, 18, 55, 25, 70]);
 
             const pickupMole = createDartObstacleVisual('mole', obstacle.direction);
@@ -6940,7 +7120,7 @@
 
             pickupMole.classList.add('has-dart');
             clearDrawLandingResultOnly();
-            playDartObstacleSound('mole', obstacle.direction);
+            playDartObstacleSound('mole', obstacle.direction, 'burrow');
             setDrawTopbar('두더지가 당첨 다트를 뽑아갔다!', '다트를 들고 땅속으로 들어가는 중', false);
             if (navigator.vibrate) navigator.vibrate([38, 22, 55]);
             if (!await waitForDartSequence(320, sequenceToken)) return;
@@ -6968,7 +7148,7 @@
             if (!destinationPoint || sequenceToken !== dartSequenceToken) return;
             setDrawTopbar('새 위치의 땅이 다시 흔들린다!', '두더지가 다트를 들고 파고 올라오는 중', false);
             triggerMoleEarthquake();
-            playDartObstacleSound('mole', obstacle.direction);
+            playDartObstacleSound('mole', obstacle.direction, 'emerge');
             if (navigator.vibrate) navigator.vibrate([24, 18, 42, 22, 58]);
 
             const destinationMole = createDartObstacleVisual('mole', obstacle.direction);
@@ -6983,7 +7163,8 @@
             setDrawTopbar('두더지가 새 위치에 다트를 꽂았다!', '최종 여행지 당첨을 확인하는 중', false);
             if (navigator.vibrate) navigator.vibrate([30, 20, 55]);
             if (!await waitForDartSequence(260, sequenceToken)) return;
-            if (!await animateMolePose(destinationMole, destinationPoint, 1, 0, 460, sequenceToken)) return;
+            playDartObstacleSound('mole', obstacle.direction, 'burrow');
+            if (!await animateMolePose(destinationMole, destinationPoint, 1, 0, 560, sequenceToken)) return;
             clearDartObstacle();
 
             showDrawLanding(plan.lat, plan.lng, plan.distanceKm, destinationPoint.x, destinationPoint.y, {
