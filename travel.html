@@ -619,6 +619,460 @@
                 max-width 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
+        .draw-result-goo {
+            position: absolute;
+            left: var(--draw-result-left, -139px);
+            bottom: 0;
+            z-index: 1;
+            width: var(--draw-result-width, 344px);
+            height: 128px;
+            opacity: 0;
+            pointer-events: none;
+            will-change: opacity;
+        }
+
+        .draw-goo-fluids {
+            position: absolute;
+            inset: 0;
+            filter: url("#draw-result-goo-filter");
+            pointer-events: none;
+        }
+
+        .draw-result-goo > .draw-goo-surface,
+        .draw-goo-fluids > span {
+            position: absolute;
+            display: block;
+            background: #eef7fc;
+            opacity: 0;
+            will-change: transform, opacity, border-radius;
+        }
+
+        :root[data-device-theme="dark"] .draw-result-goo > .draw-goo-surface,
+        :root[data-device-theme="dark"] .draw-goo-fluids > span {
+            background: #1a232d;
+        }
+
+        .draw-goo-surface {
+            --draw-goo-result-color: #eef7fc;
+            left: 0;
+            bottom: var(--draw-result-bottom, 62px);
+            width: 100%;
+            height: var(--draw-result-height, 64px);
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.94);
+            border-radius: 22px;
+            background: var(--draw-goo-result-color);
+            box-shadow:
+                0 -12px 28px rgba(15, 23, 42, 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.88);
+            transform-origin: var(--draw-origin-x, 50%) 100%;
+        }
+
+        :root[data-device-theme="dark"] .draw-goo-surface {
+            --draw-goo-result-color: #1a232d;
+            border-color: rgba(255, 255, 255, 0.34);
+            box-shadow:
+                0 -14px 30px rgba(0, 0, 0, 0.34),
+                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+        }
+
+        .draw-goo-neck {
+            left: calc(var(--draw-origin-x, 50%) - 17px);
+            bottom: 34px;
+            width: 34px;
+            height: 54px;
+            border-radius: 48% 52% 44% 56% / 62% 58% 42% 38%;
+            transform-origin: 50% 100%;
+        }
+
+        .draw-goo-drop {
+            border-radius: 50%;
+        }
+
+        .draw-goo-drop-a {
+            left: calc(var(--draw-origin-x, 50%) - 18px);
+            bottom: 38px;
+            width: 30px;
+            height: 30px;
+        }
+
+        .draw-goo-drop-b {
+            left: calc(var(--draw-origin-x, 50%) + 5px);
+            bottom: 32px;
+            width: 20px;
+            height: 20px;
+        }
+
+        #bottom-nav.is-draw-tab.has-draw-result .draw-result-goo,
+        #bottom-nav.is-draw-tab.is-swallowing .draw-result-goo {
+            opacity: 1;
+        }
+
+        #bottom-nav.is-draw-tab.has-draw-result .bottom-nav-glass,
+        #bottom-nav.is-draw-tab.is-swallowing .bottom-nav-glass {
+            overflow: visible;
+        }
+
+        #bottom-nav.is-draw-tab.has-draw-result .draw-goo-surface {
+            animation:
+                drawGooSurfaceSpit 980ms linear both,
+                drawGooSurfaceRetire 60ms linear 980ms forwards;
+        }
+
+        #bottom-nav.is-draw-tab.has-draw-result .draw-goo-neck {
+            animation: drawGooNeckSpit 900ms linear both;
+        }
+
+        #bottom-nav.is-draw-tab.has-draw-result .draw-goo-drop-a {
+            animation: drawGooDropASpit 900ms linear both;
+        }
+
+        #bottom-nav.is-draw-tab.has-draw-result .draw-goo-drop-b {
+            animation: drawGooDropBSpit 900ms linear both;
+        }
+
+        #bottom-nav.is-draw-tab.is-swallowing .draw-goo-neck,
+        #bottom-nav.is-draw-tab.is-swallowing .draw-goo-drop-a,
+        #bottom-nav.is-draw-tab.is-swallowing .draw-goo-drop-b {
+            animation-direction: reverse;
+            animation-duration: 520ms;
+            animation-timing-function: linear;
+            animation-fill-mode: both;
+            animation-iteration-count: 1;
+        }
+
+        #bottom-nav.is-draw-tab.is-swallowing .draw-goo-neck {
+            animation-name: drawGooNeckSpit;
+        }
+
+        #bottom-nav.is-draw-tab.is-swallowing .draw-goo-drop-a {
+            animation-name: drawGooDropASpit;
+        }
+
+        #bottom-nav.is-draw-tab.is-swallowing .draw-goo-drop-b {
+            animation-name: drawGooDropBSpit;
+        }
+
+        .draw-result-island {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: calc(100% + 10px);
+            z-index: 3;
+            min-height: 64px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 11px 11px 15px;
+            border: 0;
+            border-radius: 22px;
+            background: transparent;
+            box-shadow: none;
+            overflow: visible;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transform-origin: 50% calc(100% + 5px);
+            will-change: transform, opacity, border-radius;
+        }
+
+        :root[data-device-theme="dark"] .draw-result-island {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .draw-result-island::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            border: 1px solid rgba(255, 255, 255, 0.94);
+            border-radius: 22px;
+            background: #eef7fc;
+            box-shadow:
+                0 -12px 28px rgba(15, 23, 42, 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.88);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        :root[data-device-theme="dark"] .draw-result-island::before {
+            border-color: rgba(255, 255, 255, 0.34);
+            background: #1a232d;
+            box-shadow:
+                0 -14px 30px rgba(0, 0, 0, 0.34),
+                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+        }
+
+        #bottom-nav.is-draw-tab .draw-result-island.is-visible {
+            visibility: visible;
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        #bottom-nav.is-draw-tab .draw-result-island.is-visible::before {
+            animation: drawResultFinalSurfaceIn 60ms linear 980ms both;
+        }
+
+        #bottom-nav.is-draw-tab .draw-result-island.is-visible > * {
+            animation: drawResultContentIn 300ms ease-out 480ms both;
+        }
+
+        #bottom-nav.is-draw-tab .draw-result-island.is-hiding {
+            visibility: visible;
+            pointer-events: none;
+            opacity: 1;
+        }
+
+        #bottom-nav.is-draw-tab .draw-result-island.is-hiding::before {
+            transform-origin: 50% 100%;
+            animation: drawResultFinalSurfaceSwallow 220ms cubic-bezier(0.55, 0, 0.86, 0.42) both;
+        }
+
+        #bottom-nav.is-draw-tab .draw-result-island.is-hiding > * {
+            animation: drawResultContentOut 80ms ease-in both;
+        }
+
+        .draw-result-island > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .draw-result-copy {
+            min-width: 0;
+            line-height: 1.15;
+        }
+
+        .draw-result-title,
+        .draw-result-detail {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .draw-result-title {
+            font-size: 13px;
+            font-weight: 850;
+            letter-spacing: -0.025em;
+            color: var(--app-text-strong);
+        }
+
+        .draw-result-detail {
+            margin-top: 5px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--app-text-secondary);
+        }
+
+        .draw-result-retry {
+            min-width: 56px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 0 12px;
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(49, 130, 246, 0.94);
+            box-shadow: 0 6px 16px rgba(49, 130, 246, 0.28);
+            font-size: 10px;
+            font-weight: 800;
+            transition: transform 150ms ease, filter 150ms ease;
+        }
+
+        .draw-result-retry:active {
+            transform: scale(0.91);
+            filter: brightness(0.96);
+        }
+
+        #bottom-nav.is-draw-tab.has-draw-result #nav-indicator::before {
+            animation: drawIndicatorSpit 980ms linear both;
+        }
+
+        #bottom-nav.is-draw-tab.is-swallowing #nav-indicator::before {
+            animation: drawIndicatorSpit 520ms linear reverse both;
+        }
+
+        @keyframes drawGooSurfaceSpit {
+            0%, 27% {
+                opacity: 0;
+                transform: translateY(8px) scaleX(0.18) scaleY(0.72);
+                border-radius: 999px;
+            }
+            28% {
+                opacity: 1;
+                transform: translateY(8px) scaleX(0.18) scaleY(0.72);
+                border-radius: 999px;
+            }
+            36% {
+                opacity: 1;
+                transform: translateY(2px) scaleX(0.54) scaleY(1.05);
+                border-radius: 34px;
+            }
+            46% {
+                opacity: 1;
+                transform: translateY(-6px) scaleX(1.035) scaleY(0.88);
+                border-radius: 22px;
+            }
+            59% {
+                transform: translateY(5px) scaleX(0.965) scaleY(1.105);
+            }
+            71% {
+                transform: translateY(-3px) scaleX(1.02) scaleY(0.965);
+            }
+            82% {
+                transform: translateY(2px) scaleX(0.99) scaleY(1.025);
+            }
+            91% {
+                transform: translateY(-1px) scaleX(1.005) scaleY(0.992);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                border-radius: 22px;
+            }
+        }
+
+        @keyframes drawGooSurfaceRetire {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes drawResultContentIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes drawResultFinalSurfaceIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes drawResultFinalSurfaceSwallow {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                border-radius: 22px;
+            }
+            28% {
+                opacity: 1;
+                transform: translateY(1px) scaleX(0.92) scaleY(1.035);
+                border-radius: 23px;
+            }
+            62% {
+                opacity: 0.92;
+                transform: translateY(5px) scaleX(0.62) scaleY(0.88);
+                border-radius: 30px;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(13px) scaleX(0.24) scaleY(0.62);
+                border-radius: 999px;
+            }
+        }
+
+        @keyframes drawResultContentOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes drawGooNeckSpit {
+            0%, 8% {
+                opacity: 0;
+                transform: translate3d(0, 25px, 0) scaleX(0.46) scaleY(0.08);
+            }
+            18% {
+                opacity: 1;
+                transform: translate3d(-3px, 15px, 0) scaleX(0.62) scaleY(0.48);
+                border-radius: 55% 45% 58% 42% / 46% 52% 48% 54%;
+            }
+            34% {
+                opacity: 1;
+                transform: translate3d(4px, -1px, 0) scaleX(0.86) scaleY(1.16);
+                border-radius: 42% 58% 36% 64% / 62% 44% 56% 38%;
+            }
+            48% {
+                opacity: 0.96;
+                transform: translate3d(-5px, -11px, 0) scaleX(1.08) scaleY(1.34);
+                border-radius: 61% 39% 57% 43% / 38% 63% 37% 62%;
+            }
+            62% {
+                opacity: 0.58;
+                transform: translate3d(3px, -18px, 0) scaleX(0.58) scaleY(1.5);
+            }
+            76%, 100% {
+                opacity: 0;
+                transform: translate3d(-2px, -26px, 0) scaleX(0.2) scaleY(1.15);
+            }
+        }
+
+        @keyframes drawGooDropASpit {
+            0%, 18% {
+                opacity: 0;
+                transform: translate3d(0, 9px, 0) scale(0.25);
+            }
+            28% {
+                opacity: 1;
+                transform: translate3d(-4px, -4px, 0) scale(0.72);
+            }
+            45% {
+                opacity: 1;
+                transform: translate3d(7px, -35px, 0) scale(1.05, 1.18);
+            }
+            62% {
+                opacity: 0.72;
+                transform: translate3d(-3px, -61px, 0) scale(0.62, 1.1);
+            }
+            76%, 100% {
+                opacity: 0;
+                transform: translate3d(1px, -71px, 0) scale(0.22);
+            }
+        }
+
+        @keyframes drawGooDropBSpit {
+            0%, 25% {
+                opacity: 0;
+                transform: translate3d(-6px, 5px, 0) scale(0.2);
+            }
+            36% {
+                opacity: 0.92;
+                transform: translate3d(5px, -10px, 0) scale(0.8);
+            }
+            51% {
+                opacity: 0.84;
+                transform: translate3d(-8px, -39px, 0) scale(1.12, 0.86);
+            }
+            67% {
+                opacity: 0.38;
+                transform: translate3d(2px, -61px, 0) scale(0.44);
+            }
+            78%, 100% {
+                opacity: 0;
+                transform: translate3d(0, -69px, 0) scale(0.16);
+            }
+        }
+
+        @keyframes drawIndicatorSpit {
+            0%, 100% { transform: translateY(0) scale(1); }
+            10% { transform: translateY(1px) scaleX(1.09) scaleY(0.86); }
+            21% { transform: translateY(2px) scaleX(0.72) scaleY(0.76); }
+            34% { transform: translateY(-7px) scaleX(0.58) scaleY(1.28); }
+            48% { transform: translateY(2px) scaleX(1.06) scaleY(0.9); }
+            64% { transform: translateY(-1px) scaleX(0.97) scaleY(1.055); }
+            80% { transform: translateY(0.5px) scaleX(1.012) scaleY(0.985); }
+        }
+
         /* 여행지 뽑기 */
         #draw-map {
             position: absolute;
@@ -1213,6 +1667,8 @@
         }
 
         #bottom-nav .bottom-nav-glass {
+            position: relative;
+            z-index: 2;
             border-radius: 999px;
             box-shadow: var(--lg-glass-shadow), inset 0 1px 0 rgba(255,255,255,0.34);
             transition: padding 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -1301,6 +1757,18 @@
         }
 
         #nav-indicator {
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+
+        #nav-indicator::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
             background: rgba(255,255,255,0.38);
             border: 1px solid rgba(255,255,255,0.68);
             box-shadow:
@@ -1308,14 +1776,16 @@
                 0 5px 16px rgba(4, 10, 22, 0.18);
             backdrop-filter: blur(14px) saturate(1.5);
             -webkit-backdrop-filter: blur(14px) saturate(1.5);
+            transform-origin: 50% 50%;
+            will-change: transform;
         }
 
-        #mobile-wrapper[data-chrome-ink="dark"] #nav-indicator {
+        #mobile-wrapper[data-chrome-ink="dark"] #nav-indicator::before {
             background: rgba(255,255,255,0.48);
             border-color: rgba(255,255,255,0.78);
         }
 
-        #mobile-wrapper[data-chrome-ink="light"] #nav-indicator {
+        #mobile-wrapper[data-chrome-ink="light"] #nav-indicator::before {
             background: rgba(255,255,255,0.30);
             border-color: rgba(255,255,255,0.58);
         }
@@ -1329,7 +1799,7 @@
             border-color: rgba(15, 23, 42, 0.10);
         }
 
-        :root[data-device-theme="light"] #mobile-wrapper[data-chrome-ink="dark"] #nav-indicator {
+        :root[data-device-theme="light"] #mobile-wrapper[data-chrome-ink="dark"] #nav-indicator::before {
             background: rgba(15, 23, 42, 0.14);
             border-color: rgba(15, 23, 42, 0.26);
             box-shadow:
@@ -1421,7 +1891,7 @@
                 -webkit-backdrop-filter: none;
             }
 
-            #nav-indicator {
+            #nav-indicator::before {
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
             }
@@ -1595,9 +2065,44 @@
 
         <!-- 하단 플로팅 메뉴 -->
         <nav id="bottom-nav" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-[360px] px-2 touch-pan-x select-none">
+            <svg class="absolute w-0 h-0 pointer-events-none" aria-hidden="true" focusable="false">
+                <defs>
+                    <filter id="draw-result-goo-filter" x="-80%" y="-80%" width="260%" height="260%" color-interpolation-filters="sRGB">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="draw-goo-blur"></feGaussianBlur>
+                        <feColorMatrix
+                            in="draw-goo-blur"
+                            mode="matrix"
+                            values="1 0 0 0 0
+                                    0 1 0 0 0
+                                    0 0 1 0 0
+                                    0 0 0 20 -9"
+                            result="draw-goo-shape">
+                        </feColorMatrix>
+                        <feBlend in="SourceGraphic" in2="draw-goo-shape"></feBlend>
+                    </filter>
+                </defs>
+            </svg>
+            <section id="draw-result-island" class="draw-result-island" role="status" aria-live="polite" aria-hidden="true">
+                <div class="draw-result-copy">
+                    <strong id="draw-result-title" class="draw-result-title"></strong>
+                    <span id="draw-result-detail" class="draw-result-detail"></span>
+                </div>
+                <button type="button" class="draw-result-retry" onclick="resetDraw()" aria-label="다시 던지기">
+                    <i class="fa-solid fa-rotate-right"></i><span>다시</span>
+                </button>
+            </section>
             <div class="bottom-nav-glass liquid-glass-control flex items-center justify-between p-1 gap-0.5 relative transition-all duration-300">
                 <!-- 활성화 표시 배경 -->
-                <div id="nav-indicator" class="absolute top-1 bottom-1 rounded-full z-0 nav-transition" style="left: 4px; width: 66px;"></div>
+                <div id="nav-indicator" class="absolute top-1 bottom-1 rounded-full z-0 nav-transition" style="left: 4px; width: 66px;">
+                    <div class="draw-result-goo" aria-hidden="true">
+                        <span class="draw-goo-surface"></span>
+                        <div class="draw-goo-fluids">
+                            <span class="draw-goo-neck"></span>
+                            <span class="draw-goo-drop draw-goo-drop-a"></span>
+                            <span class="draw-goo-drop draw-goo-drop-b"></span>
+                        </div>
+                    </div>
+                </div>
                 
                 <a href="index.html" onclick="event.preventDefault(); returnToEnjoyHome();" class="nav-item relative py-1.5 flex-1 rounded-full" style="text-decoration: none;" aria-label="홈으로 이동">
                     <div class="flex flex-col items-center gap-0.5 pointer-events-none">
@@ -1655,6 +2160,7 @@
         let dartAudioContext = null;
         let dartFlightSoundStop = null;
         let dartRevealAudio = null;
+        let drawResultHideTimer = null;
         let isDartRevealAudioPrimed = false;
         let isDartFlying = false;
         let dartSequenceToken = 0;
@@ -5969,13 +6475,35 @@
         }
 
         function syncBottomNavIndicator() {
-            const navButtons = document.querySelectorAll('#bottom-nav button');
+            const navButtons = document.querySelectorAll('#bottom-nav .bottom-nav-glass > button.nav-item');
             const indicator = document.getElementById('nav-indicator');
             const activeButton = navButtons[activeTabIndex];
+            const navGlass = document.querySelector('#bottom-nav .bottom-nav-glass');
+            const resultIsland = document.getElementById('draw-result-island');
 
             if (!indicator || !activeButton) return;
             indicator.style.width = `${activeButton.offsetWidth}px`;
             indicator.style.transform = `translateX(${activeButton.offsetLeft - 4}px)`;
+            if (navGlass) {
+                const navGlassRect = navGlass.getBoundingClientRect();
+                const resultRect = resultIsland?.getBoundingClientRect();
+                const resultWidth = resultIsland?.offsetWidth || navGlass.offsetWidth;
+                const resultHeight = resultIsland?.offsetHeight || 64;
+                const indicatorTargetLeft = navGlassRect.left + activeButton.offsetLeft;
+                const indicatorTargetBottom = navGlassRect.bottom - 4;
+                const resultLeft = resultRect
+                    ? resultRect.left - indicatorTargetLeft
+                    : (activeButton.offsetWidth - resultWidth) / 2;
+                const resultBottom = resultRect
+                    ? indicatorTargetBottom - resultRect.bottom
+                    : 62;
+                const originX = activeButton.offsetWidth / 2 - resultLeft;
+                indicator.style.setProperty('--draw-result-width', `${resultWidth}px`);
+                indicator.style.setProperty('--draw-result-height', `${resultHeight}px`);
+                indicator.style.setProperty('--draw-result-left', `${resultLeft}px`);
+                indicator.style.setProperty('--draw-result-bottom', `${resultBottom}px`);
+                indicator.style.setProperty('--draw-origin-x', `${originX}px`);
+            }
         }
 
         function setBottomNavCompact(compact) {
@@ -6004,6 +6532,7 @@
             if (navigator.vibrate) navigator.vibrate(10);
             activeTabIndex = index;
             updateChromeContrast();
+            document.getElementById('bottom-nav')?.classList.toggle('is-draw-tab', index === 1);
 
             const screens = [
                 document.getElementById('map-screen'),
@@ -6023,7 +6552,7 @@
             });
 
             // 바텀 네비게이션 선택 상태 조정
-            const navButtons = document.querySelectorAll('#bottom-nav button');
+            const navButtons = document.querySelectorAll('#bottom-nav .bottom-nav-glass > button.nav-item');
 
             navButtons.forEach((btn, i) => {
                 const isActive = i === index;
@@ -7120,6 +7649,7 @@
 
             pickupMole.classList.add('has-dart');
             clearDrawLandingResultOnly();
+            hideDrawResult();
             playDartObstacleSound('mole', obstacle.direction, 'burrow');
             setDrawTopbar('두더지가 당첨 다트를 뽑아갔다!', '다트를 들고 땅속으로 들어가는 중', false);
             if (navigator.vibrate) navigator.vibrate([38, 22, 55]);
@@ -7314,16 +7844,16 @@
                 keepDrawLandingVisible();
                 playDartRevealSound();
                 if (northKorea) {
-                    setDrawTopbar(title, '그 여행은 무리니까 다시 던지세요', true);
+                    showDrawResultIsland(title, '그 여행은 무리니까 다시 던지세요');
                 } else if (islandPrize) {
-                    setDrawTopbar(title, '경북 동해 해역 특별 당첨 · 다시 던지기 가능', true);
+                    showDrawResultIsland(title, '경북 동해 해역 특별 당첨 · 다시 던지기 가능');
                 } else if (hasLandHighlight) {
                     const detailPrefix = detail ? `${detail} · ` : '';
-                    setDrawTopbar(title, `${detailPrefix}여행지 당첨 · 약 ${Math.round(distance)} km`, true);
+                    showDrawResultIsland(title, `${detailPrefix}여행지 당첨 · 약 ${Math.round(distance)} km`);
                 } else {
                     const sea = getUnmappedLandingInfo(lat, lng);
                     title = sea.title;
-                    setDrawTopbar(title, `${sea.detail} · 잘못 던진 그대로 도착했습니다`, true);
+                    showDrawResultIsland(title, `${sea.detail} · 잘못 던진 그대로 도착했습니다`);
                 }
                 drawZoomFinishTimer = null;
             }, hasLandHighlight ? 1280 : 380);
@@ -7338,7 +7868,7 @@
                     const status = drawZoomStartTimer ? '착지 충격 확인 중' : '꽂힌 지역으로 확대 중';
                     setDrawTopbar(title, `${detailPrefix}${status}`, false);
                 } else if (hasLandHighlight) {
-                    setDrawTopbar(title, `${detailPrefix}여행지 당첨 · 약 ${Math.round(distance)} km`, true);
+                    updateDrawResultIsland(title, `${detailPrefix}여행지 당첨 · 약 ${Math.round(distance)} km`);
                 }
             }
         }
@@ -7513,7 +8043,67 @@
         }
 
         function hideDrawResult() {
+            const island = document.getElementById('draw-result-island');
+            const bottomNav = document.getElementById('bottom-nav');
+            if (drawResultHideTimer) {
+                window.clearTimeout(drawResultHideTimer);
+                drawResultHideTimer = null;
+            }
+            bottomNav?.classList.remove('is-swallowing');
+            if (island?.classList.contains('is-visible')) {
+                island.classList.remove('is-visible');
+                island.classList.add('is-hiding');
+                island.setAttribute('aria-hidden', 'true');
+                bottomNav?.classList.remove('has-draw-result');
+                void bottomNav?.offsetWidth;
+                bottomNav?.classList.add('is-swallowing');
+                drawResultHideTimer = window.setTimeout(() => {
+                    island.classList.remove('is-hiding');
+                    bottomNav?.classList.remove('is-swallowing');
+                    drawResultHideTimer = null;
+                }, 560);
+            } else {
+                island?.classList.remove('is-hiding');
+                island?.setAttribute('aria-hidden', 'true');
+                bottomNav?.classList.remove('has-draw-result');
+            }
             setDrawTopbar('다트 여행지 뽑기', '다트를 아래로 당겼다가 놓으세요', false);
+        }
+
+        function showDrawResultIsland(title, detail) {
+            const island = document.getElementById('draw-result-island');
+            const titleElement = document.getElementById('draw-result-title');
+            const detailElement = document.getElementById('draw-result-detail');
+            const bottomNav = document.getElementById('bottom-nav');
+            if (!island) return;
+
+            if (drawResultHideTimer) {
+                window.clearTimeout(drawResultHideTimer);
+                drawResultHideTimer = null;
+            }
+            bottomNav?.classList.remove('is-swallowing');
+            if (titleElement) titleElement.textContent = title;
+            if (detailElement) detailElement.textContent = detail;
+
+            island.classList.remove('is-visible', 'is-hiding');
+            bottomNav?.classList.remove('has-draw-result');
+            void island.offsetWidth;
+            void bottomNav?.offsetWidth;
+            island.classList.add('is-visible');
+            island.setAttribute('aria-hidden', 'false');
+            bottomNav?.classList.add('has-draw-result');
+            setDrawTopbar('여행지 뽑기 완료', '하단에서 당첨 지역을 확인하세요', false);
+        }
+
+        function updateDrawResultIsland(title, detail) {
+            const island = document.getElementById('draw-result-island');
+            const titleElement = document.getElementById('draw-result-title');
+            const detailElement = document.getElementById('draw-result-detail');
+            if (titleElement) titleElement.textContent = title;
+            if (detailElement) detailElement.textContent = detail;
+            if (!island?.classList.contains('is-visible')) {
+                showDrawResultIsland(title, detail);
+            }
         }
 
         function setDrawTopbar(title, instruction, showRetry) {
