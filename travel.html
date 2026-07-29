@@ -1403,7 +1403,7 @@
                             <h1 class="adaptive-contrast text-[13px] font-extrabold flex items-center tracking-tight">
                                 엔조이 여행 지도<span class="w-1 h-1 bg-[#3182F6] rounded-full ml-1 mb-0.5"></span>
                             </h1>
-                            <span class="adaptive-contrast adaptive-muted block mt-1 text-[10px] font-medium whitespace-nowrap">전국 226개 지역 중 11개 채움</span>
+                            <span class="adaptive-contrast adaptive-muted block mt-1 text-[10px] font-medium whitespace-nowrap">전국 226개 지역 중 10개 채움</span>
                         </div>
                     </div>
 
@@ -1726,14 +1726,24 @@
             {
                 id: 10,
                 title: '전남광주통합특별시 여행',
-                region: '전남광주통합특별시',
-                date: '2026.07.14 ~ 07.15',
+                region: '전남광주통합특별시 [구)광주광역시]',
+                date: '2026.07.14 ~ 07.16',
                 emoji: '🌿',
                 color: 'teal',
-                status: 'upcoming',
                 desc: '새롭게 출범한 전남광주통합특별시로 떠나는 첫 여행.',
                 lat: 35.1595,
                 lng: 126.8526
+            },
+            {
+                id: 11,
+                title: '전남광주통합특별시 장성군',
+                region: '전남광주통합특별시 장성군',
+                date: '2026.07.14',
+                emoji: '🌿',
+                color: 'teal',
+                desc: '전남광주통합특별시 장성군을 방문한 기록.',
+                lat: 35.3019,
+                lng: 126.7848
             }
         ];
 
@@ -1757,12 +1767,10 @@
             return aDate.year - bDate.year || aDate.month - bDate.month || aDate.day - bDate.day;
         }
 
-        // 화면은 최신순으로 보여주되 번호는 가장 오래된 기록부터 고정한다.
+        // 화면은 최신순으로 보여주고 번호도 표시 순서에 맞춰 내림차순으로 매긴다.
         travelData.sort((a, b) => compareTripChronology(b, a));
         const tripSequenceById = new Map(
-            [...travelData]
-                .sort(compareTripChronology)
-                .map((trip, index) => [trip.id, index + 1])
+            travelData.map((trip, index) => [trip.id, travelData.length - index])
         );
 
         const colorThemes = {
