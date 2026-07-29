@@ -281,6 +281,76 @@
             scroll-snap-type: none;
             overscroll-behavior-inline: auto;
         }
+        #story-tray > .member-status-item {
+            flex: 0 0 68px;
+            width: 68px;
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        .member-status-avatar-wrap { position: relative; flex: none; }
+        .member-status-avatar-frame {
+            width: 64px;
+            height: 64px;
+            padding: 2px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .1);
+        }
+        .member-status-avatar-inner {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 999px;
+        }
+        .member-status-avatar-photo,
+        .member-status-avatar-color {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 999px;
+            object-fit: cover;
+        }
+        .member-status-avatar-color {
+            background: var(--member-color, #6B7280);
+            opacity: .3;
+        }
+        .member-status-item.is-registered .member-status-avatar-color { opacity: 1; }
+        .member-status-active-dot {
+            position: absolute;
+            right: 2px;
+            bottom: 2px;
+            width: 15px;
+            height: 15px;
+            border: 2px solid #000;
+            border-radius: 999px;
+            background: #10B981;
+        }
+        .member-status-name,
+        .member-status-detail {
+            display: block !important;
+            width: 100%;
+            overflow: hidden;
+            opacity: 1 !important;
+            visibility: visible !important;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .member-status-name {
+            color: #6B7280;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .member-status-detail {
+            margin-top: -4px;
+            color: #6B7280;
+            font-size: 10px;
+        }
+        .member-status-item.is-registered .member-status-name { color: #FFF; }
+        .member-status-item.is-active .member-status-detail { color: #34D399; }
 
         /* 홈 콘텐츠: 인스타그램 피드형 */
         .enjoy-feed {
@@ -9208,14 +9278,14 @@
         const MEMBERS = window.ENJOY_MEMBERS;
         // 모임통장과 통일된 멤버 프로필 색상 (solid = 사진 없을 때 단색 원)
         const MEMBER_COLORS = {
-            '홍박사': { bg: 'bg-blue-500/20',   text: 'text-blue-400',   solid: 'bg-blue-500',   char: '홍' },
-            '류짱':   { bg: 'bg-purple-500/20', text: 'text-purple-400', solid: 'bg-purple-500', char: '류' },
-            '오스틴': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', solid: 'bg-emerald-500', char: '오' },
-            '전시기': { bg: 'bg-orange-500/20', text: 'text-orange-400', solid: 'bg-orange-500', char: '전' },
-            '이진누': { bg: 'bg-indigo-500/20', text: 'text-indigo-400', solid: 'bg-indigo-500', char: '이' },
-            '성원제': { bg: 'bg-pink-500/20',   text: 'text-pink-400',   solid: 'bg-pink-500',   char: '성' }
+            '홍박사': { bg: 'bg-blue-500/20',   text: 'text-blue-400',   solid: 'bg-blue-500',   solidHex: '#3B82F6', char: '홍' },
+            '류짱':   { bg: 'bg-purple-500/20', text: 'text-purple-400', solid: 'bg-purple-500', solidHex: '#A855F7', char: '류' },
+            '오스틴': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', solid: 'bg-emerald-500', solidHex: '#10B981', char: '오' },
+            '전시기': { bg: 'bg-orange-500/20', text: 'text-orange-400', solid: 'bg-orange-500', solidHex: '#F97316', char: '전' },
+            '이진누': { bg: 'bg-indigo-500/20', text: 'text-indigo-400', solid: 'bg-indigo-500', solidHex: '#6366F1', char: '이' },
+            '성원제': { bg: 'bg-pink-500/20',   text: 'text-pink-400',   solid: 'bg-pink-500',   solidHex: '#EC4899', char: '성' }
         };
-        const DEFAULT_COLOR = { bg: 'bg-gray-500/20', text: 'text-gray-400', solid: 'bg-gray-500', char: '?' };
+        const DEFAULT_COLOR = { bg: 'bg-gray-500/20', text: 'text-gray-400', solid: 'bg-gray-500', solidHex: '#6B7280', char: '?' };
         window.enjoyMemberColor = (name) => (name && MEMBER_COLORS[name]) ? MEMBER_COLORS[name] : DEFAULT_COLOR;
         window.enjoyMemberPhoto = (uid) => { const m = lastMembers.find(x => x.uid === uid); return (m && m.photoURL) || ''; };
 
@@ -9388,17 +9458,17 @@
 
                 // 원 안: 구글 사진 > 단색 원 (글자 없음)
                 let inner;
-                if (photo) inner = '<img src="' + photo + '" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer">';
-                else inner = '<div class="w-full h-full rounded-full ' + col.solid + (registered ? '' : ' opacity-30') + '"></div>';
+                if (photo) inner = '<img src="' + photo + '" class="member-status-avatar-photo" referrerpolicy="no-referrer">';
+                else inner = '<span class="member-status-avatar-color"></span>';
 
-                const circle = '<div class="w-[64px] h-[64px] rounded-full p-[2px] bg-white/10"><div class="w-full h-full rounded-full overflow-hidden">' + inner + '</div></div>';
-                const dot = active ? '<span class="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 enjoy-page-border"></span>' : '';
+                const circle = '<div class="member-status-avatar-frame"><div class="member-status-avatar-inner">' + inner + '</div></div>';
+                const dot = active ? '<span class="member-status-active-dot"></span>' : '';
                 const sub = registered
-                    ? '<span class="text-[10px] ' + (active ? 'text-emerald-400' : 'text-gray-600') + ' -mt-1 w-full text-center truncate">' + activityText + '</span>'
-                    : '<span class="text-[10px] text-gray-500 -mt-1 w-full text-center truncate">미가입자</span>';
-                return '<div class="shrink-0 flex flex-col items-center gap-1.5 w-[68px]">' +
-                            '<div class="relative">' + circle + dot + '</div>' +
-                            '<span class="text-[11px] font-semibold ' + (registered ? 'text-white' : 'text-gray-500') + ' w-full text-center truncate">' + name + '</span>' +
+                    ? '<span class="member-status-detail">' + activityText + '</span>'
+                    : '<span class="member-status-detail">미가입자</span>';
+                return '<div class="member-status-item' + (registered ? ' is-registered' : '') + (active ? ' is-active' : '') + '" style="--member-color:' + (col.solidHex || '#6B7280') + '">' +
+                            '<div class="member-status-avatar-wrap">' + circle + dot + '</div>' +
+                            '<span class="member-status-name">' + name + '</span>' +
                             sub +
                         '</div>';
             }).join('');
