@@ -4234,6 +4234,7 @@
                 <div class="schedule-form-grid">
                     <input type="hidden" id="sch-edit-date-key">
                     <input type="hidden" id="sch-edit-index">
+                    <input type="hidden" id="sch-edit-schedule-id">
                     <section class="schedule-card-section">
                         <div class="schedule-field">
                             <label class="schedule-label" for="add-sch-category">카테고리</label>
@@ -5838,9 +5839,48 @@
             m.classList.add('flex');
         };
         
+        function createScheduleId() {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                return window.crypto.randomUUID();
+            }
+            return 'schedule-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        }
+
+        function escapeScheduleText(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[character];
+            });
+        }
+
+        function removeScheduleOccurrences(data, dateKey, index, scheduleId) {
+            if (!data || typeof data !== 'object') return;
+            if (scheduleId) {
+                Object.keys(data).forEach(function(key) {
+                    if (!Array.isArray(data[key])) return;
+                    data[key] = data[key].filter(function(event) {
+                        return !event || event.scheduleId !== scheduleId;
+                    });
+                    if (data[key].length === 0) delete data[key];
+                });
+                return;
+            }
+
+            const list = data[dateKey];
+            const itemIndex = Number(index);
+            if (!Array.isArray(list) || !Number.isInteger(itemIndex) || itemIndex < 0 || itemIndex >= list.length) return;
+            list.splice(itemIndex, 1);
+            if (list.length === 0) delete data[dateKey];
+        }
+
         window.saveScheduleToFirebase = async function() {
             // 멤버(동기화 모드)일 때만 DB 연결 필요. 게스트/스페셜은 로컬 저장이므로 통과.
-            if (window.enjoySync && !window.meetingDb) { window.enjoyAlert('DB 연결 확인 중...'); return; }
+            if (window.enjoySync && (!window.meetingDb || !window.runTransaction)) { window.enjoyAlert('DB 연결 확인 중...'); return; }
 
             const category = document.getElementById('add-sch-category').value;
             const startDateStr = document.getElementById('add-sch-start-date').value; 
@@ -5849,20 +5889,28 @@
             const title = document.getElementById('add-sch-title').value; 
             const editKey = document.getElementById('sch-edit-date-key').value; 
             const editIdx = document.getElementById('sch-edit-index').value; 
+            const editScheduleId = document.getElementById('sch-edit-schedule-id').value;
             const isEdit = (editKey && editIdx !== ''); 
 
             if (!startDateStr || !title) { window.enjoyAlert('시작일과 내용을 입력해주세요.'); return; }
             if (!endDateStr) endDateStr = startDateStr;
             if (endDateStr < startDateStr) { window.enjoyAlert('종료일이 시작일보다 빠를 수 없습니다.'); return; }
 
-            const newEvent = { type: category, title: title, time: time };
+            const scheduleId = editScheduleId || createScheduleId();
+            const newEvent = {
+                scheduleId: scheduleId,
+                startDate: startDateStr,
+                endDate: endDateStr,
+                type: category,
+                title: title,
+                time: time
+            };
 
             // [임시] 게스트/스페셜 → 파이어베이스 대신 본인 기기(localStorage)에 저장
             if (!window.enjoySync) {
                 const data = window.dynamicEvents || {};
                 if (isEdit) {
-                    const oldList = data[editKey];
-                    if (oldList) { oldList.splice(editIdx, 1); if (oldList.length === 0) delete data[editKey]; else data[editKey] = oldList; }
+                    removeScheduleOccurrences(data, editKey, editIdx, editScheduleId);
                 }
                 const ls = new Date(startDateStr), le = new Date(endDateStr);
                 for (let d = new Date(ls); d <= le; d.setDate(d.getDate() + 1)) {
@@ -5880,31 +5928,26 @@
 
             try {
                 const docRef = window.doc(window.meetingDb, ...window.SCHEDULE_PATH);
-                const docSnap = await window.getDoc(docRef);
-                let data = docSnap.exists() ? docSnap.data() : {};
+                await window.runTransaction(window.meetingDb, async function(transaction) {
+                    const docSnap = await transaction.get(docRef);
+                    const data = docSnap.exists() ? docSnap.data() : {};
 
-                if(isEdit) { 
-                    // 수정 시: 기존 데이터 삭제 후 새로 추가
-                    const oldList = data[editKey]; 
-                    if(oldList) { 
-                        oldList.splice(editIdx, 1); 
-                        if(oldList.length === 0) delete data[editKey]; 
-                        else data[editKey] = oldList; 
-                    } 
-                } 
+                    if(isEdit) {
+                        // 수정 시: 기존 범위 전체를 삭제한 뒤 새 범위로 추가
+                        removeScheduleOccurrences(data, editKey, editIdx, editScheduleId);
+                    }
 
-                // 날짜 범위 루프
-                const start = new Date(startDateStr);
-                const end = new Date(endDateStr);
-                
-                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                    const dateKey = d.toISOString().split('T')[0];
-                    const list = data[dateKey] || [];
-                    list.push(newEvent);
-                    data[dateKey] = list;
-                }
+                    const start = new Date(startDateStr);
+                    const end = new Date(endDateStr);
+                    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                        const dateKey = d.toISOString().split('T')[0];
+                        const list = data[dateKey] || [];
+                        list.push(newEvent);
+                        data[dateKey] = list;
+                    }
 
-                await window.setDoc(docRef, data); 
+                    transaction.set(docRef, data);
+                });
                 window.enjoyAlert(isEdit ? '수정되었습니다!' : '등록되었습니다!');
                 window.closeModal('schedule-modal'); 
             } catch (e) { 
@@ -5914,18 +5957,19 @@
         };
 
         window.deleteSchedule = async function() { 
+            if (window.enjoySync && (!window.meetingDb || !window.runTransaction)) { window.enjoyAlert('DB 연결 확인 중...'); return; }
             if (!await window.enjoyConfirm('정말 삭제하시겠습니까?', { title: '일정 삭제', confirmText: '삭제', danger: true })) return;
             
             const dateKey = document.getElementById('sch-edit-date-key').value;
             const index = document.getElementById('sch-edit-index').value;
+            const scheduleId = document.getElementById('sch-edit-schedule-id').value;
 
             // [임시] 게스트/스페셜 → 본인 기기(localStorage)에서 삭제
             if (!window.enjoySync) {
                 const data = window.dynamicEvents || {};
                 const list = data[dateKey];
                 if (list) {
-                    list.splice(index, 1);
-                    if (list.length === 0) delete data[dateKey]; else data[dateKey] = list;
+                    removeScheduleOccurrences(data, dateKey, index, scheduleId);
                     window.dynamicEvents = data;
                     window.enjoySaveLocalSchedule && window.enjoySaveLocalSchedule();
                     if (typeof window.renderCalendar === 'function') window.renderCalendar(window.viewYear, window.viewMonth);
@@ -5937,20 +5981,23 @@
             }
 
             try {
-                const docSnap = await window.getDoc(window.doc(window.meetingDb, ...window.SCHEDULE_PATH));
-                if(docSnap.exists()) { 
-                    const data = docSnap.data(); 
-                    const list = data[dateKey]; 
-                    if(list) { 
-                        list.splice(index, 1); 
-                        if(list.length === 0) delete data[dateKey]; 
-                        else data[dateKey] = list; 
-                        
-                        await window.setDoc(window.doc(window.meetingDb, ...window.SCHEDULE_PATH), data); 
-                        window.enjoyAlert('삭제되었습니다.');
-                        window.closeModal('schedule-modal'); 
-                    } 
-                } 
+                const docRef = window.doc(window.meetingDb, ...window.SCHEDULE_PATH);
+                const deleted = await window.runTransaction(window.meetingDb, async function(transaction) {
+                    const docSnap = await transaction.get(docRef);
+                    if (!docSnap.exists()) return false;
+
+                    const data = docSnap.data();
+                    const list = data[dateKey];
+                    if (!list) return false;
+
+                    removeScheduleOccurrences(data, dateKey, index, scheduleId);
+                    transaction.set(docRef, data);
+                    return true;
+                });
+                if (deleted) {
+                    window.enjoyAlert('삭제되었습니다.');
+                    window.closeModal('schedule-modal');
+                }
             } catch(e) { 
                 console.error(e); 
                 window.enjoyAlert('삭제 실패');
@@ -6474,6 +6521,7 @@
             document.getElementById('sch-save-btn').innerText = '등록하기'; 
             document.getElementById('sch-edit-date-key').value = ''; 
             document.getElementById('sch-edit-index').value = ''; 
+            document.getElementById('sch-edit-schedule-id').value = '';
             document.getElementById('add-sch-title').value = ''; 
             document.getElementById('add-sch-time').value = ''; 
             document.getElementById('add-sch-start-date').value = ''; 
@@ -6494,9 +6542,10 @@
             const list = window.dynamicEvents[dateStr]; 
             if(list && list[index]) { 
                 const event = list[index]; 
+                document.getElementById('sch-edit-schedule-id').value = event.scheduleId || '';
                 document.getElementById('add-sch-category').value = event.type; 
-                document.getElementById('add-sch-start-date').value = dateStr; 
-                document.getElementById('add-sch-end-date').value = dateStr;
+                document.getElementById('add-sch-start-date').value = event.startDate || dateStr;
+                document.getElementById('add-sch-end-date').value = event.endDate || dateStr;
                 document.getElementById('add-sch-time').value = event.time; 
                 document.getElementById('add-sch-title').value = event.title; 
             } 
@@ -8256,7 +8305,7 @@
             if (year === 2025 && month === 2) { ['05', '06', '07'].forEach(day => { const k = `${keyPrefix}-${day}`; events[k] = (events[k]||[]).concat([{type:'meet', title:'경북칠곡, 대구 여행 🚅', time:'정기모임'}]); }); }
             if (year === 2025 && month === 8) { ['29', '30'].forEach(day => { const k = `${keyPrefix}-${day}`; events[k] = (events[k]||[]).concat([{type:'meet', title:'진주 여행 🏰', time:'정기모임'}]); }); }
             const lastDay = new Date(year, month, 0).getDate(); for(let i=1; i<=lastDay; i++) { const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`; const currentDate = new Date(dateStr); const sanghoonStart = new Date('2025-12-23'); const sanghoonEnd = new Date('2026-01-22'); if (currentDate >= sanghoonStart && currentDate <= sanghoonEnd) { if(i===1 || currentDate.getTime() === sanghoonStart.getTime()) { events[dateStr] = (events[dateStr]||[]).concat([{type:'personal', title:'상훈이 개인 일정 🏠', time:'장기 일정'}]); } else { events[dateStr] = (events[dateStr]||[]).concat([{type:'personal_dot', title:'상훈이 개인 일정', time:''}]); } } }
-            if (window.dynamicEvents) { Object.keys(window.dynamicEvents).forEach(k => { const [dy, dm, dd] = k.split('-').map(Number); if (dy === year && dm === month) { const list = window.dynamicEvents[k]; if(Array.isArray(list)) { const taggedList = list.map(e => ({...e, isFirebase: true})); events[k] = (events[k] || []).concat(taggedList); } } }); }
+            if (window.dynamicEvents) { Object.keys(window.dynamicEvents).forEach(k => { const [dy, dm, dd] = k.split('-').map(Number); if (dy === year && dm === month) { const list = window.dynamicEvents[k]; if(Array.isArray(list)) { const taggedList = list.map((e, index) => ({...e, isFirebase: true, scheduleIndex: index})); events[k] = (events[k] || []).concat(taggedList); } } }); }
             return events;
         }
 
@@ -8592,11 +8641,12 @@
             dayEvts.forEach(e => {
                 const st = window.getEventStyle(e.type);
                 let onclickAttr = '', showPen = false;
+                const safeTitle = escapeScheduleText(e.title);
+                const safeTime = escapeScheduleText(e.time || '');
 
                 if(e.isFirebase) {
-                    const dynList = window.dynamicEvents[dKey] || [];
-                    const dynIdx = dynList.findIndex(de => de.title === e.title && de.time === e.time);
-                    if(dynIdx !== -1) {
+                    const dynIdx = Number(e.scheduleIndex);
+                    if(Number.isInteger(dynIdx) && dynIdx >= 0) {
                         onclickAttr = `onclick="window.haptic(); window.openEditScheduleModal('${dKey}', ${dynIdx})"`;
                         showPen = true;
                     }
@@ -8613,8 +8663,8 @@
                     <div class="flex items-center gap-3.5 py-3.5 animate-[fadeInUp_0.3s_ease-out] ${activeClass}" ${onclickAttr}>
                         <div class="w-2 h-2 rounded-full ${st.dot} shrink-0"></div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-[15px] font-semibold text-white tracking-tight truncate">${e.title}</p>
-                            <p class="text-[12px] font-medium text-gray-500 mt-0.5 truncate">${e.time || ''}</p>
+                            <p class="text-[15px] font-semibold text-white tracking-tight truncate">${safeTitle}</p>
+                            <p class="text-[12px] font-medium text-gray-500 mt-0.5 truncate">${safeTime}</p>
                         </div>
                         ${penHtml}
                     </div>`;
@@ -9419,12 +9469,13 @@
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, increment, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, increment, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, runTransaction, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global functions for firebase interaction
         window.getDoc = getDoc;
         window.doc = doc;
         window.setDoc = setDoc;
+        window.runTransaction = runTransaction;
         window.addDoc = addDoc;
         window.collection = collection;
         window.query = query;
