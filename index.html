@@ -9406,6 +9406,8 @@
             wrap.innerHTML = html;
         }
         window.enjoyRenderMembers = renderMembers;
+        // 로그인/Firebase 초기화 전에도 빈 영역으로 남지 않도록 기본 멤버 목록을 먼저 표시한다.
+        renderMembers();
 
         function subscribeMembers() {
             if (membersUnsub) return;
@@ -9438,8 +9440,27 @@
         }
         window.enjoyStartMemberSync = startMemberSync;
 
+        let startRetryTimer = null;
+        let startRetryDelay = 300;
         async function start() {
-            if (started || !fbReady()) return; started = true;
+            if (started) return;
+            if (!fbReady()) {
+                if (!window.enjoyUser) return;
+                if (!startRetryTimer) {
+                    startRetryTimer = setTimeout(() => {
+                        startRetryTimer = null;
+                        start();
+                    }, startRetryDelay);
+                    startRetryDelay = Math.min(5000, startRetryDelay * 2);
+                }
+                return;
+            }
+            if (startRetryTimer) {
+                clearTimeout(startRetryTimer);
+                startRetryTimer = null;
+            }
+            startRetryDelay = 300;
+            started = true;
             const myName = await loadMyName();
             if (myName && window.enjoyIsMemberName(myName)) {
                 // 정식 멤버 → 파이어베이스 동기화
