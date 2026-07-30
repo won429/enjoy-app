@@ -219,14 +219,22 @@
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
             border-color: rgba(0, 0, 0, 0.06) !important;
         }
-        /* 더보기 팝오버: 글자마다 바로 뒤 배경 밝기를 읽어 흰색/검정으로 개별 보정 */
-        #more-popover-panel [data-contrast-glyph] {
-            color: #FFFFFF !important;
-            transition: color 0.12s ease;
+        /* 더보기 팝오버: 뒤쪽 화면 밝기에 맞춰 유리 표면과 글자를 함께 전환 */
+        #more-popover-panel {
+            background: rgba(12, 12, 14, .52);
+            border-color: rgba(255, 255, 255, .15);
+            transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
         }
-        #more-popover-panel [data-contrast-glyph].glyph-on-light {
-            color: #141414 !important;
+        #more-popover-panel .text-white { color: #FFFFFF !important; }
+        #more-popover-panel .text-\[\#8B95A1\] { color: rgba(255, 255, 255, .62) !important; }
+        #more-popover-panel.popover-on-light {
+            background: rgba(255, 255, 255, .58);
+            border-color: rgba(0, 0, 0, .10);
+            box-shadow: 0 18px 52px rgba(15, 23, 42, .20), 0 6px 16px rgba(15, 23, 42, .12);
         }
+        #more-popover-panel.popover-on-light .text-white { color: #141414 !important; }
+        #more-popover-panel.popover-on-light .text-\[\#8B95A1\] { color: rgba(20, 20, 20, .62) !important; }
+        #more-popover-panel.popover-on-light .bg-white\/10 { background-color: rgba(0, 0, 0, .10) !important; }
 
         /* === Liquid Glass (색 없는 완전 투명 유리 / 뒷배경 그대로 비침) === */
         .liquid-glass {
@@ -3045,6 +3053,7 @@
             #story-tray .border-white\/30 { border-color: rgba(0, 0, 0, 0.28) !important; }
             #story-tray .bg-white\/5 { background-color: rgba(0, 0, 0, 0.05) !important; }
             #story-tray .text-white\/85, #story-tray [class*="text-white/"] { color: #141414 !important; }
+            #story-tray .member-status-item.is-registered .member-status-name { color: #191F28; }
             .story-strip-title, .story-person-name { color: #191F28; }
             .story-strip-note { color: #8B95A1; }
             .story-avatar-gap { background: #F2F4F6; }
@@ -7742,27 +7751,10 @@
             window.setMorePopoverOrigin();
             window.morePopoverOpen = true;
 
-            // 배경 밝기에 따라 팝오버 글자색 자동 보정 (글자마다 따로)
-            // 한 줄 안에서 밝고 어두운 배경이 갈려도 각 글자가 자기 뒤의 밝기를 사용한다.
-            try {
-                if (window.detectBgLight) {
-                    panel.querySelectorAll('[data-pop-item] .text-white, [data-pop-item] .text-\\[\\#8B95A1\\]').forEach(textEl => {
-                        if (!textEl.querySelector('[data-contrast-glyph]')) {
-                            const text = textEl.textContent;
-                            textEl.textContent = '';
-                            Array.from(text).forEach(char => {
-                                const glyph = document.createElement('span');
-                                glyph.dataset.contrastGlyph = '';
-                                glyph.textContent = char;
-                                textEl.appendChild(glyph);
-                            });
-                        }
-                    });
-                    panel.querySelectorAll('[data-contrast-glyph]').forEach(glyph => {
-                        glyph.classList.toggle('glyph-on-light', window.detectBgLight(glyph));
-                    });
-                }
-            } catch (e) {}
+            // 유리 뒤 화면의 평균 밝기를 기준으로 패널 표면과 모든 글자를 함께 전환한다.
+            // 글자별 측정은 같은 문장 안에서 색이 갈리고, 실제 유리 합성색과도 어긋날 수 있다.
+            window.updateMorePopoverContrast();
+            requestAnimationFrame(window.updateMorePopoverContrast);
 
             // 패널 스프링 등장 (버튼 지점에서 빨려 나옴)
             panel.style.animation = 'none';
@@ -7793,6 +7785,13 @@
         window.toggleMorePopover = function() {
             if (window.morePopoverOpen) window.closeMorePopover();
             else window.openMorePopover();
+        };
+        window.updateMorePopoverContrast = function() {
+            const panel = document.getElementById('more-popover-panel');
+            if (!panel || !window.morePopoverOpen || !window.detectBgLight) return;
+            try {
+                panel.classList.toggle('popover-on-light', window.detectBgLight(panel));
+            } catch (e) {}
         };
         
         window.changeMonth = (delta) => { 
@@ -9110,7 +9109,11 @@
                     const value = measuredBrightness(target);
                     const wasLight = target === nav || nav.contains(target)
                         ? nav.classList.contains('nav-on-light')
-                        : !!(target.classList && (target.classList.contains('btn-on-light') || target.classList.contains('item-on-light')));
+                        : !!(target.classList && (
+                            target.classList.contains('btn-on-light') ||
+                            target.classList.contains('item-on-light') ||
+                            target.classList.contains('popover-on-light')
+                        ));
                     return value > (wasLight ? 142 : 158);
                 } catch (e) {
                     return matchMedia('(prefers-color-scheme: light)').matches;
@@ -9126,6 +9129,7 @@
                 const btns = nav.querySelectorAll('button');
                 btns.forEach(button => button.classList.toggle('btn-on-light', onLight));
                 nav.classList.toggle('nav-on-light', onLight);
+                if (window.updateMorePopoverContrast) window.updateMorePopoverContrast();
             }
             function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
 
