@@ -1237,6 +1237,11 @@
             return `${ampm} ${h}:${m.toString().padStart(2, '0')}`;
         };
 
+        const EXPRESS_COLOR = '#DC2626';
+        const renderExpressBadge = (isExpress, extraClasses = '') => isExpress
+            ? `<span class="inline-flex shrink-0 items-center justify-center rounded-full border border-red-700 bg-red-600 px-1.5 py-0.5 text-[8px] font-black leading-none text-white shadow-sm ${extraClasses}">급행</span>`
+            : '';
+
         const STATION_TIMETABLE_FILES = {
             gyeongchun: { src: './gyeongchun_line_timetable.js', globalName: 'GYEONGCHUN_LINE_TIMETABLE' },
             daegyeong: { src: './daegyeong_timetable.js', globalName: 'DAEGYEONG_TIMETABLE' },
@@ -1317,6 +1322,14 @@
             const normalizeStationName = (name) => aliases[name] || name;
             const stationOrder = source.stations.map(station => normalizeStationName(station.name));
             const stationIndex = new Map(stationOrder.map((name, index) => [name, index]));
+            const routeMetaById = new Map((source.routes || []).map(route => [String(route.id), route]));
+            const isExpressRow = row => {
+                const route = routeMetaById.get(String(row.routeId));
+                return row.service === '급행'
+                    || route?.express === true
+                    || route?.operation?.type === 'EXPRESS'
+                    || /급행|EXPRESS/i.test(row.routeName || '');
+            };
             const pairKey = (first, second) => {
                 const firstIndex = stationIndex.get(first);
                 const secondIndex = stationIndex.get(second);
@@ -1369,16 +1382,23 @@
                 rows.forEach(row => {
                     const time = row.departureTime || row.time || row.arrivalTime;
                     if (!row.trainNo || !time) return;
-                    const groupKey = `${row.trainNo}:${row.startStationId || row.startStation}:${row.destinationId || row.destination}`;
+                    const groupKey = `${row.trainNo}:${row.startStationId || row.startStation}:${row.destinationId || row.destination}:${row.routeId || ''}`;
+                    const rowIsExpress = isExpressRow(row);
                     if (!groupedTrains.has(groupKey)) {
                         groupedTrains.set(groupKey, {
                             id: String(row.trainNo),
                             startStation: normalizeStationName(row.startStation),
                             destination: normalizeStationName(row.destination),
+                            isExpress: rowIsExpress,
+                            service: rowIsExpress ? '급행' : (row.service || '일반'),
                             schedule: []
                         });
                     }
                     const train = groupedTrains.get(groupKey);
+                    if (rowIsExpress) {
+                        train.isExpress = true;
+                        train.service = '급행';
+                    }
                     if (!train.schedule.some(stop => stop.name === stationName)) {
                         train.schedule.push({
                             name: stationName,
@@ -1411,7 +1431,7 @@
                 addEndpoint(train.startStation, true);
                 addEndpoint(train.destination, false);
                 train.schedule.sort((a, b) => a.sec - b.sec);
-                return { id: train.id, schedule: train.schedule };
+                return { id: train.id, schedule: train.schedule, isExpress: train.isExpress, service: train.service };
             }).filter(train => train.schedule.length >= 2)
               .sort((a, b) => a.schedule[0].sec - b.schedule[0].sec);
 
@@ -2534,7 +2554,7 @@
                 let upc = [];
                 list.forEach(t => {
                     const stop = t.schedule.find(s => s.name === homeSelectedStation);
-                    if (stop && stop.sec >= currentSec) upc.push({ id: t.id, sec: stop.sec, dest: t.schedule[t.schedule.length-1].name });
+                    if (stop && stop.sec >= currentSec) upc.push({ id: t.id, sec: stop.sec, dest: t.schedule[t.schedule.length-1].name, isExpress: t.isExpress });
                 });
                 return upc.sort((a,b) => a.sec-b.sec).slice(0, 2);
             };
@@ -2546,7 +2566,7 @@
                 return trains.map(t => {
                     const diff = t.sec - currentSec;
                     const timeText = diff <= 0 ? '곧 도착' : (diff < 60 ? diff + '초' : Math.ceil(diff/60) + '분');
-                    return `<div class="flex justify-between items-center w-full bg-white px-3 py-2 rounded-xl border border-black/5 shadow-sm"><span class="text-[12px] font-bold text-[#111827]">${t.dest}</span><span class="text-[13px] font-extrabold" style="color:${THEME_COLOR}">${timeText}</span></div>`;
+                    return `<div class="flex justify-between items-center w-full bg-white px-3 py-2 rounded-xl border ${t.isExpress ? 'border-red-200' : 'border-black/5'} shadow-sm"><span class="flex min-w-0 items-center gap-1.5"><span class="truncate text-[12px] font-bold ${t.isExpress ? 'text-red-700' : 'text-[#111827]'}">${t.dest}</span>${renderExpressBadge(t.isExpress)}</span><span class="text-[13px] font-extrabold" style="color:${t.isExpress ? EXPRESS_COLOR : THEME_COLOR}">${timeText}</span></div>`;
                 }).join('');
             };
             
@@ -3000,7 +3020,7 @@
             const element = document.createElement('div');
             element.className = 'subway-map-train';
             element.setAttribute('role', 'button');
-            element.setAttribute('aria-label', `${train.id} 열차 따라가기`);
+            element.setAttribute('aria-label', `${train.id} ${train.isExpress ? '급행 ' : ''}열차 따라가기`);
             element.innerHTML = `<svg class="subway-map-train-body" viewBox="0 0 36 80" aria-hidden="true">
                 <path d="M9 12C9 4.8 12.8 1.5 18 1.5S27 4.8 27 12v56c0 6.8-3.7 10.5-9 10.5S9 74.8 9 68Z" fill="${color}" opacity=".22" transform="translate(2 0)"/>
                 <path d="M7.5 12C7.5 4.8 12 1.5 18 1.5S28.5 4.8 28.5 12v56c0 6.8-4.2 10.5-10.5 10.5S7.5 74.8 7.5 68Z" fill="#fff" stroke="${color}" stroke-width="1.6"/>
@@ -3015,6 +3035,7 @@
                 <path d="M11 68.4c4.4 2 9.6 2 14 0v3.6c-4.4 3.5-9.6 3.5-14 0Z" fill="#E2E8F0"/>
                 <circle cx="18" cy="28.5" r="6.1" fill="${color}" stroke="#fff" stroke-width="1.45"/>
                 <text class="subway-map-train-badge" x="18" y="31.4" text-anchor="middle" fill="#fff" font-size="8.5" font-weight="900">${getTrainLineBadge(train.lineId)}</text>
+                ${train.isExpress ? `<g class="subway-map-express-badge"><rect x=".8" y=".8" width="19.4" height="10.5" rx="5.25" fill="${EXPRESS_COLOR}" stroke="#fff" stroke-width="1.1"/><text x="10.5" y="8.1" text-anchor="middle" fill="#fff" font-size="6.4" font-weight="900">급행</text></g>` : ''}
             </svg>`;
             element.addEventListener('click', event => {
                 event.preventDefault(); event.stopPropagation();
@@ -3029,7 +3050,7 @@
                 const meta = FAVORITE_LINE_META[train.lineId || currentLineId];
                 if (dom.mapTitle) dom.mapTitle.textContent = `${meta?.label || train.lineId || currentLineId} 열차 추적`;
                 if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = meta?.color || color;
-                if (dom.mapStatus) dom.mapStatus.textContent = `${train.id} 따라가는 중`;
+                if (dom.mapStatus) dom.mapStatus.textContent = `${train.id} ${train.isExpress ? '급행 ' : ''}따라가는 중`;
                 if (subwayMap?.getLevel?.() > 4) subwayMap.setLevel(4, { animate:{ duration:500 } });
                 window.render();
             });
@@ -3090,7 +3111,8 @@
                         smoothedLat:lanePoint[0], smoothedLng:lanePoint[1],
                         visualLeft:null, visualTop:null, pixelUpdatedAt:options.timestamp || performance.now(),
                         body:element.querySelector('.subway-map-train-body'),
-                        badge:element.querySelector('.subway-map-train-badge')
+                        badge:element.querySelector('.subway-map-train-badge'),
+                        expressBadge:element.querySelector('.subway-map-express-badge')
                     };
                     subwayMapTrainOverlays.set(key, entry);
                 }
@@ -3125,6 +3147,7 @@
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
                 entry.element.classList.toggle('is-nationwide', mapNationwideMode);
                 entry.badge.setAttribute('transform', `rotate(${-entry.angle} 18 28.5)`);
+                entry.expressBadge?.setAttribute('transform', `rotate(${-entry.angle} 10.5 6)`);
                 entry.element.style.visibility = isFollowed ? 'hidden' : 'visible';
                 if (isFollowed) {
                     const followAnchor = ensureSubwayMapFollowLayer().querySelector('.subway-map-follow-anchor');
@@ -3135,6 +3158,7 @@
                         followAnchor.replaceChildren(entry.followElement);
                         entry.followBody = entry.followElement.querySelector('.subway-map-train-body');
                         entry.followBadge = entry.followElement.querySelector('.subway-map-train-badge');
+                        entry.followExpressBadge = entry.followElement.querySelector('.subway-map-express-badge');
                     }
                     entry.followElement.style.visibility = 'visible';
                     entry.followElement.style.pointerEvents = 'none';
@@ -3142,6 +3166,7 @@
                     entry.followElement.className = entry.element.className;
                     entry.followBody.style.transform = `rotate(${entry.angle}deg)`;
                     entry.followBadge.setAttribute('transform', `rotate(${-entry.angle} 18 28.5)`);
+                    entry.followExpressBadge?.setAttribute('transform', `rotate(${-entry.angle} 10.5 6)`);
                 } else if (entry.followElement) {
                     entry.followElement.remove();
                     entry.followElement = null;
@@ -3462,7 +3487,7 @@
             const getStationTimes = (trains) => {
                 return trains.map(t => {
                     const stop = t.schedule.find(s => s.name === selectedStation);
-                    if (stop) return { id: t.id, time: stop.time, sec: stop.sec, dest: t.schedule[t.schedule.length-1].name };
+                    if (stop) return { id: t.id, time: stop.time, sec: stop.sec, dest: t.schedule[t.schedule.length-1].name, isExpress: t.isExpress };
                     return null;
                 }).filter(t => t).sort((a,b) => a.sec - b.sec);
             };
@@ -3497,14 +3522,16 @@
                             <div class="flex justify-between items-center px-1">
                                 <span class="text-[12px] font-bold text-gray-500">첫차</span>
                                 <div class="flex items-center gap-2.5">
-                                    <span class="text-[15px] font-black tracking-tight" style="color:${curColor}">${first.time.slice(0,5)}</span>
+                                    ${renderExpressBadge(first.isExpress)}
+                                    <span class="text-[15px] font-black tracking-tight" style="color:${first.isExpress ? EXPRESS_COLOR : curColor}">${first.time.slice(0,5)}</span>
                                     <span class="text-[9px] font-bold text-gray-500 bg-gray-200/80 px-1.5 py-0.5 rounded border border-black/5">${first.id}</span>
                                 </div>
                             </div>
                             <div class="flex justify-between items-center px-1">
                                 <span class="text-[12px] font-bold text-gray-500">막차</span>
                                 <div class="flex items-center gap-2.5">
-                                    <span class="text-[15px] font-black tracking-tight" style="color:${curColor}">${last.time.slice(0,5)}</span>
+                                    ${renderExpressBadge(last.isExpress)}
+                                    <span class="text-[15px] font-black tracking-tight" style="color:${last.isExpress ? EXPRESS_COLOR : curColor}">${last.time.slice(0,5)}</span>
                                     <span class="text-[9px] font-bold text-gray-500 bg-gray-200/80 px-1.5 py-0.5 rounded border border-black/5">${last.id}</span>
                                 </div>
                             </div>
@@ -3513,7 +3540,11 @@
                 } else {
                     times.forEach(t => {
                         const isPast = (modalDayType === currentDayType) && (t.sec < currentSec);
-                        listHtml += `<div class="bg-gray-50 hover:bg-gray-100 transition-colors rounded-[14px] py-2.5 px-3.5 flex justify-between items-center ${isPast ? 'opacity-40' : 'future-time'}"><div class="flex items-center gap-3"><span class="text-[14px] font-bold ${isPast ? 'text-gray-400' : 'text-[#111827] tracking-tight'}">${t.time.slice(0,5)}</span><span class="text-[11px] font-medium ${isPast ? 'text-gray-400' : 'text-gray-600'}">${t.dest}행</span></div><span class="text-[10px] font-bold ${isPast ? 'text-gray-400 bg-gray-100 border-black/5' : 'text-white shadow-sm'}" style="${!isPast ? `background-color: ${curColor}; border-color: ${curColor};` : ''} padding: 2px 8px; border-radius: 4px; border-width: 1px;">${t.id}</span></div>`;
+                        const rowClass = t.isExpress ? 'border border-red-200 bg-red-50/80 hover:bg-red-100' : 'bg-gray-50 hover:bg-gray-100';
+                        const timeClass = t.isExpress ? 'text-red-700' : (isPast ? 'text-gray-400' : 'text-[#111827] tracking-tight');
+                        const destClass = t.isExpress ? 'text-red-600' : (isPast ? 'text-gray-400' : 'text-gray-600');
+                        const trainColor = t.isExpress ? EXPRESS_COLOR : curColor;
+                        listHtml += `<div class="${rowClass} transition-colors rounded-[14px] py-2.5 px-3.5 flex justify-between items-center ${isPast ? 'opacity-40' : 'future-time'}"><div class="flex items-center gap-2.5"><span class="text-[14px] font-bold ${timeClass}">${t.time.slice(0,5)}</span><span class="text-[11px] font-medium ${destClass}">${t.dest}행</span>${renderExpressBadge(t.isExpress)}</div><span class="text-[10px] font-bold ${isPast && !t.isExpress ? 'text-gray-400 bg-gray-100 border-black/5' : 'text-white shadow-sm'}" style="${!isPast || t.isExpress ? `background-color: ${trainColor}; border-color: ${trainColor};` : ''} padding: 2px 8px; border-radius: 4px; border-width: 1px;">${t.id}</span></div>`;
                     });
                 }
                 listHtml += `</div>`; return listHtml;
@@ -3566,7 +3597,7 @@
             busan_donghae: '동'
         })[lineId] || '';
 
-        const renderTopViewTrain = (color, isSelected, moving, angle) => {
+        const renderTopViewTrain = (color, isSelected, moving, angle, isExpress = false) => {
             const outline = isSelected ? '#111827' : color;
             const badge = getTrainLineBadge();
             return `${isSelected && moving ? `<circle r="30" fill="${color}" opacity="0.16" class="animate-ping" />` : ''}
@@ -3585,10 +3616,11 @@
                     <text x="9.3" y="3.1" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="900" transform="rotate(${-angle} 9.3 0)">${badge}</text>
                     <circle cx="28" cy="-4" r="1.1" fill="#FFF1A8" />
                     <circle cx="28" cy="4" r="1.1" fill="#FFF1A8" />
+                    ${isExpress ? `<g transform="rotate(${-angle} -20 -18)"><rect x="-31" y="-24" width="22" height="12" rx="6" fill="${EXPRESS_COLOR}" stroke="#FFFFFF" stroke-width="1.2"/><text x="-20" y="-16" text-anchor="middle" fill="#FFFFFF" font-size="7" font-weight="900">급행</text></g>` : ''}
                 </g>`;
         };
 
-        const renderTwoCarTrain = (color) => `
+        const renderTwoCarTrain = (color, isExpress = false) => `
             <svg width="72" height="30" viewBox="-36 -13 72 26" style="overflow:visible; filter:drop-shadow(0 2px 2px rgba(15,23,42,.25))">
                 <rect x="-33" y="-9" width="30" height="18" rx="4" fill="#F8FAFC" stroke="#D1D5DB" stroke-width="1" />
                 <path d="M1-9 H26 Q32-9 34-2 V5 Q32 9 26 9 H1Z" fill="#F8FAFC" stroke="#D1D5DB" stroke-width="1" />
@@ -3601,6 +3633,7 @@
                 <rect x="-32" y="4.5" width="29" height="3" rx="1.5" fill="${color}" />
                 <path d="M2 4.5 H32 Q31.5 7.5 27 7.5 H2Z" fill="${color}" />
                 <path d="M-29-7 H-8 M5-7 H25" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" opacity=".9" />
+                ${isExpress ? `<g><rect x="-10" y="-13" width="20" height="10" rx="5" fill="${EXPRESS_COLOR}" stroke="#FFFFFF" stroke-width="1"/><text x="0" y="-6" text-anchor="middle" fill="#FFFFFF" font-size="6.4" font-weight="900">급행</text></g>` : ''}
             </svg>`;
 
         window.render = () => {
@@ -3648,7 +3681,7 @@
             activeT.forEach(t => {
                 const isSel = t.id === selectedTrainId; const tColor = t.direction === 'down' ? DOWN_COLOR : THEME_COLOR;
                 let selClass = isSel ? 'text-white shadow-md border' : 'bg-gray-100 text-gray-600 border border-black/5 hover:bg-gray-200';
-                btnHtml += `<button onclick="handleTrainClick('${t.id}')" class="flex-shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selClass}" style="${isSel ? `background-color: ${tColor}; border-color: ${tColor};` : ''}"><span style="color: ${isSel ? '#FFFFFF' : tColor};" class="mr-1">●</span>${t.id}${t.isWaiting ? ' (대기)' : ''}</button>`;
+                btnHtml += `<button onclick="handleTrainClick('${t.id}')" class="flex flex-shrink-0 items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selClass}" style="${isSel ? `background-color: ${tColor}; border-color: ${tColor};` : ''}"><span style="color: ${isSel ? '#FFFFFF' : tColor};">●</span>${renderExpressBadge(t.isExpress)}<span>${t.id}${t.isWaiting ? ' (대기)' : ''}</span></button>`;
             });
             dom.trainList.innerHTML = btnHtml;
             
@@ -3663,7 +3696,7 @@
                         const isUp = t.direction === 'up'; const textWidth = t.id.length * 6 + 14; const rectX = -(textWidth / 2);
                         const moving = !t.isStopped && !t.isWaiting;
                         // 세로 노선 위에서 진행 방향을 바라보는 입체형 상부 열차
-                        g.innerHTML = renderTopViewTrain(fillColor, isSelected, moving, t.angle)
+                        g.innerHTML = renderTopViewTrain(fillColor, isSelected, moving, t.angle, t.isExpress)
                             + `${isLine ? `<g transform="rotate(${-t.angle})"><rect x="${rectX}" y="${isUp?29:-45}" width="${textWidth}" height="16" rx="8" fill="#ffffff" stroke="${tColor}" stroke-width="1.5" /><text x="0" y="${isUp?40:-34}" text-anchor="middle" fill="#111827" class="text-[10px] font-black tracking-wider">${t.id}</text></g>` : ''}`;
                     });
                 };
@@ -3704,11 +3737,11 @@
             } else if (selectedData && !selectedStation && activeTab === 'line') dom.autoScrollBtn.classList.remove('hidden'); else dom.autoScrollBtn.classList.add('hidden');
             let panelHtml = ''; if (selectedStation) {
                 dom.floatingPanel.classList.remove('hidden');
-                const makeUpcoming = list => list.map(train => { const stop = train.schedule.find(item => item.name === selectedStation); return stop && stop.sec >= currentSec ? { sec: stop.sec, dest: train.schedule[train.schedule.length - 1].name } : null; }).filter(Boolean).sort((a,b) => a.sec-b.sec).slice(0, 2);
+                const makeUpcoming = list => list.map(train => { const stop = train.schedule.find(item => item.name === selectedStation); return stop && stop.sec >= currentSec ? { sec: stop.sec, dest: train.schedule[train.schedule.length - 1].name, isExpress: train.isExpress } : null; }).filter(Boolean).sort((a,b) => a.sec-b.sec).slice(0, 2);
                 const upUpcoming = makeUpcoming(parsedTrainsUp), downUpcoming = makeUpcoming(parsedTrainsDown);
                 const stationNames = Object.keys(STATIONS);
                 const directionLabel = direction => direction === 'up' ? `${stationNames[0]} 방면` : `${stationNames[stationNames.length - 1]} 방면`;
-                const arrivalRows = (items, color) => items.length ? items.map(item => `<div class="flex items-center justify-between rounded-[12px] border border-black/5 bg-gray-50 px-2.5 py-2"><span class="truncate text-[11px] font-extrabold text-[#111827]">${item.dest}</span><strong class="ml-2 whitespace-nowrap text-[13px]" style="color:${color}">${item.sec-currentSec < 60 ? item.sec-currentSec + '초' : Math.ceil((item.sec-currentSec)/60) + '분'}</strong></div>`).join('') : '<div class="py-3 text-center text-[10px] font-semibold text-gray-400">운행 종료</div>';
+                const arrivalRows = (items, color) => items.length ? items.map(item => `<div class="flex items-center justify-between rounded-[12px] border ${item.isExpress ? 'border-red-200 bg-red-50/80' : 'border-black/5 bg-gray-50'} px-2.5 py-2"><span class="flex min-w-0 items-center gap-1"><span class="truncate text-[11px] font-extrabold ${item.isExpress ? 'text-red-700' : 'text-[#111827]'}">${item.dest}</span>${renderExpressBadge(item.isExpress)}</span><strong class="ml-2 whitespace-nowrap text-[13px]" style="color:${item.isExpress ? EXPRESS_COLOR : color}">${item.sec-currentSec < 60 ? item.sec-currentSec + '초' : Math.ceil((item.sec-currentSec)/60) + '분'}</strong></div>`).join('') : '<div class="py-3 text-center text-[10px] font-semibold text-gray-400">운행 종료</div>';
                 panelHtml = `<div class="bg-white/95 backdrop-blur-md border border-black/5 rounded-[26px] p-3.5 mx-auto w-full max-w-[350px] shadow-2xl transition-all duration-300">
                     <div class="mb-3 flex items-center justify-between px-0.5"><div class="flex items-center gap-2"><span class="h-5 w-1 rounded-full" style="background:${THEME_COLOR}"></span><div><h3 class="text-[16px] font-extrabold text-[#111827] tracking-tight">${selectedStation}역 도착 정보</h3><span class="text-[9px] font-semibold text-gray-400">${formatAmPm(currentSec)}</span></div></div><button onclick="handleStationClick(null)" aria-label="역 정보 닫기" class="text-gray-400 bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center hover:text-black hover:bg-gray-200 transition-all"><i class="fa-solid fa-xmark text-[11px]"></i></button></div>
                     <div class="grid grid-cols-2 gap-2"><section class="rounded-[18px] bg-gray-100/70 p-2.5"><h4 class="mb-2 text-center text-[10px] font-extrabold text-gray-500">${directionLabel('up')}</h4><div class="space-y-1.5">${arrivalRows(upUpcoming, THEME_COLOR)}</div></section><section class="rounded-[18px] bg-gray-100/70 p-2.5"><h4 class="mb-2 text-center text-[10px] font-extrabold text-gray-500">${directionLabel('down')}</h4><div class="space-y-1.5">${arrivalRows(downUpcoming, DOWN_COLOR)}</div></section></div>
@@ -3736,7 +3769,7 @@
                 const colorEnd = rightExtends ? 100 : nodeR;
                 const grayW = (tX - grayStart).toFixed(1);
                 const colorW = (colorEnd - tX).toFixed(1);
-                const trainSvg = renderTwoCarTrain(pColor);
+                const trainSvg = renderTwoCarTrain(pColor, selectedData.isExpress);
                 const segHtml = `<div class="border-t border-black/5 mt-3 pt-3"><div class="relative h-[74px] mx-1">
                     <div class="absolute top-[34px] h-[5px] bg-gray-300 ${leftExtends ? '' : 'rounded-l-full'}" style="left:${grayStart}%; width:${grayW}%"></div>
                     <div class="absolute top-[34px] h-[5px] ${rightExtends ? '' : 'rounded-r-full'}" style="left:${tX}%; width:${colorW}%; background-color:${pColor}"></div>
@@ -3750,7 +3783,7 @@
                     <span class="absolute top-[50px] -translate-x-1/2 text-[12px] font-bold whitespace-nowrap" style="left:${nodeR}%; color:${pColor}">${sdNext.name}</span>
                 </div></div>`;
                 const arrivalTime = selectedData.next?.time ? `${selectedData.next.time.slice(0,5)} 도착` : '';
-                const arrivalSummary = `<div class="flex justify-between items-center px-2"><div><div class="flex items-center gap-2 mb-1"><span style="background-color: ${pColor}" class="text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold shadow-sm">${selectedData.id}</span><span class="text-[11px] font-semibold text-gray-500">${selectedData.isWaiting ? '대기중' : selectedData.isStopped ? '도착' : `(${selectedData.curr.name} 출발)`}</span></div><h2 class="text-[18px] font-extrabold text-[#111827] tracking-tight flex items-baseline gap-1.5">${selectedData.isStopped || selectedData.isWaiting ? selectedData.curr.name : selectedData.next.name}역<span class="text-[12px] font-medium text-gray-500">${selectedData.isWaiting ? '출발 예정' : selectedData.isStopped ? '정차중' : '도착 예정'}</span></h2></div>${!selectedData.isStopped && !selectedData.isWaiting ? `<div class="text-right flex flex-col items-end"><div class="flex items-baseline gap-0.5"><p class="text-[28px] font-black tracking-tighter" style="color: ${pColor}">${selectedData.timeRemaining < 60 ? selectedData.timeRemaining : Math.ceil(selectedData.timeRemaining / 60)}</p><span class="text-[11px] text-gray-500 ml-0.5 font-bold">${selectedData.timeRemaining < 60 ? '초 전' : '분 전'}</span></div><span class="mt-0.5 text-[9px] font-semibold text-gray-400">${arrivalTime}</span></div>` : (selectedData.isStopped && !selectedData.isWaiting ? `<div class="text-right flex items-baseline gap-0.5"><p class="text-[28px] font-black tracking-tighter" style="color: ${pColor}">${selectedData.stopRemaining}</p><span class="text-[11px] text-gray-500 ml-0.5 font-bold">초 후 출발</span></div>` : '')}</div>`;
+                const arrivalSummary = `<div class="flex justify-between items-center px-2"><div><div class="flex items-center gap-2 mb-1"><span style="background-color: ${pColor}" class="text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold shadow-sm">${selectedData.id}</span>${renderExpressBadge(selectedData.isExpress, 'px-2 py-1 text-[9px]')}<span class="text-[11px] font-semibold text-gray-500">${selectedData.isWaiting ? '대기중' : selectedData.isStopped ? '도착' : `(${selectedData.curr.name} 출발)`}</span></div><h2 class="text-[18px] font-extrabold text-[#111827] tracking-tight flex items-baseline gap-1.5">${selectedData.isStopped || selectedData.isWaiting ? selectedData.curr.name : selectedData.next.name}역<span class="text-[12px] font-medium text-gray-500">${selectedData.isWaiting ? '출발 예정' : selectedData.isStopped ? '정차중' : '도착 예정'}</span></h2></div>${!selectedData.isStopped && !selectedData.isWaiting ? `<div class="text-right flex flex-col items-end"><div class="flex items-baseline gap-0.5"><p class="text-[28px] font-black tracking-tighter" style="color: ${pColor}">${selectedData.timeRemaining < 60 ? selectedData.timeRemaining : Math.ceil(selectedData.timeRemaining / 60)}</p><span class="text-[11px] text-gray-500 ml-0.5 font-bold">${selectedData.timeRemaining < 60 ? '초 전' : '분 전'}</span></div><span class="mt-0.5 text-[9px] font-semibold text-gray-400">${arrivalTime}</span></div>` : (selectedData.isStopped && !selectedData.isWaiting ? `<div class="text-right flex items-baseline gap-0.5"><p class="text-[28px] font-black tracking-tighter" style="color: ${pColor}">${selectedData.stopRemaining}</p><span class="text-[11px] text-gray-500 ml-0.5 font-bold">초 후 출발</span></div>` : '')}</div>`;
                 panelHtml = `<div class="bg-white/95 backdrop-blur-md border border-black/5 rounded-[36px] p-4 pt-4 mx-auto w-full max-w-[360px] shadow-2xl flex flex-col justify-center relative overflow-hidden"><button onclick="closeTrainDetail()" aria-label="열차 정보 닫기" class="absolute right-3 top-3 z-30 text-gray-400 bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center hover:text-black hover:bg-gray-200 transition-all"><i class="fa-solid fa-xmark text-[11px]"></i></button><div class="pr-7">${arrivalSummary}</div>${segHtml}</div>`;
             } else dom.floatingPanel.classList.add('hidden');
             if(dom.floatingPanel.innerHTML !== panelHtml && activeTab !== 'home') dom.floatingPanel.innerHTML = panelHtml;
