@@ -1471,10 +1471,25 @@
                 const stationMeta = lineStations[stationName];
                 if (!stationMeta) return;
                 const rows = station.timetable?.[dayType]?.[direction] || [];
-                rows.forEach(row => {
+                // 신분당선 API의 trainNo는 한 운행일에 반복 사용된다. 같은 번호를
+                // 하나로 합치지 않고 역별 시간순 발생 횟수로 실제 운행을 구분한다.
+                const repeatedTrainOccurrences = new Map();
+                const orderedRows = cacheNamespace === 'shinbundang'
+                    ? [...rows].sort((first, second) => {
+                        const firstTime = first.departureTime || first.time || first.arrivalTime;
+                        const secondTime = second.departureTime || second.time || second.arrivalTime;
+                        return timeToSeconds(firstTime) - timeToSeconds(secondTime);
+                    })
+                    : rows;
+                orderedRows.forEach(row => {
                     const time = row.departureTime || row.time || row.arrivalTime;
                     if (!row.trainNo || !time) return;
-                    const groupKey = `${row.trainNo}:${row.startStationId || row.startStation}:${row.destinationId || row.destination}:${row.routeId || ''}`;
+                    const baseGroupKey = `${row.trainNo}:${row.startStationId || row.startStation}:${row.destinationId || row.destination}:${row.routeId || ''}`;
+                    const occurrenceIndex = repeatedTrainOccurrences.get(baseGroupKey) || 0;
+                    repeatedTrainOccurrences.set(baseGroupKey, occurrenceIndex + 1);
+                    const groupKey = cacheNamespace === 'shinbundang'
+                        ? `${baseGroupKey}:${occurrenceIndex}`
+                        : baseGroupKey;
                     const rowIsExpress = isExpressRow(row);
                     const routeMeta = routeMetaById.get(String(row.routeId));
                     const rowService = row.service || routeMeta?.operation?.name || (rowIsExpress ? '급행' : '일반');
