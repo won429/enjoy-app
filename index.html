@@ -4540,6 +4540,12 @@
         let enjoyBaseballMoreHistoryPromise = null;
         let enjoyBaseballMoreHistoryGames = null;
 
+        function enjoyBaseballHistorySourceForDate(date) {
+            const target = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
+            const useAugustHistory = target.getFullYear() > 2026 ||
+                (target.getFullYear() === 2026 && target.getMonth() >= 7);
+            return useAugustHistory ? 'kbo_history_2026_08.js' : 'kbo_history_2026.js';
+        }
         function enjoyBaseballEnsureFullHistory() {
             if (window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate) return Promise.resolve();
             if (enjoyBaseballMoreHistoryPromise) return enjoyBaseballMoreHistoryPromise;
@@ -4551,7 +4557,7 @@
                     return;
                 }
                 const script = document.createElement('script');
-                script.src = 'kbo_history_2026.js';
+                script.src = enjoyBaseballHistorySourceForDate(new Date());
                 script.dataset.enjoyKboHistory = 'true';
                 script.onload = resolve;
                 script.onerror = reject;
