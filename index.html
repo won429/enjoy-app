@@ -7941,8 +7941,13 @@
                         let penaltyAmount = 0;
                         
                         let isPastOrCurrent = (y < currentYear || (y === currentYear && m <= currentRealMonth));
+                        let hasPenaltyDue = isPastOrCurrent && shouldApplyPenalty && !isPaymentStopped;
+                        // 면제권은 한 번만 적용한다. 이미 부과될 금액이 있으면 이번 달
+                        // 부과금을 먼저 면제하고, 없으면 이번 달 미납으로 생길 다음
+                        // 부과금을 면제한다.
+                        let penaltyWaived = hasPenaltyDue && isExempted;
 
-                        if (isPastOrCurrent && shouldApplyPenalty && !isPaymentStopped) {
+                        if (hasPenaltyDue && !penaltyWaived) {
                             penaltyAmount = 10000;
                         }
                         
@@ -7951,11 +7956,14 @@
                         // 과거 미납이 남아 있어도 이번 달 정상 회비를 냈다면
                         // 이번 달을 원인으로 다음 달 부과금이 다시 생기지 않는다.
                         let currentDuesPaid = isPaymentStopped || amount >= regularDues;
+                        let exemptionAppliesToNextPenalty = isExempted && !penaltyWaived && !currentDuesPaid;
                         
                         history[key] = {
                             amount: amount,
                             status: status,
                             isExempted: isExempted,
+                            penaltyWaived: penaltyWaived,
+                            exemptionAppliesToNextPenalty: exemptionAppliesToNextPenalty,
                             isLeader: isLeader,
                             rawPenaltyText: rawPenaltyText,
                             baseDues: baseDues,
@@ -7980,7 +7988,7 @@
                                     shouldApplyPenalty = false;
                                 } else {
                                     prevStatus = 'unpaid';
-                                    shouldApplyPenalty = !currentDuesPaid && !isExempted;
+                                    shouldApplyPenalty = !currentDuesPaid && !exemptionAppliesToNextPenalty;
                                 }
                             } else {
                                 carriedDebt = 0;
@@ -8166,6 +8174,7 @@
                 let carryOverTexts = [];
                 if (h.carriedDebt > 0) carryOverTexts.push(`이전 미납/유예 합산 ${h.carriedDebt.toLocaleString()}원`);
                 if (h.penaltyAmount > 0) carryOverTexts.push(`이전 부과금 ${h.penaltyAmount.toLocaleString()}원`);
+                if (h.penaltyWaived) carryOverTexts.push('이전 부과금 10,000원 면제권 적용');
 
                 let isPaid = h.status === 'paid';
                 let isDeferred = h.status === 'deferred';
