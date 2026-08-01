@@ -1217,6 +1217,8 @@
         const MAP_TRAIN_TARGET_INTERVAL = 1000 / 60;
         const MAP_CAMERA_FRAME_INTERVAL = 1000 / 60;
         const MAP_TRAIN_TANGENT_SAMPLE_METERS = 45;
+        const MAP_TRAIN_TRACK_OFFSET_PX = 7;
+        const MAP_TRAIN_NATIONWIDE_TRACK_OFFSET_PX = 4;
         const MAP_TRAIN_SUBPIXEL_SMOOTHING_MS = 46;
         const MAP_TRAIN_MAX_SUBPIXEL_OFFSET = 1.05;
         const MAP_CAMERA_SMOOTHING_MS = 90;
@@ -3399,8 +3401,10 @@
                 const angleBlend = 1 - Math.exp(-angleElapsed / 240);
                 if (Math.abs(angleDelta) > .25) entry.angle += angleDelta * angleBlend;
                 entry.angleUpdatedAt = angleNow;
-                // 차체 중심은 선로 좌표에 고정하고 화면상 선로 접선 방향으로만 회전한다.
-                entry.body.style.transform = `rotate(${entry.angle}deg)`;
+                // 실제 선로 좌표는 유지한 채 차체만 진행 방향의 오른쪽으로 밀면,
+                // 반대 방향 열차는 서로 다른 트랙(화면 기준 하행 좌측·상행 우측)에 놓인다.
+                const trackOffsetPx = isFollowed ? 0 : (mapNationwideMode ? MAP_TRAIN_NATIONWIDE_TRACK_OFFSET_PX : MAP_TRAIN_TRACK_OFFSET_PX);
+                entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${trackOffsetPx}px)`;
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
                 entry.element.classList.toggle('is-nationwide', mapNationwideMode);
                 entry.badge.setAttribute('transform', `rotate(${-entry.angle} 18 28.5)`);
