@@ -287,8 +287,8 @@
         }
         .subway-map-train {
             position: relative;
-            width: 23px;
-            height: 53px;
+            width: 25.3px;
+            height: 58.3px;
             pointer-events: auto;
             cursor: pointer;
             filter: drop-shadow(0 4px 5px rgba(15,23,42,.28));
@@ -305,8 +305,8 @@
             filter: drop-shadow(0 5px 7px rgba(15,23,42,.38)) drop-shadow(0 0 5px rgba(255,255,255,.9));
         }
         .subway-map-train.is-nationwide {
-            width: 13px;
-            height: 30px;
+            width: 14.3px;
+            height: 33px;
             filter: drop-shadow(0 2px 2px rgba(15,23,42,.24));
             opacity: .9;
         }
@@ -1216,10 +1216,7 @@
         const railPathMetricCache = new Map();
         const MAP_TRAIN_TARGET_INTERVAL = 1000 / 60;
         const MAP_CAMERA_FRAME_INTERVAL = 1000 / 60;
-        const MAP_TRAIN_HALF_LENGTH_METERS = 130;
-        const MAP_TRAIN_LANE_OFFSET_METERS = 4.2;
-        const MAP_TRAIN_LANE_OFFSET_PX = 6;
-        const MAP_TRAIN_POSITION_SMOOTHING_MS = 64;
+        const MAP_TRAIN_TANGENT_SAMPLE_METERS = 45;
         const MAP_TRAIN_SUBPIXEL_SMOOTHING_MS = 46;
         const MAP_TRAIN_MAX_SUBPIXEL_OFFSET = 1.05;
         const MAP_CAMERA_SMOOTHING_MS = 90;
@@ -3039,16 +3036,6 @@
             return Math.atan2(dLng, to[0] - from[0]) * 180 / Math.PI;
         };
 
-        const offsetRailPointByMeters = (point, pathAngle, signedMeters) => {
-            const normal = (pathAngle + 90) * Math.PI / 180;
-            const latMeters = 111320;
-            const lngMeters = Math.max(1, latMeters * Math.cos(point[0] * Math.PI / 180));
-            return [
-                point[0] + Math.cos(normal) * signedMeters / latMeters,
-                point[1] + Math.sin(normal) * signedMeters / lngMeters
-            ];
-        };
-
         const REGION_LINE_IDS = {
             seoul: ['gtx_a', 'gyeonggang', 'gyeongchun', 'seohae', 'airport', 'shinbundang'],
             gangwon: ['gyeongchun'],
@@ -3357,14 +3344,12 @@
             const point = pointOnRailPath(metric, distance);
             if (!point) return null;
             const movementSign = Math.sign(toDistance - fromDistance) || (train.direction === 'up' ? -1 : 1);
-            // 진행 방향과 무관한 긴 접선으로 선로 방향을 먼저 구하면 짧은 좌표 구간의 각도 떨림이 사라진다.
-            const pathRear = pointOnRailPath(metric, distance - MAP_TRAIN_HALF_LENGTH_METERS) || point;
-            const pathFront = pointOnRailPath(metric, distance + MAP_TRAIN_HALF_LENGTH_METERS) || point;
-            const pathAngle = bearingBetweenRailPoints(pathRear, pathFront);
+            // 가까운 앞뒤 선로점으로 화면상 접선을 구해 곡선에서도 차체가 선형과 나란히 향하게 한다.
+            const pathRear = pointOnRailPath(metric, distance - MAP_TRAIN_TANGENT_SAMPLE_METERS) || point;
+            const pathFront = pointOnRailPath(metric, distance + MAP_TRAIN_TANGENT_SAMPLE_METERS) || point;
+            const pathAngle = getMapScreenAngle(pathRear, pathFront);
             const angle = pathAngle + (movementSign < 0 ? 180 : 0);
-            // 두 진행 방향을 실제 위·경도상 평행 차선으로 분리한다. 화면 확대/축소와 관계없이 간격이 유지된다.
-            const lanePoint = offsetRailPointByMeters(point, pathAngle, movementSign * MAP_TRAIN_LANE_OFFSET_METERS);
-            return { train, point, lanePoint, key:`${train.lineId || currentLineId}:${train.direction}:${train.id}`, distance, angle };
+            return { train, point, key:`${train.lineId || currentLineId}:${train.direction}:${train.id}`, distance, angle };
         };
 
         window.updateSubwayMapTrains = (trains, options = {}) => {
@@ -3375,7 +3360,7 @@
                 return (!options.onlyKey || key === options.onlyKey) && (!options.skipKey || key !== options.skipKey);
             });
             const positioned = targetTrains.map(getSubwayMapTrainPlacement).filter(Boolean);
-            positioned.forEach(({ train, point, lanePoint, key, angle }) => {
+            positioned.forEach(({ train, point, key, angle }) => {
                 if (options.onlyKey && key !== options.onlyKey) return;
                 let entry = subwayMapTrainOverlays.get(key);
                 if (!entry) {
@@ -3383,7 +3368,7 @@
                     const element = createSubwayMapTrainElement(train, color, key);
                     const overlay = new kakao.maps.CustomOverlay({
                         map:subwayMap,
-                        position:new kakao.maps.LatLng(lanePoint[0], lanePoint[1]),
+                        position:new kakao.maps.LatLng(point[0], point[1]),
                         content:element,
                         xAnchor:0.5,
                         yAnchor:0.5,
@@ -3391,8 +3376,6 @@
                     });
                     entry = {
                         element, overlay, angle, angleUpdatedAt:options.timestamp || performance.now(),
-                        positionUpdatedAt:options.timestamp || performance.now(),
-                        smoothedLat:lanePoint[0], smoothedLng:lanePoint[1],
                         visualLeft:null, visualTop:null, pixelUpdatedAt:options.timestamp || performance.now(),
                         body:element.querySelector('.subway-map-train-body'),
                         badge:element.querySelector('.subway-map-train-badge'),
@@ -3401,18 +3384,9 @@
                     subwayMapTrainOverlays.set(key, entry);
                 }
                 const positionNow = options.timestamp || performance.now();
-                const positionElapsed = Math.max(1, Math.min(64, positionNow - entry.positionUpdatedAt));
-                const positionBlend = 1 - Math.exp(-positionElapsed / MAP_TRAIN_POSITION_SMOOTHING_MS);
-                const targetGapMeters = haversine(entry.smoothedLat, entry.smoothedLng, lanePoint[0], lanePoint[1]) * 1000;
-                if (mapViewportChanging || targetGapMeters > 180) {
-                    entry.smoothedLat = lanePoint[0];
-                    entry.smoothedLng = lanePoint[1];
-                } else {
-                    entry.smoothedLat += (lanePoint[0] - entry.smoothedLat) * positionBlend;
-                    entry.smoothedLng += (lanePoint[1] - entry.smoothedLng) * positionBlend;
-                }
-                entry.positionUpdatedAt = positionNow;
-                const position = new kakao.maps.LatLng(entry.smoothedLat, entry.smoothedLng);
+                // 위·경도 좌표를 완화하면 곡선에서 선로 안쪽을 가로지른다.
+                // 시간표 보간으로 얻은 실제 선로 좌표를 그대로 사용하고 픽셀 단위 미세 보정만 적용한다.
+                const position = new kakao.maps.LatLng(point[0], point[1]);
                 entry.overlay.setPosition(position);
                 const isFollowed = key === mapFollowTrainKey;
                 // 카카오가 오버레이 부모를 1px 이동시키는 사이를 내부 GPU 소수점 이동으로 채운다.
@@ -3425,9 +3399,8 @@
                 const angleBlend = 1 - Math.exp(-angleElapsed / 240);
                 if (Math.abs(angleDelta) > .25) entry.angle += angleDelta * angleBlend;
                 entry.angleUpdatedAt = angleNow;
-                // 추적 중에는 열차 중심을 화면 중심에 고정해 회전으로 인한 원형 미세 떨림을 없앤다.
-                const pixelLaneOffset = isFollowed ? 0 : (mapNationwideMode ? 2 : MAP_TRAIN_LANE_OFFSET_PX);
-                entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${pixelLaneOffset}px)`;
+                // 차체 중심은 선로 좌표에 고정하고 화면상 선로 접선 방향으로만 회전한다.
+                entry.body.style.transform = `rotate(${entry.angle}deg)`;
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
                 entry.element.classList.toggle('is-nationwide', mapNationwideMode);
                 entry.badge.setAttribute('transform', `rotate(${-entry.angle} 18 28.5)`);
