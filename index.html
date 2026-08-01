@@ -4538,6 +4538,7 @@
         let enjoyBaseballMoreDailyDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
         let enjoyBaseballMoreMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         let enjoyBaseballMoreHistoryPromise = null;
+        let enjoyBaseballMoreHistoryLoadedSource = '';
         let enjoyBaseballMoreHistoryGames = null;
 
         function enjoyBaseballHistorySourceForDate(date) {
@@ -4546,22 +4547,60 @@
                 (target.getFullYear() === 2026 && target.getMonth() >= 7);
             return useAugustHistory ? 'kbo_history_2026_08.js' : 'kbo_history_2026.js';
         }
-        function enjoyBaseballEnsureFullHistory() {
-            if (window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate) return Promise.resolve();
-            if (enjoyBaseballMoreHistoryPromise) return enjoyBaseballMoreHistoryPromise;
-            enjoyBaseballMoreHistoryPromise = new Promise(function (resolve, reject) {
-                const existing = document.querySelector('script[data-enjoy-kbo-history]');
-                if (existing) {
-                    existing.addEventListener('load', resolve, { once: true });
-                    existing.addEventListener('error', reject, { once: true });
-                    return;
-                }
+        function enjoyBaseballMergeHistoryData(baseHistory, nextHistory) {
+            const base = baseHistory || {};
+            const next = nextHistory || {};
+            const merged = Object.assign({}, base, next);
+            merged.from = base.from || next.from;
+            merged.to = next.to || base.to;
+            merged.gamesByDate = Object.assign({}, base.gamesByDate || {}, next.gamesByDate || {});
+            merged.rankings = Array.isArray(next.rankings) && next.rankings.length ? next.rankings : (base.rankings || []);
+            return merged;
+        }
+        function enjoyBaseballInstallHistoryData(history) {
+            window.KBO_HISTORY_2026 = history;
+            window.getKboHistoryGames = function (dateStr) {
+                return (history.gamesByDate && history.gamesByDate[dateStr]) || [];
+            };
+            window.getKboScheduleGames = window.getKboHistoryGames;
+            window.getKboHistoryRankings = function () {
+                return history.rankings || [];
+            };
+        }
+        function enjoyBaseballLoadHistorySource(source) {
+            return new Promise(function (resolve, reject) {
                 const script = document.createElement('script');
-                script.src = enjoyBaseballHistorySourceForDate(new Date());
-                script.dataset.enjoyKboHistory = 'true';
-                script.onload = resolve;
-                script.onerror = reject;
+                script.src = source;
+                script.dataset.enjoyKboHistory = source;
+                script.onload = function () {
+                    resolve(window.KBO_HISTORY_2026 || {});
+                };
+                script.onerror = function (error) {
+                    script.remove();
+                    reject(error);
+                };
                 document.head.appendChild(script);
+            });
+        }
+        function enjoyBaseballEnsureFullHistory() {
+            const finalSource = enjoyBaseballHistorySourceForDate(new Date());
+            if (window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate &&
+                enjoyBaseballMoreHistoryLoadedSource === finalSource) return Promise.resolve();
+            if (enjoyBaseballMoreHistoryPromise) return enjoyBaseballMoreHistoryPromise;
+            const sources = finalSource === 'kbo_history_2026_08.js'
+                ? ['kbo_history_2026.js', 'kbo_history_2026_08.js']
+                : ['kbo_history_2026.js'];
+            let mergedHistory = null;
+            enjoyBaseballMoreHistoryPromise = sources.reduce(function (promise, source) {
+                return promise.then(function () {
+                    return enjoyBaseballLoadHistorySource(source);
+                }).then(function (loadedHistory) {
+                    mergedHistory = enjoyBaseballMergeHistoryData(mergedHistory, loadedHistory);
+                });
+            }, Promise.resolve()).then(function () {
+                enjoyBaseballInstallHistoryData(mergedHistory || {});
+                enjoyBaseballMoreHistoryLoadedSource = finalSource;
+                enjoyBaseballMoreHistoryGames = null;
             }).finally(function () {
                 enjoyBaseballMoreHistoryPromise = null;
             });
