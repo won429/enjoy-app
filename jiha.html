@@ -287,11 +287,11 @@
         }
         .subway-map-train {
             position: relative;
-            width: 25.3px;
-            height: 58.3px;
+            width: 100px;
+            height: 36px;
             pointer-events: auto;
             cursor: pointer;
-            filter: drop-shadow(0 4px 5px rgba(15,23,42,.28));
+            filter: drop-shadow(0 2px 1.5px rgba(15,23,42,.24)) drop-shadow(0 5px 6px rgba(15,23,42,.18));
             transition: filter .2s ease, transform .16s ease;
             -webkit-tap-highlight-color: transparent;
             transform: translateZ(0);
@@ -302,11 +302,11 @@
             transform: translate(-50%, -50%) translateZ(0);
         }
         .subway-map-train.is-selected {
-            filter: drop-shadow(0 5px 7px rgba(15,23,42,.38)) drop-shadow(0 0 5px rgba(255,255,255,.9));
+            filter: drop-shadow(0 4px 3px rgba(15,23,42,.30)) drop-shadow(0 6px 9px rgba(15,23,42,.25)) drop-shadow(0 0 5px rgba(255,255,255,.95));
         }
         .subway-map-train.is-nationwide {
-            width: 14.3px;
-            height: 33px;
+            width: 55px;
+            height: 20px;
             filter: drop-shadow(0 2px 2px rgba(15,23,42,.24));
             opacity: .9;
         }
@@ -314,16 +314,59 @@
             filter: drop-shadow(0 3px 4px rgba(15,23,42,.38)) drop-shadow(0 0 4px rgba(255,255,255,.9));
         }
         .subway-map-train-body {
+            position: relative;
+            display: block;
             width: 100%;
             height: 100%;
             transform-origin: 50% 50%;
-            overflow: visible;
             will-change: transform;
             transform: translateZ(0);
             backface-visibility: hidden;
+            user-select: none;
+            pointer-events: none;
+        }
+        .subway-map-train-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .subway-map-train-label {
+            position: absolute;
+            left: 65.54%;
+            top: 62.34%;
+            display: flex;
+            width: 21px;
+            height: 21px;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -.5px;
+            text-shadow: 0 1px 1px rgba(15,23,42,.42);
+            pointer-events: none;
+        }
+        .subway-map-train-label-text {
+            display: block;
+            transform-origin: 50% 50%;
+        }
+        .subway-map-train-label.is-wide {
+            font-size: 7.8px;
+            letter-spacing: -1px;
+        }
+        .subway-map-train.is-nationwide .subway-map-train-label {
+            width: 11.5px;
+            height: 11.5px;
+            font-size: 6.2px;
+            letter-spacing: -.3px;
+        }
+        .subway-map-train.is-nationwide .subway-map-train-label.is-wide {
+            font-size: 4.4px;
         }
         .subway-map-train:active { transform: scale(.94) translateZ(0); }
-        .map-line-tabs::-webkit-scrollbar { display:none; }
     </style>
 </head>
 <body class="w-full h-[100dvh] flex justify-center items-center overflow-hidden">
@@ -581,7 +624,6 @@
                     </div>
                     <div class="flex items-center gap-2"><span id="subway-map-status" class="text-[9px] font-bold text-gray-400">Kakao Map</span><button id="map-country-view" onclick="toggleNationwideMapView()" class="flex h-7 items-center gap-1 rounded-full bg-gray-100 px-2.5 text-[9px] font-extrabold text-gray-600 transition-colors hover:bg-gray-200" aria-label="전국 운행 지도 보기"><i class="fa-solid fa-earth-asia text-[8px]"></i><span>전국보기</span></button></div>
                 </div>
-                <div id="map-line-tabs" class="map-line-tabs pointer-events-auto mt-2 flex gap-1.5 overflow-x-auto px-0.5 py-1" style="scrollbar-width:none"></div>
             </header>
         </main>
 
@@ -1287,8 +1329,6 @@
         let mapFollowTrainKey = null;
         let selectedMapStationLineId = null;
         const regionMapTimetables = new Map();
-        const mapVisibleLinesByRegion = new Map();
-        const mapVisibleNationwideLines = new Set();
         let mapNationwideMode = false;
         let mapAnimationFrameId = null;
         let mapLastFullUpdateTime = 0;
@@ -1309,6 +1349,20 @@
         const MAP_TRAIN_SUBPIXEL_SMOOTHING_MS = 46;
         const MAP_TRAIN_MAX_SUBPIXEL_OFFSET = 1.05;
         const MAP_CAMERA_SMOOTHING_MS = 90;
+        const MAP_TRAIN_CANVAS_WIDTH = 100;
+        const MAP_TRAIN_CANVAS_HEIGHT = 36;
+        const MAP_TRAIN_CANVAS_SCALE = 3;
+        const loadMapTrainAsset = src => new Promise((resolve, reject) => {
+            const image = new Image();
+            image.decoding = 'async';
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = src;
+        });
+        const mapTrainCanvasAssets = Promise.all([
+            loadMapTrainAsset('assets/subway-train-map-reference-v7.png'),
+            loadMapTrainAsset('assets/subway-train-map-reference-accent-v7.png')
+        ]);
 
         const dom = {
             mainHeader: document.getElementById('main-header'),
@@ -1335,7 +1389,6 @@
             mapLineDot: document.getElementById('subway-map-line-dot'),
             mapStatus: document.getElementById('subway-map-status'),
             mapCountryView: document.getElementById('map-country-view'),
-            mapLineTabs: document.getElementById('map-line-tabs'),
             navIndicator: document.getElementById('nav-indicator'),
             timetableModal: document.getElementById('timetable-modal'),
             modalTitle: document.getElementById('modal-title'),
@@ -2153,7 +2206,6 @@
                     dom.lineHeaderTitle.textContent = '수도권 경춘선 지하철 현황';
                     if (activeTab === 'map') {
                         setMapRegionHeader();
-                        window.renderMapLineControls();
                         if (subwayMap) window.updateSubwayMap();
                     }
                 }
@@ -2166,7 +2218,6 @@
                     dom.lineHeaderTitle.textContent = '강원도 경춘선 지하철 현황';
                     if (activeTab === 'map') {
                         setMapRegionHeader();
-                        window.renderMapLineControls();
                         if (subwayMap) window.updateSubwayMap();
                     }
                 }
@@ -3549,15 +3600,7 @@
             const colors = getLineColors(lineId);
             return train?.direction === 'down' ? colors.down : colors.up;
         };
-        const getVisibleMapLineIds = () => {
-            if (mapNationwideMode) {
-                if (!mapVisibleNationwideLines.size) ALL_MAP_LINE_IDS.forEach(lineId => mapVisibleNationwideLines.add(lineId));
-                return ALL_MAP_LINE_IDS.filter(lineId => mapVisibleNationwideLines.has(lineId));
-            }
-            const regionLines = REGION_LINE_IDS[currentRegion] || [currentLineId];
-            if (!mapVisibleLinesByRegion.has(currentRegion)) mapVisibleLinesByRegion.set(currentRegion, new Set(regionLines));
-            return regionLines.filter(lineId => mapVisibleLinesByRegion.get(currentRegion).has(lineId));
-        };
+        const getVisibleMapLineIds = () => mapNationwideMode ? ALL_MAP_LINE_IDS : [currentLineId];
         const getLiveCurrentSeconds = () => {
             const now = new Date();
             let hours = now.getHours(); if (hours < 4) hours += 24;
@@ -3598,29 +3641,13 @@
             return mapActiveTrainSources.map(({ train, direction, lineId }) => getActiveTrainItems([train], direction, lineId, atSec)[0]).filter(Boolean);
         };
         const loadRegionMapTimetables = async () => {
-            const lineIds = mapNationwideMode ? ALL_MAP_LINE_IDS : (REGION_LINE_IDS[currentRegion] || [currentLineId]);
+            const lineIds = getVisibleMapLineIds();
             await Promise.all(lineIds.map(async lineId => {
                 const key = `${lineId}:${currentDayType}`;
                 if (!regionMapTimetables.has(key)) regionMapTimetables.set(key, await loadLineTimetableData(currentDayType, lineId));
             }));
         };
 
-        const MAP_LINE_FOCUS_STATIONS = {
-            gtx_a:'대곡',
-            seohae:'시흥시청',
-            incheon_line1:'인천시청',
-            incheon_line2:'인천시청',
-            gyeongui_jungang:'공덕',
-            gimpo_goldline:'사우',
-            gyeonggang:'경기광주',
-            gyeongchun:'평내호평',
-            airport:'김포공항',
-            shinbundang:'판교',
-            suinbundang:'수원',
-            sillim_line:'신림',
-            daegyeong:'대구', line1:'반월당', line2:'반월당', line3:'서문시장', daejeon_line1:'시청', gwangju_line1:'금남로4가',
-            busan_line1:'서면', busan_line2:'서면', busan_line3:'연산', busan_line4:'동래', busan_bglrt:'공항', busan_donghae:'벡스코'
-        };
         const renderMapViewToggle = () => {
             if (!dom.mapCountryView) return;
             const regionLabel = REGION_LABELS[currentRegion] || '지역';
@@ -3637,38 +3664,10 @@
                 if (dom.mapStatus) dom.mapStatus.textContent = `${Object.keys(REGION_LINE_IDS).length}개 권역 · ${getVisibleMapLineIds().length}개 노선`;
                 return;
             }
-            const regionLabel = REGION_LABELS[currentRegion] || '지역';
-            if (dom.mapTitle) dom.mapTitle.textContent = `${regionLabel} 전노선 지도`;
-            if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = THEME_COLOR;
-            if (dom.mapStatus) dom.mapStatus.textContent = `© OSM · ${getVisibleMapLineIds().length}개 노선`;
-        };
-        window.renderMapLineControls = () => {
-            if (!dom.mapLineTabs) return;
-            const visible = new Set(getVisibleMapLineIds());
-            const controlLineIds = mapNationwideMode ? ALL_MAP_LINE_IDS : (REGION_LINE_IDS[currentRegion] || [currentLineId]);
-            dom.mapLineTabs.innerHTML = controlLineIds.map(lineId => {
-                const meta = FAVORITE_LINE_META[lineId] || { label:lineId, color:'#64748B' };
-                const enabled = visible.has(lineId);
-                const label = mapNationwideMode ? meta.label : meta.label.replace('대구 ', '').replace('부산 ', '').replace('광주 ', '').replace('대전 ', '');
-                return `<div class="flex shrink-0 items-center overflow-hidden rounded-full border shadow-sm transition-all ${enabled ? '' : 'bg-white/75 opacity-65'}" style="background:${enabled ? meta.color : 'rgba(255,255,255,.75)'};border-color:${enabled ? meta.color : 'rgba(148,163,184,.3)'}"><button onclick="focusMapLine('${lineId}')" class="px-3 py-2 text-[10px] font-extrabold" style="color:${enabled ? '#fff' : '#64748B'}">${label}</button><button onclick="toggleMapLine('${lineId}', event)" aria-label="${meta.label} ${enabled ? '끄기' : '켜기'}" class="mr-1 flex h-6 w-6 items-center justify-center rounded-full" style="background:${enabled ? 'rgba(255,255,255,.22)' : 'rgba(148,163,184,.12)'};color:${enabled ? '#fff' : '#94A3B8'}"><i class="fa-solid ${enabled ? 'fa-eye' : 'fa-eye-slash'} text-[8px]"></i></button></div>`;
-            }).join('');
-            renderMapViewToggle();
-        };
-        window.focusMapLine = lineId => {
-            if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps) return;
-            mapFollowTrainKey = null;
-            const stationName = MAP_LINE_FOCUS_STATIONS[lineId];
-            const coords = STATION_COORDS[lineId] || {};
-            const values = Object.values(coords);
-            const coord = coords[stationName] || values[Math.floor(values.length / 2)];
-            if (!coord) return;
-            const center = new kakao.maps.LatLng(coord[0], coord[1]);
-            subwayMap.setLevel(5, { anchor:center, animate:{ duration:450 } });
-            subwayMap.panTo(center);
-            const meta = FAVORITE_LINE_META[lineId];
-            if (dom.mapTitle) dom.mapTitle.textContent = `${meta?.label || lineId} 지도`;
-            if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = meta?.color || THEME_COLOR;
-            if (dom.mapStatus) dom.mapStatus.textContent = '노선 집중 보기';
+            const lineMeta = FAVORITE_LINE_META[currentLineId];
+            if (dom.mapTitle) dom.mapTitle.textContent = `${lineMeta?.label || currentLineId} 지도`;
+            if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = lineMeta?.color || THEME_COLOR;
+            if (dom.mapStatus) dom.mapStatus.textContent = '© OSM · 현재 노선';
         };
         window.toggleNationwideMapView = async () => {
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps) return;
@@ -3682,22 +3681,6 @@
             await loadRegionMapTimetables();
             window.updateSubwayMap();
             window.render();
-        };
-        window.toggleMapLine = (lineId, event) => {
-            event?.stopPropagation?.();
-            const visible = mapNationwideMode
-                ? mapVisibleNationwideLines
-                : (mapVisibleLinesByRegion.get(currentRegion) || new Set(REGION_LINE_IDS[currentRegion] || [currentLineId]));
-            if (visible.has(lineId)) {
-                if (visible.size === 1) return;
-                visible.delete(lineId);
-            } else visible.add(lineId);
-            if (!mapNationwideMode) mapVisibleLinesByRegion.set(currentRegion, visible);
-            mapActiveTrainSourceKey = '';
-            selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null;
-            window.updateSubwayMap();
-            window.renderMapLineControls();
-            if (visible.has(lineId)) requestAnimationFrame(() => window.focusMapLine(lineId));
         };
         const clearSubwayMapTrains = () => {
             subwayMapTrainOverlays.forEach(entry => {
@@ -3772,28 +3755,117 @@
             return bearingBetweenRailPoints(point, ahead);
         };
 
+        const drawCanvasRoundRect = (ctx, x, y, width, height, radius) => {
+            const r = Math.min(radius, width / 2, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + width - r, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+            ctx.lineTo(x + width, y + height - r);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+            ctx.lineTo(x + r, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        };
+
+        const renderSubwayMapTrainCanvas = async (canvas, color, isExpress, specialMeta) => {
+            const [bodyImage, accentMaskImage] = await mapTrainCanvasAssets;
+            const width = MAP_TRAIN_CANVAS_WIDTH;
+            const height = MAP_TRAIN_CANVAS_HEIGHT;
+            const scale = MAP_TRAIN_CANVAS_SCALE;
+            canvas.width = width * scale;
+            canvas.height = height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(scale, 0, 0, scale, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(bodyImage, 0, 0, width, height);
+
+            const accentCanvas = document.createElement('canvas');
+            accentCanvas.width = width * scale;
+            accentCanvas.height = height * scale;
+            const accentCtx = accentCanvas.getContext('2d');
+            accentCtx.imageSmoothingEnabled = true;
+            accentCtx.imageSmoothingQuality = 'high';
+            accentCtx.drawImage(accentMaskImage, 0, 0, accentCanvas.width, accentCanvas.height);
+            accentCtx.globalCompositeOperation = 'source-in';
+            accentCtx.fillStyle = color;
+            accentCtx.fillRect(0, 0, accentCanvas.width, accentCanvas.height);
+            ctx.save();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.drawImage(accentCanvas, 0, 0, width, height);
+            ctx.restore();
+
+            const badgeX = 65.54;
+            const badgeY = 22.44;
+            ctx.save();
+            ctx.shadowColor = 'rgba(15,23,42,.30)';
+            ctx.shadowBlur = 2;
+            ctx.shadowOffsetY = 1;
+            ctx.beginPath();
+            ctx.arc(badgeX, badgeY, 10.3, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.save();
+            ctx.clip();
+            const badgeHighlight = ctx.createRadialGradient(badgeX - 3.2, badgeY - 3.2, .2, badgeX - 1.5, badgeY - 1.5, 9.5);
+            badgeHighlight.addColorStop(0, 'rgba(255,255,255,.28)');
+            badgeHighlight.addColorStop(.5, 'rgba(255,255,255,.06)');
+            badgeHighlight.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = badgeHighlight;
+            ctx.fillRect(badgeX - 11, badgeY - 11, 22, 22);
+            ctx.restore();
+            ctx.shadowColor = 'transparent';
+            ctx.lineWidth = 1.8;
+            ctx.strokeStyle = 'rgba(255,255,255,.98)';
+            ctx.stroke();
+            ctx.restore();
+
+            if (isExpress) {
+                ctx.save();
+                ctx.font = '900 5.8px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif';
+                const labelWidth = Math.max(19, ctx.measureText(specialMeta.label).width + 8);
+                drawCanvasRoundRect(ctx, 1.5, 1.5, labelWidth, 9.5, 4.75);
+                ctx.fillStyle = specialMeta.color;
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.stroke();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(specialMeta.label, 1.5 + labelWidth / 2, 6.3);
+                ctx.restore();
+            }
+            canvas.dataset.rendered = 'true';
+        };
+
         const createSubwayMapTrainElement = (train, color, key) => {
             const element = document.createElement('div');
             const specialMeta = getSpecialServiceMeta(train.service);
+            const trainBadge = getTrainLineBadge(train.lineId);
             element.className = 'subway-map-train';
             element.setAttribute('role', 'button');
             element.setAttribute('aria-label', `${train.id} ${train.isExpress ? `${specialMeta.label} ` : ''}열차 따라가기`);
-            element.innerHTML = `<svg class="subway-map-train-body" viewBox="0 0 36 80" aria-hidden="true">
-                <path d="M9 12C9 4.8 12.8 1.5 18 1.5S27 4.8 27 12v56c0 6.8-3.7 10.5-9 10.5S9 74.8 9 68Z" fill="${color}" opacity=".22" transform="translate(2 0)"/>
-                <path d="M7.5 12C7.5 4.8 12 1.5 18 1.5S28.5 4.8 28.5 12v56c0 6.8-4.2 10.5-10.5 10.5S7.5 74.8 7.5 68Z" fill="#fff" stroke="${color}" stroke-width="1.6"/>
-                <path d="M10.5 10.8C10.5 6.6 13.5 4.4 18 4.4s7.5 2.2 7.5 6.4v7.1c-4.8-1.7-10.2-1.7-15 0Z" fill="#172033"/>
-                <path d="M12.2 12.2c3.7-1.1 7.9-1.1 11.6 0" fill="none" stroke="#6F819B" stroke-width="1.1" stroke-linecap="round"/>
-                <circle cx="12" cy="20.7" r="1.25" fill="#FFF4B5" stroke="#EAB308" stroke-width=".45"/><circle cx="24" cy="20.7" r="1.25" fill="#FFF4B5" stroke="#EAB308" stroke-width=".45"/>
-                <rect x="7.8" y="26" width="20.4" height="5" fill="${color}"/>
-                <path d="M11.2 35.5h13.6v22.8H11.2Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width=".9"/>
-                <path d="M18 35.8v22.1M11.7 47h12.6" stroke="#CBD5E1" stroke-width=".75"/>
-                <rect x="8.6" y="37" width="2.2" height="8.5" rx="1.1" fill="#253247"/><rect x="25.2" y="37" width="2.2" height="8.5" rx="1.1" fill="#253247"/>
-                <rect x="8.6" y="51" width="2.2" height="8.5" rx="1.1" fill="#253247"/><rect x="25.2" y="51" width="2.2" height="8.5" rx="1.1" fill="#253247"/>
-                <path d="M11 68.4c4.4 2 9.6 2 14 0v3.6c-4.4 3.5-9.6 3.5-14 0Z" fill="#E2E8F0"/>
-                <circle cx="18" cy="28.5" r="6.1" fill="${color}" stroke="#fff" stroke-width="1.45"/>
-                <text class="subway-map-train-badge" x="18" y="31.4" text-anchor="middle" fill="#fff" font-size="8.5" font-weight="900">${getTrainLineBadge(train.lineId)}</text>
-                ${train.isExpress ? `<g class="subway-map-express-badge"><rect x=".8" y=".8" width="19.4" height="10.5" rx="5.25" fill="${specialMeta.color}" stroke="#fff" stroke-width="1.1"/><text x="10.5" y="8.1" text-anchor="middle" fill="#fff" font-size="6.4" font-weight="900">${specialMeta.label}</text></g>` : ''}
-            </svg>`;
+            const body = document.createElement('div');
+            body.className = 'subway-map-train-body';
+            body.setAttribute('aria-hidden', 'true');
+            const canvas = document.createElement('canvas');
+            canvas.className = 'subway-map-train-canvas';
+            const label = document.createElement('span');
+            label.className = `subway-map-train-label ${trainBadge.length > 1 ? 'is-wide' : ''}`;
+            const labelText = document.createElement('span');
+            labelText.className = 'subway-map-train-label-text';
+            labelText.textContent = trainBadge;
+            label.appendChild(labelText);
+            body.append(canvas, label);
+            element.appendChild(body);
+            renderSubwayMapTrainCanvas(canvas, color, train.isExpress, specialMeta).catch(() => {
+                canvas.dataset.rendered = 'error';
+            });
             element.addEventListener('click', event => {
                 event.preventDefault(); event.stopPropagation();
                 selectedTrainId = train.id;
@@ -3868,8 +3940,8 @@
                         element, overlay, angle, angleUpdatedAt:options.timestamp || performance.now(),
                         visualLeft:null, visualTop:null, pixelUpdatedAt:options.timestamp || performance.now(),
                         body:element.querySelector('.subway-map-train-body'),
-                        badge:element.querySelector('.subway-map-train-badge'),
-                        expressBadge:element.querySelector('.subway-map-express-badge')
+                        canvas:element.querySelector('.subway-map-train-canvas'),
+                        labelText:element.querySelector('.subway-map-train-label-text')
                     };
                     subwayMapTrainOverlays.set(key, entry);
                 }
@@ -3892,11 +3964,11 @@
                 // 실제 선로 좌표는 유지한 채 차체만 진행 방향의 오른쪽으로 밀면,
                 // 반대 방향 열차는 서로 다른 트랙(화면 기준 하행 좌측·상행 우측)에 놓인다.
                 const trackOffsetPx = isFollowed ? 0 : (mapNationwideMode ? MAP_TRAIN_NATIONWIDE_TRACK_OFFSET_PX : MAP_TRAIN_TRACK_OFFSET_PX);
-                entry.body.style.transform = `rotate(${entry.angle}deg) translateX(${trackOffsetPx}px)`;
+                const bodyAngle = entry.angle - 90;
+                entry.body.style.transform = `rotate(${bodyAngle}deg) translateY(${trackOffsetPx}px)`;
+                entry.labelText.style.transform = `rotate(${-bodyAngle}deg)`;
                 entry.element.classList.toggle('is-selected', key === selectedMapTrainKey);
                 entry.element.classList.toggle('is-nationwide', mapNationwideMode);
-                entry.badge.setAttribute('transform', `rotate(${-entry.angle} 18 28.5)`);
-                entry.expressBadge?.setAttribute('transform', `rotate(${-entry.angle} 10.5 6)`);
                 entry.element.style.visibility = isFollowed ? 'hidden' : 'visible';
                 if (isFollowed) {
                     const followAnchor = ensureSubwayMapFollowLayer().querySelector('.subway-map-follow-anchor');
@@ -3906,21 +3978,26 @@
                         entry.followElement.removeAttribute('aria-label');
                         followAnchor.replaceChildren(entry.followElement);
                         entry.followBody = entry.followElement.querySelector('.subway-map-train-body');
-                        entry.followBadge = entry.followElement.querySelector('.subway-map-train-badge');
-                        entry.followExpressBadge = entry.followElement.querySelector('.subway-map-express-badge');
+                        entry.followCanvas = entry.followElement.querySelector('.subway-map-train-canvas');
+                        entry.followLabelText = entry.followElement.querySelector('.subway-map-train-label-text');
                     }
                     entry.followElement.style.visibility = 'visible';
                     entry.followElement.style.pointerEvents = 'none';
                     entry.followElement.style.translate = '0px 0px';
                     entry.followElement.className = entry.element.className;
-                    entry.followBody.style.transform = `rotate(${entry.angle}deg)`;
-                    entry.followBadge.setAttribute('transform', `rotate(${-entry.angle} 18 28.5)`);
-                    entry.followExpressBadge?.setAttribute('transform', `rotate(${-entry.angle} 10.5 6)`);
+                    entry.followCanvas.width = entry.canvas.width;
+                    entry.followCanvas.height = entry.canvas.height;
+                    const followContext = entry.followCanvas.getContext('2d');
+                    followContext.clearRect(0, 0, entry.followCanvas.width, entry.followCanvas.height);
+                    followContext.drawImage(entry.canvas, 0, 0);
+                    entry.followBody.style.transform = `rotate(${bodyAngle}deg)`;
+                    entry.followLabelText.style.transform = `rotate(${-bodyAngle}deg)`;
                 } else if (entry.followElement) {
                     entry.followElement.remove();
                     entry.followElement = null;
                     entry.followBody = null;
-                    entry.followBadge = null;
+                    entry.followCanvas = null;
+                    entry.followLabelText = null;
                 }
                 entry.position = position;
             });
@@ -4019,7 +4096,6 @@
             });
 
             setMapRegionHeader();
-            window.renderMapLineControls();
             requestAnimationFrame(() => {
                 subwayMap.relayout();
                 if (options.fitBounds !== false) subwayMap.setBounds(bounds, mapNationwideMode ? 104 : 92, 24, mapNationwideMode ? 124 : 112, 24);
@@ -4028,7 +4104,6 @@
 
         window.initSubwayMap = () => {
             setMapRegionHeader();
-            window.renderMapLineControls();
             if (subwayMap) {
                 window.updateSubwayMap();
                 return true;
@@ -4158,7 +4233,12 @@
         };
 
         window.switchTab = (tabId) => {
+            const previousTab = activeTab;
             activeTab = tabId;
+            if (tabId === 'map' && previousTab !== 'map') {
+                mapNationwideMode = false;
+                mapActiveTrainSourceKey = '';
+            }
             selectedStation = null; selectedMapStationLineId = null; selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; modalDayType = null; modalViewMode = 'all';
             dom.timetableModal.classList.add('hidden'); dom.stationSelectorModal.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
             if (tabId === 'home') {
@@ -4174,7 +4254,7 @@
                 requestAnimationFrame(async () => {
                     window.initSubwayMap();
                     await loadRegionMapTimetables();
-                    if (activeTab === 'map') { window.render(); window.renderMapLineControls(); window.ensureMapAnimationLoop(); }
+                    if (activeTab === 'map') { window.render(); window.ensureMapAnimationLoop(); }
                 });
             } else {
                 dom.homeScreen.classList.add('hidden'); dom.scrollContainer.classList.remove('hidden');
@@ -4344,6 +4424,8 @@
             incheon_line2: '인2',
             gtx_a: 'A',
             seohae: '서',
+            gyeongui_jungang: '경중',
+            gimpo_goldline: '김',
             gyeonggang: '강',
             gyeongchun: '경',
             airport: '공',
@@ -4371,22 +4453,22 @@
             return `${isSelected && moving ? `<circle r="34" fill="${color}" opacity="0.14" class="animate-ping" />` : ''}
                 ${moving ? `<path class="train-trail" d="M-39-4.5h4v9h-4z" rx="2" fill="${color}" opacity=".58"/><path class="train-trail" d="M-46-3h3v6h-3z" fill="${color}" opacity=".32"/>` : ''}
                 <g style="filter:drop-shadow(0 2px 2px rgba(15,23,42,.24))">
-                    <path d="M-34-11.5H18C27-11.5 33-6.7 35-1.8v3.6c-2 4.9-8 9.7-17 9.7h-52c-2.2 0-3.8-1.8-3.8-4v-15c0-2.2 1.6-4 3.8-4Z" fill="#F8FAFC" stroke="${outline}" stroke-width="${isSelected ? '1.8' : '1.15'}"/>
-                    <path d="M-31-8.2h46.5c7.1 0 12.5 3.4 15.2 8.2-2.7 4.8-8.1 8.2-15.2 8.2H-31Z" fill="#E9EEF4"/>
-                    <path d="M-32 7.5h50c7.5 0 12.3-3.1 15.4-7.5-.6 5.2-6.3 9.5-15.4 9.5h-50Z" fill="${color}" opacity=".95"/>
-                    <path d="M13-9.1h5.5c7.7 0 12.9 4 14.9 9.1-2-5.1-7.2-9.1-14.9-9.1Z" fill="${color}"/>
-                    <rect x="-29" y="-5.4" width="9.5" height="10.8" rx="2.8" fill="#263548"/>
-                    <rect x="-16.5" y="-5.4" width="9.5" height="10.8" rx="2.8" fill="#34465B"/>
-                    <rect x="-4" y="-5.4" width="8.5" height="10.8" rx="2.8" fill="#34465B"/>
-                    <path d="M17.5-6.8c6.7.2 11.2 2.8 13.7 6.8-2.5 4-7 6.6-13.7 6.8l-7.2-1.9v-9.8Z" fill="#172033"/>
-                    <path d="M19.5-4.4c4.2.3 7.2 1.8 9.1 4.4-1.9 2.6-4.9 4.1-9.1 4.4" fill="none" stroke="#5F7895" stroke-width="1.15" stroke-linecap="round"/>
-                    <path d="M-18.3-4.2v8.4M-5.8-4.2v8.4M6.8-6.2v12.4" stroke="#FFFFFF" stroke-width=".9" opacity=".8"/>
-                    <path d="M-27-3.3h5M-14.5-3.3h5M-2-3.3h4" stroke="#8FA4BA" stroke-width=".75" stroke-linecap="round" opacity=".7"/>
-                    <rect x="6.4" y="-7.7" width="3.2" height="15.4" rx="1.6" fill="${color}"/>
-                    <circle cx="-23.8" cy="0" r="6.1" fill="${color}" stroke="#FFFFFF" stroke-width="1.5"/>
-                    <text x="-23.8" y="3" text-anchor="middle" fill="#FFFFFF" font-size="8.5" font-weight="900" transform="rotate(${-angle} -23.8 0)">${badge}</text>
-                    <circle cx="29.2" cy="-4.2" r="1.35" fill="#FFF3A6" stroke="#D59A16" stroke-width=".45"/>
-                    <circle cx="29.2" cy="4.2" r="1.35" fill="#FFF3A6" stroke="#D59A16" stroke-width=".45"/>
+                    <path d="M-35-12H17c9.4 0 16.1 4.3 19 10.1v3.8C33.1 7.7 26.4 12 17 12h-52c-2.2 0-4-1.8-4-4V-8c0-2.2 1.8-4 4-4Z" fill="#F8FAFC" stroke="${outline}" stroke-width="${isSelected ? '1.8' : '1.15'}"/>
+                    <path d="M-35-8.6h49.8c7.7 0 13.8 3.2 17.6 8.6-3.8 5.4-9.9 8.6-17.6 8.6H-35Z" fill="#E9EEF3"/>
+                    <path d="M-35 5.7h53c7.7 0 12.8-2.1 16.2-5.7-1.5 5.5-7.5 9.1-16.8 9.1H-35Z" fill="${color}"/>
+                    <rect x="-30.5" y="-5.5" width="9.7" height="9.7" rx="2.1" fill="#294159"/>
+                    <rect x="-18.4" y="-5.5" width="9.7" height="9.7" rx="2.1" fill="#294159"/>
+                    <rect x="-6.3" y="-5.5" width="8.7" height="9.7" rx="2.1" fill="#294159"/>
+                    <path d="M16.4-7.2c7.5.2 12.8 2.9 16 7.2-3.2 4.3-8.5 7-16 7.2L7.5 4.7v-9.4Z" fill="#17283B"/>
+                    <path d="M18.5-4.5c4.8.3 8.6 1.8 11.1 4.5-2.5 2.7-6.3 4.2-11.1 4.5" fill="none" stroke="#7893AE" stroke-width="1.2" stroke-linecap="round"/>
+                    <path d="M-19.6-4.3v8.5M-7.5-4.3v8.5M4.7-6.5v13" stroke="#FFFFFF" stroke-width=".85" opacity=".9"/>
+                    <path d="M-28.4-3h5.5M-16.3-3h5.5M-4.2-3h4.5" stroke="#91A6BA" stroke-width=".7" stroke-linecap="round"/>
+                    <rect x="3.4" y="-8.3" width="3.2" height="16.6" rx="1.6" fill="${color}"/>
+                    <path d="M-2.2-9.5h4.4M-2.2 9.5h4.4" stroke="#68798A" stroke-width="1" stroke-linecap="round"/>
+                    <circle cx="-25.7" cy="0" r="6.1" fill="${color}" stroke="#FFFFFF" stroke-width="1.5"/>
+                    <text x="-25.7" y="3" text-anchor="middle" fill="#FFFFFF" font-size="8.5" font-weight="900" transform="rotate(${-angle} -25.7 0)">${badge}</text>
+                    <circle cx="30.9" cy="-4.4" r="1.45" fill="#FFF8C8" stroke="#D69B13" stroke-width=".5"/>
+                    <circle cx="30.9" cy="4.4" r="1.45" fill="#FFF8C8" stroke="#D69B13" stroke-width=".5"/>
                     ${specialService ? `<g transform="rotate(${-angle} -23 -18.5)"><rect x="-34" y="-24.5" width="22" height="12" rx="6" fill="${specialMeta.color}" stroke="#FFFFFF" stroke-width="1.2"/><text x="-23" y="-16.5" text-anchor="middle" fill="#FFFFFF" font-size="7" font-weight="900">${specialMeta.label}</text></g>` : ''}
                 </g>`;
         };
@@ -4395,17 +4477,19 @@
             const specialMeta = getSpecialServiceMeta(specialService);
             return `
             <svg width="72" height="30" viewBox="-36 -13 72 26" style="overflow:visible; filter:drop-shadow(0 2px 2px rgba(15,23,42,.25))">
-                <rect x="-33" y="-9" width="30" height="18" rx="4" fill="#F8FAFC" stroke="#D1D5DB" stroke-width="1" />
-                <path d="M1-9 H26 Q32-9 34-2 V5 Q32 9 26 9 H1Z" fill="#F8FAFC" stroke="#D1D5DB" stroke-width="1" />
-                <rect x="-3" y="-2" width="4" height="4" rx="1" fill="#9CA3AF" />
-                <rect x="-29" y="-5.5" width="9" height="7" rx="1.3" fill="#24272C" />
-                <rect x="-17" y="-5.5" width="9" height="7" rx="1.3" fill="#24272C" />
-                <rect x="5" y="-5.5" width="9" height="7" rx="1.3" fill="#24272C" />
-                <rect x="17" y="-5.5" width="9" height="7" rx="1.3" fill="#24272C" />
-                <path d="M27-5 Q31-4 32-1 V2 H27Z" fill="#24272C" />
-                <rect x="-32" y="4.5" width="29" height="3" rx="1.5" fill="${color}" />
-                <path d="M2 4.5 H32 Q31.5 7.5 27 7.5 H2Z" fill="${color}" />
-                <path d="M-29-7 H-8 M5-7 H25" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" opacity=".9" />
+                <rect x="-34" y="-9.5" width="31" height="19" rx="3.8" fill="#F8FAFC" stroke="#BFC9D3" stroke-width="1" />
+                <path d="M1-9.5h24.5c5 0 8.5 3.3 9.5 8.2v3.5c-1.3 4.5-4.7 7.3-9.5 7.3H1Z" fill="#F8FAFC" stroke="#BFC9D3" stroke-width="1" />
+                <rect x="-3.2" y="-2.3" width="4.2" height="4.6" rx="1.2" fill="#718096" />
+                <rect x="-30" y="-5.7" width="9.4" height="8.5" rx="1.6" fill="#294159" />
+                <rect x="-18" y="-5.7" width="9.4" height="8.5" rx="1.6" fill="#294159" />
+                <rect x="5" y="-5.7" width="9.4" height="8.5" rx="1.6" fill="#294159" />
+                <rect x="17" y="-5.7" width="8.3" height="8.5" rx="1.6" fill="#294159" />
+                <path d="M26.5-6c3.8.5 6.2 2.6 7 6.2-1 3.2-3.3 5.2-7 5.7l-4.2-1.6v-8.7Z" fill="#17283B" />
+                <rect x="-33" y="4.8" width="30" height="3.2" rx="1.6" fill="${color}" />
+                <path d="M2 4.8h31.4c-1.1 2.1-3.5 3.2-7.4 3.2H2Z" fill="${color}" />
+                <path d="M-19.3-4.7v7.2M-7.3-4.7v7.2M15.6-4.7v7.2" stroke="#FFFFFF" stroke-width=".8" opacity=".9" />
+                <circle cx="31.6" cy="-3.4" r="1.05" fill="#FFF8C8" stroke="#D69B13" stroke-width=".4" />
+                <circle cx="31.6" cy="3.4" r="1.05" fill="#FFF8C8" stroke="#D69B13" stroke-width=".4" />
                 ${specialService ? `<g><rect x="-10" y="-13" width="20" height="10" rx="5" fill="${specialMeta.color}" stroke="#FFFFFF" stroke-width="1"/><text x="0" y="-6" text-anchor="middle" fill="#FFFFFF" font-size="6.4" font-weight="900">${specialMeta.label}</text></g>` : ''}
             </svg>`;
         };
