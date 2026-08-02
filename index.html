@@ -5270,6 +5270,17 @@
                 });
                 return nextGame ? [finishedGame, nextGame] : [finishedGame];
             }
+
+            const canceledGame = todayGames.slice().reverse().find(function (game) {
+                return enjoyBaseballIsCanceled(game);
+            });
+            if (canceledGame) {
+                const canceledIndex = teamGames.indexOf(canceledGame);
+                const nextGame = teamGames.slice(canceledIndex + 1).find(function (game) {
+                    return String(game.date || '') >= today && !enjoyBaseballIsCanceled(game);
+                });
+                return nextGame ? [canceledGame, nextGame] : [canceledGame];
+            }
             if (waitingGame) return [waitingGame];
 
             const upcoming = teamGames.find(function (game) { return String(game.date || '') > today; });
