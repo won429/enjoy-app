@@ -4651,7 +4651,8 @@
         function enjoyBaseballMoreDailyGameCard(game, date) {
             const status = String(game.gameStatus || '경기전');
             const inning = String(game.inning || '');
-            const canceled = enjoyBaseballIsCanceled(game);
+            const cancellation = enjoyBaseballCancellationInfo(game);
+            const canceled = Boolean(cancellation);
             const live = status === '경기중' && !canceled;
             const finished = status === '종료' && !canceled;
             const isPast = String(date || '') < enjoyBaseballDateKey(new Date());
@@ -4681,10 +4682,10 @@
                 centerSub = '경기결과';
             } else {
                 centerMain = '<span class="home-baseball-pregame-time">' +
-                    enjoyBaseballEscape(canceled ? '취소' : (game.time || '미정')) + '</span>';
+                    enjoyBaseballEscape(canceled ? cancellation.shortLabel : (game.time || '미정')) + '</span>';
                 awaySub = canceled ? '경기 취소' : enjoyBaseballStarterPersonnel(game, 'away');
                 homeSub = canceled ? '경기 취소' : enjoyBaseballStarterPersonnel(game, 'home');
-                centerSub = enjoyBaseballEscape(game.stadium || game.ballpark || '-');
+                centerSub = enjoyBaseballEscape(canceled ? cancellation.label : (game.stadium || game.ballpark || '-'));
             }
 
             return '<button type="button" class="kbo-original-game-card' + (isPast ? ' is-past' : '') +
@@ -4794,8 +4795,11 @@
         }
         function enjoyBaseballMoreCalendarResult(game, team) {
             if (!game) return '';
-            if (enjoyBaseballIsCanceled(game)) {
-                return '<span class="kbo-original-stamp" style="--stamp-color:#60A5FA;">RAIN</span>';
+            const cancellation = enjoyBaseballCancellationInfo(game);
+            if (cancellation) {
+                return '<span class="kbo-original-stamp" style="--stamp-color:' + cancellation.color +
+                    ';" title="' + enjoyBaseballEscape(cancellation.label) + '" aria-label="' +
+                    enjoyBaseballEscape(cancellation.label) + '">' + cancellation.stamp + '</span>';
             }
             if (String(game.gameStatus || '') !== '종료') return '';
             const away = Number(game.awayScore || 0);
@@ -5214,10 +5218,33 @@
             game.time = game.gameTime || game.time || '';
             return game;
         }
+        function enjoyBaseballCancellationInfo(game) {
+            const cancellationText = [
+                game && game.gameStatus,
+                game && game.status,
+                game && game.inning,
+                game && game.cancelType,
+                game && game.cancelReason,
+                game && game.cancellationType,
+                game && game.cancellationReason
+            ].filter(Boolean).join(' ');
+            const compact = cancellationText.replace(/\s+/g, '').toLowerCase();
+            if (compact.includes('그라운드') || compact.includes('ground')) {
+                return { label: '그라운드 사정 취소', shortLabel: '그라운드', stamp: 'GROUND', color: '#A78BFA' };
+            }
+            if (compact.includes('폭염') || compact.includes('heat')) {
+                return { label: '폭염 취소', shortLabel: '폭염 취소', stamp: 'HEAT', color: '#FB923C' };
+            }
+            if (compact.includes('우천') || compact.includes('우취') || compact.includes('rain')) {
+                return { label: '우천취소', shortLabel: '우천취소', stamp: 'RAIN', color: '#60A5FA' };
+            }
+            if (compact.includes('취소') || compact.includes('cancel')) {
+                return { label: '경기 취소', shortLabel: '취소', stamp: 'CANCEL', color: '#94A3B8' };
+            }
+            return null;
+        }
         function enjoyBaseballIsCanceled(game) {
-            const status = String((game && game.gameStatus) || '');
-            const inning = String((game && game.inning) || '');
-            return status.includes('취소') || status.includes('우취') || inning.includes('취소') || inning.includes('우취');
+            return Boolean(enjoyBaseballCancellationInfo(game));
         }
         function enjoyBaseballChooseRotation(games, team, today) {
             const teamGames = games.filter(function (game) {
@@ -5429,13 +5456,14 @@
             card.style.setProperty('--home-color', enjoyBaseballTeamColors[game.team2] || '#64748B');
             const status = String(game.gameStatus || '경기전');
             const inning = String(game.inning || '');
-            const canceled = status.includes('취소') || status.includes('우취') || inning.includes('취소') || inning.includes('우취');
-            const live = status === '경기중';
-            const finished = status === '종료';
+            const cancellation = enjoyBaseballCancellationInfo(game);
+            const canceled = Boolean(cancellation);
+            const live = status === '경기중' && !canceled;
+            const finished = status === '종료' && !canceled;
             const hasScore = (live || finished) && !canceled;
             const awayScore = hasScore ? String(game.awayScore ?? 0) : '-';
             const homeScore = hasScore ? String(game.homeScore ?? 0) : '-';
-            const detail = canceled ? '경기 취소' : (live ? (inning || '경기중') : (finished ? '종료' : (game.time || '시간 미정')));
+            const detail = canceled ? cancellation.label : (live ? (inning || '경기중') : (finished ? '종료' : (game.time || '시간 미정')));
             let centerMain = '';
             let awaySub = '';
             let centerSub = '';
@@ -5459,10 +5487,10 @@
                 homeSub = homeWon ? '<b>승</b> ' + enjoyBaseballEscape(game.winPitcher || '-') : (awayWon ? '패 ' + enjoyBaseballEscape(game.losePitcher || '-') : '무승부');
                 centerSub = '경기결과';
             } else {
-                centerMain = '<span class="home-baseball-pregame-time">' + enjoyBaseballEscape(canceled ? '취소' : enjoyBaseballHomeGameTime(game)) + '</span>';
-                awaySub = enjoyBaseballStarterPersonnel(game, 'away');
-                homeSub = enjoyBaseballStarterPersonnel(game, 'home');
-                centerSub = enjoyBaseballEscape(game.stadium || game.ballpark || '-');
+                centerMain = '<span class="home-baseball-pregame-time">' + enjoyBaseballEscape(canceled ? cancellation.shortLabel : enjoyBaseballHomeGameTime(game)) + '</span>';
+                awaySub = canceled ? '경기 취소' : enjoyBaseballStarterPersonnel(game, 'away');
+                homeSub = canceled ? '경기 취소' : enjoyBaseballStarterPersonnel(game, 'home');
+                centerSub = enjoyBaseballEscape(canceled ? cancellation.label : (game.stadium || game.ballpark || '-'));
             }
 
             card.classList.toggle('is-live', live);
