@@ -305,9 +305,9 @@
             filter: drop-shadow(0 4px 3px rgba(15,23,42,.30)) drop-shadow(0 6px 9px rgba(15,23,42,.25)) drop-shadow(0 0 5px rgba(255,255,255,.95));
         }
         .subway-map-train.is-nationwide {
-            width: 55px;
-            height: 20px;
-            filter: drop-shadow(0 2px 2px rgba(15,23,42,.24));
+            width: 27.5px;
+            height: 10px;
+            filter: drop-shadow(0 1px 1px rgba(15,23,42,.24));
             opacity: .9;
         }
         .subway-map-train.is-nationwide.is-selected {
@@ -358,13 +358,13 @@
             letter-spacing: -1px;
         }
         .subway-map-train.is-nationwide .subway-map-train-label {
-            width: 11.5px;
-            height: 11.5px;
-            font-size: 6.2px;
-            letter-spacing: -.3px;
+            width: 5.75px;
+            height: 5.75px;
+            font-size: 3.1px;
+            letter-spacing: -.15px;
         }
         .subway-map-train.is-nationwide .subway-map-train-label.is-wide {
-            font-size: 4.4px;
+            font-size: 2.2px;
         }
         .subway-map-train:active { transform: scale(.94) translateZ(0); }
     </style>
@@ -421,6 +421,7 @@
                         <button id="btn-line-seoul-airport" data-line-id="airport" onclick="switchLine('airport')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">공항철도</button>
                         <button id="btn-line-seoul-gyeongui-jungang" data-line-id="gyeongui_jungang" onclick="switchLine('gyeongui_jungang')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">경의중앙선</button>
                         <button id="btn-line-seoul-sillim" data-line-id="sillim_line" onclick="switchLine('sillim_line')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">신림선</button>
+                        <button id="btn-line-seoul-ui-sinseol" data-line-id="ui_sinseol_line" onclick="switchLine('ui_sinseol_line')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">우이신설선</button>
                         <button id="btn-line-seoul-gyeongchun" data-line-id="gyeongchun" onclick="switchLine('gyeongchun')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-[#178C72] text-white shadow-[0_2px_8px_rgba(23,140,114,0.3)] shrink-0 border border-[#178C72] transition-all">경춘선</button>
                         <button id="btn-line-seoul-gyeonggang" data-line-id="gyeonggang" onclick="switchLine('gyeonggang')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">경강선</button>
                         <button id="btn-line-seoul-shinbundang" data-line-id="shinbundang" onclick="switchLine('shinbundang')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">신분당선</button>
@@ -1216,6 +1217,13 @@
             ['신림', { transfer:[{ name:'2', color:'#00A84D' }] }],
             ['서원', {}], ['서울대벤처타운', {}], ['관악산', {}]
         ].map(([name, metadata], index, stations) => [name, { progress:index / (stations.length - 1), ...metadata }]));
+        STATIONS_ALL.ui_sinseol_line = Object.fromEntries([
+            ['북한산우이', {}], ['솔밭공원', {}], ['4.19민주묘지', {}], ['가오리', {}], ['화계', {}],
+            ['삼양', {}], ['삼양사거리', {}], ['솔샘', {}], ['북한산보국문', {}], ['정릉', {}],
+            ['성신여대입구', { transfer:[{ name:'4', color:'#00A5DE' }] }],
+            ['보문', { transfer:[{ name:'6', color:'#CD7C2F' }] }],
+            ['신설동', { transfer:[{ name:'1', color:'#0052A4' }, { name:'2', color:'#00A84D' }] }]
+        ].map(([name, metadata], index, stations) => [name, { progress:index / (stations.length - 1), ...metadata }]));
         STATIONS_ALL.gyeongui_jungang = Object.fromEntries([
             ['임진강', {}], ['운천', {}], ['문산', {}], ['파주', {}], ['월롱', {}], ['금촌', {}], ['금릉', {}],
             ['운정', {}], ['야당', {}], ['탄현', {}], ['일산', { transfer:[{ name:'서', color:'#8FC31F' }] }],
@@ -1478,6 +1486,7 @@
             shinbundang: { src: './shinbundang_line_timetable.js', globalName: 'SHINBUNDANG_LINE_TIMETABLE' },
             suinbundang: { src: './suinbundang_line_timetable.js', globalName: 'SUINBUNDANG_LINE_TIMETABLE' },
             sillim_line: { src: './sillim_line_timetable.js', globalName: 'SILLIM_LINE_TIMETABLE' },
+            ui_sinseol_line: { src: './ui_sinseol_line_timetable.js', globalName: 'UI_SINSEOL_LINE_TIMETABLE' },
             daegyeong: { src: './daegyeong_timetable.js', globalName: 'DAEGYEONG_TIMETABLE' },
             daejeon_line1: { src: './daejeon_line1_timetable.js', globalName: 'DAEJEON_LINE1_TIMETABLE' },
             line1: { src: './daegu_line1_timetable.js', globalName: 'DAEGU_LINE1_TIMETABLE' },
@@ -2274,14 +2283,14 @@
             modalDayType = null;
             THEME_COLOR = ({
                 gtx_a:'#9A6292', seohae:'#8FC31F', incheon_line1:'#759CCE', incheon_line2:'#F5A251', gyeongui_jungang:'#77C4A3', gimpo_goldline:'#AD8605', gyeonggang:'#0054A6', gyeongchun:'#178C72',
-                airport:'#0090D2', shinbundang:'#D20F46', suinbundang:'#FABE00', sillim_line:'#6789CA',
+                airport:'#0090D2', shinbundang:'#D20F46', suinbundang:'#FABE00', sillim_line:'#6789CA', ui_sinseol_line:'#B7C450',
                 line1:'#D93F5C', line2:'#00AA80', line3:'#ffb100',
                 daejeon_line1:'#007448', busan_line1:'#F06A00', busan_line2:'#81C147', busan_line3:'#B07C4A',
                 busan_line4:'#217DCB', busan_bglrt:'#8652A1', busan_donghae:'#003DA5', gwangju_line1:'#009088'
             })[currentLineId] || '#0054A6';
             DOWN_COLOR = ({
                 gtx_a:'#BFA0BB', seohae:'#B7DC6B', incheon_line1:'#759CCE', incheon_line2:'#F5A251', gyeongui_jungang:'#77C4A3', gimpo_goldline:'#AD8605', gyeonggang:'#5998D6', gyeongchun:'#55B89E',
-                airport:'#0090D2', shinbundang:'#D20F46', suinbundang:'#FABE00', sillim_line:'#6789CA',
+                airport:'#0090D2', shinbundang:'#D20F46', suinbundang:'#FABE00', sillim_line:'#6789CA', ui_sinseol_line:'#B7C450',
                 line1:'#FF7EB3', line2:'#74C96E', line3:'#FFCC4D',
                 daejeon_line1:'#009F62', busan_line1:'#F58A33', busan_line2:'#97D86B', busan_line3:'#C5A67C',
                 busan_line4:'#53A1E2', busan_bglrt:'#A77BC0', busan_donghae:'#4B77C2', gwangju_line1:'#38B2AC'
@@ -2310,12 +2319,13 @@
             const btnShinbundangSeoul = document.getElementById('btn-line-seoul-shinbundang');
             const btnSuinbundangSeoul = document.getElementById('btn-line-seoul-suinbundang');
             const btnSillimSeoul = document.getElementById('btn-line-seoul-sillim');
+            const btnUiSinseolSeoul = document.getElementById('btn-line-seoul-ui-sinseol');
             const btnGyeonggangSeoul = document.getElementById('btn-line-seoul-gyeonggang');
             const btnGyeongchunSeoul = document.getElementById('btn-line-seoul-gyeongchun');
             const btnGyeongchunGangwon = document.getElementById('btn-line-gangwon-gyeongchun');
             const inactiveCapitalLineClass = 'px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-500 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all';
             const deactivateCapitalLines = activeButton => {
-                [btnGtxASeoul, btnSeohaeSeoul, btnIncheon1Seoul, btnIncheon2Seoul, btnGyeonguiJungangSeoul, btnGimpoGoldlineSeoul, btnAirportSeoul, btnShinbundangSeoul, btnSuinbundangSeoul, btnSillimSeoul, btnGyeonggangSeoul, btnGyeongchunSeoul, btnGyeongchunGangwon]
+                [btnGtxASeoul, btnSeohaeSeoul, btnIncheon1Seoul, btnIncheon2Seoul, btnGyeonguiJungangSeoul, btnGimpoGoldlineSeoul, btnAirportSeoul, btnShinbundangSeoul, btnSuinbundangSeoul, btnSillimSeoul, btnUiSinseolSeoul, btnGyeonggangSeoul, btnGyeongchunSeoul, btnGyeongchunGangwon]
                     .filter(button => button && button !== activeButton)
                     .forEach(button => { button.className = inactiveCapitalLineClass; });
             };
@@ -2362,6 +2372,17 @@
                 dom.directionToggle.innerHTML = '<option value="up" class="text-gray-900">상행 (샛강 방면)</option><option value="down" class="text-gray-900">하행 (관악산 방면)</option>';
                 document.getElementById('home-up-dir-label').textContent = '샛강 방면';
                 document.getElementById('home-down-dir-label').textContent = '관악산 방면';
+                document.getElementById('data-status-display').className = 'text-[10px] font-bold';
+                document.getElementById('data-status-display').style.color = THEME_COLOR;
+            } else if (lineId === 'ui_sinseol_line') {
+                deactivateCapitalLines(btnUiSinseolSeoul);
+                if (btnUiSinseolSeoul) btnUiSinseolSeoul.className = 'px-3 py-1 rounded-full text-[11px] font-bold bg-[#B7C450] text-white shadow-[0_2px_8px_rgba(183,196,80,0.3)] shrink-0 border border-[#B7C450] transition-all';
+                if (!STATIONS[homeSelectedStation]) homeSelectedStation = '북한산보국문';
+                document.querySelector('#home-screen h2').textContent = '수도권 우이신설선 지하철역';
+                dom.lineHeaderTitle.textContent = '수도권 우이신설선 지하철 현황';
+                dom.directionToggle.innerHTML = '<option value="up" class="text-gray-900">상행 (북한산우이 방면)</option><option value="down" class="text-gray-900">하행 (신설동 방면)</option>';
+                document.getElementById('home-up-dir-label').textContent = '북한산우이 방면';
+                document.getElementById('home-down-dir-label').textContent = '신설동 방면';
                 document.getElementById('data-status-display').className = 'text-[10px] font-bold';
                 document.getElementById('data-status-display').style.color = THEME_COLOR;
             } else if (lineId === 'gimpo_goldline') {
@@ -2660,7 +2681,7 @@
             }
 
             document.querySelector('.metro-logo-circle').textContent = ({
-                gtx_a:'A', seohae:'서', gyeonggang:'강', gyeongchun:'경', airport:'공', shinbundang:'신', suinbundang:'수', sillim_line:'림', daegyeong:'대',
+                gtx_a:'A', seohae:'서', gyeonggang:'강', gyeongchun:'경', airport:'공', shinbundang:'신', suinbundang:'수', sillim_line:'림', ui_sinseol_line:'우', daegyeong:'대',
                 daejeon_line1:'대', busan_line1:'1', busan_line2:'2', busan_line3:'3', busan_line4:'4',
                 busan_bglrt:'부', busan_donghae:'동', gwangju_line1:'1', line3:'3', line2:'2', line1:'1'
             })[lineId] || '1';
@@ -2681,7 +2702,7 @@
             const heroBand = document.getElementById('hero-band');
             if (heroBand) heroBand.style.backgroundColor = THEME_COLOR;
 
-            const lineLen = currentLineId === 'suinbundang' ? 5800 : (currentLineId === 'sillim_line' ? 1500 : (currentLineId === 'gyeongchun' ? 2800 : (currentLineId === 'seohae' ? 2400 : (currentLineId === 'gtx_a' ? 1400 : (currentLineId === 'gyeonggang' ? 1600 : (currentLineId === 'airport' ? 1800 : (currentLineId === 'shinbundang' ? 2100 : (currentLineId === 'line1' ? 3200 : (currentLineId === 'line2' ? 2900 : (currentLineId === 'line3' ? 3000 : (currentLineId === 'daejeon_line1' ? 2200 : (currentLineId === 'busan_line1' ? 4800 : (currentLineId === 'busan_line2' ? 5200 : (currentLineId === 'busan_line3' ? 2000 : (currentLineId === 'busan_line4' ? 1800 : (currentLineId === 'busan_bglrt' ? 2100 : (currentLineId === 'busan_donghae' ? 2400 : (currentLineId === 'gwangju_line1' ? 2100 : 1600))))))))))))))))));
+            const lineLen = currentLineId === 'suinbundang' ? 5800 : (currentLineId === 'ui_sinseol_line' ? 1700 : (currentLineId === 'sillim_line' ? 1500 : (currentLineId === 'gyeongchun' ? 2800 : (currentLineId === 'seohae' ? 2400 : (currentLineId === 'gtx_a' ? 1400 : (currentLineId === 'gyeonggang' ? 1600 : (currentLineId === 'airport' ? 1800 : (currentLineId === 'shinbundang' ? 2100 : (currentLineId === 'line1' ? 3200 : (currentLineId === 'line2' ? 2900 : (currentLineId === 'line3' ? 3000 : (currentLineId === 'daejeon_line1' ? 2200 : (currentLineId === 'busan_line1' ? 4800 : (currentLineId === 'busan_line2' ? 5200 : (currentLineId === 'busan_line3' ? 2000 : (currentLineId === 'busan_line4' ? 1800 : (currentLineId === 'busan_bglrt' ? 2100 : (currentLineId === 'busan_donghae' ? 2400 : (currentLineId === 'gwangju_line1' ? 2100 : 1600)))))))))))))))))));
             const svg = document.getElementById('line-svg');
             if (svg) {
                 svg.setAttribute('viewBox', `0 0 400 ${lineLen + 160}`);
@@ -2719,7 +2740,7 @@
         };
 
         const FAVORITES_STORAGE_KEY = 'subway_favorites_v2';
-        const FAVORITE_LINE_ORDER = ['incheon_line1', 'incheon_line2', 'airport', 'gyeongui_jungang', 'sillim_line', 'gyeongchun', 'gyeonggang', 'shinbundang', 'suinbundang', 'seohae', 'gimpo_goldline', 'gtx_a', 'line1', 'line2', 'line3', 'daegyeong', 'daejeon_line1', 'busan_line1', 'busan_line2', 'busan_line3', 'busan_line4', 'busan_bglrt', 'busan_donghae', 'gwangju_line1'];
+        const FAVORITE_LINE_ORDER = ['incheon_line1', 'incheon_line2', 'airport', 'gyeongui_jungang', 'sillim_line', 'ui_sinseol_line', 'gyeongchun', 'gyeonggang', 'shinbundang', 'suinbundang', 'seohae', 'gimpo_goldline', 'gtx_a', 'line1', 'line2', 'line3', 'daegyeong', 'daejeon_line1', 'busan_line1', 'busan_line2', 'busan_line3', 'busan_line4', 'busan_bglrt', 'busan_donghae', 'gwangju_line1'];
         const FAVORITE_LINE_META = {
             incheon_line1: { label: '인천 1호선', color: '#759CCE' },
             incheon_line2: { label: '인천 2호선', color: '#F5A251' },
@@ -2727,6 +2748,7 @@
             seohae: { label: '서해선', color: '#8FC31F' },
             gyeongui_jungang: { label: '경의중앙선', color: '#77C4A3' },
             sillim_line: { label: '신림선', color: '#6789CA' },
+            ui_sinseol_line: { label: '우이신설선', color: '#B7C450' },
             gimpo_goldline: { label: '김포골드라인', color: '#AD8605' },
             gyeonggang: { label: '경강선', color: '#0054A6' },
             gyeongchun: { label: '경춘선', color: '#178C72' },
@@ -3236,6 +3258,15 @@
             '서울특별시 관악구 신림로 258 (신림동)', '서울특별시 관악구 신림로 144 (신림동)',
             '서울특별시 관악구 신림로 23 (신림동)'
         ];
+        STATION_ADDRESS_LISTS.ui_sinseol_line = [
+            '서울특별시 강북구 우이동 16-20', '서울특별시 강북구 우이동 57-28',
+            '서울특별시 강북구 우이동 72-186', '서울특별시 강북구 수유동 338-46',
+            '서울특별시 강북구 수유동 472-677', '서울특별시 강북구 미아동 791-4703',
+            '서울특별시 강북구 미아동 745-142', '서울특별시 강북구 미아동 1353-20',
+            '서울특별시 성북구 정릉동 286-19', '서울특별시 성북구 정릉동 139-80',
+            '서울특별시 성북구 동선동4가 1', '서울특별시 성북구 보문동1가 127-1',
+            '서울특별시 동대문구 신설동 76-5'
+        ];
         const STATION_ADDRESSES = Object.fromEntries(Object.entries(STATION_ADDRESS_LISTS).map(([lineId, addresses]) => {
             const stationNames = Object.keys(STATIONS_ALL[lineId] || {});
             return [lineId, Object.fromEntries(stationNames.map((stationName, index) => [stationName, addresses[index]]).filter(([, address]) => typeof address === 'string' && address).map(([stationName, address]) => [stationName, normalizeStationAddress(lineId, address)]))];
@@ -3304,6 +3335,13 @@
             [37.49003911,126.9275688], [37.48489076,126.9296099], [37.47827336,126.9332282],
             [37.47204068,126.9339766], [37.46916896,126.9449548]
         ];
+        STATION_COORD_LISTS.ui_sinseol_line = [
+            [37.6633606,127.0123479], [37.6559343,127.0131587], [37.6493635,127.0136521],
+            [37.6420351,127.0165155], [37.6340359,127.0174308], [37.6269639,127.0181389],
+            [37.6211486,127.0204838], [37.6202204,127.0137122], [37.6119626,127.0082576],
+            [37.6027532,127.013338], [37.5925679,127.0164561], [37.5850612,127.0194667],
+            [37.5760855,127.0231571]
+        ];
         STATION_COORD_LISTS.seohae = [
             [37.6821094,126.7699182], [37.6716106,126.7867036], [37.6575978,126.7949216],
             [37.6451532,126.8021797], [37.6312822,126.810266], [37.6184109,126.8211962],
@@ -3367,6 +3405,8 @@
         RAIL_ROUTE_PATHS.shinbundang = [[37.5157525,127.0196599],[37.5129864,127.0204541],[37.4848181,127.0338585],[37.4844223,127.0341011],[37.4819863,127.0366322],[37.4808875,127.0376059],[37.4795469,127.038256],[37.4780338,127.0385585],[37.4730565,127.0380972],[37.4659637,127.0389213],[37.452701,127.0506392],[37.4452484,127.0574901],[37.4393599,127.0618787],[37.4266208,127.0743072],[37.420212,127.0827514],[37.4185657,127.0852727],[37.4133302,127.0948739],[37.4064638,127.109106],[37.4060072,127.1096778],[37.4050114,127.1104776],[37.4041661,127.1108341],[37.4027795,127.1111029],[37.3912899,127.1112779],[37.3843696,127.1112209],[37.3834372,127.1110465],[37.3803163,127.1096081],[37.3784051,127.108926],[37.375916,127.1084362],[37.3673677,127.1084329],[37.3529369,127.1088676],[37.3452947,127.1089456],[37.344484,127.108688],[37.3438776,127.1081846],[37.3434393,127.1076179],[37.3429469,127.1063938],[37.3423652,127.1042077],[37.3418399,127.1034337],[37.3412801,127.1030103],[37.3289383,127.1027254],[37.3282728,127.1026717],[37.3272405,127.1022104],[37.3266945,127.1015881],[37.3230224,127.0956584],[37.3181711,127.0869111],[37.3167888,127.0828127],[37.3165499,127.0823835],[37.3134135,127.0803106],[37.3113401,127.0770626],[37.3066326,127.0749134],[37.3048121,127.0749007],[37.3035402,127.0743096],[37.3028444,127.0736203],[37.3005107,127.0703383],[37.2938669,127.0682931],[37.2931682,127.0679386],[37.2925997,127.0672551],[37.2907996,127.0630462],[37.2862614,127.0574947],[37.2859272,127.0568302],[37.2858004,127.0561659],[37.2859366,127.0556855],[37.286343,127.0547058],[37.2870695,127.0534668],[37.2901673,127.0492808],[37.2910151,127.0484147],[37.2918281,127.0481438],[37.2927329,127.0482297],[37.2933474,127.0484228],[37.2943204,127.0489807],[37.2968381,127.0497681],[37.2977452,127.0497499],[37.2987639,127.049106],[37.3000299,127.0478513],[37.3007303,127.046854],[37.3024813,127.0435221]];
         RAIL_ROUTE_PATHS.suinbundang = [[37.5800944,127.0473246],[37.5808603,127.0479196],[37.5758128,127.0444732],[37.5676802,127.038235],[37.5661638,127.0376359],[37.5547094,127.0400464],[37.5535106,127.0407828],[37.55193,127.0433945],[37.551206,127.0440198],[37.5454421,127.0448792],[37.5439868,127.0448532],[37.5406551,127.0439475],[37.5383664,127.0436964],[37.5307525,127.0417495],[37.5232065,127.0391359],[37.5091668,127.0443343],[37.5082192,127.0450817],[37.5066632,127.0477189],[37.5059846,127.0483654],[37.4888166,127.0562488],[37.4873603,127.0580872],[37.4868756,127.0600088],[37.4870923,127.0612946],[37.4884717,127.0640311],[37.4891184,127.0660366],[37.4898273,127.0697703],[37.4915968,127.0731696],[37.4961245,127.0871496],[37.4963373,127.0888651],[37.4961978,127.0902055],[37.4944143,127.0950674],[37.4935939,127.0960688],[37.4889549,127.0995676],[37.4782005,127.1130265],[37.4777073,127.1145349],[37.4758816,127.1243838],[37.4755498,127.1251046],[37.4741975,127.1261154],[37.4717041,127.1268368],[37.4602443,127.1258672],[37.4578208,127.125935],[37.4556378,127.1264529],[37.4438781,127.1270434],[37.4290491,127.1294947],[37.4244525,127.1288884],[37.405894,127.1286833],[37.402986,127.1282615],[37.3986072,127.1286687],[37.3964515,127.128266],[37.3889768,127.1281381],[37.3876724,127.1272516],[37.3745429,127.1088194],[37.3733656,127.1080999],[37.3593149,127.1081707],[37.3544134,127.1089114],[37.3349382,127.1091857],[37.3303409,127.1075752],[37.3177391,127.1072571],[37.3102054,127.1085227],[37.3092396,127.1082627],[37.3074636,127.106523],[37.3065127,127.1060111],[37.2953101,127.1057898],[37.2919835,127.1062133],[37.2899491,127.1072319],[37.2828272,127.1152882],[37.2819807,127.1158472],[37.2645716,127.1159975],[37.262674,127.1145949],[37.2620144,127.1132944],[37.2618114,127.1122169],[37.2606934,127.0935725],[37.2609017,127.0904865],[37.2619831,127.0844631],[37.2619216,127.0828441],[37.261537,127.0813955],[37.2604763,127.080037],[37.2469483,127.0671819],[37.2459193,127.0654637],[37.2454502,127.0521776],[37.2456448,127.0506686],[37.2514087,127.0417245],[37.254628,127.03939],[37.2567502,127.036643],[37.2598319,127.0357288],[37.2609099,127.0346361],[37.2644812,127.0207227],[37.2659281,127.0133162],[37.2678522,127.0088638],[37.2681789,127.0061589],[37.2667856,127.0017247],[37.2644357,126.9961919],[37.2635107,126.9954495],[37.2555839,126.9926232],[37.254177,126.9919292],[37.2533421,126.9908995],[37.2453839,126.9679784],[37.2421337,126.9614774],[37.240904,126.9557724],[37.2408745,126.9524492],[37.2443547,126.938527],[37.2480274,126.9146286],[37.256433,126.8915822],[37.2658182,126.8766956],[37.2665954,126.8743801],[37.2683774,126.866025],[37.2693592,126.8634179],[37.2710174,126.8612781],[37.2769991,126.8563214],[37.2787555,126.8552672],[37.2809352,126.8546931],[37.283467,126.8549374],[37.2968647,126.8587753],[37.3035321,126.8588804],[37.3050027,126.8580758],[37.3140345,126.849271],[37.3149758,126.847752],[37.315632,126.8452969],[37.3172494,126.8153623],[37.3180786,126.811615],[37.322782,126.8012337],[37.3243866,126.7946549],[37.33253,126.7765982],[37.3407789,126.7611518],[37.3420172,126.7598099],[37.3467908,126.7565939],[37.3483312,126.7545086],[37.3526218,126.740041],[37.3532643,126.738685],[37.3552274,126.7369274],[37.356395,126.7366064],[37.3578479,126.7367436],[37.3680021,126.7410305],[37.3694324,126.741237],[37.3727791,126.7410037],[37.3740793,126.7412612],[37.3820422,126.7467946],[37.3842929,126.7472666],[37.3869462,126.7466551],[37.3881393,126.7460403],[37.3987226,126.7360601],[37.4008947,126.7335143],[37.4014742,126.7319961],[37.4017619,126.7301266],[37.4016362,126.728182],[37.3995017,126.7156237],[37.3999208,126.7123851],[37.4072739,126.6959925],[37.4206067,126.6742033],[37.4246582,126.6696596],[37.4263452,126.6665858],[37.4271333,126.6643408],[37.427636,126.6598025],[37.4324305,126.6494009],[37.4335188,126.6482207],[37.4351566,126.6475528],[37.4449786,126.6505194],[37.4473891,126.6501224],[37.4492992,126.6491917],[37.4522143,126.6461796],[37.4547055,126.6449189],[37.4594983,126.6407722],[37.4643652,126.6295445],[37.4678266,126.6254635],[37.4717566,126.6190866],[37.4723803,126.6185716],[37.4754605,126.6173767],[37.4769719,126.6173267]];
         RAIL_ROUTE_PATHS.sillim_line = [[37.5173398,126.9293465],[37.5161763,126.9283939],[37.5148201,126.9278302],[37.5132108,126.9253446],[37.5110017,126.9247393],[37.5003006,126.9203966],[37.4982297,126.9201107],[37.4976973,126.9194836],[37.4972469,126.917869],[37.4964795,126.917677],[37.4942316,126.9185944],[37.4937096,126.9190816],[37.4926845,126.9258801],[37.4921696,126.9268177],[37.4862089,126.9292601],[37.4813882,126.9298394],[37.4804934,126.9302429],[37.4781827,126.9329546],[37.4772108,126.9358767],[37.4764578,126.9368556],[37.475815,126.9369312],[37.4753102,126.9365295],[37.4734003,126.9335015],[37.4726918,126.9333272],[37.4719356,126.9337084],[37.4712424,126.9351443],[37.470687,126.9390885],[37.4708071,126.942802],[37.46877,126.9452234]];
+        // 우이신설선 북한산우이-신설동 실제 선로 형상 (OSM ODbL).
+        RAIL_ROUTE_PATHS.ui_sinseol_line = [[37.6633606,127.0123479],[37.6630587,127.0125333],[37.6623141,127.0129213],[37.6620019,127.0130525],[37.6601686,127.013582],[37.6593889,127.0138117],[37.6590414,127.0137912],[37.6564168,127.0132562],[37.6563469,127.0132425],[37.6559343,127.0131587],[37.6556399,127.0130911],[37.6550751,127.0129703],[37.6526616,127.0124541],[37.6522777,127.0124184],[37.6520464,127.0124523],[37.6515463,127.0126021],[37.6493635,127.0136521],[37.6493136,127.0136761],[37.6472988,127.0146169],[37.6470443,127.0147379],[37.6463204,127.015069],[37.6453085,127.0155024],[37.6448704,127.0156867],[37.6435898,127.0160838],[37.6420351,127.0165155],[37.6409501,127.0168059],[37.6376605,127.0170548],[37.6342171,127.0174049],[37.6340359,127.0174308],[37.6335183,127.0175039],[37.6315186,127.017638],[37.628972,127.017909],[37.6269639,127.0181389],[37.6265655,127.0181845],[37.624712,127.0183035],[37.6238753,127.0184617],[37.6237032,127.0185602],[37.6231639,127.0189925],[37.6222422,127.0198703],[37.6220501,127.0200556],[37.6219011,127.02018],[37.6217304,127.0202825],[37.6214857,127.020372],[37.6211486,127.0204838],[37.6208063,127.0205655],[37.6203532,127.0206473],[37.6200047,127.0206868],[37.6199157,127.0206807],[37.6198244,127.02062],[37.6197667,127.0205229],[37.6197114,127.0203803],[37.6196994,127.0201921],[37.6198684,127.0191254],[37.6200367,127.0170794],[37.6200849,127.016296],[37.6202204,127.0137122],[37.620263,127.0127868],[37.6202357,127.0123944],[37.6201826,127.0120068],[37.620057,127.0116014],[37.6198451,127.0110779],[37.6190825,127.0093694],[37.6187981,127.0088171],[37.6186914,127.0086821],[37.6185765,127.0085937],[37.6183413,127.00847],[37.6176056,127.0083424],[37.6172579,127.0083782],[37.6165828,127.0086588],[37.6162819,127.0087409],[37.6157535,127.0087728],[37.614105,127.0086306],[37.6139169,127.0085871],[37.6136938,127.0084577],[37.613548,127.0083324],[37.613244,127.007946],[37.6131142,127.0078559],[37.6130035,127.0078191],[37.6128954,127.0078166],[37.6128078,127.0078187],[37.6126737,127.00785],[37.6125528,127.0078874],[37.6123722,127.0080014],[37.6119626,127.0082576],[37.6107328,127.0089708],[37.6102786,127.0092717],[37.6100077,127.0093942],[37.6089646,127.0096494],[37.6076223,127.0102005],[37.605379,127.0113145],[37.6047885,127.0115684],[37.604608,127.0116218],[37.6044334,127.0117115],[37.6043396,127.0117713],[37.6042511,127.0118746],[37.6039472,127.0123304],[37.6035065,127.0129173],[37.6031928,127.0132019],[37.6027532,127.013338],[37.602319,127.0134723],[37.6003747,127.0138769],[37.5978764,127.0143764],[37.5954632,127.0157477],[37.5929189,127.0163916],[37.5925679,127.0164561],[37.5914656,127.0166587],[37.5902325,127.0168943],[37.5900068,127.0169377],[37.5899063,127.0169698],[37.5896756,127.0170829],[37.5895477,127.0172376],[37.5891175,127.017829],[37.5889628,127.0179633],[37.5888722,127.018048],[37.5887588,127.0180749],[37.587758,127.0180995],[37.5875532,127.0181103],[37.5874019,127.0181479],[37.5872257,127.0182166],[37.5867957,127.0184796],[37.5850612,127.0194667],[37.584416,127.0198004],[37.5838083,127.0201201],[37.5811466,127.0215261],[37.5789534,127.0227096],[37.578304,127.0230191],[37.5779818,127.0230859],[37.5760855,127.0231571],[37.575656,127.0231826]];
         RAIL_ROUTE_PATHS.incheon_line1 = [[37.6024184,126.6885383],[37.6025595,126.6998383],[37.6015096,126.7064023],[37.6008131,126.7083062],[37.5972781,126.7123408],[37.5899662,126.7136948],[37.5855601,126.716836],[37.583608,126.7172767],[37.5740549,126.7168814],[37.5717582,126.718115],[37.5709183,126.7203189],[37.5705715,126.7227714],[37.5714512,126.7295769],[37.5714832,126.7380727],[37.5711489,126.7396029],[37.5667709,126.7424783],[37.5627375,126.7428446],[37.5596495,126.7455527],[37.5578451,126.7458487],[37.5533139,126.7448339],[37.5432284,126.7372307],[37.5428983,126.7356214],[37.5434734,126.7261114],[37.5431456,126.7244049],[37.5427778,126.7237164],[37.5415035,126.7225813],[37.5283957,126.7224775],[37.5074472,126.720486],[37.4890731,126.7238004],[37.4881572,126.7234087],[37.4873433,126.7224774],[37.48303,126.7132246],[37.4819743,126.7118127],[37.4715898,126.7081015],[37.4668394,126.7076872],[37.4654258,126.706314],[37.4641342,126.7021557],[37.4627192,126.7011664],[37.4584048,126.7021995],[37.4399302,126.6994294],[37.4356053,126.6977086],[37.4291185,126.6989696],[37.4260474,126.6987311],[37.4223607,126.6975985],[37.4202184,126.6960337],[37.4107665,126.6861866],[37.4030327,126.679028],[37.3936011,126.6684606],[37.3902314,126.6650678],[37.3896049,126.6634118],[37.3890449,126.6626109],[37.3759008,126.6497379],[37.3758949,126.6478974],[37.3767653,126.646571],[37.3899687,126.6369925],[37.4068352,126.626147]];
         RAIL_ROUTE_PATHS.incheon_line2 = [[37.5949031,126.6282878],[37.5936065,126.6357405],[37.5937387,126.6380589],[37.5958452,126.6443823],[37.5986361,126.6502388],[37.6003971,126.6530219],[37.60202,126.6575728],[37.59818,126.6664547],[37.5960016,126.6693839],[37.5947576,126.6721491],[37.5940374,126.6726097],[37.5899298,126.6734143],[37.5837578,126.6762095],[37.5809086,126.6753225],[37.5715272,126.6744509],[37.5647878,126.6775467],[37.5386664,126.6764772],[37.5227119,126.6751136],[37.5219962,126.6753059],[37.5209403,126.6769825],[37.488652,126.6750881],[37.4878214,126.6757896],[37.4875226,126.6788826],[37.4828228,126.6855309],[37.4802863,126.6864614],[37.4780959,126.6853159],[37.474856,126.6816146],[37.4739144,126.681086],[37.4654585,126.6790985],[37.4629819,126.6778752],[37.4589096,126.6778839],[37.4585489,126.678459],[37.4566943,126.7032777],[37.4569365,126.7086888],[37.4558458,126.7192421],[37.4548639,126.7329588],[37.452884,126.7359666],[37.4489602,126.7339419],[37.4482966,126.7342458],[37.4476616,126.7453155],[37.4489513,126.7479658],[37.4491993,126.7491542],[37.4478879,126.7553679],[37.4423572,126.7598687],[37.4393136,126.7594871]];
 
@@ -3564,7 +3604,7 @@
         };
 
         const REGION_LINE_IDS = {
-            seoul: ['incheon_line1', 'incheon_line2', 'airport', 'gyeongui_jungang', 'sillim_line', 'gyeongchun', 'gyeonggang', 'shinbundang', 'suinbundang', 'seohae', 'gimpo_goldline', 'gtx_a'],
+            seoul: ['incheon_line1', 'incheon_line2', 'airport', 'gyeongui_jungang', 'sillim_line', 'ui_sinseol_line', 'gyeongchun', 'gyeonggang', 'shinbundang', 'suinbundang', 'seohae', 'gimpo_goldline', 'gtx_a'],
             gangwon: ['gyeongchun'],
             daegu: ['daegyeong', 'line1', 'line2', 'line3'],
             daejeon: ['daejeon_line1'],
@@ -3586,6 +3626,7 @@
             shinbundang:'#D20F46',
             suinbundang:'#FABE00',
             sillim_line:'#6789CA',
+            ui_sinseol_line:'#B7C450',
             daegyeong:'#5998D6', line1:'#FF7EB3', line2:'#74C96E', line3:'#FFCC4D', daejeon_line1:'#009F62',
             gwangju_line1:'#38B2AC', busan_line1:'#F58A33', busan_line2:'#97D86B', busan_line3:'#C5A67C',
             busan_line4:'#53A1E2', busan_bglrt:'#A77BC0', busan_donghae:'#4B77C2'
@@ -4160,6 +4201,7 @@
             shinbundang: 'seoul',
             suinbundang: 'seoul',
             sillim_line: 'seoul',
+            ui_sinseol_line: 'seoul',
             daegyeong: 'daegu', line1: 'daegu', line2: 'daegu', line3: 'daegu',
             daejeon_line1: 'daejeon', gwangju_line1: 'gwangju',
             busan_line1: 'busan', busan_line2: 'busan', busan_line3: 'busan',
@@ -4422,16 +4464,17 @@
         const getTrainLineBadge = (lineId = currentLineId) => ({
             incheon_line1: '인1',
             incheon_line2: '인2',
-            gtx_a: 'A',
+            gtx_a: 'G',
             seohae: '서',
             gyeongui_jungang: '경중',
             gimpo_goldline: '김',
-            gyeonggang: '강',
-            gyeongchun: '경',
+            gyeonggang: '경강',
+            gyeongchun: '춘',
             airport: '공',
             shinbundang: '신',
             suinbundang: '수',
             sillim_line: '림',
+            ui_sinseol_line: '우',
             daegyeong: '대',
             line1: '1',
             line2: '2',
@@ -4466,7 +4509,7 @@
                     <rect x="3.4" y="-8.3" width="3.2" height="16.6" rx="1.6" fill="${color}"/>
                     <path d="M-2.2-9.5h4.4M-2.2 9.5h4.4" stroke="#68798A" stroke-width="1" stroke-linecap="round"/>
                     <circle cx="-25.7" cy="0" r="6.1" fill="${color}" stroke="#FFFFFF" stroke-width="1.5"/>
-                    <text x="-25.7" y="3" text-anchor="middle" fill="#FFFFFF" font-size="8.5" font-weight="900" transform="rotate(${-angle} -25.7 0)">${badge}</text>
+                    <text x="-25.7" y="${badge.length > 1 ? '2' : '3'}" text-anchor="middle" fill="#FFFFFF" font-size="${badge.length > 1 ? '5.2' : '8.5'}" font-weight="900" transform="rotate(${-angle} -25.7 0)">${badge}</text>
                     <circle cx="30.9" cy="-4.4" r="1.45" fill="#FFF8C8" stroke="#D69B13" stroke-width=".5"/>
                     <circle cx="30.9" cy="4.4" r="1.45" fill="#FFF8C8" stroke="#D69B13" stroke-width=".5"/>
                     ${specialService ? `<g transform="rotate(${-angle} -23 -18.5)"><rect x="-34" y="-24.5" width="22" height="12" rx="6" fill="${specialMeta.color}" stroke="#FFFFFF" stroke-width="1.2"/><text x="-23" y="-16.5" text-anchor="middle" fill="#FFFFFF" font-size="7" font-weight="900">${specialMeta.label}</text></g>` : ''}
@@ -4517,7 +4560,7 @@
             
             let activeT = (activeTab === 'line' || activeTab === 'map') ? [...activeTrainsUp, ...activeTrainsDown] : (currentDirection === 'up' ? activeTrainsUp : activeTrainsDown);
             
-            const lineLen = currentLineId === 'suinbundang' ? 5800 : (currentLineId === 'sillim_line' ? 1500 : (currentLineId === 'gyeongchun' ? 2800 : (currentLineId === 'seohae' ? 2400 : (currentLineId === 'gtx_a' ? 1400 : (currentLineId === 'gyeonggang' ? 1600 : (currentLineId === 'airport' ? 1800 : (currentLineId === 'shinbundang' ? 2100 : (currentLineId === 'line1' ? 3200 : (currentLineId === 'line2' ? 2900 : (currentLineId === 'line3' ? 3000 : (currentLineId === 'daejeon_line1' ? 2200 : (currentLineId === 'busan_line1' ? 4800 : (currentLineId === 'busan_line2' ? 5200 : (currentLineId === 'busan_line3' ? 2000 : (currentLineId === 'busan_line4' ? 1800 : (currentLineId === 'busan_bglrt' ? 2100 : (currentLineId === 'busan_donghae' ? 2400 : (currentLineId === 'gwangju_line1' ? 2100 : 1600))))))))))))))))));
+            const lineLen = currentLineId === 'suinbundang' ? 5800 : (currentLineId === 'ui_sinseol_line' ? 1700 : (currentLineId === 'sillim_line' ? 1500 : (currentLineId === 'gyeongchun' ? 2800 : (currentLineId === 'seohae' ? 2400 : (currentLineId === 'gtx_a' ? 1400 : (currentLineId === 'gyeonggang' ? 1600 : (currentLineId === 'airport' ? 1800 : (currentLineId === 'shinbundang' ? 2100 : (currentLineId === 'line1' ? 3200 : (currentLineId === 'line2' ? 2900 : (currentLineId === 'line3' ? 3000 : (currentLineId === 'daejeon_line1' ? 2200 : (currentLineId === 'busan_line1' ? 4800 : (currentLineId === 'busan_line2' ? 5200 : (currentLineId === 'busan_line3' ? 2000 : (currentLineId === 'busan_line4' ? 1800 : (currentLineId === 'busan_bglrt' ? 2100 : (currentLineId === 'busan_donghae' ? 2400 : (currentLineId === 'gwangju_line1' ? 2100 : 1600)))))))))))))))))));
             const renderedT = activeT.map(t => {
                 const ref = t.direction === 'up' ? dom.linePathUp : dom.linePathDown;
                 let p = {x: 0, y: 0}, angle = 0;
