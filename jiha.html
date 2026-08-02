@@ -2277,6 +2277,28 @@
             }
         };
 
+        const LINE_VIEW_LENGTHS = Object.freeze({
+            incheon_line1:2400, incheon_line2:2400, gyeongui_jungang:2400,
+            gtx_a:1400, seohae:2400, gimpo_goldline:1600, gyeonggang:1600, gyeongchun:2800,
+            airport:1800, shinbundang:2100, suinbundang:5800, sillim_line:1500, ui_sinseol_line:1700,
+            daegyeong:1600, line1:3200, line2:2900, line3:3000, daejeon_line1:2200,
+            busan_line1:4800, busan_line2:5200, busan_line3:2000, busan_line4:1800,
+            busan_bglrt:2100, busan_donghae:2400, gwangju_line1:2100
+        });
+        const MIN_NEW_LINE_STATION_GAP_PX = 75;
+        const getLineViewLength = lineId => {
+            if (LINE_VIEW_LENGTHS[lineId]) return LINE_VIEW_LENGTHS[lineId];
+            const progresses = Object.values(STATIONS_ALL[lineId] || {})
+                .map(station => station.progress)
+                .filter(Number.isFinite)
+                .sort((first, second) => first - second);
+            const progressGaps = progresses.slice(1)
+                .map((progress, index) => progress - progresses[index])
+                .filter(gap => gap > 0);
+            const smallestGap = progressGaps.length ? Math.min(...progressGaps) : 1;
+            return Math.max(1600, Math.ceil(MIN_NEW_LINE_STATION_GAP_PX / smallestGap));
+        };
+
         window.switchLine = async (lineId, isInit = false) => {
             if (currentLineId === lineId && !isInit) return;
             currentLineId = lineId;
@@ -2702,7 +2724,7 @@
             const heroBand = document.getElementById('hero-band');
             if (heroBand) heroBand.style.backgroundColor = THEME_COLOR;
 
-            const lineLen = currentLineId === 'suinbundang' ? 5800 : (currentLineId === 'ui_sinseol_line' ? 1700 : (currentLineId === 'sillim_line' ? 1500 : (currentLineId === 'gyeongchun' ? 2800 : (currentLineId === 'seohae' ? 2400 : (currentLineId === 'gtx_a' ? 1400 : (currentLineId === 'gyeonggang' ? 1600 : (currentLineId === 'airport' ? 1800 : (currentLineId === 'shinbundang' ? 2100 : (currentLineId === 'line1' ? 3200 : (currentLineId === 'line2' ? 2900 : (currentLineId === 'line3' ? 3000 : (currentLineId === 'daejeon_line1' ? 2200 : (currentLineId === 'busan_line1' ? 4800 : (currentLineId === 'busan_line2' ? 5200 : (currentLineId === 'busan_line3' ? 2000 : (currentLineId === 'busan_line4' ? 1800 : (currentLineId === 'busan_bglrt' ? 2100 : (currentLineId === 'busan_donghae' ? 2400 : (currentLineId === 'gwangju_line1' ? 2100 : 1600)))))))))))))))))));
+            const lineLen = getLineViewLength(currentLineId);
             const svg = document.getElementById('line-svg');
             if (svg) {
                 svg.setAttribute('viewBox', `0 0 400 ${lineLen + 160}`);
@@ -4561,7 +4583,7 @@
             
             let activeT = (activeTab === 'line' || activeTab === 'map') ? [...activeTrainsUp, ...activeTrainsDown] : (currentDirection === 'up' ? activeTrainsUp : activeTrainsDown);
             
-            const lineLen = currentLineId === 'suinbundang' ? 5800 : (currentLineId === 'ui_sinseol_line' ? 1700 : (currentLineId === 'sillim_line' ? 1500 : (currentLineId === 'gyeongchun' ? 2800 : (currentLineId === 'seohae' ? 2400 : (currentLineId === 'gtx_a' ? 1400 : (currentLineId === 'gyeonggang' ? 1600 : (currentLineId === 'airport' ? 1800 : (currentLineId === 'shinbundang' ? 2100 : (currentLineId === 'line1' ? 3200 : (currentLineId === 'line2' ? 2900 : (currentLineId === 'line3' ? 3000 : (currentLineId === 'daejeon_line1' ? 2200 : (currentLineId === 'busan_line1' ? 4800 : (currentLineId === 'busan_line2' ? 5200 : (currentLineId === 'busan_line3' ? 2000 : (currentLineId === 'busan_line4' ? 1800 : (currentLineId === 'busan_bglrt' ? 2100 : (currentLineId === 'busan_donghae' ? 2400 : (currentLineId === 'gwangju_line1' ? 2100 : 1600)))))))))))))))))));
+            const lineLen = getLineViewLength(currentLineId);
             const renderedT = activeT.map(t => {
                 const ref = t.direction === 'up' ? dom.linePathUp : dom.linePathDown;
                 let p = {x: 0, y: 0}, angle = 0;
