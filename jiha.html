@@ -741,6 +741,7 @@
     </div>
 
     <!-- 스크립트 (통합 로직) -->
+    <script src="./seoul_line1_rail_paths.js"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -1431,6 +1432,7 @@
         const MAP_CAMERA_FRAME_INTERVAL = 1000 / 60;
         const MAP_TRAIN_TANGENT_SAMPLE_METERS = 45;
         const MAP_TRAIN_TRACK_OFFSET_PX = 7;
+        const MAP_TRAIN_SEOUL_LINE1_TRACK_OFFSET_PX = 3;
         const MAP_TRAIN_NATIONWIDE_TRACK_OFFSET_PX = 2;
         const MAP_TRAIN_SUBPIXEL_SMOOTHING_MS = 46;
         const MAP_TRAIN_MAX_SUBPIXEL_OFFSET = 1.05;
@@ -3594,7 +3596,7 @@
             gwangundae: GYEONGCHUN_GWANGUNDAE_PREFIX.slice(0, -1).concat(GYEONGCHUN_SHARED_PATH)
         };
         RAIL_ROUTE_PATHS.gyeongchun = GYEONGCHUN_RAIL_PATHS.main;
-        const SEOUL_LINE1_RAIL_PATHS = (() => {
+        const SEOUL_LINE1_FALLBACK_RAIL_PATHS = (() => {
             const coords = STATION_COORDS.seoul_line1;
             const points = names => names.map(name => coords[name]).filter(Boolean);
             const common = points(SEOUL_LINE1_COMMON_STATIONS);
@@ -3606,6 +3608,7 @@
                 seodongtan:withBranch(SEOUL_LINE1_SOUTH_STATIONS.slice(0, SEOUL_LINE1_SOUTH_STATIONS.indexOf('병점') + 1)).concat([coords['서동탄']])
             };
         })();
+        const SEOUL_LINE1_RAIL_PATHS = window.SEOUL_LINE1_OSM_RAIL_PATHS || SEOUL_LINE1_FALLBACK_RAIL_PATHS;
         RAIL_ROUTE_PATHS.seoul_line1 = SEOUL_LINE1_RAIL_PATHS.incheon;
         const RAIL_ROUTE_PATH_VARIANTS = {
             seoul_line1: SEOUL_LINE1_RAIL_PATHS,
@@ -4180,7 +4183,12 @@
                 entry.angleUpdatedAt = angleNow;
                 // 실제 선로 좌표는 유지한 채 차체만 진행 방향의 오른쪽으로 밀면,
                 // 반대 방향 열차는 서로 다른 트랙(화면 기준 하행 좌측·상행 우측)에 놓인다.
-                const trackOffsetPx = isFollowed ? 0 : (mapNationwideMode ? MAP_TRAIN_NATIONWIDE_TRACK_OFFSET_PX : MAP_TRAIN_TRACK_OFFSET_PX);
+                const isSeoulLine1 = (train.lineId || currentLineId) === 'seoul_line1';
+                const trackOffsetPx = isFollowed
+                    ? 0
+                    : (mapNationwideMode
+                        ? MAP_TRAIN_NATIONWIDE_TRACK_OFFSET_PX
+                        : (isSeoulLine1 ? MAP_TRAIN_SEOUL_LINE1_TRACK_OFFSET_PX : MAP_TRAIN_TRACK_OFFSET_PX));
                 const bodyAngle = entry.angle - 90;
                 entry.body.style.transform = `rotate(${bodyAngle}deg) translateY(${trackOffsetPx}px)`;
                 entry.labelText.style.transform = `rotate(${-bodyAngle}deg)`;
@@ -4257,7 +4265,18 @@
                 const blend = 1 - Math.exp(-elapsed / MAP_CAMERA_SMOOTHING_MS);
                 const remainingMeters = haversine(mapCameraLat, mapCameraLng, targetLat, targetLng) * 1000;
                 if (remainingMeters < .002) {
+                    // 정차 열차 선택 직후의 지도 확대 애니메이션은 실제 지도 중심을 다시 움직일 수 있다.
+                    // 목표 좌표 캐시뿐 아니라 현재 지도 중심도 확인해야 정차 중 추적 열차가 엉뚱한 곳에 고정되지 않는다.
+                    const currentCenter = subwayMap.getCenter?.();
+                    const centerGapMeters = currentCenter
+                        ? haversine(currentCenter.getLat(), currentCenter.getLng(), targetLat, targetLng) * 1000
+                        : Infinity;
+                    mapCameraLat = targetLat;
+                    mapCameraLng = targetLng;
                     mapLastCameraUpdateTime = timestamp;
+                    if (centerGapMeters >= .5) {
+                        subwayMap.setCenter(new kakao.maps.LatLng(targetLat, targetLng));
+                    }
                     return;
                 }
                 if (remainingMeters < .06) {
