@@ -689,6 +689,23 @@
             let z = big ? 'z-0' : 'z-20';
             return `<div class="absolute top-1/2 left-1/2 -translate-x-1/2 ${yShift} -rotate-[13deg] font-black pointer-events-none whitespace-nowrap ${shape} ${z}" style="color:${hex};border-color:${hex};background:${hex}1f;box-shadow:0 2px 8px ${hex}40, inset 0 0 0 1px ${hex}30;text-shadow:0 1px 1px rgba(0,0,0,0.12);">${label}</div>`;
         }
+        function gameCancellationLabel(game) {
+            const cancellationText = [
+                game && game.gameStatus,
+                game && game.status,
+                game && game.inning,
+                game && game.cancelType,
+                game && game.cancelReason,
+                game && game.cancellationType,
+                game && game.cancellationReason
+            ].filter(Boolean).join(' ');
+            const compact = cancellationText.replace(/\s+/g, '').toLowerCase();
+            if (compact.includes('그라운드') || compact.includes('ground')) return '그라운드 사정 취소';
+            if (compact.includes('폭염') || compact.includes('heat')) return '폭염 취소';
+            if (compact.includes('우천') || compact.includes('우취') || compact.includes('rain')) return '우천취소';
+            if (compact.includes('취소') || compact.includes('cancel')) return '경기 취소';
+            return '';
+        }
         const STAMP_HEX = { WIN: '#EA0029', LOSE: '#64748B', DRAW: '#10B981', CANCEL: '#3B82F6' };
         // 스코어보드 위에 쾅 찍히는 큰 도장 (모션 포함)
         function bigStamp(label, hex) { return `<div class="stamp-pop absolute top-1/2 left-1/2 z-30 font-black pointer-events-none whitespace-nowrap text-[26px] px-5 py-1.5 border-[3px] rounded-tl-[26px] rounded-br-[26px] rounded-tr-md rounded-bl-md tracking-[0.12em]" style="color:${hex};border-color:${hex};background:${hex}26;box-shadow:0 6px 18px ${hex}55, inset 0 0 0 1px ${hex}33;text-shadow:0 1px 2px rgba(0,0,0,0.18);">${label}</div>`; }
@@ -987,10 +1004,8 @@
         function renderPopupContent(id) {
             const c = document.getElementById('lineup-content'), m = scheduleData.find(x => x.id === parseInt(id) || x.id === id); if (!m) return;
             const l = liveDataStore[id] || {}; if (!l.gameStatus) l.gameStatus = '경기전';
-            const iC = Boolean(
-                (l.gameStatus && (l.gameStatus.includes('취소') || l.gameStatus.includes('우취'))) ||
-                (l.inning && (l.inning.includes('취소') || l.inning.includes('우취')))
-            );
+            const cancelText = gameCancellationLabel(l);
+            const iC = Boolean(cancelText);
             
             const isAllstarGame = isAllstarDate(m.date);
             let h1 = teamHex[m.team1] || '#888888', h2 = teamHex[m.team2] || '#888888';
@@ -998,8 +1013,7 @@
             let sch = `<span class="text-2xl font-black text-gray-700">VS</span>`;
             if (l.gameStatus !== '경기전') {
                 if (iC) {
-                    let txt = (l.inning && (l.inning.includes('취소') || l.inning.includes('우취'))) ? l.inning : (l.gameStatus || '취소'); if (txt === '취소') txt = '우천취소'; txt = txt.replace('우취', '우천취소');
-                    sch = `<div class="flex flex-col items-center gap-1"><span class="text-[11px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">${txt}</span><span class="text-2xl font-black text-gray-700 mt-1">VS</span></div>`;
+                    sch = `<div class="flex flex-col items-center gap-1"><span class="text-[11px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">${cancelText}</span><span class="text-2xl font-black text-gray-700 mt-1">VS</span></div>`;
                 } else if (l.gameStatus !== '경기전') {
                     let dis = (l.gameStatus === '경기중' && l.inning) ? l.inning : l.gameStatus, as = parseInt(l.awayScore || 0), hs = parseInt(l.homeScore || 0), asz = as > hs ? 'text-[38px]' : as < hs ? 'text-[24px] opacity-50' : 'text-[30px]', hsz = hs > as ? 'text-[38px]' : hs < as ? 'text-[24px] opacity-50' : 'text-[30px]', ac = as > hs ? 'text-point drop-shadow-xl' : 'text-white', hc = hs > as ? 'text-point drop-shadow-xl' : 'text-white';
                     let badgeHtml = l.gameStatus !== '종료' ? `<span class="text-[12px] font-black text-[#EA0029] flex items-center gap-1.5 tracking-widest drop-shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-[#EA0029] animate-pulse"></span>${dis}</span>` : `<span class="text-[10px] font-bold text-gray-400 bg-gray-600/30 px-2 py-0.5 rounded border border-gray-500/20">${dis}</span>`;
@@ -1097,7 +1111,7 @@
                     let homeStarterText = homeExpectedStarter.name ? `${homeExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${homeExpectedStarter.name}` : '예상 선발 미정';
                     aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${awayStarterText}</span>`;
                     hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${homeStarterText}</span>`;
-                    let centerTxt = iC ? '우천취소' : m.time;
+                    let centerTxt = iC ? cancelText : m.time;
                     inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">${centerTxt}</span>`;
                     centerArea = `<span class="text-[11px] font-bold text-gray-400 tracking-widest mt-px">${m.stadium}</span>`;
                     aScoreBanner = '-'; hScoreBanner = '-';
@@ -1163,7 +1177,7 @@
                         </div>
                     </div>
                 </div>`;
-                if (iC) sbh = sbh.replace(/<\/div>\s*$/, bigStamp('우천취소', STAMP_HEX.CANCEL) + '</div>');
+                if (iC) sbh = sbh.replace(/<\/div>\s*$/, bigStamp(cancelText, STAMP_HEX.CANCEL) + '</div>');
 
                 if (m.date.startsWith('2026-05')) {
                     sbh += `<div class="w-full mb-5">
@@ -1288,7 +1302,7 @@
                     let homeStarterText = homeExpectedStarter.name ? `${homeExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${homeExpectedStarter.name}` : '예상 선발 미정';
                     aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${awayStarterText}</span>`;
                     hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${homeStarterText}</span>`;
-                    let centerTxt = iC ? '우천취소' : m.time;
+                    let centerTxt = iC ? cancelText : m.time;
                     inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">${centerTxt}</span>`;
                     centerArea = `<span class="text-[11px] font-bold text-gray-400 tracking-widest mt-px">${m.stadium}</span>`;
                     aScoreBanner = '-'; hScoreBanner = '-';
@@ -1355,7 +1369,7 @@
                         </div>
                     </div>
                 </div>`;
-                if (iC) sbh = sbh.replace(/<\/div>\s*$/, bigStamp('우천취소', STAMP_HEX.CANCEL) + '</div>');
+                if (iC) sbh = sbh.replace(/<\/div>\s*$/, bigStamp(cancelText, STAMP_HEX.CANCEL) + '</div>');
             }
 
             if (isClassicSeries) sbh = classicSeriesHeader(m) + sbh;
