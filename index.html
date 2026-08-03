@@ -7401,6 +7401,20 @@
                 businessMedia.querySelector('.absolute.bottom-5 p').textContent = '드디어 3화가 공개되었습니다!';
                 cardStore['business-trip'] = businessTrip;
             }
+            if (cardStore['gwangju-2027']) {
+                const enjoySetlog = cardStore['gwangju-2027'].cloneNode(true);
+                enjoySetlog.dataset.homeCard = 'enjoy-setlog';
+                enjoySetlog.setAttribute('onclick', "window.haptic(); window.enjoyAlert('곧 공개됩니다! 🔒')");
+                const enjoySetlogTitle = enjoySetlog.querySelector('h3');
+                const enjoySetlogImage = enjoySetlog.querySelector('img');
+                if (enjoySetlogTitle) enjoySetlogTitle.textContent = '엔조이 셋로그';
+                if (enjoySetlogImage) {
+                    enjoySetlogImage.setAttribute('src', 'enjoy_setlog.jpg');
+                    enjoySetlogImage.setAttribute('alt', '엔조이 셋로그');
+                    enjoySetlogImage.setAttribute('onerror', "this.onerror=null;this.src='banner_5.jpg'");
+                }
+                cardStore['enjoy-setlog'] = enjoySetlog;
+            }
 
             const vlogProgramCards = {
                 'throwback': 'enjjok',
@@ -7423,10 +7437,10 @@
             });
 
             const collections = [
+                { title: '전남광주 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['enjoy-setlog', 'gwangju-2027'] },
                 { title: '부울경 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['enjoy-vlog', 'music-2'] },
                 { title: '대구경북 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['throwback', 'music-1'] },
                 { title: '대전충남 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['first-trip', 'transfer-trip'] },
-                { title: '전남광주 브이로그', hint: '티저 공개', icon: 'fa-play', cards: ['gwangju-2027'] },
                 { title: '제주 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['jeju-story', 'business-trip'] },
                 { title: '공개 예정', hint: '곧 만나요', icon: 'fa-lock', cards: ['f1-movie'] }
             ];
