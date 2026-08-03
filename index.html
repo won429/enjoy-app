@@ -809,14 +809,14 @@
             background: #000000;
         }
         #scratch-more-screen {
-            color: #191F28;
-            background: #F2F2F7;
+            color: #F2F4F6;
+            background: #000000;
         }
         #scratch-more-screen .scratch-topbar {
-            background: #F2F2F7;
+            background: #000000;
         }
         #scratch-more-screen .scratch-topbar h2 {
-            color: #191F28;
+            color: #FFFFFF;
             font-family: 'Noto Sans KR', sans-serif;
             font-weight: 700;
         }
@@ -826,6 +826,9 @@
         }
         #scratch-play-screen.is-orange {
             background: #F28C18;
+        }
+        #scratch-play-screen.is-blue {
+            background: #3182F6;
         }
         #scratch-play-screen::before,
         #scratch-play-screen::after {
@@ -929,6 +932,10 @@
         }
         .scratch-more-item.is-orange {
             --scratch-card-color: #F28C18;
+            background: var(--scratch-card-color);
+        }
+        .scratch-more-item.is-blue {
+            --scratch-card-color: #3182F6;
             background: var(--scratch-card-color);
         }
         .scratch-more-item:active { transform: scale(.985); opacity: .86; }
@@ -1060,14 +1067,14 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            color: #4E5968;
-            background: #FFFFFF;
+            color: #A1A1A6;
+            background: #1C1C1E;
             font-family: 'Noto Sans KR', sans-serif;
             font-size: 10px;
             font-weight: 500;
         }
         .scratch-more-footer b {
-            color: #191F28;
+            color: #F2F4F6;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
         }
@@ -1137,6 +1144,36 @@
             grid-template-rows: repeat(2, minmax(0, 1fr));
             gap: 8px;
         }
+        .scratch-symbol-grid.is-cash-amount {
+            aspect-ratio: 3 / 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            background: #EEF4FF;
+            border: 1px solid #D6E4FF;
+        }
+        .scratch-cash-amount {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #3182F6;
+        }
+        .scratch-cash-amount small {
+            margin-bottom: 7px;
+            color: #6B7684;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .scratch-cash-amount strong {
+            font-family: 'Roboto Condensed', 'Noto Sans KR', sans-serif;
+            font-size: clamp(48px, 15vw, 72px);
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -.045em;
+            font-variant-numeric: tabular-nums;
+        }
         .scratch-symbol-cell {
             min-width: 0;
             display: flex;
@@ -1157,6 +1194,9 @@
         }
         .scratch-reveal.is-orange .scratch-symbol-cell.is-prize {
             background: #F28C18;
+        }
+        .scratch-reveal.is-blue .scratch-symbol-cell.is-prize {
+            background: #3182F6;
         }
         .scratch-symbol-cell i {
             font-size: 34px;
@@ -3342,6 +3382,12 @@
             }
             .scratch-topbar { background: #F2F2F7; }
             .scratch-topbar h2 { color: #191F28; }
+            #scratch-more-screen {
+                color: #191F28;
+                background: #F2F2F7;
+            }
+            #scratch-more-screen .scratch-topbar { background: #F2F2F7; }
+            #scratch-more-screen .scratch-topbar h2 { color: #191F28; }
             .scratch-screen-heading h2 { color: #191F28; }
             .scratch-screen-heading p,
             .scratch-progress { color: #8B95A1; }
@@ -3352,8 +3398,14 @@
                 box-shadow: 0 6px 16px rgba(15,23,42,.08);
             }
             .scratch-more-item.is-orange { background: #F28C18; }
+            .scratch-more-item.is-blue { background: #3182F6; }
             .scratch-more-item-copy strong { color: #FFFFFF; }
             .scratch-more-item-copy .scratch-more-item-desc { color: rgba(255,255,255,.78); }
+            .scratch-more-footer {
+                color: #4E5968;
+                background: #FFFFFF;
+            }
+            .scratch-more-footer b { color: #191F28; }
 
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
@@ -4655,7 +4707,7 @@
             <div class="scratch-play-shell">
                 <div id="scratch-reveal-card" class="scratch-reveal">
                     <div class="scratch-result-board" aria-live="polite">
-                        <strong class="scratch-result-rule">같은 상품 3개가 나오면 당첨!</strong>
+                        <strong id="scratch-result-rule" class="scratch-result-rule">같은 상품 3개가 나오면 당첨!</strong>
                         <div id="scratch-symbol-grid" class="scratch-symbol-grid"></div>
                         <span id="scratch-grid-result" class="scratch-grid-result">결과를 확인해보세요</span>
                     </div>
@@ -5792,6 +5844,24 @@
                     desc: '배달의민족 5천원 상품권에 당첨됐어요!',
                     icon: 'fa-utensils',
                     chance: .10
+                },
+                {
+                    id: 'cash-prize',
+                    title: '상금 스크래치',
+                    subtitle: '1원부터 최대 1만원까지 도전',
+                    prize: '현금 상금',
+                    badge: '최대 10,000원',
+                    watermark: '10K',
+                    resultKey: 'cashPrize',
+                    maxNote: '최대 1만원',
+                    lead: '오늘의 상금은 얼마?',
+                    cardHeadline: '1원부터 만원까지<br>행운의 금액은?',
+                    theme: 'is-blue',
+                    coverImage: 'assets/scratch/cash-prize-card-v2.png',
+                    coverBadge: '긁어서 오늘의 상금 확인!',
+                    desc: '1원부터 최대 1만원까지 상금에 당첨됐어요!',
+                    icon: 'fa-sack-dollar',
+                    chance: .25
                 }
             ];
             let currentCard = null;
@@ -6089,6 +6159,7 @@
                     cardId: card.id,
                     won: !!record.won,
                     matchCount: Number(record.matchCount) || 0,
+                    prizeAmount: Number(record.prizeAmount) || 0,
                     createdAt: record.createdAt
                 };
                 payload.scratchUsage = normalizeScratchUsage(memberScratchUsage);
@@ -6106,6 +6177,7 @@
                 const record = {
                     cardId: card.id,
                     prize: card.prize,
+                    prizeAmount: Number(outcome.prizeAmount) || 0,
                     won: !!outcome.won,
                     matchCount: Number(outcome.matchCount) || 0,
                     createdAt: outcome.revealedAt || Date.now(),
@@ -6136,6 +6208,19 @@
                 const identity = currentScratchIdentity();
                 // 정식 멤버 6명은 3개 일치가 절대 나오지 않도록 당첨 확률을 0%로 고정한다.
                 // 비정식 로그인 계정과 로그인 전 체험 사용자는 기존 무작위 결과를 기기에만 저장한다.
+                if (card.id === 'cash-prize') {
+                    const cashWon = !identity.isMember && randomUnit() < card.chance;
+                    return {
+                        won: cashWon,
+                        effective: identity.isMember,
+                        isDemo: !identity.isMember,
+                        matchCount: 0,
+                        prizeAmount: cashWon ? Math.floor(randomUnit() * 10000) + 1 : 0,
+                        prizePositions: [],
+                        revealed: false,
+                        createdAt: Date.now()
+                    };
+                }
                 const possibleCounts = identity.isMember ? [1, 2, 4] : [1, 2, 3, 4];
                 const matchCount = possibleCounts[Math.floor(randomUnit() * possibleCounts.length)];
                 const positions = [0, 1, 2, 3, 4, 5];
@@ -6145,11 +6230,13 @@
                     positions[i] = positions[j];
                     positions[j] = temp;
                 }
+                const won = !identity.isMember && matchCount === 3;
                 return {
-                    won: !identity.isMember && matchCount === 3,
+                    won: won,
                     effective: identity.isMember,
                     isDemo: !identity.isMember,
                     matchCount: matchCount,
+                    prizeAmount: 0,
                     prizePositions: positions.slice(0, matchCount),
                     revealed: false,
                     createdAt: Date.now()
@@ -6159,7 +6246,27 @@
             function renderScratchResultGrid(card, outcome) {
                 const grid = document.getElementById('scratch-symbol-grid');
                 const result = document.getElementById('scratch-grid-result');
+                const rule = document.getElementById('scratch-result-rule');
                 if (!grid || !result) return;
+                const isCash = card.id === 'cash-prize';
+                if (rule) {
+                    rule.textContent = isCash
+                        ? '긁으면 오늘의 상금이 바로 공개돼요!'
+                        : '같은 상품 3개가 나오면 당첨!';
+                }
+                grid.classList.toggle('is-cash-amount', isCash);
+                if (isCash) {
+                    const amount = Math.max(0, Number(outcome.prizeAmount) || 0);
+                    grid.innerHTML = '<span class="scratch-cash-amount">' +
+                        '<small>오늘의 상금</small>' +
+                        '<strong>' + amount.toLocaleString('ko-KR') + '원</strong>' +
+                    '</span>';
+                    result.classList.toggle('is-winner', amount > 0);
+                    result.textContent = amount > 0
+                        ? '상금에 당첨됐어요!'
+                        : '이번 상금은 0원이에요.';
+                    return;
+                }
                 const neutralLabels = ['수', '일', '요', '행', '운', '복'];
                 const prizePositions = new Set(outcome.prizePositions || []);
                 grid.innerHTML = neutralLabels.map(function (label, index) {
@@ -6168,12 +6275,16 @@
                     }
                     const prizeVisual = card.id === 'baemin-gift'
                         ? '<img src="assets/scratch/baemin-5000-voucher-cutout.png" alt="배달의민족 5천원 상품권">'
-                        : '<i class="fa-solid fa-ticket-simple" aria-label="부과금 면제권"></i>';
+                        : card.id === 'cash-prize'
+                            ? '<i class="fa-solid fa-sack-dollar" aria-label="현금 상금"></i>'
+                            : '<i class="fa-solid fa-ticket-simple" aria-label="부과금 면제권"></i>';
                     return '<span class="scratch-symbol-cell is-prize">' + prizeVisual + '</span>';
                 }).join('');
                 result.classList.toggle('is-winner', outcome.won);
                 result.textContent = outcome.won
-                    ? '당첨을 축하합니다!'
+                    ? (card.id === 'cash-prize'
+                        ? Number(outcome.prizeAmount || 0).toLocaleString('ko-KR') + '원 당첨! 축하합니다!'
+                        : '당첨을 축하합니다!')
                     : outcome.matchCount + '개 · 아쉽지만 미당첨이에요';
             }
 
@@ -6229,7 +6340,11 @@
                 scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 scratchCoverReady = false;
                 const coverCard = currentCard;
-                const coverAccent = coverCard && coverCard.theme === 'is-orange' ? '#C85D00' : '#16835D';
+                const coverAccent = coverCard && coverCard.theme === 'is-orange'
+                    ? '#C85D00'
+                    : coverCard && coverCard.theme === 'is-blue'
+                        ? '#1769D1'
+                        : '#16835D';
 
                 scratchCtx.fillStyle = '#F7EDC8';
                 scratchCtx.fillRect(0, 0, cssWidth, cssHeight);
@@ -6258,9 +6373,16 @@
                     scratchCtx.fillStyle = coverAccent;
                     scratchCtx.fillText(badgeText, cssWidth / 2, badgeY + badgeHeight / 2 + .5);
 
-                    scratchCtx.font = '950 ' + Math.max(42, Math.round(cssWidth * .14)) + 'px Pretendard, sans-serif';
-                    scratchCtx.fillText('당', cssWidth * .18, cssHeight * .62);
-                    scratchCtx.fillText('첨', cssWidth * .82, cssHeight * .62);
+                    if (coverCard && coverCard.id === 'cash-prize') return;
+                    const isPenaltyCard = coverCard && coverCard.id === 'penalty-waiver';
+                    const titleSize = isPenaltyCard
+                        ? Math.max(38, Math.round(cssWidth * .115))
+                        : Math.max(42, Math.round(cssWidth * .14));
+                    const leftX = isPenaltyCard ? cssWidth * .11 : cssWidth * .18;
+                    const rightX = isPenaltyCard ? cssWidth * .89 : cssWidth * .82;
+                    scratchCtx.font = '950 ' + titleSize + 'px Pretendard, sans-serif';
+                    scratchCtx.fillText('당', leftX, cssHeight * .62);
+                    scratchCtx.fillText('첨', rightX, cssHeight * .62);
                 };
 
                 const coverImage = new Image();
@@ -6378,7 +6500,9 @@
                             : '미당첨 결과가 멤버 현황에 공유됐어요.';
                     } else {
                         progress.textContent = saved.won
-                            ? '축하해요! 당첨 결과를 확인했어요.'
+                            ? (currentCard.id === 'cash-prize'
+                                ? '축하해요! ' + Number(saved.prizeAmount || 0).toLocaleString('ko-KR') + '원에 당첨됐어요.'
+                                : '축하해요! 당첨 결과를 확인했어요.')
                             : '결과를 확인했어요. 다음 행운도 기다리고 있어요.';
                     }
                 }
@@ -6422,13 +6546,20 @@
                     const progress = document.getElementById('scratch-progress');
                     if (title) title.textContent = card.title;
                     if (revealCard) {
-                        revealCard.classList.toggle('is-orange', card.theme === 'is-orange');
-                        revealCard.classList.remove('is-winner', 'is-loser', 'is-cover-ready');
+                        revealCard.classList.remove('is-orange', 'is-blue', 'is-winner', 'is-loser', 'is-cover-ready');
+                        if (card.theme === 'is-orange' || card.theme === 'is-blue') {
+                            revealCard.classList.add(card.theme);
+                        }
                     }
                     if (scratchCanvas) scratchCanvas.classList.remove('is-cleared');
                     renderScratchResultGrid(card, currentOutcome);
                     const playScreen = document.getElementById('scratch-play-screen');
-                    if (playScreen) playScreen.classList.toggle('is-orange', card.theme === 'is-orange');
+                    if (playScreen) {
+                        playScreen.classList.remove('is-orange', 'is-blue');
+                        if (card.theme === 'is-orange' || card.theme === 'is-blue') {
+                            playScreen.classList.add(card.theme);
+                        }
+                    }
                     if (progress) progress.textContent = currentOutcome.revealed
                         ? (currentOutcome.won ? '축하해요! 당첨 결과를 확인했어요.' : '이미 확인한 스크래치예요.')
                         : '메인 카드를 60% 이상 긁으면 결과가 열려요. 3회 참여 후 5분 동안 쉬어요.';
