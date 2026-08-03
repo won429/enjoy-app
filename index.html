@@ -813,6 +813,10 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        .home-scratch-question {
+            font-size: 12.5px !important;
+            font-weight: 650 !important;
+        }
         .home-scratch-action {
             position: relative;
             z-index: 1;
@@ -1117,6 +1121,23 @@
         .scratch-more-footer i {
             margin-right: 6px;
             color: var(--scratch-card-color);
+        }
+        .scratch-more-feed-person,
+        .scratch-more-feed-status {
+            transition: opacity .2s ease, transform .2s ease;
+        }
+        .scratch-more-footer.is-feed-leaving .scratch-more-feed-person,
+        .scratch-more-footer.is-feed-leaving .scratch-more-feed-status {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+        .scratch-more-footer.is-feed-entering .scratch-more-feed-person,
+        .scratch-more-footer.is-feed-entering .scratch-more-feed-status {
+            animation: scratchFeedEnter .34s cubic-bezier(.2,.8,.2,1) both;
+        }
+        @keyframes scratchFeedEnter {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .scratch-play-shell {
             min-height: 100%;
@@ -4116,9 +4137,7 @@
                         <button type="button" class="home-scratch-ticket is-mint" onclick="window.openScratchTicket('penalty-waiver', false)" aria-label="부과금 면제권 스크래치 열기">
                             <span class="home-scratch-watermark" aria-hidden="true">FREE</span>
                             <span class="home-scratch-copy">
-                                <span class="home-scratch-kicker">엔조이 스크래치 · 부과금 면제권</span>
-                                <strong>부과금은 잠시 쉬어~</strong>
-                                <span class="home-scratch-subline">면제권 당첨의 주인공은?</span>
+                                <strong class="home-scratch-question">면제권 당첨의 주인공은?</strong>
                             </span>
                             <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="penalty-waiver">3회 남음</span>
                         </button>
@@ -4126,9 +4145,7 @@
                         <button type="button" class="home-scratch-ticket is-orange" onclick="window.openScratchTicket('baemin-gift', false)" aria-label="배달의민족 상품권 스크래치 열기">
                             <span class="home-scratch-watermark" aria-hidden="true">5K</span>
                             <span class="home-scratch-copy">
-                                <span class="home-scratch-kicker">엔조이 스크래치 · 배달의민족 상품권</span>
-                                <strong>배달은 열린 문~</strong>
-                                <span class="home-scratch-subline">5천원 상품권의 주인공은?</span>
+                                <strong class="home-scratch-question">5천원 상품권의 주인공은?</strong>
                             </span>
                             <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="baemin-gift">3회 남음</span>
                         </button>
@@ -5969,6 +5986,9 @@
             let scratchUsageMemory = {};
             let memberScratchUsage = {};
             let sharedScratchResults = [];
+            let sharedScratchFeedIndexes = {};
+            let sharedScratchFeedSignature = '';
+            let scratchFeedRotationTimer = null;
             let scratchResultUnsub = null;
             let scratchSyncRetry = 0;
             let memberScratchLocks = {};
@@ -6189,28 +6209,60 @@
                 return Math.floor(hours / 24) + '일 전';
             }
 
-            function latestSharedResult(cardId) {
+            function sharedResultsForCard(cardId) {
                 return sharedScratchResults
                     .filter(function (item) { return item && item.cardId === cardId; })
-                    .sort(function (a, b) { return Number(b.createdAt || 0) - Number(a.createdAt || 0); })[0] || null;
+                    .sort(function (a, b) { return Number(b.createdAt || 0) - Number(a.createdAt || 0); });
             }
 
-            function renderSharedScratchStatus() {
+            function renderSharedScratchStatus(animate) {
                 cards.forEach(function (card) {
                     const footer = document.querySelector('.scratch-more-footer[data-scratch-card="' + card.id + '"]');
                     if (!footer) return;
                     const person = footer.querySelector('.scratch-more-feed-person');
                     const status = footer.querySelector('.scratch-more-feed-status');
-                    const latest = latestSharedResult(card.id);
                     if (!person || !status) return;
-                    if (!latest) {
+                    const cardResults = sharedResultsForCard(card.id);
+                    if (!cardResults.length) {
                         person.innerHTML = '<i class="fa-solid fa-circle-check"></i>엔조이 회원 전용';
                         status.textContent = '아직 참여 전';
                         return;
                     }
-                    person.innerHTML = '<i class="fa-solid fa-circle-check"></i>' + latest.name + '님';
-                    status.textContent = relativeScratchTime(latest.createdAt) + (latest.won ? ' 당첨!' : ' 미당첨!');
+                    const index = (Number(sharedScratchFeedIndexes[card.id]) || 0) % cardResults.length;
+                    const current = cardResults[index];
+                    person.innerHTML = '<i class="fa-solid fa-circle-check"></i>' + current.name + '님';
+                    status.textContent = relativeScratchTime(current.createdAt) + (current.won ? ' 당첨!' : ' 미당첨!');
+                    footer.classList.remove('is-feed-leaving', 'is-feed-entering');
+                    if (animate && cardResults.length > 1) {
+                        void footer.offsetWidth;
+                        footer.classList.add('is-feed-entering');
+                        window.setTimeout(function () { footer.classList.remove('is-feed-entering'); }, 380);
+                    }
                 });
+            }
+
+            function rotateSharedScratchStatus() {
+                const rotatingCards = cards.filter(function (card) {
+                    const footer = document.querySelector('.scratch-more-footer[data-scratch-card="' + card.id + '"]');
+                    return footer && sharedResultsForCard(card.id).length > 1;
+                });
+                if (!rotatingCards.length) return;
+                rotatingCards.forEach(function (card) {
+                    const footer = document.querySelector('.scratch-more-footer[data-scratch-card="' + card.id + '"]');
+                    if (footer) footer.classList.add('is-feed-leaving');
+                });
+                window.setTimeout(function () {
+                    rotatingCards.forEach(function (card) {
+                        const count = sharedResultsForCard(card.id).length;
+                        sharedScratchFeedIndexes[card.id] = ((Number(sharedScratchFeedIndexes[card.id]) || 0) + 1) % count;
+                    });
+                    renderSharedScratchStatus(true);
+                }, 210);
+            }
+
+            function startScratchFeedRotation() {
+                if (scratchFeedRotationTimer) return;
+                scratchFeedRotationTimer = window.setInterval(rotateSharedScratchStatus, 3800);
             }
 
             function subscribeSharedScratchResults() {
@@ -6244,6 +6296,14 @@
                             });
                         });
                         if (identity.isMember && ownMemberData) applyMemberScratchData(ownMemberData);
+                        const nextSignature = results
+                            .map(function (item) { return [item.name, item.cardId, item.won ? 1 : 0, item.createdAt].join(':'); })
+                            .sort()
+                            .join('|');
+                        if (nextSignature !== sharedScratchFeedSignature) {
+                            sharedScratchFeedSignature = nextSignature;
+                            sharedScratchFeedIndexes = {};
+                        }
                         sharedScratchResults = results;
                         renderSharedScratchStatus();
                         refreshScratchTimers();
@@ -6420,6 +6480,7 @@
                 }).join('');
                 refreshScratchTimers();
                 renderSharedScratchStatus();
+                startScratchFeedRotation();
             }
 
             function setScreenVisible(id, visible) {
