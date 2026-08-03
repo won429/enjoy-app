@@ -720,12 +720,12 @@
             width: 100%;
             height: 58px;
             min-height: 58px;
-            padding: 0 14px;
+            padding: 6px 13px;
             display: flex;
             align-items: center;
             gap: 11px;
             overflow: hidden;
-            border-radius: 18px;
+            border-radius: 16px;
             color: #fff;
             background: #43B7A5;
             border: 0;
@@ -736,14 +736,39 @@
         }
         .home-scratch-ticket.is-orange { background: #F28C18; }
         .home-scratch-ticket:active { transform: scale(.985); opacity: .84; }
+        .home-scratch-ticket::before {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            width: 70px;
+            height: 70px;
+            top: -43px;
+            right: -17px;
+            border: 9px solid rgba(255,255,255,.11);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .home-scratch-ticket::after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            width: 72px;
+            height: 55px;
+            right: 56px;
+            bottom: -24px;
+            background: rgba(255,255,255,.055);
+            clip-path: polygon(50% 0, 100% 100%, 0 100%);
+            transform: rotate(12deg);
+            pointer-events: none;
+        }
         .home-scratch-watermark {
             position: absolute;
             z-index: -1;
-            top: 50%;
-            right: 92px;
-            color: rgba(255,255,255,.14);
+            top: 55%;
+            right: 77px;
+            color: rgba(255,255,255,.17);
             font-family: 'Roboto Condensed', sans-serif;
-            font-size: 36px;
+            font-size: 44px;
             font-weight: 800;
             line-height: 1;
             transform: translateY(-50%);
@@ -756,12 +781,12 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 1px;
         }
         .home-scratch-kicker {
             font-family: 'Noto Sans KR', sans-serif;
             color: rgba(255,255,255,.68);
-            font-size: 7.5px;
+            font-size: 7px;
             font-weight: 400;
             line-height: 1;
             letter-spacing: -.02em !important;
@@ -770,7 +795,18 @@
             font-family: 'Noto Sans KR', sans-serif;
             overflow: hidden;
             color: #fff;
-            font-size: 14px;
+            font-size: 11.5px;
+            font-weight: 600;
+            line-height: 1.12;
+            letter-spacing: -.045em !important;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .home-scratch-subline {
+            overflow: hidden;
+            color: rgba(255,255,255,.90);
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 9.5px;
             font-weight: 600;
             line-height: 1.12;
             letter-spacing: -.045em !important;
@@ -781,13 +817,13 @@
             position: relative;
             z-index: 1;
             flex: 0 0 auto;
-            min-width: 62px;
-            padding: 6px 10px;
+            min-width: 59px;
+            padding: 6px 9px;
             border-radius: 999px;
             color: #191F28;
             background: rgba(255,255,255,.92);
             font-family: 'Noto Sans KR', sans-serif;
-            font-size: 9px;
+            font-size: 8.5px;
             font-weight: 700;
             text-align: center;
             font-variant-numeric: tabular-nums;
@@ -1145,34 +1181,90 @@
             gap: 8px;
         }
         .scratch-symbol-grid.is-cash-amount {
-            aspect-ratio: 3 / 2;
+            min-height: 0;
+            flex: 1;
+            aspect-ratio: auto;
+            margin-top: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 18px;
-            background: #EEF4FF;
-            border: 1px solid #D6E4FF;
+            background: transparent;
+            border: 0;
         }
         .scratch-cash-amount {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #3182F6;
+            width: 100%;
+            color: #191F28;
+            font-family: 'Noto Sans KR', 'Pretendard', sans-serif;
         }
         .scratch-cash-amount small {
-            margin-bottom: 7px;
-            color: #6B7684;
-            font-size: 11px;
-            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 13px;
+            color: #8B95A1;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: -.035em;
         }
-        .scratch-cash-amount strong {
-            font-family: 'Roboto Condensed', 'Noto Sans KR', sans-serif;
-            font-size: clamp(48px, 15vw, 72px);
+        .scratch-cash-amount small::before,
+        .scratch-cash-amount small::after {
+            content: "";
+            width: 18px;
+            height: 1px;
+            background: #D9DEE5;
+        }
+        .scratch-cash-amount-line {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            color: #3182F6;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .scratch-cash-amount-line strong {
+            font-family: 'Noto Sans KR', 'Pretendard', sans-serif;
+            font-size: clamp(68px, 21vw, 94px);
             font-weight: 900;
             line-height: 1;
-            letter-spacing: -.045em;
-            font-variant-numeric: tabular-nums;
+            letter-spacing: -.075em;
+        }
+        .scratch-cash-amount-line em {
+            margin-left: 8px;
+            color: #3182F6;
+            font-family: 'Noto Sans KR', 'Pretendard', sans-serif;
+            font-size: 30px;
+            font-style: normal;
+            font-weight: 800;
+            letter-spacing: -.05em;
+        }
+        .scratch-cash-amount-line.is-max strong {
+            font-size: clamp(60px, 17vw, 76px);
+        }
+        .scratch-reveal.is-cash-result .scratch-result-board {
+            justify-content: center;
+            padding: 27px 24px 25px;
+        }
+        .scratch-reveal.is-cash-result .scratch-result-rule {
+            color: #4E5968;
+            font-family: 'Noto Sans KR', 'Pretendard', sans-serif;
+            font-size: 15px;
+            font-weight: 650;
+            letter-spacing: -.04em !important;
+        }
+        .scratch-grid-result.is-cash-result {
+            min-height: 21px;
+            margin-top: 0;
+            color: #6B7684;
+            font-family: 'Noto Sans KR', 'Pretendard', sans-serif;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+        .scratch-grid-result.is-cash-result.is-winner {
+            color: #3182F6;
         }
         .scratch-symbol-cell {
             min-width: 0;
@@ -4024,8 +4116,9 @@
                         <button type="button" class="home-scratch-ticket is-mint" onclick="window.openScratchTicket('penalty-waiver', false)" aria-label="부과금 면제권 스크래치 열기">
                             <span class="home-scratch-watermark" aria-hidden="true">FREE</span>
                             <span class="home-scratch-copy">
-                                <span class="home-scratch-kicker">엔조이 스크래치</span>
-                                <strong>부과금 면제권</strong>
+                                <span class="home-scratch-kicker">엔조이 스크래치 · 부과금 면제권</span>
+                                <strong>부과금은 잠시 쉬어~</strong>
+                                <span class="home-scratch-subline">면제권 당첨의 주인공은?</span>
                             </span>
                             <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="penalty-waiver">3회 남음</span>
                         </button>
@@ -4033,8 +4126,9 @@
                         <button type="button" class="home-scratch-ticket is-orange" onclick="window.openScratchTicket('baemin-gift', false)" aria-label="배달의민족 상품권 스크래치 열기">
                             <span class="home-scratch-watermark" aria-hidden="true">5K</span>
                             <span class="home-scratch-copy">
-                                <span class="home-scratch-kicker">엔조이 스크래치</span>
-                                <strong>배달의민족 상품권</strong>
+                                <span class="home-scratch-kicker">엔조이 스크래치 · 배달의민족 상품권</span>
+                                <strong>배달은 열린 문~</strong>
+                                <span class="home-scratch-subline">5천원 상품권의 주인공은?</span>
                             </span>
                             <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="baemin-gift">3회 남음</span>
                         </button>
@@ -5872,8 +5966,8 @@
             let lastPoint = null;
             let lastCoverageCheck = 0;
             let scratchCoverReady = false;
-            let scratchUsageMemory = { attempts: 0, cooldownUntil: 0 };
-            let memberScratchUsage = { attempts: 0, cooldownUntil: 0 };
+            let scratchUsageMemory = {};
+            let memberScratchUsage = {};
             let sharedScratchResults = [];
             let scratchResultUnsub = null;
             let scratchSyncRetry = 0;
@@ -5881,7 +5975,8 @@
             let memberScratchStateReady = false;
             let memberScratchStateUid = '';
             let scratchOpenChecking = false;
-            const SCRATCH_USAGE_PREFIX = 'enjoy_scratch_usage_v1_';
+            const SCRATCH_USAGE_PREFIX = 'enjoy_scratch_usage_v2_';
+            const SCRATCH_LEGACY_USAGE_PREFIX = 'enjoy_scratch_usage_v1_';
             const SCRATCH_LOCAL_RESULTS_KEY = 'enjoy_scratch_results_v1';
             const SCRATCH_MAX_ATTEMPTS = 3;
             const SCRATCH_COOLDOWN_MS = 5 * 60 * 1000;
@@ -5918,19 +6013,28 @@
                 return normalized;
             }
 
+            function normalizeScratchUsageByCard(value) {
+                const source = value && typeof value === 'object' ? value : {};
+                const normalized = {};
+                cards.forEach(function (card) {
+                    normalized[card.id] = normalizeScratchUsage(source[card.resultKey] || source[card.id]);
+                });
+                return normalized;
+            }
+
             function resetMemberScratchMemoryIfNeeded(identity) {
                 const uid = identity && identity.isMember ? identity.uid : '';
                 if (memberScratchStateUid === uid) return;
                 memberScratchStateUid = uid;
                 memberScratchLocks = {};
-                memberScratchUsage = { attempts: 0, cooldownUntil: 0 };
+                memberScratchUsage = normalizeScratchUsageByCard({});
                 memberScratchStateReady = false;
             }
 
             function clearLegacyMemberScratchLocalData(identity) {
                 if (!(identity && identity.isMember && identity.uid)) return;
                 try {
-                    localStorage.removeItem(SCRATCH_USAGE_PREFIX + identity.uid);
+                    localStorage.removeItem(SCRATCH_LEGACY_USAGE_PREFIX + identity.uid);
                     localStorage.removeItem('enjoy_scratch_member_locks_v1_' + identity.uid);
                     const stored = JSON.parse(localStorage.getItem(SCRATCH_LOCAL_RESULTS_KEY) || '[]');
                     if (Array.isArray(stored)) {
@@ -5954,7 +6058,7 @@
                     if (item && item.cardId && item.won) locks[item.cardId] = true;
                 });
                 memberScratchLocks = locks;
-                memberScratchUsage = normalizeScratchUsage(data && data.scratchUsage);
+                memberScratchUsage = normalizeScratchUsageByCard(data && data.scratchUsageByCard);
                 memberScratchStateReady = true;
                 refreshScratchTimers();
             }
@@ -5977,47 +6081,49 @@
                 }
             }
 
-            function scratchUsageKey() {
+            function scratchUsageKey(card) {
                 const identity = currentScratchIdentity();
-                return SCRATCH_USAGE_PREFIX + (identity.uid || 'guest');
+                return SCRATCH_USAGE_PREFIX + (identity.uid || 'guest') + '_' + card.id;
             }
 
-            function loadScratchUsage() {
+            function loadScratchUsage(card) {
+                if (!card) return normalizeScratchUsage({});
                 const identity = currentScratchIdentity();
                 if (identity.isMember) {
                     resetMemberScratchMemoryIfNeeded(identity);
-                    memberScratchUsage = normalizeScratchUsage(memberScratchUsage);
-                    return memberScratchUsage;
+                    memberScratchUsage[card.id] = normalizeScratchUsage(memberScratchUsage[card.id]);
+                    return memberScratchUsage[card.id];
                 }
-                let state = scratchUsageMemory;
+                let state = scratchUsageMemory[card.id] || {};
                 let storedCooldownUntil = 0;
                 try {
-                    const parsed = JSON.parse(localStorage.getItem(scratchUsageKey()) || 'null');
+                    const parsed = JSON.parse(localStorage.getItem(scratchUsageKey(card)) || 'null');
                     if (parsed && typeof parsed === 'object') {
                         state = parsed;
                         storedCooldownUntil = Number(parsed.cooldownUntil) || 0;
                     }
                 } catch (e) {}
                 state = normalizeScratchUsage(state);
-                if (storedCooldownUntil && !state.cooldownUntil) saveScratchUsage(state);
-                scratchUsageMemory = state;
+                if (storedCooldownUntil && !state.cooldownUntil) saveScratchUsage(card, state);
+                scratchUsageMemory[card.id] = state;
                 return state;
             }
 
-            function saveScratchUsage(state) {
+            function saveScratchUsage(card, state) {
+                if (!card) return;
                 const identity = currentScratchIdentity();
                 const normalized = normalizeScratchUsage(state);
                 if (identity.isMember) {
                     resetMemberScratchMemoryIfNeeded(identity);
-                    memberScratchUsage = normalized;
+                    memberScratchUsage[card.id] = normalized;
                     return;
                 }
-                scratchUsageMemory = normalized;
-                try { localStorage.setItem(scratchUsageKey(), JSON.stringify(scratchUsageMemory)); } catch (e) {}
+                scratchUsageMemory[card.id] = normalized;
+                try { localStorage.setItem(scratchUsageKey(card), JSON.stringify(normalized)); } catch (e) {}
             }
 
-            function scratchCooldownRemaining() {
-                const state = loadScratchUsage();
+            function scratchCooldownRemaining(card) {
+                const state = loadScratchUsage(card);
                 return Math.max(0, state.cooldownUntil - Date.now());
             }
 
@@ -6029,12 +6135,14 @@
             }
 
             function refreshScratchTimers() {
-                const state = loadScratchUsage();
-                const remaining = Math.max(0, state.cooldownUntil - Date.now());
                 const identity = currentScratchIdentity();
                 if (identity.isMember) resetMemberScratchMemoryIfNeeded(identity);
                 document.querySelectorAll('.scratch-attempt-timer').forEach(function (element) {
                     const cardId = element.getAttribute('data-scratch-timer-card') || '';
+                    const card = cards.find(function (item) { return item.id === cardId; });
+                    if (!card) return;
+                    const state = loadScratchUsage(card);
+                    const remaining = Math.max(0, state.cooldownUntil - Date.now());
                     const locked = !!(identity.isMember && cardId && memberScratchLocks[cardId]);
                     const label = locked
                         ? '당첨 완료'
@@ -6049,15 +6157,15 @@
                 });
             }
 
-            function consumeScratchAttempt() {
-                const state = loadScratchUsage();
+            function consumeScratchAttempt(card) {
+                const state = loadScratchUsage(card);
                 if (state.cooldownUntil > Date.now()) return state;
                 state.attempts += 1;
                 if (state.attempts >= SCRATCH_MAX_ATTEMPTS) {
                     state.attempts = SCRATCH_MAX_ATTEMPTS;
                     state.cooldownUntil = Date.now() + SCRATCH_COOLDOWN_MS;
                 }
-                saveScratchUsage(state);
+                saveScratchUsage(card, state);
                 refreshScratchTimers();
                 return state;
             }
@@ -6162,7 +6270,7 @@
                     prizeAmount: Number(record.prizeAmount) || 0,
                     createdAt: record.createdAt
                 };
-                payload.scratchUsage = normalizeScratchUsage(memberScratchUsage);
+                payload['scratchUsageByCard.' + card.resultKey] = normalizeScratchUsage(memberScratchUsage[card.id]);
                 try {
                     await window.fsUpdateDoc(window.fsDoc('members', identity.uid), payload);
                     return true;
@@ -6247,24 +6355,29 @@
                 const grid = document.getElementById('scratch-symbol-grid');
                 const result = document.getElementById('scratch-grid-result');
                 const rule = document.getElementById('scratch-result-rule');
+                const revealCard = document.getElementById('scratch-reveal-card');
                 if (!grid || !result) return;
                 const isCash = card.id === 'cash-prize';
+                if (revealCard) revealCard.classList.toggle('is-cash-result', isCash);
+                result.classList.toggle('is-cash-result', isCash);
                 if (rule) {
                     rule.textContent = isCash
-                        ? '긁으면 오늘의 상금이 바로 공개돼요!'
+                        ? '오늘의 상금 결과'
                         : '같은 상품 3개가 나오면 당첨!';
                 }
                 grid.classList.toggle('is-cash-amount', isCash);
                 if (isCash) {
                     const amount = Math.max(0, Number(outcome.prizeAmount) || 0);
                     grid.innerHTML = '<span class="scratch-cash-amount">' +
-                        '<small>오늘의 상금</small>' +
-                        '<strong>' + amount.toLocaleString('ko-KR') + '원</strong>' +
+                        '<small>당첨된 금액</small>' +
+                        '<span class="scratch-cash-amount-line' + (amount >= 10000 ? ' is-max' : '') + '">' +
+                            '<strong>' + amount.toLocaleString('ko-KR') + '</strong><em>원</em>' +
+                        '</span>' +
                     '</span>';
                     result.classList.toggle('is-winner', amount > 0);
                     result.textContent = amount > 0
-                        ? '상금에 당첨됐어요!'
-                        : '이번 상금은 0원이에요.';
+                        ? '축하해요! 오늘의 상금에 당첨됐어요.'
+                        : '아쉽지만, 이번 상금은 0원이에요.';
                     return;
                 }
                 const neutralLabels = ['수', '일', '요', '행', '운', '복'];
@@ -6481,7 +6594,7 @@
                 saved.revealed = true;
                 saved.revealedAt = saved.revealedAt || Date.now();
                 currentOutcome = saved;
-                consumeScratchAttempt();
+                consumeScratchAttempt(currentCard);
                 storeScratchResult(currentCard, saved);
 
                 const card = document.getElementById('scratch-reveal-card');
@@ -6529,7 +6642,7 @@
                         if (window.enjoyAlert) window.enjoyAlert('다음 스크래치 이벤트에 도전해주세요.');
                         return;
                     }
-                    const cooldown = scratchCooldownRemaining();
+                    const cooldown = scratchCooldownRemaining(card);
                     if (cooldown > 0) {
                         refreshScratchTimers();
                         if (window.enjoyAlert) window.enjoyAlert(formatCountdown(cooldown) + ' 뒤에 다시 참여할 수 있어요.');
@@ -6546,7 +6659,7 @@
                     const progress = document.getElementById('scratch-progress');
                     if (title) title.textContent = card.title;
                     if (revealCard) {
-                        revealCard.classList.remove('is-orange', 'is-blue', 'is-winner', 'is-loser', 'is-cover-ready');
+                        revealCard.classList.remove('is-orange', 'is-blue', 'is-winner', 'is-loser', 'is-cover-ready', 'is-cash-result');
                         if (card.theme === 'is-orange' || card.theme === 'is-blue') {
                             revealCard.classList.add(card.theme);
                         }
@@ -6562,7 +6675,7 @@
                     }
                     if (progress) progress.textContent = currentOutcome.revealed
                         ? (currentOutcome.won ? '축하해요! 당첨 결과를 확인했어요.' : '이미 확인한 스크래치예요.')
-                        : '메인 카드를 60% 이상 긁으면 결과가 열려요. 3회 참여 후 5분 동안 쉬어요.';
+                        : '메인 카드를 60% 이상 긁으면 결과가 열려요. 이 스크래치는 3회 참여 후 5분 동안 쉬어요.';
 
                     setScreenVisible('scratch-play-screen', true);
                     const scroll = document.querySelector('#scratch-play-screen .scratch-screen-scroll');
