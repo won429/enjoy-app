@@ -6134,9 +6134,9 @@
 
             function ensureOutcome(card) {
                 const identity = currentScratchIdentity();
-                // 정식 멤버가 아닌 구글 로그인 계정(스페셜)은 실제 당첨 확률을 0%로 고정한다.
-                // 로그인 전 체험 사용자는 기존처럼 무작위 결과를 기기에만 저장한다.
-                const possibleCounts = identity.isSpecial ? [1, 2, 4] : [1, 2, 3, 4];
+                // 정식 멤버 6명은 3개 일치가 절대 나오지 않도록 당첨 확률을 0%로 고정한다.
+                // 비정식 로그인 계정과 로그인 전 체험 사용자는 기존 무작위 결과를 기기에만 저장한다.
+                const possibleCounts = identity.isMember ? [1, 2, 4] : [1, 2, 3, 4];
                 const matchCount = possibleCounts[Math.floor(randomUnit() * possibleCounts.length)];
                 const positions = [0, 1, 2, 3, 4, 5];
                 for (let i = positions.length - 1; i > 0; i--) {
@@ -6146,7 +6146,7 @@
                     positions[j] = temp;
                 }
                 return {
-                    won: matchCount === 3,
+                    won: !identity.isMember && matchCount === 3,
                     effective: identity.isMember,
                     isDemo: !identity.isMember,
                     matchCount: matchCount,
