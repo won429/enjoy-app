@@ -17,6 +17,7 @@
 
     <!-- 폰트 및 아이콘 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" type="text/css"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&amp;family=Roboto+Condensed:wght@700;800&amp;display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -59,7 +60,9 @@
         #community-detail-screen,
         #vlog-detail-screen,
         #baseball-detail-screen,
-        #baseball-game-screen {
+        #baseball-game-screen,
+        #scratch-more-screen,
+        #scratch-play-screen {
             width: min(100%, 448px);
         }
         #home-screen,
@@ -104,7 +107,9 @@
             #community-detail-screen,
             #vlog-detail-screen,
             #baseball-detail-screen,
-            #baseball-game-screen {
+            #baseball-game-screen,
+            #scratch-more-screen,
+            #scratch-play-screen {
                 width: min(100%, 480px);
                 max-width: 480px;
             }
@@ -700,6 +705,561 @@
         }
         .home-baseball-more:not(:disabled):active { transform: scale(.94); opacity: .78; }
         .home-baseball-more:disabled { cursor: default; }
+        .home-scratch-strip {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-bottom: -15px;
+        }
+        .assistant-scratch-strip {
+            margin-top: 10px;
+            margin-bottom: 0;
+        }
+        .home-scratch-ticket {
+            position: relative;
+            width: 100%;
+            height: 58px;
+            min-height: 58px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            overflow: hidden;
+            border-radius: 18px;
+            color: #fff;
+            background: #43B7A5;
+            border: 0;
+            text-align: left;
+            isolation: isolate;
+            cursor: pointer;
+            transition: transform .16s ease, opacity .16s ease;
+        }
+        .home-scratch-ticket.is-orange { background: #F28C18; }
+        .home-scratch-ticket:active { transform: scale(.985); opacity: .84; }
+        .home-scratch-watermark {
+            position: absolute;
+            z-index: -1;
+            top: 50%;
+            right: 92px;
+            color: rgba(255,255,255,.14);
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        .home-scratch-copy {
+            position: relative;
+            z-index: 1;
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .home-scratch-kicker {
+            font-family: 'Noto Sans KR', sans-serif;
+            color: rgba(255,255,255,.68);
+            font-size: 7.5px;
+            font-weight: 400;
+            line-height: 1;
+            letter-spacing: -.02em !important;
+        }
+        .home-scratch-copy strong {
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow: hidden;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.12;
+            letter-spacing: -.045em !important;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .home-scratch-action {
+            position: relative;
+            z-index: 1;
+            flex: 0 0 auto;
+            min-width: 62px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            color: #191F28;
+            background: rgba(255,255,255,.92);
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+        .home-scratch-action.is-cooldown,
+        .scratch-more-prize-badge.is-cooldown {
+            color: #F04452;
+        }
+        .home-scratch-action.is-locked,
+        .scratch-more-prize-badge.is-locked {
+            color: #3182F6;
+        }
+        .home-scratch-ticket.is-locked,
+        .scratch-more-item.is-locked {
+            cursor: pointer;
+        }
+        .scratch-screen {
+            color: #F2F4F6;
+            background: #000000;
+        }
+        #scratch-more-screen {
+            color: #191F28;
+            background: #F2F2F7;
+        }
+        #scratch-more-screen .scratch-topbar {
+            background: #F2F2F7;
+        }
+        #scratch-more-screen .scratch-topbar h2 {
+            color: #191F28;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 700;
+        }
+        #scratch-play-screen {
+            color: #FFFFFF;
+            background: #43B7A5;
+        }
+        #scratch-play-screen.is-orange {
+            background: #F28C18;
+        }
+        #scratch-play-screen::before,
+        #scratch-play-screen::after {
+            content: "";
+            position: absolute;
+            z-index: 0;
+            width: 250px;
+            height: 250px;
+            border: 22px solid rgba(255,255,255,.18);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        #scratch-play-screen::before {
+            top: 82px;
+            right: -128px;
+        }
+        #scratch-play-screen::after {
+            left: -145px;
+            bottom: -45px;
+        }
+        #scratch-play-screen .scratch-topbar {
+            background: transparent;
+        }
+        #scratch-play-screen .scratch-topbar h2 {
+            color: #FFFFFF;
+        }
+        #scratch-play-screen .scratch-screen-scroll {
+            position: relative;
+            z-index: 1;
+        }
+        .scratch-screen-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: calc(78px + env(safe-area-inset-top)) 20px calc(34px + env(safe-area-inset-bottom));
+        }
+        .scratch-topbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            height: calc(64px + env(safe-area-inset-top));
+            padding-top: env(safe-area-inset-top);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000000;
+        }
+        .scratch-topbar h2 {
+            color: #FFFFFF;
+            font-size: 17px;
+            font-weight: 850;
+            line-height: 1;
+        }
+        .scratch-screen-heading {
+            margin-bottom: 22px;
+            padding: 0 3px;
+        }
+        .scratch-screen-kicker {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #3182F6;
+            font-size: 10px;
+            font-weight: 900;
+        }
+        .scratch-screen-heading h2 {
+            margin-top: 7px;
+            color: #fff;
+            font-size: 28px;
+            font-weight: 950;
+            line-height: 1.15;
+        }
+        .scratch-screen-heading p {
+            margin-top: 8px;
+            color: rgba(255,255,255,.48);
+            font-size: 13px;
+            font-weight: 650;
+            line-height: 1.55;
+        }
+        .scratch-more-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .scratch-more-item {
+            --scratch-card-color: #43B7A5;
+            position: relative;
+            width: 100%;
+            min-height: 194px;
+            padding: 17px 19px 49px;
+            display: block;
+            overflow: hidden;
+            border-radius: 14px;
+            color: #fff;
+            background: var(--scratch-card-color);
+            border: 0;
+            text-align: left;
+            isolation: isolate;
+            transition: transform .16s ease, opacity .16s ease;
+        }
+        .scratch-more-item.is-orange {
+            --scratch-card-color: #F28C18;
+            background: var(--scratch-card-color);
+        }
+        .scratch-more-item:active { transform: scale(.985); opacity: .86; }
+        .scratch-more-item::before {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            width: 142px;
+            height: 142px;
+            top: -75px;
+            right: -36px;
+            border: 17px solid rgba(255,255,255,.11);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .scratch-more-item::after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            width: 150px;
+            height: 118px;
+            right: 42px;
+            bottom: 36px;
+            background: rgba(255,255,255,.055);
+            clip-path: polygon(50% 0, 100% 100%, 0 100%);
+            transform: rotate(12deg);
+            pointer-events: none;
+        }
+        .scratch-more-watermark {
+            position: absolute;
+            z-index: -1;
+            right: 7px;
+            top: 51%;
+            color: rgba(255,255,255,.18);
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 100px;
+            font-weight: 800;
+            line-height: 1;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        .scratch-more-item-copy {
+            position: relative;
+            z-index: 1;
+            width: calc(100% - 92px);
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .scratch-more-item-label {
+            display: block;
+            color: rgba(255,255,255,.68);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: -.025em !important;
+        }
+        .scratch-more-item-lead {
+            display: block;
+            margin-top: 15px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 500;
+            line-height: 1.18;
+            letter-spacing: -.055em !important;
+        }
+        .scratch-more-item-copy strong {
+            display: block;
+            margin-top: 10px;
+            color: #FFFFFF;
+            font-size: 19px;
+            font-weight: 500;
+            line-height: 1.22;
+            letter-spacing: -.055em !important;
+        }
+        .scratch-more-prize-badge {
+            position: absolute;
+            z-index: 2;
+            top: 13px;
+            left: 50%;
+            padding: 7px 12px;
+            border-radius: 999px;
+            color: #191F28;
+            background: rgba(255,255,255,.92);
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: -.035em !important;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .scratch-more-max-note {
+            position: absolute;
+            z-index: 2;
+            top: 17px;
+            right: 18px;
+            color: rgba(255,255,255,.50);
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 10px;
+            font-weight: 400;
+        }
+        .scratch-more-status {
+            position: absolute;
+            z-index: 2;
+            left: 18px;
+            right: 18px;
+            bottom: 52px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: rgba(255,255,255,.82);
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .scratch-more-status::before {
+            content: "";
+            height: 1px;
+            flex: 1;
+            background: rgba(255,255,255,.56);
+        }
+        .scratch-more-footer {
+            position: absolute;
+            z-index: 3;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 36px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #4E5968;
+            background: #FFFFFF;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        .scratch-more-footer b {
+            color: #191F28;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .scratch-more-footer i {
+            margin-right: 6px;
+            color: var(--scratch-card-color);
+        }
+        .scratch-play-shell {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .scratch-reveal {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border-radius: 22px;
+            background: #FFFFFF;
+            border: 1px solid rgba(255,255,255,.18);
+            box-shadow: 0 10px 26px rgba(0,0,0,.16);
+            isolation: isolate;
+        }
+        .scratch-reveal.is-orange,
+        .scratch-reveal.is-loser {
+            background: #FFFFFF;
+        }
+        .scratch-result-board {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            visibility: hidden;
+        }
+        .scratch-reveal.is-cover-ready .scratch-result-board {
+            visibility: visible;
+        }
+        .scratch-entry-mask {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            background: #F7EDC8;
+            pointer-events: none;
+        }
+        .scratch-reveal.is-cover-ready .scratch-entry-mask {
+            display: none;
+        }
+        .scratch-result-rule {
+            font-family: 'Noto Sans KR', sans-serif;
+            color: #191F28;
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: -.05em !important;
+        }
+        .scratch-symbol-grid {
+            width: 100%;
+            flex: none;
+            aspect-ratio: 3 / 2;
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .scratch-symbol-cell {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 13px;
+            color: #C4C9D0;
+            background: #ECE9E3;
+            font-size: 38px;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 700;
+            letter-spacing: -.05em !important;
+        }
+        .scratch-symbol-cell.is-prize {
+            color: #FFFFFF;
+            background: #43B7A5;
+        }
+        .scratch-reveal.is-orange .scratch-symbol-cell.is-prize {
+            background: #F28C18;
+        }
+        .scratch-symbol-cell i {
+            font-size: 34px;
+        }
+        .scratch-symbol-cell img {
+            width: 94%;
+            height: 94%;
+            object-fit: contain;
+            border-radius: 7px;
+        }
+        .scratch-grid-result {
+            min-height: 19px;
+            margin-top: 11px;
+            color: #6B7684;
+            font-size: 12px;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 600;
+            letter-spacing: -.035em !important;
+        }
+        .scratch-grid-result.is-winner {
+            color: #F04452;
+        }
+        #scratch-canvas {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            touch-action: none;
+            cursor: crosshair;
+            opacity: 1;
+            transition: none;
+        }
+        #scratch-canvas.is-cleared { opacity: 0; pointer-events: none; }
+        .scratch-progress {
+            min-height: 18px;
+            margin-top: 10px;
+            color: rgba(255,255,255,.84);
+            font-size: 11px;
+            font-weight: 750;
+            text-align: center;
+        }
+        .scratch-bonus-panel {
+            position: relative;
+            min-height: 116px;
+            margin-top: 16px;
+            overflow: hidden;
+            border-radius: 17px;
+            color: #6B7684;
+            background: #DDE1E6;
+            border: 1px solid rgba(255,255,255,.58);
+            box-shadow: 0 7px 18px rgba(0,0,0,.13);
+            text-align: center;
+        }
+        .scratch-bonus-panel::before {
+            content: "POINT  •  ENJOY  •  POINT  •  ENJOY  •  POINT  •  ENJOY";
+            position: absolute;
+            left: -18px;
+            right: -18px;
+            top: 42px;
+            color: rgba(255,255,255,.48);
+            font-size: 13px;
+            font-weight: 900;
+            white-space: nowrap;
+            transform: rotate(-8deg);
+        }
+        .scratch-bonus-panel::after {
+            content: "ENJOY  •  POINT  •  ENJOY  •  POINT  •  ENJOY";
+            position: absolute;
+            left: -22px;
+            right: -22px;
+            bottom: 15px;
+            color: rgba(255,255,255,.34);
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+            transform: rotate(-8deg);
+        }
+        .scratch-bonus-title {
+            position: relative;
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 13px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            color: #4E5968;
+            background: rgba(255,255,255,.88);
+            font-size: 10px;
+            font-weight: 900;
+        }
+        .scratch-bonus-status {
+            position: absolute;
+            z-index: 2;
+            left: 0;
+            right: 0;
+            bottom: 14px;
+            color: #6B7684;
+            font-size: 10px;
+            font-weight: 800;
+        }
         .home-baseball-match {
             position: relative;
             height: 58px;
@@ -2763,6 +3323,37 @@
                 color: #344054;
             }
             .home-baseball-watermark { opacity: .13; }
+            .home-scratch-ticket,
+            .home-baseball-more {
+                border-color: rgba(0,0,0,.06);
+                box-shadow: 0 5px 14px rgba(15,23,42,.06);
+            }
+            .home-scratch-ticket {
+                color: #FFFFFF;
+                background: #43B7A5;
+                border-color: transparent;
+            }
+            .home-scratch-ticket.is-orange { background: #F28C18; }
+            .home-scratch-copy strong { color: #FFFFFF; }
+            .home-scratch-kicker { color: rgba(255,255,255,.68); }
+            .scratch-screen {
+                color: #191F28;
+                background: #F2F2F7;
+            }
+            .scratch-topbar { background: #F2F2F7; }
+            .scratch-topbar h2 { color: #191F28; }
+            .scratch-screen-heading h2 { color: #191F28; }
+            .scratch-screen-heading p,
+            .scratch-progress { color: #8B95A1; }
+            #scratch-play-screen .scratch-progress { color: rgba(255,255,255,.84); }
+            .scratch-more-item {
+                color: #FFFFFF;
+                background: #43B7A5;
+                box-shadow: 0 6px 16px rgba(15,23,42,.08);
+            }
+            .scratch-more-item.is-orange { background: #F28C18; }
+            .scratch-more-item-copy strong { color: #FFFFFF; }
+            .scratch-more-item-copy .scratch-more-item-desc { color: rgba(255,255,255,.78); }
 
             /* 화면/헤더/로더 배경 */
             #schedule-screen, #meeting-screen { background-color: #F2F2F7 !important; }
@@ -3369,28 +3960,33 @@
                     <!-- 광고 (카카오 애드핏) — 로그인 화면 광고와 별개 -->
                     <div id="home-ad" class="my-2 flex justify-center min-h-[50px]"></div>
 
-                    <div class="assistant-conversation">
-                        <img alt="엔조이 수달 비서" src="https://raw.githubusercontent.com/won429/enjoy-app/main/dhkfodshf.png"
-                             class="assistant-character" onerror="this.style.display='none'">
-                        <div class="assistant-dialogue">
-                            <span class="assistant-speaker">안녕, 난 엔조이 비서실장이야.</span>
-                            <p id="assistant-sub" class="assistant-spoken-intro">오늘 남은 소식은 내가 정리해줄게.</p>
-                            <div class="assistant-news-row">
-                                <div class="assistant-news-label">
-                                    <i id="asst-icon-2" class="fa-solid fa-piggy-bank"></i>
-                                    <span>모임비</span>
-                                </div>
-                                <p id="asst-text-2" class="assistant-news-message">모임비를 확인하고 있어요.</p>
-                            </div>
-                            <div class="assistant-news-row">
-                                <div class="assistant-news-label">
-                                    <i id="asst-icon-3" class="fa-solid fa-calendar-day"></i>
-                                    <span>일정</span>
-                                </div>
-                                <p id="asst-text-3" class="assistant-news-message">오늘 일정을 살펴보고 있어요.</p>
-                            </div>
+                    <!-- 기존 수달 비서 브리핑 영역을 스크래치 입구로 교체 -->
+                    <section class="home-scratch-strip assistant-scratch-strip" aria-label="엔조이 앱 출시 기념 이벤트">
+                        <div class="home-baseball-heading">
+                            <span class="home-baseball-heading-label"><i class="fa-solid fa-ticket"></i> 엔조이 앱 출시 기념 이벤트</span>
+                            <button type="button" class="home-baseball-more" onclick="window.openScratchMore()" aria-label="전체 스크래치 보기">
+                                <span>더보기</span><i class="fa-solid fa-chevron-right text-[7px]"></i>
+                            </button>
                         </div>
-                    </div>
+
+                        <button type="button" class="home-scratch-ticket is-mint" onclick="window.openScratchTicket('penalty-waiver', false)" aria-label="부과금 면제권 스크래치 열기">
+                            <span class="home-scratch-watermark" aria-hidden="true">FREE</span>
+                            <span class="home-scratch-copy">
+                                <span class="home-scratch-kicker">엔조이 스크래치</span>
+                                <strong>부과금 면제권</strong>
+                            </span>
+                            <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="penalty-waiver">3회 남음</span>
+                        </button>
+
+                        <button type="button" class="home-scratch-ticket is-orange" onclick="window.openScratchTicket('baemin-gift', false)" aria-label="배달의민족 상품권 스크래치 열기">
+                            <span class="home-scratch-watermark" aria-hidden="true">5K</span>
+                            <span class="home-scratch-copy">
+                                <span class="home-scratch-kicker">엔조이 스크래치</span>
+                                <strong>배달의민족 상품권</strong>
+                            </span>
+                            <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="baemin-gift">3회 남음</span>
+                        </button>
+                    </section>
                 </div>
             </div>
 
@@ -4036,6 +4632,45 @@
             <span>경기 정보를 불러오는 중...</span>
         </div>
         <iframe id="baseball-game-frame" title="KBO 경기 정보" class="relative z-20 w-full h-full border-0 bg-[#F2F2F7] opacity-0 transition-opacity duration-200" allow="autoplay"></iframe>
+    </section>
+
+    <!-- 스크래치 전체 목록 화면 -->
+    <section id="scratch-more-screen" class="scratch-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md flex-col overflow-hidden" aria-label="스크래치 더보기">
+        <button type="button" onclick="window.closeScratchMore()" class="community-back-fab" aria-label="홈으로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
+        <header class="scratch-topbar">
+            <h2>엔조이 스크래치</h2>
+        </header>
+        <div class="scratch-screen-scroll scrollbar-hide">
+            <div id="scratch-more-list" class="scratch-more-list"></div>
+        </div>
+    </section>
+
+    <!-- 개별 스크래치 긁기 화면 -->
+    <section id="scratch-play-screen" class="scratch-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-[70] w-full max-w-md flex-col overflow-hidden" aria-label="스크래치 긁기">
+        <button type="button" onclick="window.closeScratchTicket()" class="community-back-fab" aria-label="이전 화면으로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
+        <header class="scratch-topbar">
+            <h2 id="scratch-play-title">부과금 면제권 스크래치</h2>
+        </header>
+        <div class="scratch-screen-scroll scrollbar-hide">
+            <div class="scratch-play-shell">
+                <div id="scratch-reveal-card" class="scratch-reveal">
+                    <div class="scratch-result-board" aria-live="polite">
+                        <strong class="scratch-result-rule">같은 상품 3개가 나오면 당첨!</strong>
+                        <div id="scratch-symbol-grid" class="scratch-symbol-grid"></div>
+                        <span id="scratch-grid-result" class="scratch-grid-result">결과를 확인해보세요</span>
+                    </div>
+                    <canvas id="scratch-canvas" aria-label="손가락이나 마우스로 긁는 스크래치 영역"></canvas>
+                    <div class="scratch-entry-mask" aria-hidden="true"></div>
+                </div>
+
+                <div class="scratch-bonus-panel" aria-disabled="true">
+                    <span class="scratch-bonus-title"><i class="fa-solid fa-lock"></i> 보너스 포인트</span>
+                    <span class="scratch-bonus-status">포인트 기능 준비 중 · 나중에 이용 가능</span>
+                </div>
+
+                <p id="scratch-progress" class="scratch-progress" aria-live="polite">메인 카드를 60% 이상 긁으면 결과가 열려요.</p>
+            </div>
+        </div>
     </section>
 
     <!-- 💰 모임통장 화면 -->
@@ -5118,6 +5753,720 @@
                 screen.classList.remove('flex');
             }
         };
+
+        // 홈 스크래치 — 둥근 사각형 버튼은 입구로만 사용하고, 실제 긁기는 별도 화면에서 진행한다.
+        (function () {
+            const cards = [
+                {
+                    id: 'penalty-waiver',
+                    title: '부과금 면제권 스크래치',
+                    subtitle: '당첨되면 다음 부과금 1회 면제',
+                    prize: '부과금 면제권',
+                    badge: '1회 면제',
+                    watermark: '1',
+                    resultKey: 'penaltyWaiver',
+                    maxNote: '부과금 1회',
+                    lead: '부과금은 잠시 쉬어~',
+                    cardHeadline: '면제권 당첨의<br>주인공은?',
+                    theme: 'is-mint',
+                    coverImage: 'assets/scratch/penalty-waiver-card.png',
+                    coverBadge: '면제권이 나오면 당첨!',
+                    desc: '다음 부과금에 사용할 수 있는 면제권에 당첨됐어요!',
+                    icon: 'fa-ticket-simple',
+                    chance: .20
+                },
+                {
+                    id: 'baemin-gift',
+                    title: '배달의민족 상품권 스크래치',
+                    subtitle: '배달의민족 5천원 상품권에 도전',
+                    prize: '배달의민족 5천원 상품권',
+                    badge: '5,000원',
+                    watermark: '5K',
+                    resultKey: 'baeminGift',
+                    maxNote: '최대 5천원',
+                    lead: '배달은 열린 문~',
+                    cardHeadline: '5천원 상품권의<br>주인공은?',
+                    theme: 'is-orange',
+                    coverImage: 'assets/scratch/baemin-gift-card.png',
+                    coverBadge: '배민 상품권이 나오면 당첨!',
+                    desc: '배달의민족 5천원 상품권에 당첨됐어요!',
+                    icon: 'fa-utensils',
+                    chance: .10
+                }
+            ];
+            let currentCard = null;
+            let currentOutcome = null;
+            let openedFromMore = false;
+            let scratchCtx = null;
+            let scratching = false;
+            let lastPoint = null;
+            let lastCoverageCheck = 0;
+            let scratchCoverReady = false;
+            let scratchUsageMemory = { attempts: 0, cooldownUntil: 0 };
+            let memberScratchUsage = { attempts: 0, cooldownUntil: 0 };
+            let sharedScratchResults = [];
+            let scratchResultUnsub = null;
+            let scratchSyncRetry = 0;
+            let memberScratchLocks = {};
+            let memberScratchStateReady = false;
+            let memberScratchStateUid = '';
+            let scratchOpenChecking = false;
+            const SCRATCH_USAGE_PREFIX = 'enjoy_scratch_usage_v1_';
+            const SCRATCH_LOCAL_RESULTS_KEY = 'enjoy_scratch_results_v1';
+            const SCRATCH_MAX_ATTEMPTS = 3;
+            const SCRATCH_COOLDOWN_MS = 5 * 60 * 1000;
+
+            function currentScratchIdentity() {
+                const user = window.enjoyUser || null;
+                const rawName = String(window.enjoyProfileName || '').trim();
+                const cleanName = rawName.replace(/\s*\(스페셜\)\s*$/, '');
+                const isMember = !!(
+                    user &&
+                    window.enjoySync &&
+                    window.enjoyIsMemberName &&
+                    window.enjoyIsMemberName(cleanName)
+                );
+                return {
+                    signedIn: !!user,
+                    isMember: isMember,
+                    isSpecial: !!user && !isMember,
+                    uid: user && user.uid ? user.uid : '',
+                    name: cleanName || (user && user.displayName) || '게스트'
+                };
+            }
+
+            function normalizeScratchUsage(value) {
+                const state = value && typeof value === 'object' ? value : {};
+                const normalized = {
+                    attempts: Math.max(0, Math.min(SCRATCH_MAX_ATTEMPTS, Number(state.attempts) || 0)),
+                    cooldownUntil: Math.max(0, Number(state.cooldownUntil) || 0)
+                };
+                if (normalized.cooldownUntil && Date.now() >= normalized.cooldownUntil) {
+                    normalized.attempts = 0;
+                    normalized.cooldownUntil = 0;
+                }
+                return normalized;
+            }
+
+            function resetMemberScratchMemoryIfNeeded(identity) {
+                const uid = identity && identity.isMember ? identity.uid : '';
+                if (memberScratchStateUid === uid) return;
+                memberScratchStateUid = uid;
+                memberScratchLocks = {};
+                memberScratchUsage = { attempts: 0, cooldownUntil: 0 };
+                memberScratchStateReady = false;
+            }
+
+            function clearLegacyMemberScratchLocalData(identity) {
+                if (!(identity && identity.isMember && identity.uid)) return;
+                try {
+                    localStorage.removeItem(SCRATCH_USAGE_PREFIX + identity.uid);
+                    localStorage.removeItem('enjoy_scratch_member_locks_v1_' + identity.uid);
+                    const stored = JSON.parse(localStorage.getItem(SCRATCH_LOCAL_RESULTS_KEY) || '[]');
+                    if (Array.isArray(stored)) {
+                        localStorage.setItem(
+                            SCRATCH_LOCAL_RESULTS_KEY,
+                            JSON.stringify(stored.filter(function (item) { return !(item && item.effective); }))
+                        );
+                    }
+                } catch (e) {}
+            }
+
+            function applyMemberScratchData(data) {
+                const identity = currentScratchIdentity();
+                if (!identity.isMember) return;
+                resetMemberScratchMemoryIfNeeded(identity);
+                clearLegacyMemberScratchLocalData(identity);
+                const byCard = (data && data.scratchResults) || {};
+                const locks = {};
+                Object.keys(byCard).forEach(function (key) {
+                    const item = byCard[key];
+                    if (item && item.cardId && item.won) locks[item.cardId] = true;
+                });
+                memberScratchLocks = locks;
+                memberScratchUsage = normalizeScratchUsage(data && data.scratchUsage);
+                memberScratchStateReady = true;
+                refreshScratchTimers();
+            }
+
+            async function isMemberScratchLocked(card) {
+                const identity = currentScratchIdentity();
+                if (!identity.isMember || !card) return false;
+                resetMemberScratchMemoryIfNeeded(identity);
+                if (!(identity.uid && window.getDoc && window.fsDoc)) {
+                    return memberScratchStateReady ? !!memberScratchLocks[card.id] : null;
+                }
+                try {
+                    const memberDoc = await window.getDoc(window.fsDoc('members', identity.uid));
+                    if (!memberDoc.exists()) return null;
+                    const data = memberDoc.data() || {};
+                    applyMemberScratchData(data);
+                    return !!memberScratchLocks[card.id];
+                } catch (e) {
+                    return memberScratchStateReady ? !!memberScratchLocks[card.id] : null;
+                }
+            }
+
+            function scratchUsageKey() {
+                const identity = currentScratchIdentity();
+                return SCRATCH_USAGE_PREFIX + (identity.uid || 'guest');
+            }
+
+            function loadScratchUsage() {
+                const identity = currentScratchIdentity();
+                if (identity.isMember) {
+                    resetMemberScratchMemoryIfNeeded(identity);
+                    memberScratchUsage = normalizeScratchUsage(memberScratchUsage);
+                    return memberScratchUsage;
+                }
+                let state = scratchUsageMemory;
+                let storedCooldownUntil = 0;
+                try {
+                    const parsed = JSON.parse(localStorage.getItem(scratchUsageKey()) || 'null');
+                    if (parsed && typeof parsed === 'object') {
+                        state = parsed;
+                        storedCooldownUntil = Number(parsed.cooldownUntil) || 0;
+                    }
+                } catch (e) {}
+                state = normalizeScratchUsage(state);
+                if (storedCooldownUntil && !state.cooldownUntil) saveScratchUsage(state);
+                scratchUsageMemory = state;
+                return state;
+            }
+
+            function saveScratchUsage(state) {
+                const identity = currentScratchIdentity();
+                const normalized = normalizeScratchUsage(state);
+                if (identity.isMember) {
+                    resetMemberScratchMemoryIfNeeded(identity);
+                    memberScratchUsage = normalized;
+                    return;
+                }
+                scratchUsageMemory = normalized;
+                try { localStorage.setItem(scratchUsageKey(), JSON.stringify(scratchUsageMemory)); } catch (e) {}
+            }
+
+            function scratchCooldownRemaining() {
+                const state = loadScratchUsage();
+                return Math.max(0, state.cooldownUntil - Date.now());
+            }
+
+            function formatCountdown(ms) {
+                const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+            }
+
+            function refreshScratchTimers() {
+                const state = loadScratchUsage();
+                const remaining = Math.max(0, state.cooldownUntil - Date.now());
+                const identity = currentScratchIdentity();
+                if (identity.isMember) resetMemberScratchMemoryIfNeeded(identity);
+                document.querySelectorAll('.scratch-attempt-timer').forEach(function (element) {
+                    const cardId = element.getAttribute('data-scratch-timer-card') || '';
+                    const locked = !!(identity.isMember && cardId && memberScratchLocks[cardId]);
+                    const label = locked
+                        ? '당첨 완료'
+                        : remaining
+                            ? formatCountdown(remaining)
+                            : Math.max(0, SCRATCH_MAX_ATTEMPTS - state.attempts) + '회 남음';
+                    element.textContent = label;
+                    element.classList.toggle('is-locked', locked);
+                    element.classList.toggle('is-cooldown', !locked && remaining > 0);
+                    const ticket = element.closest('.home-scratch-ticket, .scratch-more-item');
+                    if (ticket) ticket.classList.toggle('is-locked', locked);
+                });
+            }
+
+            function consumeScratchAttempt() {
+                const state = loadScratchUsage();
+                if (state.cooldownUntil > Date.now()) return state;
+                state.attempts += 1;
+                if (state.attempts >= SCRATCH_MAX_ATTEMPTS) {
+                    state.attempts = SCRATCH_MAX_ATTEMPTS;
+                    state.cooldownUntil = Date.now() + SCRATCH_COOLDOWN_MS;
+                }
+                saveScratchUsage(state);
+                refreshScratchTimers();
+                return state;
+            }
+
+            function saveLocalScratchResult(record) {
+                try {
+                    const stored = JSON.parse(localStorage.getItem(SCRATCH_LOCAL_RESULTS_KEY) || '[]');
+                    const items = Array.isArray(stored) ? stored : [];
+                    items.push(record);
+                    localStorage.setItem(SCRATCH_LOCAL_RESULTS_KEY, JSON.stringify(items.slice(-40)));
+                } catch (e) {}
+            }
+
+            function relativeScratchTime(time) {
+                const elapsed = Math.max(0, Date.now() - Number(time || 0));
+                if (elapsed < 60000) return '방금 전';
+                const minutes = Math.floor(elapsed / 60000);
+                if (minutes < 60) return minutes + '분 전';
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return hours + '시간 전';
+                return Math.floor(hours / 24) + '일 전';
+            }
+
+            function latestSharedResult(cardId) {
+                return sharedScratchResults
+                    .filter(function (item) { return item && item.cardId === cardId; })
+                    .sort(function (a, b) { return Number(b.createdAt || 0) - Number(a.createdAt || 0); })[0] || null;
+            }
+
+            function renderSharedScratchStatus() {
+                cards.forEach(function (card) {
+                    const footer = document.querySelector('.scratch-more-footer[data-scratch-card="' + card.id + '"]');
+                    if (!footer) return;
+                    const person = footer.querySelector('.scratch-more-feed-person');
+                    const status = footer.querySelector('.scratch-more-feed-status');
+                    const latest = latestSharedResult(card.id);
+                    if (!person || !status) return;
+                    if (!latest) {
+                        person.innerHTML = '<i class="fa-solid fa-circle-check"></i>엔조이 회원 전용';
+                        status.textContent = '아직 참여 전';
+                        return;
+                    }
+                    person.innerHTML = '<i class="fa-solid fa-circle-check"></i>' + latest.name + '님';
+                    status.textContent = relativeScratchTime(latest.createdAt) + (latest.won ? ' 당첨!' : ' 미당첨!');
+                });
+            }
+
+            function subscribeSharedScratchResults() {
+                if (scratchResultUnsub) return;
+                if (!(window.meetingDb && window.fsOnSnapshot && window.fsCol)) {
+                    if (scratchSyncRetry < 40) {
+                        scratchSyncRetry += 1;
+                        window.setTimeout(subscribeSharedScratchResults, 500);
+                    }
+                    return;
+                }
+                try {
+                    scratchResultUnsub = window.fsOnSnapshot(window.fsCol('members'), function (snapshot) {
+                        const results = [];
+                        const identity = currentScratchIdentity();
+                        let ownMemberData = null;
+                        snapshot.forEach(function (memberDoc) {
+                            const value = memberDoc.data() || {};
+                            if (!value.name || !window.enjoyIsMemberName || !window.enjoyIsMemberName(value.name)) return;
+                            const byCard = value.scratchResults || {};
+                            if (identity.isMember && memberDoc.id === identity.uid) ownMemberData = value;
+                            Object.keys(byCard).forEach(function (key) {
+                                const item = byCard[key];
+                                if (!item || !item.cardId) return;
+                                results.push({
+                                    name: value.name,
+                                    cardId: item.cardId,
+                                    won: !!item.won,
+                                    createdAt: Number(item.createdAt) || 0
+                                });
+                            });
+                        });
+                        if (identity.isMember && ownMemberData) applyMemberScratchData(ownMemberData);
+                        sharedScratchResults = results;
+                        renderSharedScratchStatus();
+                        refreshScratchTimers();
+                    }, function () {
+                        scratchResultUnsub = null;
+                        if (scratchSyncRetry < 80) {
+                            scratchSyncRetry += 1;
+                            window.setTimeout(subscribeSharedScratchResults, 1000);
+                        }
+                    });
+                } catch (e) {
+                    scratchResultUnsub = null;
+                }
+            }
+
+            async function publishMemberScratchResult(card, record) {
+                const identity = currentScratchIdentity();
+                if (!(identity.isMember && identity.uid && window.fsUpdateDoc && window.fsDoc)) return false;
+                const payload = {};
+                payload['scratchResults.' + card.resultKey] = {
+                    cardId: card.id,
+                    won: !!record.won,
+                    matchCount: Number(record.matchCount) || 0,
+                    createdAt: record.createdAt
+                };
+                payload.scratchUsage = normalizeScratchUsage(memberScratchUsage);
+                try {
+                    await window.fsUpdateDoc(window.fsDoc('members', identity.uid), payload);
+                    return true;
+                } catch (e) {
+                    console.warn('스크래치 결과 공유 실패:', e);
+                    return false;
+                }
+            }
+
+            function storeScratchResult(card, outcome) {
+                const identity = currentScratchIdentity();
+                const record = {
+                    cardId: card.id,
+                    prize: card.prize,
+                    won: !!outcome.won,
+                    matchCount: Number(outcome.matchCount) || 0,
+                    createdAt: outcome.revealedAt || Date.now(),
+                    name: identity.name,
+                    effective: !!identity.isMember
+                };
+                if (identity.isMember) {
+                    if (record.won) {
+                        memberScratchLocks[card.id] = true;
+                        memberScratchStateReady = true;
+                        refreshScratchTimers();
+                    }
+                    publishMemberScratchResult(card, record);
+                } else saveLocalScratchResult(record);
+            }
+
+            function randomUnit() {
+                try {
+                    const value = new Uint32Array(1);
+                    crypto.getRandomValues(value);
+                    return value[0] / 4294967296;
+                } catch (e) {
+                    return Math.random();
+                }
+            }
+
+            function ensureOutcome(card) {
+                const identity = currentScratchIdentity();
+                // 정식 멤버가 아닌 구글 로그인 계정(스페셜)은 실제 당첨 확률을 0%로 고정한다.
+                // 로그인 전 체험 사용자는 기존처럼 무작위 결과를 기기에만 저장한다.
+                const possibleCounts = identity.isSpecial ? [1, 2, 4] : [1, 2, 3, 4];
+                const matchCount = possibleCounts[Math.floor(randomUnit() * possibleCounts.length)];
+                const positions = [0, 1, 2, 3, 4, 5];
+                for (let i = positions.length - 1; i > 0; i--) {
+                    const j = Math.floor(randomUnit() * (i + 1));
+                    const temp = positions[i];
+                    positions[i] = positions[j];
+                    positions[j] = temp;
+                }
+                return {
+                    won: matchCount === 3,
+                    effective: identity.isMember,
+                    isDemo: !identity.isMember,
+                    matchCount: matchCount,
+                    prizePositions: positions.slice(0, matchCount),
+                    revealed: false,
+                    createdAt: Date.now()
+                };
+            }
+
+            function renderScratchResultGrid(card, outcome) {
+                const grid = document.getElementById('scratch-symbol-grid');
+                const result = document.getElementById('scratch-grid-result');
+                if (!grid || !result) return;
+                const neutralLabels = ['수', '일', '요', '행', '운', '복'];
+                const prizePositions = new Set(outcome.prizePositions || []);
+                grid.innerHTML = neutralLabels.map(function (label, index) {
+                    if (!prizePositions.has(index)) {
+                        return '<span class="scratch-symbol-cell" aria-hidden="true">' + label + '</span>';
+                    }
+                    const prizeVisual = card.id === 'baemin-gift'
+                        ? '<img src="assets/scratch/baemin-5000-voucher-cutout.png" alt="배달의민족 5천원 상품권">'
+                        : '<i class="fa-solid fa-ticket-simple" aria-label="부과금 면제권"></i>';
+                    return '<span class="scratch-symbol-cell is-prize">' + prizeVisual + '</span>';
+                }).join('');
+                result.classList.toggle('is-winner', outcome.won);
+                result.textContent = outcome.won
+                    ? '당첨을 축하합니다!'
+                    : outcome.matchCount + '개 · 아쉽지만 미당첨이에요';
+            }
+
+            function renderMoreList() {
+                const list = document.getElementById('scratch-more-list');
+                if (!list) return;
+                list.innerHTML = cards.map(function (card) {
+                    return '<button type="button" class="scratch-more-item ' + card.theme + '" onclick="window.openScratchTicket(\'' + card.id + '\', true)" aria-label="' + card.title + ' 열기">' +
+                        '<span class="scratch-more-watermark" aria-hidden="true">' + card.watermark + '</span>' +
+                        '<span class="scratch-more-prize-badge scratch-attempt-timer" data-scratch-timer-card="' + card.id + '">3회 남음</span>' +
+                        '<span class="scratch-more-max-note">' + card.maxNote + '</span>' +
+                        '<span class="scratch-more-item-copy">' +
+                            '<span class="scratch-more-item-label">엔조이 스크래치</span>' +
+                            '<span class="scratch-more-item-lead">' + card.lead + '</span>' +
+                            '<strong>' + card.cardHeadline + '</strong>' +
+                        '</span>' +
+                        '<span class="scratch-more-status">지금 바로 참여</span>' +
+                        '<span class="scratch-more-footer" data-scratch-card="' + card.id + '"><span class="scratch-more-feed-person"><i class="fa-solid fa-circle-check"></i>엔조이 회원 전용</span><b class="scratch-more-feed-status">아직 참여 전</b></span>' +
+                    '</button>';
+                }).join('');
+                refreshScratchTimers();
+                renderSharedScratchStatus();
+            }
+
+            function setScreenVisible(id, visible) {
+                const screen = document.getElementById(id);
+                if (!screen) return;
+                screen.classList.toggle('hidden', !visible);
+                screen.classList.toggle('flex', visible);
+            }
+
+            window.openScratchMore = function () {
+                window.haptic && window.haptic();
+                renderMoreList();
+                setScreenVisible('scratch-more-screen', true);
+                const scroll = document.querySelector('#scratch-more-screen .scratch-screen-scroll');
+                if (scroll) scroll.scrollTop = 0;
+            };
+
+            window.closeScratchMore = function () {
+                window.haptic && window.haptic();
+                setScreenVisible('scratch-more-screen', false);
+            };
+
+            function paintScratchCover(canvas) {
+                const rect = canvas.getBoundingClientRect();
+                const cssWidth = Math.max(1, rect.width);
+                const cssHeight = Math.max(1, rect.height);
+                const dpr = Math.min(window.devicePixelRatio || 1, 3);
+                canvas.width = Math.round(cssWidth * dpr);
+                canvas.height = Math.round(cssHeight * dpr);
+                scratchCtx = canvas.getContext('2d', { willReadFrequently: true });
+                scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                scratchCoverReady = false;
+                const coverCard = currentCard;
+                const coverAccent = coverCard && coverCard.theme === 'is-orange' ? '#C85D00' : '#16835D';
+
+                scratchCtx.fillStyle = '#F7EDC8';
+                scratchCtx.fillRect(0, 0, cssWidth, cssHeight);
+                const revealCard = document.getElementById('scratch-reveal-card');
+                if (revealCard) revealCard.classList.add('is-cover-ready');
+
+                const drawCoverText = function () {
+                    if (!scratchCtx || currentCard !== coverCard) return;
+                    const badgeText = (coverCard && coverCard.coverBadge) || '긁어서 결과를 확인하세요';
+                    scratchCtx.globalCompositeOperation = 'source-over';
+                    scratchCtx.textAlign = 'center';
+                    scratchCtx.textBaseline = 'middle';
+                    scratchCtx.font = '900 12px Pretendard, sans-serif';
+                    const badgeWidth = Math.min(cssWidth - 36, scratchCtx.measureText(badgeText).width + 28);
+                    const badgeX = (cssWidth - badgeWidth) / 2;
+                    const badgeY = 28;
+                    const badgeHeight = 34;
+                    scratchCtx.fillStyle = 'rgba(255,255,255,.94)';
+                    scratchCtx.beginPath();
+                    if (typeof scratchCtx.roundRect === 'function') {
+                        scratchCtx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 17);
+                    } else {
+                        scratchCtx.rect(badgeX, badgeY, badgeWidth, badgeHeight);
+                    }
+                    scratchCtx.fill();
+                    scratchCtx.fillStyle = coverAccent;
+                    scratchCtx.fillText(badgeText, cssWidth / 2, badgeY + badgeHeight / 2 + .5);
+
+                    scratchCtx.font = '950 ' + Math.max(42, Math.round(cssWidth * .14)) + 'px Pretendard, sans-serif';
+                    scratchCtx.fillText('당', cssWidth * .18, cssHeight * .62);
+                    scratchCtx.fillText('첨', cssWidth * .82, cssHeight * .62);
+                };
+
+                const coverImage = new Image();
+                coverImage.onload = function () {
+                    if (!scratchCtx || currentCard !== coverCard) return;
+                    scratchCtx.globalCompositeOperation = 'source-over';
+                    scratchCtx.drawImage(coverImage, 0, 0, cssWidth, cssHeight);
+                    drawCoverText();
+                    scratchCoverReady = true;
+                };
+                coverImage.onerror = function () {
+                    drawCoverText();
+                    scratchCoverReady = true;
+                };
+                coverImage.src = coverCard && coverCard.coverImage ? coverCard.coverImage : '';
+            }
+
+            function scratchPoint(event) {
+                const canvas = document.getElementById('scratch-canvas');
+                if (!canvas || !scratchCtx) return;
+                const rect = canvas.getBoundingClientRect();
+                const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+                scratchCtx.globalCompositeOperation = 'destination-out';
+                scratchCtx.lineCap = 'round';
+                scratchCtx.lineJoin = 'round';
+                scratchCtx.lineWidth = 38;
+                scratchCtx.beginPath();
+                if (lastPoint) {
+                    scratchCtx.moveTo(lastPoint.x, lastPoint.y);
+                    scratchCtx.lineTo(point.x, point.y);
+                } else {
+                    scratchCtx.moveTo(point.x, point.y);
+                    scratchCtx.lineTo(point.x + .1, point.y + .1);
+                }
+                scratchCtx.stroke();
+                lastPoint = point;
+
+                const now = performance.now();
+                if (now - lastCoverageCheck > 90) {
+                    lastCoverageCheck = now;
+                    updateCoverage();
+                }
+            }
+
+            function updateCoverage() {
+                const canvas = document.getElementById('scratch-canvas');
+                if (!canvas || !scratchCtx || !currentOutcome || currentOutcome.revealed) return;
+                let pixels;
+                try { pixels = scratchCtx.getImageData(0, 0, canvas.width, canvas.height).data; }
+                catch (e) { return; }
+                const stride = 4 * 10;
+                let checked = 0;
+                let clear = 0;
+                for (let i = 3; i < pixels.length; i += stride) {
+                    checked++;
+                    if (pixels[i] < 80) clear++;
+                }
+                const ratio = checked ? clear / checked : 0;
+                const progress = document.getElementById('scratch-progress');
+                if (progress) progress.textContent = Math.min(100, Math.round(ratio * 100)) + '% 긁었어요.';
+                if (ratio >= .60) revealResult(true);
+            }
+
+            function bindScratchCanvas() {
+                const canvas = document.getElementById('scratch-canvas');
+                if (!canvas) return;
+                canvas.classList.remove('is-cleared');
+                canvas.onpointerdown = function (event) {
+                    if (!scratchCoverReady || (currentOutcome && currentOutcome.revealed)) return;
+                    scratching = true;
+                    lastPoint = null;
+                    try { canvas.setPointerCapture(event.pointerId); } catch (e) {}
+                    scratchPoint(event);
+                };
+                canvas.onpointermove = function (event) {
+                    if (!scratching) return;
+                    event.preventDefault();
+                    scratchPoint(event);
+                };
+                const finish = function (event) {
+                    if (!scratching) return;
+                    scratching = false;
+                    lastPoint = null;
+                    try { canvas.releasePointerCapture(event.pointerId); } catch (e) {}
+                    updateCoverage();
+                };
+                canvas.onpointerup = finish;
+                canvas.onpointercancel = finish;
+                paintScratchCover(canvas);
+            }
+
+            function revealResult(withHaptic) {
+                if (!currentCard || !currentOutcome) return;
+                const saved = currentOutcome;
+                if (saved.revealed) return;
+                saved.revealed = true;
+                saved.revealedAt = saved.revealedAt || Date.now();
+                currentOutcome = saved;
+                consumeScratchAttempt();
+                storeScratchResult(currentCard, saved);
+
+                const card = document.getElementById('scratch-reveal-card');
+                const canvas = document.getElementById('scratch-canvas');
+                const progress = document.getElementById('scratch-progress');
+                if (card) {
+                    card.classList.toggle('is-winner', !!saved.won);
+                    card.classList.toggle('is-loser', !saved.won);
+                }
+                if (canvas) canvas.classList.add('is-cleared');
+                if (progress) {
+                    const identity = currentScratchIdentity();
+                    if (identity.isMember) {
+                        progress.textContent = saved.won
+                            ? '축하해요! 당첨 결과가 멤버 현황에 공유됐어요.'
+                            : '미당첨 결과가 멤버 현황에 공유됐어요.';
+                    } else {
+                        progress.textContent = saved.won
+                            ? '축하해요! 당첨 결과를 확인했어요.'
+                            : '결과를 확인했어요. 다음 행운도 기다리고 있어요.';
+                    }
+                }
+                if (withHaptic && window.haptic) {
+                    window.haptic();
+                    window.setTimeout(function () { window.haptic && window.haptic(); }, 110);
+                }
+            }
+
+            window.openScratchTicket = async function (id, fromMore) {
+                const card = cards.find(function (item) { return item.id === id; });
+                if (!card) return;
+                if (scratchOpenChecking) return;
+                scratchOpenChecking = true;
+                try {
+                    const memberLockStatus = await isMemberScratchLocked(card);
+                    if (memberLockStatus === null) {
+                        if (window.enjoyAlert) window.enjoyAlert('스크래치 정보를 확인하고 있어요. 잠시 후 다시 시도해주세요.');
+                        return;
+                    }
+                    if (memberLockStatus) {
+                        refreshScratchTimers();
+                        window.haptic && window.haptic();
+                        if (window.enjoyAlert) window.enjoyAlert('다음 스크래치 이벤트에 도전해주세요.');
+                        return;
+                    }
+                    const cooldown = scratchCooldownRemaining();
+                    if (cooldown > 0) {
+                        refreshScratchTimers();
+                        if (window.enjoyAlert) window.enjoyAlert(formatCountdown(cooldown) + ' 뒤에 다시 참여할 수 있어요.');
+                        return;
+                    }
+                    window.haptic && window.haptic();
+                    currentCard = card;
+                    currentOutcome = ensureOutcome(card);
+                    openedFromMore = !!fromMore;
+
+                    const title = document.getElementById('scratch-play-title');
+                    const revealCard = document.getElementById('scratch-reveal-card');
+                    const scratchCanvas = document.getElementById('scratch-canvas');
+                    const progress = document.getElementById('scratch-progress');
+                    if (title) title.textContent = card.title;
+                    if (revealCard) {
+                        revealCard.classList.toggle('is-orange', card.theme === 'is-orange');
+                        revealCard.classList.remove('is-winner', 'is-loser', 'is-cover-ready');
+                    }
+                    if (scratchCanvas) scratchCanvas.classList.remove('is-cleared');
+                    renderScratchResultGrid(card, currentOutcome);
+                    const playScreen = document.getElementById('scratch-play-screen');
+                    if (playScreen) playScreen.classList.toggle('is-orange', card.theme === 'is-orange');
+                    if (progress) progress.textContent = currentOutcome.revealed
+                        ? (currentOutcome.won ? '축하해요! 당첨 결과를 확인했어요.' : '이미 확인한 스크래치예요.')
+                        : '메인 카드를 60% 이상 긁으면 결과가 열려요. 3회 참여 후 5분 동안 쉬어요.';
+
+                    setScreenVisible('scratch-play-screen', true);
+                    const scroll = document.querySelector('#scratch-play-screen .scratch-screen-scroll');
+                    if (scroll) scroll.scrollTop = 0;
+                    requestAnimationFrame(function () {
+                        if (!currentOutcome || currentCard !== card) return;
+                        if (currentOutcome.revealed) revealResult(false);
+                        else bindScratchCanvas();
+                    });
+                } finally {
+                    scratchOpenChecking = false;
+                }
+            };
+
+            window.closeScratchTicket = function () {
+                window.haptic && window.haptic();
+                setScreenVisible('scratch-play-screen', false);
+                if (!openedFromMore) setScreenVisible('scratch-more-screen', false);
+                scratching = false;
+                lastPoint = null;
+                scratchCtx = null;
+                currentCard = null;
+                currentOutcome = null;
+            };
+
+            window.addEventListener('resize', function () {
+                if (!currentOutcome || currentOutcome.revealed) return;
+                const screen = document.getElementById('scratch-play-screen');
+                if (screen && !screen.classList.contains('hidden')) bindScratchCanvas();
+            });
+            refreshScratchTimers();
+            subscribeSharedScratchResults();
+            window.setInterval(refreshScratchTimers, 250);
+            window.setInterval(renderSharedScratchStatus, 30000);
+        })();
 
         /*
          * 엔조이 야구 데이터는 본체 Firebase와 다른 프로젝트(enjoykbooo)에서 읽는다.
@@ -6268,10 +7617,67 @@
                 if (t) t.textContent = cleanText;
                 if (ic) ic.className = `fa-solid ${msg.icon}`;
             };
+            const playTopBriefingOnce = (noticeText, regularText, profileKey, ready) => {
+                const el = document.getElementById('assistant-greeting');
+                if (!el) return;
+                const state = window.__enjoyTopBriefingState || (window.__enjoyTopBriefingState = {
+                    profileKey: '',
+                    phase: 'idle',
+                    timer: null,
+                    token: 0
+                });
+
+                if (!profileKey || !noticeText || !ready) {
+                    if (state.phase !== 'typing' && state.phase !== 'waiting') el.textContent = regularText;
+                    return;
+                }
+                if (state.profileKey === profileKey && state.phase !== 'idle') {
+                    if (state.phase === 'finished') el.textContent = regularText;
+                    return;
+                }
+
+                if (state.timer) window.clearTimeout(state.timer);
+                state.profileKey = profileKey;
+                state.phase = 'typing';
+                state.token += 1;
+                const token = state.token;
+                const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const type = (text, done) => {
+                    if (state.token !== token) return;
+                    if (reducedMotion) {
+                        el.textContent = text;
+                        done();
+                        return;
+                    }
+                    let index = 0;
+                    el.textContent = '';
+                    const tick = () => {
+                        if (state.token !== token) return;
+                        index += 1;
+                        el.textContent = text.slice(0, index);
+                        if (index < text.length) state.timer = window.setTimeout(tick, 42);
+                        else done();
+                    };
+                    tick();
+                };
+
+                type(noticeText, () => {
+                    state.phase = 'waiting';
+                    state.timer = window.setTimeout(() => {
+                        state.phase = 'typing';
+                        type(regularText, () => {
+                            state.phase = 'finished';
+                            state.timer = null;
+                            el.textContent = regularText;
+                        });
+                    }, 3000);
+                });
+            };
 
             // 시간대별 인사 헤드라인
             const rawProfileName = String(window.enjoyProfileName || ((window.enjoyUser && window.enjoyUser.displayName) || '') || '').trim();
             const profileName = rawProfileName.replace(/\s*\(스페셜\)\s*$/, '');
+            const topBriefParts = [];
             const pickSeed = `${todayKey}-${hh}-${profileName || 'guest'}`;
             const pick = (items, salt) => {
                 let hash = 0;
@@ -6328,7 +7734,7 @@
             else if (hh >= 18 && hh < 23) period = 'evening';
             const greeting = pick(greetings[period], 'greeting');
             const sub = pick(subs[period], 'sub');
-            setTxt('assistant-greeting', (profileName ? `${profileName}님, ` : '') + greeting);
+            const regularGreetingText = (profileName ? `${profileName}님, ` : '') + greeting;
             setTxt('assistant-sub', sub);
             setTxt('assistant-date', `${m}월 ${d}일 ${dow}요일`);
 
@@ -6343,6 +7749,12 @@
                     if (h.status === 'deferred' || h.isPaymentStopped) return false;
                     return !(h.status === 'paid' && h.amount >= h.totalOwed);
                 });
+                if (profileName && members.includes(profileName)) {
+                    const mine = hist[profileName] && hist[profileName][monthKey];
+                    if (mine && mine.isPaymentStopped) topBriefParts.push('이번 달 모임비는 납부하지 않아도 돼요.');
+                    else if (mine && mine.currentDuesPaid) topBriefParts.push('이번 달 모임비 내셨네요.');
+                    else topBriefParts.push('이번 달 모임비가 아직이에요. 잊지 말고 내주세요.');
+                }
                 if (unpaid.length === 0) setMsg(2, { icon: 'fa-circle-check', color: 'text-emerald-400', text: '이번 달 모임비\n모두 납부 완료' });
                 else {
                     const who = unpaid.join(', ');
@@ -6357,6 +7769,10 @@
                 let schedText, icon, color;
                 if (items.length === 0) { schedText = '오늘 특별한 일정은 없어요'; icon = 'fa-mug-hot'; color = 'text-amber-400'; }
                 else { const more = items.length > 1 ? ` 외 ${items.length - 1}개` : ''; schedText = `오늘 일정\n${items[0].title}${more}`; icon = 'fa-bell'; color = 'text-amber-400'; }
+                if (profileName && items.length > 0) {
+                    const more = items.length > 1 ? ` 외 ${items.length - 1}개` : '';
+                    topBriefParts.push(`오늘은 ${items[0].title}${more} 일정이 있어요.`);
+                }
 
                 // 다음 정기모임 탐색
                 let next = null;
@@ -6378,6 +7794,12 @@
                 }
                 setMsg(3, { icon, color, text: finalText });
             } catch (e) { setMsg(3, { icon: 'fa-bell', color: 'text-amber-400', text: '오늘 일정을 살펴보고 있어요.' }); }
+
+            const topNotice = profileName && topBriefParts.length
+                ? `${profileName}님, ${topBriefParts.join(' ')}`
+                : '';
+            const briefingDataReady = !window.enjoySync || !!window.__enjoyTodayDataReady;
+            playTopBriefingOnce(topNotice, regularGreetingText, profileName, briefingDataReady);
         };
 
         // 모임통장 가계부 — 회비 기록·일정·수입/지출을 함께 계산해 현황과 예측을 표시
@@ -9366,6 +10788,7 @@
         // 게스트/스페셜 공통: 로컬 데이터 로드 + 로더 숨김
         window.enjoyEnterLocalMode = function () {
             window.enjoySync = false;
+            window.__enjoyTodayDataReady = true;
             window.enjoyLoadLocalSchedule();
             var ld = document.getElementById('app-loader');
             if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
@@ -9602,6 +11025,7 @@
         // 정식 멤버 전용 서비스 시작 (활동 하트비트 + 멤버/일정/모임통장 파이어베이스 동기화)
         function startMemberSync() {
             window.enjoySync = true;
+            window.__enjoyTodayDataReady = false;
             beat();
             if (!beatTimer) beatTimer = setInterval(beat, BEAT_MS);
             document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
@@ -9894,6 +11318,8 @@
                     let isScheduleLoaded = false;
                     const checkHideLoader = () => {
                         if (isMeetingLoaded && isScheduleLoaded) {
+                            window.__enjoyTodayDataReady = true;
+                            try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
                             const loader = document.getElementById('app-loader');
                             if (loader && loader.style.display !== 'none') {
                                 loader.style.opacity = '0';
