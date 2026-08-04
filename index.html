@@ -5982,7 +5982,7 @@
 
     <!-- 엔조이 숏츠 전체 화면 -->
     <section id="shorts-screen" class="shorts-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" style="z-index:45;" aria-label="엔조이 숏츠">
-        <header class="shorts-topbar absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5" style="padding-top: calc(max(16px, env(safe-area-inset-top)) + 4px);">
+        <header class="shorts-topbar absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5" style="padding-top: max(6px, calc(env(safe-area-inset-top) - 10px));">
             <span class="w-10 h-10" aria-hidden="true"></span>
             <h1 class="shorts-header-title">엔조이 숏츠</h1>
             <span class="w-10 h-10" aria-hidden="true"></span>
@@ -6468,9 +6468,9 @@
 
         const vlogMemberNames = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
         const gwangjuVlogCast = ['전시기', '성원제', '이진누', '류짱'];
-        const makeVlogEpisodes = function (labels, image, urls) {
+        const makeVlogEpisodes = function (labels, image, urls, titles) {
             return labels.map(function (label, index) {
-                return { label: label, title: label, url: (urls && urls[index]) || '', image: image };
+                return { label: label, title: (titles && titles[index]) || label, url: (urls && urls[index]) || '', image: image };
             });
         };
         window.ENJOY_VLOG_PROGRAMS = {
@@ -6553,11 +6553,22 @@
                 image: 'enjoy_setlog.jpg',
                 description: '네 명의 엔조이 멤버가 함께한 광주의 순간들을 네 편의 셋로그로 만나보세요.',
                 cast: gwangjuVlogCast,
-                // 영상 링크를 받으면 아래 빈 문자열 4개만 회차 순서대로 교체하면 됩니다.
+                // 영상 링크와 유튜브 제목을 회차 순서대로 추가하면 됩니다.
                 episodes: makeVlogEpisodes(
                     ['1화','2화','3화','4화'],
                     'enjoy_setlog.jpg',
-                    ['', '', '', '']
+                    [
+                        'https://youtube.com/shorts/AkszapiawS4?feature=share',
+                        'https://youtube.com/shorts/LMKunCU6gu4?feature=share',
+                        'https://youtube.com/shorts/zY9Js09dfdE?feature=share',
+                        ''
+                    ],
+                    [
+                        '엔조이 셋로그 #1 풀버전',
+                        '엔조이 셋로그 #1 클린버전(음악)',
+                        '엔조이 셋로그 #1 원본',
+                        ''
+                    ]
                 )
             },
             business: {
@@ -8573,7 +8584,9 @@
                                 const ready = !!String(episode.url || '').trim();
                                 const thumb = vlogEpisodeThumbnail(episode, program);
                                 const action = ready ? ' onclick="window.openVlogEpisode(\'' + vlogEsc(programId) + '\',' + index + ')" role="button" tabindex="0"' : '';
-                                const displayTitle = episode.label === '티저' ? '티저' : (index + 1) + '. ' + episode.label;
+                                const displayTitle = episode.title && episode.title !== episode.label
+                                    ? episode.title
+                                    : (episode.label === '티저' ? '티저' : (index + 1) + '. ' + episode.label);
                                 return '<article class="vlog-episode-card flex items-center gap-3 py-4 transition-transform"' + action + ' data-ready="' + ready + '">' +
                                     '<div class="w-[132px] aspect-video rounded-[10px] bg-[#171719] overflow-hidden relative shrink-0">' +
                                         '<img src="' + vlogEsc(thumb) + '" class="w-full h-full object-cover" alt="' + vlogEsc(program.title + ' ' + episode.label) + ' 썸네일" onerror="this.onerror=null;this.src=\'' + vlogEsc(program.image) + '\'">' +
