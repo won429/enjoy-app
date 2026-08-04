@@ -3167,9 +3167,7 @@
         .community-like-profile { box-shadow: 0 0 0 2px #000; }
         .vlog-detail-screen { background-color: #000; }
         .shorts-screen {
-            background:
-                radial-gradient(circle at 50% 32%, rgba(125, 92, 255, .18), transparent 34%),
-                #000;
+            background: #000;
         }
         .shorts-feed {
             height: 100%;
@@ -3202,20 +3200,60 @@
             position: absolute;
             inset: 0;
             pointer-events: none;
-            background: linear-gradient(180deg, rgba(0,0,0,.52), transparent 22%, transparent 58%, rgba(0,0,0,.82));
+            background: linear-gradient(180deg, rgba(0,0,0,.44), transparent 20%, transparent 56%, rgba(0,0,0,.84));
+        }
+        .shorts-topbar {
+            pointer-events: none;
+            isolation: isolate;
+        }
+        .shorts-topbar::before {
+            content: "";
+            position: absolute;
+            z-index: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: calc(92px + env(safe-area-inset-top));
+            pointer-events: none;
+            background: linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,.22) 58%, transparent);
+        }
+        .shorts-topbar > * {
+            position: relative;
+            z-index: 1;
+            pointer-events: auto;
+        }
+        .shorts-header-button {
+            color: #fff !important;
+            border: 1px solid rgba(255,255,255,.13);
+            background: rgba(18,18,20,.42);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,.1), 0 4px 14px rgba(0,0,0,.2);
+            -webkit-backdrop-filter: blur(16px) saturate(1.25);
+            backdrop-filter: blur(16px) saturate(1.25);
+        }
+        .shorts-header-title {
+            color: #fff !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,.82);
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
         }
         .shorts-copy {
             position: absolute;
             z-index: 2;
             left: 18px;
-            right: 72px;
+            right: 78px;
             bottom: calc(102px + env(safe-area-inset-bottom));
             color: #fff;
             text-shadow: 0 2px 12px rgba(0,0,0,.65);
         }
         .shorts-copy h2 {
-            font-size: 18px;
-            font-weight: 900;
+            font-size: 17px;
+            font-weight: 800;
             line-height: 1.25;
         }
         .shorts-copy p {
@@ -3226,21 +3264,192 @@
             line-height: 1.5;
             word-break: keep-all;
         }
-        .shorts-sound-button {
+        .shorts-meta {
+            margin-top: 7px;
+            color: rgba(255,255,255,.8);
+            font-size: 12px;
+            font-weight: 750;
+        }
+        .shorts-liked-members {
+            max-width: 100%;
+            margin-top: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .shorts-liked-members:empty { display: none; }
+        .shorts-liked-members::-webkit-scrollbar { display: none; }
+        .shorts-like-person {
+            min-width: 36px;
+            max-width: 44px;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: rgba(255,255,255,.78);
+            font-size: 8.5px;
+            font-weight: 750;
+            text-align: center;
+        }
+        .shorts-like-person-avatar {
+            display: inline-flex;
+            border-radius: 999px;
+            box-shadow: 0 0 0 2px rgba(0,0,0,.7);
+        }
+        .shorts-like-person-name {
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .shorts-actions {
             position: absolute;
             z-index: 3;
             right: 18px;
             bottom: calc(110px + env(safe-area-inset-bottom));
-            width: 44px;
-            height: 44px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+        .shorts-action {
+            min-width: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0,0,0,.8);
+        }
+        .shorts-action-core,
+        .shorts-sound-button {
+            width: 42px;
+            height: 42px;
             display: grid;
             place-items: center;
-            border: 1px solid rgba(255,255,255,.16);
+            border: 1px solid rgba(255,255,255,.11);
             border-radius: 999px;
             color: #fff;
-            background: rgba(0,0,0,.38);
+            background: rgba(18,18,20,.34);
             -webkit-backdrop-filter: blur(14px);
             backdrop-filter: blur(14px);
+        }
+        .shorts-action-core {
+            pointer-events: none;
+            transition: transform .16s ease, color .16s ease, background-color .16s ease;
+        }
+        .shorts-action:active .shorts-action-core { transform: scale(.86); }
+        .shorts-action.is-liked .shorts-action-core {
+            color: #fff;
+            border-color: rgba(255,77,98,.62);
+            background: rgba(240,68,82,.82);
+        }
+        .shorts-action-count {
+            min-height: 12px;
+            font-size: 10px;
+            font-weight: 850;
+            line-height: 1;
+        }
+        .shorts-comments-layer {
+            position: absolute;
+            z-index: 20;
+            inset: 0;
+            display: flex;
+            align-items: flex-end;
+            padding-bottom: calc(88px + env(safe-area-inset-bottom));
+        }
+        .shorts-comments-layer.hidden { display: none; }
+        .shorts-comments-backdrop {
+            position: absolute;
+            inset: 0;
+            border: 0;
+            border-radius: 0;
+            background: rgba(0,0,0,.5);
+        }
+        .shorts-comments-sheet {
+            position: relative;
+            width: 100%;
+            max-height: min(68dvh, 620px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.16);
+            border-bottom: 0;
+            border-radius: 28px 28px 0 0;
+            background: rgba(17,17,20,.96);
+            box-shadow: 0 -18px 60px rgba(0,0,0,.38);
+            -webkit-backdrop-filter: blur(24px) saturate(1.4);
+            backdrop-filter: blur(24px) saturate(1.4);
+            animation: shortsCommentsIn .26s cubic-bezier(.2,.9,.3,1) both;
+        }
+        @keyframes shortsCommentsIn {
+            from { opacity: 0; transform: translateY(34px); }
+            to { opacity: 1; transform: none; }
+        }
+        .shorts-comments-header {
+            min-height: 58px;
+            padding: 0 16px 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,.09);
+        }
+        .shorts-comments-list {
+            min-height: 150px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 18px 12px;
+            scrollbar-width: none;
+        }
+        .shorts-comments-list::-webkit-scrollbar { display: none; }
+        .shorts-comment-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+        .shorts-comment-copy { min-width: 0; flex: 1; }
+        .shorts-comment-copy strong { font-size: 12px; }
+        .shorts-comment-copy time { margin-left: 7px; color: rgba(255,255,255,.35); font-size: 9px; }
+        .shorts-comment-copy p {
+            margin-top: 4px;
+            color: rgba(255,255,255,.78);
+            font-size: 13px;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+        }
+        .shorts-comment-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 14px;
+            border-top: 1px solid rgba(255,255,255,.09);
+        }
+        .shorts-comment-form input {
+            min-width: 0;
+            flex: 1;
+            height: 42px;
+            padding: 0 15px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 999px;
+            outline: none;
+            color: #fff;
+            background: rgba(255,255,255,.08);
+        }
+        .shorts-comment-form input::placeholder { color: rgba(255,255,255,.35); }
+        .shorts-comment-form button {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            flex: none;
+            border-radius: 999px;
+            color: #fff;
+            background: #3182F6;
         }
         .shorts-item-status {
             position: absolute;
@@ -3276,33 +3485,49 @@
             justify-content: center;
             padding: 32px 28px 116px;
             color: #fff;
+            background: #000;
             text-align: center;
         }
         .shorts-empty-mark {
-            width: 76px;
-            height: 76px;
+            width: 60px;
+            height: 60px;
             display: grid;
             place-items: center;
-            border: 1px solid rgba(255,255,255,.16);
-            border-radius: 28px;
-            background: linear-gradient(145deg, rgba(129,92,246,.34), rgba(255,255,255,.06));
-            box-shadow: inset 0 1px 1px rgba(255,255,255,.22), 0 20px 60px rgba(63,36,145,.28);
-            font-size: 25px;
+            border: 1px solid rgba(49,130,246,.2);
+            border-radius: 999px;
+            color: #3182F6;
+            background: rgba(49,130,246,.12);
+            box-shadow: none;
+            font-size: 20px;
         }
         .shorts-empty h2 {
-            margin-top: 22px;
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: -.04em !important;
+            margin-top: 18px;
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -.025em !important;
         }
         .shorts-empty p {
             max-width: 290px;
-            margin-top: 10px;
-            color: rgba(255,255,255,.48);
-            font-size: 13px;
+            margin-top: 8px;
+            color: #8B95A1;
+            font-size: 12px;
             font-weight: 600;
             line-height: 1.6;
             word-break: keep-all;
+        }
+        @media (prefers-color-scheme: light) {
+            #shorts-screen .shorts-header-button {
+                color: #fff !important;
+                border-color: rgba(255,255,255,.18) !important;
+                background: rgba(18,18,20,.48) !important;
+                box-shadow: inset 0 1px 1px rgba(255,255,255,.1), 0 4px 14px rgba(0,0,0,.22) !important;
+            }
+            #shorts-screen .shorts-header-title {
+                color: #fff !important;
+                border: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+            }
         }
         .vlog-episode-card {
             border-bottom: 1px solid rgba(255,255,255,.09);
@@ -5657,12 +5882,29 @@
 
     <!-- 엔조이 숏츠 전체 화면 -->
     <section id="shorts-screen" class="shorts-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" style="z-index:45;" aria-label="엔조이 숏츠">
-        <header class="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4" style="padding-top: calc(max(16px, env(safe-area-inset-top)) + 4px);">
-            <button type="button" onclick="window.closeEnjoyShorts()" class="w-11 h-11 rounded-full border border-white/10 text-white backdrop-blur-md active:scale-90 transition-transform" style="background:rgba(0,0,0,.35);" aria-label="엔조이 숏츠 닫기"><i class="fa-solid fa-chevron-left text-[15px]"></i></button>
-            <h1 class="text-[18px] font-black text-white drop-shadow-lg">엔조이 숏츠</h1>
-            <span class="w-11 h-11" aria-hidden="true"></span>
+        <header class="shorts-topbar absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5" style="padding-top: calc(max(16px, env(safe-area-inset-top)) + 4px);">
+            <button type="button" onclick="window.closeEnjoyShorts()" class="shorts-header-button w-10 h-10 rounded-full active:scale-90 transition-transform" aria-label="엔조이 숏츠 닫기"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>
+            <h1 class="shorts-header-title">엔조이 숏츠</h1>
+            <span class="w-10 h-10" aria-hidden="true"></span>
         </header>
         <div id="shorts-feed" class="shorts-feed flex-1"></div>
+        <div id="shorts-comments-layer" class="shorts-comments-layer hidden" role="dialog" aria-modal="true" aria-labelledby="shorts-comments-title">
+            <button type="button" class="shorts-comments-backdrop" onclick="window.closeEnjoyShortsComments()" aria-label="댓글 닫기"></button>
+            <section class="shorts-comments-sheet">
+                <header class="shorts-comments-header">
+                    <div>
+                        <h2 id="shorts-comments-title" class="text-[15px] font-black">댓글</h2>
+                        <p id="shorts-comments-count" class="mt-0.5 text-[10px] font-bold text-white/40"></p>
+                    </div>
+                    <button type="button" onclick="window.closeEnjoyShortsComments()" class="w-9 h-9 rounded-full bg-white/10 text-white active:scale-90 transition-transform" aria-label="댓글 닫기"><i class="fa-solid fa-xmark text-[13px]"></i></button>
+                </header>
+                <div id="shorts-comments-list" class="shorts-comments-list"></div>
+                <form class="shorts-comment-form" onsubmit="event.preventDefault(); window.submitEnjoyShortsComment()">
+                    <input id="shorts-comment-input" type="text" maxlength="300" autocomplete="off" placeholder="댓글을 입력하세요" aria-label="댓글 내용">
+                    <button id="shorts-comment-submit" type="submit" aria-label="댓글 등록"><i class="fa-solid fa-arrow-up text-[12px]"></i></button>
+                </form>
+            </section>
+        </div>
     </section>
 
     <!-- 브이로그 프로그램 상세 전체 화면 -->
@@ -9393,12 +9635,194 @@
         window._shortsScrollTimer = 0;
         window._shortsActiveIndex = -1;
         window._homeNavLastTap = 0;
+        window._shortsEngagement = Object.create(null);
+        window._shortsEngagementUnsub = null;
+        window._shortsEngagementRetry = 0;
+        window._shortsViewed = new Set();
+        window._shortsLikePending = new Set();
+        window._shortsCommentsIndex = -1;
+        window._shortsComments = [];
+        window._shortsCommentsUnsub = null;
 
         function enjoyShortsEsc(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
             });
         }
+
+        function enjoyShortsDocId(key) {
+            return encodeURIComponent(String(key || 'unknown')).slice(0, 1400);
+        }
+
+        function enjoyShortsCount(value) {
+            return Math.max(0, Number(value) || 0).toLocaleString('ko-KR');
+        }
+
+        function enjoyShortsUser() {
+            return window.enjoyUser && window.enjoyUser.uid ? window.enjoyUser : null;
+        }
+
+        function enjoyShortsAuthorName(user) {
+            if (typeof communityAuthorName === 'function') return communityAuthorName(user);
+            return String(window.enjoyProfileName || (user && user.displayName) || (user && user.email) || '멤버').trim() || '멤버';
+        }
+
+        function enjoyShortsEngagementFor(key) {
+            return window._shortsEngagement[key] || {
+                key: key,
+                viewCount: 0,
+                likedBy: [],
+                likedByProfiles: {},
+                commentCount: 0
+            };
+        }
+
+        function enjoyShortsLikeProfile(uid, engagement) {
+            const saved = engagement && engagement.likedByProfiles && engagement.likedByProfiles[uid];
+            const joined = typeof window.enjoyJoinedMembers === 'function' ? window.enjoyJoinedMembers() : [];
+            const member = joined.find(function (item) { return item.uid === uid; });
+            const current = enjoyShortsUser();
+            if (current && current.uid === uid) {
+                return {
+                    name: enjoyShortsAuthorName(current),
+                    photoURL: current.photoURL || (saved && saved.photoURL) || (member && member.photoURL) || ''
+                };
+            }
+            return {
+                name: (saved && saved.name) || (member && member.name) || '멤버',
+                photoURL: (saved && saved.photoURL) || (member && member.photoURL) || ''
+            };
+        }
+
+        function enjoyShortsLikeProfilesHtml(engagement) {
+            const likedBy = Array.isArray(engagement && engagement.likedBy) ? engagement.likedBy : [];
+            if (!likedBy.length) return '';
+            const visible = likedBy.slice(0, 5);
+            const profiles = visible.map(function (uid) {
+                const profile = enjoyShortsLikeProfile(uid, engagement);
+                const avatar = typeof communityAvatar === 'function'
+                    ? communityAvatar(profile.name, profile.photoURL, 'w-7 h-7')
+                    : '<span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-black">' + enjoyShortsEsc(profile.name.slice(0, 1)) + '</span>';
+                return '<span class="shorts-like-person" title="' + enjoyShortsEsc(profile.name) + '">' +
+                    '<span class="shorts-like-person-avatar">' + avatar + '</span>' +
+                    '<span class="shorts-like-person-name">' + enjoyShortsEsc(profile.name) + '</span>' +
+                '</span>';
+            }).join('');
+            const more = likedBy.length > visible.length
+                ? '<span class="shorts-like-person" title="좋아요를 누른 멤버 ' + enjoyShortsCount(likedBy.length) + '명">' +
+                    '<span class="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center text-[9px] font-black">+' + enjoyShortsCount(likedBy.length - visible.length) + '</span>' +
+                    '<span class="shorts-like-person-name">더보기</span></span>'
+                : '';
+            return profiles + more;
+        }
+
+        function updateEnjoyShortsEngagementUI(index) {
+            const item = window.ENJOY_SHORTS[index];
+            const feed = document.getElementById('shorts-feed');
+            const article = feed && feed.querySelector('.shorts-item[data-shorts-index="' + index + '"]');
+            if (!item || !article) return;
+            const engagement = enjoyShortsEngagementFor(item.key);
+            const likedBy = Array.isArray(engagement.likedBy) ? engagement.likedBy : [];
+            const user = enjoyShortsUser();
+            const liked = !!(user && likedBy.indexOf(user.uid) >= 0);
+            const view = article.querySelector('.shorts-view-count');
+            const like = article.querySelector('.shorts-like-button');
+            const likeCount = article.querySelector('.shorts-like-count');
+            const commentCount = article.querySelector('.shorts-comment-count');
+            const members = article.querySelector('.shorts-liked-members');
+            if (view) view.textContent = '조회수 ' + enjoyShortsCount(engagement.viewCount) + '회';
+            if (like) {
+                like.classList.toggle('is-liked', liked);
+                like.setAttribute('aria-pressed', liked ? 'true' : 'false');
+                like.setAttribute('aria-label', liked ? '좋아요 취소' : '좋아요');
+                const icon = like.querySelector('i');
+                if (icon) icon.className = (liked ? 'fa-solid' : 'fa-regular') + ' fa-heart';
+            }
+            if (likeCount) likeCount.textContent = enjoyShortsCount(likedBy.length);
+            if (commentCount) commentCount.textContent = enjoyShortsCount(engagement.commentCount);
+            if (members) members.innerHTML = enjoyShortsLikeProfilesHtml(engagement);
+            if (window._shortsCommentsIndex === index) {
+                const headingCount = document.getElementById('shorts-comments-count');
+                if (headingCount) headingCount.textContent = '댓글 ' + enjoyShortsCount(engagement.commentCount) + '개';
+            }
+        }
+
+        function updateAllEnjoyShortsEngagementUI() {
+            window.ENJOY_SHORTS.forEach(function (_, index) {
+                updateEnjoyShortsEngagementUI(index);
+            });
+        }
+
+        function disconnectEnjoyShortsEngagement() {
+            if (window._shortsEngagementUnsub) {
+                try { window._shortsEngagementUnsub(); } catch (e) {}
+                window._shortsEngagementUnsub = null;
+            }
+            if (window._shortsEngagementRetry) {
+                clearTimeout(window._shortsEngagementRetry);
+                window._shortsEngagementRetry = 0;
+            }
+        }
+
+        function subscribeEnjoyShortsEngagement() {
+            if (window._shortsEngagementUnsub) return;
+            const screen = document.getElementById('shorts-screen');
+            if (!screen || screen.classList.contains('hidden')) return;
+            if (!window.meetingDb || !window.fsOnSnapshot || !window.fsCol) {
+                if (!window._shortsEngagementRetry) {
+                    window._shortsEngagementRetry = setTimeout(function () {
+                        window._shortsEngagementRetry = 0;
+                        subscribeEnjoyShortsEngagement();
+                    }, 350);
+                }
+                return;
+            }
+            try {
+                window._shortsEngagementUnsub = window.fsOnSnapshot(window.fsCol('enjoy_shorts'), function (snapshot) {
+                    const next = Object.create(null);
+                    snapshot.forEach(function (entry) {
+                        const value = entry.data() || {};
+                        if (value.key) next[value.key] = value;
+                    });
+                    window._shortsEngagement = next;
+                    updateAllEnjoyShortsEngagementUI();
+                }, function (error) {
+                    console.warn('shorts engagement snapshot', error);
+                    disconnectEnjoyShortsEngagement();
+                });
+            } catch (error) {
+                console.warn('shorts engagement subscribe', error);
+            }
+        }
+
+        window.recordEnjoyShortsView = async function (index) {
+            const user = enjoyShortsUser();
+            const item = window.ENJOY_SHORTS[index];
+            if (!user || !item || !window.meetingDb || !window.runTransaction || !window.fsDoc) return;
+            const uniqueKey = user.uid + ':' + item.key;
+            if (window._shortsViewed.has(uniqueKey)) return;
+            window._shortsViewed.add(uniqueKey);
+            try {
+                const ref = window.fsDoc('enjoy_shorts', enjoyShortsDocId(item.key));
+                await window.runTransaction(window.meetingDb, async function (transaction) {
+                    const snapshot = await transaction.get(ref);
+                    const current = snapshot.exists() ? (snapshot.data() || {}) : {};
+                    const viewedBy = Array.isArray(current.viewedBy) ? current.viewedBy.slice() : [];
+                    if (viewedBy.indexOf(user.uid) >= 0) return;
+                    viewedBy.push(user.uid);
+                    transaction.set(ref, {
+                        key: item.key,
+                        title: item.title || deriveEnjoyShortsTitle(item.key),
+                        viewedBy: viewedBy,
+                        viewCount: Math.max(Number(current.viewCount) || 0, viewedBy.length - 1) + 1,
+                        updatedAt: Date.now()
+                    }, { merge: true });
+                });
+            } catch (error) {
+                window._shortsViewed.delete(uniqueKey);
+                console.warn('shorts view count', error);
+            }
+        };
 
         function renderEnjoyShortsState(icon, title, message, actionLabel, action) {
             const feed = document.getElementById('shorts-feed');
@@ -9587,8 +10011,22 @@
                         '<span>화면에 들어오면 영상을 연결해요.</span>' +
                         '<button type="button" class="hidden" onclick="window.retryEnjoyShortsItem(' + index + ')">다시 연결</button>' +
                     '</div>' +
-                    '<div class="shorts-copy"><h2>' + enjoyShortsEsc(title) + '</h2></div>' +
-                    '<button type="button" class="shorts-sound-button" onclick="window.toggleEnjoyShortsSound(this)" aria-label="소리 켜기"><i class="fa-solid fa-volume-xmark"></i></button>' +
+                    '<div class="shorts-copy">' +
+                        '<h2>' + enjoyShortsEsc(title) + '</h2>' +
+                        '<p class="shorts-meta shorts-view-count">조회수 0회</p>' +
+                        '<div class="shorts-liked-members" aria-label="좋아요를 누른 멤버"></div>' +
+                    '</div>' +
+                    '<div class="shorts-actions">' +
+                        '<button type="button" class="shorts-action shorts-like-button" onclick="window.toggleEnjoyShortsLike(' + index + ')" aria-label="좋아요" aria-pressed="false">' +
+                            '<span class="shorts-action-core"><i class="fa-regular fa-heart"></i></span>' +
+                            '<span class="shorts-action-count shorts-like-count">0</span>' +
+                        '</button>' +
+                        '<button type="button" class="shorts-action shorts-comment-button" onclick="window.openEnjoyShortsComments(' + index + ')" aria-label="댓글 보기">' +
+                            '<span class="shorts-action-core"><i class="fa-regular fa-comment"></i></span>' +
+                            '<span class="shorts-action-count shorts-comment-count">0</span>' +
+                        '</button>' +
+                        '<button type="button" class="shorts-sound-button" onclick="window.toggleEnjoyShortsSound(this)" aria-label="소리 켜기"><i class="fa-solid fa-volume-xmark"></i></button>' +
+                    '</div>' +
                 '</article>';
             }).join('');
 
@@ -9599,7 +10037,12 @@
                 video.addEventListener('error', function () {
                     window.handleEnjoyShortsPlaybackError(video);
                 });
+                video.addEventListener('play', function () {
+                    window.recordEnjoyShortsView(Number(article.dataset.shortsIndex));
+                });
             });
+            updateAllEnjoyShortsEngagementUI();
+            subscribeEnjoyShortsEngagement();
 
             if ('IntersectionObserver' in window) {
                 window._shortsObserver = new IntersectionObserver(function (entries) {
@@ -9827,9 +10270,270 @@
             if (video.paused) video.play().catch(function () {});
         };
 
+        window.toggleEnjoyShortsLike = async function (index) {
+            const user = typeof communityRequireUser === 'function' ? communityRequireUser() : enjoyShortsUser();
+            const item = window.ENJOY_SHORTS[index];
+            if (!user || !item) return;
+            if (!window.meetingDb || !window.runTransaction || !window.fsDoc) {
+                window.enjoyAlert && window.enjoyAlert('Firebase 연결을 확인하고 있어요. 잠시 후 다시 눌러주세요.');
+                return;
+            }
+            if (window._shortsLikePending.has(item.key)) return;
+            window._shortsLikePending.add(item.key);
+            window.haptic && window.haptic();
+
+            const previous = enjoyShortsEngagementFor(item.key);
+            const previousLikedBy = Array.isArray(previous.likedBy) ? previous.likedBy.slice() : [];
+            const previousProfiles = Object.assign({}, previous.likedByProfiles || {});
+            const wasLiked = previousLikedBy.indexOf(user.uid) >= 0;
+            const optimisticLikedBy = wasLiked
+                ? previousLikedBy.filter(function (uid) { return uid !== user.uid; })
+                : previousLikedBy.concat(user.uid);
+            const optimisticProfiles = Object.assign({}, previousProfiles);
+            if (wasLiked) delete optimisticProfiles[user.uid];
+            else optimisticProfiles[user.uid] = {
+                name: enjoyShortsAuthorName(user),
+                photoURL: user.photoURL || ''
+            };
+            window._shortsEngagement[item.key] = Object.assign({}, previous, {
+                key: item.key,
+                likedBy: optimisticLikedBy,
+                likedByProfiles: optimisticProfiles
+            });
+            updateEnjoyShortsEngagementUI(index);
+
+            try {
+                const ref = window.fsDoc('enjoy_shorts', enjoyShortsDocId(item.key));
+                const saved = await window.runTransaction(window.meetingDb, async function (transaction) {
+                    const snapshot = await transaction.get(ref);
+                    const current = snapshot.exists() ? (snapshot.data() || {}) : {};
+                    const likedBy = Array.isArray(current.likedBy) ? current.likedBy.slice() : [];
+                    const profiles = Object.assign({}, current.likedByProfiles || {});
+                    const currentlyLiked = likedBy.indexOf(user.uid) >= 0;
+                    const nextLikedBy = currentlyLiked
+                        ? likedBy.filter(function (uid) { return uid !== user.uid; })
+                        : likedBy.concat(user.uid);
+                    if (currentlyLiked) delete profiles[user.uid];
+                    else profiles[user.uid] = {
+                        name: enjoyShortsAuthorName(user),
+                        photoURL: user.photoURL || ''
+                    };
+                    transaction.set(ref, {
+                        key: item.key,
+                        title: item.title || deriveEnjoyShortsTitle(item.key),
+                        likedBy: nextLikedBy,
+                        likedByProfiles: profiles,
+                        updatedAt: Date.now()
+                    }, { merge: true });
+                    return { likedBy: nextLikedBy, likedByProfiles: profiles };
+                });
+                window._shortsEngagement[item.key] = Object.assign({}, enjoyShortsEngagementFor(item.key), saved);
+                updateEnjoyShortsEngagementUI(index);
+            } catch (error) {
+                window._shortsEngagement[item.key] = Object.assign({}, previous, {
+                    likedBy: previousLikedBy,
+                    likedByProfiles: previousProfiles
+                });
+                updateEnjoyShortsEngagementUI(index);
+                window.enjoyAlert && window.enjoyAlert(
+                    error && error.code === 'permission-denied'
+                        ? '숏츠 좋아요 권한 설정이 필요해요.'
+                        : '좋아요를 반영하지 못했어요.'
+                );
+            } finally {
+                window._shortsLikePending.delete(item.key);
+            }
+        };
+
+        function renderEnjoyShortsComments() {
+            const list = document.getElementById('shorts-comments-list');
+            const count = document.getElementById('shorts-comments-count');
+            const user = enjoyShortsUser();
+            if (!list) return;
+            if (count) count.textContent = window._shortsComments.length
+                ? '댓글 ' + enjoyShortsCount(window._shortsComments.length) + '개'
+                : '아직 댓글이 없어요';
+            if (!window._shortsComments.length) {
+                list.innerHTML = '<div class="min-h-[180px] flex flex-col items-center justify-center text-center">' +
+                    '<i class="fa-regular fa-comments text-[25px] text-white/25"></i>' +
+                    '<p class="mt-3 text-[12px] font-bold text-white/45">첫 댓글을 남겨보세요.</p></div>';
+                return;
+            }
+            list.innerHTML = window._shortsComments.map(function (comment) {
+                const own = !!(user && comment.authorUid === user.uid);
+                const avatar = typeof communityAvatar === 'function'
+                    ? communityAvatar(comment.authorName, comment.authorPhoto, 'w-8 h-8')
+                    : '<span class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-[11px] font-black">' + enjoyShortsEsc(String(comment.authorName || '멤').slice(0, 1)) + '</span>';
+                const relative = typeof communityRelativeTime === 'function'
+                    ? communityRelativeTime(comment.createdAt)
+                    : '';
+                return '<div class="shorts-comment-row">' +
+                    avatar +
+                    '<div class="shorts-comment-copy"><div><strong>' + enjoyShortsEsc(comment.authorName || '멤버') + '</strong>' +
+                    '<time>' + enjoyShortsEsc(relative) + '</time></div>' +
+                    '<p>' + enjoyShortsEsc(comment.text || '') + '</p></div>' +
+                    (own ? '<button type="button" onclick="window.deleteEnjoyShortsComment(\'' + enjoyShortsEsc(comment._id) + '\')" class="p-1 text-white/30 active:text-[#F04452]" aria-label="댓글 삭제"><i class="fa-regular fa-trash-can text-[10px]"></i></button>' : '') +
+                '</div>';
+            }).join('');
+        }
+
+        window.openEnjoyShortsComments = function (index) {
+            const user = typeof communityRequireUser === 'function' ? communityRequireUser() : enjoyShortsUser();
+            const item = window.ENJOY_SHORTS[index];
+            const layer = document.getElementById('shorts-comments-layer');
+            const list = document.getElementById('shorts-comments-list');
+            if (!user || !item || !layer) return;
+            if (!window.fsOnSnapshot || !window.fsCol || !window.fsQuery || !window.fsOrderBy) {
+                window.enjoyAlert && window.enjoyAlert('Firebase 연결을 확인하고 있어요. 잠시 후 다시 눌러주세요.');
+                return;
+            }
+            window.haptic && window.haptic();
+            if (window._shortsCommentsUnsub) {
+                try { window._shortsCommentsUnsub(); } catch (e) {}
+                window._shortsCommentsUnsub = null;
+            }
+            window._shortsCommentsIndex = index;
+            window._shortsComments = [];
+            const input = document.getElementById('shorts-comment-input');
+            const title = document.getElementById('shorts-comments-title');
+            if (input) input.value = '';
+            if (title) title.textContent = '댓글 · ' + (item.title || deriveEnjoyShortsTitle(item.key));
+            if (list) list.innerHTML = '<div class="min-h-[180px] flex items-center justify-center text-[12px] text-white/45"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>댓글 불러오는 중…</div>';
+            layer.classList.remove('hidden');
+            const feed = document.getElementById('shorts-feed');
+            const article = feed && feed.querySelector('.shorts-item[data-shorts-index="' + index + '"]');
+            const video = article && article.querySelector('video');
+            if (video) video.pause();
+            try {
+                const commentsQuery = window.fsQuery(
+                    window.fsCol('enjoy_shorts', enjoyShortsDocId(item.key), 'comments'),
+                    window.fsOrderBy('createdAt', 'asc'),
+                    window.fsLimit(100)
+                );
+                window._shortsCommentsUnsub = window.fsOnSnapshot(commentsQuery, function (snapshot) {
+                    const next = [];
+                    snapshot.forEach(function (entry) {
+                        const value = entry.data() || {};
+                        value._id = entry.id;
+                        next.push(value);
+                    });
+                    window._shortsComments = next;
+                    renderEnjoyShortsComments();
+                }, function (error) {
+                    console.warn('shorts comments snapshot', error);
+                    if (list) list.innerHTML = '<div class="min-h-[180px] flex items-center justify-center text-[12px] text-[#F04452]">댓글을 불러오지 못했어요.</div>';
+                });
+            } catch (error) {
+                console.warn('shorts comments subscribe', error);
+            }
+        };
+
+        window.closeEnjoyShortsComments = function () {
+            if (window._shortsCommentsUnsub) {
+                try { window._shortsCommentsUnsub(); } catch (e) {}
+                window._shortsCommentsUnsub = null;
+            }
+            const index = window._shortsCommentsIndex;
+            window._shortsCommentsIndex = -1;
+            window._shortsComments = [];
+            const layer = document.getElementById('shorts-comments-layer');
+            if (layer) layer.classList.add('hidden');
+            const screen = document.getElementById('shorts-screen');
+            const feed = document.getElementById('shorts-feed');
+            const article = feed && feed.querySelector('.shorts-item[data-shorts-index="' + index + '"]');
+            const video = article && article.querySelector('video');
+            if (screen && !screen.classList.contains('hidden') && index === window._shortsActiveIndex && video && video.src) {
+                video.play().catch(function () {});
+            }
+        };
+
+        window.submitEnjoyShortsComment = async function () {
+            const user = typeof communityRequireUser === 'function' ? communityRequireUser() : enjoyShortsUser();
+            const index = window._shortsCommentsIndex;
+            const item = window.ENJOY_SHORTS[index];
+            const input = document.getElementById('shorts-comment-input');
+            const text = input ? String(input.value || '').trim() : '';
+            if (!user || !item || !text || !window.meetingDb || !window.runTransaction || !window.doc || !window.fsDoc || !window.fsCol) return;
+            const button = document.getElementById('shorts-comment-submit');
+            if (button) { button.disabled = true; button.style.opacity = '.55'; }
+            try {
+                const parentRef = window.fsDoc('enjoy_shorts', enjoyShortsDocId(item.key));
+                const commentRef = window.doc(window.fsCol('enjoy_shorts', enjoyShortsDocId(item.key), 'comments'));
+                await window.runTransaction(window.meetingDb, async function (transaction) {
+                    const parentSnapshot = await transaction.get(parentRef);
+                    const current = parentSnapshot.exists() ? (parentSnapshot.data() || {}) : {};
+                    transaction.set(parentRef, {
+                        key: item.key,
+                        title: item.title || deriveEnjoyShortsTitle(item.key),
+                        commentCount: Math.max(0, Number(current.commentCount) || 0) + 1,
+                        updatedAt: Date.now()
+                    }, { merge: true });
+                    transaction.set(commentRef, {
+                        authorUid: user.uid,
+                        authorName: enjoyShortsAuthorName(user),
+                        authorPhoto: user.photoURL || '',
+                        text: text,
+                        createdAt: Date.now()
+                    });
+                });
+                if (input) input.value = '';
+            } catch (error) {
+                console.error('shorts comment', error);
+                window.enjoyAlert && window.enjoyAlert(
+                    error && error.code === 'permission-denied'
+                        ? '숏츠 댓글 쓰기 권한 설정이 필요해요.'
+                        : '댓글을 등록하지 못했어요.'
+                );
+            } finally {
+                if (button) { button.disabled = false; button.style.opacity = '1'; }
+            }
+        };
+
+        window.deleteEnjoyShortsComment = async function (commentId) {
+            const user = typeof communityRequireUser === 'function' ? communityRequireUser() : enjoyShortsUser();
+            const index = window._shortsCommentsIndex;
+            const item = window.ENJOY_SHORTS[index];
+            const comment = window._shortsComments.find(function (entry) { return entry._id === commentId; });
+            if (!user || !item || !comment || comment.authorUid !== user.uid || !window.meetingDb || !window.runTransaction) return;
+            if (window.enjoyConfirm && !await window.enjoyConfirm('댓글을 삭제할까요?', { title: '댓글 삭제', confirmText: '삭제', danger: true })) return;
+            try {
+                const parentRef = window.fsDoc('enjoy_shorts', enjoyShortsDocId(item.key));
+                const commentRef = window.fsDoc('enjoy_shorts', enjoyShortsDocId(item.key), 'comments', commentId);
+                await window.runTransaction(window.meetingDb, async function (transaction) {
+                    const parentSnapshot = await transaction.get(parentRef);
+                    const current = parentSnapshot.exists() ? (parentSnapshot.data() || {}) : {};
+                    transaction.delete(commentRef);
+                    transaction.set(parentRef, {
+                        commentCount: Math.max(0, (Number(current.commentCount) || 0) - 1),
+                        updatedAt: Date.now()
+                    }, { merge: true });
+                });
+            } catch (error) {
+                console.error('shorts comment delete', error);
+                window.enjoyAlert && window.enjoyAlert('댓글을 삭제하지 못했어요.');
+            }
+        };
+
         window.startEnjoyShortsLogin = function () {
             window.closeEnjoyShorts();
             if (typeof window.enjoyLogin === 'function') window.enjoyLogin();
+        };
+
+        window.setHomeNavShortsMode = function (isShorts) {
+            const button = document.getElementById('nav-home');
+            if (!button) return;
+            const icon = button.querySelector('i');
+            const label = button.querySelector('span');
+            button.dataset.mode = isShorts ? 'shorts' : 'home';
+            button.setAttribute('aria-label', isShorts
+                ? '숏츠, 두 번 누르면 홈'
+                : '홈, 두 번 누르면 엔조이 숏츠');
+            if (icon) {
+                const activeColor = icon.classList.contains('text-gray-300') ? 'text-gray-300' : 'text-white';
+                icon.className = (isShorts ? 'fa-solid fa-clapperboard' : 'fa-solid fa-house') +
+                    ' text-base ' + activeColor + ' transition-colors';
+            }
+            if (label) label.textContent = isShorts ? '숏츠' : '홈';
         };
 
         window.openEnjoyShorts = function () {
@@ -9839,6 +10543,7 @@
             if (!screen) return;
             screen.classList.remove('hidden');
             screen.classList.add('flex');
+            window.setHomeNavShortsMode(true);
             if (feed) feed.scrollTop = 0;
             window._shortsSessionPromises.clear();
             window.loadEnjoyShorts();
@@ -9848,9 +10553,11 @@
         window.closeEnjoyShorts = function () {
             const screen = document.getElementById('shorts-screen');
             if (!screen) return;
+            window.closeEnjoyShortsComments();
             window._shortsRequestId += 1;
             window._shortsSessionPromises.clear();
             disconnectEnjoyShortsFeed();
+            disconnectEnjoyShortsEngagement();
             screen.querySelectorAll('video').forEach(function (video) {
                 video.pause();
                 video.removeAttribute('src');
@@ -9858,12 +10565,25 @@
             });
             screen.classList.add('hidden');
             screen.classList.remove('flex');
+            window.setHomeNavShortsMode(false);
             if (window.updateNavContrast) requestAnimationFrame(window.updateNavContrast);
         };
 
         window.handleHomeNavTap = function () {
             window.haptic && window.haptic();
             const now = Date.now();
+            const shorts = document.getElementById('shorts-screen');
+            const shortsOpen = !!(shorts && !shorts.classList.contains('hidden'));
+            if (shortsOpen) {
+                if (now - window._homeNavLastTap <= 380) {
+                    window._homeNavLastTap = 0;
+                    window.closeEnjoyShorts();
+                    window.goHome();
+                } else {
+                    window._homeNavLastTap = now;
+                }
+                return;
+            }
             if (now - window._homeNavLastTap <= 380) {
                 window._homeNavLastTap = 0;
                 window.openEnjoyShorts();
