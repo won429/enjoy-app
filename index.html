@@ -3190,9 +3190,13 @@
         }
         .shorts-video {
             position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            width: min(100%, 56.25dvh);
+            height: auto;
+            max-height: 100%;
+            aspect-ratio: 9 / 16;
+            transform: translate(-50%, -50%);
             object-fit: cover;
             background: #000;
         }
@@ -9643,6 +9647,8 @@
         window._shortsCommentsIndex = -1;
         window._shortsComments = [];
         window._shortsCommentsUnsub = null;
+        window._shortsMuted = true;
+        window._shortsPreviousFirstKey = '';
 
         function enjoyShortsEsc(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
@@ -9656,6 +9662,39 @@
 
         function enjoyShortsCount(value) {
             return Math.max(0, Number(value) || 0).toLocaleString('ko-KR');
+        }
+
+        function randomizeEnjoyShorts(items) {
+            const shuffled = Array.isArray(items) ? items.slice() : [];
+            for (let index = shuffled.length - 1; index > 0; index -= 1) {
+                const target = Math.floor(Math.random() * (index + 1));
+                const current = shuffled[index];
+                shuffled[index] = shuffled[target];
+                shuffled[target] = current;
+            }
+            if (shuffled.length > 1 && shuffled[0].key === window._shortsPreviousFirstKey) {
+                const target = 1 + Math.floor(Math.random() * (shuffled.length - 1));
+                const first = shuffled[0];
+                shuffled[0] = shuffled[target];
+                shuffled[target] = first;
+            }
+            window._shortsPreviousFirstKey = shuffled.length ? shuffled[0].key : '';
+            return shuffled;
+        }
+
+        function syncEnjoyShortsSoundState() {
+            const feed = document.getElementById('shorts-feed');
+            if (!feed) return;
+            const muted = window._shortsMuted !== false;
+            feed.querySelectorAll('.shorts-video').forEach(function (video) {
+                video.muted = muted;
+            });
+            feed.querySelectorAll('.shorts-sound-button').forEach(function (button) {
+                const icon = button.querySelector('i');
+                if (icon) icon.className = muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+                button.setAttribute('aria-label', muted ? '소리 켜기' : '소리 끄기');
+                button.setAttribute('aria-pressed', muted ? 'false' : 'true');
+            });
         }
 
         function enjoyShortsUser() {
@@ -9914,13 +9953,13 @@
             }
 
             const seenKeys = new Set();
-            return payload.shorts.reduce(function (items, rawItem) {
+            const items = payload.shorts.reduce(function (result, rawItem) {
                 if (!rawItem || typeof rawItem.key !== 'string' ||
                     !ENJOY_SHORTS_SUPPORTED_KEY.test(rawItem.key) || seenKeys.has(rawItem.key)) {
-                    return items;
+                    return result;
                 }
                 seenKeys.add(rawItem.key);
-                items.push({
+                result.push({
                     key: rawItem.key,
                     title: typeof rawItem.title === 'string' && rawItem.title.trim()
                         ? rawItem.title.trim()
@@ -9928,8 +9967,9 @@
                     size: Math.max(0, Number(rawItem.size) || 0),
                     updated: typeof rawItem.updated === 'string' ? rawItem.updated : ''
                 });
-                return items;
+                return result;
             }, []);
+            return randomizeEnjoyShorts(items);
         }
 
         async function requestEnjoyShortsSession(key, forceRefresh) {
@@ -10003,8 +10043,11 @@
 
             feed.innerHTML = items.map(function (item, index) {
                 const title = item.title || deriveEnjoyShortsTitle(item.key);
+                const mutedAttribute = window._shortsMuted === false ? '' : ' muted';
+                const soundIcon = window._shortsMuted === false ? 'fa-volume-high' : 'fa-volume-xmark';
+                const soundLabel = window._shortsMuted === false ? '소리 끄기' : '소리 켜기';
                 return '<article class="shorts-item" data-shorts-index="' + index + '">' +
-                    '<video class="shorts-video" muted playsinline loop preload="metadata" onclick="window.toggleEnjoyShortsVideo(this)" aria-label="' + enjoyShortsEsc(title) + '"></video>' +
+                    '<video class="shorts-video"' + mutedAttribute + ' width="720" height="1280" playsinline loop preload="metadata" onclick="window.toggleEnjoyShortsVideo(this)" aria-label="' + enjoyShortsEsc(title) + '"></video>' +
                     '<div class="shorts-video-shade"></div>' +
                     '<div class="shorts-item-status" role="status">' +
                         '<i class="fa-solid fa-spinner fa-spin text-[18px]"></i>' +
@@ -10025,10 +10068,11 @@
                             '<span class="shorts-action-core"><i class="fa-regular fa-comment"></i></span>' +
                             '<span class="shorts-action-count shorts-comment-count">0</span>' +
                         '</button>' +
-                        '<button type="button" class="shorts-sound-button" onclick="window.toggleEnjoyShortsSound(this)" aria-label="소리 켜기"><i class="fa-solid fa-volume-xmark"></i></button>' +
+                        '<button type="button" class="shorts-sound-button" onclick="window.toggleEnjoyShortsSound(this)" aria-label="' + soundLabel + '" aria-pressed="' + (window._shortsMuted === false ? 'true' : 'false') + '"><i class="fa-solid ' + soundIcon + '"></i></button>' +
                     '</div>' +
                 '</article>';
             }).join('');
+            syncEnjoyShortsSoundState();
 
             const articles = Array.from(feed.querySelectorAll('.shorts-item'));
             articles.forEach(function (article) {
@@ -10091,6 +10135,8 @@
                 const video = candidate.querySelector('video');
                 if (video && candidateIndex !== index) video.pause();
             });
+            const activeVideo = article.querySelector('video');
+            if (activeVideo) activeVideo.muted = window._shortsMuted !== false;
             window.ensureEnjoyShortsSession(index);
         };
 
@@ -10106,6 +10152,7 @@
 
             const expiresAt = Number(article.dataset.playbackExpiresAt) || 0;
             if (!forceRefresh && video.src && (!expiresAt || expiresAt > Date.now() + 5000)) {
+                video.muted = window._shortsMuted !== false;
                 setEnjoyShortsItemStatus(article, 'ready');
                 if (window._shortsActiveIndex === index) video.play().catch(function () {});
                 return Promise.resolve();
@@ -10126,6 +10173,7 @@
                     video.load();
                     article.dataset.playbackExpiresAt = String(session.expiresAt || 0);
                     article.dataset.sessionState = 'ready';
+                    video.muted = window._shortsMuted !== false;
                     video.src = session.playbackUrl;
                     setEnjoyShortsItemStatus(article, 'ready');
                     if (window._shortsActiveIndex === index) video.play().catch(function () {});
@@ -10263,10 +10311,8 @@
             const video = item && item.querySelector('video');
             if (!video) return;
             window.haptic && window.haptic();
-            video.muted = !video.muted;
-            const icon = button.querySelector('i');
-            if (icon) icon.className = video.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
-            button.setAttribute('aria-label', video.muted ? '소리 켜기' : '소리 끄기');
+            window._shortsMuted = !window._shortsMuted;
+            syncEnjoyShortsSoundState();
             if (video.paused) video.play().catch(function () {});
         };
 
