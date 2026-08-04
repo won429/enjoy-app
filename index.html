@@ -5130,9 +5130,9 @@
                 <section class="promotion-detail-guide" aria-label="초대 코드 입력 방법">
                     <h3 class="promotion-detail-guide-title">초대 코드는 이렇게 입력해요</h3>
                     <div class="promotion-detail-code">
-                        <span class="promotion-detail-code-label">친구 초대 코드</span>
-                        <div class="promotion-detail-code-value">전시기</div>
-                        <p class="promotion-detail-code-help">초대 코드는 <strong>초대한 사람의 프로필 이름</strong>이에요. 전시기에게 초대받았다면 “전시기”라고 입력하면 됩니다.</p>
+                        <span class="promotion-detail-code-label">당신의 초대코드는 이러합니다!</span>
+                        <div id="promotion-detail-invite-code" class="promotion-detail-code-value">확인 중</div>
+                        <p class="promotion-detail-code-help">초대 코드는 <strong>내 프로필 이름</strong>이에요. 친구가 가입할 때 위 초대 코드를 입력하면 됩니다.</p>
                     </div>
                 </section>
             </main>
@@ -5148,8 +5148,14 @@
         const detailScreen = document.getElementById('promotion-detail-screen');
         const detailCloseButton = document.getElementById('promotion-detail-close');
         const detailConfirmButton = document.getElementById('promotion-detail-confirm');
+        const detailInviteCode = document.getElementById('promotion-detail-invite-code');
         let promotionShown = false;
         let previousFocus = null;
+
+        function updatePromotionInviteCode() {
+            const profileName = String(window.enjoyProfileName || '').trim();
+            detailInviteCode.textContent = profileName || '확인 중';
+        }
 
         function closePromotionPopup() {
             if (!popup.classList.contains('is-open')) return;
@@ -5170,6 +5176,7 @@
         };
 
         function openPromotionDetail() {
+            updatePromotionInviteCode();
             popup.classList.remove('is-open');
             popup.setAttribute('aria-hidden', 'true');
             detailScreen.classList.add('is-open');
