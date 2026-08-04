@@ -2125,13 +2125,210 @@
             padding: 15px 0; border-radius: 9999px; display: flex; align-items: center; justify-content: center; gap: 12px;
             border: 1px solid transparent; box-shadow: 0 6px 22px rgba(0,0,0,0.35); transition: transform .15s; cursor: pointer; }
         .lg-google:active { transform: scale(0.96); }
-        #login-prompt, #profile-modal { background: rgba(0,0,0,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-        #login-prompt .lp-card, #profile-modal .lp-card { background: #1c1c1e; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-        #login-prompt .lp-title, #profile-modal .lp-title { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-        #login-prompt .lp-desc, #profile-modal .lp-desc { font-size: 13.5px; font-weight: 500; line-height: 1.55; margin-top: 8px; color: rgba(255,255,255,0.6); }
-        #login-prompt .lp-cancel, #profile-modal .lp-cancel { margin-top: 10px; width: 100%; padding: 12px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
+        #login-prompt { background: rgba(0,0,0,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+        #login-prompt .lp-card { background: #1c1c1e; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        #login-prompt .lp-title { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        #login-prompt .lp-desc { font-size: 13.5px; font-weight: 500; line-height: 1.55; margin-top: 8px; color: rgba(255,255,255,0.6); }
+        #login-prompt .lp-cancel { margin-top: 10px; width: 100%; padding: 12px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
             background: transparent; transition: opacity .15s; }
-        #login-prompt .lp-cancel:active, #profile-modal .lp-cancel:active { opacity: 0.6; }
+        #login-prompt .lp-cancel:active { opacity: 0.6; }
+        /* 프로필 최초 등록/이름 변경: 로그인 화면과 같은 전체 화면 구성 */
+        #profile-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 310;
+            overflow-y: auto;
+            background: #000;
+            color: #fff;
+        }
+        .profile-join-content {
+            width: min(100%, 448px);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            margin: 0 auto;
+            padding: max(64px, env(safe-area-inset-top)) 28px max(36px, env(safe-area-inset-bottom));
+        }
+        .profile-join-kicker {
+            color: #3182F6;
+            font-size: 16px;
+            font-weight: 800;
+        }
+        .profile-join-title {
+            margin-top: 18px;
+            color: #fff;
+            font-size: 30px;
+            font-weight: 850;
+            line-height: 1.3;
+            word-break: keep-all;
+        }
+        .profile-join-desc {
+            margin-top: 14px;
+            color: rgba(255,255,255,.52);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+        .profile-join-form { margin-top: 42px; }
+        .profile-field + .profile-field { margin-top: 20px; }
+        .profile-field-label {
+            display: block;
+            color: rgba(255,255,255,.78);
+            font-size: 13px;
+            font-weight: 700;
+        }
+        #profile-modal .pf-input {
+            margin-top: 9px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            text-align: left;
+        }
+        .profile-invite-note {
+            margin-top: 8px;
+            color: rgba(255,255,255,.38);
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.45;
+        }
+        #profile-modal .pf-status {
+            margin-top: 14px;
+            text-align: left;
+        }
+        #profile-modal .pf-submit {
+            min-height: 54px;
+            margin-top: 18px;
+        }
+        .profile-cancel {
+            width: 100%;
+            margin-top: 10px;
+            padding: 13px 0;
+            color: rgba(255,255,255,.55);
+            background: transparent;
+            font-size: 14px;
+            font-weight: 650;
+        }
+        .profile-join-footer {
+            margin-top: auto;
+            padding-top: 40px;
+            color: rgba(255,255,255,.3);
+            font-size: 12px;
+            font-weight: 750;
+            text-align: center;
+        }
+        /* 로그인 완료 후 노출되는 이미지 프로모션 팝업 */
+        #promotion-popup {
+            position: fixed;
+            inset: 0;
+            z-index: 350;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+            background: rgba(0,0,0,.76);
+            -webkit-backdrop-filter: blur(3px);
+            backdrop-filter: blur(3px);
+        }
+        #promotion-popup.is-open { display: flex; }
+        .promotion-popup-card {
+            position: relative;
+            width: min(47.52vw, 238px);
+            max-height: calc(100dvh - 40px);
+            overflow: hidden;
+            border-radius: 19px;
+            background: #3182F6;
+            box-shadow: 0 19px 53px rgba(0,0,0,.55);
+            animation: promotionPopupIn .32s cubic-bezier(.16,1,.3,1) both;
+        }
+        .promotion-popup-visual {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 36 / 41;
+            overflow: hidden;
+            background: linear-gradient(155deg, #48A1FF 0%, #1673F8 58%, #0560DF 100%);
+        }
+        .promotion-popup-visual img {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+        .promotion-popup-fallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 47px 24px 24px;
+            color: rgba(255,255,255,.94);
+            font-size: 19px;
+            font-weight: 800;
+            line-height: 1.35;
+            text-align: center;
+            word-break: keep-all;
+        }
+        .promotion-popup-close {
+            position: absolute;
+            top: 4.3%;
+            right: 4.3%;
+            z-index: 2;
+            width: 14%;
+            min-width: 26px;
+            max-width: 33px;
+            aspect-ratio: 1;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 999px;
+            outline: none;
+            color: #fff;
+            background: rgba(7,55,120,.48);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            transition: transform .15s ease, background-color .15s ease;
+        }
+        .promotion-popup-close::before,
+        .promotion-popup-close::after {
+            content: "";
+            position: absolute;
+            width: 48%;
+            height: 2.6px;
+            border-radius: 999px;
+            background: currentColor;
+        }
+        .promotion-popup-close::before { transform: rotate(45deg); }
+        .promotion-popup-close::after { transform: rotate(-45deg); }
+        .promotion-popup-detail {
+            width: 100%;
+            min-height: 0;
+            aspect-ratio: 36 / 7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            color: #fff;
+            background: #075CCF;
+            font-size: clamp(12px, 2.9vw, 13px);
+            font-weight: 600;
+            outline: none;
+            text-decoration: none;
+            transition: filter .15s ease;
+        }
+        .promotion-popup-close:active { transform: scale(.92); background: rgba(7,55,120,.66); }
+        .promotion-popup-detail:active { filter: brightness(.88); }
+        @keyframes promotionPopupIn {
+            from { opacity: 0; transform: translateY(18px) scale(.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (max-height: 620px) {
+            .promotion-popup-card { width: min(47.52vw, 198px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .promotion-popup-card { animation: none; }
+        }
         #enjoy-dialog { z-index: 400; background: rgba(0,0,0,0.68); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
         #enjoy-dialog .ed-card { width: min(100%, 360px); border: 1px solid rgba(255,255,255,0.10); border-radius: 26px; padding: 24px;
             background: #1c1c1e; box-shadow: 0 24px 70px rgba(0,0,0,0.55); text-align: center;
@@ -3406,10 +3603,17 @@
             #login-screen .lg-card p { color: #6e6e73; }
             #login-screen .lg-footer { color: #9b95a8; }
             .lg-google { background: #fff; color: #141414; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 6px 22px rgba(0,0,0,0.10); }
-            #login-prompt, #profile-modal { background: rgba(0,0,0,0.35); }
-            #login-prompt .lp-card, #profile-modal .lp-card { background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
-            #login-prompt .lp-title, #profile-modal .lp-title { color: #141414; }
-            #login-prompt .lp-desc, #login-prompt .lp-cancel, #profile-modal .lp-desc, #profile-modal .lp-cancel { color: #8B95A1; }
+            #login-prompt { background: rgba(0,0,0,0.35); }
+            #login-prompt .lp-card { background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+            #login-prompt .lp-title { color: #141414; }
+            #login-prompt .lp-desc, #login-prompt .lp-cancel { color: #8B95A1; }
+            #profile-modal { background: #F2F2F7; color: #141414; }
+            #profile-modal .profile-join-title { color: #141414; }
+            #profile-modal .profile-join-desc { color: #6E6E73; }
+            #profile-modal .profile-field-label { color: #333D4B; }
+            #profile-modal .profile-invite-note,
+            #profile-modal .profile-cancel { color: #8B95A1; }
+            #profile-modal .profile-join-footer { color: #9B95A8; }
             #enjoy-dialog { background: rgba(0,0,0,.38); }
             #enjoy-dialog .ed-card { background: #fff; border-color: rgba(0,0,0,.08); box-shadow: 0 24px 70px rgba(0,0,0,.2); }
             #enjoy-dialog .ed-title { color: #141414; }
@@ -4006,6 +4210,72 @@
         </div>
     </div>
 
+    <!-- 로그인 완료 후 이미지 팝업
+         권장 이미지: popup-notice.png / 1080 × 1230px (가로:세로 = 36:41) -->
+    <div id="promotion-popup" aria-hidden="true">
+        <div class="promotion-popup-card" role="dialog" aria-modal="true" aria-label="엔조이 새 소식">
+            <div class="promotion-popup-visual">
+                <div class="promotion-popup-fallback" aria-hidden="true">새 소식을<br>준비 중이에요</div>
+                <img id="promotion-popup-image" src="popup-notice.png" alt="엔조이 새 소식" onerror="this.remove()">
+                <button id="promotion-popup-close" class="promotion-popup-close" type="button" aria-label="팝업 닫기"></button>
+            </div>
+            <!-- 상세 페이지가 정해지면 data-detail-url에 주소만 넣으면 됩니다. -->
+            <button id="promotion-popup-detail" class="promotion-popup-detail" type="button" data-detail-url="">자세히 보기</button>
+        </div>
+    </div>
+    <script>
+    (function () {
+        const popup = document.getElementById('promotion-popup');
+        const closeButton = document.getElementById('promotion-popup-close');
+        const detailButton = document.getElementById('promotion-popup-detail');
+        let promotionShown = false;
+        let previousFocus = null;
+
+        function closePromotionPopup() {
+            if (!popup.classList.contains('is-open')) return;
+            popup.classList.remove('is-open');
+            popup.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (previousFocus && previousFocus.focus) previousFocus.focus();
+            previousFocus = null;
+        }
+
+        window.openPromotionPopup = function () {
+            if (promotionShown) return;
+            promotionShown = true;
+            previousFocus = document.activeElement;
+            popup.classList.add('is-open');
+            popup.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        };
+
+        closeButton.addEventListener('click', function () {
+            window.haptic && window.haptic();
+            closePromotionPopup();
+        });
+        detailButton.addEventListener('click', function () {
+            window.haptic && window.haptic();
+            const detailUrl = detailButton.dataset.detailUrl;
+            const image = document.getElementById('promotion-popup-image');
+            if (detailUrl) {
+                window.location.href = detailUrl;
+                return;
+            }
+            if (image && image.complete && image.naturalWidth) {
+                window.open(image.currentSrc || image.src, '_blank', 'noopener');
+                return;
+            }
+            closePromotionPopup();
+        });
+        window.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && popup.classList.contains('is-open')) {
+                event.preventDefault();
+                closePromotionPopup();
+            }
+        });
+    })();
+    </script>
+
     <!-- [New] 로그인 유도 팝업 — 둘러보기 중 기능 사용 시 노출 -->
     <div id="login-prompt" class="hidden fixed inset-0 z-[280] flex items-center justify-center px-8" onclick="window.hideLoginPrompt && window.hideLoginPrompt(event)">
         <div class="lp-card w-full max-w-[300px] rounded-[26px] p-7 text-center" onclick="event.stopPropagation()">
@@ -4019,16 +4289,36 @@
         </div>
     </div>
 
-    <!-- [New] 프로필 이름 입력 모달 — 로그인 후 필수 1회 (한 번 정하면 영구) -->
-    <div id="profile-modal" class="hidden fixed inset-0 z-[290] flex items-center justify-center px-8">
-        <div class="lp-card w-full max-w-[330px] rounded-[26px] p-7 text-center" onclick="event.stopPropagation()">
-            <h3 class="lp-title" id="profile-title">프로필 이름을 입력해주세요</h3>
-            <p class="lp-desc" id="profile-desc">멤버 현황에 표시될 내 이름이에요.<br><b>한 번 정하면 바꿀 수 없어요.</b></p>
-            <input id="profile-input" type="text" class="pf-input" placeholder="이름 입력" autocomplete="off" autocapitalize="off" spellcheck="false"
-                   onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.enjoySubmitProfile && window.enjoySubmitProfile(); }">
-            <p id="profile-status" class="pf-status"></p>
-            <button id="profile-submit" class="pf-submit" onclick="window.haptic && window.haptic(); window.enjoySubmitProfile && window.enjoySubmitProfile();">입력 완료</button>
-            <button id="profile-cancel" class="lp-cancel hidden" onclick="window.haptic && window.haptic(); window.enjoyCloseProfile && window.enjoyCloseProfile();">취소</button>
+    <!-- 프로필 등록 화면 — 로그인 후 필수 1회 -->
+    <div id="profile-modal" class="hidden fixed inset-0 z-[310] overflow-y-auto scrollbar-hide" aria-hidden="true">
+        <div class="profile-join-content">
+            <div>
+                <p class="profile-join-kicker">ENJOY ACCOUNT</p>
+                <h2 id="profile-title" class="profile-join-title">엔조이에서 사용할<br>프로필을 만들어주세요</h2>
+                <p id="profile-desc" class="profile-join-desc">멤버 현황과 활동에 표시되는 이름이에요.<br>가입을 완료하면 엔조이를 바로 시작할 수 있어요.</p>
+            </div>
+
+            <div class="profile-join-form">
+                <div class="profile-field">
+                    <label class="profile-field-label" for="profile-input">프로필 이름</label>
+                    <input id="profile-input" type="text" class="pf-input" placeholder="이름을 입력해주세요" autocomplete="off" autocapitalize="off" spellcheck="false"
+                           oninput="window.enjoyProfileNameInput && window.enjoyProfileNameInput()"
+                           onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.enjoySubmitProfile && window.enjoySubmitProfile(); }">
+                </div>
+
+                <div id="profile-invite-wrap" class="profile-field hidden">
+                    <label class="profile-field-label" for="profile-invite-code">친구 초대 코드 <span style="font-weight:500;opacity:.55">(선택)</span></label>
+                    <input id="profile-invite-code" type="text" class="pf-input" placeholder="초대 코드를 입력해주세요" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                           onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.enjoySubmitProfile && window.enjoySubmitProfile(); }">
+                    <p class="profile-invite-note">오스틴·홍박사 프로필을 등록할 때만 입력할 수 있어요.</p>
+                </div>
+
+                <p id="profile-status" class="pf-status"></p>
+                <button id="profile-submit" class="pf-submit" onclick="window.haptic && window.haptic(); window.enjoySubmitProfile && window.enjoySubmitProfile();">가입 완료</button>
+                <button id="profile-cancel" class="profile-cancel hidden" onclick="window.haptic && window.haptic(); window.enjoyCloseProfile && window.enjoyCloseProfile();">취소</button>
+            </div>
+
+            <p class="profile-join-footer">Copyright © 2026 엔조이. All rights reserved.</p>
         </div>
     </div>
 
@@ -11198,20 +11488,53 @@
             return taken;
         }
 
-        /* ----- 프로필 이름 입력(필수·영구·중복불가) / 변경(성원제 전용) ----- */
+        /* ----- 프로필 등록(필수·영구·중복불가) / 변경(성원제 전용) ----- */
+        const INVITE_CODE_MEMBERS = ['오스틴', '홍박사'];
         let renameMode = false;
+
+        function updateInviteCodeVisibility() {
+            const inp = $('profile-input');
+            const wrap = $('profile-invite-wrap');
+            const inviteInp = $('profile-invite-code');
+            const name = inp ? (inp.value || '').trim() : '';
+            const canEnterInviteCode = !renameMode && INVITE_CODE_MEMBERS.indexOf(name) >= 0;
+            if (wrap) wrap.classList.toggle('hidden', !canEnterInviteCode);
+            if (inviteInp) {
+                inviteInp.disabled = !canEnterInviteCode;
+                if (!canEnterInviteCode) inviteInp.value = '';
+            }
+        }
+        window.enjoyProfileNameInput = updateInviteCodeVisibility;
+
         function openProfileModal(isRename) {
             renameMode = !!isRename;
-            const t = $('profile-title'), d = $('profile-desc'), c = $('profile-cancel'), inp = $('profile-input'), st = $('profile-status');
-            if (t) t.textContent = isRename ? '프로필 이름 변경' : '프로필 이름을 입력해주세요';
-            if (d) d.innerHTML = isRename ? '새 이름을 입력해주세요. (이미 쓰는 이름은 불가)' : '멤버 현황에 표시될 내 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(스페셜)</b>이 붙고, 기록은 본인 기기에만 저장돼요.';
+            const t = $('profile-title'), d = $('profile-desc'), c = $('profile-cancel'), inp = $('profile-input');
+            const inviteInp = $('profile-invite-code'), st = $('profile-status'), submit = $('profile-submit');
+            if (t) t.innerHTML = isRename ? '프로필 이름을<br>변경해주세요' : '엔조이에서 사용할<br>프로필을 만들어주세요';
+            if (d) d.innerHTML = isRename
+                ? '새 이름을 입력해주세요. 이미 사용 중인 이름은 선택할 수 없어요.'
+                : '멤버 현황과 활동에 표시되는 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(스페셜)</b>이 붙어요.';
             if (c) c.classList.toggle('hidden', !isRename);     // 변경 모드에서만 취소 가능
+            if (submit) submit.textContent = isRename ? '변경 완료' : '가입 완료';
             if (inp) inp.value = isRename ? (window.enjoyProfileName || '') : '';
+            if (inviteInp) inviteInp.value = '';
             if (st) st.textContent = '';
-            const m = $('profile-modal'); if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+            updateInviteCodeVisibility();
+            const m = $('profile-modal');
+            if (m) {
+                m.classList.remove('hidden');
+                m.setAttribute('aria-hidden', 'false');
+                m.scrollTop = 0;
+            }
             setTimeout(() => { if (inp) inp.focus(); }, 100);
         }
-        function closeProfileModal() { const m = $('profile-modal'); if (m) { m.classList.add('hidden'); m.classList.remove('flex'); } }
+        function closeProfileModal() {
+            const m = $('profile-modal');
+            if (m) {
+                m.classList.add('hidden');
+                m.setAttribute('aria-hidden', 'true');
+            }
+        }
         // 성원제만 이름 변경 가능
         window.enjoyOpenRename = function () { if (fbReady() && window.enjoyProfileName === '성원제') openProfileModal(true); };
         window.enjoyCloseProfile = function () { if (renameMode) closeProfileModal(); };  // 최초 입력은 필수(못 닫음), 변경만 취소 허용
@@ -11224,9 +11547,11 @@
         };
 
         window.enjoySubmitProfile = async function () {
-            const inp = $('profile-input'), st = $('profile-status'); if (!inp) return;
+            const inp = $('profile-input'), inviteInp = $('profile-invite-code'), st = $('profile-status'); if (!inp) return;
             let name = (inp.value || '').trim();
             if (!name) { if (st) st.textContent = '이름을 입력해주세요.'; return; }
+            const canEnterInviteCode = !renameMode && INVITE_CODE_MEMBERS.indexOf(name) >= 0;
+            const friendInviteCode = canEnterInviteCode && inviteInp ? (inviteInp.value || '').trim() : '';
 
             // 정식 멤버 6명 → 파이어베이스 동기화 (이름 중복 불가)
             if (window.enjoyIsMemberName(name)) {
@@ -11235,8 +11560,15 @@
                 const taken = await takenNames();
                 if (taken[name]) { if (st) st.textContent = '이미 사용한 이름이에요.'; return; }
                 try {
+                    const memberProfile = {
+                        name: name,
+                        lastActive: Date.now(),
+                        email: window.enjoyUser.email || '',
+                        photoURL: window.enjoyUser.photoURL || ''
+                    };
+                    if (friendInviteCode) memberProfile.friendInviteCode = friendInviteCode;
                     await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid),
-                        { name: name, lastActive: Date.now(), email: window.enjoyUser.email || '', photoURL: window.enjoyUser.photoURL || '' },
+                        memberProfile,
                         { merge: true });
                     window.enjoyProfileName = name;
                     notifyAndroidMemberTopic(name);
@@ -11595,6 +11927,7 @@
                     } catch (e) {}
                     hideLogin();
                     window.enjoyEnterLocalMode && window.enjoyEnterLocalMode();
+                    window.openPromotionPopup && window.openPromotionPopup();
                 };
 
                 // [수정] Firestore Internal Assertion 에러를 방지하기 위해
@@ -11632,6 +11965,7 @@
                         localStorage.setItem('enjoy_chat_account_label_v1', user.displayName || user.email || '엔조이 계정');
                     } catch (e) {}
                     if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(window.enjoyUser);
+                    if (window.openPromotionPopup) window.openPromotionPopup();
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
