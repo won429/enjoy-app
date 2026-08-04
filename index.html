@@ -58,6 +58,7 @@
         #meeting-screen,
         #community-write-screen,
         #community-detail-screen,
+        #shorts-screen,
         #vlog-detail-screen,
         #baseball-detail-screen,
         #baseball-game-screen,
@@ -105,6 +106,7 @@
             #meeting-screen,
             #community-write-screen,
             #community-detail-screen,
+            #shorts-screen,
             #vlog-detail-screen,
             #baseball-detail-screen,
             #baseball-game-screen,
@@ -3164,6 +3166,118 @@
         }
         .community-like-profile { box-shadow: 0 0 0 2px #000; }
         .vlog-detail-screen { background-color: #000; }
+        .shorts-screen {
+            background:
+                radial-gradient(circle at 50% 32%, rgba(125, 92, 255, .18), transparent 34%),
+                #000;
+        }
+        .shorts-feed {
+            height: 100%;
+            overflow-y: auto;
+            overscroll-behavior-y: contain;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .shorts-feed::-webkit-scrollbar { display: none; }
+        .shorts-item {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            overflow: hidden;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            background: #08080a;
+        }
+        .shorts-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+        .shorts-video-shade {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(180deg, rgba(0,0,0,.52), transparent 22%, transparent 58%, rgba(0,0,0,.82));
+        }
+        .shorts-copy {
+            position: absolute;
+            z-index: 2;
+            left: 18px;
+            right: 72px;
+            bottom: calc(102px + env(safe-area-inset-bottom));
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0,0,0,.65);
+        }
+        .shorts-copy h2 {
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1.25;
+        }
+        .shorts-copy p {
+            margin-top: 7px;
+            color: rgba(255,255,255,.78);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.5;
+            word-break: keep-all;
+        }
+        .shorts-sound-button {
+            position: absolute;
+            z-index: 3;
+            right: 18px;
+            bottom: calc(110px + env(safe-area-inset-bottom));
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(0,0,0,.38);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+        }
+        .shorts-empty {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 28px 116px;
+            color: #fff;
+            text-align: center;
+        }
+        .shorts-empty-mark {
+            width: 76px;
+            height: 76px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 28px;
+            background: linear-gradient(145deg, rgba(129,92,246,.34), rgba(255,255,255,.06));
+            box-shadow: inset 0 1px 1px rgba(255,255,255,.22), 0 20px 60px rgba(63,36,145,.28);
+            font-size: 25px;
+        }
+        .shorts-empty h2 {
+            margin-top: 22px;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -.04em !important;
+        }
+        .shorts-empty p {
+            max-width: 290px;
+            margin-top: 10px;
+            color: rgba(255,255,255,.48);
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
         .vlog-episode-card {
             border-bottom: 1px solid rgba(255,255,255,.09);
         }
@@ -5515,6 +5629,16 @@
         </div>
     </section>
 
+    <!-- 엔조이 숏츠 전체 화면 -->
+    <section id="shorts-screen" class="shorts-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" style="z-index:45;" aria-label="엔조이 숏츠">
+        <header class="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4" style="padding-top: calc(max(16px, env(safe-area-inset-top)) + 4px);">
+            <button type="button" onclick="window.closeEnjoyShorts()" class="w-11 h-11 rounded-full border border-white/10 text-white backdrop-blur-md active:scale-90 transition-transform" style="background:rgba(0,0,0,.35);" aria-label="엔조이 숏츠 닫기"><i class="fa-solid fa-chevron-left text-[15px]"></i></button>
+            <h1 class="text-[18px] font-black text-white drop-shadow-lg">엔조이 숏츠</h1>
+            <span class="w-11 h-11" aria-hidden="true"></span>
+        </header>
+        <div id="shorts-feed" class="shorts-feed flex-1"></div>
+    </section>
+
     <!-- 브이로그 프로그램 상세 전체 화면 -->
     <section id="vlog-detail-screen" class="vlog-detail-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md flex-col overflow-hidden">
         <button type="button" onclick="window.closeVlogProgram()" class="community-back-fab" aria-label="홈으로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
@@ -5704,7 +5828,7 @@
             </button>
 
             <!-- 홈 메뉴 -->
-            <button id="nav-home" class="relative w-[68px] py-2 rounded-full group z-10 active:scale-95 transition-transform" onclick="window.haptic(); window.goHome()">
+            <button id="nav-home" class="relative w-[68px] py-2 rounded-full group z-10 active:scale-95 transition-transform" onclick="window.handleHomeNavTap(event)" aria-label="홈, 두 번 누르면 엔조이 숏츠">
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
                     <i class="fa-solid fa-house text-base text-white transition-colors"></i>
                     <span class="text-[10px] font-bold text-white whitespace-nowrap transition-colors">홈</span>
@@ -5769,6 +5893,17 @@
     <div id="more-popover" class="hidden fixed left-1/2 -translate-x-1/2 w-full max-w-md z-50 px-4 pointer-events-none" style="bottom: 86px;">
         <div id="more-popover-panel" class="liquid-glass ml-auto w-[252px] origin-bottom-right rounded-[26px] p-2.5 pointer-events-auto">
             <div class="relative z-10 flex flex-col gap-0.5">
+                <!-- 엔조이 숏츠 -->
+                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openEnjoyShorts();" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
+                    <div class="w-9 h-9 rounded-[12px] flex items-center justify-center text-[15px] shrink-0" style="background:rgba(139,92,246,.15);color:#a78bfa;"><i class="fa-solid fa-play"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[14px] font-bold text-white leading-tight">엔조이 숏츠</span>
+                            <span class="bg-[#3182F6]/15 text-[#3182F6] text-[9px] font-bold px-1 py-0.5 rounded leading-none">NEW</span>
+                        </div>
+                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">짧은 영상 연속으로 보기</div>
+                    </div>
+                </button>
                 <!-- 엔조이 비서실장 -->
                 <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('biseo.html');" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
                     <div class="w-9 h-9 rounded-[12px] bg-blue-500/15 text-blue-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-user-tie"></i></div>
@@ -9222,6 +9357,287 @@
         
         window.goToTravel = () => window.openBrowser("https://won429.github.io/enjoy_trip/");
         
+        const ENJOY_SHORTS_WORKER_BASE_URL = 'https://enjoy-shorts-video.sungwon4867.workers.dev';
+        const ENJOY_SHORTS_OBJECT_KEY = 'shorts/shorts-001.mp4';
+        window.ENJOY_SHORTS = [{
+            key: ENJOY_SHORTS_OBJECT_KEY,
+            title: '엔조이 숏츠',
+            caption: '엔조이의 순간을 짧은 영상으로 만나보세요.'
+        }];
+        window._shortsObserver = null;
+        window._shortsRequestId = 0;
+        window._shortsPlaybackExpiresAt = 0;
+        window._shortsPlaybackRetryCount = 0;
+        window._homeNavLastTap = 0;
+
+        function enjoyShortsEsc(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+            });
+        }
+
+        function renderEnjoyShortsState(icon, title, message, actionLabel, action) {
+            const feed = document.getElementById('shorts-feed');
+            if (!feed) return;
+            if (window._shortsObserver) {
+                window._shortsObserver.disconnect();
+                window._shortsObserver = null;
+            }
+            feed.innerHTML =
+                '<div class="shorts-empty" role="status">' +
+                    '<div class="shorts-empty-mark"><i class="' + enjoyShortsEsc(icon) + '"></i></div>' +
+                    '<h2>' + enjoyShortsEsc(title) + '</h2>' +
+                    '<p>' + enjoyShortsEsc(message) + '</p>' +
+                    (actionLabel && action
+                        ? '<button type="button" onclick="' + enjoyShortsEsc(action) + '" class="mt-6 rounded-full bg-white px-5 py-3 text-[13px] font-black text-black active:scale-95 transition-transform">' + enjoyShortsEsc(actionLabel) + '</button>'
+                        : '') +
+                '</div>';
+        }
+
+        function waitForEnjoyShortsAuth() {
+            if (window.enjoyAuthResolved === true && typeof window.getEnjoyIdToken === 'function') {
+                return Promise.resolve();
+            }
+            return new Promise(function (resolve) {
+                let settled = false;
+                const finish = function () {
+                    if (settled) return;
+                    settled = true;
+                    window.removeEventListener('enjoy-auth-ready', finish);
+                    resolve();
+                };
+                window.addEventListener('enjoy-auth-ready', finish, { once: true });
+                setTimeout(finish, 4000);
+            });
+        }
+
+        async function requestEnjoyShortsSession(forceRefresh) {
+            await waitForEnjoyShortsAuth();
+            if (window.enjoyAuthResolved !== true || typeof window.getEnjoyIdToken !== 'function') {
+                const error = new Error('Firebase Auth is not ready');
+                error.code = 'auth-not-ready';
+                throw error;
+            }
+
+            const idToken = await window.getEnjoyIdToken(!!forceRefresh);
+            if (!idToken) {
+                const error = new Error('Firebase user is not signed in');
+                error.code = 'unauthenticated';
+                throw error;
+            }
+
+            const response = await fetch(
+                ENJOY_SHORTS_WORKER_BASE_URL + '/session?key=' + encodeURIComponent(ENJOY_SHORTS_OBJECT_KEY),
+                {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + idToken
+                    }
+                }
+            );
+
+            let payload = null;
+            try { payload = await response.json(); } catch (e) {}
+            if (response.status === 401 && !forceRefresh) {
+                return requestEnjoyShortsSession(true);
+            }
+            if (!response.ok) {
+                const error = new Error((payload && payload.error) || 'Playback session request failed');
+                error.code = response.status === 401 ? 'unauthenticated' : 'session-failed';
+                error.status = response.status;
+                throw error;
+            }
+            if (!payload || typeof payload.playbackUrl !== 'string' || !/^https:\/\//.test(payload.playbackUrl)) {
+                const error = new Error('Playback session response is invalid');
+                error.code = 'session-failed';
+                throw error;
+            }
+
+            return {
+                playbackUrl: payload.playbackUrl,
+                expiresIn: Math.max(0, Number(payload.expiresIn) || 0)
+            };
+        }
+
+        window.renderEnjoyShorts = function (playbackUrl) {
+            const feed = document.getElementById('shorts-feed');
+            if (!feed || !playbackUrl) return;
+            if (window._shortsObserver) {
+                window._shortsObserver.disconnect();
+                window._shortsObserver = null;
+            }
+
+            const item = window.ENJOY_SHORTS[0];
+            const title = item.title || '엔조이 숏츠';
+            const caption = item.caption || '';
+            feed.innerHTML =
+                '<article class="shorts-item" data-shorts-index="0">' +
+                    '<video class="shorts-video" muted playsinline loop preload="metadata" onclick="window.toggleEnjoyShortsVideo(this)" aria-label="' + enjoyShortsEsc(title) + '"></video>' +
+                    '<div class="shorts-video-shade"></div>' +
+                    '<div class="shorts-copy"><h2>' + enjoyShortsEsc(title) + '</h2>' +
+                        (caption ? '<p>' + enjoyShortsEsc(caption) + '</p>' : '') +
+                    '</div>' +
+                    '<button type="button" class="shorts-sound-button" onclick="window.toggleEnjoyShortsSound(this)" aria-label="소리 켜기"><i class="fa-solid fa-volume-xmark"></i></button>' +
+                '</article>';
+
+            const video = feed.querySelector('video');
+            if (!video) return;
+            video.addEventListener('error', function () {
+                window.handleEnjoyShortsPlaybackError();
+            });
+            video.src = playbackUrl;
+
+            if ('IntersectionObserver' in window) {
+                window._shortsObserver = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting && entry.intersectionRatio >= .72) {
+                            entry.target.play().catch(function () {});
+                        } else {
+                            entry.target.pause();
+                        }
+                    });
+                }, { root: feed, threshold: [.2, .72] });
+                window._shortsObserver.observe(video);
+            }
+        };
+
+        window.loadEnjoyShorts = async function (options) {
+            options = options || {};
+            const screen = document.getElementById('shorts-screen');
+            if (!screen) return;
+            const requestId = ++window._shortsRequestId;
+            renderEnjoyShortsState(
+                'fa-solid fa-spinner fa-spin',
+                options.reconnecting ? '영상을 다시 연결하고 있어요' : '영상을 불러오고 있어요',
+                '잠시만 기다려 주세요.'
+            );
+
+            try {
+                const session = await requestEnjoyShortsSession(!!options.forceRefresh);
+                if (requestId !== window._shortsRequestId || screen.classList.contains('hidden')) return;
+                window._shortsPlaybackExpiresAt = session.expiresIn
+                    ? Date.now() + (session.expiresIn * 1000)
+                    : 0;
+                window.renderEnjoyShorts(session.playbackUrl);
+                const video = document.querySelector('#shorts-feed video');
+                if (video) video.play().catch(function () {});
+            } catch (error) {
+                if (requestId !== window._shortsRequestId || screen.classList.contains('hidden')) return;
+                if (error && error.code === 'unauthenticated') {
+                    renderEnjoyShortsState(
+                        'fa-solid fa-lock',
+                        '로그인이 필요해요',
+                        '엔조이 계정으로 로그인하면 비공개 숏츠를 볼 수 있어요.',
+                        '로그인하기',
+                        'window.startEnjoyShortsLogin()'
+                    );
+                    return;
+                }
+                renderEnjoyShortsState(
+                    'fa-solid fa-circle-exclamation',
+                    '영상을 불러오지 못했어요',
+                    error && error.code === 'auth-not-ready'
+                        ? '로그인 확인이 지연되고 있어요. 잠시 후 다시 시도해 주세요.'
+                        : '재생 세션이 만료되었거나 네트워크 연결이 불안정할 수 있어요.',
+                    '다시 시도',
+                    'window.retryEnjoyShorts()'
+                );
+            }
+        };
+
+        window.retryEnjoyShorts = function () {
+            window._shortsPlaybackRetryCount = 0;
+            window.loadEnjoyShorts({ forceRefresh: true });
+        };
+
+        window.handleEnjoyShortsPlaybackError = function () {
+            const screen = document.getElementById('shorts-screen');
+            if (!screen || screen.classList.contains('hidden')) return;
+            if (window._shortsPlaybackRetryCount < 1) {
+                window._shortsPlaybackRetryCount += 1;
+                window.loadEnjoyShorts({ forceRefresh: true, reconnecting: true });
+                return;
+            }
+            renderEnjoyShortsState(
+                'fa-solid fa-circle-exclamation',
+                '재생이 중단됐어요',
+                window._shortsPlaybackExpiresAt && Date.now() >= window._shortsPlaybackExpiresAt
+                    ? '재생 세션이 만료됐어요. 새 세션으로 다시 연결해 주세요.'
+                    : '네트워크 상태를 확인한 뒤 다시 시도해 주세요.',
+                '다시 연결',
+                'window.retryEnjoyShorts()'
+            );
+        };
+
+        window.toggleEnjoyShortsVideo = function (video) {
+            if (!video) return;
+            window.haptic && window.haptic();
+            if (video.paused) video.play().catch(function () {});
+            else video.pause();
+        };
+
+        window.toggleEnjoyShortsSound = function (button) {
+            const item = button && button.closest('.shorts-item');
+            const video = item && item.querySelector('video');
+            if (!video) return;
+            window.haptic && window.haptic();
+            video.muted = !video.muted;
+            const icon = button.querySelector('i');
+            if (icon) icon.className = video.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+            button.setAttribute('aria-label', video.muted ? '소리 켜기' : '소리 끄기');
+            if (video.paused) video.play().catch(function () {});
+        };
+
+        window.startEnjoyShortsLogin = function () {
+            window.closeEnjoyShorts();
+            if (typeof window.enjoyLogin === 'function') window.enjoyLogin();
+        };
+
+        window.openEnjoyShorts = function () {
+            window.closeMorePopover();
+            const screen = document.getElementById('shorts-screen');
+            const feed = document.getElementById('shorts-feed');
+            if (!screen) return;
+            screen.classList.remove('hidden');
+            screen.classList.add('flex');
+            if (feed) feed.scrollTop = 0;
+            window._shortsPlaybackRetryCount = 0;
+            window.loadEnjoyShorts();
+            if (window.updateNavContrast) requestAnimationFrame(window.updateNavContrast);
+        };
+
+        window.closeEnjoyShorts = function () {
+            const screen = document.getElementById('shorts-screen');
+            if (!screen) return;
+            window._shortsRequestId += 1;
+            window._shortsPlaybackExpiresAt = 0;
+            if (window._shortsObserver) {
+                window._shortsObserver.disconnect();
+                window._shortsObserver = null;
+            }
+            screen.querySelectorAll('video').forEach(function (video) {
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+            });
+            screen.classList.add('hidden');
+            screen.classList.remove('flex');
+            if (window.updateNavContrast) requestAnimationFrame(window.updateNavContrast);
+        };
+
+        window.handleHomeNavTap = function () {
+            window.haptic && window.haptic();
+            const now = Date.now();
+            if (now - window._homeNavLastTap <= 380) {
+                window._homeNavLastTap = 0;
+                window.openEnjoyShorts();
+                return;
+            }
+            window._homeNavLastTap = now;
+            window.goHome();
+        };
+
         window.goHome = () => { window.closeMorePopover(); window.activeTabIndex = 2; window.updateTabUI(2); }
         window.goSchedule = () => { window.closeMorePopover(); window.activeTabIndex = 3; window.updateTabUI(3); }
         window.goMeeting = () => { window.closeMorePopover(); window.activeTabIndex = 4; window.updateTabUI(4); }
@@ -11359,11 +11775,13 @@
             const more = document.getElementById('more-screen');
             const sched = document.getElementById('schedule-screen');
             const meet = document.getElementById('meeting-screen');
+            const shorts = document.getElementById('shorts-screen');
             
             home.classList.add('hidden'); 
             if(more) { more.classList.add('hidden'); more.classList.remove('flex'); }
             sched.classList.add('hidden'); meet.classList.add('hidden');
             sched.classList.remove('flex'); meet.classList.remove('flex');
+            if(shorts && !shorts.classList.contains('hidden') && window.closeEnjoyShorts) window.closeEnjoyShorts();
 
             if(index===1 && more) {
                 more.classList.remove('hidden');
@@ -12290,6 +12708,13 @@
                 const meetingApp = getOrInitializeApp(meetingConfig, 'meetingApp');
                 const meetingAuth = getAuth(meetingApp);
                 window.meetingDb = getFirestore(meetingApp);
+                window.enjoyAuthResolved = false;
+                // 비공개 영상 등 인증이 필요한 API에는 현재 사용자의 짧은 수명 ID 토큰만 전달한다.
+                window.getEnjoyIdToken = async function (forceRefresh) {
+                    const user = meetingAuth.currentUser;
+                    if (!user || user.isAnonymous) return null;
+                    return user.getIdToken(!!forceRefresh);
+                };
 
                 // 로그인 화면 제어 헬퍼
                 const loginScreen   = document.getElementById('login-screen');
@@ -12450,6 +12875,8 @@
                             localStorage.setItem('enjoy_chat_account_label_v1', '게스트');
                         } catch (e) {}
                         if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(null);
+                        window.enjoyAuthResolved = true;
+                        window.dispatchEvent(new CustomEvent('enjoy-auth-ready', { detail: { authenticated: false } }));
                         showLoginForm();
                         return;
                     }
@@ -12465,6 +12892,8 @@
                         localStorage.setItem('enjoy_chat_account_label_v1', user.displayName || user.email || '엔조이 계정');
                     } catch (e) {}
                     if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(window.enjoyUser);
+                    window.enjoyAuthResolved = true;
+                    window.dispatchEvent(new CustomEvent('enjoy-auth-ready', { detail: { authenticated: true } }));
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
