@@ -2232,12 +2232,12 @@
         #promotion-popup.is-open { display: flex; }
         .promotion-popup-card {
             position: relative;
-            width: min(47.52vw, 238px);
+            width: min(54.648vw, 274px);
             max-height: calc(100dvh - 40px);
             overflow: hidden;
-            border-radius: 19px;
+            border-radius: 22px;
             background: #3182F6;
-            box-shadow: 0 19px 53px rgba(0,0,0,.55);
+            box-shadow: 0 22px 61px rgba(0,0,0,.55);
             animation: promotionPopupIn .32s cubic-bezier(.16,1,.3,1) both;
         }
         .promotion-popup-visual {
@@ -2262,9 +2262,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 47px 24px 24px;
+            padding: 54px 28px 28px;
             color: rgba(255,255,255,.94);
-            font-size: 19px;
+            font-size: 22px;
             font-weight: 800;
             line-height: 1.35;
             text-align: center;
@@ -2276,8 +2276,8 @@
             right: 4.3%;
             z-index: 2;
             width: 14%;
-            min-width: 26px;
-            max-width: 33px;
+            min-width: 30px;
+            max-width: 38px;
             aspect-ratio: 1;
             display: grid;
             place-items: center;
@@ -2295,7 +2295,7 @@
             content: "";
             position: absolute;
             width: 48%;
-            height: 2.6px;
+            height: 3px;
             border-radius: 999px;
             background: currentColor;
         }
@@ -2311,7 +2311,7 @@
             border: 0;
             color: #fff;
             background: #075CCF;
-            font-size: clamp(12px, 2.9vw, 13px);
+            font-size: clamp(14px, 3.34vw, 15px);
             font-weight: 600;
             outline: none;
             text-decoration: none;
@@ -2324,7 +2324,7 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @media (max-height: 620px) {
-            .promotion-popup-card { width: min(47.52vw, 198px); }
+            .promotion-popup-card { width: min(54.648vw, 228px); }
         }
         @media (prefers-reduced-motion: reduce) {
             .promotion-popup-card { animation: none; }
@@ -4108,6 +4108,7 @@
             dialogMessage.textContent = String(message == null ? '' : message);
             dialogCancel.classList.toggle('hidden', !isConfirm);
             dialogActions.classList.toggle('is-alert', !isConfirm);
+            dialogCancel.textContent = options.cancelText || '취소';
             dialogOk.textContent = options.confirmText || '확인';
             dialogOk.classList.toggle('danger', !!options.danger);
             dialogOk.classList.toggle('primary', !options.danger);
@@ -4308,9 +4309,9 @@
 
                 <div id="profile-invite-wrap" class="profile-field hidden">
                     <label class="profile-field-label" for="profile-invite-code">친구 초대 코드 <span style="font-weight:500;opacity:.55">(선택)</span></label>
-                    <input id="profile-invite-code" type="text" class="pf-input" placeholder="초대 코드를 입력해주세요" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                    <input id="profile-invite-code" type="text" class="pf-input" placeholder="정식 멤버 이름을 입력해주세요" maxlength="10" autocomplete="off" autocapitalize="off" spellcheck="false"
                            onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.enjoySubmitProfile && window.enjoySubmitProfile(); }">
-                    <p class="profile-invite-note">오스틴·홍박사 프로필을 등록할 때만 입력할 수 있어요.</p>
+                    <p class="profile-invite-note">초대를 받았다면 성원제, 전시기, 류짱, 홍박사 중 한 명의 이름을 입력해주세요.</p>
                 </div>
 
                 <p id="profile-status" class="pf-status"></p>
@@ -11490,6 +11491,7 @@
 
         /* ----- 프로필 등록(필수·영구·중복불가) / 변경(성원제 전용) ----- */
         const INVITE_CODE_MEMBERS = ['오스틴', '홍박사'];
+        const VALID_INVITE_CODES = ['성원제', '전시기', '류짱', '홍박사'];
         let renameMode = false;
 
         function updateInviteCodeVisibility() {
@@ -11552,6 +11554,18 @@
             if (!name) { if (st) st.textContent = '이름을 입력해주세요.'; return; }
             const canEnterInviteCode = !renameMode && INVITE_CODE_MEMBERS.indexOf(name) >= 0;
             const friendInviteCode = canEnterInviteCode && inviteInp ? (inviteInp.value || '').trim() : '';
+            if (canEnterInviteCode && friendInviteCode && VALID_INVITE_CODES.indexOf(friendInviteCode) < 0) {
+                if (st) st.textContent = '성원제, 전시기, 류짱, 홍박사 중 한 명의 이름을 초대 코드로 입력해주세요.';
+                if (inviteInp) inviteInp.focus();
+                return;
+            }
+            if (canEnterInviteCode && !friendInviteCode) {
+                const continueWithoutInvite = await window.enjoyConfirm(
+                    '친구의 초대를 받지 않으신 게 확실한가요?',
+                    { title: '초대 코드 없이 가입', cancelText: '아니요', confirmText: '예' }
+                );
+                if (!continueWithoutInvite) return;
+            }
 
             // 정식 멤버 6명 → 파이어베이스 동기화 (이름 중복 불가)
             if (window.enjoyIsMemberName(name)) {
