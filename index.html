@@ -5963,6 +5963,7 @@
         };
 
         const vlogMemberNames = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+        const gwangjuVlogCast = ['전시기', '성원제', '이진누', '류짱'];
         const makeVlogEpisodes = function (labels, image, urls) {
             return labels.map(function (label, index) {
                 return { label: label, title: label, url: (urls && urls[index]) || '', image: image };
@@ -6039,8 +6040,21 @@
                 category: 'SPECIAL',
                 image: 'banner_3.jpg',
                 description: '환승여행 IN 광주의 새로운 이야기를 티저로 만나보세요.',
-                cast: ['전시기', '성원제', '이진누', '류짱'],
+                cast: gwangjuVlogCast,
                 episodes: makeVlogEpisodes(['티저'], 'banner_3.jpg', ['https://youtu.be/MyacH4Epdjg'])
+            },
+            setlog: {
+                title: '엔조이 셋로그',
+                category: 'GWANGJU ORIGINAL',
+                image: 'enjoy_setlog.jpg',
+                description: '네 명의 엔조이 멤버가 함께한 광주의 순간들을 네 편의 셋로그로 만나보세요.',
+                cast: gwangjuVlogCast,
+                // 영상 링크를 받으면 아래 빈 문자열 4개만 회차 순서대로 교체하면 됩니다.
+                episodes: makeVlogEpisodes(
+                    ['1화','2화','3화','4화'],
+                    'enjoy_setlog.jpg',
+                    ['', '', '', '']
+                )
             },
             business: {
                 title: '출장엔조이',
@@ -8148,7 +8162,7 @@
             if (cardStore['gwangju-2027']) {
                 const enjoySetlog = cardStore['gwangju-2027'].cloneNode(true);
                 enjoySetlog.dataset.homeCard = 'enjoy-setlog';
-                enjoySetlog.setAttribute('onclick', "window.haptic(); window.enjoyAlert('곧 공개됩니다! 🔒')");
+                enjoySetlog.setAttribute('onclick', "window.openVlogProgram('setlog')");
                 const enjoySetlogTitle = enjoySetlog.querySelector('h3');
                 const enjoySetlogImage = enjoySetlog.querySelector('img');
                 if (enjoySetlogTitle) enjoySetlogTitle.textContent = '엔조이 셋로그';
@@ -8168,6 +8182,7 @@
                 'jeju-story': 'story',
                 'transfer-trip': 'transfer',
                 'gwangju-2027': 'gwangju',
+                'enjoy-setlog': 'setlog',
                 'business-trip': 'business'
             };
             Object.keys(vlogProgramCards).forEach(function (cardId) {
