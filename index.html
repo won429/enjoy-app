@@ -3190,13 +3190,13 @@
         }
         .shorts-video {
             position: absolute;
-            top: 50%;
+            top: 0;
             left: 50%;
             width: min(100%, 56.25dvh);
             height: auto;
             max-height: 100%;
             aspect-ratio: 9 / 16;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             object-fit: cover;
             background: #000;
         }
@@ -3333,22 +3333,30 @@
             height: 42px;
             display: grid;
             place-items: center;
-            border: 1px solid rgba(255,255,255,.11);
-            border-radius: 999px;
             color: #fff;
             background: rgba(18,18,20,.34);
             -webkit-backdrop-filter: blur(14px);
             backdrop-filter: blur(14px);
         }
         .shorts-action-core {
+            border: 0;
+            border-radius: 15px;
+            background: linear-gradient(145deg, rgba(40,40,44,.72), rgba(15,15,18,.58));
+            box-shadow: inset 0 1px 1px rgba(255,255,255,.13), 0 7px 20px rgba(0,0,0,.25);
             pointer-events: none;
             transition: transform .16s ease, color .16s ease, background-color .16s ease;
+        }
+        .shorts-action-core i { font-size: 18px; }
+        .shorts-comment-button .shorts-action-core i { font-size: 17px; }
+        .shorts-sound-button {
+            border: 1px solid rgba(255,255,255,.11);
+            border-radius: 999px;
         }
         .shorts-action:active .shorts-action-core { transform: scale(.86); }
         .shorts-action.is-liked .shorts-action-core {
             color: #fff;
-            border-color: rgba(255,77,98,.62);
-            background: rgba(240,68,82,.82);
+            background: linear-gradient(145deg, #FF6374, #F04452);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,.28), 0 8px 22px rgba(240,68,82,.36);
         }
         .shorts-action-count {
             min-height: 12px;
@@ -3362,7 +3370,7 @@
             inset: 0;
             display: flex;
             align-items: flex-end;
-            padding-bottom: calc(88px + env(safe-area-inset-bottom));
+            padding-bottom: calc(68px + env(safe-area-inset-bottom));
         }
         .shorts-comments-layer.hidden { display: none; }
         .shorts-comments-backdrop {
@@ -3375,14 +3383,15 @@
         .shorts-comments-sheet {
             position: relative;
             width: 100%;
-            max-height: min(68dvh, 620px);
+            height: min(54dvh, 520px);
+            max-height: calc(100dvh - 122px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
             display: flex;
             flex-direction: column;
             overflow: hidden;
             color: #fff;
             border: 1px solid rgba(255,255,255,.16);
             border-bottom: 0;
-            border-radius: 28px 28px 0 0;
+            border-radius: 24px 24px 0 0;
             background: rgba(17,17,20,.96);
             box-shadow: 0 -18px 60px rgba(0,0,0,.38);
             -webkit-backdrop-filter: blur(24px) saturate(1.4);
@@ -3394,12 +3403,29 @@
             to { opacity: 1; transform: none; }
         }
         .shorts-comments-header {
-            min-height: 58px;
-            padding: 0 16px 0 20px;
-            display: flex;
+            min-height: 56px;
+            padding: 0 14px;
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr) 36px;
             align-items: center;
-            justify-content: space-between;
             border-bottom: 1px solid rgba(255,255,255,.09);
+        }
+        .shorts-comments-header-copy {
+            min-width: 0;
+            grid-column: 2;
+            text-align: center;
+        }
+        .shorts-comments-header-copy h2 {
+            overflow: hidden;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .shorts-comments-close {
+            grid-column: 3;
+            justify-self: end;
         }
         .shorts-comments-list {
             min-height: 150px;
@@ -3426,12 +3452,30 @@
             line-height: 1.45;
             overflow-wrap: anywhere;
         }
+        .shorts-comment-delete {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            flex: none;
+            border-radius: 11px;
+            color: #8B95A1;
+            background: rgba(255,255,255,.07);
+            transition: color .16s ease, background-color .16s ease, transform .16s ease;
+        }
+        .shorts-comment-delete:active {
+            color: #fff;
+            background: #F04452;
+            transform: scale(.9);
+        }
+        .shorts-comment-delete i { font-size: 12px; }
         .shorts-comment-form {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 11px 14px;
             border-top: 1px solid rgba(255,255,255,.09);
+            background: rgba(17,17,20,.98);
         }
         .shorts-comment-form input {
             min-width: 0;
@@ -3531,6 +3575,58 @@
                 border: 0 !important;
                 background: transparent !important;
                 box-shadow: none !important;
+            }
+            #shorts-screen .shorts-comments-sheet {
+                color: #191F28;
+                border-color: rgba(0,0,0,.09);
+                background: rgba(248,249,251,.98);
+                box-shadow: 0 -16px 50px rgba(15,23,42,.16);
+            }
+            #shorts-screen .shorts-comments-header {
+                border-bottom-color: rgba(0,0,0,.08);
+            }
+            #shorts-screen .shorts-comments-header-copy h2 { color: #191F28; }
+            #shorts-screen #shorts-comments-count { color: #8B95A1 !important; }
+            #shorts-screen .shorts-comments-close {
+                color: #4E5968 !important;
+                background: rgba(0,0,0,.06) !important;
+            }
+            #shorts-screen .shorts-comments-list { color: #191F28; }
+            #shorts-screen .shorts-comment-row { border-bottom-color: rgba(0,0,0,.06); }
+            #shorts-screen .shorts-comment-copy strong { color: #191F28; }
+            #shorts-screen .shorts-comment-copy time { color: #8B95A1; }
+            #shorts-screen .shorts-comment-copy p { color: #4E5968; }
+            #shorts-screen .shorts-comment-delete {
+                color: #6B7684;
+                background: rgba(0,0,0,.055);
+            }
+            #shorts-screen .shorts-comment-delete:active {
+                color: #fff;
+                background: #F04452;
+            }
+            #shorts-screen .shorts-comment-form {
+                border-top-color: rgba(0,0,0,.08);
+                background: rgba(248,249,251,.99);
+            }
+            #shorts-screen .shorts-comment-form input {
+                color: #191F28;
+                border-color: rgba(0,0,0,.07);
+                background: #EDEFF2;
+            }
+            #shorts-screen .shorts-comment-form input::placeholder { color: #8B95A1; }
+            #shorts-screen .shorts-comments-list .text-white\/25,
+            #shorts-screen .shorts-comments-list .text-white\/45 { color: #8B95A1 !important; }
+        }
+        @media (min-height: 720px) {
+            .shorts-copy {
+                bottom: calc(120px + env(safe-area-inset-bottom));
+            }
+            .shorts-liked-members {
+                position: absolute;
+                top: calc(100% + 9px);
+                left: 0;
+                right: 0;
+                margin-top: 0;
             }
         }
         .vlog-episode-card {
@@ -5887,7 +5983,7 @@
     <!-- 엔조이 숏츠 전체 화면 -->
     <section id="shorts-screen" class="shorts-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" style="z-index:45;" aria-label="엔조이 숏츠">
         <header class="shorts-topbar absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5" style="padding-top: calc(max(16px, env(safe-area-inset-top)) + 4px);">
-            <button type="button" onclick="window.closeEnjoyShorts()" class="shorts-header-button w-10 h-10 rounded-full active:scale-90 transition-transform" aria-label="엔조이 숏츠 닫기"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>
+            <span class="w-10 h-10" aria-hidden="true"></span>
             <h1 class="shorts-header-title">엔조이 숏츠</h1>
             <span class="w-10 h-10" aria-hidden="true"></span>
         </header>
@@ -5896,11 +5992,12 @@
             <button type="button" class="shorts-comments-backdrop" onclick="window.closeEnjoyShortsComments()" aria-label="댓글 닫기"></button>
             <section class="shorts-comments-sheet">
                 <header class="shorts-comments-header">
-                    <div>
-                        <h2 id="shorts-comments-title" class="text-[15px] font-black">댓글</h2>
+                    <span class="w-9 h-9" aria-hidden="true"></span>
+                    <div class="shorts-comments-header-copy">
+                        <h2 id="shorts-comments-title">댓글</h2>
                         <p id="shorts-comments-count" class="mt-0.5 text-[10px] font-bold text-white/40"></p>
                     </div>
-                    <button type="button" onclick="window.closeEnjoyShortsComments()" class="w-9 h-9 rounded-full bg-white/10 text-white active:scale-90 transition-transform" aria-label="댓글 닫기"><i class="fa-solid fa-xmark text-[13px]"></i></button>
+                    <button type="button" onclick="window.closeEnjoyShortsComments()" class="shorts-comments-close w-9 h-9 rounded-full bg-white/10 text-white active:scale-90 transition-transform" aria-label="댓글 닫기"><i class="fa-solid fa-xmark text-[13px]"></i></button>
                 </header>
                 <div id="shorts-comments-list" class="shorts-comments-list"></div>
                 <form class="shorts-comment-form" onsubmit="event.preventDefault(); window.submitEnjoyShortsComment()">
@@ -9697,6 +9794,18 @@
             });
         }
 
+        function syncEnjoyShortsLoopClone(source, expiresAt) {
+            const feed = document.getElementById('shorts-feed');
+            const clone = feed && feed.querySelector('.shorts-item[data-shorts-loop-clone="true"]');
+            const video = clone && clone.querySelector('.shorts-video');
+            if (!clone || !video || !source) return;
+            clone.dataset.playbackExpiresAt = String(expiresAt || 0);
+            clone.dataset.sessionState = 'ready';
+            video.muted = window._shortsMuted !== false;
+            if (video.src !== source) video.src = source;
+            setEnjoyShortsItemStatus(clone, 'ready');
+        }
+
         function enjoyShortsUser() {
             return window.enjoyUser && window.enjoyUser.uid ? window.enjoyUser : null;
         }
@@ -9758,28 +9867,30 @@
         function updateEnjoyShortsEngagementUI(index) {
             const item = window.ENJOY_SHORTS[index];
             const feed = document.getElementById('shorts-feed');
-            const article = feed && feed.querySelector('.shorts-item[data-shorts-index="' + index + '"]');
-            if (!item || !article) return;
+            const articles = feed ? Array.from(feed.querySelectorAll('.shorts-item[data-shorts-index="' + index + '"]')) : [];
+            if (!item || !articles.length) return;
             const engagement = enjoyShortsEngagementFor(item.key);
             const likedBy = Array.isArray(engagement.likedBy) ? engagement.likedBy : [];
             const user = enjoyShortsUser();
             const liked = !!(user && likedBy.indexOf(user.uid) >= 0);
-            const view = article.querySelector('.shorts-view-count');
-            const like = article.querySelector('.shorts-like-button');
-            const likeCount = article.querySelector('.shorts-like-count');
-            const commentCount = article.querySelector('.shorts-comment-count');
-            const members = article.querySelector('.shorts-liked-members');
-            if (view) view.textContent = '조회수 ' + enjoyShortsCount(engagement.viewCount) + '회';
-            if (like) {
-                like.classList.toggle('is-liked', liked);
-                like.setAttribute('aria-pressed', liked ? 'true' : 'false');
-                like.setAttribute('aria-label', liked ? '좋아요 취소' : '좋아요');
-                const icon = like.querySelector('i');
-                if (icon) icon.className = (liked ? 'fa-solid' : 'fa-regular') + ' fa-heart';
-            }
-            if (likeCount) likeCount.textContent = enjoyShortsCount(likedBy.length);
-            if (commentCount) commentCount.textContent = enjoyShortsCount(engagement.commentCount);
-            if (members) members.innerHTML = enjoyShortsLikeProfilesHtml(engagement);
+            articles.forEach(function (article) {
+                const view = article.querySelector('.shorts-view-count');
+                const like = article.querySelector('.shorts-like-button');
+                const likeCount = article.querySelector('.shorts-like-count');
+                const commentCount = article.querySelector('.shorts-comment-count');
+                const members = article.querySelector('.shorts-liked-members');
+                if (view) view.textContent = '조회수 ' + enjoyShortsCount(engagement.viewCount) + '회';
+                if (like) {
+                    like.classList.toggle('is-liked', liked);
+                    like.setAttribute('aria-pressed', liked ? 'true' : 'false');
+                    like.setAttribute('aria-label', liked ? '좋아요 취소' : '좋아요');
+                    const icon = like.querySelector('i');
+                    if (icon) icon.className = (liked ? 'fa-solid' : 'fa-regular') + ' fa-heart';
+                }
+                if (likeCount) likeCount.textContent = enjoyShortsCount(likedBy.length);
+                if (commentCount) commentCount.textContent = enjoyShortsCount(engagement.commentCount);
+                if (members) members.innerHTML = enjoyShortsLikeProfilesHtml(engagement);
+            });
             if (window._shortsCommentsIndex === index) {
                 const headingCount = document.getElementById('shorts-comments-count');
                 if (headingCount) headingCount.textContent = '댓글 ' + enjoyShortsCount(engagement.commentCount) + '개';
@@ -10072,6 +10183,12 @@
                     '</div>' +
                 '</article>';
             }).join('');
+            const firstArticle = feed.querySelector('.shorts-item[data-shorts-index="0"]');
+            if (firstArticle) {
+                const loopClone = firstArticle.cloneNode(true);
+                loopClone.dataset.shortsLoopClone = 'true';
+                feed.appendChild(loopClone);
+            }
             syncEnjoyShortsSoundState();
 
             const articles = Array.from(feed.querySelectorAll('.shorts-item'));
@@ -10092,6 +10209,11 @@
                 window._shortsObserver = new IntersectionObserver(function (entries) {
                     entries.forEach(function (entry) {
                         if (entry.isIntersecting && entry.intersectionRatio >= .72) {
+                            if (entry.target.dataset.shortsLoopClone === 'true') {
+                                feed.scrollTop = 0;
+                                requestAnimationFrame(function () { window.activateEnjoyShortsItem(0); });
+                                return;
+                            }
                             window.activateEnjoyShortsItem(Number(entry.target.dataset.shortsIndex));
                         }
                     });
@@ -10114,7 +10236,13 @@
                             nearestIndex = index;
                         }
                     });
-                    window.activateEnjoyShortsItem(nearestIndex);
+                    const nearestArticle = articles[nearestIndex];
+                    if (nearestArticle && nearestArticle.dataset.shortsLoopClone === 'true') {
+                        feed.scrollTop = 0;
+                        window.activateEnjoyShortsItem(0);
+                        return;
+                    }
+                    window.activateEnjoyShortsItem(nearestArticle ? Number(nearestArticle.dataset.shortsIndex) : 0);
                 }, 100);
             };
             feed.addEventListener('scroll', window._shortsScrollHandler, { passive: true });
@@ -10153,6 +10281,7 @@
             const expiresAt = Number(article.dataset.playbackExpiresAt) || 0;
             if (!forceRefresh && video.src && (!expiresAt || expiresAt > Date.now() + 5000)) {
                 video.muted = window._shortsMuted !== false;
+                if (index === 0) syncEnjoyShortsLoopClone(video.src, expiresAt);
                 setEnjoyShortsItemStatus(article, 'ready');
                 if (window._shortsActiveIndex === index) video.play().catch(function () {});
                 return Promise.resolve();
@@ -10175,6 +10304,7 @@
                     article.dataset.sessionState = 'ready';
                     video.muted = window._shortsMuted !== false;
                     video.src = session.playbackUrl;
+                    if (index === 0) syncEnjoyShortsLoopClone(session.playbackUrl, session.expiresAt);
                     setEnjoyShortsItemStatus(article, 'ready');
                     if (window._shortsActiveIndex === index) video.play().catch(function () {});
                 })
@@ -10418,7 +10548,7 @@
                     '<div class="shorts-comment-copy"><div><strong>' + enjoyShortsEsc(comment.authorName || '멤버') + '</strong>' +
                     '<time>' + enjoyShortsEsc(relative) + '</time></div>' +
                     '<p>' + enjoyShortsEsc(comment.text || '') + '</p></div>' +
-                    (own ? '<button type="button" onclick="window.deleteEnjoyShortsComment(\'' + enjoyShortsEsc(comment._id) + '\')" class="p-1 text-white/30 active:text-[#F04452]" aria-label="댓글 삭제"><i class="fa-regular fa-trash-can text-[10px]"></i></button>' : '') +
+                    (own ? '<button type="button" onclick="window.deleteEnjoyShortsComment(\'' + enjoyShortsEsc(comment._id) + '\')" class="shorts-comment-delete" aria-label="댓글 삭제"><i class="fa-regular fa-trash-can"></i></button>' : '') +
                 '</div>';
             }).join('');
         }
