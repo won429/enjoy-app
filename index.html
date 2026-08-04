@@ -8082,8 +8082,6 @@
         const enjoyBaseballFeaturedRotationIndexes = { samsung: 0, kia: 0 };
         let enjoyBaseballScheduleGames = [];
         let enjoyBaseballStarterHistoryGames = [];
-        let enjoyBaseballStarterHistoryDate = '';
-        let enjoyBaseballStarterHistoryPromise = null;
         const enjoyBaseballTeamLogos = {
             '삼성': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png',
             'KIA': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kia_logoo.png',
@@ -8131,34 +8129,6 @@
         }
         function enjoyBaseballMonthKey(date) {
             return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
-        }
-        function enjoyBaseballLoadStarterHistory(now) {
-            const today = enjoyBaseballDateKey(now);
-            if (enjoyBaseballStarterHistoryDate === today && enjoyBaseballStarterHistoryGames.length) {
-                return Promise.resolve(enjoyBaseballStarterHistoryGames);
-            }
-            if (enjoyBaseballStarterHistoryPromise) return enjoyBaseballStarterHistoryPromise;
-            const dates = [];
-            for (let offset = 1; offset <= 14; offset += 1) {
-                const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
-                dates.push(enjoyBaseballDateKey(date));
-            }
-            enjoyBaseballStarterHistoryPromise = Promise.all(dates.map(function (date) {
-                return enjoyBaseballGetDocument('games/' + date).catch(function () { return null; });
-            })).then(function (documents) {
-                const history = [];
-                documents.forEach(function (documentData) {
-                    ((documentData && documentData.games) || []).forEach(function (rawGame) {
-                        history.push(enjoyBaseballNormalizeGame(rawGame));
-                    });
-                });
-                enjoyBaseballStarterHistoryDate = today;
-                enjoyBaseballStarterHistoryGames = history;
-                return history;
-            }).finally(function () {
-                enjoyBaseballStarterHistoryPromise = null;
-            });
-            return enjoyBaseballStarterHistoryPromise;
         }
         function enjoyBaseballNormalizeGame(raw) {
             const game = Object.assign({}, raw || {});
@@ -8350,7 +8320,7 @@
 
             const team = side === 'away' ? game.team1 : game.team2;
             const history = enjoyBaseballStarterHistoryGames.filter(function (item) {
-                return String(item.date || '') < today &&
+                return String(item.date || '') < gameDate &&
                     String(item.gameStatus || '') === '종료' &&
                     (item.team1 === team || item.team2 === team);
             }).sort(function (first, second) {
@@ -8359,30 +8329,42 @@
             });
             const starts = history.map(function (item) {
                 const itemSide = item.team1 === team ? 'away' : 'home';
-                return enjoyBaseballPlayerName(
+                const name = enjoyBaseballPlayerName(
                     item[itemSide + 'StarterDetail'] ||
                     item[itemSide + 'Starter'] ||
                     item[itemSide + 'PitcherDetail'] ||
                     item[itemSide + 'Pitcher']
                 );
-            }).filter(function (name) { return name && name !== '-'; });
+                return { name: name, game: item };
+            }).filter(function (entry) { return entry.name && entry.name !== '-'; });
             const recentUnique = [];
             for (let index = starts.length - 1; index >= 0 && recentUnique.length < 5; index -= 1) {
-                if (!recentUnique.includes(starts[index])) recentUnique.push(starts[index]);
+                if (!recentUnique.includes(starts[index].name)) recentUnique.push(starts[index].name);
             }
             recentUnique.reverse();
             if (recentUnique.length < 3) return { name: '', predicted: false };
 
+            const latestStart = starts[starts.length - 1];
+            const latestDate = String((latestStart && latestStart.game && latestStart.game.date) || '');
+            const latestTime = String((latestStart && latestStart.game && latestStart.game.time) || '');
             const upcoming = enjoyBaseballScheduleGames.filter(function (item) {
-                return String(item.date || '') >= today && String(item.date || '') <= gameDate &&
-                    (item.team1 === team || item.team2 === team) && !enjoyBaseballIsCanceled(item);
+                const itemDate = String(item.date || '');
+                const itemTime = String(item.time || '');
+                const afterLatest = itemDate > latestDate || (itemDate === latestDate && itemTime > latestTime);
+                return afterLatest && itemDate <= gameDate &&
+                    (item.team1 === team || item.team2 === team) &&
+                    !enjoyBaseballIsCanceled(item);
             }).sort(function (first, second) {
                 return String(first.date || '').localeCompare(String(second.date || '')) ||
                     String(first.time || '').localeCompare(String(second.time || ''));
             });
             let gameIndex = upcoming.findIndex(function (item) { return enjoyBaseballSameGame(item, game); });
             if (gameIndex < 0) gameIndex = Math.max(0, upcoming.length - 1);
-            return { name: recentUnique[gameIndex % recentUnique.length], predicted: true };
+            let predictedName = recentUnique[gameIndex % recentUnique.length];
+            if (latestStart && predictedName === latestStart.name && recentUnique.length > 1) {
+                predictedName = recentUnique[(gameIndex + 1) % recentUnique.length];
+            }
+            return { name: predictedName, predicted: true };
         }
         function enjoyBaseballStarterPersonnel(game, side) {
             const starter = enjoyBaseballStarterInfo(game, side);
@@ -8502,9 +8484,8 @@
                 fileHistoryGames.forEach(addGame);
                 firebaseGames.forEach(addGame);
                 enjoyBaseballStarterHistoryGames = fileHistoryGames.filter(function (game) {
-                    return String(game.date || '') < today;
+                    return String(game.date || '') <= today;
                 });
-                enjoyBaseballStarterHistoryDate = today;
                 const games = Array.from(merged.values());
                 enjoyBaseballScheduleGames = games;
                 enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today));
