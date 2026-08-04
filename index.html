@@ -4920,24 +4920,32 @@
         <span class="text-gray-400 text-sm font-medium tracking-tight">데이터 동기화 중...</span>
     </div>
     <script>
-        // 안전장치: 메인 스크립트에 무슨 일이 있어도 로더가 멈추지 않도록 독립적으로 보장
+        // 인증과 최초 데이터 동기화가 끝난 경우에만 로더를 닫는다.
+        // 인증 확인 전에 홈이 노출되면 프로필이 '미가입'처럼 잠깐 보일 수 있다.
         setTimeout(function () {
             var l = document.getElementById('app-loader');
-            if (l && l.style.display !== 'none') {
+            var ready = window.enjoyAuthResolved === true &&
+                (!window.meetingAuthed || window.__enjoyTodayDataReady === true);
+            if (ready && l && l.style.display !== 'none') {
                 l.style.opacity = '0';
                 setTimeout(function () { l.style.display = 'none'; }, 400);
             }
         }, 2000);
-        // 안전장치: 인증 확인이 지연되면 로그인 버튼을 노출(스피너 무한 회전 방지)
+        // SDK 자체가 로드되지 않는 경우에는 로그인 폼으로 오인시키지 않고 연결 오류를 안내한다.
         setTimeout(function () {
-            var ls = document.getElementById('login-screen');
+            if (window.enjoyAuthResolved === true) return;
+            window.__enjoyAuthTimeoutShown = true;
             var lc = document.getElementById('login-checking');
             var lf = document.getElementById('login-content');
-            if (ls && ls.style.display !== 'none' && lc && lc.style.display !== 'none') {
-                lc.style.display = 'none';
-                if (lf) { lf.classList.remove('hidden'); lf.style.display = 'flex'; }
-            }
-        }, 3500);
+            var lb = document.getElementById('login-google-btn');
+            var ls = document.getElementById('login-status');
+            var ld = document.getElementById('app-loader');
+            if (lc) lc.style.display = 'none';
+            if (lf) { lf.classList.remove('hidden'); lf.style.display = 'flex'; }
+            if (lb) lb.disabled = true;
+            if (ls) ls.textContent = '연결이 지연되고 있어요. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
+            if (ld) { ld.style.opacity = '0'; setTimeout(function () { ld.style.display = 'none'; }, 400); }
+        }, 12000);
     </script>
 
     <div id="enjoy-dialog" class="hidden fixed inset-0 z-[400] items-center justify-center px-5" aria-hidden="true">
@@ -13364,12 +13372,13 @@
                 setTimeout(() => { loader.style.display = 'none'; }, 400);
             }
         }
-        // 데이터 동기화를 기다리지 않고 홈을 즉시 표시
-        // (모임통장/일정 데이터는 백그라운드 onSnapshot으로 실시간 반영됨)
+        // 홈 구조는 먼저 준비하되 인증 전에는 로더를 유지한다.
+        // 미로그인 확인이 끝난 경우에만 여기서 로더를 닫고,
+        // 로그인 사용자는 프로필·일정·모임통장 최초 동기화가 끝날 때 Firebase 모듈이 닫는다.
         let __enjoyBooted = false;
         function __enjoyBoot() {
             if (!__enjoyBooted) { __enjoyBooted = true; __enjoyInitHome(); }
-            __enjoyHideLoader();
+            if (window.enjoyAuthResolved === true && !window.meetingAuthed) __enjoyHideLoader();
         }
         __enjoyBoot();                                                   // 즉시
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', __enjoyBoot);
@@ -13519,10 +13528,8 @@
         }
 
         async function loadMyName() {
-            try {
-                const d = await window.getDoc(window.fsDoc('members', window.enjoyUser.uid));
-                return d.exists() ? (d.data().name || null) : null;
-            } catch (e) { return null; }
+            const d = await window.getDoc(window.fsDoc('members', window.enjoyUser.uid));
+            return d.exists() ? (d.data().name || null) : null;
         }
         async function takenNames() {
             const taken = {};
@@ -13758,49 +13765,66 @@
         }
         window.enjoyStartMemberSync = startMemberSync;
 
-        let startRetryTimer = null;
-        let startRetryDelay = 300;
+        let startPromise = null;
         async function start() {
-            if (started) return;
-            if (!fbReady()) {
-                if (!window.enjoyUser) return;
-                if (!startRetryTimer) {
-                    startRetryTimer = setTimeout(() => {
-                        startRetryTimer = null;
-                        start();
-                    }, startRetryDelay);
-                    startRetryDelay = Math.min(5000, startRetryDelay * 2);
+            if (started) return true;
+            if (startPromise) return startPromise;
+
+            startPromise = (async function () {
+                let retryDelay = 300;
+                while (!started) {
+                    if (!window.enjoyUser) return false;
+                    if (!fbReady()) {
+                        await new Promise(resolve => setTimeout(resolve, retryDelay));
+                        retryDelay = Math.min(5000, retryDelay * 2);
+                        continue;
+                    }
+
+                    const expectedUid = window.enjoyUser.uid;
+                    try {
+                        const myName = await loadMyName();
+                        if (!window.enjoyUser || window.enjoyUser.uid !== expectedUid) continue;
+
+                        if (myName && window.enjoyIsMemberName(myName)) {
+                            // 정식 멤버 → 파이어베이스 동기화
+                            window.enjoyProfileName = myName;
+                            notifyAndroidMemberTopic(myName);
+                            startMemberSync();
+                            updateProfileCard();
+                            renderMembers();
+                            try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
+                            started = true;
+                            return true;
+                        }
+
+                        // 프로필 문서 조회가 정상 완료된 뒤 문서가 없을 때만 로컬(스페셜) 모드로 전환한다.
+                        const localName = window.enjoyLoadLocalProfile && window.enjoyLoadLocalProfile();
+                        window.enjoyProfileName = localName || null;
+                        window.enjoyEnterLocalMode && window.enjoyEnterLocalMode();
+                        updateProfileCard();
+                        renderMembers();
+                        try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
+                        if (!localName) {
+                            openProfileModal(false);   // 이름 없으면 필수 입력 ('(스페셜)' 자동 부착)
+                        } else {
+                            window.openPromotionPopup && window.openPromotionPopup();
+                        }
+                        started = true;
+                        return true;
+                    } catch (e) {
+                        // 일시적인 Firestore 오류를 '미가입'으로 오인하지 않고 연결이 회복될 때까지 재시도한다.
+                        console.warn('Member profile load retry:', e);
+                        await new Promise(resolve => setTimeout(resolve, retryDelay));
+                        retryDelay = Math.min(5000, retryDelay * 2);
+                    }
                 }
-                return;
-            }
-            if (startRetryTimer) {
-                clearTimeout(startRetryTimer);
-                startRetryTimer = null;
-            }
-            startRetryDelay = 300;
-            started = true;
-            const myName = await loadMyName();
-            if (myName && window.enjoyIsMemberName(myName)) {
-                // 정식 멤버 → 파이어베이스 동기화
-                window.enjoyProfileName = myName;
-                notifyAndroidMemberTopic(myName);
-                startMemberSync();
-                updateProfileCard();
-                renderMembers();
-                try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
-                return;
-            }
-            // 멤버가 아니면 로컬(스페셜) 모드 — 본인 기기에만 저장
-            const localName = window.enjoyLoadLocalProfile && window.enjoyLoadLocalProfile();
-            window.enjoyProfileName = localName || null;
-            window.enjoyEnterLocalMode && window.enjoyEnterLocalMode();
-            updateProfileCard();
-            renderMembers();
-            try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
-            if (!localName) {
-                openProfileModal(false);   // 이름 없으면 필수 입력 ('(스페셜)' 자동 부착)
-            } else {
-                window.openPromotionPopup && window.openPromotionPopup();
+                return true;
+            })();
+
+            try {
+                return await startPromise;
+            } finally {
+                startPromise = null;
             }
         }
         window.enjoyOnLogin = start;
@@ -13898,10 +13922,26 @@
                     if (loginScreen)   { loginScreen.style.display = 'block'; }
                     if (loginChecking) loginChecking.style.display = 'none';
                     if (loginContent)  { loginContent.classList.remove('hidden'); loginContent.style.display = 'flex'; }
+                    if (loginButton) loginButton.disabled = false;
+                    if (window.__enjoyAuthTimeoutShown && loginStatus) loginStatus.textContent = '';
+                    window.__enjoyAuthTimeoutShown = false;
                     // 미로그인 상태에서는 데이터 로더를 숨긴다(스피너 무한 회전 방지)
                     const ld = document.getElementById('app-loader');
                     if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
                     setTimeout(renderLoginAd, 150);   // 컨테이너가 표시된 뒤 광고 요청
+                };
+                const showLoginChecking = () => {
+                    if (loginScreen) loginScreen.style.display = 'block';
+                    if (loginChecking) loginChecking.style.display = 'flex';
+                    if (loginContent) {
+                        loginContent.classList.add('hidden');
+                        loginContent.style.display = 'none';
+                    }
+                    const ld = document.getElementById('app-loader');
+                    if (ld) {
+                        ld.style.display = 'flex';
+                        requestAnimationFrame(() => { ld.style.opacity = '1'; });
+                    }
                 };
                 const hideLogin = () => { if (loginScreen) loginScreen.style.display = 'none'; };
 
@@ -14018,7 +14058,7 @@
                 let unsubMeeting = null;
                 let unsubSchedule = null;
 
-                onAuthStateChanged(meetingAuth, (user) => {
+                onAuthStateChanged(meetingAuth, async (user) => {
                     if (unsubMeeting) { unsubMeeting(); unsubMeeting = null; }
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
                     window.enjoySync = false;        // 멤버 확정 전까지는 로컬 모드 기본
@@ -14039,7 +14079,8 @@
                         return;
                     }
                     window.isGuest = false;
-                    hideLogin();
+                    window.__enjoyTodayDataReady = false;
+                    showLoginChecking();
                     const emailEl = document.getElementById('more-account-email');
                     if (emailEl && user.email) emailEl.textContent = user.email;
                     window.meetingAuthed = true; // 멤버/모임 데이터 동기화 신호
@@ -14099,10 +14140,41 @@
                     };
 
                     // 멤버/스페셜 판별 후 동기화(멤버) 또는 로컬 로드(스페셜)는 enjoyOnLogin에서 처리
-                    if (typeof window.enjoyOnLogin === 'function') { try { window.enjoyOnLogin(); } catch (e) {} }
+                    let profileReady = true;
+                    if (typeof window.enjoyOnLogin === 'function') {
+                        try {
+                            profileReady = await window.enjoyOnLogin();
+                        } catch (e) {
+                            profileReady = false;
+                            console.warn('Member profile initialization error:', e);
+                        }
+                    }
+                    // 저장된 멤버 프로필까지 확인된 뒤 로그인 화면을 닫아
+                    // 이름 없는 홈 화면이 잠깐 노출되지 않도록 한다.
+                    if (profileReady && window.enjoyUser && window.enjoyUser.uid === user.uid) hideLogin();
                 });
 
-            } catch(e) { console.error("Firebase Init Error:", e); }
+            } catch(e) {
+                console.error("Firebase Init Error:", e);
+                window.enjoyAuthResolved = true;
+                window.enjoyAuthInitFailed = true;
+                const loginChecking = document.getElementById('login-checking');
+                const loginContent = document.getElementById('login-content');
+                const loginStatus = document.getElementById('login-status');
+                const loginButton = document.getElementById('login-google-btn');
+                const loader = document.getElementById('app-loader');
+                if (loginChecking) loginChecking.style.display = 'none';
+                if (loginContent) {
+                    loginContent.classList.remove('hidden');
+                    loginContent.style.display = 'flex';
+                }
+                if (loginStatus) loginStatus.textContent = '연결에 실패했어요. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
+                if (loginButton) loginButton.disabled = true;
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => { loader.style.display = 'none'; }, 400);
+                }
+            }
         }
 
         initializeFirebaseApp();
