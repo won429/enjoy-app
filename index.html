@@ -3242,6 +3242,32 @@
             -webkit-backdrop-filter: blur(14px);
             backdrop-filter: blur(14px);
         }
+        .shorts-item-status {
+            position: absolute;
+            z-index: 4;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 28px;
+            color: rgba(255,255,255,.9);
+            background: rgba(0,0,0,.2);
+            text-align: center;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        .shorts-item-status.hidden { display: none; }
+        .shorts-item-status button {
+            margin-top: 4px;
+            border-radius: 999px;
+            padding: 10px 16px;
+            color: #000;
+            background: #fff;
+            font-size: 12px;
+            font-weight: 900;
+        }
         .shorts-empty {
             min-height: 100%;
             display: flex;
@@ -9358,16 +9384,14 @@
         window.goToTravel = () => window.openBrowser("https://won429.github.io/enjoy_trip/");
         
         const ENJOY_SHORTS_WORKER_BASE_URL = 'https://enjoy-shorts-video.sungwon4867.workers.dev';
-        const ENJOY_SHORTS_OBJECT_KEY = 'shorts/shorts-001.mp4';
-        window.ENJOY_SHORTS = [{
-            key: ENJOY_SHORTS_OBJECT_KEY,
-            title: '엔조이 숏츠',
-            caption: '엔조이의 순간을 짧은 영상으로 만나보세요.'
-        }];
+        const ENJOY_SHORTS_SUPPORTED_KEY = /^shorts\/.+\.(?:mp4|webm|mov|m4v|ogv|ogg)$/i;
+        window.ENJOY_SHORTS = [];
         window._shortsObserver = null;
         window._shortsRequestId = 0;
-        window._shortsPlaybackExpiresAt = 0;
-        window._shortsPlaybackRetryCount = 0;
+        window._shortsSessionPromises = new Map();
+        window._shortsScrollHandler = null;
+        window._shortsScrollTimer = 0;
+        window._shortsActiveIndex = -1;
         window._homeNavLastTap = 0;
 
         function enjoyShortsEsc(value) {
@@ -9379,10 +9403,13 @@
         function renderEnjoyShortsState(icon, title, message, actionLabel, action) {
             const feed = document.getElementById('shorts-feed');
             if (!feed) return;
-            if (window._shortsObserver) {
-                window._shortsObserver.disconnect();
-                window._shortsObserver = null;
-            }
+            disconnectEnjoyShortsFeed();
+            window._shortsSessionPromises.clear();
+            feed.querySelectorAll('video').forEach(function (video) {
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+            });
             feed.innerHTML =
                 '<div class="shorts-empty" role="status">' +
                     '<div class="shorts-empty-mark"><i class="' + enjoyShortsEsc(icon) + '"></i></div>' +
@@ -9392,6 +9419,12 @@
                         ? '<button type="button" onclick="' + enjoyShortsEsc(action) + '" class="mt-6 rounded-full bg-white px-5 py-3 text-[13px] font-black text-black active:scale-95 transition-transform">' + enjoyShortsEsc(actionLabel) + '</button>'
                         : '') +
                 '</div>';
+        }
+
+        function deriveEnjoyShortsTitle(key) {
+            const filename = String(key || '').split('/').pop() || '';
+            const stem = filename.replace(/\.[^.]+$/, '');
+            return stem.replace(/^\d+(?:[_\-\s]+)/, '').trim() || stem || '제목 없음';
         }
 
         function waitForEnjoyShortsAuth() {
@@ -9411,7 +9444,7 @@
             });
         }
 
-        async function requestEnjoyShortsSession(forceRefresh) {
+        async function requestEnjoyShortsJson(path, method, forceRefresh) {
             await waitForEnjoyShortsAuth();
             if (window.enjoyAuthResolved !== true || typeof window.getEnjoyIdToken !== 'function') {
                 const error = new Error('Firebase Auth is not ready');
@@ -9426,80 +9459,260 @@
                 throw error;
             }
 
-            const response = await fetch(
-                ENJOY_SHORTS_WORKER_BASE_URL + '/session?key=' + encodeURIComponent(ENJOY_SHORTS_OBJECT_KEY),
-                {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Authorization': 'Bearer ' + idToken
-                    }
+            const response = await fetch(ENJOY_SHORTS_WORKER_BASE_URL + path, {
+                method: method || 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': 'Bearer ' + idToken
                 }
-            );
+            });
 
             let payload = null;
             try { payload = await response.json(); } catch (e) {}
             if (response.status === 401 && !forceRefresh) {
-                return requestEnjoyShortsSession(true);
+                return requestEnjoyShortsJson(path, method, true);
             }
             if (!response.ok) {
-                const error = new Error((payload && payload.error) || 'Playback session request failed');
+                const error = new Error((payload && payload.error) || 'Shorts request failed');
                 error.code = response.status === 401 ? 'unauthenticated' : 'session-failed';
                 error.status = response.status;
                 throw error;
             }
+            return payload;
+        }
+
+        async function requestEnjoyShortsList(forceRefresh) {
+            const payload = await requestEnjoyShortsJson('/shorts', 'GET', !!forceRefresh);
+            if (!payload || !Array.isArray(payload.shorts)) {
+                const error = new Error('Shorts list response is invalid');
+                error.code = 'list-failed';
+                throw error;
+            }
+
+            const seenKeys = new Set();
+            return payload.shorts.reduce(function (items, rawItem) {
+                if (!rawItem || typeof rawItem.key !== 'string' ||
+                    !ENJOY_SHORTS_SUPPORTED_KEY.test(rawItem.key) || seenKeys.has(rawItem.key)) {
+                    return items;
+                }
+                seenKeys.add(rawItem.key);
+                items.push({
+                    key: rawItem.key,
+                    title: typeof rawItem.title === 'string' && rawItem.title.trim()
+                        ? rawItem.title.trim()
+                        : deriveEnjoyShortsTitle(rawItem.key),
+                    size: Math.max(0, Number(rawItem.size) || 0),
+                    updated: typeof rawItem.updated === 'string' ? rawItem.updated : ''
+                });
+                return items;
+            }, []);
+        }
+
+        async function requestEnjoyShortsSession(key, forceRefresh) {
+            const payload = await requestEnjoyShortsJson(
+                '/session?key=' + encodeURIComponent(key),
+                'POST',
+                !!forceRefresh
+            );
             if (!payload || typeof payload.playbackUrl !== 'string' || !/^https:\/\//.test(payload.playbackUrl)) {
                 const error = new Error('Playback session response is invalid');
                 error.code = 'session-failed';
                 throw error;
             }
 
+            const playbackUrl = new URL(payload.playbackUrl);
+            if (playbackUrl.origin !== new URL(ENJOY_SHORTS_WORKER_BASE_URL).origin) {
+                const error = new Error('Playback session origin is invalid');
+                error.code = 'session-failed';
+                throw error;
+            }
+
             return {
-                playbackUrl: payload.playbackUrl,
-                expiresIn: Math.max(0, Number(payload.expiresIn) || 0)
+                playbackUrl: playbackUrl.toString(),
+                expiresAt: Number(payload.expiresAt) > 0
+                    ? Number(payload.expiresAt) * 1000
+                    : Date.now() + (Math.max(0, Number(payload.expiresIn) || 0) * 1000)
             };
         }
 
-        window.renderEnjoyShorts = function (playbackUrl) {
+        function disconnectEnjoyShortsFeed() {
             const feed = document.getElementById('shorts-feed');
-            if (!feed || !playbackUrl) return;
             if (window._shortsObserver) {
                 window._shortsObserver.disconnect();
                 window._shortsObserver = null;
             }
+            if (feed && window._shortsScrollHandler) {
+                feed.removeEventListener('scroll', window._shortsScrollHandler);
+            }
+            if (window._shortsScrollTimer) {
+                clearTimeout(window._shortsScrollTimer);
+                window._shortsScrollTimer = 0;
+            }
+            window._shortsScrollHandler = null;
+            window._shortsActiveIndex = -1;
+        }
 
-            const item = window.ENJOY_SHORTS[0];
-            const title = item.title || '엔조이 숏츠';
-            const caption = item.caption || '';
-            feed.innerHTML =
-                '<article class="shorts-item" data-shorts-index="0">' +
+        function setEnjoyShortsItemStatus(article, state, message) {
+            const status = article && article.querySelector('.shorts-item-status');
+            if (!status) return;
+            const icon = status.querySelector('i');
+            const text = status.querySelector('span');
+            const button = status.querySelector('button');
+            if (state === 'ready') {
+                status.classList.add('hidden');
+                return;
+            }
+            status.classList.remove('hidden');
+            if (icon) {
+                icon.className = state === 'loading'
+                    ? 'fa-solid fa-spinner fa-spin text-[18px]'
+                    : 'fa-solid fa-circle-exclamation text-[18px]';
+            }
+            if (text) text.textContent = message || '';
+            if (button) button.classList.toggle('hidden', state !== 'error');
+        }
+
+        window.renderEnjoyShorts = function (items) {
+            const feed = document.getElementById('shorts-feed');
+            if (!feed || !Array.isArray(items) || !items.length) return;
+            disconnectEnjoyShortsFeed();
+
+            feed.innerHTML = items.map(function (item, index) {
+                const title = item.title || deriveEnjoyShortsTitle(item.key);
+                return '<article class="shorts-item" data-shorts-index="' + index + '">' +
                     '<video class="shorts-video" muted playsinline loop preload="metadata" onclick="window.toggleEnjoyShortsVideo(this)" aria-label="' + enjoyShortsEsc(title) + '"></video>' +
                     '<div class="shorts-video-shade"></div>' +
-                    '<div class="shorts-copy"><h2>' + enjoyShortsEsc(title) + '</h2>' +
-                        (caption ? '<p>' + enjoyShortsEsc(caption) + '</p>' : '') +
+                    '<div class="shorts-item-status" role="status">' +
+                        '<i class="fa-solid fa-spinner fa-spin text-[18px]"></i>' +
+                        '<span>화면에 들어오면 영상을 연결해요.</span>' +
+                        '<button type="button" class="hidden" onclick="window.retryEnjoyShortsItem(' + index + ')">다시 연결</button>' +
                     '</div>' +
+                    '<div class="shorts-copy"><h2>' + enjoyShortsEsc(title) + '</h2></div>' +
                     '<button type="button" class="shorts-sound-button" onclick="window.toggleEnjoyShortsSound(this)" aria-label="소리 켜기"><i class="fa-solid fa-volume-xmark"></i></button>' +
                 '</article>';
+            }).join('');
 
-            const video = feed.querySelector('video');
-            if (!video) return;
-            video.addEventListener('error', function () {
-                window.handleEnjoyShortsPlaybackError();
+            const articles = Array.from(feed.querySelectorAll('.shorts-item'));
+            articles.forEach(function (article) {
+                const video = article.querySelector('video');
+                if (!video) return;
+                video.addEventListener('error', function () {
+                    window.handleEnjoyShortsPlaybackError(video);
+                });
             });
-            video.src = playbackUrl;
 
             if ('IntersectionObserver' in window) {
                 window._shortsObserver = new IntersectionObserver(function (entries) {
                     entries.forEach(function (entry) {
                         if (entry.isIntersecting && entry.intersectionRatio >= .72) {
-                            entry.target.play().catch(function () {});
-                        } else {
-                            entry.target.pause();
+                            window.activateEnjoyShortsItem(Number(entry.target.dataset.shortsIndex));
                         }
                     });
                 }, { root: feed, threshold: [.2, .72] });
-                window._shortsObserver.observe(video);
+                articles.forEach(function (article) {
+                    window._shortsObserver.observe(article);
+                });
             }
+
+            window._shortsScrollHandler = function () {
+                if (window._shortsScrollTimer) clearTimeout(window._shortsScrollTimer);
+                window._shortsScrollTimer = setTimeout(function () {
+                    window._shortsScrollTimer = 0;
+                    let nearestIndex = 0;
+                    let nearestDistance = Infinity;
+                    articles.forEach(function (article, index) {
+                        const distance = Math.abs(article.offsetTop - feed.scrollTop);
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearestIndex = index;
+                        }
+                    });
+                    window.activateEnjoyShortsItem(nearestIndex);
+                }, 100);
+            };
+            feed.addEventListener('scroll', window._shortsScrollHandler, { passive: true });
+            requestAnimationFrame(function () {
+                window.activateEnjoyShortsItem(0);
+            });
+        };
+
+        window.activateEnjoyShortsItem = function (index) {
+            const screen = document.getElementById('shorts-screen');
+            const feed = document.getElementById('shorts-feed');
+            if (!screen || screen.classList.contains('hidden') || !feed) return;
+            const articles = Array.from(feed.querySelectorAll('.shorts-item'));
+            const article = articles[index];
+            if (!article || !window.ENJOY_SHORTS[index]) return;
+            window._shortsActiveIndex = index;
+            articles.forEach(function (candidate, candidateIndex) {
+                const video = candidate.querySelector('video');
+                if (video && candidateIndex !== index) video.pause();
+            });
+            window.ensureEnjoyShortsSession(index);
+        };
+
+        window.ensureEnjoyShortsSession = function (index, forceRefresh) {
+            const screen = document.getElementById('shorts-screen');
+            const feed = document.getElementById('shorts-feed');
+            const item = window.ENJOY_SHORTS[index];
+            const article = feed && feed.querySelector('.shorts-item[data-shorts-index="' + index + '"]');
+            const video = article && article.querySelector('video');
+            if (!screen || screen.classList.contains('hidden') || !item || !article || !video) {
+                return Promise.resolve();
+            }
+
+            const expiresAt = Number(article.dataset.playbackExpiresAt) || 0;
+            if (!forceRefresh && video.src && (!expiresAt || expiresAt > Date.now() + 5000)) {
+                setEnjoyShortsItemStatus(article, 'ready');
+                if (window._shortsActiveIndex === index) video.play().catch(function () {});
+                return Promise.resolve();
+            }
+
+            if (window._shortsSessionPromises.has(item.key)) {
+                return window._shortsSessionPromises.get(item.key);
+            }
+
+            const requestId = window._shortsRequestId;
+            article.dataset.sessionState = 'loading';
+            setEnjoyShortsItemStatus(article, 'loading', forceRefresh ? '영상을 다시 연결하고 있어요.' : '영상을 연결하고 있어요.');
+            const sessionPromise = requestEnjoyShortsSession(item.key, !!forceRefresh)
+                .then(function (session) {
+                    if (requestId !== window._shortsRequestId || screen.classList.contains('hidden')) return;
+                    video.pause();
+                    video.removeAttribute('src');
+                    video.load();
+                    article.dataset.playbackExpiresAt = String(session.expiresAt || 0);
+                    article.dataset.sessionState = 'ready';
+                    video.src = session.playbackUrl;
+                    setEnjoyShortsItemStatus(article, 'ready');
+                    if (window._shortsActiveIndex === index) video.play().catch(function () {});
+                })
+                .catch(function (error) {
+                    if (requestId !== window._shortsRequestId || screen.classList.contains('hidden')) return;
+                    if (error && error.code === 'unauthenticated') {
+                        renderEnjoyShortsState(
+                            'fa-solid fa-lock',
+                            '로그인이 필요해요',
+                            '엔조이 계정으로 로그인하면 비공개 숏츠를 볼 수 있어요.',
+                            '로그인하기',
+                            'window.startEnjoyShortsLogin()'
+                        );
+                        return;
+                    }
+                    article.dataset.sessionState = 'error';
+                    setEnjoyShortsItemStatus(
+                        article,
+                        'error',
+                        '영상을 연결하지 못했어요. 네트워크 상태를 확인해 주세요.'
+                    );
+                })
+                .finally(function () {
+                    if (window._shortsSessionPromises.get(item.key) === sessionPromise) {
+                        window._shortsSessionPromises.delete(item.key);
+                    }
+                });
+            window._shortsSessionPromises.set(item.key, sessionPromise);
+            return sessionPromise;
         };
 
         window.loadEnjoyShorts = async function (options) {
@@ -9509,19 +9722,25 @@
             const requestId = ++window._shortsRequestId;
             renderEnjoyShortsState(
                 'fa-solid fa-spinner fa-spin',
-                options.reconnecting ? '영상을 다시 연결하고 있어요' : '영상을 불러오고 있어요',
+                '영상 목록을 불러오고 있어요',
                 '잠시만 기다려 주세요.'
             );
 
             try {
-                const session = await requestEnjoyShortsSession(!!options.forceRefresh);
+                const items = await requestEnjoyShortsList(!!options.forceRefresh);
                 if (requestId !== window._shortsRequestId || screen.classList.contains('hidden')) return;
-                window._shortsPlaybackExpiresAt = session.expiresIn
-                    ? Date.now() + (session.expiresIn * 1000)
-                    : 0;
-                window.renderEnjoyShorts(session.playbackUrl);
-                const video = document.querySelector('#shorts-feed video');
-                if (video) video.play().catch(function () {});
+                window.ENJOY_SHORTS = items;
+                if (!items.length) {
+                    renderEnjoyShortsState(
+                        'fa-solid fa-film',
+                        '아직 등록된 영상이 없어요',
+                        'R2의 shorts/ 폴더에 영상 파일을 올린 뒤 새로고침해 주세요.',
+                        '새로고침',
+                        'window.retryEnjoyShorts()'
+                    );
+                    return;
+                }
+                window.renderEnjoyShorts(items);
             } catch (error) {
                 if (requestId !== window._shortsRequestId || screen.classList.contains('hidden')) return;
                 if (error && error.code === 'unauthenticated') {
@@ -9536,10 +9755,10 @@
                 }
                 renderEnjoyShortsState(
                     'fa-solid fa-circle-exclamation',
-                    '영상을 불러오지 못했어요',
+                    '영상 목록을 불러오지 못했어요',
                     error && error.code === 'auth-not-ready'
                         ? '로그인 확인이 지연되고 있어요. 잠시 후 다시 시도해 주세요.'
-                        : '재생 세션이 만료되었거나 네트워크 연결이 불안정할 수 있어요.',
+                        : '네트워크 연결이 불안정할 수 있어요.',
                     '다시 시도',
                     'window.retryEnjoyShorts()'
                 );
@@ -9547,33 +9766,52 @@
         };
 
         window.retryEnjoyShorts = function () {
-            window._shortsPlaybackRetryCount = 0;
             window.loadEnjoyShorts({ forceRefresh: true });
         };
 
-        window.handleEnjoyShortsPlaybackError = function () {
+        window.retryEnjoyShortsItem = function (index) {
+            const feed = document.getElementById('shorts-feed');
+            const article = feed && feed.querySelector('.shorts-item[data-shorts-index="' + index + '"]');
+            const video = article && article.querySelector('video');
+            if (!article || !video) return;
+            article.dataset.playbackRetryCount = '0';
+            article.dataset.playbackExpiresAt = '0';
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+            window.ensureEnjoyShortsSession(index, true);
+        };
+
+        window.handleEnjoyShortsPlaybackError = function (video) {
             const screen = document.getElementById('shorts-screen');
-            if (!screen || screen.classList.contains('hidden')) return;
-            if (window._shortsPlaybackRetryCount < 1) {
-                window._shortsPlaybackRetryCount += 1;
-                window.loadEnjoyShorts({ forceRefresh: true, reconnecting: true });
+            const article = video && video.closest('.shorts-item');
+            const index = article ? Number(article.dataset.shortsIndex) : -1;
+            if (!screen || screen.classList.contains('hidden') || !article || index < 0) return;
+            if (article.dataset.sessionState === 'loading') return;
+            const retryCount = Number(article.dataset.playbackRetryCount) || 0;
+            if (retryCount < 1) {
+                article.dataset.playbackRetryCount = String(retryCount + 1);
+                article.dataset.playbackExpiresAt = '0';
+                window.ensureEnjoyShortsSession(index, true);
                 return;
             }
-            renderEnjoyShortsState(
-                'fa-solid fa-circle-exclamation',
-                '재생이 중단됐어요',
-                window._shortsPlaybackExpiresAt && Date.now() >= window._shortsPlaybackExpiresAt
+            const expiresAt = Number(article.dataset.playbackExpiresAt) || 0;
+            setEnjoyShortsItemStatus(
+                article,
+                'error',
+                expiresAt && Date.now() >= expiresAt
                     ? '재생 세션이 만료됐어요. 새 세션으로 다시 연결해 주세요.'
-                    : '네트워크 상태를 확인한 뒤 다시 시도해 주세요.',
-                '다시 연결',
-                'window.retryEnjoyShorts()'
+                    : '재생이 중단됐어요. 네트워크 상태를 확인해 주세요.'
             );
         };
 
         window.toggleEnjoyShortsVideo = function (video) {
             if (!video) return;
             window.haptic && window.haptic();
-            if (video.paused) video.play().catch(function () {});
+            if (!video.src) {
+                const article = video.closest('.shorts-item');
+                if (article) window.ensureEnjoyShortsSession(Number(article.dataset.shortsIndex));
+            } else if (video.paused) video.play().catch(function () {});
             else video.pause();
         };
 
@@ -9602,7 +9840,7 @@
             screen.classList.remove('hidden');
             screen.classList.add('flex');
             if (feed) feed.scrollTop = 0;
-            window._shortsPlaybackRetryCount = 0;
+            window._shortsSessionPromises.clear();
             window.loadEnjoyShorts();
             if (window.updateNavContrast) requestAnimationFrame(window.updateNavContrast);
         };
@@ -9611,11 +9849,8 @@
             const screen = document.getElementById('shorts-screen');
             if (!screen) return;
             window._shortsRequestId += 1;
-            window._shortsPlaybackExpiresAt = 0;
-            if (window._shortsObserver) {
-                window._shortsObserver.disconnect();
-                window._shortsObserver = null;
-            }
+            window._shortsSessionPromises.clear();
+            disconnectEnjoyShortsFeed();
             screen.querySelectorAll('video').forEach(function (video) {
                 video.pause();
                 video.removeAttribute('src');
