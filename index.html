@@ -8308,6 +8308,17 @@
             }
             return '';
         }
+        function enjoyBaseballDeclaredStarter(game, side) {
+            const candidates = [
+                game[side + 'StarterDetail'], game[side + 'Starter'],
+                game[side + 'PitcherDetail'], game[side + 'Pitcher']
+            ];
+            for (let index = 0; index < candidates.length; index += 1) {
+                const name = enjoyBaseballPlayerName(candidates[index]);
+                if (name && name !== '-') return name;
+            }
+            return '';
+        }
         function enjoyBaseballStarterInfo(game, side) {
             const official = enjoyBaseballOfficialStarter(game, side);
             if (official) return { name: official, predicted: false };
@@ -8319,6 +8330,22 @@
             }
 
             const team = side === 'away' ? game.team1 : game.team2;
+            const previousTeamGames = enjoyBaseballScheduleGames.filter(function (item) {
+                const itemDate = String(item.date || '');
+                const itemTime = String(item.time || '');
+                const beforeTarget = itemDate < gameDate || (itemDate === gameDate && itemTime < String(game.time || ''));
+                return beforeTarget && (item.team1 === team || item.team2 === team);
+            }).sort(function (first, second) {
+                return String(first.date || '').localeCompare(String(second.date || '')) ||
+                    String(first.time || '').localeCompare(String(second.time || ''));
+            });
+            const previousTeamGame = previousTeamGames[previousTeamGames.length - 1];
+            if (previousTeamGame && enjoyBaseballIsCanceled(previousTeamGame)) {
+                const canceledSide = previousTeamGame.team1 === team ? 'away' : 'home';
+                const canceledStarter = enjoyBaseballDeclaredStarter(previousTeamGame, canceledSide);
+                if (canceledStarter) return { name: canceledStarter, predicted: true, carriedFromCancellation: true };
+            }
+
             const history = enjoyBaseballStarterHistoryGames.filter(function (item) {
                 return String(item.date || '') < gameDate &&
                     String(item.gameStatus || '') === '종료' &&
