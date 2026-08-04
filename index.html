@@ -2184,13 +2184,6 @@
             border-radius: 16px;
             text-align: left;
         }
-        .profile-invite-note {
-            margin-top: 8px;
-            color: rgba(255,255,255,.38);
-            font-size: 11px;
-            font-weight: 500;
-            line-height: 1.45;
-        }
         #profile-modal .pf-status {
             margin-top: 14px;
             text-align: left;
@@ -2354,6 +2347,7 @@
         .pf-input { width: 100%; margin-top: 18px; padding: 14px 16px; border-radius: 16px; font-size: 16px; font-weight: 600; text-align: center;
             color: #fff; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.12); outline: none; transition: border-color .15s; }
         .pf-input:focus { border-color: #3182F6; }
+        .pf-input.is-error { border-color: #F04452; }
         .pf-input::placeholder { color: rgba(255,255,255,0.35); font-weight: 500; }
         .pf-status { font-size: 12.5px; font-weight: 600; min-height: 16px; margin-top: 12px; color: #F04452; }
         .pf-submit { width: 100%; margin-top: 14px; padding: 15px 0; border-radius: 9999px; font-size: 15px; font-weight: 700;
@@ -3611,7 +3605,6 @@
             #profile-modal .profile-join-title { color: #141414; }
             #profile-modal .profile-join-desc { color: #6E6E73; }
             #profile-modal .profile-field-label { color: #333D4B; }
-            #profile-modal .profile-invite-note,
             #profile-modal .profile-cancel { color: #8B95A1; }
             #profile-modal .profile-join-footer { color: #9B95A8; }
             #enjoy-dialog { background: rgba(0,0,0,.38); }
@@ -4308,10 +4301,10 @@
                 </div>
 
                 <div id="profile-invite-wrap" class="profile-field hidden">
-                    <label class="profile-field-label" for="profile-invite-code">친구 초대 코드 <span style="font-weight:500;opacity:.55">(선택)</span></label>
-                    <input id="profile-invite-code" type="text" class="pf-input" placeholder="정식 멤버 이름을 입력해주세요" maxlength="10" autocomplete="off" autocapitalize="off" spellcheck="false"
+                    <label class="profile-field-label" for="profile-invite-code">친구 초대 코드</label>
+                    <input id="profile-invite-code" type="text" class="pf-input" placeholder="초대를 받은 사람의 코드를 입력해주세요" maxlength="10" autocomplete="off" autocapitalize="off" spellcheck="false"
+                           oninput="this.classList.remove('is-error'); document.getElementById('profile-status').textContent=''"
                            onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.enjoySubmitProfile && window.enjoySubmitProfile(); }">
-                    <p class="profile-invite-note">초대를 받았다면 성원제, 전시기, 류짱, 홍박사 중 한 명의 이름을 입력해주세요.</p>
                 </div>
 
                 <p id="profile-status" class="pf-status"></p>
@@ -11491,7 +11484,7 @@
 
         /* ----- 프로필 등록(필수·영구·중복불가) / 변경(성원제 전용) ----- */
         const INVITE_CODE_MEMBERS = ['오스틴', '홍박사'];
-        const VALID_INVITE_CODES = ['성원제', '전시기', '류짱', '홍박사'];
+        const BASE_INVITE_CODES = ['성원제', '전시기', '류짱', '이진누'];
         let renameMode = false;
 
         function updateInviteCodeVisibility() {
@@ -11503,7 +11496,10 @@
             if (wrap) wrap.classList.toggle('hidden', !canEnterInviteCode);
             if (inviteInp) {
                 inviteInp.disabled = !canEnterInviteCode;
-                if (!canEnterInviteCode) inviteInp.value = '';
+                if (!canEnterInviteCode) {
+                    inviteInp.value = '';
+                    inviteInp.classList.remove('is-error');
+                }
             }
         }
         window.enjoyProfileNameInput = updateInviteCodeVisibility;
@@ -11519,7 +11515,10 @@
             if (c) c.classList.toggle('hidden', !isRename);     // 변경 모드에서만 취소 가능
             if (submit) submit.textContent = isRename ? '변경 완료' : '가입 완료';
             if (inp) inp.value = isRename ? (window.enjoyProfileName || '') : '';
-            if (inviteInp) inviteInp.value = '';
+            if (inviteInp) {
+                inviteInp.value = '';
+                inviteInp.classList.remove('is-error');
+            }
             if (st) st.textContent = '';
             updateInviteCodeVisibility();
             const m = $('profile-modal');
@@ -11554,17 +11553,16 @@
             if (!name) { if (st) st.textContent = '이름을 입력해주세요.'; return; }
             const canEnterInviteCode = !renameMode && INVITE_CODE_MEMBERS.indexOf(name) >= 0;
             const friendInviteCode = canEnterInviteCode && inviteInp ? (inviteInp.value || '').trim() : '';
-            if (canEnterInviteCode && friendInviteCode && VALID_INVITE_CODES.indexOf(friendInviteCode) < 0) {
-                if (st) st.textContent = '성원제, 전시기, 류짱, 홍박사 중 한 명의 이름을 초대 코드로 입력해주세요.';
-                if (inviteInp) inviteInp.focus();
+            if (inviteInp) inviteInp.classList.remove('is-error');
+            const isBaseInviteCode = BASE_INVITE_CODES.indexOf(friendInviteCode) >= 0;
+            const isJoinedInviteCandidate = INVITE_CODE_MEMBERS.indexOf(friendInviteCode) >= 0 && friendInviteCode !== name;
+            if (canEnterInviteCode && !isBaseInviteCode && !isJoinedInviteCandidate) {
+                if (st) st.textContent = '알 수 없는 초대 코드예요.';
+                if (inviteInp) {
+                    inviteInp.classList.add('is-error');
+                    inviteInp.focus();
+                }
                 return;
-            }
-            if (canEnterInviteCode && !friendInviteCode) {
-                const continueWithoutInvite = await window.enjoyConfirm(
-                    '친구의 초대를 받지 않으신 게 확실한가요?',
-                    { title: '초대 코드 없이 가입', cancelText: '아니요', confirmText: '예' }
-                );
-                if (!continueWithoutInvite) return;
             }
 
             // 정식 멤버 6명 → 파이어베이스 동기화 (이름 중복 불가)
@@ -11573,6 +11571,14 @@
                 if (st) st.textContent = '확인 중…';
                 const taken = await takenNames();
                 if (taken[name]) { if (st) st.textContent = '이미 사용한 이름이에요.'; return; }
+                if (canEnterInviteCode && isJoinedInviteCandidate && !taken[friendInviteCode]) {
+                    if (st) st.textContent = '알 수 없는 초대 코드예요.';
+                    if (inviteInp) {
+                        inviteInp.classList.add('is-error');
+                        inviteInp.focus();
+                    }
+                    return;
+                }
                 try {
                     const memberProfile = {
                         name: name,
@@ -11604,6 +11610,7 @@
             updateProfileCard();
             renderMembers();
             try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
+            window.openPromotionPopup && window.openPromotionPopup();
         };
 
         /* ----- 더보기: 내 프로필 카드 (원형 사진/단색, 글자 없음) ----- */
@@ -11739,7 +11746,11 @@
             updateProfileCard();
             renderMembers();
             try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
-            if (!localName) openProfileModal(false);   // 이름 없으면 필수 입력 ('(스페셜)' 자동 부착)
+            if (!localName) {
+                openProfileModal(false);   // 이름 없으면 필수 입력 ('(스페셜)' 자동 부착)
+            } else {
+                window.openPromotionPopup && window.openPromotionPopup();
+            }
         }
         window.enjoyOnLogin = start;
         if (window.enjoyUser) start();   // 모듈이 먼저 로그인 처리한 경우 대비
@@ -11979,7 +11990,6 @@
                         localStorage.setItem('enjoy_chat_account_label_v1', user.displayName || user.email || '엔조이 계정');
                     } catch (e) {}
                     if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(window.enjoyUser);
-                    if (window.openPromotionPopup) window.openPromotionPopup();
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
@@ -11987,10 +11997,20 @@
                         if (isMeetingLoaded && isScheduleLoaded) {
                             window.__enjoyTodayDataReady = true;
                             try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
+                            const showPromotion = () => {
+                                const profileScreen = document.getElementById('profile-modal');
+                                const profileComplete = !!window.enjoyProfileName && (!profileScreen || profileScreen.classList.contains('hidden'));
+                                if (profileComplete && window.openPromotionPopup) window.openPromotionPopup();
+                            };
                             const loader = document.getElementById('app-loader');
                             if (loader && loader.style.display !== 'none') {
                                 loader.style.opacity = '0';
-                                setTimeout(() => { loader.style.display = 'none'; }, 500);
+                                setTimeout(() => {
+                                    loader.style.display = 'none';
+                                    showPromotion();
+                                }, 500);
+                            } else {
+                                showPromotion();
                             }
                         }
                     };
