@@ -2322,6 +2322,381 @@
         @media (prefers-reduced-motion: reduce) {
             .promotion-popup-card { animation: none; }
         }
+        /* 프로모션 자세히 보기 — 앱 안에서 열리는 한 화면 안내 */
+        #promotion-detail-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 360;
+            display: none;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            background: #07182f;
+        }
+        #promotion-detail-screen.is-open { display: block; }
+        .promotion-detail-content {
+            position: relative;
+            width: min(100%, 448px);
+            min-height: 100dvh;
+            margin: 0 auto;
+            padding:
+                max(20px, env(safe-area-inset-top))
+                22px
+                max(22px, env(safe-area-inset-bottom));
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: #fff;
+            background:
+                radial-gradient(circle at 96% 8%, rgba(75,166,255,.38) 0, rgba(75,166,255,0) 32%),
+                radial-gradient(circle at -8% 58%, rgba(19,107,255,.27) 0, rgba(19,107,255,0) 37%),
+                linear-gradient(180deg, #0b2b55 0%, #07182f 49%, #061225 100%);
+        }
+        .promotion-detail-content::before,
+        .promotion-detail-content::after {
+            content: "";
+            position: absolute;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 999px;
+            pointer-events: none;
+        }
+        .promotion-detail-content::before {
+            top: 72px;
+            right: -65px;
+            width: 190px;
+            height: 190px;
+        }
+        .promotion-detail-content::after {
+            top: 122px;
+            right: -17px;
+            width: 92px;
+            height: 92px;
+        }
+        .promotion-detail-topbar {
+            position: relative;
+            z-index: 1;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .promotion-detail-kicker {
+            margin: 0;
+            color: #69adff;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: .16em;
+        }
+        .promotion-detail-close {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 50%;
+            color: #fff;
+            background: rgba(255,255,255,.08);
+            font-size: 18px;
+            transition: transform .15s ease, background-color .15s ease;
+        }
+        .promotion-detail-close:active {
+            transform: scale(.92);
+            background: rgba(255,255,255,.14);
+        }
+        .promotion-detail-main {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            padding-top: clamp(29px, 6vh, 52px);
+        }
+        .promotion-detail-tag {
+            width: fit-content;
+            margin: 0 0 16px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            color: #9fceff;
+            background: rgba(49,130,246,.2);
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .promotion-detail-title {
+            margin: 0;
+            color: #fff;
+            font-size: clamp(31px, 9vw, 40px);
+            font-weight: 900;
+            line-height: 1.14;
+            letter-spacing: -.045em;
+            word-break: keep-all;
+        }
+        .promotion-detail-lead {
+            margin: 18px 0 0;
+            color: rgba(255,255,255,.68);
+            font-size: 15px;
+            font-weight: 580;
+            line-height: 1.65;
+            word-break: keep-all;
+        }
+        .promotion-detail-gift {
+            margin-top: 25px;
+            padding: 18px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            border: 1px solid rgba(108,176,255,.34);
+            border-radius: 22px;
+            background: linear-gradient(135deg, rgba(49,130,246,.3), rgba(18,87,181,.18));
+            box-shadow: inset 0 1px rgba(255,255,255,.08);
+        }
+        .promotion-detail-gift-icon {
+            width: 46px;
+            height: 46px;
+            flex: 0 0 auto;
+            display: grid;
+            place-items: center;
+            border-radius: 15px;
+            color: #fff;
+            background: #3182f6;
+            font-size: 20px;
+            box-shadow: 0 9px 24px rgba(49,130,246,.35);
+        }
+        .promotion-detail-gift p {
+            margin: 0;
+            color: rgba(255,255,255,.93);
+            font-size: 15px;
+            font-weight: 730;
+            line-height: 1.48;
+            word-break: keep-all;
+        }
+        .promotion-detail-code {
+            margin-top: 14px;
+            padding: 19px 18px;
+            border-radius: 22px;
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.1);
+        }
+        .promotion-detail-code-label {
+            margin: 0 0 8px;
+            color: rgba(255,255,255,.48);
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .promotion-detail-code > p:last-of-type {
+            margin: 0;
+            color: rgba(255,255,255,.82);
+            font-size: 14px;
+            font-weight: 620;
+            line-height: 1.55;
+            word-break: keep-all;
+        }
+        .promotion-detail-example {
+            margin-top: 15px;
+            padding: 14px 15px;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            border-radius: 16px;
+            background: rgba(2,10,24,.38);
+        }
+        .promotion-detail-example-badge {
+            flex: 0 0 auto;
+            padding: 5px 8px;
+            border-radius: 8px;
+            color: #8cc5ff;
+            background: rgba(49,130,246,.2);
+            font-size: 11px;
+            font-weight: 850;
+        }
+        .promotion-detail-example-copy {
+            min-width: 0;
+            color: rgba(255,255,255,.58);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        .promotion-detail-example-copy strong {
+            display: block;
+            margin-bottom: 2px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 850;
+            line-height: 1.2;
+        }
+        .promotion-detail-confirm {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            min-height: 54px;
+            margin-top: 24px;
+            flex: 0 0 auto;
+            border: 0;
+            border-radius: 17px;
+            color: #fff;
+            background: #3182f6;
+            font-size: 16px;
+            font-weight: 800;
+            box-shadow: 0 12px 32px rgba(49,130,246,.28);
+            transition: transform .15s ease, filter .15s ease;
+        }
+        .promotion-detail-confirm:active {
+            transform: scale(.98);
+            filter: brightness(.9);
+        }
+        @media (max-height: 720px) {
+            .promotion-detail-main { padding-top: 18px; }
+            .promotion-detail-lead { margin-top: 13px; line-height: 1.5; }
+            .promotion-detail-gift { margin-top: 16px; padding: 14px; }
+            .promotion-detail-code { margin-top: 11px; padding: 15px; }
+            .promotion-detail-confirm { margin-top: 16px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .promotion-detail-close,
+            .promotion-detail-confirm { transition: none; }
+        }
+        /* 프로모션 상세 화면을 엔조이 공통 상세 화면 UI에 맞춤 */
+        #promotion-detail-screen {
+            color: #fff;
+            background: #000;
+        }
+        .promotion-detail-content {
+            position: static;
+            padding: 0;
+            overflow: visible;
+            color: #fff;
+            background: #000;
+        }
+        .promotion-detail-content::before,
+        .promotion-detail-content::after { content: none; }
+        .promotion-detail-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            min-height: calc(64px + env(safe-area-inset-top));
+            padding: env(safe-area-inset-top) 20px 0;
+            justify-content: center;
+            background: rgba(0,0,0,.92);
+            -webkit-backdrop-filter: blur(18px);
+            backdrop-filter: blur(18px);
+        }
+        .promotion-detail-topbar h2 {
+            margin: 0;
+            color: #fff;
+            font-size: 17px;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .promotion-detail-close {
+            position: absolute;
+            left: 16px;
+            bottom: 10px;
+            width: 44px;
+            height: 44px;
+            border-color: rgba(255,255,255,.14);
+            color: #f2f4f6;
+            background: rgba(255,255,255,.1);
+            font-size: 16px;
+        }
+        .promotion-detail-main {
+            padding: 34px 20px 18px;
+        }
+        .promotion-detail-kicker {
+            margin: 0 0 9px;
+            color: #3182f6;
+            font-size: 13px;
+            font-weight: 850;
+            letter-spacing: 0;
+        }
+        .promotion-detail-title {
+            font-size: clamp(27px, 7.5vw, 32px);
+            line-height: 1.25;
+            letter-spacing: -.035em;
+        }
+        .promotion-detail-lead {
+            margin-top: 14px;
+            color: rgba(255,255,255,.5);
+            font-size: 14px;
+            font-weight: 550;
+            line-height: 1.6;
+        }
+        .promotion-detail-gift {
+            margin-top: 30px;
+            padding: 20px;
+            border: 0;
+            border-radius: 22px;
+            background: #1c1c1e;
+            box-shadow: none;
+        }
+        .promotion-detail-gift-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            color: #3182f6;
+            background: rgba(49,130,246,.14);
+            box-shadow: none;
+        }
+        .promotion-detail-gift p {
+            color: rgba(255,255,255,.88);
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.55;
+        }
+        .promotion-detail-guide { margin-top: 32px; }
+        .promotion-detail-guide-title {
+            margin: 0 0 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 800;
+        }
+        .promotion-detail-code {
+            margin: 0;
+            padding: 20px;
+            border: 0;
+            border-radius: 22px;
+            background: #1c1c1e;
+        }
+        .promotion-detail-code-label {
+            display: block;
+            margin: 0 0 9px;
+            color: rgba(255,255,255,.7);
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .promotion-detail-code-value {
+            min-height: 54px;
+            padding: 0 17px;
+            display: flex;
+            align-items: center;
+            border: 1.5px solid rgba(255,255,255,.12);
+            border-radius: 16px;
+            color: #fff;
+            background: rgba(255,255,255,.06);
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .promotion-detail-code > .promotion-detail-code-help {
+            margin: 11px 0 0;
+            color: rgba(255,255,255,.46);
+            font-size: 12.5px;
+            font-weight: 550;
+            line-height: 1.55;
+            word-break: keep-all;
+        }
+        .promotion-detail-code > .promotion-detail-code-help strong {
+            color: #3182f6;
+            font-weight: 800;
+        }
+        .promotion-detail-confirm {
+            position: static;
+            width: calc(100% - 40px);
+            margin: 18px 20px max(20px, env(safe-area-inset-bottom));
+            border-radius: 999px;
+            box-shadow: none;
+        }
+        @media (max-height: 720px) {
+            .promotion-detail-main { padding-top: 24px; }
+            .promotion-detail-gift { margin-top: 22px; padding: 16px 18px; }
+            .promotion-detail-guide { margin-top: 24px; }
+            .promotion-detail-code { margin: 0; padding: 17px 18px; }
+            .promotion-detail-confirm { margin-top: 14px; }
+        }
         #enjoy-dialog { z-index: 400; background: rgba(0,0,0,0.68); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
         #enjoy-dialog .ed-card { width: min(100%, 360px); border: 1px solid rgba(255,255,255,0.10); border-radius: 26px; padding: 24px;
             background: #1c1c1e; box-shadow: 0 24px 70px rgba(0,0,0,0.55); text-align: center;
@@ -3607,6 +3982,34 @@
             #profile-modal .profile-field-label { color: #333D4B; }
             #profile-modal .profile-cancel { color: #8B95A1; }
             #profile-modal .profile-join-footer { color: #9B95A8; }
+            #promotion-detail-screen,
+            .promotion-detail-content { color: #141414; background: #F2F2F7; }
+            .promotion-detail-topbar {
+                background: rgba(242,242,247,.92);
+                border-bottom: 1px solid rgba(0,0,0,.05);
+            }
+            .promotion-detail-topbar h2,
+            .promotion-detail-title,
+            .promotion-detail-guide-title { color: #191F28; }
+            .promotion-detail-close {
+                color: #191F28;
+                border-color: rgba(0,0,0,.07);
+                background: rgba(0,0,0,.05);
+            }
+            .promotion-detail-lead { color: #6E6E73; }
+            .promotion-detail-gift,
+            .promotion-detail-code {
+                background: #fff;
+                box-shadow: 0 4px 20px rgba(0,0,0,.05);
+            }
+            .promotion-detail-gift p { color: #333D4B; }
+            .promotion-detail-code-label { color: #4E5968; }
+            .promotion-detail-code-value {
+                color: #191F28;
+                border-color: rgba(0,0,0,.1);
+                background: rgba(0,0,0,.035);
+            }
+            .promotion-detail-code > .promotion-detail-code-help { color: #8B95A1; }
             #enjoy-dialog { background: rgba(0,0,0,.38); }
             #enjoy-dialog .ed-card { background: #fff; border-color: rgba(0,0,0,.08); box-shadow: 0 24px 70px rgba(0,0,0,.2); }
             #enjoy-dialog .ed-title { color: #141414; }
@@ -4213,8 +4616,41 @@
                 <img id="promotion-popup-image" src="popup-notice.png" alt="엔조이 새 소식" onerror="this.remove()">
                 <button id="promotion-popup-close" class="promotion-popup-close" type="button" aria-label="팝업 닫기"></button>
             </div>
-            <!-- 상세 페이지가 정해지면 data-detail-url에 주소만 넣으면 됩니다. -->
-            <button id="promotion-popup-detail" class="promotion-popup-detail" type="button" data-detail-url="">자세히 보기</button>
+            <button id="promotion-popup-detail" class="promotion-popup-detail" type="button">자세히 보기</button>
+        </div>
+    </div>
+
+    <!-- 프로모션 자세히 보기 -->
+    <div id="promotion-detail-screen" aria-hidden="true">
+        <div class="promotion-detail-content" role="dialog" aria-modal="true" aria-labelledby="promotion-detail-title">
+            <header class="promotion-detail-topbar">
+                <button id="promotion-detail-close" class="promotion-detail-close" type="button" aria-label="이전 화면으로 돌아가기">
+                    <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                </button>
+                <h2>친구 초대 안내</h2>
+            </header>
+
+            <main class="promotion-detail-main">
+                <p class="promotion-detail-kicker">친구 초대 이벤트</p>
+                <h2 id="promotion-detail-title" class="promotion-detail-title">오스틴과 홍박사를<br>가입시키기</h2>
+                <p class="promotion-detail-lead">엔조이 앱이 출시된 지 어느덧 한 달이 되어가지만, 아직 가입하지 않은 친구가 있어요.</p>
+
+                <div class="promotion-detail-gift">
+                    <div class="promotion-detail-gift-icon"><i class="fa-solid fa-gift" aria-hidden="true"></i></div>
+                    <p>오스틴 또는 홍박사가 엔조이 가입을 완료하면 초대한 친구에게 선물을 드려요.</p>
+                </div>
+
+                <section class="promotion-detail-guide" aria-label="초대 코드 입력 방법">
+                    <h3 class="promotion-detail-guide-title">초대 코드는 이렇게 입력해요</h3>
+                    <div class="promotion-detail-code">
+                        <span class="promotion-detail-code-label">친구 초대 코드</span>
+                        <div class="promotion-detail-code-value">전시기</div>
+                        <p class="promotion-detail-code-help">초대 코드는 <strong>초대한 사람의 프로필 이름</strong>이에요. 전시기에게 초대받았다면 “전시기”라고 입력하면 됩니다.</p>
+                    </div>
+                </section>
+            </main>
+
+            <button id="promotion-detail-confirm" class="promotion-detail-confirm" type="button">확인</button>
         </div>
     </div>
     <script>
@@ -4222,6 +4658,9 @@
         const popup = document.getElementById('promotion-popup');
         const closeButton = document.getElementById('promotion-popup-close');
         const detailButton = document.getElementById('promotion-popup-detail');
+        const detailScreen = document.getElementById('promotion-detail-screen');
+        const detailCloseButton = document.getElementById('promotion-detail-close');
+        const detailConfirmButton = document.getElementById('promotion-detail-confirm');
         let promotionShown = false;
         let previousFocus = null;
 
@@ -4243,29 +4682,50 @@
             document.body.style.overflow = 'hidden';
         };
 
+        function openPromotionDetail() {
+            popup.classList.remove('is-open');
+            popup.setAttribute('aria-hidden', 'true');
+            detailScreen.classList.add('is-open');
+            detailScreen.setAttribute('aria-hidden', 'false');
+            detailScreen.scrollTop = 0;
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePromotionDetail() {
+            if (!detailScreen.classList.contains('is-open')) return;
+            detailScreen.classList.remove('is-open');
+            detailScreen.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (previousFocus && previousFocus.focus) previousFocus.focus();
+            previousFocus = null;
+        }
+
         closeButton.addEventListener('click', function () {
             window.haptic && window.haptic();
             closePromotionPopup();
         });
         detailButton.addEventListener('click', function () {
             window.haptic && window.haptic();
-            const detailUrl = detailButton.dataset.detailUrl;
-            const image = document.getElementById('promotion-popup-image');
-            if (detailUrl) {
-                window.location.href = detailUrl;
-                return;
-            }
-            if (image && image.complete && image.naturalWidth) {
-                window.open(image.currentSrc || image.src, '_blank', 'noopener');
-                return;
-            }
-            closePromotionPopup();
+            openPromotionDetail();
+        });
+        detailCloseButton.addEventListener('click', function () {
+            window.haptic && window.haptic();
+            closePromotionDetail();
+        });
+        detailConfirmButton.addEventListener('click', function () {
+            window.haptic && window.haptic();
+            closePromotionDetail();
         });
         window.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape' && popup.classList.contains('is-open')) {
+            if (event.key !== 'Escape') return;
+            if (detailScreen.classList.contains('is-open')) {
                 event.preventDefault();
-                closePromotionPopup();
+                closePromotionDetail();
+                return;
             }
+            if (!popup.classList.contains('is-open')) return;
+            event.preventDefault();
+            closePromotionPopup();
         });
     })();
     </script>
