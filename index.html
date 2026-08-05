@@ -8412,13 +8412,35 @@
             if (recentUnique.length < 3) return { name: '', predicted: false };
 
             const latestStart = starts[starts.length - 1];
-            const latestDate = String((latestStart && latestStart.game && latestStart.game.date) || '');
-            const latestTime = String((latestStart && latestStart.game && latestStart.game.time) || '');
+            let rotationAnchor = latestStart;
+            const confirmedScheduleStarts = enjoyBaseballScheduleGames.map(function (item) {
+                const itemDate = String(item.date || '');
+                const itemTime = String(item.time || '');
+                const beforeTarget = itemDate < gameDate || (itemDate === gameDate && itemTime < String(game.time || ''));
+                if (!beforeTarget || enjoyBaseballIsCanceled(item) || (item.team1 !== team && item.team2 !== team)) return null;
+                const itemSide = item.team1 === team ? 'away' : 'home';
+                const name = enjoyBaseballOfficialStarter(item, itemSide);
+                return name ? { name: name, game: item } : null;
+            }).filter(Boolean).sort(function (first, second) {
+                return String(first.game.date || '').localeCompare(String(second.game.date || '')) ||
+                    String(first.game.time || '').localeCompare(String(second.game.time || ''));
+            });
+            const latestConfirmedScheduleStart = confirmedScheduleStarts[confirmedScheduleStarts.length - 1];
+            if (latestConfirmedScheduleStart) {
+                const historyAnchorKey = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.date) || '') + ' ' +
+                    String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.time) || '');
+                const scheduleAnchorKey = String(latestConfirmedScheduleStart.game.date || '') + ' ' +
+                    String(latestConfirmedScheduleStart.game.time || '');
+                if (!rotationAnchor || scheduleAnchorKey >= historyAnchorKey) rotationAnchor = latestConfirmedScheduleStart;
+            }
+
+            const anchorDate = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.date) || '');
+            const anchorTime = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.time) || '');
             const upcoming = enjoyBaseballScheduleGames.filter(function (item) {
                 const itemDate = String(item.date || '');
                 const itemTime = String(item.time || '');
-                const afterLatest = itemDate > latestDate || (itemDate === latestDate && itemTime > latestTime);
-                return afterLatest && itemDate <= gameDate &&
+                const afterAnchor = itemDate > anchorDate || (itemDate === anchorDate && itemTime > anchorTime);
+                return afterAnchor && itemDate <= gameDate &&
                     (item.team1 === team || item.team2 === team) &&
                     !enjoyBaseballIsCanceled(item);
             }).sort(function (first, second) {
@@ -8427,9 +8449,13 @@
             });
             let gameIndex = upcoming.findIndex(function (item) { return enjoyBaseballSameGame(item, game); });
             if (gameIndex < 0) gameIndex = Math.max(0, upcoming.length - 1);
-            let predictedName = recentUnique[gameIndex % recentUnique.length];
-            if (latestStart && predictedName === latestStart.name && recentUnique.length > 1) {
-                predictedName = recentUnique[(gameIndex + 1) % recentUnique.length];
+            const anchorRotationIndex = rotationAnchor ? recentUnique.indexOf(rotationAnchor.name) : -1;
+            const predictedRotationIndex = anchorRotationIndex >= 0
+                ? (anchorRotationIndex + gameIndex + 1) % recentUnique.length
+                : gameIndex % recentUnique.length;
+            let predictedName = recentUnique[predictedRotationIndex];
+            if (rotationAnchor && predictedName === rotationAnchor.name && recentUnique.length > 1) {
+                predictedName = recentUnique[(predictedRotationIndex + 1) % recentUnique.length];
             }
             return { name: predictedName, predicted: true };
         }
