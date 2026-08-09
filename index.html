@@ -3135,15 +3135,19 @@
             gap: 16px;
             border-bottom: 1px solid rgba(255,255,255,.1);
         }
-        .vlog-region-select-wrap {
+        .vlog-region-picker {
             position: relative;
             flex: 0 0 auto;
             margin-bottom: 8px;
         }
-        .vlog-region-select {
+        .vlog-region-trigger {
             min-height: 38px;
             max-width: 156px;
-            padding: 0 38px 0 16px;
+            padding: 0 15px 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
             border: 1px solid rgba(255,255,255,.1);
             border-radius: 999px;
             color: #fff;
@@ -3152,21 +3156,69 @@
             font-weight: 750;
             line-height: 1;
             outline: none;
-            -webkit-appearance: none;
-            appearance: none;
+            transition: transform .16s ease, border-color .16s ease, background-color .16s ease;
         }
-        .vlog-region-select-wrap i {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            color: #A1A1A6;
-            font-size: 11px;
-            pointer-events: none;
-            transform: translateY(-50%);
-        }
-        .vlog-region-select:focus-visible {
+        .vlog-region-trigger:active { transform: scale(.96); }
+        .vlog-region-trigger:focus-visible {
             border-color: #3182F6;
             box-shadow: 0 0 0 3px rgba(49,130,246,.2);
+        }
+        .vlog-region-trigger i {
+            color: #A1A1A6;
+            font-size: 11px;
+            transition: transform .2s ease;
+        }
+        .vlog-region-picker.is-open .vlog-region-trigger i { transform: rotate(180deg); }
+        .vlog-region-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            z-index: 40;
+            min-width: 174px;
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 18px;
+            background: rgba(36,36,38,.98);
+            box-shadow: 0 16px 40px rgba(0,0,0,.34);
+        }
+        .vlog-region-picker.is-open .vlog-region-menu { display: flex; }
+        .vlog-region-option {
+            width: 100%;
+            min-height: 42px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border: 0;
+            border-radius: 13px;
+            color: #F2F4F6;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: left;
+            transition: transform .14s ease, background-color .14s ease;
+        }
+        .vlog-region-option:active { transform: scale(.97); }
+        .vlog-region-option:hover,
+        .vlog-region-option:focus-visible { background: rgba(255,255,255,.08); outline: none; }
+        .vlog-region-option.is-selected {
+            color: #fff;
+            background: rgba(49,130,246,.22);
+        }
+        .vlog-region-option i {
+            color: #3182F6;
+            font-size: 12px;
+            opacity: 0;
+        }
+        .vlog-region-option.is-selected i { opacity: 1; }
+        @media (prefers-reduced-motion: reduce) {
+            .vlog-region-trigger,
+            .vlog-region-trigger i,
+            .vlog-region-option { transition: none; }
         }
         .vlog-empty-episodes {
             padding: 30px 0 34px;
@@ -4246,12 +4298,24 @@
             .vlog-episode-card { border-color: rgba(0,0,0,.10); }
             .vlog-media-label { color: #FFFFFF !important; }
             .vlog-episode-nav { border-color: rgba(0,0,0,.1); }
-            .vlog-region-select {
+            .vlog-region-trigger {
                 color: #191F28;
                 border-color: rgba(0,0,0,.08);
                 background: #E5E7EB;
             }
-            .vlog-region-select-wrap i { color: #6B7280; }
+            .vlog-region-trigger i { color: #6B7280; }
+            .vlog-region-menu {
+                border-color: rgba(0,0,0,.08);
+                background: rgba(255,255,255,.98);
+                box-shadow: 0 16px 40px rgba(15,23,42,.16);
+            }
+            .vlog-region-option { color: #191F28; }
+            .vlog-region-option:hover,
+            .vlog-region-option:focus-visible { background: rgba(0,0,0,.05); }
+            .vlog-region-option.is-selected {
+                color: #1B64DA;
+                background: rgba(49,130,246,.12);
+            }
             .baseball-detail-title,
             .baseball-team-name { color: #191F28; }
             .baseball-detail-desc,
@@ -4747,7 +4811,7 @@
                     <div id="home-ad" class="my-2 flex justify-center min-h-[50px]"></div>
 
                     <!-- 최근 브이로그 -->
-                    <section class="home-content-item home-featured" data-home-category="latest" style="margin-top:1px;">
+                    <section class="home-content-item home-featured" data-home-category="latest" style="margin-top:2px;">
                         <div class="home-rail-heading">
                             <h3>최근 브이로그</h3>
                             <button type="button" class="home-baseball-more" onclick="window.haptic(); window.openBrowser('https://m.youtube.com/playlist?list=PLfVenQYYskJE&ra=m')" aria-label="엔조이 브이로그 전편 몰아보기">
@@ -8020,15 +8084,21 @@
         ];
         function renderVlogRegionSelect(programId, program) {
             if (program.series !== 'transfer-trip') return '';
-            return '<label class="vlog-region-select-wrap">' +
-                '<span class="sr-only">환승여행 지역 선택</span>' +
-                '<select class="vlog-region-select" aria-label="환승여행 지역 선택" onchange="window.switchVlogRegion(this.value)">' +
+            return '<div class="vlog-region-picker">' +
+                '<button type="button" class="vlog-region-trigger" aria-label="환승여행 지역 선택: ' + vlogEsc(program.regionLabel) + '" aria-haspopup="listbox" aria-expanded="false" onclick="window.toggleVlogRegionMenu(this, event)">' +
+                    '<span>' + vlogEsc(program.regionLabel) + '</span>' +
+                    '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>' +
+                '</button>' +
+                '<div class="vlog-region-menu" role="listbox" aria-label="환승여행 지역">' +
                     transferVlogRegions.map(function (region) {
-                        return '<option value="' + vlogEsc(region.id) + '"' + (region.id === programId ? ' selected' : '') + '>' + vlogEsc(region.label) + '</option>';
+                        const selected = region.id === programId;
+                        return '<button type="button" class="vlog-region-option' + (selected ? ' is-selected' : '') + '" role="option" aria-selected="' + selected + '" onclick="window.selectVlogRegion(\'' + vlogEsc(region.id) + '\', event)">' +
+                            '<span>' + vlogEsc(region.label) + '</span>' +
+                            '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
+                        '</button>';
                     }).join('') +
-                '</select>' +
-                '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>' +
-            '</label>';
+                '</div>' +
+            '</div>';
         }
         function renderVlogProgram(programId) {
             const program = window.ENJOY_VLOG_PROGRAMS[programId];
@@ -8089,6 +8159,41 @@
             }
             if (scroll) scroll.scrollTop = 0;
         };
+        function closeVlogRegionMenus(restoreFocus) {
+            document.querySelectorAll('.vlog-region-picker.is-open').forEach(function (picker) {
+                picker.classList.remove('is-open');
+                const trigger = picker.querySelector('.vlog-region-trigger');
+                if (trigger) {
+                    trigger.setAttribute('aria-expanded', 'false');
+                    if (restoreFocus) trigger.focus();
+                }
+            });
+        }
+        window.toggleVlogRegionMenu = function (trigger, event) {
+            if (event) event.stopPropagation();
+            const picker = trigger && trigger.closest('.vlog-region-picker');
+            if (!picker) return;
+            const shouldOpen = !picker.classList.contains('is-open');
+            closeVlogRegionMenus(false);
+            if (shouldOpen) {
+                picker.classList.add('is-open');
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+            window.haptic && window.haptic();
+        };
+        window.selectVlogRegion = function (programId, event) {
+            if (event) event.stopPropagation();
+            closeVlogRegionMenus(false);
+            window.switchVlogRegion(programId);
+        };
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.vlog-region-picker')) closeVlogRegionMenus(false);
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape' || !document.querySelector('.vlog-region-picker.is-open')) return;
+            event.preventDefault();
+            closeVlogRegionMenus(true);
+        });
         window.switchVlogRegion = function (programId) {
             const program = window.ENJOY_VLOG_PROGRAMS[programId];
             if (!program || program.series !== 'transfer-trip') return;
