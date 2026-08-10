@@ -5962,7 +5962,6 @@
                     const fare = railRealFare(L, t.type, dep, arr);
                     const distance = (L.km[dep] != null && L.km[arr] != null)
                         ? Math.round(Math.abs(L.km[dep] - L.km[arr]) * 10) / 10 : 0;
-                    const seed = railHash(`${t.trainNo}|${L.line}|${dep}|${arr}`);
                     out.push({
                         source: 'real', lineName: L.line, serviceDate: L.serviceDate,
                         type: t.type, typeColor: T.color, cat: T.cat, hasSpecial: false, hasMile: false,
@@ -5970,7 +5969,6 @@
                         depName: dep, arrName: arr, isNearDep: false, isNearArr: false,
                         depMin, arrMin, dayOffset: 0,
                         duration: arrMin - depMin, distance,
-                        platform: (seed % 14) + 1,
                         fare: fare != null ? fare : railFare(t.type, distance),
                         fareSpecial: 0,
                         mile: 0, soldOut: false,
@@ -6199,7 +6197,6 @@
                                         sortKey: abs, arrKey: dayOffset * 1440 + tArr,
                                         duration: tArr - tDep,
                                         distance,
-                                        platform: (sSeed % 14) + 1,
                                         fare, fareSpecial: Math.round(fare * 1.4 / 100) * 100,
                                         mile: (sSeed % 3 === 0) ? 10 : 5,
                                         soldOut
@@ -6654,7 +6651,6 @@
                             <div class="flex items-center gap-2 min-w-0">
                                 <span class="rail-type-badge" style="background:${t.typeColor}">${t.type}</span>
                                 <span class="text-[15px] font-extrabold text-white tracking-tight">${String(t.trainNo).padStart(3, '0')}</span>
-                                <span class="text-[12.5px] font-semibold text-white/40 truncate">· 타는 곳 ${t.platform}번</span>
                             </div>
                             <div class="mt-2 flex items-start gap-2.5">
                                 <div>
@@ -6685,7 +6681,7 @@
                 ['운행 노선', t.routeName],
                 ['열차 번호', `${t.type} ${t.trainNo}`],
                 ['운행 일자', `${runDate.getFullYear()}년 ${runDate.getMonth() + 1}월 ${runDate.getDate()}일 (${RAIL_DOW[runDate.getDay()]})`],
-                ['출발', `${t.depName} ${railMinToClock(t.depMin)} · 타는 곳 ${t.platform}번`],
+                ['출발', `${t.depName} ${railMinToClock(t.depMin)}`],
                 ['도착', `${t.arrName} ${railMinToClock(t.arrMin)}`],
                 ['소요 시간', railDur(t.duration)],
                 ['운행 거리', `${t.distance}km`],
