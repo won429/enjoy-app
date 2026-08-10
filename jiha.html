@@ -415,7 +415,7 @@
                         <button id="btn-line-seoul6" data-line-id="seoul_line6" onclick="showPreparingPopup('수도권 6호선')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">6호선</button>
                         <button id="btn-line-seoul7" data-line-id="seoul_line7" onclick="showPreparingPopup('수도권 7호선')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">7호선</button>
                         <button id="btn-line-seoul8" data-line-id="seoul_line8" onclick="showPreparingPopup('수도권 8호선')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">8호선</button>
-                        <button id="btn-line-seoul9" data-line-id="seoul_line9" onclick="showPreparingPopup('수도권 9호선')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">9호선</button>
+                        <button id="btn-line-seoul9" data-line-id="seoul_line9" onclick="switchLine('seoul_line9')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-500 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">9호선</button>
                         <button id="btn-line-seoul-incheon1" data-line-id="incheon_line1" onclick="switchLine('incheon_line1')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">인천 1호선</button>
                         <button id="btn-line-seoul-incheon2" data-line-id="incheon_line2" onclick="switchLine('incheon_line2')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">인천 2호선</button>
                         <button id="btn-line-seoul-airport" data-line-id="airport" onclick="switchLine('airport')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">공항철도</button>
@@ -1489,6 +1489,30 @@
             name, { progress:index / (stations.length - 1), ...(SEOUL_LINE4_TRANSFER_META[name] || {}) }
         ]));
 
+        const SEOUL_LINE9_STATIONS = [
+            '개화','김포공항','공항시장','신방화','마곡나루','양천향교','가양','증미','등촌','염창','신목동','선유도','당산',
+            '국회의사당','여의도','샛강','노량진','노들','흑석','동작','구반포','신반포','고속터미널','사평','신논현','언주',
+            '선정릉','삼성중앙','봉은사','종합운동장','삼전','석촌고분','석촌','송파나루','한성백제','올림픽공원','둔촌오륜','중앙보훈병원'
+        ];
+        const SEOUL_LINE9_TRANSFER_META = {
+            '김포공항':{ transfer:[{name:'5',color:'#996CAC'},{name:'공',color:'#0090D2'},{name:'서',color:'#8FC31F'},{name:'김',color:'#AD8605'}] },
+            '마곡나루':{ transfer:[{name:'공',color:'#0090D2'}] },
+            '당산':{ transfer:[{name:'2',color:'#00A84D'}] },
+            '여의도':{ transfer:[{name:'5',color:'#996CAC'}] },
+            '샛강':{ transfer:[{name:'림',color:'#6789CA'}] },
+            '노량진':{ transfer:[{name:'1',color:'#0052A4'}] },
+            '동작':{ transfer:[{name:'4',color:'#00A4E3'}] },
+            '고속터미널':{ transfer:[{name:'3',color:'#EF7C1C'},{name:'7',color:'#747F00'}] },
+            '신논현':{ transfer:[{name:'신',color:'#D20F46'}] },
+            '선정릉':{ transfer:[{name:'수',color:'#FABE00'}] },
+            '종합운동장':{ transfer:[{name:'2',color:'#00A84D'}] },
+            '석촌':{ transfer:[{name:'8',color:'#E6186C'}] },
+            '올림픽공원':{ transfer:[{name:'5',color:'#996CAC'}] }
+        };
+        STATIONS_ALL.seoul_line9 = Object.fromEntries(SEOUL_LINE9_STATIONS.map((name, index, stations) => [
+            name, { progress:index / (stations.length - 1), ...(SEOUL_LINE9_TRANSFER_META[name] || {}) }
+        ]));
+
         const KOR_HOLIDAYS = [
             "2025-01-01", "2025-01-28", "2025-01-29", "2025-01-30", "2025-03-03",
             "2025-05-05", "2025-05-06", "2025-06-06", "2025-08-15", "2025-10-03",
@@ -1725,6 +1749,7 @@
             seoul_line2: { src: './seoul_line2_timetable.js', globalName: 'SEOUL_LINE2_TIMETABLE' },
             seoul_line3: { src: './seoul_line3_timetable.js', globalName: 'SEOUL_LINE3_TIMETABLE' },
             seoul_line4: { src: './seoul_line4_timetable.js', globalName: 'SEOUL_LINE4_TIMETABLE' },
+            seoul_line9: { src: './seoul_line9_timetable.js', globalName: 'SEOUL_LINE9_TIMETABLE' },
             gtx_a: { src: './gtx_a_timetable.js', globalName: 'GTX_A_TIMETABLE' },
             seohae: { src: './seohae_line_timetable.js', globalName: 'SEOHAE_LINE_TIMETABLE' },
             incheon_line1: { src: './incheon_line1_timetable.js', globalName: 'INCHEON_LINE1_TIMETABLE' },
@@ -2540,7 +2565,7 @@
         const LINE_VIEW_LENGTHS = Object.freeze({
             seoul_line1:SEOUL_LINE1_SCHEMATIC.height - 60,
             seoul_line2:SEOUL_LINE2_SCHEMATIC.height - 60,
-            seoul_line3:3400, seoul_line4:3950,
+            seoul_line3:3400, seoul_line4:3950, seoul_line9:3000,
             incheon_line1:2400, incheon_line2:2400, gyeongui_jungang:2400,
             gtx_a:1400, seohae:2400, gimpo_goldline:1600, gyeonggang:1600, gyeongchun:2800,
             airport:1800, shinbundang:2100, suinbundang:5800, sillim_line:1500, ui_sinseol_line:1700,
@@ -2567,14 +2592,14 @@
             currentLineId = lineId;
             modalDayType = null;
             THEME_COLOR = ({
-                seoul_line1:'#0052A4', seoul_line2:'#00A84D', seoul_line3:'#EF7C1C', seoul_line4:'#00A4E3', gtx_a:'#9A6292', seohae:'#8FC31F', incheon_line1:'#759CCE', incheon_line2:'#F5A251', gyeongui_jungang:'#77C4A3', gimpo_goldline:'#AD8605', gyeonggang:'#0054A6', gyeongchun:'#178C72',
+                seoul_line1:'#0052A4', seoul_line2:'#00A84D', seoul_line3:'#EF7C1C', seoul_line4:'#00A4E3', seoul_line9:'#BDB092', gtx_a:'#9A6292', seohae:'#8FC31F', incheon_line1:'#759CCE', incheon_line2:'#F5A251', gyeongui_jungang:'#77C4A3', gimpo_goldline:'#AD8605', gyeonggang:'#0054A6', gyeongchun:'#178C72',
                 airport:'#0090D2', shinbundang:'#D20F46', suinbundang:'#FABE00', sillim_line:'#6789CA', ui_sinseol_line:'#B7C450',
                 line1:'#D93F5C', line2:'#00AA80', line3:'#ffb100',
                 daejeon_line1:'#007448', busan_line1:'#F06A00', busan_line2:'#81C147', busan_line3:'#B07C4A',
                 busan_line4:'#217DCB', busan_bglrt:'#8652A1', busan_donghae:'#003DA5', gwangju_line1:'#009088'
             })[currentLineId] || '#0054A6';
             DOWN_COLOR = ({
-                seoul_line1:'#0052A4', seoul_line2:'#00A84D', seoul_line3:'#EF7C1C', seoul_line4:'#00A4E3', gtx_a:'#BFA0BB', seohae:'#B7DC6B', incheon_line1:'#759CCE', incheon_line2:'#F5A251', gyeongui_jungang:'#77C4A3', gimpo_goldline:'#AD8605', gyeonggang:'#5998D6', gyeongchun:'#55B89E',
+                seoul_line1:'#0052A4', seoul_line2:'#00A84D', seoul_line3:'#EF7C1C', seoul_line4:'#00A4E3', seoul_line9:'#BDB092', gtx_a:'#BFA0BB', seohae:'#B7DC6B', incheon_line1:'#759CCE', incheon_line2:'#F5A251', gyeongui_jungang:'#77C4A3', gimpo_goldline:'#AD8605', gyeonggang:'#5998D6', gyeongchun:'#55B89E',
                 airport:'#0090D2', shinbundang:'#D20F46', suinbundang:'#FABE00', sillim_line:'#6789CA', ui_sinseol_line:'#B7C450',
                 line1:'#FF7EB3', line2:'#74C96E', line3:'#FFCC4D',
                 daejeon_line1:'#009F62', busan_line1:'#F58A33', busan_line2:'#97D86B', busan_line3:'#C5A67C',
@@ -2598,6 +2623,7 @@
             const btnSeoul2 = document.getElementById('btn-line-seoul2');
             const btnSeoul3 = document.getElementById('btn-line-seoul3');
             const btnSeoul4 = document.getElementById('btn-line-seoul4');
+            const btnSeoul9 = document.getElementById('btn-line-seoul9');
             const btnGtxASeoul = document.getElementById('btn-line-seoul-gtx-a');
             const btnSeohaeSeoul = document.getElementById('btn-line-seoul-seohae');
             const btnIncheon1Seoul = document.getElementById('btn-line-seoul-incheon1');
@@ -2614,7 +2640,7 @@
             const btnGyeongchunGangwon = document.getElementById('btn-line-gangwon-gyeongchun');
             const inactiveCapitalLineClass = 'px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-500 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all';
             const deactivateCapitalLines = activeButton => {
-                [btnSeoul1, btnSeoul2, btnSeoul3, btnSeoul4, btnGtxASeoul, btnSeohaeSeoul, btnIncheon1Seoul, btnIncheon2Seoul, btnGyeonguiJungangSeoul, btnGimpoGoldlineSeoul, btnAirportSeoul, btnShinbundangSeoul, btnSuinbundangSeoul, btnSillimSeoul, btnUiSinseolSeoul, btnGyeonggangSeoul, btnGyeongchunSeoul, btnGyeongchunGangwon]
+                [btnSeoul1, btnSeoul2, btnSeoul3, btnSeoul4, btnSeoul9, btnGtxASeoul, btnSeohaeSeoul, btnIncheon1Seoul, btnIncheon2Seoul, btnGyeonguiJungangSeoul, btnGimpoGoldlineSeoul, btnAirportSeoul, btnShinbundangSeoul, btnSuinbundangSeoul, btnSillimSeoul, btnUiSinseolSeoul, btnGyeonggangSeoul, btnGyeongchunSeoul, btnGyeongchunGangwon]
                     .filter(button => button && button !== activeButton)
                     .forEach(button => { button.className = inactiveCapitalLineClass; });
             };
@@ -2661,6 +2687,17 @@
                 dom.directionToggle.innerHTML = '<option value="up" class="text-gray-900">상행 (진접 방면)</option><option value="down" class="text-gray-900">하행 (오이도 방면)</option>';
                 document.getElementById('home-up-dir-label').textContent = '진접 방면';
                 document.getElementById('home-down-dir-label').textContent = '오이도 방면';
+                document.getElementById('data-status-display').className = 'text-[10px] font-bold';
+                document.getElementById('data-status-display').style.color = THEME_COLOR;
+            } else if (lineId === 'seoul_line9') {
+                deactivateCapitalLines(btnSeoul9);
+                if (btnSeoul9) btnSeoul9.className = 'px-3 py-1 rounded-full text-[11px] font-bold bg-[#BDB092] text-white shadow-[0_2px_8px_rgba(189,176,146,0.35)] shrink-0 border border-[#BDB092] transition-all';
+                if (!STATIONS[homeSelectedStation]) homeSelectedStation = '여의도';
+                document.querySelector('#home-screen h2').textContent = '수도권 9호선 지하철역';
+                dom.lineHeaderTitle.textContent = '수도권 9호선 지하철 현황';
+                dom.directionToggle.innerHTML = '<option value="up" class="text-gray-900">상행 (개화/김포공항 방면)</option><option value="down" class="text-gray-900">하행 (중앙보훈병원 방면)</option>';
+                document.getElementById('home-up-dir-label').textContent = '개화/김포공항 방면';
+                document.getElementById('home-down-dir-label').textContent = '중앙보훈병원 방면';
                 document.getElementById('data-status-display').className = 'text-[10px] font-bold';
                 document.getElementById('data-status-display').style.color = THEME_COLOR;
             } else if (lineId === 'incheon_line1') {
@@ -3014,7 +3051,7 @@
             }
 
             document.querySelector('.metro-logo-circle').textContent = ({
-                seoul_line1:'1', seoul_line2:'2', seoul_line3:'3', seoul_line4:'4', gtx_a:'A', seohae:'서', gyeonggang:'강', gyeongchun:'경', airport:'공', shinbundang:'신', suinbundang:'수', sillim_line:'림', ui_sinseol_line:'우', daegyeong:'대',
+                seoul_line1:'1', seoul_line2:'2', seoul_line3:'3', seoul_line4:'4', seoul_line9:'9', gtx_a:'A', seohae:'서', gyeonggang:'강', gyeongchun:'경', airport:'공', shinbundang:'신', suinbundang:'수', sillim_line:'림', ui_sinseol_line:'우', daegyeong:'대',
                 daejeon_line1:'대', busan_line1:'1', busan_line2:'2', busan_line3:'3', busan_line4:'4',
                 busan_bglrt:'부', busan_donghae:'동', gwangju_line1:'1', line3:'3', line2:'2', line1:'1'
             })[lineId] || '1';
@@ -3076,12 +3113,13 @@
         };
 
         const FAVORITES_STORAGE_KEY = 'subway_favorites_v2';
-        const FAVORITE_LINE_ORDER = ['seoul_line1', 'seoul_line2', 'seoul_line3', 'seoul_line4', 'incheon_line1', 'incheon_line2', 'airport', 'gyeongui_jungang', 'sillim_line', 'ui_sinseol_line', 'gyeongchun', 'gyeonggang', 'shinbundang', 'suinbundang', 'seohae', 'gimpo_goldline', 'gtx_a', 'line1', 'line2', 'line3', 'daegyeong', 'daejeon_line1', 'busan_line1', 'busan_line2', 'busan_line3', 'busan_line4', 'busan_bglrt', 'busan_donghae', 'gwangju_line1'];
+        const FAVORITE_LINE_ORDER = ['seoul_line1', 'seoul_line2', 'seoul_line3', 'seoul_line4', 'seoul_line9', 'incheon_line1', 'incheon_line2', 'airport', 'gyeongui_jungang', 'sillim_line', 'ui_sinseol_line', 'gyeongchun', 'gyeonggang', 'shinbundang', 'suinbundang', 'seohae', 'gimpo_goldline', 'gtx_a', 'line1', 'line2', 'line3', 'daegyeong', 'daejeon_line1', 'busan_line1', 'busan_line2', 'busan_line3', 'busan_line4', 'busan_bglrt', 'busan_donghae', 'gwangju_line1'];
         const FAVORITE_LINE_META = {
             seoul_line1: { label: '수도권 1호선', color: '#0052A4' },
             seoul_line2: { label: '수도권 2호선', color: '#00A84D' },
             seoul_line3: { label: '수도권 3호선', color: '#EF7C1C' },
             seoul_line4: { label: '수도권 4호선', color: '#00A4E3' },
+            seoul_line9: { label: '수도권 9호선', color: '#BDB092' },
             incheon_line1: { label: '인천 1호선', color: '#759CCE' },
             incheon_line2: { label: '인천 2호선', color: '#F5A251' },
             gtx_a: { label: 'GTX-A', color: '#9A6292' },
@@ -3770,6 +3808,19 @@
             .map(name => window.SEOUL_LINE3_OSM_STATION_COORDS?.[name]);
         STATION_COORD_LISTS.seoul_line4 = SEOUL_LINE4_STATIONS
             .map(name => window.SEOUL_LINE4_OSM_STATION_COORDS?.[name]);
+        // 수도권 9호선 역 좌표 (서쪽 개화에서 동쪽 중앙보훈병원 순서).
+        STATION_COORD_LISTS.seoul_line9 = [
+            [37.5784,126.7986],[37.5619,126.8022],[37.5639,126.8106],[37.5675,126.8166],
+            [37.5668,126.8276],[37.5683,126.8410],[37.5614,126.8544],[37.5574,126.8619],
+            [37.5506,126.8657],[37.5469,126.8749],[37.5443,126.8831],[37.5380,126.8935],
+            [37.5346,126.9027],[37.5281,126.9179],[37.5217,126.9240],[37.5174,126.9284],
+            [37.5134,126.9409],[37.5129,126.9532],[37.5088,126.9637],[37.5029,126.9803],
+            [37.5014,126.9874],[37.5035,126.9961],[37.5048,127.0049],[37.5042,127.0153],
+            [37.5046,127.0251],[37.5073,127.0339],[37.5109,127.0437],[37.5129,127.0530],
+            [37.5142,127.0602],[37.5111,127.0738],[37.5045,127.0871],[37.5025,127.0976],
+            [37.5054,127.1069],[37.5104,127.1122],[37.5164,127.1160],[37.5160,127.1308],
+            [37.5197,127.1380],[37.5292,127.1480]
+        ];
         const STATION_COORDS = Object.fromEntries(Object.entries(STATION_COORD_LISTS).map(([lineId, coords]) => {
             const stationNames = Object.keys(STATIONS_ALL[lineId] || {});
             return [lineId, Object.fromEntries(stationNames.map((stationName, index) => [stationName, coords[index]]).filter(([, coord]) => Array.isArray(coord)))];
@@ -3841,6 +3892,8 @@
             || SEOUL_LINE3_STATIONS.map(name => STATION_COORDS.seoul_line3[name]).filter(Boolean);
         RAIL_ROUTE_PATHS.seoul_line4 = window.SEOUL_LINE4_OSM_RAIL_PATH
             || SEOUL_LINE4_STATIONS.map(name => STATION_COORDS.seoul_line4[name]).filter(Boolean);
+        RAIL_ROUTE_PATHS.seoul_line9 = SEOUL_LINE9_STATIONS
+            .map(name => STATION_COORDS.seoul_line9[name]).filter(Boolean);
         const RAIL_ROUTE_PATH_VARIANTS = {
             seoul_line1: SEOUL_LINE1_RAIL_PATHS,
             seoul_line2: SEOUL_LINE2_RAIL_PATHS,
@@ -4007,7 +4060,7 @@
         };
 
         const REGION_LINE_IDS = {
-            seoul: ['seoul_line1', 'seoul_line2', 'seoul_line3', 'seoul_line4', 'incheon_line1', 'incheon_line2', 'airport', 'gyeongui_jungang', 'sillim_line', 'ui_sinseol_line', 'gyeongchun', 'gyeonggang', 'shinbundang', 'suinbundang', 'seohae', 'gimpo_goldline', 'gtx_a'],
+            seoul: ['seoul_line1', 'seoul_line2', 'seoul_line3', 'seoul_line4', 'seoul_line9', 'incheon_line1', 'incheon_line2', 'airport', 'gyeongui_jungang', 'sillim_line', 'ui_sinseol_line', 'gyeongchun', 'gyeonggang', 'shinbundang', 'suinbundang', 'seohae', 'gimpo_goldline', 'gtx_a'],
             gangwon: ['gyeongchun'],
             daegu: ['daegyeong', 'line1', 'line2', 'line3'],
             daejeon: ['daejeon_line1'],
@@ -4021,6 +4074,7 @@
             seoul_line2:'#00A84D',
             seoul_line3:'#EF7C1C',
             seoul_line4:'#00A4E3',
+            seoul_line9:'#BDB092',
             gtx_a:'#BFA0BB',
             seohae:'#B7DC6B',
             incheon_line1:'#759CCE',
@@ -4674,6 +4728,7 @@
             seoul_line2: 'seoul',
             seoul_line3: 'seoul',
             seoul_line4: 'seoul',
+            seoul_line9: 'seoul',
             gtx_a: 'seoul',
             seohae: 'seoul',
             gyeonggang: 'seoul',
@@ -4947,6 +5002,7 @@
             seoul_line2: '2',
             seoul_line3: '3',
             seoul_line4: '4',
+            seoul_line9: '9',
             incheon_line1: '인1',
             incheon_line2: '인2',
             gtx_a: 'G',
