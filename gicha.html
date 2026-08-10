@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>대경선 지하철 현황 실시간 트래커</title>
+    <title>기차 정보 · 열차 조회</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" type="text/css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0be88f46eb39dabeacc3414f5af0bb5f"></script>
+
+    <!-- 실제 열차 시간표 데이터 (노선별로 추가) -->
+    <script src="gyeongbu_general_train_timetable.js"></script>
     
     <style>
         /* =======================================================
@@ -367,6 +370,164 @@
             font-size: 2.2px;
         }
         .subway-map-train:active { transform: scale(.94) translateZ(0); }
+
+        /* =======================================================
+           기차 정보 홈 (KORAIL 스타일) — 신규 홈 화면 전용 스타일
+           ======================================================= */
+        /* 구 지하철 홈 화면은 비활성화(기존 JS 참조 유지를 위해 DOM은 남겨둔다) */
+        #home-screen { display: none !important; }
+
+        #rail-home {
+            background: #080D1B;
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+        }
+        .rail-bg {
+            position: absolute; inset: 0; pointer-events: none;
+            background:
+                radial-gradient(120% 52% at 88% -6%, rgba(96,131,214,.30) 0%, rgba(10,16,32,0) 62%),
+                radial-gradient(90% 40% at 10% 8%, rgba(38,60,120,.30) 0%, rgba(10,16,32,0) 60%),
+                linear-gradient(180deg, #070C19 0%, #0B1223 44%, #101930 100%);
+        }
+        .rail-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .rail-moon {
+            position: absolute; top: 52px; right: 2px;
+            width: 76px; height: 76px; border-radius: 50%;
+            box-shadow: inset -25px 9px 0 0 rgba(255,255,255,.95);
+            filter: drop-shadow(0 0 26px rgba(178,205,255,.34));
+            transform: rotate(-12deg);
+        }
+        .rail-star {
+            position: absolute; left: var(--x); top: var(--y);
+            width: var(--s); height: var(--s); border-radius: 50%;
+            background: #fff; opacity: var(--o);
+            box-shadow: 0 0 6px rgba(255,255,255,.75);
+        }
+        .rail-brand {
+            font-size: clamp(17px, 5vw, 20px); font-weight: 800; letter-spacing: -.045em; color: #fff;
+            text-shadow: 0 1px 6px rgba(4,8,20,.7);
+        }
+        .rail-title { font-size: clamp(19px, 5.6vw, 22.5px); font-weight: 800; letter-spacing: -.045em; color: #fff; line-height: 1.25; }
+        .rail-card {
+            border-radius: 26px; overflow: hidden;
+            background: rgba(255,255,255,.062);
+            border: 1px solid rgba(255,255,255,.075);
+            box-shadow: 0 22px 48px -24px rgba(0,0,0,.85);
+        }
+        .rail-sublabel { font-size: clamp(10.5px, 3.05vw, 12.5px); font-weight: 700; color: #8B94AA; letter-spacing: -.02em; }
+        .rail-station {
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            margin-top: 6px; font-size: clamp(20px, 6.4vw, 24px); font-weight: 800;
+            letter-spacing: -.05em; color: #fff; line-height: 1.1;
+        }
+        .rail-station span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rail-caret { width: 8px; height: 11px; color: #7C859B; flex: none; }
+        .rail-swap {
+            width: clamp(34px, 9.9vw, 40px); height: clamp(34px, 9.9vw, 40px); flex: none;
+            border-radius: 50%; background: #2C6BF3;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 20px -8px rgba(44,107,243,.9);
+            transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+        }
+        .rail-swap:active { transform: scale(.9); }
+        .rail-swap.is-turn { transform: rotate(180deg); }
+        .rail-field {
+            display: flex; align-items: center; gap: 8px;
+            height: clamp(39px, 11.2vw, 45px); padding: 0 14px;
+            border-radius: 14px; border: 1px solid rgba(255,255,255,.13);
+            background: rgba(255,255,255,.02);
+            transition: background-color .15s ease, transform .12s ease;
+        }
+        .rail-field:active { transform: scale(.985); background: rgba(255,255,255,.06); }
+        .rail-field-label { font-size: clamp(10.5px, 2.95vw, 12px); font-weight: 700; color: #8B94AA; flex: none; letter-spacing: -.02em; }
+        .rail-field-value {
+            flex: 1; text-align: center; font-size: clamp(13px, 3.85vw, 15.5px); font-weight: 800;
+            color: #fff; letter-spacing: -.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .rail-cta { background: #2C6BF3; }
+        .rail-cta button {
+            padding: clamp(13px, 3.9vw, 16px) 0; font-size: clamp(14px, 4.1vw, 16.5px); font-weight: 800; color: #fff; letter-spacing: -.03em;
+            transition: background-color .15s ease;
+        }
+        .rail-cta button:active { background: #1F57D4; }
+
+        /* ---- 열차 조회 결과 화면 ---- */
+        .rail-rt-title { font-size: clamp(15px, 4.4vw, 17.5px); font-weight: 800; letter-spacing: -.04em; color: #fff; }
+        .rail-rt-edit {
+            height: 28px; padding: 0 13px; border-radius: 999px;
+            border: 1px solid rgba(255,255,255,.45); color: #fff;
+            font-size: 12.5px; font-weight: 700; letter-spacing: -.02em;
+        }
+        .rail-rt-edit:active { background: rgba(255,255,255,.12); }
+        .rail-rt-select {
+            display: flex; align-items: center; justify-content: space-between; gap: 4px;
+            height: clamp(34px, 9.7vw, 39px); padding: 0 11px; border-radius: 11px;
+            border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.03);
+            font-size: clamp(11.5px, 3.35vw, 13.5px); font-weight: 700; color: #E7ECF6; letter-spacing: -.03em;
+        }
+        .rail-rt-select:active { background: rgba(255,255,255,.1); }
+        .rail-row {
+            display: block; width: 100%; text-align: left;
+            padding: 15px 15px; border-bottom: 1px solid rgba(255,255,255,.07);
+            background: #0A0B0E; transition: background-color .12s ease;
+        }
+        .rail-row:active { background: #14161C; }
+        .rail-row.is-soldout { opacity: .45; }
+        .rail-type-badge {
+            display: inline-flex; align-items: center; flex: none; height: 20px; padding: 0 7px;
+            border-radius: 5px; font-size: 11.5px; font-weight: 900; color: #fff; letter-spacing: -.02em;
+            white-space: nowrap;
+        }
+        .rail-time { font-size: clamp(19px, 5.6vw, 22.5px); font-weight: 800; color: #fff; letter-spacing: -.04em; line-height: 1.1; }
+        .rail-dur-chip {
+            display: inline-flex; align-items: center; height: 24px; padding: 0 9px;
+            border-radius: 6px; background: rgba(255,255,255,.07);
+            font-size: clamp(11px, 3.2vw, 12.5px); font-weight: 700; color: #B7BFCE; letter-spacing: -.02em;
+        }
+        .rail-fare { font-size: clamp(15.5px, 4.6vw, 18.5px); font-weight: 800; color: #fff; letter-spacing: -.04em; }
+        .rail-fare-label { font-size: clamp(11.5px, 3.35vw, 13.5px); font-weight: 700; color: #8B94AA; letter-spacing: -.02em; }
+        .rail-mile {
+            display: inline-flex; align-items: center; gap: 3px; height: 21px; padding: 0 7px;
+            border-radius: 5px; background: rgba(196,102,20,.28);
+            font-size: 11px; font-weight: 800; color: #F0A860; letter-spacing: -.02em;
+        }
+        .rail-mile i {
+            width: 13px; height: 13px; border-radius: 50%; background: #C4761A; color: #fff;
+            font-style: normal; font-size: 8.5px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+        }
+        .rail-daypill { height: clamp(37px, 10.8vw, 44px); }
+        .rail-daytext { font-size: clamp(13px, 3.9vw, 15.5px); }
+        .rail-nextday {
+            display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px;
+            border-radius: 999px; border: 1px solid rgba(255,255,255,.28);
+            font-size: 14.5px; font-weight: 700; color: #E7ECF6; letter-spacing: -.03em;
+        }
+        .rail-nextday:active { background: rgba(255,255,255,.08); }
+
+        /* ---- 바텀시트 ---- */
+        #rail-sheet-panel { transition: transform .28s cubic-bezier(.22,1,.36,1); }
+        .rail-list-row {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 14px; border-radius: 14px; background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.06);
+            font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -.02em;
+        }
+        .rail-list-row.is-on { background: rgba(44,107,243,.22); border-color: #2C6BF3; }
+        .rail-cal-cell {
+            aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #E7ECF6;
+        }
+        .rail-cal-cell.is-off { color: #4A5468; }
+        .rail-cal-cell.is-on { background: #2C6BF3; color: #fff; }
+        .rail-cal-cell.is-sun { color: #FF7B7B; }
+        .rail-cal-cell.is-sat { color: #7BB2FF; }
+        .rail-cal-cell.is-off.is-sun, .rail-cal-cell.is-off.is-sat { color: #4A5468; }
+        .rail-time-btn {
+            flex: none; min-width: 44px; padding: 7px 10px; border-radius: 11px;
+            background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08);
+            font-size: 13px; font-weight: 800; color: #C9D2E4;
+        }
+        .rail-time-btn.is-on { background: #2C6BF3; border-color: #2C6BF3; color: #fff; }
     </style>
 </head>
 <body class="w-full h-[100dvh] flex justify-center items-center overflow-hidden">
@@ -535,6 +696,80 @@
             </div>
         </main>
 
+        <!-- 1-B. 기차 예매 홈 화면 (신규) -->
+        <main id="rail-home" class="hidden absolute inset-0 z-[26] flex-col overflow-y-auto hide-scrollbar">
+            <div class="rail-bg"></div>
+            <div class="rail-sky" aria-hidden="true">
+                <div class="rail-moon"></div>
+                <span class="rail-star" style="--x:7%;--y:12%;--s:3px;--o:.6"></span>
+                <span class="rail-star" style="--x:20%;--y:6%;--s:2px;--o:.45"></span>
+                <span class="rail-star" style="--x:33%;--y:17%;--s:2px;--o:.35"></span>
+                <span class="rail-star" style="--x:46%;--y:9%;--s:3px;--o:.5"></span>
+                <span class="rail-star" style="--x:58%;--y:19%;--s:2px;--o:.4"></span>
+                <span class="rail-star" style="--x:69%;--y:5%;--s:2px;--o:.5"></span>
+                <span class="rail-star" style="--x:88%;--y:23%;--s:3px;--o:.7"></span>
+                <span class="rail-star" style="--x:96%;--y:13%;--s:2px;--o:.45"></span>
+                <span class="rail-star" style="--x:78%;--y:28%;--s:2px;--o:.35"></span>
+                <span class="rail-star" style="--x:12%;--y:29%;--s:2px;--o:.4"></span>
+                <span class="rail-star" style="--x:5%;--y:47%;--s:2px;--o:.3"></span>
+                <span class="rail-star" style="--x:94%;--y:44%;--s:2px;--o:.35"></span>
+                <span class="rail-star" style="--x:9%;--y:86%;--s:3px;--o:.5"></span>
+                <span class="rail-star" style="--x:24%;--y:93%;--s:2px;--o:.4"></span>
+                <span class="rail-star" style="--x:52%;--y:96%;--s:2px;--o:.35"></span>
+                <span class="rail-star" style="--x:73%;--y:89%;--s:2px;--o:.45"></span>
+                <span class="rail-star" style="--x:91%;--y:80%;--s:3px;--o:.55"></span>
+                <span class="rail-star" style="--x:41%;--y:82%;--s:2px;--o:.3"></span>
+            </div>
+
+            <div class="relative z-10 flex flex-col px-[22px] pt-safe pb-32">
+                <!-- 상단 바 -->
+                <header class="flex items-center pt-1">
+                    <h2 class="rail-brand">기차 정보</h2>
+                </header>
+
+                <!-- 타이틀 -->
+                <h1 class="rail-title mt-7">어디로 떠나볼까요?</h1>
+
+                <!-- 예매 카드 -->
+                <section class="rail-card mt-[22px]">
+                    <div class="px-[18px] pt-[30px] pb-[18px]">
+                        <div class="flex items-center gap-1">
+                            <button class="flex-1 min-w-0 text-center active:opacity-70 transition-opacity" onclick="railOpenStationPicker('dep')" aria-label="출발역 선택">
+                                <div class="rail-sublabel">출발역</div>
+                                <div class="rail-station">
+                                    <span id="rail-dep-name">동대구</span>
+                                    <svg class="rail-caret" viewBox="0 0 8 12" fill="currentColor" aria-hidden="true"><path d="M0.8 0.6 L7.2 6 L0.8 11.4 Z"/></svg>
+                                </div>
+                            </button>
+                            <button id="rail-swap-btn" class="rail-swap" onclick="railSwap()" aria-label="출발역과 도착역 바꾸기">
+                                <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M4 9h14.5"/><path d="M15.5 5.6 19 9l-3.5 3.4"/>
+                                    <path d="M20 15H5.5"/><path d="M8.5 11.6 5 15l3.5 3.4"/>
+                                </svg>
+                            </button>
+                            <button class="flex-1 min-w-0 text-center active:opacity-70 transition-opacity" onclick="railOpenStationPicker('arr')" aria-label="도착역 선택">
+                                <div class="rail-sublabel">도착역</div>
+                                <div class="rail-station">
+                                    <span id="rail-arr-name">서울</span>
+                                    <svg class="rail-caret" viewBox="0 0 8 12" fill="currentColor" aria-hidden="true"><path d="M0.8 0.6 L7.2 6 L0.8 11.4 Z"/></svg>
+                                </div>
+                            </button>
+                        </div>
+
+                        <button class="rail-field w-full mt-[20px]" onclick="railOpenSheet('date')" aria-label="가는날 선택">
+                            <span class="rail-field-label">가는날</span>
+                            <span class="rail-field-value" id="rail-date-text">2026년 8월 9일 (일) 23:32</span>
+                        </button>
+
+                    </div>
+
+                    <div class="rail-cta">
+                        <button onclick="railSearch()" class="w-full">열차 조회</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
         <!-- 2. 상단 헤더 & 트래커 UI -->
         <header id="main-header" class="hidden absolute top-0 left-0 w-full z-20 bg-white/90 backdrop-blur-md flex flex-col pt-safe pb-1.5 shadow-sm text-[#111827] transition-all">
             <div class="px-4 pt-2 flex justify-between items-center mb-2">
@@ -665,6 +900,80 @@
                 </button>
             </div>
         </nav>
+
+        <!-- 5-B. 열차 조회 결과 화면 -->
+        <div id="rail-result" class="hidden absolute inset-0 z-[130] flex-col bg-[#050608]">
+            <header class="shrink-0 bg-[#0A0F1B] px-4 pt-safe pb-3">
+                <div class="flex items-start gap-2 pt-1">
+                    <button onclick="railCloseResult()" class="w-9 h-9 -ml-2 mt-0.5 flex items-center justify-center text-white active:scale-90 transition-transform" aria-label="뒤로">
+                        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
+                    </button>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span id="rail-result-dep" class="rail-rt-title truncate">동대구</span>
+                            <svg viewBox="0 0 26 14" width="20" height="11" fill="none" stroke="#DDE3EE" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M1 10h22"/><path d="M17 3.5 23.5 10"/></svg>
+                            <span id="rail-result-arr" class="rail-rt-title truncate">서울</span>
+                        </div>
+                        <div id="rail-result-sub" class="mt-0.5 text-[12.5px] font-semibold text-white/50 truncate">직통 열차</div>
+                    </div>
+                    <button onclick="railCloseResult()" class="rail-rt-edit shrink-0 mt-1">수정</button>
+                    <button onclick="railRenderResult()" class="w-8 h-8 mt-0.5 flex items-center justify-center text-white/85 active:scale-90 transition-transform shrink-0" aria-label="새로고침">
+                        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-1.6 5.7"/><path d="M20 4.5V11h-6.2"/></svg>
+                    </button>
+                </div>
+
+                <div class="mt-3 flex items-center rounded-full bg-white/[0.07] rail-daypill px-1">
+                    <button onclick="railShiftDay(-1)" id="rail-day-prev" class="w-9 h-9 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="이전날">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
+                    </button>
+                    <button onclick="railOpenSheet('date')" class="flex-1 h-full flex items-center justify-center gap-1.5 min-w-0">
+                        <span id="rail-day-text" class="rail-daytext font-extrabold tracking-tight text-white truncate">2026년 08월 10일 (월) 22:43</span>
+                        <svg viewBox="0 0 12 8" width="10" height="7" fill="currentColor" class="text-white shrink-0" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg>
+                    </button>
+                    <button onclick="railShiftDay(1)" class="w-9 h-9 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="다음날">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                    </button>
+                </div>
+
+                <div class="mt-3 grid grid-cols-3 gap-2">
+                    <button onclick="railOpenSheet('type')" class="rail-rt-select"><span id="rail-sel-type" class="truncate">전체 열차</span><svg viewBox="0 0 12 8" width="10" height="7" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
+                    <button onclick="railOpenSheet('direct')" class="rail-rt-select"><span id="rail-sel-direct" class="truncate">직통</span><svg viewBox="0 0 12 8" width="10" height="7" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
+                    <button onclick="railOpenSheet('near')" class="rail-rt-select"><span id="rail-sel-near" class="truncate">인접역 미포함</span><svg viewBox="0 0 12 8" width="10" height="7" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
+                </div>
+            </header>
+
+            <div class="shrink-0 flex items-center justify-between px-4 py-3 bg-[#050608] border-b border-white/[0.08]">
+                <button onclick="railOpenSheet('sort')" class="flex items-center gap-2 active:opacity-70 transition-opacity">
+                    <svg viewBox="0 0 20 18" width="18" height="16" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 2v14"/><path d="M1 13l3 3 3-3"/><path d="M9.5 3.5h9"/><path d="M9.5 8.5h6.5"/><path d="M9.5 13.5h4"/>
+                    </svg>
+                    <span id="rail-sort-text" class="rail-daytext font-extrabold text-white tracking-tight">출발 빠른 순</span>
+                </button>
+                <div class="text-[12.5px] font-semibold text-white/45 whitespace-nowrap">
+                    일반실 <b class="text-white/85 font-extrabold">운임</b> <span class="text-white/25">|</span> 특·우등실 <b class="text-white/85 font-extrabold">운임+요금</b>
+                </div>
+            </div>
+
+            <div id="rail-result-list" class="flex-1 overflow-y-auto hide-scrollbar pb-10"></div>
+        </div>
+
+        <!-- 5-C. 기차 예매 바텀시트 -->
+        <div id="rail-sheet" class="hidden absolute inset-0 z-[170] flex-col justify-end bg-black/55 opacity-0 transition-opacity duration-200" onclick="if(event.target===this) railCloseSheet()">
+            <div id="rail-sheet-panel" class="w-full max-h-[88%] flex flex-col rounded-t-[26px] bg-[#111A2C] border-t border-white/10 translate-y-8">
+                <div class="pt-3 pb-1 flex justify-center shrink-0"><div class="h-1 w-10 rounded-full bg-white/25"></div></div>
+                <div class="px-5 pt-2 pb-3 flex items-center justify-between shrink-0">
+                    <h3 id="rail-sheet-title" class="text-[17px] font-extrabold tracking-tight text-white">선택</h3>
+                    <button onclick="railCloseSheet()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="닫기">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                    </button>
+                </div>
+                <div id="rail-sheet-body" class="flex-1 overflow-y-auto hide-scrollbar px-5 pb-6"></div>
+                <div id="rail-sheet-foot" class="hidden px-5 pb-7 pt-2 shrink-0 border-t border-white/10"></div>
+            </div>
+        </div>
+
+        <!-- 5-D. 토스트 -->
+        <div id="rail-toast" class="hidden absolute left-1/2 -translate-x-1/2 bottom-[110px] z-[190] px-4 py-2.5 rounded-full bg-black/85 text-white text-[12.5px] font-bold shadow-xl opacity-0 transition-opacity duration-200 whitespace-nowrap"></div>
 
         <!-- 모달들 -->
         <div id="timetable-modal" class="hidden absolute inset-0 z-[150] flex flex-col justify-end bg-black/40 backdrop-blur-sm transition-opacity">
@@ -4758,6 +5067,13 @@
         window.switchTab = (tabId) => {
             const previousTab = activeTab;
             activeTab = tabId;
+            // 신규 기차 예매 홈 화면 토글 (구 지하철 홈은 CSS로 비활성)
+            const railHomeEl = document.getElementById('rail-home');
+            if (railHomeEl) {
+                railHomeEl.classList.toggle('hidden', tabId !== 'home');
+                railHomeEl.classList.toggle('flex', tabId === 'home');
+                if (tabId !== 'home' && typeof window.railCloseResult === 'function') window.railCloseResult();
+            }
             if (tabId === 'map' && previousTab !== 'map') {
                 mapNationwideMode = false;
                 mapActiveTrainSourceKey = '';
@@ -5486,6 +5802,1004 @@
                 modal.classList.add('hidden');
             }, 300);
         };
+    </script>
+
+    <!-- =======================================================
+         기차(일반열차 · 고속열차) 조회 로직
+         무궁화호 / ITX-새마을 / ITX-마음 / KTX / SRT / 누리로 / 관광열차
+         ※ 예매 기능은 제공하지 않는 '조회 전용' 화면
+         ======================================================= -->
+    <script>
+    (function () {
+        'use strict';
+
+        /* ---------------- 열차 종별 제원 ---------------- */
+        const RAIL_TYPES = {
+            'KTX':       { color: '#2C6BF3', speed: 172, base: 2000, per: 140, headway: 32,  offset: 4,  no: 100,  special: true,  mile: true,  cat: '고속' },
+            'KTX-청룡':   { color: '#12327A', speed: 188, base: 2400, per: 148, headway: 210, offset: 46, no: 2,    special: true,  mile: true,  cat: '고속' },
+            'KTX-이음':   { color: '#0E8A7D', speed: 112, base: 2000, per: 118, headway: 68,  offset: 17, no: 700,  special: true,  mile: true,  cat: '고속' },
+            'SRT':       { color: '#4B2E83', speed: 176, base: 2000, per: 127, headway: 38,  offset: 13, no: 300,  special: true,  mile: true,  cat: '고속' },
+            'ITX-새마을': { color: '#0F5FA6', speed: 100, base: 3200, per: 89,  headway: 96,  offset: 27, no: 1000, special: false, mile: false, cat: 'ITX' },
+            'ITX-마음':   { color: '#00A0B0', speed: 96,  base: 3000, per: 70,  headway: 104, offset: 43, no: 1200, special: false, mile: false, cat: 'ITX' },
+            'ITX-청춘':   { color: '#E1523F', speed: 72,  base: 2600, per: 66,  headway: 58,  offset: 9,  no: 2000, special: false, mile: false, cat: 'ITX' },
+            '무궁화호':   { color: '#D9534F', speed: 88,  base: 2600, per: 58.5, headway: 74, offset: 34, no: 1700, special: false, mile: false, cat: '일반' },
+            '누리로':     { color: '#7A4FBF', speed: 88,  base: 2600, per: 58.5, headway: 155, offset: 51, no: 1600, special: false, mile: false, cat: '일반' },
+            '관광열차':   { color: '#C08A2A', speed: 58,  base: 8000, per: 75,  headway: 420, offset: 92, no: 4300, special: false, mile: false, cat: '관광' }
+        };
+
+        /* ---------------- 운행 계통(노선) ---------------- */
+        const RAIL_ROUTES = [
+            { id: 'ktx_gyeongbu', name: '경부고속선', types: ['KTX', 'KTX-청룡'],
+              stops: [['서울',0],['광명',22],['천안아산',96],['오송',129],['대전',161],['김천구미',253],['동대구',294],['신경주',369],['울산(통도사)',409],['부산',442]] },
+            { id: 'srt_gyeongbu', name: '수서고속선(경부)', types: ['SRT'],
+              stops: [['수서',0],['동탄',32],['평택지제',51],['천안아산',84],['오송',117],['대전',149],['동대구',282],['신경주',357],['울산(통도사)',397],['부산',430]] },
+            { id: 'gyeongbu', name: '경부선', types: ['ITX-새마을', 'ITX-마음', '무궁화호', '누리로'],
+              stops: [['서울',0],['영등포',6],['수원',42],['평택',74],['천안',96],['조치원',129],['신탄진',148],['대전',166],['옥천',186],['영동',226],['김천',267],['구미',288],['왜관',312],['동대구',336],['경산',350],['청도',371],['밀양',407],['물금',436],['구포',448],['부산',456]] },
+            { id: 'ktx_honam', name: '호남고속선', types: ['KTX'],
+              stops: [['용산',0],['광명',22],['천안아산',96],['오송',129],['공주',168],['익산',219],['정읍',264],['광주송정',313],['나주',328],['목포',371]] },
+            { id: 'srt_honam', name: '수서고속선(호남)', types: ['SRT'],
+              stops: [['수서',0],['동탄',32],['평택지제',51],['천안아산',84],['오송',117],['공주',156],['익산',207],['정읍',252],['광주송정',301],['나주',316],['목포',359]] },
+            { id: 'honam', name: '호남선', types: ['ITX-마음', '무궁화호'],
+              stops: [['용산',0],['영등포',5],['서대전',167],['계룡',188],['논산',211],['강경',224],['익산',250],['김제',272],['정읍',300],['장성',338],['광주송정',363],['나주',380],['함평',402],['무안',424],['목포',447]] },
+            { id: 'jeolla', name: '전라선', types: ['KTX', 'ITX-새마을', '무궁화호'],
+              stops: [['용산',0],['익산',250],['전주',274],['남원',331],['곡성',362],['구례구',376],['순천',411],['여천',446],['여수엑스포',456]] },
+            { id: 'jungang', name: '중앙선', types: ['KTX-이음', 'ITX-마음', '무궁화호'],
+              stops: [['청량리',0],['양평',44],['원주',87],['제천',134],['단양',163],['풍기',190],['영주',206],['안동',245],['의성',279],['영천',341],['경주',375],['태화강',419],['부전',456]] },
+            { id: 'gangneung', name: '강릉선', types: ['KTX-이음'],
+              stops: [['서울',0],['청량리',12],['상봉',18],['양평',55],['만종',100],['횡성',110],['둔내',131],['평창',155],['진부(오대산)',177],['강릉',223]] },
+            { id: 'janghang', name: '장항선', types: ['ITX-마음', '무궁화호', '누리로'],
+              stops: [['용산',0],['영등포',5],['천안',96],['온양온천',111],['예산',141],['홍성',160],['광천',175],['대천',196],['웅천',213],['서천',228],['장항',240],['군산',250],['익산',268]] },
+            { id: 'gyeongjeon', name: '경전선', types: ['KTX', 'ITX-새마을', '무궁화호'],
+              stops: [['서울',0],['광명',22],['천안아산',96],['오송',129],['대전',161],['동대구',294],['밀양',348],['진영',375],['창원중앙',396],['창원',406],['마산',414],['함안',432],['진주',468]] },
+            { id: 'ktx_pohang', name: '동해선(고속)', types: ['KTX'],
+              stops: [['서울',0],['광명',22],['천안아산',96],['오송',129],['대전',161],['동대구',294],['포항',332]] },
+            { id: 'donghae', name: '동해선', types: ['ITX-마음', '무궁화호'],
+              stops: [['부전',0],['태화강',37],['남창',55],['경주',92],['포항',130]] },
+            { id: 'taebaek', name: '태백·영동선', types: ['무궁화호'],
+              stops: [['청량리',0],['양평',44],['원주',87],['제천',134],['영월',173],['민둥산',205],['태백',240],['도계',275],['동해',298],['정동진',322],['강릉',340]] },
+            { id: 'gyeongchun', name: '경춘선', types: ['ITX-청춘'],
+              stops: [['청량리',0],['상봉',6],['평내호평',26],['마석',33],['청평',48],['가평',58],['강촌',76],['남춘천',87],['춘천',90]] },
+            { id: 'a_train', name: '정선아리랑열차(A-train)', types: ['관광열차'],
+              stops: [['청량리',0],['원주',87],['제천',134],['영월',173],['민둥산',205],['정선',227]] },
+            { id: 'g_train', name: '서해금빛열차(G-train)', types: ['관광열차'],
+              stops: [['용산',0],['영등포',5],['천안',96],['온양온천',111],['홍성',160],['대천',196],['익산',268]] },
+            { id: 's_train', name: '남도해양열차(S-train)', types: ['관광열차'],
+              stops: [['부산',0],['구포',8],['순천',130],['벌교',155],['보성',175],['광주송정',250]] },
+            { id: 'v_train', name: '백두대간협곡열차(V-train)', types: ['관광열차'],
+              stops: [['영주',0],['봉화',24],['분천',50],['양원',58],['승부',66],['철암',77]] }
+        ];
+
+        /* =======================================================
+           실제 시간표 어댑터
+           - 노선별 시간표 파일(gyeongbu_general_train_timetable.js 등)을 읽어
+             실제 정차 시각 · 운임으로 조회한다.
+           - 데이터가 없는 구간은 아래 RAIL_ROUTES 기반 추정 시간표로 대체한다.
+           ======================================================= */
+        const RAIL_REAL_SOURCES = [
+            { line: '경부선', routeId: 'gyeongbu', global: 'GYEONGBU_GENERAL_TRAIN_TIMETABLE' }
+        ];
+        // 파일의 정차 순서가 실제와 다른 구간 보정 (부산 방면 기준 … 화명 - 구포 - 사상 - 부산)
+        const RAIL_ORDER_FIX = { '경부선': [['구포', '사상']] };
+        const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
+        // 무궁화호 운임 → 영업거리(km) 환산 계수 (대전 166km · 부산 442km 기준으로 보정)
+        const RAIL_FARE_TO_KM = 0.01547;
+
+        const railReal = {};   // { 노선명: { stations, order, km, fare, trains, serviceDate, source } }
+
+        function railStripSuffix(name) { return String(name).replace(/역$/, ''); }
+        function railClockToMin(t) {
+            const m = /^(\d{1,2}):(\d{2})$/.exec(String(t).trim());
+            return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+        }
+        function railWon(v) { return Number(String(v).replace(/[^0-9]/g, '')) || 0; }
+
+        function railBuildRealLine(src) {
+            const raw = (typeof window !== 'undefined') ? window[src.global] : null;
+            if (!raw || !Array.isArray(raw.stations) || !Array.isArray(raw.trains)) return null;
+
+            // 1) 정차역 순서 (서울 방면 → 부산 방면)
+            const stations = raw.stations.slice().sort((a, b) => a.order - b.order).map(st => railStripSuffix(st.name));
+            (RAIL_ORDER_FIX[src.line] || []).forEach(([a, b]) => {
+                const ia = stations.indexOf(a), ib = stations.indexOf(b);
+                if (ia > -1 && ib > -1 && ia > ib) { stations[ib] = a; stations[ia] = b; }
+            });
+            const order = {};
+            stations.forEach((n, i) => { order[n] = i; });
+
+            // 2) 열차별 방향 (byStation의 direction 사용)
+            const dirOf = {};
+            Object.values(raw.byStation || {}).forEach(list => (list || []).forEach(e => { dirOf[e.trainNo] = e.direction; }));
+
+            // 3) 운임표: 서울역 기준 누적 운임 → 임의 구간 운임을 차액으로 계산
+            const fare = {};
+            const addFare = (type, station, won) => {
+                fare[type] = fare[type] || {};
+                if (fare[type][station] == null) fare[type][station] = won;
+            };
+            const anchorName = railStripSuffix(stations[0]);
+            Object.entries(raw.byStation || {}).forEach(([st, list]) => (list || []).forEach(e => {
+                if (railStripSuffix(e.to) !== anchorName) return;
+                addFare(e.trainType, railStripSuffix(st), railWon(e.fare));
+            }));
+            Object.keys(fare).forEach(type => { fare[type][anchorName] = 0; });
+            // 기준역(대전) 운임으로 빈칸 보강
+            Object.entries(raw.byStation || {}).forEach(([st, list]) => (list || []).forEach(e => {
+                const type = e.trainType, name = railStripSuffix(st), to = railStripSuffix(e.to);
+                if (to === anchorName || !fare[type] || fare[type][name] != null) return;
+                const hub = fare[type][to];
+                const won = railWon(e.fare);
+                if (hub != null && won > (RAIL_MIN_FARE[type] || 2600)) fare[type][name] = hub + won;
+            }));
+            // 남은 빈칸은 정차 순서 기준 선형 보간
+            Object.keys(fare).forEach(type => {
+                const tbl = fare[type];
+                const known = stations.map((n, i) => ({ n, i, f: tbl[n] })).filter(x => x.f != null);
+                if (known.length < 2) return;
+                stations.forEach((n, i) => {
+                    if (tbl[n] != null) return;
+                    let before = null, after = null;
+                    known.forEach(k => { if (k.i < i) before = k; else if (k.i > i && !after) after = k; });
+                    if (before && after) tbl[n] = Math.round((before.f + (after.f - before.f) * (i - before.i) / (after.i - before.i)) / 100) * 100;
+                });
+            });
+
+            // 4) 영업거리: 무궁화호 운임을 거리로 환산 (없으면 다른 등급으로 대체)
+            const kmBase = fare['무궁화호'] || fare[Object.keys(fare)[0]] || {};
+            const km = {};
+            stations.forEach(n => { if (kmBase[n] != null) km[n] = Math.round(kmBase[n] * RAIL_FARE_TO_KM); });
+
+            // 5) 열차별 정차 타임라인 (자정 넘김 보정)
+            const trains = raw.trains.map(t => {
+                const dep = {}, arr = {};
+                (t.samples || []).forEach(sm => {
+                    const st = railStripSuffix(sm.station), to = railStripSuffix(sm.to);
+                    if (order[st] != null && sm.departureTime) dep[st] = railClockToMin(sm.departureTime);
+                    if (order[to] != null && sm.arrivalTime) arr[to] = railClockToMin(sm.arrivalTime);
+                });
+                const names = Array.from(new Set(Object.keys(dep).concat(Object.keys(arr))));
+                if (!names.length) return null;
+                const dir = dirOf[t.trainNo] === 'up' ? 'up' : 'down';
+                names.sort((a, b) => dir === 'up' ? order[b] - order[a] : order[a] - order[b]);
+                let prev = -1, add = 0;
+                const stops = names.map(n => {
+                    const base = arr[n] != null ? arr[n] : dep[n];
+                    if (base < prev) add += 1440;
+                    prev = base;
+                    return { name: n, dep: dep[n] == null ? null : dep[n] + add, arr: arr[n] == null ? null : arr[n] + add };
+                });
+                return { trainNo: String(t.trainNo), type: t.trainType, dir, stops };
+            }).filter(Boolean);
+
+            return {
+                line: src.line, routeId: src.routeId, stations, order, km, fare, trains,
+                serviceDate: (raw.meta && raw.meta.serviceDate) || '',
+                source: (raw.meta && raw.meta.source) || ''
+            };
+        }
+
+        RAIL_REAL_SOURCES.forEach(src => {
+            const built = railBuildRealLine(src);
+            if (built) railReal[src.line] = built;
+        });
+
+        function railRealFare(lineData, type, a, b) {
+            const tbl = lineData.fare[type];
+            if (!tbl || tbl[a] == null || tbl[b] == null) return null;
+            return Math.max(RAIL_MIN_FARE[type] || 2600, Math.abs(tbl[a] - tbl[b]));
+        }
+
+        // 실제 시간표에서 A→B 열차를 찾는다.
+        function railSearchReal(dep, arr) {
+            const out = [];
+            Object.values(railReal).forEach(L => {
+                if (L.order[dep] == null || L.order[arr] == null) return;
+                L.trains.forEach(t => {
+                    const i = t.stops.findIndex(s => s.name === dep);
+                    const j = t.stops.findIndex(s => s.name === arr);
+                    if (i < 0 || j < 0 || j <= i) return;
+                    const s1 = t.stops[i], s2 = t.stops[j];
+                    const depMin = s1.dep != null ? s1.dep : s1.arr;
+                    const arrMin = s2.arr != null ? s2.arr : s2.dep;
+                    if (depMin == null || arrMin == null || arrMin <= depMin) return;
+
+                    const T = RAIL_TYPES[t.type] || RAIL_TYPES['무궁화호'];
+                    const fare = railRealFare(L, t.type, dep, arr);
+                    const distance = (L.km[dep] != null && L.km[arr] != null) ? Math.abs(L.km[dep] - L.km[arr]) : 0;
+                    const seed = railHash(`${t.trainNo}|${L.line}|${dep}|${arr}`);
+                    out.push({
+                        source: 'real', lineName: L.line, serviceDate: L.serviceDate,
+                        type: t.type, typeColor: T.color, cat: T.cat, hasSpecial: false, hasMile: false,
+                        routeName: L.line, trainNo: t.trainNo,
+                        depName: dep, arrName: arr, isNearDep: false, isNearArr: false,
+                        depMin, arrMin, dayOffset: 0,
+                        duration: arrMin - depMin, distance,
+                        platform: (seed % 14) + 1,
+                        fare: fare != null ? fare : railFare(t.type, distance),
+                        fareSpecial: 0,
+                        mile: 0, soldOut: false,
+                        stops: t.stops
+                    });
+                });
+            });
+            return out;
+        }
+
+        // 실제 시간표가 있는 노선은 정차역 · 영업거리 · 운행 등급을 실제 값으로 교체한다.
+        RAIL_REAL_SOURCES.forEach(src => {
+            const L = railReal[src.line];
+            const route = RAIL_ROUTES.find(r => r.id === src.routeId);
+            if (!L || !route) return;
+            route.realLine = src.line;
+            route.name = src.line;
+            const types = Array.from(new Set(L.trains.map(t => t.type))).filter(t => RAIL_TYPES[t]);
+            if (types.length) route.types = types;
+            const stops = L.stations.filter(n => L.km[n] != null).map(n => [n, L.km[n]]);
+            if (stops.length > 2) route.stops = stops;
+        });
+
+        /* ---------------- 역 · 지역 ---------------- */
+        const RAIL_REGION_MAP = {
+            '수도권': ['서울','용산','영등포','청량리','상봉','광명','수서','동탄','평택지제','수원','평택','평내호평','마석','안양','오산','서정리'],
+            '강원': ['춘천','남춘천','강촌','가평','청평','양평','원주','만종','횡성','둔내','평창','진부(오대산)','강릉','정동진','동해','도계','태백','민둥산','영월','정선'],
+            '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
+            '전라': ['익산','정읍','광주송정','나주','목포','김제','장성','함평','무안','전주','남원','곡성','구례구','순천','여천','여수엑스포','군산','벌교','보성'],
+            '경상': ['김천','김천구미','구미','왜관','동대구','경산','청도','밀양','물금','구포','부산','부전','신경주','경주','울산(통도사)','태화강','남창','포항','영주','풍기','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
+        };
+        const RAIL_POPULAR = ['서울','부산','동대구','대전','광주송정','강릉','목포','여수엑스포','수서','용산','전주','포항'];
+
+        const RAIL_STATION_REGION = {};
+        Object.keys(RAIL_REGION_MAP).forEach(region => {
+            RAIL_REGION_MAP[region].forEach(name => { RAIL_STATION_REGION[name] = region; });
+        });
+        const RAIL_ALL_STATIONS = (() => {
+            const set = new Set();
+            RAIL_ROUTES.forEach(r => r.stops.forEach(s => set.add(s[0])));
+            return Array.from(set).sort((a, b) => a.localeCompare(b, 'ko'));
+        })();
+        RAIL_ALL_STATIONS.forEach(name => { if (!RAIL_STATION_REGION[name]) RAIL_STATION_REGION[name] = '기타'; });
+
+        const RAIL_TYPE_FILTERS = [
+            { id: '전체', label: '전체 열차', desc: 'KTX · SRT · ITX · 무궁화호 · 관광열차' },
+            { id: '고속', label: 'KTX · SRT', desc: 'KTX, KTX-청룡, KTX-이음, SRT' },
+            { id: 'ITX', label: 'ITX', desc: 'ITX-새마을, ITX-마음, ITX-청춘' },
+            { id: '일반', label: '무궁화호 · 누리로', desc: '일반열차' },
+            { id: '관광', label: '관광열차', desc: 'A · G · S · V-train' }
+        ];
+        const RAIL_SORTS = [
+            { id: 'dep',   label: '출발 빠른 순' },
+            { id: 'arr',   label: '도착 빠른 순' },
+            { id: 'dur',   label: '소요시간 짧은 순' },
+            { id: 'fare',  label: '운임 낮은 순' }
+        ];
+
+        /* ---------------- 상태 ---------------- */
+        const RAIL_KEY = 'railSearchStateV2';
+        const railState = {
+            dep: '동대구',
+            arr: '서울',
+            date: new Date(),
+            type: '전체',
+            near: false,
+            sort: 'dep',
+            recent: []
+        };
+        let railTrains = [];
+        let railTmp = {};
+
+        function railSave() {
+            try {
+                localStorage.setItem(RAIL_KEY, JSON.stringify({
+                    dep: railState.dep, arr: railState.arr, recent: railState.recent.slice(0, 8)
+                }));
+            } catch (e) { /* 저장 실패는 무시 */ }
+        }
+        function railLoad() {
+            try {
+                const raw = localStorage.getItem(RAIL_KEY);
+                if (!raw) return;
+                const d = JSON.parse(raw);
+                if (d.dep && RAIL_STATION_REGION[d.dep]) railState.dep = d.dep;
+                if (d.arr && RAIL_STATION_REGION[d.arr]) railState.arr = d.arr;
+                if (Array.isArray(d.recent)) railState.recent = d.recent.filter(n => RAIL_STATION_REGION[n]);
+            } catch (e) { /* 파싱 실패는 무시 */ }
+        }
+
+        /* ---------------- 유틸 ---------------- */
+        const RAIL_DOW = ['일', '월', '화', '수', '목', '금', '토'];
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const railComma = (n) => Math.round(n).toLocaleString('ko-KR');
+        const railEsc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        function railHash(str) {
+            let h = 2166136261;
+            for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+            return Math.abs(h);
+        }
+        function railFmtDate(d) {
+            return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${RAIL_DOW[d.getDay()]}) ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+        }
+        function railFmtDateFull(d) {
+            return `${d.getFullYear()}년 ${pad2(d.getMonth() + 1)}월 ${pad2(d.getDate())}일 (${RAIL_DOW[d.getDay()]}) ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+        }
+        function railDateKey(d) { return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`; }
+        function railMinToClock(min) {
+            const m = ((min % 1440) + 1440) % 1440;
+            return `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`;
+        }
+        function railDur(min) {
+            const h = Math.floor(min / 60), m = Math.round(min % 60);
+            return h > 0 ? (m > 0 ? `${h}시간 ${m}분` : `${h}시간`) : `${m}분`;
+        }
+        function railToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+
+        /* ---------------- 운임 ---------------- */
+        function railFare(type, km) {
+            const T = RAIL_TYPES[type];
+            const near = Math.min(km, 300), far = Math.max(0, km - 300);
+            const raw = T.base + near * T.per + far * T.per * 0.8;
+            return Math.max(T.base, Math.round(raw / 100) * 100);
+        }
+
+        /* ---------------- 열차 시각 생성 ---------------- */
+        function railTravelMinutes(km, stopCount, type) {
+            const T = RAIL_TYPES[type];
+            return (km / T.speed) * 60 + stopCount * (T.cat === '고속' ? 2.2 : 1.2);
+        }
+
+        function railNeighbors(name) {
+            const out = new Map();
+            RAIL_ROUTES.forEach(r => {
+                const names = r.stops.map(s => s[0]);
+                const i = names.indexOf(name);
+                if (i < 0) return;
+                [i - 1, i + 1].forEach(k => {
+                    if (k < 0 || k >= names.length) return;
+                    if (Math.abs(r.stops[k][1] - r.stops[i][1]) > 35) return;
+                    out.set(names[k], true);
+                });
+            });
+            out.delete(name);
+            return Array.from(out.keys());
+        }
+
+        function railBuildTrains(dep, arr, baseDate, includeNear) {
+            const depList = [dep].concat(includeNear ? railNeighbors(dep) : []);
+            const arrList = [arr].concat(includeNear ? railNeighbors(arr) : []);
+            const requestMin = baseDate.getHours() * 60 + baseDate.getMinutes();
+            const list = [];
+
+            // 1) 실제 시간표를 먼저 조회한다.
+            const realCovered = new Set();
+            const realCats = new Set();
+            depList.forEach(d => arrList.forEach(a => {
+                railSearchReal(d, a).forEach(t => {
+                    realCovered.add(t.lineName);
+                    realCats.add(t.cat);
+                    for (let off = 0; off <= 1; off++) {
+                        const abs = t.depMin + off * 1440;
+                        if (abs < requestMin || abs > requestMin + 1440) continue;
+                        list.push(Object.assign({}, t, {
+                            isNearDep: d !== dep, isNearArr: a !== arr,
+                            sortKey: abs, arrKey: abs + t.duration,
+                            dayOffset: Math.floor(abs / 1440)
+                        }));
+                        break;
+                    }
+                });
+            }));
+
+            // 2) 실제 시간표가 없는 노선만 추정 시간표로 생성한다.
+            RAIL_ROUTES.forEach(route => {
+                if (route.realLine && realCovered.has(route.realLine)) return;
+                const names = route.stops.map(s => s[0]);
+                const total = route.stops[route.stops.length - 1][1];
+                const n = route.stops.length;
+
+                depList.forEach(depName => {
+                    const i = names.indexOf(depName);
+                    if (i < 0) return;
+                    arrList.forEach(arrName => {
+                        const j = names.indexOf(arrName);
+                        if (j < 0 || i === j) return;
+
+                        const dir = j > i ? 1 : -1;
+                        const kmOf = (idx) => dir > 0 ? route.stops[idx][1] : total - route.stops[idx][1];
+                        const orderOf = (idx) => dir > 0 ? idx : (n - 1 - idx);
+                        const kmDep = kmOf(i), kmArr = kmOf(j);
+                        const distance = Math.round(Math.abs(kmArr - kmDep));
+                        if (distance < 5) return;
+
+                        route.types.forEach(type => {
+                            const T = RAIL_TYPES[type];
+                            // 실제 시간표가 있는 등급(일반열차 등)은 추정으로 중복 생성하지 않는다.
+                            if (realCats.has(T.cat)) return;
+                            const seed = railHash(route.id + type + dir + railDateKey(baseDate));
+                            const firstDep = 5 * 60 + T.offset + (seed % 23);
+                            const lastDep = T.cat === '관광' ? 15 * 60 : 22 * 60 + 40;
+                            let idx = 0;
+                            for (let start = firstDep; start <= lastDep; start += T.headway) {
+                                const jitter = (railHash(route.id + type + idx) % 7) - 3;
+                                const originDep = start + jitter;
+                                const tDep = Math.round(originDep + railTravelMinutes(kmDep, orderOf(i), type));
+                                const tArr = Math.round(originDep + railTravelMinutes(kmArr, orderOf(j), type));
+                                if (tArr <= tDep) { idx++; continue; }
+
+                                const trainNo = T.no + (railHash(route.id + type) % 22) * 2 + idx * 2 + (dir > 0 ? 0 : 1);
+                                for (let dayOffset = 0; dayOffset <= 1; dayOffset++) {
+                                    const abs = dayOffset * 1440 + tDep;
+                                    if (abs < requestMin || abs > requestMin + 1440) continue;
+                                    const sSeed = railHash(`${trainNo}|${route.id}|${railDateKey(baseDate)}|${dayOffset}|${depName}|${arrName}`);
+                                    const soldOut = sSeed % 29 === 0;
+                                    const realLine = route.realLine ? railReal[route.realLine] : null;
+                                    const fare = (realLine && railRealFare(realLine, type, depName, arrName)) || railFare(type, distance);
+                                    list.push({
+                                        source: 'est',
+                                        type, typeColor: T.color, cat: T.cat, hasSpecial: T.special, hasMile: T.mile,
+                                        routeName: route.name, trainNo,
+                                        depName, arrName,
+                                        isNearDep: depName !== dep, isNearArr: arrName !== arr,
+                                        depMin: tDep, arrMin: tArr, dayOffset,
+                                        sortKey: abs, arrKey: dayOffset * 1440 + tArr,
+                                        duration: tArr - tDep,
+                                        distance,
+                                        platform: (sSeed % 14) + 1,
+                                        fare, fareSpecial: Math.round(fare * 1.4 / 100) * 100,
+                                        mile: (sSeed % 3 === 0) ? 10 : 5,
+                                        soldOut
+                                    });
+                                    break;
+                                }
+                                idx++;
+                            }
+                        });
+                    });
+                });
+            });
+
+            // 같은 열차는 한 번만 노출한다. (인접역보다 실제 선택한 역을 우선)
+            const nearScore = (t) => (t.isNearDep ? 1 : 0) + (t.isNearArr ? 1 : 0);
+            list.sort((a, b) => nearScore(a) - nearScore(b) || a.sortKey - b.sortKey || a.duration - b.duration);
+            const seen = new Set();
+            const uniq = list.filter(t => {
+                const k = `${t.type}-${t.trainNo}`;
+                if (seen.has(k)) return false;
+                seen.add(k);
+                return true;
+            });
+            uniq.sort((a, b) => a.sortKey - b.sortKey || a.duration - b.duration);
+            return uniq.slice(0, 150);
+        }
+
+        /* ---------------- 홈 화면 ---------------- */
+        function railRenderHome() {
+            const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+            set('rail-dep-name', railState.dep);
+            set('rail-arr-name', railState.arr);
+            set('rail-date-text', railFmtDate(railState.date));
+        }
+
+        window.railSwap = function () {
+            const btn = document.getElementById('rail-swap-btn');
+            const tmp = railState.dep;
+            railState.dep = railState.arr;
+            railState.arr = tmp;
+            if (btn) btn.classList.toggle('is-turn');
+            railSave();
+            railRenderHome();
+        };
+
+        /* ---------------- 토스트 ---------------- */
+        let railToastTimer = null;
+        function railToast(msg) {
+            const el = document.getElementById('rail-toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            requestAnimationFrame(() => el.classList.remove('opacity-0'));
+            clearTimeout(railToastTimer);
+            railToastTimer = setTimeout(() => {
+                el.classList.add('opacity-0');
+                setTimeout(() => el.classList.add('hidden'), 220);
+            }, 1900);
+        }
+
+        /* ---------------- 바텀시트 ---------------- */
+        function railSheetEls() {
+            return {
+                wrap: document.getElementById('rail-sheet'),
+                panel: document.getElementById('rail-sheet-panel'),
+                title: document.getElementById('rail-sheet-title'),
+                body: document.getElementById('rail-sheet-body'),
+                foot: document.getElementById('rail-sheet-foot')
+            };
+        }
+        function railShowSheet(title, bodyHtml, footHtml) {
+            const el = railSheetEls();
+            if (!el.wrap) return;
+            el.title.textContent = title;
+            el.body.innerHTML = bodyHtml;
+            if (footHtml) { el.foot.innerHTML = footHtml; el.foot.classList.remove('hidden'); }
+            else { el.foot.innerHTML = ''; el.foot.classList.add('hidden'); }
+            el.body.scrollTop = 0;
+            el.wrap.classList.remove('hidden');
+            el.wrap.classList.add('flex');
+            requestAnimationFrame(() => {
+                el.wrap.classList.remove('opacity-0');
+                el.panel.classList.remove('translate-y-8');
+            });
+        }
+        window.railCloseSheet = function () {
+            const el = railSheetEls();
+            if (!el.wrap || el.wrap.classList.contains('hidden')) return;
+            el.wrap.classList.add('opacity-0');
+            el.panel.classList.add('translate-y-8');
+            setTimeout(() => { el.wrap.classList.add('hidden'); el.wrap.classList.remove('flex'); }, 200);
+        };
+
+        window.railOpenSheet = function (kind) {
+            if (kind === 'date') railSheetDate();
+            else if (kind === 'type') railSheetType();
+            else if (kind === 'direct') railSheetDirect();
+            else if (kind === 'near') railSheetNear();
+            else if (kind === 'sort') railSheetSort();
+        };
+
+        function railOptionRows(options, currentId, handler) {
+            return `<div class="space-y-2">${options.map(o => `
+                <button onclick="${handler}('${o.id}')" class="rail-list-row ${currentId === o.id ? 'is-on' : ''}">
+                    <span class="text-left">
+                        <span class="block text-[14.5px] font-extrabold text-white">${railEsc(o.label)}</span>
+                        ${o.desc ? `<span class="block text-[11px] font-semibold text-white/45 mt-0.5">${railEsc(o.desc)}</span>` : ''}
+                    </span>
+                    ${currentId === o.id ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6E9BFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 5 5 9-11"/></svg>' : ''}
+                </button>`).join('')}</div>`;
+        }
+
+        function railSheetType() {
+            railShowSheet('열차 종류', railOptionRows(RAIL_TYPE_FILTERS, railState.type, 'railPickType'));
+        }
+        window.railPickType = function (id) {
+            railState.type = id;
+            railCloseSheet();
+            railRenderResult();
+        };
+
+        function railSheetDirect() {
+            railShowSheet('경유', railOptionRows([{ id: 'direct', label: '직통', desc: '환승 없이 한 번에 가는 열차' }], 'direct', 'railPickDirect')
+                + `<p class="mt-3 text-[11.5px] font-semibold text-white/40 leading-relaxed">· 현재는 직통 운행 열차만 조회합니다.<br>· 환승 경로는 주요 환승역(서울 · 대전 · 동대구 · 익산 등)에서 각각 조회해 주세요.</p>`);
+        }
+        window.railPickDirect = function () { railCloseSheet(); };
+
+        function railSheetNear() {
+            railShowSheet('인접역', railOptionRows([
+                { id: 'off', label: '인접역 미포함', desc: '선택한 역에서 출발 · 도착하는 열차만' },
+                { id: 'on', label: '인접역 포함', desc: '바로 옆 역에서 타고 내리는 열차도 함께' }
+            ], railState.near ? 'on' : 'off', 'railPickNear'));
+        }
+        window.railPickNear = function (id) {
+            railState.near = (id === 'on');
+            railCloseSheet();
+            railRunSearch();
+        };
+
+        function railSheetSort() {
+            railShowSheet('정렬', railOptionRows(RAIL_SORTS, railState.sort, 'railPickSort'));
+        }
+        window.railPickSort = function (id) {
+            railState.sort = id;
+            railCloseSheet();
+            railRenderResult();
+        };
+
+        /* ---------- 역 선택 시트 ---------- */
+        window.railOpenStationPicker = function (which) {
+            railTmp = { which, query: '' };
+            railShowSheet(which === 'dep' ? '출발역 선택' : '도착역 선택', railStationSheetHtml(''));
+            setTimeout(() => {
+                const input = document.getElementById('rail-station-search');
+                if (input) input.focus({ preventScroll: true });
+            }, 260);
+        };
+
+        function railStationSheetHtml(query) {
+            const q = (query || '').trim();
+            const other = railTmp.which === 'dep' ? railState.arr : railState.dep;
+            let html = `
+                <div class="sticky top-0 -mx-5 px-5 pt-1 pb-3 bg-[#111A2C] z-10">
+                    <div class="flex items-center gap-2 h-11 px-3.5 rounded-xl bg-white/[0.08] border border-white/[0.12]">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#8B94AA" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+                        <input id="rail-station-search" type="search" inputmode="search" autocomplete="off" value="${railEsc(q)}"
+                               oninput="railStationSearch(this.value)" placeholder="역 이름 검색 (예: 동대구)"
+                               class="flex-1 bg-transparent outline-none text-[14px] font-semibold text-white placeholder:text-white/35" />
+                    </div>
+                </div>`;
+
+            if (!q) {
+                if (railState.recent.length) {
+                    html += `<div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[12px] font-extrabold text-white/50">최근 검색</span>
+                            <button onclick="railClearRecent()" class="text-[11px] font-bold text-white/35">지우기</button>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${railState.recent.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="px-3 py-1.5 rounded-full bg-white/[0.08] border border-white/10 text-[12.5px] font-bold text-white/85">${railEsc(n)}</button>`).join('')}
+                        </div>
+                    </div>`;
+                }
+                html += `<div class="mb-4">
+                    <div class="text-[12px] font-extrabold text-white/50 mb-2">많이 찾는 역</div>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        ${RAIL_POPULAR.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] font-bold text-white/90 ${n === other ? 'opacity-40' : ''}">${railEsc(n)}</button>`).join('')}
+                    </div>
+                </div>`;
+            }
+
+            Object.keys(RAIL_REGION_MAP).forEach(region => {
+                const items = RAIL_ALL_STATIONS.filter(n => RAIL_STATION_REGION[n] === region && (!q || n.includes(q)));
+                if (!items.length) return;
+                html += `<div class="mb-4">
+                    <div class="text-[12px] font-extrabold text-white/50 mb-2">${region}</div>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        ${items.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="py-2.5 px-1 rounded-xl bg-white/[0.05] border border-white/[0.08] text-[12.5px] font-bold text-white/85 truncate ${n === other ? 'opacity-40' : ''}">${railEsc(n)}</button>`).join('')}
+                    </div>
+                </div>`;
+            });
+
+            if (q && !RAIL_ALL_STATIONS.some(n => n.includes(q))) {
+                html += `<div class="py-10 text-center text-[13px] font-bold text-white/40">'${railEsc(q)}' 검색 결과가 없습니다.</div>`;
+            }
+            return html;
+        }
+
+        window.railStationSearch = function (value) {
+            railTmp.query = value;
+            const body = document.getElementById('rail-sheet-body');
+            if (!body) return;
+            const el = document.activeElement;
+            const pos = el && el.id === 'rail-station-search' ? el.selectionStart : null;
+            body.innerHTML = railStationSheetHtml(value);
+            const input = document.getElementById('rail-station-search');
+            if (input) {
+                input.focus({ preventScroll: true });
+                if (pos !== null) { try { input.setSelectionRange(pos, pos); } catch (e) {} }
+            }
+        };
+
+        window.railClearRecent = function () {
+            railState.recent = [];
+            railSave();
+            railStationSearch(railTmp.query || '');
+        };
+
+        window.railPickStation = function (name) {
+            if (railTmp.which === 'dep') {
+                if (name === railState.arr) railState.arr = railState.dep;
+                railState.dep = name;
+            } else {
+                if (name === railState.dep) railState.dep = railState.arr;
+                railState.arr = name;
+            }
+            railState.recent = [name].concat(railState.recent.filter(n => n !== name)).slice(0, 8);
+            railSave();
+            railRenderHome();
+            railCloseSheet();
+        };
+
+        /* ---------- 날짜 · 시각 시트 ---------- */
+        function railSheetDate() {
+            const d = railState.date;
+            railTmp = { y: d.getFullYear(), m: d.getMonth(), day: d.getDate(), h: d.getHours(), mi: Math.floor(d.getMinutes() / 10) * 10, viewY: d.getFullYear(), viewM: d.getMonth() };
+            railShowSheet('가는날 선택', railDateSheetHtml(),
+                `<button onclick="railApplyDate()" class="w-full py-3.5 rounded-2xl bg-[#2C6BF3] text-white text-[15px] font-extrabold active:scale-[.99] transition-transform">확인</button>`);
+            requestAnimationFrame(railScrollHourStrip);
+        }
+        function railScrollHourStrip() {
+            const strip = document.getElementById('rail-hour-strip');
+            const on = strip && strip.querySelector('.is-on');
+            if (strip && on) strip.scrollLeft = Math.max(0, on.offsetLeft - strip.clientWidth / 2 + on.offsetWidth / 2);
+        }
+
+        function railDateSheetHtml() {
+            const today = railToday();
+            const maxDate = new Date(today.getTime() + 30 * 86400000);
+            const first = new Date(railTmp.viewY, railTmp.viewM, 1);
+            const startDow = first.getDay();
+            const daysInMonth = new Date(railTmp.viewY, railTmp.viewM + 1, 0).getDate();
+            const prevDisabled = new Date(railTmp.viewY, railTmp.viewM, 1) <= new Date(today.getFullYear(), today.getMonth(), 1);
+            const nextDisabled = new Date(railTmp.viewY, railTmp.viewM, 1) >= new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+            let cells = '';
+            for (let i = 0; i < startDow; i++) cells += `<div></div>`;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cur = new Date(railTmp.viewY, railTmp.viewM, day);
+                const dow = cur.getDay();
+                const off = cur < today || cur > maxDate;
+                const on = !off && railTmp.y === cur.getFullYear() && railTmp.m === cur.getMonth() && railTmp.day === day;
+                const isToday = cur.getTime() === today.getTime();
+                const cls = ['rail-cal-cell'];
+                if (off) cls.push('is-off');
+                if (dow === 0) cls.push('is-sun');
+                if (dow === 6) cls.push('is-sat');
+                if (on) cls.push('is-on');
+                cells += `<button ${off ? 'disabled' : ''} onclick="railPickDay(${cur.getFullYear()},${cur.getMonth()},${day})" class="${cls.join(' ')}">
+                    <span>${day}</span>${isToday ? '<span class="text-[8.5px] font-bold mt-0.5 opacity-70">오늘</span>' : ''}
+                </button>`;
+            }
+
+            const hours = Array.from({ length: 24 }, (_, i) => i);
+            const mins = [0, 10, 20, 30, 40, 50];
+
+            return `
+            <div class="flex items-center justify-between mb-3">
+                <button ${prevDisabled ? 'disabled' : ''} onclick="railMoveMonth(-1)" class="w-9 h-9 rounded-full bg-white/[0.08] flex items-center justify-center text-white ${prevDisabled ? 'opacity-30' : ''}">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5 8 12l7 7"/></svg>
+                </button>
+                <div class="text-[15.5px] font-extrabold text-white">${railTmp.viewY}년 ${railTmp.viewM + 1}월</div>
+                <button ${nextDisabled ? 'disabled' : ''} onclick="railMoveMonth(1)" class="w-9 h-9 rounded-full bg-white/[0.08] flex items-center justify-center text-white ${nextDisabled ? 'opacity-30' : ''}">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[11px] font-extrabold text-white/40">
+                ${RAIL_DOW.map((d, i) => `<div class="${i === 0 ? 'text-[#FF7B7B]' : i === 6 ? 'text-[#7BB2FF]' : ''}">${d}</div>`).join('')}
+            </div>
+            <div class="grid grid-cols-7 gap-1">${cells}</div>
+
+            <div class="mt-5 text-[12px] font-extrabold text-white/50 mb-2">출발 시각</div>
+            <div id="rail-hour-strip" class="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1">
+                ${hours.map(h => `<button onclick="railPickHour(${h})" class="rail-time-btn ${railTmp.h === h ? 'is-on' : ''}">${pad2(h)}시</button>`).join('')}
+            </div>
+            <div class="flex gap-1.5 overflow-x-auto hide-scrollbar mt-2 pb-1">
+                ${mins.map(m => `<button onclick="railPickMinute(${m})" class="rail-time-btn ${railTmp.mi === m ? 'is-on' : ''}">${pad2(m)}분</button>`).join('')}
+            </div>
+            <div class="mt-4 px-4 py-3 rounded-xl bg-white/[0.05] border border-white/[0.08] text-center text-[13.5px] font-extrabold text-white">
+                ${railTmp.y}년 ${railTmp.m + 1}월 ${railTmp.day}일 (${RAIL_DOW[new Date(railTmp.y, railTmp.m, railTmp.day).getDay()]}) ${pad2(railTmp.h)}:${pad2(railTmp.mi)}
+            </div>`;
+        }
+
+        function railRefreshDateSheet() {
+            const body = document.getElementById('rail-sheet-body');
+            if (!body) return;
+            body.innerHTML = railDateSheetHtml();
+            railScrollHourStrip();
+        }
+        window.railMoveMonth = function (delta) {
+            const d = new Date(railTmp.viewY, railTmp.viewM + delta, 1);
+            railTmp.viewY = d.getFullYear(); railTmp.viewM = d.getMonth();
+            railRefreshDateSheet();
+        };
+        window.railPickDay = function (y, m, day) { railTmp.y = y; railTmp.m = m; railTmp.day = day; railRefreshDateSheet(); };
+        window.railPickHour = function (h) { railTmp.h = h; railRefreshDateSheet(); };
+        window.railPickMinute = function (m) { railTmp.mi = m; railRefreshDateSheet(); };
+        window.railApplyDate = function () {
+            railState.date = new Date(railTmp.y, railTmp.m, railTmp.day, railTmp.h, railTmp.mi, 0, 0);
+            railRenderHome();
+            railCloseSheet();
+            const result = document.getElementById('rail-result');
+            if (result && !result.classList.contains('hidden')) railRunSearch();
+        };
+
+        /* ---------------- 열차 조회 ---------------- */
+        function railRunSearch() {
+            railTrains = railBuildTrains(railState.dep, railState.arr, railState.date, railState.near);
+            railRenderResult();
+        }
+
+        window.railSearch = function () {
+            if (railState.dep === railState.arr) { railToast('출발역과 도착역을 다르게 선택해 주세요.'); return; }
+            railRunSearch();
+            const wrap = document.getElementById('rail-result');
+            if (!wrap) return;
+            wrap.classList.remove('hidden');
+            wrap.classList.add('flex');
+            const list = document.getElementById('rail-result-list');
+            if (list) list.scrollTop = 0;
+        };
+
+        window.railCloseResult = function () {
+            const wrap = document.getElementById('rail-result');
+            if (!wrap) return;
+            wrap.classList.add('hidden');
+            wrap.classList.remove('flex');
+        };
+
+        window.railShiftDay = function (delta) {
+            const base = new Date(railState.date);
+            const next = new Date(base.getFullYear(), base.getMonth(), base.getDate() + delta, 0, 0, 0, 0);
+            const today = railToday();
+            if (next < today) { railToast('오늘 이전 날짜는 조회할 수 없습니다.'); return; }
+            if (next > new Date(today.getTime() + 30 * 86400000)) { railToast('한 달 이내 날짜만 조회할 수 있습니다.'); return; }
+            const now = new Date();
+            railState.date = (next.getTime() === today.getTime())
+                ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0, 0)
+                : next;
+            railRenderHome();
+            railRunSearch();
+            const list = document.getElementById('rail-result-list');
+            if (list) list.scrollTop = 0;
+        };
+
+        function railSortedTrains() {
+            const list = railState.type === '전체' ? railTrains.slice() : railTrains.filter(t => t.cat === railState.type);
+            const s = railState.sort;
+            list.sort((a, b) => {
+                if (s === 'arr') return a.arrKey - b.arrKey || a.sortKey - b.sortKey;
+                if (s === 'dur') return a.duration - b.duration || a.sortKey - b.sortKey;
+                if (s === 'fare') return a.fare - b.fare || a.sortKey - b.sortKey;
+                return a.sortKey - b.sortKey || a.duration - b.duration;
+            });
+            return list;
+        }
+
+        window.railRenderResult = function () {
+            const listEl = document.getElementById('rail-result-list');
+            if (!listEl) return;
+            const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+            setText('rail-result-dep', railState.dep);
+            setText('rail-result-arr', railState.arr);
+            setText('rail-day-text', railFmtDateFull(railState.date));
+            setText('rail-sel-type', (RAIL_TYPE_FILTERS.find(f => f.id === railState.type) || RAIL_TYPE_FILTERS[0]).label);
+            setText('rail-sel-direct', '직통');
+            setText('rail-sel-near', railState.near ? '인접역 포함' : '인접역 미포함');
+            setText('rail-sort-text', (RAIL_SORTS.find(s => s.id === railState.sort) || RAIL_SORTS[0]).label);
+
+            const list = railSortedTrains();
+            const realCount = list.filter(t => t.source === 'real').length;
+            const estCount = list.length - realCount;
+            setText('rail-result-sub', estCount === 0
+                ? `직통 · 열차 ${list.length}개 · 실제 시간표`
+                : (realCount === 0 ? `직통 · 열차 ${list.length}개 · 추정 시간표`
+                                   : `직통 · 열차 ${list.length}개 (실제 ${realCount} · 추정 ${estCount})`));
+
+            const nextDay = new Date(railState.date.getFullYear(), railState.date.getMonth(), railState.date.getDate() + 1);
+            const footer = `
+                <div class="py-10 flex flex-col items-center px-6">
+                    <p class="text-[15px] font-bold text-white/60 tracking-tight">원하는 열차를 찾지 못하셨나요?</p>
+                    <button onclick="railShiftDay(1)" class="rail-nextday mt-4">
+                        <span><b class="text-[#4E8BFF] font-extrabold">다음날(${nextDay.getMonth() + 1}월 ${nextDay.getDate()}일)</b> 열차 찾아보기</span>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                    </button>
+                </div>`;
+
+            if (!list.length) {
+                listEl.innerHTML = `
+                    <div class="pt-16 flex flex-col items-center text-center px-8">
+                        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#4A5468" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="3" width="14" height="14" rx="4"/><path d="M5 10h14"/><path d="m7 21 2-3M17 21l-2-3"/><circle cx="9" cy="13.5" r="1"/><circle cx="15" cy="13.5" r="1"/>
+                        </svg>
+                        <p class="mt-4 text-[14.5px] font-extrabold text-white/70">${railTrains.length ? '해당 조건의 열차가 없습니다.' : '직통 열차를 찾지 못했습니다.'}</p>
+                        <p class="mt-2 text-[12.5px] font-semibold text-white/40 leading-relaxed">${railTrains.length ? '열차 종류를 바꾸어 다시 조회해 보세요.' : '두 역을 잇는 직통 운행 계통이 없습니다.<br>서울 · 대전 · 동대구 · 익산 등 주요 환승역을 이용해 주세요.'}</p>
+                    </div>${footer}`;
+                return;
+            }
+
+            const noteBar = estCount ? `<div class="px-4 py-2.5 bg-amber-400/[0.08] border-b border-amber-300/20 text-[11.5px] font-semibold text-amber-200/85 leading-relaxed">
+                    <b class="font-extrabold text-amber-200">추정</b> 표시는 실제 시간표 데이터가 없어 계산한 값입니다.${realCount ? '' : ' 이 구간·방향은 아직 실제 시간표가 없습니다.'}
+                </div>` : '';
+
+            listEl.innerHTML = noteBar + list.map(t => {
+                const mile = t.hasMile ? `<div class="mt-1 flex justify-end"><span class="rail-mile"><i>M</i>${t.mile}%적립</span></div>` : '';
+                const fareBlock = t.soldOut
+                    ? `<div class="flex items-baseline justify-between gap-2"><span class="rail-fare-label">일반실</span><span class="rail-fare text-[#FF8A8A]">매진</span></div>`
+                    : `<div class="flex items-baseline justify-between gap-2">
+                           <span class="rail-fare-label">일반실</span><span class="rail-fare">${railComma(t.fare)}원</span>
+                       </div>${mile}
+                       ${t.hasSpecial ? `<div class="mt-2.5 flex items-baseline justify-between gap-2">
+                           <span class="rail-fare-label">특실</span><span class="rail-fare">${railComma(t.fareSpecial)}원</span>
+                       </div>${mile}` : ''}`;
+                const nearTag = (t.isNearDep || t.isNearArr) ? `<span class="ml-1 px-1.5 py-0.5 rounded bg-[#2C6BF3]/25 text-[10px] font-extrabold text-[#8EB4FF]">인접역</span>` : '';
+                const estTag = t.source === 'real' ? '' : `<span class="ml-1 px-1.5 py-0.5 rounded bg-amber-400/20 text-[10px] font-extrabold text-amber-300">추정</span>`;
+                const dayTag = t.dayOffset ? `<span class="ml-1 px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-extrabold text-white/60">익일</span>` : '';
+                return `
+                <button class="rail-row ${t.soldOut ? 'is-soldout' : ''}" onclick="railOpenTrainInfo(${railTrains.indexOf(t)})">
+                    <div class="flex items-stretch gap-2.5">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="rail-type-badge" style="background:${t.typeColor}">${t.type}</span>
+                                <span class="text-[15px] font-extrabold text-white tracking-tight">${String(t.trainNo).padStart(3, '0')}</span>
+                                <span class="text-[12.5px] font-semibold text-white/40 truncate">· 타는 곳 ${t.platform}번</span>
+                            </div>
+                            <div class="mt-2 flex items-start gap-2.5">
+                                <div>
+                                    <div class="rail-time">${railMinToClock(t.depMin)}</div>
+                                    <div class="mt-1 text-[13px] font-semibold text-white/45">${railEsc(t.depName)}</div>
+                                </div>
+                                <svg viewBox="0 0 26 12" width="22" height="10" fill="none" stroke="#7C859B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="mt-2.5 shrink-0"><path d="M1 9h22"/><path d="M17 3 23 9"/></svg>
+                                <div>
+                                    <div class="rail-time">${railMinToClock(t.arrMin)}</div>
+                                    <div class="mt-1 text-[13px] font-semibold text-white/45">${railEsc(t.arrName)}</div>
+                                </div>
+                            </div>
+                            <div class="mt-2.5"><span class="rail-dur-chip">${railDur(t.duration)} 소요</span>${estTag}${nearTag}${dayTag}</div>
+                        </div>
+                        <div class="w-px bg-white/[0.09] shrink-0"></div>
+                        <div class="w-[124px] shrink-0 pt-0.5">${fareBlock}</div>
+                    </div>
+                </button>`;
+            }).join('') + footer;
+        };
+
+        /* ---------- 열차 상세 정보 ---------- */
+        window.railOpenTrainInfo = function (idx) {
+            const t = railTrains[idx];
+            if (!t) return;
+            const runDate = new Date(railState.date.getFullYear(), railState.date.getMonth(), railState.date.getDate() + t.dayOffset);
+            const rows = [
+                ['운행 노선', t.routeName],
+                ['열차 번호', `${t.type} ${t.trainNo}`],
+                ['운행 일자', `${runDate.getFullYear()}년 ${runDate.getMonth() + 1}월 ${runDate.getDate()}일 (${RAIL_DOW[runDate.getDay()]})`],
+                ['출발', `${t.depName} ${railMinToClock(t.depMin)} · 타는 곳 ${t.platform}번`],
+                ['도착', `${t.arrName} ${railMinToClock(t.arrMin)}`],
+                ['소요 시간', railDur(t.duration)],
+                ['운행 거리', `${t.distance}km`],
+                ['일반실 운임', t.soldOut ? '매진' : `${railComma(t.fare)}원`],
+                ['특실 운임', t.hasSpecial ? `${railComma(t.fareSpecial)}원` : '운영하지 않음'],
+                ['자료', t.source === 'real' ? `실제 시간표 (${t.serviceDate || '기준일 미상'})` : '추정 시간표 (실제 운행과 다를 수 있음)']
+            ];
+
+            const iDep = Array.isArray(t.stops) ? t.stops.findIndex(x => x.name === t.depName) : -1;
+            const iArr = Array.isArray(t.stops) ? t.stops.findIndex(x => x.name === t.arrName) : -1;
+            const stopList = (t.source === 'real' && iDep > -1 && iArr > iDep)
+                ? `<div class="mt-3 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
+                        <div class="text-[12px] font-extrabold text-white/50 mb-2">정차역 시각 <span class="text-white/30 font-semibold">(수집된 구간)</span></div>
+                        ${t.stops.map((x, i) => {
+                            const inRange = i >= iDep && i <= iArr;
+                            const time = x.dep != null ? x.dep : x.arr;
+                            return `<div class="flex items-center justify-between py-1.5 ${inRange ? '' : 'opacity-35'}">
+                                <span class="flex items-center gap-2 text-[13px] font-bold ${inRange ? 'text-white' : 'text-white/60'}">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background:${inRange ? t.typeColor : 'rgba(255,255,255,.25)'}"></span>${railEsc(x.name)}
+                                </span>
+                                <span class="text-[13px] font-extrabold ${inRange ? 'text-white' : 'text-white/45'}">${railMinToClock(time)}</span>
+                            </div>`;
+                        }).join('')}
+                   </div>`
+                : '';
+            railShowSheet('열차 정보', `
+                <div class="px-4 py-4 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
+                    <div class="flex items-center gap-2">
+                        <span class="rail-type-badge" style="background:${t.typeColor}">${t.type}</span>
+                        <span class="text-[15px] font-extrabold text-white">${t.trainNo}</span>
+                        <span class="text-[11.5px] font-bold text-white/35 ml-auto">${t.routeName}</span>
+                    </div>
+                    <div class="mt-3 flex items-end gap-2 flex-wrap">
+                        <span class="text-[22px] font-extrabold text-white tracking-tight">${railMinToClock(t.depMin)}</span>
+                        <span class="text-[13px] font-bold text-white/55 mb-0.5">${railEsc(t.depName)}</span>
+                        <svg viewBox="0 0 24 12" width="18" height="10" fill="none" stroke="#7C859B" stroke-width="2" stroke-linecap="round" class="mb-1.5"><path d="M1 9h21"/><path d="M16 3l6 6"/></svg>
+                        <span class="text-[22px] font-extrabold text-white tracking-tight">${railMinToClock(t.arrMin)}</span>
+                        <span class="text-[13px] font-bold text-white/55 mb-0.5">${railEsc(t.arrName)}</span>
+                    </div>
+                </div>
+                <div class="mt-3 px-4 py-2 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
+                    ${rows.map(([k, v]) => `<div class="flex items-start justify-between gap-3 py-2.5 border-b border-white/[0.06] last:border-0">
+                        <span class="text-[12.5px] font-semibold text-white/45 shrink-0">${k}</span>
+                        <span class="text-[13px] font-bold text-white text-right">${railEsc(v)}</span>
+                    </div>`).join('')}
+                </div>
+                ${stopList}
+                <p class="mt-3 text-[11px] font-semibold text-white/35 leading-relaxed">· 본 화면은 열차 정보 조회 전용이며 승차권을 발권하지 않습니다.<br>· 실제 예매는 코레일톡 · 레츠코레일에서 진행해 주세요.</p>`);
+        };
+
+        /* ---------------- 초기화 ---------------- */
+        railLoad();
+        railState.date = new Date();
+        railRenderHome();
+
+        // 폰트 로딩 후 하단 네비 인디케이터 위치를 다시 계산한다.
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const rh = document.getElementById('rail-home');
+                if (typeof window.switchTab === 'function' && rh && !rh.classList.contains('hidden')) window.switchTab('home');
+            }, 500);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const sheet = document.getElementById('rail-sheet');
+            const result = document.getElementById('rail-result');
+            if (sheet && !sheet.classList.contains('hidden')) { railCloseSheet(); return; }
+            if (result && !result.classList.contains('hidden')) railCloseResult();
+        });
+    })();
     </script>
 </body>
 </html>
