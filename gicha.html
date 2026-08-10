@@ -5878,11 +5878,7 @@
         const RAIL_REAL_SOURCES = [
             { line: '경부선', routeId: 'gyeongbu', global: 'GYEONGBU_GENERAL_TRAIN_TIMETABLE' }
         ];
-        // 파일의 정차 순서가 실제와 다른 구간 보정 (부산 방면 기준 … 화명 - 구포 - 사상 - 부산)
-        const RAIL_ORDER_FIX = { '경부선': [['구포', '사상']] };
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
-        // 무궁화호 운임 → 영업거리(km) 환산 계수 (대전 166km · 부산 442km 기준으로 보정)
-        const RAIL_FARE_TO_KM = 0.01547;
 
         const railReal = {};   // { 노선명: { stations, order, km, fare, trains, serviceDate, source } }
 
@@ -5891,87 +5887,47 @@
             const m = /^(\d{1,2}):(\d{2})$/.exec(String(t).trim());
             return m ? Number(m[1]) * 60 + Number(m[2]) : null;
         }
-        function railWon(v) { return Number(String(v).replace(/[^0-9]/g, '')) || 0; }
 
         function railBuildRealLine(src) {
             const raw = (typeof window !== 'undefined') ? window[src.global] : null;
             if (!raw || !Array.isArray(raw.stations) || !Array.isArray(raw.trains)) return null;
 
-            // 1) 정차역 순서 (서울 방면 → 부산 방면)
-            const stations = raw.stations.slice().sort((a, b) => a.order - b.order).map(st => railStripSuffix(st.name));
-            (RAIL_ORDER_FIX[src.line] || []).forEach(([a, b]) => {
-                const ia = stations.indexOf(a), ib = stations.indexOf(b);
-                if (ia > -1 && ib > -1 && ia > ib) { stations[ib] = a; stations[ia] = b; }
-            });
-            const order = {};
-            stations.forEach((n, i) => { order[n] = i; });
-
-            // 2) 열차별 방향 (byStation의 direction 사용)
-            const dirOf = {};
-            Object.values(raw.byStation || {}).forEach(list => (list || []).forEach(e => { dirOf[e.trainNo] = e.direction; }));
-
-            // 3) 운임표: 서울역 기준 누적 운임 → 임의 구간 운임을 차액으로 계산
-            const fare = {};
-            const addFare = (type, station, won) => {
-                fare[type] = fare[type] || {};
-                if (fare[type][station] == null) fare[type][station] = won;
-            };
-            const anchorName = railStripSuffix(stations[0]);
-            Object.entries(raw.byStation || {}).forEach(([st, list]) => (list || []).forEach(e => {
-                if (railStripSuffix(e.to) !== anchorName) return;
-                addFare(e.trainType, railStripSuffix(st), railWon(e.fare));
-            }));
-            Object.keys(fare).forEach(type => { fare[type][anchorName] = 0; });
-            // 기준역(대전) 운임으로 빈칸 보강
-            Object.entries(raw.byStation || {}).forEach(([st, list]) => (list || []).forEach(e => {
-                const type = e.trainType, name = railStripSuffix(st), to = railStripSuffix(e.to);
-                if (to === anchorName || !fare[type] || fare[type][name] != null) return;
-                const hub = fare[type][to];
-                const won = railWon(e.fare);
-                if (hub != null && won > (RAIL_MIN_FARE[type] || 2600)) fare[type][name] = hub + won;
-            }));
-            // 남은 빈칸은 정차 순서 기준 선형 보간
-            Object.keys(fare).forEach(type => {
-                const tbl = fare[type];
-                const known = stations.map((n, i) => ({ n, i, f: tbl[n] })).filter(x => x.f != null);
-                if (known.length < 2) return;
-                stations.forEach((n, i) => {
-                    if (tbl[n] != null) return;
-                    let before = null, after = null;
-                    known.forEach(k => { if (k.i < i) before = k; else if (k.i > i && !after) after = k; });
-                    if (before && after) tbl[n] = Math.round((before.f + (after.f - before.f) * (i - before.i) / (after.i - before.i)) / 100) * 100;
-                });
+            // 1) 정차역 순서 · 영업거리 (데이터 파일이 서울 기점 순서와 km 를 그대로 제공)
+            const ordered = raw.stations.slice().sort((a, b) => a.order - b.order);
+            const stations = ordered.map(st => railStripSuffix(st.name));
+            const order = {}, km = {};
+            ordered.forEach((st, i) => {
+                const n = railStripSuffix(st.name);
+                order[n] = i;
+                if (st.km != null) km[n] = st.km;
             });
 
-            // 4) 영업거리: 무궁화호 운임을 거리로 환산 (없으면 다른 등급으로 대체)
-            const kmBase = fare['무궁화호'] || fare[Object.keys(fare)[0]] || {};
-            const km = {};
-            stations.forEach(n => { if (kmBase[n] != null) km[n] = Math.round(kmBase[n] * RAIL_FARE_TO_KM); });
-
-            // 5) 열차별 정차 타임라인 (자정 넘김 보정)
+            // 2) 열차별 정차 타임라인 (원본은 정차역마다 시각 1개 = 출발시각, 자정 넘김 보정)
             const trains = raw.trains.map(t => {
-                const dep = {}, arr = {};
-                (t.samples || []).forEach(sm => {
-                    const st = railStripSuffix(sm.station), to = railStripSuffix(sm.to);
-                    if (order[st] != null && sm.departureTime) dep[st] = railClockToMin(sm.departureTime);
-                    if (order[to] != null && sm.arrivalTime) arr[to] = railClockToMin(sm.arrivalTime);
-                });
-                const names = Array.from(new Set(Object.keys(dep).concat(Object.keys(arr))));
-                if (!names.length) return null;
-                const dir = dirOf[t.trainNo] === 'up' ? 'up' : 'down';
-                names.sort((a, b) => dir === 'up' ? order[b] - order[a] : order[a] - order[b]);
                 let prev = -1, add = 0;
-                const stops = names.map(n => {
-                    const base = arr[n] != null ? arr[n] : dep[n];
+                const stops = [];
+                (t.stops || []).forEach(s => {
+                    const n = railStripSuffix(s.station);
+                    const base = railClockToMin(s.time);
+                    if (order[n] == null || base == null) return;
                     if (base < prev) add += 1440;
                     prev = base;
-                    return { name: n, dep: dep[n] == null ? null : dep[n] + add, arr: arr[n] == null ? null : arr[n] + add };
+                    stops.push({ name: n, dep: base + add, arr: base + add });
                 });
-                return { trainNo: String(t.trainNo), type: t.trainType, dir, stops };
+                if (stops.length < 2) return null;
+                return {
+                    trainNo: String(t.trainNo), type: t.type,
+                    dir: t.direction === 'up' ? 'up' : 'down',
+                    origin: t.origin || '', terminal: t.terminal || '', note: t.note || '',
+                    stops
+                };
             }).filter(Boolean);
 
             return {
-                line: src.line, routeId: src.routeId, stations, order, km, fare, trains,
+                line: src.line, routeId: src.routeId, stations, order, km,
+                // 원본 엑셀에 운임 필드가 없다 → railFare() 의 거리비례 추정값으로 대체된다.
+                fare: {},
+                trains,
                 serviceDate: (raw.meta && raw.meta.serviceDate) || '',
                 source: (raw.meta && raw.meta.source) || ''
             };
@@ -6004,7 +5960,8 @@
 
                     const T = RAIL_TYPES[t.type] || RAIL_TYPES['무궁화호'];
                     const fare = railRealFare(L, t.type, dep, arr);
-                    const distance = (L.km[dep] != null && L.km[arr] != null) ? Math.abs(L.km[dep] - L.km[arr]) : 0;
+                    const distance = (L.km[dep] != null && L.km[arr] != null)
+                        ? Math.round(Math.abs(L.km[dep] - L.km[arr]) * 10) / 10 : 0;
                     const seed = railHash(`${t.trainNo}|${L.line}|${dep}|${arr}`);
                     out.push({
                         source: 'real', lineName: L.line, serviceDate: L.serviceDate,
