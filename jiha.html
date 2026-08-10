@@ -288,7 +288,7 @@
         .subway-map-train {
             position: relative;
             width: 100px;
-            height: 36px;
+            height: 30px;
             pointer-events: auto;
             cursor: pointer;
             filter: drop-shadow(0 2px 1.5px rgba(15,23,42,.24)) drop-shadow(0 5px 6px rgba(15,23,42,.18));
@@ -306,7 +306,7 @@
         }
         .subway-map-train.is-nationwide {
             width: 27.5px;
-            height: 10px;
+            height: 8.25px;
             filter: drop-shadow(0 1px 1px rgba(15,23,42,.24));
             opacity: .9;
         }
@@ -333,8 +333,8 @@
         }
         .subway-map-train-label {
             position: absolute;
-            left: 65.54%;
-            top: 62.34%;
+            left: 68.5%;
+            top: 54.3%;
             display: flex;
             width: 21px;
             height: 21px;
@@ -342,7 +342,7 @@
             justify-content: center;
             transform: translate(-50%, -50%);
             color: #fff;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 900;
             line-height: 1;
             letter-spacing: -.5px;
@@ -354,7 +354,7 @@
             transform-origin: 50% 50%;
         }
         .subway-map-train-label.is-wide {
-            font-size: 7.8px;
+            font-size: 9px;
             letter-spacing: -1px;
         }
         .subway-map-train.is-nationwide .subway-map-train-label {
@@ -1594,19 +1594,30 @@
         const MAP_TRAIN_MAX_SUBPIXEL_OFFSET = 1.05;
         const MAP_CAMERA_SMOOTHING_MS = 90;
         const MAP_TRAIN_CANVAS_WIDTH = 100;
-        const MAP_TRAIN_CANVAS_HEIGHT = 36;
+        const MAP_TRAIN_CANVAS_HEIGHT = 30;
         const MAP_TRAIN_CANVAS_SCALE = 3;
-        const loadMapTrainAsset = src => new Promise((resolve, reject) => {
-            const image = new Image();
-            image.decoding = 'async';
-            image.onload = () => resolve(image);
-            image.onerror = reject;
-            image.src = src;
-        });
-        const mapTrainCanvasAssets = Promise.all([
-            loadMapTrainAsset('assets/subway-train-map-reference-v7.png'),
-            loadMapTrainAsset('assets/subway-train-map-reference-accent-v7.png')
-        ]);
+        // 지도 탭 열차는 한쪽 측면이 보이는 3/4 부감 차체를 100×30 좌표계에 코드로 그린다.
+        // 진행 방향은 +x(오른쪽), 측면(창문이 있는 면)은 y가 작은 쪽이며,
+        // 캔버스(지도 탭)와 SVG(노선 탭)가 같은 좌표값을 공유한다.
+        const MAP_TRAIN_SIDE_WALL_Y = 4.55;          // 지붕면과 측면의 경계
+        const MAP_TRAIN_SIDE_WINDOW_STARTS = [7, 23, 53.8, 70];
+        const MAP_TRAIN_SIDE_WINDOW_WIDTH = 13.6;
+        const MAP_TRAIN_SIDE_WINDOW_TOP = 1.95;
+        const MAP_TRAIN_SIDE_WINDOW_HEIGHT = 2.6;
+        const MAP_TRAIN_BAND_X = 38.65;              // 지붕면 기준 색 띠 시작
+        const MAP_TRAIN_BAND_WIDTH = 9.65;
+        const MAP_TRAIN_BAND_SKEW = 4.25;            // 측면에서 띠가 앞으로 밀리는 양
+        // 앞유리는 사각형이 아니라, 노즈 외곽선에서 일정한 흰 여백을 두고 따라가는 모양이다.
+        const MAP_TRAIN_CAB_GLASS_PATH = 'M92 4.3L104 .2L104 31L92 26.4Q88.5 26.4 88.5 24.8L88.5 6.2Q88.5 4.3 92 4.3Z';
+        const MAP_TRAIN_CAB_MARGIN = 2.8;
+        const MAP_TRAIN_NOSE_CLIP_X = 84;
+        const MAP_TRAIN_BADGE_X = 68.5;
+        const MAP_TRAIN_BADGE_Y = 16.3;
+        const MAP_TRAIN_BADGE_RADIUS = 10.9;
+        const MAP_TRAIN_BODY_PATH = 'M7 .25L92.5 .25C96.3 .45 99.3 3.6 100 8.9L100 16.03C98.8 22.8 95 25.7 90 26.6C86 28.2 82 29.4 78 29.6L7 29.7C3.6 29.15 1.2 25 0 24L0 7.03C1.2 5 3.6 .8 7 .25Z';
+        const MAP_TRAIN_BODY_FILL = '#FFFFFF';
+        const MAP_TRAIN_GLASS_COLOR = '#313131';
+        const MAP_TRAIN_CAB_GLASS_COLOR = '#373737';
 
         const dom = {
             mainHeader: document.getElementById('main-header'),
@@ -4207,8 +4218,39 @@
             ctx.closePath();
         };
 
+        // 앞쪽(오른쪽) 노즈는 지붕 쪽으로 길게 흐르고 측면 쪽 모서리는 짧게 꺾인다.
+        const traceMapTrainBody = ctx => {
+            ctx.beginPath();
+            ctx.moveTo(7, .25);
+            ctx.lineTo(92.5, .25);
+            ctx.bezierCurveTo(96.3, .45, 99.3, 3.6, 100, 8.9);
+            ctx.lineTo(100, 16.03);
+            ctx.bezierCurveTo(98.8, 22.8, 95, 25.7, 90, 26.6);
+            ctx.bezierCurveTo(86, 28.2, 82, 29.4, 78, 29.6);
+            ctx.lineTo(7, 29.7);
+            ctx.bezierCurveTo(3.6, 29.15, 1.2, 25, 0, 24);
+            ctx.lineTo(0, 7.03);
+            ctx.bezierCurveTo(1.2, 5, 3.6, .8, 7, .25);
+            ctx.closePath();
+        };
+
+        // 색 띠는 지붕에서는 직각이고 측면으로 내려오면서 앞쪽으로 밀린다.
+        const traceMapTrainBand = ctx => {
+            const x0 = MAP_TRAIN_BAND_X;
+            const x1 = x0 + MAP_TRAIN_BAND_WIDTH;
+            const skew = MAP_TRAIN_BAND_SKEW;
+            const wall = MAP_TRAIN_SIDE_WALL_Y;
+            ctx.beginPath();
+            ctx.moveTo(x0 + skew, 0);
+            ctx.lineTo(x1 + skew, 0);
+            ctx.lineTo(x1, wall);
+            ctx.lineTo(x1, MAP_TRAIN_CANVAS_HEIGHT);
+            ctx.lineTo(x0, MAP_TRAIN_CANVAS_HEIGHT);
+            ctx.lineTo(x0, wall);
+            ctx.closePath();
+        };
+
         const renderSubwayMapTrainCanvas = async (canvas, color, isExpress, specialMeta) => {
-            const [bodyImage, accentMaskImage] = await mapTrainCanvasAssets;
             const width = MAP_TRAIN_CANVAS_WIDTH;
             const height = MAP_TRAIN_CANVAS_HEIGHT;
             const scale = MAP_TRAIN_CANVAS_SCALE;
@@ -4219,53 +4261,53 @@
             ctx.clearRect(0, 0, width, height);
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(bodyImage, 0, 0, width, height);
 
-            const accentCanvas = document.createElement('canvas');
-            accentCanvas.width = width * scale;
-            accentCanvas.height = height * scale;
-            const accentCtx = accentCanvas.getContext('2d');
-            accentCtx.imageSmoothingEnabled = true;
-            accentCtx.imageSmoothingQuality = 'high';
-            accentCtx.drawImage(accentMaskImage, 0, 0, accentCanvas.width, accentCanvas.height);
-            accentCtx.globalCompositeOperation = 'source-in';
-            accentCtx.fillStyle = color;
-            accentCtx.fillRect(0, 0, accentCanvas.width, accentCanvas.height);
             ctx.save();
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.drawImage(accentCanvas, 0, 0, width, height);
-            ctx.restore();
+            traceMapTrainBody(ctx);
+            ctx.clip();
 
-            const badgeX = 65.54;
-            const badgeY = 22.44;
-            ctx.save();
-            ctx.shadowColor = 'rgba(15,23,42,.30)';
-            ctx.shadowBlur = 2;
-            ctx.shadowOffsetY = 1;
-            ctx.beginPath();
-            ctx.arc(badgeX, badgeY, 10.3, 0, Math.PI * 2);
+            ctx.fillStyle = MAP_TRAIN_BODY_FILL;
+            ctx.fillRect(0, 0, width, height);
+
+            // 진행 방향과 직각으로 지나가는 노선 색 띠
+            traceMapTrainBand(ctx);
             ctx.fillStyle = color;
             ctx.fill();
+
+            // 측면 창 4개
+            ctx.fillStyle = MAP_TRAIN_GLASS_COLOR;
+            MAP_TRAIN_SIDE_WINDOW_STARTS.forEach(windowX => {
+                drawCanvasRoundRect(ctx, windowX, MAP_TRAIN_SIDE_WINDOW_TOP, MAP_TRAIN_SIDE_WINDOW_WIDTH, MAP_TRAIN_SIDE_WINDOW_HEIGHT, MAP_TRAIN_SIDE_WINDOW_HEIGHT / 2);
+                ctx.fill();
+            });
+
+            // 운전실 전면 유리. 차체 밖까지 넉넉히 그린 뒤 외곽선을 흰색으로 덧그어
+            // 노즈 곡선을 따라 일정한 흰 여백(MAP_TRAIN_CAB_MARGIN)을 남긴다.
             ctx.save();
+            ctx.beginPath();
+            ctx.rect(MAP_TRAIN_NOSE_CLIP_X, 0, width, height);
             ctx.clip();
-            const badgeHighlight = ctx.createRadialGradient(badgeX - 3.2, badgeY - 3.2, .2, badgeX - 1.5, badgeY - 1.5, 9.5);
-            badgeHighlight.addColorStop(0, 'rgba(255,255,255,.28)');
-            badgeHighlight.addColorStop(.5, 'rgba(255,255,255,.06)');
-            badgeHighlight.addColorStop(1, 'rgba(255,255,255,0)');
-            ctx.fillStyle = badgeHighlight;
-            ctx.fillRect(badgeX - 11, badgeY - 11, 22, 22);
-            ctx.restore();
-            ctx.shadowColor = 'transparent';
-            ctx.lineWidth = 1.8;
-            ctx.strokeStyle = 'rgba(255,255,255,.98)';
+            ctx.fillStyle = MAP_TRAIN_CAB_GLASS_COLOR;
+            ctx.fill(new Path2D(MAP_TRAIN_CAB_GLASS_PATH));
+            traceMapTrainBody(ctx);
+            ctx.lineWidth = MAP_TRAIN_CAB_MARGIN * 2;
+            ctx.strokeStyle = MAP_TRAIN_BODY_FILL;
             ctx.stroke();
             ctx.restore();
+            ctx.restore();
 
+            // 노선 배지는 지붕면 위에 그대로 얹는다(참고 디자인에는 테두리가 없다).
+            ctx.beginPath();
+            ctx.arc(MAP_TRAIN_BADGE_X, MAP_TRAIN_BADGE_Y, MAP_TRAIN_BADGE_RADIUS, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // 급행 등 특별 운행 표시는 차체 뒤쪽 지붕에 얹는다.
             if (isExpress) {
                 ctx.save();
-                ctx.font = '900 5.8px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif';
-                const labelWidth = Math.max(19, ctx.measureText(specialMeta.label).width + 8);
-                drawCanvasRoundRect(ctx, 1.5, 1.5, labelWidth, 9.5, 4.75);
+                ctx.font = '900 6.2px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif';
+                const labelWidth = Math.max(20, ctx.measureText(specialMeta.label).width + 9);
+                drawCanvasRoundRect(ctx, 5, 11.6, labelWidth, 10.8, 5.4);
                 ctx.fillStyle = specialMeta.color;
                 ctx.fill();
                 ctx.lineWidth = 1;
@@ -4274,7 +4316,7 @@
                 ctx.fillStyle = '#FFFFFF';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(specialMeta.label, 1.5 + labelWidth / 2, 6.3);
+                ctx.fillText(specialMeta.label, 5 + labelWidth / 2, 17);
                 ctx.restore();
             }
             canvas.dataset.rendered = 'true';
@@ -4960,33 +5002,48 @@
         };
 
         const renderMapStyleLineTrain = (color, isSelected, angle, specialService = '', maskId = '') => {
-            // 지도 탭의 100×36 차체를 기존 노선 탭 차체(약 78px)의 절반인 39px로 표시한다.
+            // 지도 탭의 100×30 차체를 기존 노선 탭 차체(약 78px)의 절반인 39px로 표시한다.
             const width = 39;
             const height = width * MAP_TRAIN_CANVAS_HEIGHT / MAP_TRAIN_CANVAS_WIDTH;
             const x = -width / 2;
             const y = -height / 2;
-            const badgeX = x + width * .6554;
-            const badgeY = y + height * .6234;
-            const badgeRadius = height * (10.3 / MAP_TRAIN_CANVAS_HEIGHT);
+            const scale = width / MAP_TRAIN_CANVAS_WIDTH;
             const badge = getTrainLineBadge();
             const specialMeta = getSpecialServiceMeta(specialService);
-            const specialWidth = Math.max(7.4, (specialMeta.label?.length || 0) * 3.1 + 2.6);
+            const specialWidth = Math.max(19, (specialMeta.label?.length || 0) * 6.4 + 8);
+            const clipId = `${maskId || 'map-train'}-body`;
+            const noseClipId = `${clipId}-nose`;
             const selectedFilter = isSelected
                 ? 'drop-shadow(0 1.5px 1.2px rgba(15,23,42,.36)) drop-shadow(0 0 2.5px rgba(255,255,255,.98))'
                 : 'drop-shadow(0 1px .8px rgba(15,23,42,.28))';
+            // 지도 탭 캔버스와 같은 100×30 좌표를 그대로 쓰고 그룹 단위로 축소한다.
+            const sideWindows = MAP_TRAIN_SIDE_WINDOW_STARTS
+                .map(windowX => `<rect x="${windowX}" y="${MAP_TRAIN_SIDE_WINDOW_TOP}" width="${MAP_TRAIN_SIDE_WINDOW_WIDTH}" height="${MAP_TRAIN_SIDE_WINDOW_HEIGHT}" rx="${MAP_TRAIN_SIDE_WINDOW_HEIGHT / 2}" fill="${MAP_TRAIN_GLASS_COLOR}"/>`)
+                .join('');
+            const bx0 = MAP_TRAIN_BAND_X;
+            const bx1 = bx0 + MAP_TRAIN_BAND_WIDTH;
+            const bandPath = `M${bx0 + MAP_TRAIN_BAND_SKEW} 0H${bx1 + MAP_TRAIN_BAND_SKEW}L${bx1} ${MAP_TRAIN_SIDE_WALL_Y}V${MAP_TRAIN_CANVAS_HEIGHT}H${bx0}V${MAP_TRAIN_SIDE_WALL_Y}Z`;
+            const specialY = 17;
             return `
                 <rect x="-39" y="-12" width="78" height="24" fill="transparent"/>
-                <defs>
-                    <mask id="${maskId}" maskUnits="userSpaceOnUse" x="${x}" y="${y}" width="${width}" height="${height}" style="mask-type:alpha">
-                        <image href="assets/subway-train-map-reference-accent-v7.png" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none"/>
-                    </mask>
-                </defs>
                 <g style="filter:${selectedFilter}">
-                    <image href="assets/subway-train-map-reference-v7.png" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none"/>
-                    <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${color}" mask="url(#${maskId})" style="mix-blend-mode:multiply"/>
-                    <circle cx="${badgeX}" cy="${badgeY}" r="${badgeRadius}" fill="${color}" stroke="#FFFFFF" stroke-width=".7"/>
-                    <text x="${badgeX}" y="${badgeY + (badge.length > 1 ? 1 : 1.45)}" text-anchor="middle" fill="#FFFFFF" font-size="${badge.length > 1 ? '3' : '4.3'}" font-weight="900" transform="rotate(${-angle} ${badgeX} ${badgeY})">${badge}</text>
-                    ${specialService ? `<g transform="rotate(${-angle} ${x + 4.2} ${y + 2.5})"><rect x="${x + .6}" y="${y + .6}" width="${specialWidth}" height="3.7" rx="1.85" fill="${specialMeta.color}" stroke="#FFFFFF" stroke-width=".4"/><text x="${x + .6 + specialWidth / 2}" y="${y + 3.25}" text-anchor="middle" fill="#FFFFFF" font-size="2.25" font-weight="900">${specialMeta.label}</text></g>` : ''}
+                    <g transform="translate(${x} ${y}) scale(${scale})">
+                        <defs>
+                            <clipPath id="${clipId}"><path d="${MAP_TRAIN_BODY_PATH}"/></clipPath>
+                            <clipPath id="${noseClipId}"><rect x="${MAP_TRAIN_NOSE_CLIP_X}" y="0" width="${MAP_TRAIN_CANVAS_WIDTH}" height="${MAP_TRAIN_CANVAS_HEIGHT}"/></clipPath>
+                        </defs>
+                        <g clip-path="url(#${clipId})">
+                            <path d="${MAP_TRAIN_BODY_PATH}" fill="${MAP_TRAIN_BODY_FILL}"/>
+                            <path d="${bandPath}" fill="${color}"/>${sideWindows}
+                            <g clip-path="url(#${noseClipId})">
+                                <path d="${MAP_TRAIN_CAB_GLASS_PATH}" fill="${MAP_TRAIN_CAB_GLASS_COLOR}"/>
+                                <path d="${MAP_TRAIN_BODY_PATH}" fill="none" stroke="${MAP_TRAIN_BODY_FILL}" stroke-width="${MAP_TRAIN_CAB_MARGIN * 2}"/>
+                            </g>
+                        </g>
+                        <circle cx="${MAP_TRAIN_BADGE_X}" cy="${MAP_TRAIN_BADGE_Y}" r="${MAP_TRAIN_BADGE_RADIUS}" fill="${color}"/>
+                        <text x="${MAP_TRAIN_BADGE_X}" y="${MAP_TRAIN_BADGE_Y + (badge.length > 1 ? 3 : 4.4)}" text-anchor="middle" fill="#FFFFFF" font-size="${badge.length > 1 ? '9' : '13'}" font-weight="900" transform="rotate(${-angle} ${MAP_TRAIN_BADGE_X} ${MAP_TRAIN_BADGE_Y})">${badge}</text>
+                        ${specialService ? `<g transform="rotate(${-angle} ${5 + specialWidth / 2} ${specialY})"><rect x="5" y="${specialY - 5.4}" width="${specialWidth}" height="10.8" rx="5.4" fill="${specialMeta.color}" stroke="#FFFFFF" stroke-width="1"/><text x="${5 + specialWidth / 2}" y="${specialY + 2.2}" text-anchor="middle" fill="#FFFFFF" font-size="6.2" font-weight="900">${specialMeta.label}</text></g>` : ''}
+                    </g>
                 </g>`;
         };
 
