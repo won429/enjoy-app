@@ -2115,7 +2115,7 @@
         #login-prompt .lp-cancel { margin-top: 10px; width: 100%; padding: 12px 0; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
             background: transparent; transition: opacity .15s; }
         #login-prompt .lp-cancel:active { opacity: 0.6; }
-        /* 프로필 최초 등록/이름 변경: 로그인 화면과 같은 전체 화면 구성 */
+        /* 프로필 최초 등록: 로그인 화면과 같은 전체 화면 구성 */
         #profile-modal {
             position: fixed;
             inset: 0;
@@ -2174,15 +2174,6 @@
         #profile-modal .pf-submit {
             min-height: 54px;
             margin-top: 18px;
-        }
-        .profile-cancel {
-            width: 100%;
-            margin-top: 10px;
-            padding: 13px 0;
-            color: rgba(255,255,255,.55);
-            background: transparent;
-            font-size: 14px;
-            font-weight: 650;
         }
         .profile-join-footer {
             margin-top: auto;
@@ -4052,7 +4043,6 @@
             #profile-modal .profile-join-title { color: #141414; }
             #profile-modal .profile-join-desc { color: #6E6E73; }
             #profile-modal .profile-field-label { color: #333D4B; }
-            #profile-modal .profile-cancel { color: #8B95A1; }
             #profile-modal .profile-join-footer { color: #9B95A8; }
             #enjoy-dialog { background: rgba(0,0,0,.38); }
             #enjoy-dialog .ed-card { background: #fff; border-color: rgba(0,0,0,.08); box-shadow: 0 24px 70px rgba(0,0,0,.2); }
@@ -4710,7 +4700,6 @@
 
                 <p id="profile-status" class="pf-status"></p>
                 <button id="profile-submit" class="pf-submit" onclick="window.haptic && window.haptic(); window.enjoySubmitProfile && window.enjoySubmitProfile();">가입 완료</button>
-                <button id="profile-cancel" class="profile-cancel hidden" onclick="window.haptic && window.haptic(); window.enjoyCloseProfile && window.enjoyCloseProfile();">취소</button>
             </div>
 
             <p class="profile-join-footer">Copyright © 2026 엔조이. All rights reserved.</p>
@@ -5796,14 +5785,6 @@
                     <div class="flex-1 min-w-0">
                         <div class="text-[14px] font-bold text-white leading-tight">로그아웃</div>
                         <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">계정에서 나가기</div>
-                    </div>
-                </button>
-                <!-- 프로필 이름 변경 (성원제 전용) -->
-                <button id="more-rename" data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.enjoyOpenRename && window.enjoyOpenRename();" class="hidden w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-blue-500/15 text-blue-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-pen"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-[14px] font-bold text-white leading-tight">프로필 이름 변경</div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">표시 이름 바꾸기</div>
                     </div>
                 </button>
                 <!-- 탈퇴 -->
@@ -7144,7 +7125,7 @@
 
             function ensureOutcome(card) {
                 const identity = currentScratchIdentity();
-                // 정식 멤버 6명은 3개 일치가 절대 나오지 않도록 당첨 확률을 0%로 고정한다.
+                // 정식 멤버 7명은 3개 일치가 절대 나오지 않도록 당첨 확률을 0%로 고정한다.
                 // 비정식 로그인 계정과 로그인 전 체험 사용자는 기존 무작위 결과를 기기에만 저장한다.
                 if (card.id === 'cash-prize') {
                     const cashWon = !identity.isMember && randomUnit() < card.chance;
@@ -10510,8 +10491,8 @@
             if (window.openCommunityComposer) window.openCommunityComposer();
         };
 
-        /* ===== 스케줄(가능/불가능) — 실제 사용 가능 (월 달력 + 멤버 6명 목록 + 날짜별 상세) =====
-           명단: 항상 엔조이 멤버 6명을 표시. 가입(로그인)한 멤버는 이름+가능여부, 아직 가입 안 한
+        /* ===== 스케줄(가능/불가능) — 실제 사용 가능 (월 달력 + 멤버 7명 목록 + 날짜별 상세) =====
+           명단: 항상 엔조이 멤버 7명을 표시. 가입(로그인)한 멤버는 이름+가능여부, 아직 가입 안 한
            멤버는 '미가입자'로 표시. 데이터는 이미 구독 중인 members 컬렉션(lastMembers)에서 즉시 읽음(빠름). */
         window._availYear = new Date().getFullYear();
         window._availMonth = new Date().getMonth();   // 0-11
@@ -10532,9 +10513,9 @@
             label.className = 'text-[11px] font-medium ' + (state === 'failed' ? 'text-[#F04452]' : 'text-gray-500');
         }
 
-        // 명단 = 멤버 6명 고정. 가입자는 이름/사진/가능여부, 미가입자는 '미가입자'
+        // 명단 = 멤버 7명 고정. 가입자는 이름/사진/가능여부, 미가입자는 '미가입자'
         function availRoster() {
-            const names = window.ENJOY_MEMBERS || ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+            const names = window.ENJOY_MEMBERS || ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사', '관리자'];
             const joined = (window.enjoyJoinedMembers && window.enjoyJoinedMembers()) || [];  // [{uid,name,photoURL,avail}]
             const byName = {}; joined.forEach(m => { if (m.name) byName[m.name] = m; });
             const myUid = window.enjoyUser && window.enjoyUser.uid;
@@ -13005,8 +12986,8 @@
     <!-- [임시·광고심사용] 로컬(기기 저장) 모드 헬퍼 — 광고 승인 후 이 블록과 관련 분기를 제거하면 원복됩니다. -->
     <script>
     (function () {
-        // 정식 멤버 6명 (이 이름들만 파이어베이스와 동기화)
-        window.ENJOY_MEMBERS = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
+        // 정식 멤버 7명 (이 이름들만 파이어베이스와 동기화)
+        window.ENJOY_MEMBERS = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사', '관리자'];
         window.enjoyIsMemberName = function (n) { return window.ENJOY_MEMBERS.indexOf(n) >= 0; };
         // true=멤버(파이어베이스 동기화) / false=게스트·스페셜(본인 기기 로컬 저장)
         window.enjoySync = false;
@@ -13048,7 +13029,8 @@
             '오스틴': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', solid: 'bg-emerald-500', solidHex: '#10B981', char: '오' },
             '전시기': { bg: 'bg-orange-500/20', text: 'text-orange-400', solid: 'bg-orange-500', solidHex: '#F97316', char: '전' },
             '이진누': { bg: 'bg-indigo-500/20', text: 'text-indigo-400', solid: 'bg-indigo-500', solidHex: '#6366F1', char: '이' },
-            '성원제': { bg: 'bg-pink-500/20',   text: 'text-pink-400',   solid: 'bg-pink-500',   solidHex: '#EC4899', char: '성' }
+            '성원제': { bg: 'bg-pink-500/20',   text: 'text-pink-400',   solid: 'bg-pink-500',   solidHex: '#EC4899', char: '성' },
+            '관리자': { bg: 'bg-sky-500/15',    text: 'text-sky-400',    solid: 'bg-blue-400',   solidHex: '#0EA5E9', char: '관' }
         };
         const DEFAULT_COLOR = { bg: 'bg-gray-500/20', text: 'text-gray-400', solid: 'bg-gray-500', solidHex: '#6B7280', char: '?' };
         window.enjoyMemberColor = (name) => (name && MEMBER_COLORS[name]) ? MEMBER_COLORS[name] : DEFAULT_COLOR;
@@ -13056,6 +13038,8 @@
 
         const ACTIVE_MS = 90 * 1000;     // 활동 중 판정(마지막 활동 90초 이내)
         const BEAT_MS = 40 * 1000;       // 하트비트 주기
+        const ADMIN_EMAIL = 'gwanlija180@gmail.com';
+        const ADMIN_PROFILE_NAME = '관리자';
         const $ = (id) => document.getElementById(id);
         let beatTimer = null, membersUnsub = null, started = false, lastMembers = [], decayTimer = null;
 
@@ -13080,6 +13064,9 @@
         }
 
         function fbReady() { return !!(window.meetingDb && window.fsOnSnapshot && window.fsSetDoc && window.meetingAuthed && window.enjoyUser); }
+        function isAdminAccount(user) {
+            return String((user && user.email) || '').trim().toLowerCase() === ADMIN_EMAIL;
+        }
 
         function notifyAndroidMemberTopic(name) {
     try {
@@ -13118,20 +13105,14 @@
             return taken;
         }
 
-        /* ----- 프로필 등록(필수·영구·중복불가) / 변경(성원제 전용) ----- */
-        let renameMode = false;
-
-        function openProfileModal(isRename) {
-            renameMode = !!isRename;
-            const t = $('profile-title'), d = $('profile-desc'), c = $('profile-cancel'), inp = $('profile-input');
+        /* ----- 프로필 등록(필수·영구·중복불가) ----- */
+        function openProfileModal() {
+            const t = $('profile-title'), d = $('profile-desc'), inp = $('profile-input');
             const st = $('profile-status'), submit = $('profile-submit');
-            if (t) t.innerHTML = isRename ? '프로필 이름을<br>변경해주세요' : '엔조이에서 사용할<br>프로필을 만들어주세요';
-            if (d) d.innerHTML = isRename
-                ? '새 이름을 입력해주세요. 이미 사용 중인 이름은 선택할 수 없어요.'
-                : '멤버 현황과 활동에 표시되는 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(스페셜)</b>이 붙어요.';
-            if (c) c.classList.toggle('hidden', !isRename);     // 변경 모드에서만 취소 가능
-            if (submit) submit.textContent = isRename ? '변경 완료' : '가입 완료';
-            if (inp) inp.value = isRename ? (window.enjoyProfileName || '') : '';
+            if (t) t.innerHTML = '엔조이에서 사용할<br>프로필을 만들어주세요';
+            if (d) d.innerHTML = '멤버 현황과 활동에 표시되는 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(스페셜)</b>이 붙어요.';
+            if (submit) submit.textContent = '가입 완료';
+            if (inp) inp.value = '';
             if (st) st.textContent = '';
             const m = $('profile-modal');
             if (m) {
@@ -13148,9 +13129,6 @@
                 m.setAttribute('aria-hidden', 'true');
             }
         }
-        // 성원제만 이름 변경 가능
-        window.enjoyOpenRename = function () { if (fbReady() && window.enjoyProfileName === '성원제') openProfileModal(true); };
-        window.enjoyCloseProfile = function () { if (renameMode) closeProfileModal(); };  // 최초 입력은 필수(못 닫음), 변경만 취소 허용
         // 탈퇴: 멤버 문서(이름·프로필) 삭제 후 로그아웃 → 재로그인 시 프로필 재입력
         window.enjoyWithdraw = async function () {
             try { localStorage.removeItem('enjoy_local_profile'); } catch (e) {}   // 스페셜 로컬 이름 제거
@@ -13163,8 +13141,12 @@
             const inp = $('profile-input'), st = $('profile-status'); if (!inp) return;
             let name = (inp.value || '').trim();
             if (!name) { if (st) st.textContent = '이름을 입력해주세요.'; return; }
+            if (name === ADMIN_PROFILE_NAME && !isAdminAccount(window.enjoyUser)) {
+                if (st) st.textContent = '관리자 프로필은 지정된 계정으로만 사용할 수 있어요.';
+                return;
+            }
 
-            // 정식 멤버 6명 → 파이어베이스 동기화 (이름 중복 불가)
+            // 정식 멤버 7명 → 파이어베이스 동기화 (이름 중복 불가)
             if (window.enjoyIsMemberName(name)) {
                 if (!fbReady()) { if (st) st.textContent = '연결 확인 중이에요. 잠시 후 다시 시도해 주세요.'; return; }
                 if (st) st.textContent = '확인 중…';
@@ -13214,12 +13196,11 @@
             }
             if (nm) nm.textContent = name || '미가입';
             if (em) em.textContent = u.email || '';
-            const rn = $('more-rename'), wd = $('more-withdraw');
-            if (rn) rn.classList.toggle('hidden', name !== '성원제');   // 성원제만 이름 변경
+            const wd = $('more-withdraw');
             if (wd) wd.classList.toggle('hidden', false);              // 로그인 사용자는 탈퇴 가능
         }
 
-        /* ----- 멤버 트레이: 6명 멤버 항상 표시 + 활동 상태 ----- */
+        /* ----- 멤버 트레이: 7명 멤버 항상 표시 + 활동 상태 ----- */
         function renderMembers() {
             const wrap = $('story-tray'); if (!wrap) return;
             const now = Date.now();
@@ -13313,6 +13294,25 @@
 
                     const expectedUid = window.enjoyUser.uid;
                     try {
+                        if (isAdminAccount(window.enjoyUser)) {
+                            await window.fsSetDoc(window.fsDoc('members', expectedUid), {
+                                name: ADMIN_PROFILE_NAME,
+                                lastActive: Date.now(),
+                                email: window.enjoyUser.email || '',
+                                photoURL: window.enjoyUser.photoURL || ''
+                            }, { merge: true });
+                            if (!window.enjoyUser || window.enjoyUser.uid !== expectedUid) continue;
+
+                            window.enjoyProfileName = ADMIN_PROFILE_NAME;
+                            notifyAndroidMemberTopic(ADMIN_PROFILE_NAME);
+                            startMemberSync();
+                            updateProfileCard();
+                            renderMembers();
+                            try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
+                            started = true;
+                            return true;
+                        }
+
                         const myName = await loadMyName();
                         if (!window.enjoyUser || window.enjoyUser.uid !== expectedUid) continue;
 
@@ -13336,7 +13336,7 @@
                         renderMembers();
                         try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
                         if (!localName) {
-                            openProfileModal(false);   // 이름 없으면 필수 입력 ('(스페셜)' 자동 부착)
+                            openProfileModal();   // 이름 없으면 필수 입력 ('(스페셜)' 자동 부착)
                         }
                         started = true;
                         return true;
