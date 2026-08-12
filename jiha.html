@@ -754,6 +754,7 @@
     <script src="./seoul_line3_rail_paths.js?v=20260812"></script>
     <script src="./seoul_line4_rail_paths.js?v=20260813"></script>
     <script src="./seoul_line5_rail_paths.js?v=20260813"></script>
+    <script src="./seoul_line6_rail_paths.js?v=20260813"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -1594,7 +1595,7 @@
         const SEOUL_LINE6_LOOP_STATIONS = ['응암','역촌','불광','독바위','연신내','구산','응암'];
         const SEOUL_LINE6_MAIN_STATIONS = [
             '응암','새절','증산','디지털미디어시티','월드컵경기장','마포구청','망원','합정','상수','광흥창','대흥','공덕','효창공원앞','삼각지','녹사평','이태원','한강진',
-            '버티고개','약수','청구','신당','동묘앞','창신','보문','안암','고려대','월곡','상월곡','돌곧이','석계','태릉입구','화랑대','봉화산','신내'
+            '버티고개','약수','청구','신당','동묘앞','창신','보문','안암','고려대','월곡','상월곡','돌곶이','석계','태릉입구','화랑대','봉화산','신내'
         ];
         const SEOUL_LINE6_STATIONS = [...SEOUL_LINE6_LOOP_STATIONS.slice(0,-1), ...SEOUL_LINE6_MAIN_STATIONS.slice(1)];
         const SEOUL_LINE6_SCHEMATIC = (() => {
@@ -4105,19 +4106,9 @@
         // 수도권 5호선 역 좌표 (OpenStreetMap ODbL).
         STATION_COORD_LISTS.seoul_line5 = SEOUL_LINE5_STATIONS
             .map(name => window.SEOUL_LINE5_OSM_STATION_COORDS?.[name]);
-        // 수도권 6호선 역 좌표 (응암순환 이후 신내 순서).
-        STATION_COORD_LISTS.seoul_line6 = [
-            [37.5987,126.9155],[37.6060,126.9227],[37.6105,126.9298],[37.6184,126.9330],
-            [37.6190,126.9210],[37.6112,126.9172],[37.5911,126.9135],[37.5839,126.9096],
-            [37.5766,126.9000],[37.5695,126.8990],[37.5635,126.9033],[37.5560,126.9100],
-            [37.5494,126.9138],[37.5477,126.9229],[37.5475,126.9319],[37.5477,126.9421],
-            [37.5441,126.9517],[37.5393,126.9613],[37.5347,126.9731],[37.5347,126.9866],
-            [37.5345,126.9946],[37.5398,127.0018],[37.5480,127.0060],[37.5543,127.0109],
-            [37.5602,127.0130],[37.5662,127.0160],[37.5726,127.0164],[37.5797,127.0153],
-            [37.5854,127.0194],[37.5863,127.0292],[37.5904,127.0363],[37.6019,127.0415],
-            [37.6064,127.0485],[37.6105,127.0564],[37.6148,127.0658],[37.6173,127.0751],
-            [37.6202,127.0839],[37.6173,127.0913],[37.6128,127.1032]
-        ];
+        // 수도권 6호선 역 좌표 (OpenStreetMap ODbL).
+        STATION_COORD_LISTS.seoul_line6 = SEOUL_LINE6_STATIONS
+            .map(name => window.SEOUL_LINE6_OSM_STATION_COORDS?.[name]);
         // 수도권 7호선 역 좌표 (북쪽 장암에서 서쪽 석남 순서).
         STATION_COORD_LISTS.seoul_line7 = [
             [37.7001,127.0532],[37.6896,127.0462],[37.6778,127.0553],[37.6649,127.0577],
@@ -4233,8 +4224,11 @@
             macheon:[...SEOUL_LINE5_COMMON_STATIONS, ...SEOUL_LINE5_MACHEON_STATIONS.slice(1)].map(name=>STATION_COORDS.seoul_line5[name]).filter(Boolean)
         };
         RAIL_ROUTE_PATHS.seoul_line5 = SEOUL_LINE5_RAIL_PATHS.hanam;
-        RAIL_ROUTE_PATHS.seoul_line6 = SEOUL_LINE6_STATIONS
-            .map(name => STATION_COORDS.seoul_line6[name]).filter(Boolean);
+        const SEOUL_LINE6_RAIL_PATHS = window.SEOUL_LINE6_OSM_RAIL_PATHS || {
+            main:SEOUL_LINE6_MAIN_STATIONS.map(name => STATION_COORDS.seoul_line6[name]).filter(Boolean),
+            loop:SEOUL_LINE6_LOOP_STATIONS.map(name => STATION_COORDS.seoul_line6[name]).filter(Boolean)
+        };
+        RAIL_ROUTE_PATHS.seoul_line6 = SEOUL_LINE6_RAIL_PATHS.main;
         RAIL_ROUTE_PATHS.seoul_line7 = SEOUL_LINE7_STATIONS
             .map(name => STATION_COORDS.seoul_line7[name]).filter(Boolean);
         RAIL_ROUTE_PATHS.seoul_line8 = SEOUL_LINE8_STATIONS
@@ -4245,6 +4239,7 @@
             seoul_line1: SEOUL_LINE1_RAIL_PATHS,
             seoul_line2: SEOUL_LINE2_RAIL_PATHS,
             seoul_line5: SEOUL_LINE5_RAIL_PATHS,
+            seoul_line6: SEOUL_LINE6_RAIL_PATHS,
             gtx_a: GTX_A_RAIL_PATHS,
             gyeongchun: GYEONGCHUN_RAIL_PATHS,
             gyeongui_jungang: GYEONGUI_JUNGANG_RAIL_PATHS
@@ -4381,6 +4376,7 @@
                 }
                 stationDistances[name] = bestAlong;
             });
+            if (lineId === 'seoul_line6' && variant === 'loop') stationDistances['응암'] = 0;
             const metric = { path, cumulative, stationDistances };
             railPathMetricCache.set(cacheKey, metric);
             return metric;
@@ -4790,6 +4786,9 @@
             } else if (lineId === 'seoul_line5') {
                 const scheduleNames = new Set((train.schedule || []).map(stop => stop.name));
                 routeVariant = SEOUL_LINE5_MACHEON_STATIONS.slice(1).some(name => scheduleNames.has(name)) ? 'macheon' : 'hanam';
+            } else if (lineId === 'seoul_line6') {
+                const loopOnlyStations = new Set(SEOUL_LINE6_LOOP_STATIONS.slice(1, -1));
+                routeVariant = loopOnlyStations.has(train.curr?.name) || loopOnlyStations.has(train.next?.name) ? 'loop' : 'main';
             } else if (lineId === 'gyeongui_jungang' && train.schedule?.some(stop => stop.name === '신촌')) {
                 routeVariant = 'seoul';
             } else if (lineId === 'gtx_a') {
@@ -4803,13 +4802,14 @@
             const fraction = train.isStopped || train.isWaiting || !denominator ? 0 : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
             const totalDistance = metric.cumulative[metric.cumulative.length - 1] || 0;
             let adjustedToDistance = toDistance;
-            if (lineId === 'seoul_line2' && routeVariant === 'loop' && totalDistance > 0) {
+            const isLoopRoute = routeVariant === 'loop' && (lineId === 'seoul_line2' || lineId === 'seoul_line6');
+            if (isLoopRoute && totalDistance > 0) {
                 const directDelta = adjustedToDistance - fromDistance;
                 if (directDelta > totalDistance / 2) adjustedToDistance -= totalDistance;
                 else if (directDelta < -totalDistance / 2) adjustedToDistance += totalDistance;
             }
             const rawDistance = fromDistance + (adjustedToDistance - fromDistance) * fraction;
-            const normalizeLoopDistance = distance => lineId === 'seoul_line2' && routeVariant === 'loop' && totalDistance > 0
+            const normalizeLoopDistance = distance => isLoopRoute && totalDistance > 0
                 ? ((distance % totalDistance) + totalDistance) % totalDistance
                 : distance;
             const distance = normalizeLoopDistance(rawDistance);
