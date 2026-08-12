@@ -1072,6 +1072,15 @@
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
 
+        /* ────────────────────────────────────────────────────────────
+           이 앱은 기차(일반열차) 전용이다.
+           지하철 노선은 화면 · 위치검색 · 즐겨찾기 · 지도에서 모두 연결을 끊는다.
+           화면 구성과 렌더링 로직은 그대로 쓰고, 아래 목록의 노선만 노출한다.
+           (다른 기차 노선을 추가할 때 여기에 노선 id 를 넣으면 된다)
+           ──────────────────────────────────────────────────────────── */
+        const TRAIN_LINE_IDS = ['gyeongbu'];
+        const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
+
         let currentRegion = 'seoul';
         let currentLineId = 'gyeongbu';
         let THEME_COLOR = "#00587A";
@@ -2993,6 +3002,7 @@
         };
 
         window.switchLine = async (lineId, isInit = false) => {
+            if (!isTrainLine(lineId)) return;   // 기차 전용 · 지하철 노선 전환 차단
             if (currentLineId === lineId && !isInit) return;
             currentLineId = lineId;
             modalDayType = null;
@@ -3589,7 +3599,8 @@
 
             const seen = new Set();
             favoriteStations = stored.filter(item => {
-                if (!item || !STATIONS_ALL[item.lineId]?.[item.station]) return false;
+                if (!item || !isTrainLine(item.lineId)) return false;   // 지하철 역 즐겨찾기는 버린다
+                if (!STATIONS_ALL[item.lineId]?.[item.station]) return false;
                 const key = makeFavoriteKey(item.lineId, item.station);
                 if (seen.has(key)) return false;
                 seen.add(key);
@@ -4478,7 +4489,7 @@
             busan: ['busan_line1', 'busan_line2', 'busan_line3', 'busan_line4', 'busan_bglrt', 'busan_donghae', 'gyeongbu']
         };
         const REGION_LABELS = { seoul:'수도권', gangwon:'강원도', daegu:'대구권', daejeon:'대전', busan:'부산권', gwangju:'광주' };
-        const ALL_MAP_LINE_IDS = [...new Set(Object.values(REGION_LINE_IDS).flat())];
+        const ALL_MAP_LINE_IDS = [...new Set(Object.values(REGION_LINE_IDS).flat())].filter(isTrainLine);
         const LINE_DOWN_COLORS = {
             seoul_line1:'#0052A4',
             seoul_line2:'#00A84D',
@@ -5163,6 +5174,7 @@
         const getNearestStation = (latitude, longitude) => {
             let best = null;
             for (const lid in STATION_COORDS) {
+                if (!isTrainLine(lid)) continue;   // 기차 전용 · 지하철 역은 위치 검색 대상에서 제외
                 for (const st in STATION_COORDS[lid]) {
                     const [la, lo] = STATION_COORDS[lid][st];
                     const distance = haversine(latitude, longitude, la, lo);
@@ -5839,39 +5851,48 @@
             if(dom.floatingPanel.innerHTML !== panelHtml && activeTab !== 'home') dom.floatingPanel.innerHTML = panelHtml;
         };
 
+        /* 기차 전용 · 지하철 지역/노선 선택 UI를 감춘다.
+           (버튼과 화면 구성은 그대로 두고 노출만 막는다) */
+        const hideSubwayLineTabs = () => {
+            const regionRow = document.getElementById('btn-region-seoul')?.parentElement;
+            if (regionRow) regionRow.classList.add('hidden');
+            ['seoul', 'gangwon', 'daegu', 'daejeon', 'busan', 'gwangju'].forEach(region => {
+                const tabs = document.getElementById('line-tabs-' + region);
+                if (!tabs) return;
+                const keep = [...tabs.children].filter(btn => isTrainLine(btn.dataset.lineId));
+                if (!keep.length || region !== LINE_REGION['gyeongbu']) {
+                    tabs.classList.add('hidden');
+                    tabs.classList.remove('flex');
+                    return;
+                }
+                tabs.classList.remove('hidden');
+                tabs.classList.add('flex');
+                [...tabs.children].forEach(btn => {
+                    if (!isTrainLine(btn.dataset.lineId)) btn.classList.add('hidden');
+                });
+            });
+        };
+
         window.onload = async () => {
             initializeFavorites();
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlRegion = urlParams.get('region');
-            const supportedRegions = ['seoul', 'gangwon', 'daegu', 'daejeon', 'busan', 'gwangju'];
 
-            if (urlRegion && supportedRegions.includes(urlRegion)) {
-                // URL 파라미터로 넘어온 지역이 있으면 가장 최우선으로 적용
-                await window.switchRegion(urlRegion, true);
-                if (urlRegion === 'seoul') await window.switchLine('seoul_line1', true);
-                else if (urlRegion === 'gangwon') await window.switchLine('gyeongchun', true);
-                else if (urlRegion === 'daegu') await window.switchLine('daegyeong', true);
-                else if (urlRegion === 'daejeon') await window.switchLine('daejeon_line1', true);
-                else if (urlRegion === 'busan') await window.switchLine('busan_line1', true);
-                else if (urlRegion === 'gwangju') await window.switchLine('gwangju_line1', true);
+            // 마지막으로 본 기차역이 있으면 그것을, 없으면 경부선을 기본으로 연다.
+            const fallbackFavorite = getLastFavorite();
+            if (fallbackFavorite) {
+                await window.switchRegion(LINE_REGION[fallbackFavorite.lineId], true);
+                await window.switchLine(fallbackFavorite.lineId, true);
+                homeSelectedStation = fallbackFavorite.station;
             } else {
-                // 위치 권한 확인 전에는 마지막 즐겨찾기를 빠른 기본값으로 사용한다.
-                const fallbackFavorite = getLastFavorite();
-                if (fallbackFavorite) {
-                    await window.switchRegion(LINE_REGION[fallbackFavorite.lineId], true);
-                    await window.switchLine(fallbackFavorite.lineId, true);
-                    homeSelectedStation = fallbackFavorite.station;
-                } else {
-                    await window.switchRegion(LINE_REGION['gyeongbu'], true);
-                    await window.switchLine('gyeongbu', true);
-                }
+                await window.switchRegion(LINE_REGION['gyeongbu'], true);
+                await window.switchLine('gyeongbu', true);
             }
+            hideSubwayLineTabs();
 
             currentDayType = getDayType(new Date());
             await loadTimetable();
             setTimeout(() => {
                 window.switchTab('home');
-                if (!urlRegion) setTimeout(() => window.findNearestStation({ silent: true }), 280);
+                setTimeout(() => window.findNearestStation({ silent: true }), 280);
                 setInterval(() => {
                     const now = new Date(); let h = now.getHours(); if(h<4) h+=24;
                     currentSec = h*3600 + now.getMinutes()*60 + now.getSeconds();
