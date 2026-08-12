@@ -67,7 +67,7 @@
     const isAllstarDate = date => ALLSTAR_DATES.has(date);
     const uiTeamLogo = (team, imgCls, divCls, extraCls = '') => teamLogos[team]
         ? `<img src="${teamLogos[team]}" class="${imgCls} object-contain ${extraCls}">`
-        : `<div class="${divCls} rounded-full ${teamColors[team] || 'bg-gray-500'} flex items-center justify-center text-white text-[10px] font-bold ${extraCls}">${team.substring(0,1)}</div>`;
+        : `<div class="${divCls} rounded-full ${teamColors[team] || 'bg-gray-500'} flex items-center justify-center text-white text-[0.625rem] font-bold ${extraCls}">${team.substring(0,1)}</div>`;
     const teamWinHex = {'LG':'#E4376E', '두산':'#3D5AFE', 'KIA':'#FF2D55', '삼성':'#2F7BE0', 'SSG':'#E63950', '롯데':'#3B6FD4', '한화':'#FF7A1A', 'KT':'#9AA0A6', 'NC':'#4A78C0', '키움':'#C23A6B', '나눔':'#002038', '드림':'#90C0E0', '북부 올스타':'#123B8D', '남부 올스타':'#13B9D1'};
     const KBO_TEAMS = ['LG','두산','KIA','삼성','SSG','롯데','한화','KT','NC','키움'];
     const CLASSIC_SERIES_DATES = new Set(['2026-05-22', '2026-05-23', '2026-05-24', '2026-07-16', '2026-07-17', '2026-07-18', '2026-07-19']);
@@ -302,15 +302,15 @@
             let live = st === '경기중', atk = live ? ((l.inning || '').includes('말') ? 'home' : 'away') : '';
             let lc = live ? ` wp-live wp-atk-${atk}` : '', front = live ? `<div class="wp-home" style="left:${p.away}%"></div><div class="wp-front" style="left:${p.away}%"></div>` : '';
             return `<div class="w-full mb-6">
-                <div class="text-[12px] mb-3 wp-name wp-note">${note} <span class="wp-byline">with 엔조이 비서실장</span></div>
+                <div class="text-[0.75rem] mb-3 wp-name wp-note">${note} <span class="wp-byline">with 엔조이 비서실장</span></div>
                 <div class="flex items-baseline justify-between mb-2.5">
                     <div class="flex items-baseline gap-1.5">
-                        <span class="text-[26px] font-bold leading-none wp-num" style="color:${c1}">${p.away}%</span>
-                        <span class="text-[13px] font-semibold wp-name">${m.team1}</span>
+                        <span class="text-[1.625rem] font-bold leading-none wp-num" style="color:${c1}">${p.away}%</span>
+                        <span class="text-[0.8125rem] font-semibold wp-name">${m.team1}</span>
                     </div>
                     <div class="flex items-baseline gap-1.5">
-                        <span class="text-[13px] font-semibold wp-name">${m.team2}</span>
-                        <span class="text-[26px] font-bold leading-none wp-num" style="color:${c2}">${p.home}%</span>
+                        <span class="text-[0.8125rem] font-semibold wp-name">${m.team2}</span>
+                        <span class="text-[1.625rem] font-bold leading-none wp-num" style="color:${c2}">${p.home}%</span>
                     </div>
                 </div>
                 <div class="relative w-full h-2.5 rounded-full overflow-hidden${lc}" style="background:${c2}">
@@ -331,12 +331,12 @@
             let live = st === '경기중', atk = live ? ((l.inning || '').includes('말') ? 'home' : 'away') : '';
             let lc = live ? ` wp-live wp-atk-${atk}` : '', extra = live ? `<div class="wp-home" style="left:${p.away}%"></div><div class="wp-front" style="left:${p.away}%"></div>` : '';
             return `<div class="relative z-10 w-full flex items-center gap-2.5 px-1 mt-2">
-                <span class="text-[11px] font-bold w-8 text-left wp-num" style="color:${c1}">${p.away}%</span>
+                <span class="text-[0.6875rem] font-bold w-8 text-left wp-num" style="color:${c1}">${p.away}%</span>
                 <div class="relative flex-1 h-1.5 rounded-full overflow-hidden${lc}" style="background:${c2}">
                     <div class="wp-bar" style="width:${p.away}%;background:${c1}"></div>
                     ${extra}
                 </div>
-                <span class="text-[11px] font-bold w-8 text-right wp-num" style="color:${c2}">${p.home}%</span>
+                <span class="text-[0.6875rem] font-bold w-8 text-right wp-num" style="color:${c2}">${p.home}%</span>
             </div>`;
         }
 
@@ -576,13 +576,13 @@
             if (homeBatter === '-') homeBatter = '타자 미정';
             const awayAverage = _batterAverageOf(l, 'away', awayBatter);
             const homeAverage = _batterAverageOf(l, 'home', homeBatter);
-            const awayAverageHtml = awayAverage ? `<span class="scoreboard-batter-average text-[9px] font-black ml-1 whitespace-nowrap">타율 ${awayAverage}</span>` : '';
-            const homeAverageHtml = homeAverage ? `<span class="scoreboard-batter-average text-[9px] font-black ml-1 whitespace-nowrap">타율 ${homeAverage}</span>` : '';
+            const awayAverageHtml = awayAverage ? `<span class="scoreboard-batter-average text-[0.5625rem] font-black ml-1 whitespace-nowrap">타율 ${awayAverage}</span>` : '';
+            const homeAverageHtml = homeAverage ? `<span class="scoreboard-batter-average text-[0.5625rem] font-black ml-1 whitespace-nowrap">타율 ${homeAverage}</span>` : '';
 
-            const awayPitcherHtml = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">P.${awayPitcher}</span><div class="scoreboard-pitch-count flex items-center gap-1 opacity-80 shrink-0"><i class="scoreboard-pitch-icon fa-solid fa-baseball text-[10px]"></i><span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md">${awayPitchCount}</span></div>`;
-            const homePitcherHtml = `<div class="scoreboard-pitch-count flex items-center gap-1 opacity-80 shrink-0"><span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md">${homePitchCount}</span><i class="scoreboard-pitch-icon fa-solid fa-baseball text-[10px]"></i></div><span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">P.${homePitcher}</span>`;
-            const awayBatterHtml = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate"><span class="scoreboard-batter-label font-black">타.</span>${awayBatter}${awayAverageHtml}</span>`;
-            const homeBatterHtml = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right"><span class="scoreboard-batter-label font-black">타.</span>${homeBatter}${homeAverageHtml}</span>`;
+            const awayPitcherHtml = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">P.${awayPitcher}</span><div class="scoreboard-pitch-count flex items-center gap-1 opacity-80 shrink-0"><i class="scoreboard-pitch-icon fa-solid fa-baseball text-[0.625rem]"></i><span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md">${awayPitchCount}</span></div>`;
+            const homePitcherHtml = `<div class="scoreboard-pitch-count flex items-center gap-1 opacity-80 shrink-0"><span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md">${homePitchCount}</span><i class="scoreboard-pitch-icon fa-solid fa-baseball text-[0.625rem]"></i></div><span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">P.${homePitcher}</span>`;
+            const awayBatterHtml = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate"><span class="scoreboard-batter-label font-black">타.</span>${awayBatter}${awayAverageHtml}</span>`;
+            const homeBatterHtml = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right"><span class="scoreboard-batter-label font-black">타.</span>${homeBatter}${homeAverageHtml}</span>`;
 
             return isTop
                 ? { away: awayBatterHtml, home: homePitcherHtml }
@@ -683,11 +683,11 @@
         // 요정 화면 캐릭터 이미지를 미리 받아둬 탭 전환 시 즉시 표시되게 한다.
         function mkStamp(label, hex, big) {
             let shape = big
-                ? 'text-[25px] px-4 py-1 border-[2.5px] rounded-tl-[26px] rounded-br-[26px] rounded-tr-md rounded-bl-md tracking-[0.12em]'
-                : 'text-[10px] px-1.5 py-[3px] border-2 rounded-tl-[11px] rounded-br-[11px] rounded-tr-[3px] rounded-bl-[3px] tracking-[0.14em]';
+                ? 'text-[1.5625rem] px-4 py-1 border-[0.15625rem] rounded-tl-[1.625rem] rounded-br-[1.625rem] rounded-tr-md rounded-bl-md tracking-[0.12em]'
+                : 'text-[0.625rem] px-1.5 py-[0.1875rem] border-2 rounded-tl-[0.6875rem] rounded-br-[0.6875rem] rounded-tr-[0.1875rem] rounded-bl-[0.1875rem] tracking-[0.14em]';
             let yShift = big ? '-translate-y-1/2' : '-translate-y-[30%]';
             let z = big ? 'z-0' : 'z-20';
-            return `<div class="absolute top-1/2 left-1/2 -translate-x-1/2 ${yShift} -rotate-[13deg] font-black pointer-events-none whitespace-nowrap ${shape} ${z}" style="color:${hex};border-color:${hex};background:${hex}1f;box-shadow:0 2px 8px ${hex}40, inset 0 0 0 1px ${hex}30;text-shadow:0 1px 1px rgba(0,0,0,0.12);">${label}</div>`;
+            return `<div class="absolute top-1/2 left-1/2 -translate-x-1/2 ${yShift} -rotate-[13deg] font-black pointer-events-none whitespace-nowrap ${shape} ${z}" style="color:${hex};border-color:${hex};background:${hex}1f;box-shadow:0 0.125rem 0.5rem ${hex}40, inset 0 0 0 0.0625rem ${hex}30;text-shadow:0 0.0625rem 0.0625rem rgba(0,0,0,0.12);">${label}</div>`;
         }
         function gameCancellationLabel(game) {
             const cancellationText = [
@@ -708,7 +708,7 @@
         }
         const STAMP_HEX = { WIN: '#EA0029', LOSE: '#64748B', DRAW: '#10B981', CANCEL: '#3B82F6' };
         // 스코어보드 위에 쾅 찍히는 큰 도장 (모션 포함)
-        function bigStamp(label, hex) { return `<div class="stamp-pop absolute top-1/2 left-1/2 z-30 font-black pointer-events-none whitespace-nowrap text-[26px] px-5 py-1.5 border-[3px] rounded-tl-[26px] rounded-br-[26px] rounded-tr-md rounded-bl-md tracking-[0.12em]" style="color:${hex};border-color:${hex};background:${hex}26;box-shadow:0 6px 18px ${hex}55, inset 0 0 0 1px ${hex}33;text-shadow:0 1px 2px rgba(0,0,0,0.18);">${label}</div>`; }
+        function bigStamp(label, hex) { return `<div class="stamp-pop absolute top-1/2 left-1/2 z-30 font-black pointer-events-none whitespace-nowrap text-[1.625rem] px-5 py-1.5 border-[0.1875rem] rounded-tl-[1.625rem] rounded-br-[1.625rem] rounded-tr-md rounded-bl-md tracking-[0.12em]" style="color:${hex};border-color:${hex};background:${hex}26;box-shadow:0 0.375rem 1.125rem ${hex}55, inset 0 0 0 0.0625rem ${hex}33;text-shadow:0 0.0625rem 0.125rem rgba(0,0,0,0.18);">${label}</div>`; }
         function classicSeriesHeader(m) {
             if (!isClassicSeriesGame(m)) return '';
             return `
@@ -716,8 +716,8 @@
                     html:has(#lineup-popup:not(.render-hidden) .classic-marker) #lineup-popup.app-bg,
                     html.light-mode:has(#lineup-popup:not(.render-hidden) .classic-marker) #lineup-popup.app-bg {
                         background-color: #EBE7DF !important;
-                        background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px) !important;
-                        background-size: 15px 15px !important;
+                        background-image: linear-gradient(rgba(0,0,0,0.05) 0.0625rem, transparent 0.0625rem), linear-gradient(90deg, rgba(0,0,0,0.05) 0.0625rem, transparent 0.0625rem) !important;
+                        background-size: 0.9375rem 0.9375rem !important;
                         transition: none !important;
                     }
                     html:has(#lineup-popup:not(.render-hidden) .classic-marker) header.app-bg,
@@ -736,12 +736,12 @@
                     html.light-mode:has(#lineup-popup:not(.render-hidden) .classic-marker) #app-header.home-header-compact #app-header-shell {
                         background: rgba(255,255,255,0.92) !important;
                         border-color: rgba(0,0,0,0.10) !important;
-                        box-shadow: 0 7px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.86) !important;
+                        box-shadow: 0 0.4375rem 1.25rem rgba(0,0,0,0.12), inset 0 0.0625rem 0 rgba(255,255,255,0.86) !important;
                     }
                     html:has(#lineup-popup:not(.render-hidden) .classic-marker) #app-header.home-header-compact #ctrl-back button {
                         color: #fff !important;
                         background: #004A99 !important;
-                        box-shadow: 0 6px 15px rgba(0,74,153,0.24) !important;
+                        box-shadow: 0 0.375rem 0.9375rem rgba(0,74,153,0.24) !important;
                     }
                     #lineup-content:has(.classic-marker) { color: #111 !important; }
                     #lineup-content:has(.classic-marker) span.text-white,
@@ -766,22 +766,22 @@
                     #lineup-content:has(.classic-marker) .bg-white\\/5 {
                         background-color: rgba(255,255,255,0.40) !important;
                         border-color: rgba(0,0,0,0.10) !important;
-                        border-bottom: 1px solid rgba(0,0,0,0.10) !important;
+                        border-bottom: 0.0625rem solid rgba(0,0,0,0.10) !important;
                     }
                     #lineup-content:has(.classic-marker) .bg-white\\/10 { background-color: rgba(0,0,0,0.05) !important; }
                     #lineup-content:has(.classic-marker) .bg-\\[\\#222224\\] {
                         background-color: #fff !important;
                         border-color: #e5e7eb !important;
-                        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+                        box-shadow: inset 0 0.125rem 0.25rem rgba(0,0,0,0.05);
                     }
                     #lineup-content:has(.classic-marker) .fa-user,
                     #lineup-content:has(.classic-marker) .fa-clipboard-question { color: #9ca3af !important; }
                     #lineup-content:has(.classic-marker) .border-white\\/5,
                     #lineup-content:has(.classic-marker) .border-white\\/10 { border-color: rgba(0,0,0,0.08) !important; }
-                    #lineup-content:has(.classic-marker) .text-\\[14px\\].font-bold.text-gray-200.truncate {
+                    #lineup-content:has(.classic-marker) .text-\\[0\\.875rem\\].font-bold.text-gray-200.truncate {
                         color: #111 !important;
                         font-weight: 900 !important;
-                        font-size: 16px !important;
+                        font-size: 1rem !important;
                     }
                     #lineup-content:has(.classic-marker) .bg-blue-600 {
                         background-color: #004A99 !important;
@@ -795,7 +795,7 @@
                     #lineup-content:has(.classic-marker) .scoreboard-surface div.text-white,
                     #lineup-content:has(.classic-marker) .scoreboard-surface .text-\\[\\#FFFFFF\\] {
                         color: #ffffff !important;
-                        text-shadow: 0 1px 3px rgba(0,0,0,0.35) !important;
+                        text-shadow: 0 0.0625rem 0.1875rem rgba(0,0,0,0.35) !important;
                     }
                     #lineup-content:has(.classic-marker) .scoreboard-surface .text-gray-200 { color: #e5e7eb !important; }
                     #lineup-content:has(.classic-marker) .scoreboard-surface .text-gray-300 { color: #d1d5db !important; }
@@ -820,16 +820,16 @@
                 </style>
                 <div class="classic-marker hidden"></div>
                 <div class="relative px-4 pb-5 pt-1 mb-2 mt-0">
-                    <div class="flex justify-center items-center gap-[1.5px] mt-1 mb-2 z-10 relative opacity-95">
-                        <span class="text-[14px] font-black px-1.5 py-0.5 -rotate-3 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #ffffff !important; background-color: #111111 !important; font-family: 'Georgia', serif; font-style: italic;">클</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 rotate-2 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #ffffff !important; background-color: #0F3789 !important; font-style: italic;">래</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 -rotate-6 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #111111 !important; background-color: #E2235B !important; font-style: italic;">식</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 rotate-3 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #ffffff !important; background-color: #0F3789 !important; font-family: 'Georgia', serif; font-style: italic;">씨</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 -rotate-2 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #111111 !important; background-color: #D1D1D1 !important; font-style: italic;">리</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 rotate-6 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #ffffff !important; background-color: #E2235B !important; font-family: 'Georgia', serif; font-style: italic;">즈</span>
+                    <div class="flex justify-center items-center gap-[0.09375rem] mt-1 mb-2 z-10 relative opacity-95">
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 -rotate-3 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #ffffff !important; background-color: #111111 !important; font-family: 'Georgia', serif; font-style: italic;">클</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 rotate-2 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #ffffff !important; background-color: #0F3789 !important; font-style: italic;">래</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 -rotate-6 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #111111 !important; background-color: #E2235B !important; font-style: italic;">식</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 rotate-3 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #ffffff !important; background-color: #0F3789 !important; font-family: 'Georgia', serif; font-style: italic;">씨</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 -rotate-2 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #111111 !important; background-color: #D1D1D1 !important; font-style: italic;">리</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 rotate-6 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #ffffff !important; background-color: #E2235B !important; font-family: 'Georgia', serif; font-style: italic;">즈</span>
                     </div>
                     <div class="flex justify-center mt-3">
-                        <span class="text-[11px] font-black text-[#2A2A2A] bg-[#D1BA98] px-3 py-1 rotate-[-1deg] shadow-[1.5px_1.5px_0_rgba(0,0,0,0.10)] border-b border-[#A6906A]" style="clip-path: polygon(1% 0%, 99% 1%, 100% 98%, 0% 100%);">${classicSeriesDateLabel(m)}</span>
+                        <span class="text-[0.6875rem] font-black text-[#2A2A2A] bg-[#D1BA98] px-3 py-1 rotate-[-1deg] shadow-[0.09375rem_0.09375rem_0_rgba(0,0,0,0.10)] border-b border-[#A6906A]" style="clip-path: polygon(1% 0%, 99% 1%, 100% 98%, 0% 100%);">${classicSeriesDateLabel(m)}</span>
                     </div>
                 </div>`;
         }
@@ -921,7 +921,7 @@
                 }).join('');
                 return `<article class="game-record-card"><div class="game-record-head"><div class="game-record-photo">${photoHtml}</div><div class="min-w-0"><div><span class="game-record-name">${name}</span><span class="game-record-meta">${order}번타자 · 타율 ${average}</span></div><div class="game-record-stats">${stats}</div></div></div><div class="game-record-body">${summary ? `<div class="game-record-summary">${summary}</div>` : ''}${events}</div></article>`;
             }).join('');
-            const empty = `<section class="min-h-[220px] flex flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/5 px-5 text-center"><div class="w-11 h-11 rounded-full bg-white/5 flex items-center justify-center mb-3"><i class="fa-solid fa-chart-column text-lg text-gray-400"></i></div><span class="text-[15px] font-black text-white">${currentGameRecordInning}회 상세 기록 입력 대기중</span><span class="mt-2 text-[10px] text-gray-500">관리자페이지에서 이닝을 선택해 기록을 입력하세요.</span></section>`;
+            const empty = `<section class="min-h-[13.75rem] flex flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/5 px-5 text-center"><div class="w-11 h-11 rounded-full bg-white/5 flex items-center justify-center mb-3"><i class="fa-solid fa-chart-column text-lg text-gray-400"></i></div><span class="text-[0.9375rem] font-black text-white">${currentGameRecordInning}회 상세 기록 입력 대기중</span><span class="mt-2 text-[0.625rem] text-gray-500">관리자페이지에서 이닝을 선택해 기록을 입력하세요.</span></section>`;
             return `<div class="game-record-inning-tabs" role="tablist" aria-label="이닝별 기록">${inningTabs}</div><section class="game-record-list">${cards || empty}</section>`;
         }
 
@@ -956,7 +956,7 @@
                 const rawName = fielders[position] || '-';
                 const name = rawName === '-' ? position : rawName;
                 const photo = playerImages[rawName];
-                const portrait = photo ? `<img src="${photo}" alt="${_recordSafeText(rawName)}">` : `<i class="fa-solid fa-user text-[14px] text-gray-300 mb-1"></i>`;
+                const portrait = photo ? `<img src="${photo}" alt="${_recordSafeText(rawName)}">` : `<i class="fa-solid fa-user text-[0.875rem] text-gray-300 mb-1"></i>`;
                 return `<div class="broadcast-player ${cls}"><div class="portrait">${portrait}</div><span class="name" title="${_recordSafeText(position)} ${_recordSafeText(name)}">${_recordSafeText(name)}</span></div>`;
             }).join('');
             const countDots = (value, max, type) => Array.from({ length: max }, (_, index) => `<span class="broadcast-count-dot ${type} ${index < Number(value || 0) ? 'on' : ''}"></span>`).join('');
@@ -968,13 +968,13 @@
             const batterName = liveBatterName !== '-' ? liveBatterName : (_lineupPlayerName(batterData) || '타자');
             const batterSide = _batterSideOf(l, offenseSide, batterData);
             const batterPhoto = playerImages[batterName];
-            const batterPortrait = batterPhoto ? `<img src="${batterPhoto}" alt="${_recordSafeText(batterName)}">` : `<i class="fa-solid fa-user text-[15px] text-gray-300 mb-1"></i>`;
+            const batterPortrait = batterPhoto ? `<img src="${batterPhoto}" alt="${_recordSafeText(batterName)}">` : `<i class="fa-solid fa-user text-[0.9375rem] text-gray-300 mb-1"></i>`;
             const runnerClasses = { 1: 'first', 2: 'second', 3: 'third' };
             const runnerHtml = [1, 2, 3].filter(base => Boolean(l[`base${base}`])).map(base => {
                 const savedName = _baseRunnerName(l, base, offenseSide);
                 const runnerName = savedName !== '-' ? savedName : `${base}루 주자`;
                 const runnerPhoto = playerImages[runnerName];
-                const runnerPortrait = runnerPhoto ? `<img src="${runnerPhoto}" alt="${_recordSafeText(runnerName)}">` : `<i class="fa-solid fa-user text-[11px] text-gray-500 mb-1"></i>`;
+                const runnerPortrait = runnerPhoto ? `<img src="${runnerPhoto}" alt="${_recordSafeText(runnerName)}">` : `<i class="fa-solid fa-user text-[0.6875rem] text-gray-500 mb-1"></i>`;
                 return `<div class="broadcast-runner ${runnerClasses[base]}" aria-label="${base}루 주자 ${_recordSafeText(runnerName)}"><div class="portrait">${runnerPortrait}</div><span class="name">${_recordSafeText(runnerName)}</span></div>`;
             }).join('');
             const batterIndex = activeOffenseLineup.findIndex(player => _lineupPlayerName(player) === batterName);
@@ -995,7 +995,7 @@
                     ${playerHtml}
                     ${runnerHtml}
                     <div class="broadcast-batter bats-${batterSide}" aria-label="${batterSide === 'left' ? '좌타자' : batterSide === 'right' ? '우타자' : '타자'} ${_recordSafeText(batterName)}"><div class="portrait">${batterPortrait}</div><span class="name">${_recordSafeText(batterName)}</span></div>
-                    ${hasFielders ? '' : `<div class="absolute inset-x-0 top-[42%] z-10 bg-black/45 px-4 py-3 text-center text-[12px] font-bold text-white backdrop-blur-sm">라인업 발표 후 수비 위치가 표시됩니다</div>`}
+                    ${hasFielders ? '' : `<div class="absolute inset-x-0 top-[42%] z-10 bg-black/45 px-4 py-3 text-center text-[0.75rem] font-bold text-white backdrop-blur-sm">라인업 발표 후 수비 위치가 표시됩니다</div>`}
                     <div class="broadcast-waiting"><strong>대기타석</strong>${waitingPlayers}</div>
                 </div>
             </section>`;
@@ -1013,10 +1013,10 @@
             let sch = `<span class="text-2xl font-black text-gray-700">VS</span>`;
             if (l.gameStatus !== '경기전') {
                 if (iC) {
-                    sch = `<div class="flex flex-col items-center gap-1"><span class="text-[11px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">${cancelText}</span><span class="text-2xl font-black text-gray-700 mt-1">VS</span></div>`;
+                    sch = `<div class="flex flex-col items-center gap-1"><span class="text-[0.6875rem] font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">${cancelText}</span><span class="text-2xl font-black text-gray-700 mt-1">VS</span></div>`;
                 } else if (l.gameStatus !== '경기전') {
-                    let dis = (l.gameStatus === '경기중' && l.inning) ? l.inning : l.gameStatus, as = parseInt(l.awayScore || 0), hs = parseInt(l.homeScore || 0), asz = as > hs ? 'text-[38px]' : as < hs ? 'text-[24px] opacity-50' : 'text-[30px]', hsz = hs > as ? 'text-[38px]' : hs < as ? 'text-[24px] opacity-50' : 'text-[30px]', ac = as > hs ? 'text-point drop-shadow-xl' : 'text-white', hc = hs > as ? 'text-point drop-shadow-xl' : 'text-white';
-                    let badgeHtml = l.gameStatus !== '종료' ? `<span class="text-[12px] font-black text-[#EA0029] flex items-center gap-1.5 tracking-widest drop-shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-[#EA0029] animate-pulse"></span>${dis}</span>` : `<span class="text-[10px] font-bold text-gray-400 bg-gray-600/30 px-2 py-0.5 rounded border border-gray-500/20">${dis}</span>`;
+                    let dis = (l.gameStatus === '경기중' && l.inning) ? l.inning : l.gameStatus, as = parseInt(l.awayScore || 0), hs = parseInt(l.homeScore || 0), asz = as > hs ? 'text-[2.375rem]' : as < hs ? 'text-[1.5rem] opacity-50' : 'text-[1.875rem]', hsz = hs > as ? 'text-[2.375rem]' : hs < as ? 'text-[1.5rem] opacity-50' : 'text-[1.875rem]', ac = as > hs ? 'text-point drop-shadow-xl' : 'text-white', hc = hs > as ? 'text-point drop-shadow-xl' : 'text-white';
+                    let badgeHtml = l.gameStatus !== '종료' ? `<span class="text-[0.75rem] font-black text-[#EA0029] flex items-center gap-1.5 tracking-widest drop-shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-[#EA0029] animate-pulse"></span>${dis}</span>` : `<span class="text-[0.625rem] font-bold text-gray-400 bg-gray-600/30 px-2 py-0.5 rounded border border-gray-500/20">${dis}</span>`;
                     
                     let winLoseHtml = '';
                     if (l.gameStatus === '종료' && (l.winPitcher || l.losePitcher)) {
@@ -1024,9 +1024,9 @@
                         let lp = l.losePitcher ? `<span class="text-[#60a5fa] font-black mr-1">패</span><span class="text-white">${l.losePitcher}</span>` : '';
                         let divLine = (wp && lp) ? `<span class="text-gray-600 mx-1.5">|</span>` : '';
                         if (hs > as) {
-                            winLoseHtml = `<div class="inline-flex items-center justify-center mt-2 text-[11px] bg-white/5 px-3 py-1 rounded-full border border-white/10 shadow-sm whitespace-nowrap">${lp}${divLine}${wp}</div>`;
+                            winLoseHtml = `<div class="inline-flex items-center justify-center mt-2 text-[0.6875rem] bg-white/5 px-3 py-1 rounded-full border border-white/10 shadow-sm whitespace-nowrap">${lp}${divLine}${wp}</div>`;
                         } else {
-                            winLoseHtml = `<div class="inline-flex items-center justify-center mt-2 text-[11px] bg-white/5 px-3 py-1 rounded-full border border-white/10 shadow-sm whitespace-nowrap">${wp}${divLine}${lp}</div>`;
+                            winLoseHtml = `<div class="inline-flex items-center justify-center mt-2 text-[0.6875rem] bg-white/5 px-3 py-1 rounded-full border border-white/10 shadow-sm whitespace-nowrap">${wp}${divLine}${lp}</div>`;
                         }
                     }
                     
@@ -1066,13 +1066,13 @@
                     let isCurA = (i === currentInnInt && isTop && l.gameStatus === '경기중');
                     let isCurH = (i === currentInnInt && !isTop && l.gameStatus === '경기중');
                     
-                    let aFormatted = isCurA ? `<div class="relative inline-block"><span class="relative z-10 text-white font-bold">${aVal}</span><div class="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-[10px] h-[1.5px] bg-[#6ee7b7]"></div></div>` : aVal;
-                    let hFormatted = isCurH ? `<div class="relative inline-block"><span class="relative z-10 text-white font-bold">${hVal}</span><div class="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-[10px] h-[1.5px] bg-[#6ee7b7]"></div></div>` : hVal;
+                    let aFormatted = isCurA ? `<div class="relative inline-block"><span class="relative z-10 text-white font-bold">${aVal}</span><div class="absolute -bottom-[0.125rem] left-1/2 -translate-x-1/2 w-[0.625rem] h-[0.09375rem] bg-[#6ee7b7]"></div></div>` : aVal;
+                    let hFormatted = isCurH ? `<div class="relative inline-block"><span class="relative z-10 text-white font-bold">${hVal}</span><div class="absolute -bottom-[0.125rem] left-1/2 -translate-x-1/2 w-[0.625rem] h-[0.09375rem] bg-[#6ee7b7]"></div></div>` : hVal;
 
                     if (isExtra) {
-                        inningHeaderHtml += `<div class="w-[20px] text-center shrink-0">${i}</div>`;
-                        aInningsHtml += `<div class="w-[20px] text-center shrink-0">${aFormatted}</div>`;
-                        hInningsHtml += `<div class="w-[20px] text-center shrink-0">${hFormatted}</div>`;
+                        inningHeaderHtml += `<div class="w-[1.25rem] text-center shrink-0">${i}</div>`;
+                        aInningsHtml += `<div class="w-[1.25rem] text-center shrink-0">${aFormatted}</div>`;
+                        hInningsHtml += `<div class="w-[1.25rem] text-center shrink-0">${hFormatted}</div>`;
                     } else {
                         inningHeaderHtml += `<div>${i}</div>`;
                         aInningsHtml += `<div>${aFormatted}</div>`;
@@ -1092,70 +1092,70 @@
                 let aPCount = l.awayPitcherCount || '0', hPCount = l.homePitcherCount || '0';
                 
                 let oCount = parseInt(l.out || 0), bCount = parseInt(l.ball || 0), sCount = parseInt(l.strike || 0);
-                let outDotsHtml = ''; for(let i=1; i<=2; i++) outDotsHtml += `<div class="w-1.5 h-1.5 rounded-full ${i <= oCount ? 'bg-[#ef4444] shadow-[0_0_3px_#ef4444]' : 'bg-[#4b5563]'}"></div>`;
-                let base1 = l.base1 ? 'bg-[#6ee7b7] shadow-[0_0_5px_rgba(110,231,183,0.6)]' : 'bg-[#374151]', base2 = l.base2 ? 'bg-[#6ee7b7] shadow-[0_0_5px_rgba(110,231,183,0.6)]' : 'bg-[#374151]', base3 = l.base3 ? 'bg-[#6ee7b7] shadow-[0_0_5px_rgba(110,231,183,0.6)]' : 'bg-[#374151]';
-                let innIcon = isTop ? `<div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[6px] border-b-[#6ee7b7] mt-0.5"></div>` : `<div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#6ee7b7] mt-0.5"></div>`;
+                let outDotsHtml = ''; for(let i=1; i<=2; i++) outDotsHtml += `<div class="w-1.5 h-1.5 rounded-full ${i <= oCount ? 'bg-[#ef4444] shadow-[0_0_0.1875rem_#ef4444]' : 'bg-[#4b5563]'}"></div>`;
+                let base1 = l.base1 ? 'bg-[#6ee7b7] shadow-[0_0_0.3125rem_rgba(110,231,183,0.6)]' : 'bg-[#374151]', base2 = l.base2 ? 'bg-[#6ee7b7] shadow-[0_0_0.3125rem_rgba(110,231,183,0.6)]' : 'bg-[#374151]', base3 = l.base3 ? 'bg-[#6ee7b7] shadow-[0_0_0.3125rem_rgba(110,231,183,0.6)]' : 'bg-[#374151]';
+                let innIcon = isTop ? `<div class="w-0 h-0 border-l-[0.25rem] border-l-transparent border-r-[0.25rem] border-r-transparent border-b-[0.375rem] border-b-[#6ee7b7] mt-0.5"></div>` : `<div class="w-0 h-0 border-l-[0.25rem] border-l-transparent border-r-[0.25rem] border-r-transparent border-t-[0.375rem] border-t-[#6ee7b7] mt-0.5"></div>`;
 
                 if (l.gameStatus === '종료' && !iC) {
                     let aWin = parseInt(aScoreBanner) > parseInt(hScoreBanner), hWin = parseInt(hScoreBanner) > parseInt(aScoreBanner);
                     let aText = aWin ? `<span class="text-[#f87171] font-black mr-1">승</span>${l.winPitcher||'-'}` : (hWin ? `<span class="text-[#60a5fa] font-black mr-1">패</span>${l.losePitcher||'-'}` : `<span class="text-gray-400">무승부</span>`);
                     let hText = hWin ? `<span class="text-[#f87171] font-black mr-1">승</span>${l.winPitcher||'-'}` : (aWin ? `<span class="text-[#60a5fa] font-black mr-1">패</span>${l.losePitcher||'-'}` : `<span class="text-gray-400">무승부</span>`);
-                    aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aText}</span>`; 
-                    hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hText}</span>`;
-                    inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">종료</span>`; 
-                    centerArea = `<span class="text-[12px] font-bold text-gray-400 tracking-widest mt-px">경기결과</span>`;
+                    aPitcherArea = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aText}</span>`; 
+                    hPitcherArea = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hText}</span>`;
+                    inningArea = `<span class="text-[0.875rem] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">종료</span>`; 
+                    centerArea = `<span class="text-[0.75rem] font-bold text-gray-400 tracking-widest mt-px">경기결과</span>`;
                 } else if (l.gameStatus === '경기전' || iC) {
                     let awayExpectedStarter = _starterForLineup(m, l, 'away');
                     let homeExpectedStarter = _starterForLineup(m, l, 'home');
                     let awayStarterText = awayExpectedStarter.name ? `${awayExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${awayExpectedStarter.name}` : '예상 선발 미정';
                     let homeStarterText = homeExpectedStarter.name ? `${homeExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${homeExpectedStarter.name}` : '예상 선발 미정';
-                    aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${awayStarterText}</span>`;
-                    hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${homeStarterText}</span>`;
+                    aPitcherArea = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${awayStarterText}</span>`;
+                    hPitcherArea = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${homeStarterText}</span>`;
                     let centerTxt = iC ? cancelText : m.time;
-                    inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">${centerTxt}</span>`;
-                    centerArea = `<span class="text-[11px] font-bold text-gray-400 tracking-widest mt-px">${m.stadium}</span>`;
+                    inningArea = `<span class="text-[0.875rem] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">${centerTxt}</span>`;
+                    centerArea = `<span class="text-[0.6875rem] font-bold text-gray-400 tracking-widest mt-px">${m.stadium}</span>`;
                     aScoreBanner = '-'; hScoreBanner = '-';
                 } else {
                     let livePersonnel = _scoreboardLivePersonnel(l, isTop);
                     aPitcherArea = livePersonnel.away;
                     hPitcherArea = livePersonnel.home;
-                    inningArea = `<div class="w-[28px] h-[24px] relative mb-0.5"><div class="absolute top-[1px] left-[10px] w-[8px] h-[8px] rotate-45 ${base2}"></div><div class="absolute top-[9px] left-[2px] w-[8px] h-[8px] rotate-45 ${base3}"></div><div class="absolute top-[9px] left-[18px] w-[8px] h-[8px] rotate-45 ${base1}"></div></div><div class="flex items-center gap-1.5">${innIcon}<span class="text-[13px] font-black text-[#FFFFFF] drop-shadow-md leading-none tracking-tighter">${innNum}</span></div>`;
-                    centerArea = `<div class="flex gap-[3px] mr-1.5">${outDotsHtml}</div><span class="text-[12px] font-black text-[#FFFFFF] tracking-widest mt-px">${bCount}-${sCount}</span>`;
+                    inningArea = `<div class="w-[1.75rem] h-[1.5rem] relative mb-0.5"><div class="absolute top-[0.0625rem] left-[0.625rem] w-[0.5rem] h-[0.5rem] rotate-45 ${base2}"></div><div class="absolute top-[0.5625rem] left-[0.125rem] w-[0.5rem] h-[0.5rem] rotate-45 ${base3}"></div><div class="absolute top-[0.5625rem] left-[1.125rem] w-[0.5rem] h-[0.5rem] rotate-45 ${base1}"></div></div><div class="flex items-center gap-1.5">${innIcon}<span class="text-[0.8125rem] font-black text-[#FFFFFF] drop-shadow-md leading-none tracking-tighter">${innNum}</span></div>`;
+                    centerArea = `<div class="flex gap-[0.1875rem] mr-1.5">${outDotsHtml}</div><span class="text-[0.75rem] font-black text-[#FFFFFF] tracking-widest mt-px">${bCount}-${sCount}</span>`;
                 }
 
                 let dalImg = "https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/dal.png";
                 let bgStyle = `background: radial-gradient(ellipse at top, #1E3A8A, #0A1128, #02040A);`;
-                let dalBadge = `<div class="absolute top-0 left-1/2 -translate-x-1/2 bg-[#0B132B] px-4 py-0.5 rounded-b-md border-x border-b border-[#1E3A8A]/50 flex items-center justify-center shadow-md z-20"><span class="text-[8px] font-bold text-blue-200 tracking-widest">MOONLIGHT</span></div>`;
+                let dalBadge = `<div class="absolute top-0 left-1/2 -translate-x-1/2 bg-[#0B132B] px-4 py-0.5 rounded-b-md border-x border-b border-[#1E3A8A]/50 flex items-center justify-center shadow-md z-20"><span class="text-[0.5rem] font-bold text-blue-200 tracking-widest">MOONLIGHT</span></div>`;
                 let centerDalLogo1 = `<img src="${dalImg}" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 opacity-[0.12] pointer-events-none object-contain z-10 mix-blend-screen">`;
 
-                sbh = `<div class="sb-dark scoreboard-surface w-[calc(100%+48px)] -mx-6 rounded-none border-x-0 relative overflow-hidden mb-5 shadow-xl flex flex-col border-y border-white/15" style="${bgStyle} --score-away-soft:${h1}24; --score-home-soft:${h2}24;">
+                sbh = `<div class="sb-dark scoreboard-surface w-[calc(100%+3rem)] -mx-6 rounded-none border-x-0 relative overflow-hidden mb-5 shadow-xl flex flex-col border-y border-white/15" style="${bgStyle} --score-away-soft:${h1}24; --score-home-soft:${h2}24;">
                     ${dalBadge}${centerDalLogo1}
                     <img src="${teamLogos[m.team1]}" class="scoreboard-team-watermark absolute -left-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">
                     <img src="${teamLogos[m.team2]}" class="scoreboard-team-watermark absolute -right-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">
                     
-                    <div class="flex justify-between items-center px-5 py-2 relative z-10 h-[62px]">
+                    <div class="flex justify-between items-center px-5 py-2 relative z-10 h-[3.875rem]">
                         <div class="flex items-center gap-3 w-[36%]">
-                            <span class="text-[26px] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md">${m.team1}</span>
-                            <span class="text-[34px] font-black text-[#FFFFFF] drop-shadow-md ml-auto leading-none">${aScoreBanner}</span>
+                            <span class="text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md">${m.team1}</span>
+                            <span class="text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md ml-auto leading-none">${aScoreBanner}</span>
                         </div>
                         <div class="flex flex-col items-center justify-center w-[28%] mt-0.5">${inningArea}</div>
                         <div class="flex items-center gap-3 w-[36%]">
-                            <span class="text-[34px] font-black text-[#FFFFFF] drop-shadow-md mr-auto leading-none">${hScoreBanner}</span>
-                            <span class="text-[26px] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md">${m.team2}</span>
+                            <span class="text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md mr-auto leading-none">${hScoreBanner}</span>
+                            <span class="text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md">${m.team2}</span>
                         </div>
                     </div>
                     
                     <div class="w-full h-px bg-[rgba(255,255,255,0.3)] relative z-10"></div>
                     
-                    <div class="flex justify-between items-center bg-[rgba(0,0,0,0.4)] relative z-10 h-[28px]">
+                    <div class="flex justify-between items-center bg-[rgba(0,0,0,0.4)] relative z-10 h-[1.75rem]">
                         <div class="flex items-center gap-2.5 w-[36%] pl-5">${aPitcherArea}</div>
-                        <div class="flex items-center justify-center bg-[#0d0d0e] h-full w-[28%]" style="border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">${centerArea}</div>
+                        <div class="flex items-center justify-center bg-[#0d0d0e] h-full w-[28%]" style="border-left: 0.0625rem solid rgba(255,255,255,0.2); border-right: 0.0625rem solid rgba(255,255,255,0.2);">${centerArea}</div>
                         <div class="flex items-center justify-end gap-2.5 w-[36%] pr-5">${hPitcherArea}</div>
                     </div>
                     
                     <div class="w-full bg-[#111113]/90 flex flex-col pt-1.5 pb-2 px-3 relative z-10 border-t border-[rgba(255,255,255,0.15)] backdrop-blur-md">
-                        <div class="flex w-full text-[10px] font-bold items-center">
-                            <div class="flex flex-col w-[36px] shrink-0 text-left pl-1 gap-y-1.5 pt-0">
+                        <div class="flex w-full text-[0.625rem] font-bold items-center">
+                            <div class="flex flex-col w-[2.25rem] shrink-0 text-left pl-1 gap-y-1.5 pt-0">
                                 <div class="text-gray-400">팀명</div>
                                 <div class="text-white truncate mt-0.5">${m.team1}</div>
                                 <div class="text-white truncate mt-0.5">${m.team2}</div>
@@ -1169,10 +1169,10 @@
                                 </div>
                             </div>
                             
-                            <div class="scoreboard-rheb-panel flex flex-col shrink-0 gap-y-1.5 px-1 text-center" style="border-left: 1px solid rgba(255,255,255,0.1);">
-                                <div class="flex gap-1 text-[#60A5FA] justify-center"><div class="font-black w-[12px]">R</div><div class="w-[12px]">H</div><div class="w-[12px]">E</div><div class="w-[12px]">B</div></div>
-                                <div class="flex gap-1 mt-0.5 justify-center"><div class="text-white font-black w-[12px]">${aScoreBanner}</div><div class="text-gray-400 w-[12px]">${aHit}</div><div class="text-gray-400 w-[12px]">${aErr}</div><div class="text-gray-400 w-[12px]">${aBase}</div></div>
-                                <div class="flex gap-1 mt-0.5 justify-center"><div class="text-white font-black w-[12px]">${hScoreBanner}</div><div class="text-gray-400 w-[12px]">${hHit}</div><div class="text-gray-400 w-[12px]">${hErr}</div><div class="text-gray-400 w-[12px]">${hBase}</div></div>
+                            <div class="scoreboard-rheb-panel flex flex-col shrink-0 gap-y-1.5 px-1 text-center" style="border-left: 0.0625rem solid rgba(255,255,255,0.1);">
+                                <div class="flex gap-1 text-[#60A5FA] justify-center"><div class="font-black w-[0.75rem]">R</div><div class="w-[0.75rem]">H</div><div class="w-[0.75rem]">E</div><div class="w-[0.75rem]">B</div></div>
+                                <div class="flex gap-1 mt-0.5 justify-center"><div class="text-white font-black w-[0.75rem]">${aScoreBanner}</div><div class="text-gray-400 w-[0.75rem]">${aHit}</div><div class="text-gray-400 w-[0.75rem]">${aErr}</div><div class="text-gray-400 w-[0.75rem]">${aBase}</div></div>
+                                <div class="flex gap-1 mt-0.5 justify-center"><div class="text-white font-black w-[0.75rem]">${hScoreBanner}</div><div class="text-gray-400 w-[0.75rem]">${hHit}</div><div class="text-gray-400 w-[0.75rem]">${hErr}</div><div class="text-gray-400 w-[0.75rem]">${hBase}</div></div>
                             </div>
                         </div>
                     </div>
@@ -1181,7 +1181,7 @@
 
                 if (m.date.startsWith('2026-05')) {
                     sbh += `<div class="w-full mb-5">
-                        <button onclick="openTicketPopup('${m.date}')" class="w-full bg-gradient-to-r from-[#0B132B] to-[#1E3A8A]/40 border border-blue-500/30 shadow-[0_4px_12px_rgba(37,99,235,0.15)] text-blue-50 text-[14px] font-black tracking-tight py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all" style="color: #ffffff !important;">
+                        <button onclick="openTicketPopup('${m.date}')" class="w-full bg-gradient-to-r from-[#0B132B] to-[#1E3A8A]/40 border border-blue-500/30 shadow-[0_0.25rem_0.75rem_rgba(37,99,235,0.15)] text-blue-50 text-[0.875rem] font-black tracking-tight py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all" style="color: #ffffff !important;">
                             <i class="fa-solid fa-ticket text-blue-300 text-lg rotate-[-15deg]" style="color: #93c5fd !important;"></i> MOONLIGHT 기념 티켓 발급
                         </button>
                     </div>`;
@@ -1193,44 +1193,44 @@
                 <style>
                     /* 팝업 전체 테마 덮어쓰기 (클래식 모드) */
                     html:has(#lineup-popup:not(.render-hidden) .classic-marker) #lineup-popup.app-bg,
-                    html.light-mode:has(#lineup-popup:not(.render-hidden) .classic-marker) #lineup-popup.app-bg { background-color: #EBE7DF !important; background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px) !important; background-size: 15px 15px !important; transition: none !important; }
+                    html.light-mode:has(#lineup-popup:not(.render-hidden) .classic-marker) #lineup-popup.app-bg { background-color: #EBE7DF !important; background-image: linear-gradient(rgba(0,0,0,0.05) 0.0625rem, transparent 0.0625rem), linear-gradient(90deg, rgba(0,0,0,0.05) 0.0625rem, transparent 0.0625rem) !important; background-size: 0.9375rem 0.9375rem !important; transition: none !important; }
                     html:has(#lineup-popup:not(.render-hidden) .classic-marker) header.app-bg,
                     html.light-mode:has(#lineup-popup:not(.render-hidden) .classic-marker) header.app-bg { background-color: transparent !important; background-image: none !important; transition: none !important; }
                     #lineup-content { color: #111 !important; }
                     #lineup-content span.text-white, #lineup-content div.text-white { color: #111 !important; text-shadow: none !important; }
                     #lineup-content span.text-gray-200, #lineup-content span.text-gray-400, #lineup-content span.text-gray-500, #lineup-content div.text-gray-500 { color: #444 !important; }
                     #lineup-content .text-gray-400\\/60 { color: #555 !important; }
-                    #lineup-content .bg-white\\/5 { background-color: rgba(255,255,255,0.4) !important; border-color: rgba(0,0,0,0.1) !important; border-bottom: 1px solid rgba(0,0,0,0.1) !important;}
-                    #lineup-content .bg-\\[\\#222224\\] { background-color: #fff !important; border-color: #e5e7eb !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+                    #lineup-content .bg-white\\/5 { background-color: rgba(255,255,255,0.4) !important; border-color: rgba(0,0,0,0.1) !important; border-bottom: 0.0625rem solid rgba(0,0,0,0.1) !important;}
+                    #lineup-content .bg-\\[\\#222224\\] { background-color: #fff !important; border-color: #e5e7eb !important; box-shadow: inset 0 0.125rem 0.25rem rgba(0,0,0,0.05); }
                     #lineup-content .bg-white\\/10 { background-color: rgba(0,0,0,0.05) !important; }
                     #lineup-content .fa-user, #lineup-content .fa-clipboard-question { color: #9ca3af !important; }
                     #lineup-content .border-white\\/5, #lineup-content .border-white\\/10 { border-color: rgba(0,0,0,0.08) !important; }
-                    #lineup-content .text-\\[14px\\].font-bold.text-gray-200.truncate { color: #111 !important; font-weight: 900 !important; font-size: 16px !important; }
+                    #lineup-content .text-\\[0\\.875rem\\].font-bold.text-gray-200.truncate { color: #111 !important; font-weight: 900 !important; font-size: 1rem !important; }
                     #lineup-content span[style*="background-color"] { color: #fff !important; border: none !important; }
                     #lineup-content .bg-blue-600 { background-color: #004A99 !important; color: white !important; }
                     
                     /* 헤더 네비게이션 테마 덮어쓰기 (팝업 내부에서만 적용됨) */
                     html:has(#lineup-popup:not(.render-hidden) .classic-marker) #left-wrapper { background: transparent !important; box-shadow: none !important; border: none !important; }
-                    html:has(#lineup-popup:not(.render-hidden) .classic-marker) #header-popup-title { background: #fff !important; border-radius: 100px !important; border: 1px solid rgba(0,0,0,0.1) !important; box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important; padding: 2px 16px !important; }
+                    html:has(#lineup-popup:not(.render-hidden) .classic-marker) #header-popup-title { background: #fff !important; border-radius: 6.25rem !important; border: 0.0625rem solid rgba(0,0,0,0.1) !important; box-shadow: 0 0.25rem 0.625rem rgba(0,0,0,0.05) !important; padding: 0.125rem 1rem !important; }
                     html:has(#lineup-popup:not(.render-hidden) .classic-marker) #header-popup-text { color: #111 !important; font-weight: 900 !important; }
-                    html:has(#lineup-popup:not(.render-hidden) .classic-marker) #ctrl-back button { background: #004A99 !important; color: #fff !important; box-shadow: 0 4px 10px rgba(0,74,153,0.3) !important; }
+                    html:has(#lineup-popup:not(.render-hidden) .classic-marker) #ctrl-back button { background: #004A99 !important; color: #fff !important; box-shadow: 0 0.25rem 0.625rem rgba(0,74,153,0.3) !important; }
                     html:has(#lineup-popup:not(.render-hidden) .classic-marker) #ctrl-wrapper { background: transparent !important; box-shadow: none !important; border: none !important; }
                 </style>
                 <div class="classic-marker hidden"></div>
                 <div class="relative px-4 pb-6 pt-1 mb-2 mt-0">
-                    <div class="flex justify-center items-center gap-[1.5px] mt-1 mb-2 z-10 relative opacity-95">
-                        <span class="text-[14px] font-black px-1.5 py-0.5 -rotate-3 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #ffffff !important; background-color: #111111 !important; font-family: 'Georgia', serif; font-style: italic;">클</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 rotate-2 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #ffffff !important; background-color: #0F3789 !important; font-style: italic;">래</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 -rotate-6 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #111111 !important; background-color: #E2235B !important; font-style: italic;">식</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 rotate-3 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #ffffff !important; background-color: #0F3789 !important; font-family: 'Georgia', serif; font-style: italic;">씨</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 -rotate-2 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #111111 !important; background-color: #D1D1D1 !important; font-style: italic;">리</span>
-                        <span class="text-[14px] font-black px-1.5 py-0.5 rotate-6 shadow-[1.5px_1.5px_0_#000] border border-black" style="color: #ffffff !important; background-color: #E2235B !important; font-family: 'Georgia', serif; font-style: italic;">즈</span>
+                    <div class="flex justify-center items-center gap-[0.09375rem] mt-1 mb-2 z-10 relative opacity-95">
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 -rotate-3 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #ffffff !important; background-color: #111111 !important; font-family: 'Georgia', serif; font-style: italic;">클</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 rotate-2 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #ffffff !important; background-color: #0F3789 !important; font-style: italic;">래</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 -rotate-6 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #111111 !important; background-color: #E2235B !important; font-style: italic;">식</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 rotate-3 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #ffffff !important; background-color: #0F3789 !important; font-family: 'Georgia', serif; font-style: italic;">씨</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 -rotate-2 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #111111 !important; background-color: #D1D1D1 !important; font-style: italic;">리</span>
+                        <span class="text-[0.875rem] font-black px-1.5 py-0.5 rotate-6 shadow-[0.09375rem_0.09375rem_0_#000] border border-black" style="color: #ffffff !important; background-color: #E2235B !important; font-family: 'Georgia', serif; font-style: italic;">즈</span>
                     </div>
 
                     <div class="flex justify-between items-center relative z-10 mt-4">
-                        <div class="flex flex-col items-center w-[30%]">${l1Lg.replace('drop-shadow-lg', 'drop-shadow-md')}<span class="text-[16px] font-black text-gray-900 tracking-wider mt-1" style="color: #111 !important;">${m.team1}</span><span class="text-[12px] font-black text-gray-600 tracking-widest mt-0.5" style="color: #444 !important;">AWAY</span></div>
+                        <div class="flex flex-col items-center w-[30%]">${l1Lg.replace('drop-shadow-lg', 'drop-shadow-md')}<span class="text-[1rem] font-black text-gray-900 tracking-wider mt-1" style="color: #111 !important;">${m.team1}</span><span class="text-[0.75rem] font-black text-gray-600 tracking-widest mt-0.5" style="color: #444 !important;">AWAY</span></div>
                         <div class="flex flex-col items-center justify-center w-[40%]">${classicSch}</div>
-                        <div class="flex flex-col items-center w-[30%]">${l2Lg.replace('drop-shadow-lg', 'drop-shadow-md')}<span class="text-[16px] font-black text-gray-900 tracking-wider mt-1" style="color: #111 !important;">${m.team2}</span><span class="text-[12px] font-black text-gray-600 tracking-widest mt-0.5" style="color: #444 !important;">HOME</span></div>
+                        <div class="flex flex-col items-center w-[30%]">${l2Lg.replace('drop-shadow-lg', 'drop-shadow-md')}<span class="text-[1rem] font-black text-gray-900 tracking-wider mt-1" style="color: #111 !important;">${m.team2}</span><span class="text-[0.75rem] font-black text-gray-600 tracking-widest mt-0.5" style="color: #444 !important;">HOME</span></div>
                     </div>
                 </div>`;
             } else {
@@ -1257,13 +1257,13 @@
                     let isCurA = (i === currentInnInt && isTop && l.gameStatus === '경기중');
                     let isCurH = (i === currentInnInt && !isTop && l.gameStatus === '경기중');
                     
-                    let aFormatted = isCurA ? `<div class="relative inline-block"><span class="relative z-10 text-white font-bold">${aVal}</span><div class="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-[10px] h-[1.5px] bg-[#6ee7b7]"></div></div>` : aVal;
-                    let hFormatted = isCurH ? `<div class="relative inline-block"><span class="relative z-10 text-white font-bold">${hVal}</span><div class="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-[10px] h-[1.5px] bg-[#6ee7b7]"></div></div>` : hVal;
+                    let aFormatted = isCurA ? `<div class="relative inline-block"><span class="relative z-10 text-white font-bold">${aVal}</span><div class="absolute -bottom-[0.125rem] left-1/2 -translate-x-1/2 w-[0.625rem] h-[0.09375rem] bg-[#6ee7b7]"></div></div>` : aVal;
+                    let hFormatted = isCurH ? `<div class="relative inline-block"><span class="relative z-10 text-white font-bold">${hVal}</span><div class="absolute -bottom-[0.125rem] left-1/2 -translate-x-1/2 w-[0.625rem] h-[0.09375rem] bg-[#6ee7b7]"></div></div>` : hVal;
 
                     if (isExtra) {
-                        inningHeaderHtml += `<div class="w-[20px] text-center shrink-0">${i}</div>`;
-                        aInningsHtml += `<div class="w-[20px] text-center shrink-0">${aFormatted}</div>`;
-                        hInningsHtml += `<div class="w-[20px] text-center shrink-0">${hFormatted}</div>`;
+                        inningHeaderHtml += `<div class="w-[1.25rem] text-center shrink-0">${i}</div>`;
+                        aInningsHtml += `<div class="w-[1.25rem] text-center shrink-0">${aFormatted}</div>`;
+                        hInningsHtml += `<div class="w-[1.25rem] text-center shrink-0">${hFormatted}</div>`;
                     } else {
                         inningHeaderHtml += `<div>${i}</div>`;
                         aInningsHtml += `<div>${aFormatted}</div>`;
@@ -1283,71 +1283,71 @@
                 let aPCount = l.awayPitcherCount || '0', hPCount = l.homePitcherCount || '0';
                 
                 let oCount = parseInt(l.out || 0), bCount = parseInt(l.ball || 0), sCount = parseInt(l.strike || 0);
-                let outDotsHtml = ''; for(let i=1; i<=2; i++) outDotsHtml += `<div class="w-1.5 h-1.5 rounded-full ${i <= oCount ? 'bg-[#ef4444] shadow-[0_0_3px_#ef4444]' : 'bg-[#4b5563]'}"></div>`;
-                let base1 = l.base1 ? 'bg-[#6ee7b7] shadow-[0_0_5px_rgba(110,231,183,0.6)]' : 'bg-[#374151]', base2 = l.base2 ? 'bg-[#6ee7b7] shadow-[0_0_5px_rgba(110,231,183,0.6)]' : 'bg-[#374151]', base3 = l.base3 ? 'bg-[#6ee7b7] shadow-[0_0_5px_rgba(110,231,183,0.6)]' : 'bg-[#374151]';
-                let innIcon = isTop ? `<div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[6px] border-b-[#6ee7b7] mt-0.5"></div>` : `<div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#6ee7b7] mt-0.5"></div>`;
+                let outDotsHtml = ''; for(let i=1; i<=2; i++) outDotsHtml += `<div class="w-1.5 h-1.5 rounded-full ${i <= oCount ? 'bg-[#ef4444] shadow-[0_0_0.1875rem_#ef4444]' : 'bg-[#4b5563]'}"></div>`;
+                let base1 = l.base1 ? 'bg-[#6ee7b7] shadow-[0_0_0.3125rem_rgba(110,231,183,0.6)]' : 'bg-[#374151]', base2 = l.base2 ? 'bg-[#6ee7b7] shadow-[0_0_0.3125rem_rgba(110,231,183,0.6)]' : 'bg-[#374151]', base3 = l.base3 ? 'bg-[#6ee7b7] shadow-[0_0_0.3125rem_rgba(110,231,183,0.6)]' : 'bg-[#374151]';
+                let innIcon = isTop ? `<div class="w-0 h-0 border-l-[0.25rem] border-l-transparent border-r-[0.25rem] border-r-transparent border-b-[0.375rem] border-b-[#6ee7b7] mt-0.5"></div>` : `<div class="w-0 h-0 border-l-[0.25rem] border-l-transparent border-r-[0.25rem] border-r-transparent border-t-[0.375rem] border-t-[#6ee7b7] mt-0.5"></div>`;
 
                 if (l.gameStatus === '종료' && !iC) {
                     let aWin = parseInt(aScoreBanner) > parseInt(hScoreBanner), hWin = parseInt(hScoreBanner) > parseInt(aScoreBanner);
                     let aText = aWin ? `<span class="text-[#f87171] font-black mr-1">승</span>${l.winPitcher||'-'}` : (hWin ? `<span class="text-[#60a5fa] font-black mr-1">패</span>${l.losePitcher||'-'}` : `<span class="text-gray-400">무승부</span>`);
                     let hText = hWin ? `<span class="text-[#f87171] font-black mr-1">승</span>${l.winPitcher||'-'}` : (aWin ? `<span class="text-[#60a5fa] font-black mr-1">패</span>${l.losePitcher||'-'}` : `<span class="text-gray-400">무승부</span>`);
-                    aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aText}</span>`; 
-                    hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hText}</span>`;
-                    inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">종료</span>`; 
-                    centerArea = `<span class="text-[12px] font-bold text-gray-400 tracking-widest mt-px">경기결과</span>`;
+                    aPitcherArea = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${aText}</span>`; 
+                    hPitcherArea = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${hText}</span>`;
+                    inningArea = `<span class="text-[0.875rem] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">종료</span>`; 
+                    centerArea = `<span class="text-[0.75rem] font-bold text-gray-400 tracking-widest mt-px">경기결과</span>`;
                 } else if (l.gameStatus === '경기전' || iC) {
                     let awayExpectedStarter = _starterForLineup(m, l, 'away');
                     let homeExpectedStarter = _starterForLineup(m, l, 'home');
                     let awayStarterText = awayExpectedStarter.name ? `${awayExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${awayExpectedStarter.name}` : '예상 선발 미정';
                     let homeStarterText = homeExpectedStarter.name ? `${homeExpectedStarter.predicted ? '예상 선발 ' : '선발 '}${homeExpectedStarter.name}` : '예상 선발 미정';
-                    aPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${awayStarterText}</span>`;
-                    hPitcherArea = `<span class="text-[11px] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${homeStarterText}</span>`;
+                    aPitcherArea = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate">${awayStarterText}</span>`;
+                    hPitcherArea = `<span class="text-[0.6875rem] font-bold text-[#FFFFFF] drop-shadow-md tracking-tight truncate text-right">${homeStarterText}</span>`;
                     let centerTxt = iC ? cancelText : m.time;
-                    inningArea = `<span class="text-[14px] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">${centerTxt}</span>`;
-                    centerArea = `<span class="text-[11px] font-bold text-gray-400 tracking-widest mt-px">${m.stadium}</span>`;
+                    inningArea = `<span class="text-[0.875rem] font-black text-[#FFFFFF] drop-shadow-md tracking-widest mt-1">${centerTxt}</span>`;
+                    centerArea = `<span class="text-[0.6875rem] font-bold text-gray-400 tracking-widest mt-px">${m.stadium}</span>`;
                     aScoreBanner = '-'; hScoreBanner = '-';
                 } else {
                     let livePersonnel = _scoreboardLivePersonnel(l, isTop);
                     aPitcherArea = livePersonnel.away;
                     hPitcherArea = livePersonnel.home;
-                    inningArea = `<div class="w-[28px] h-[24px] relative mb-0.5"><div class="absolute top-[1px] left-[10px] w-[8px] h-[8px] rotate-45 ${base2}"></div><div class="absolute top-[9px] left-[2px] w-[8px] h-[8px] rotate-45 ${base3}"></div><div class="absolute top-[9px] left-[18px] w-[8px] h-[8px] rotate-45 ${base1}"></div></div><div class="flex items-center gap-1.5">${innIcon}<span class="text-[13px] font-black text-[#FFFFFF] drop-shadow-md leading-none tracking-tighter">${innNum}</span></div>`;
-                    centerArea = `<div class="flex gap-[3px] mr-1.5">${outDotsHtml}</div><span class="text-[12px] font-black text-[#FFFFFF] tracking-widest mt-px">${bCount}-${sCount}</span>`;
+                    inningArea = `<div class="w-[1.75rem] h-[1.5rem] relative mb-0.5"><div class="absolute top-[0.0625rem] left-[0.625rem] w-[0.5rem] h-[0.5rem] rotate-45 ${base2}"></div><div class="absolute top-[0.5625rem] left-[0.125rem] w-[0.5rem] h-[0.5rem] rotate-45 ${base3}"></div><div class="absolute top-[0.5625rem] left-[1.125rem] w-[0.5rem] h-[0.5rem] rotate-45 ${base1}"></div></div><div class="flex items-center gap-1.5">${innIcon}<span class="text-[0.8125rem] font-black text-[#FFFFFF] drop-shadow-md leading-none tracking-tighter">${innNum}</span></div>`;
+                    centerArea = `<div class="flex gap-[0.1875rem] mr-1.5">${outDotsHtml}</div><span class="text-[0.75rem] font-black text-[#FFFFFF] tracking-widest mt-px">${bCount}-${sCount}</span>`;
                 }
 
-                const allstarLogo1 = isAllstarGame ? `<img src="${teamLogos[m.team1]}" class="w-[clamp(26px,8vw,42px)] h-[clamp(26px,8vw,42px)] object-contain shrink-0">` : '';
-                const allstarLogo2 = isAllstarGame ? `<img src="${teamLogos[m.team2]}" class="w-[clamp(26px,8vw,42px)] h-[clamp(26px,8vw,42px)] object-contain shrink-0">` : '';
+                const allstarLogo1 = isAllstarGame ? `<img src="${teamLogos[m.team1]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : '';
+                const allstarLogo2 = isAllstarGame ? `<img src="${teamLogos[m.team2]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : '';
                 const sideWidthClass = isAllstarGame ? 'w-[40%]' : 'w-[36%]';
                 const centerWidthClass = isAllstarGame ? 'w-[20%]' : 'w-[28%]';
                 const sideGapClass = isAllstarGame ? 'gap-1' : 'gap-3';
-                const allstarNameStyle = isAllstarGame ? 'font-size:clamp(13px,4.2vw,22px);white-space:nowrap;line-height:1;' : '';
+                const allstarNameStyle = isAllstarGame ? 'font-size:clamp(0.8125rem,4.2vw,1.375rem);white-space:nowrap;line-height:1;' : '';
 
-                sbh = `<div class="sb-dark scoreboard-surface w-[calc(100%+48px)] -mx-6 rounded-none border-x-0 relative overflow-hidden mb-5 shadow-xl flex flex-col border-y border-white/15" style="background: linear-gradient(to right, ${h1}E6 0%, #18181b 45%, #18181b 55%, ${h2}E6 100%); --score-away-soft:${h1}24; --score-home-soft:${h2}24;">
+                sbh = `<div class="sb-dark scoreboard-surface w-[calc(100%+3rem)] -mx-6 rounded-none border-x-0 relative overflow-hidden mb-5 shadow-xl flex flex-col border-y border-white/15" style="background: linear-gradient(to right, ${h1}E6 0%, #18181b 45%, #18181b 55%, ${h2}E6 100%); --score-away-soft:${h1}24; --score-home-soft:${h2}24;">
                     <img src="${teamLogos[m.team1]}" class="scoreboard-team-watermark absolute -left-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">
                     <img src="${teamLogos[m.team2]}" class="scoreboard-team-watermark absolute -right-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">
                     
-                    <div class="flex justify-between items-center px-5 py-2 relative z-10 h-[62px]">
+                    <div class="flex justify-between items-center px-5 py-2 relative z-10 h-[3.875rem]">
                         <div class="flex items-center ${sideGapClass} ${sideWidthClass} min-w-0">
-                            ${allstarLogo1}<span class="text-[26px] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md" style="${allstarNameStyle}">${m.team1}</span>
-                            <span class="text-[34px] font-black text-[#FFFFFF] drop-shadow-md ml-auto leading-none">${aScoreBanner}</span>
+                            ${allstarLogo1}<span class="text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md" style="${allstarNameStyle}">${m.team1}</span>
+                            <span class="text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md ml-auto leading-none">${aScoreBanner}</span>
                         </div>
                         <div class="flex flex-col items-center justify-center ${centerWidthClass} mt-0.5">${inningArea}</div>
                         <div class="flex items-center ${sideGapClass} ${sideWidthClass} min-w-0">
-                            <span class="text-[34px] font-black text-[#FFFFFF] drop-shadow-md mr-auto leading-none">${hScoreBanner}</span>
-                            <span class="text-[26px] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md" style="${allstarNameStyle}">${m.team2}</span>${allstarLogo2}
+                            <span class="text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md mr-auto leading-none">${hScoreBanner}</span>
+                            <span class="text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md" style="${allstarNameStyle}">${m.team2}</span>${allstarLogo2}
                         </div>
                     </div>
                     
                     <div class="w-full h-px bg-[rgba(255,255,255,0.3)] relative z-10"></div>
                     
-                    <div class="flex justify-between items-center bg-[rgba(0,0,0,0.4)] relative z-10 h-[28px]">
+                    <div class="flex justify-between items-center bg-[rgba(0,0,0,0.4)] relative z-10 h-[1.75rem]">
                         <div class="flex items-center gap-2.5 w-[36%] pl-5">${aPitcherArea}</div>
-                        <div class="flex items-center justify-center bg-[#0d0d0e] h-full w-[28%]" style="border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">${centerArea}</div>
+                        <div class="flex items-center justify-center bg-[#0d0d0e] h-full w-[28%]" style="border-left: 0.0625rem solid rgba(255,255,255,0.2); border-right: 0.0625rem solid rgba(255,255,255,0.2);">${centerArea}</div>
                         <div class="flex items-center justify-end gap-2.5 w-[36%] pr-5">${hPitcherArea}</div>
                     </div>
                     
                     <div class="w-full bg-[#111113]/90 flex flex-col pt-1.5 pb-2 px-3 relative z-10 border-t border-[rgba(255,255,255,0.15)] backdrop-blur-md">
-                        <div class="flex w-full text-[10px] font-bold items-center">
-                            <div class="flex flex-col w-[36px] shrink-0 text-left pl-1 gap-y-1.5 pt-0">
+                        <div class="flex w-full text-[0.625rem] font-bold items-center">
+                            <div class="flex flex-col w-[2.25rem] shrink-0 text-left pl-1 gap-y-1.5 pt-0">
                                 <div class="text-gray-400">팀명</div>
                                 <div class="text-white truncate mt-0.5">${m.team1}</div>
                                 <div class="text-white truncate mt-0.5">${m.team2}</div>
@@ -1361,10 +1361,10 @@
                                 </div>
                             </div>
                             
-                            <div class="scoreboard-rheb-panel flex flex-col shrink-0 gap-y-1.5 px-1 text-center" style="border-left: 1px solid rgba(255,255,255,0.1);">
-                                <div class="flex gap-1 text-[#60A5FA] justify-center"><div class="font-black w-[12px]">R</div><div class="w-[12px]">H</div><div class="w-[12px]">E</div><div class="w-[12px]">B</div></div>
-                                <div class="flex gap-1 mt-0.5 justify-center"><div class="text-white font-black w-[12px]">${aScoreBanner}</div><div class="text-gray-400 w-[12px]">${aHit}</div><div class="text-gray-400 w-[12px]">${aErr}</div><div class="text-gray-400 w-[12px]">${aBase}</div></div>
-                                <div class="flex gap-1 mt-0.5 justify-center"><div class="text-white font-black w-[12px]">${hScoreBanner}</div><div class="text-gray-400 w-[12px]">${hHit}</div><div class="text-gray-400 w-[12px]">${hErr}</div><div class="text-gray-400 w-[12px]">${hBase}</div></div>
+                            <div class="scoreboard-rheb-panel flex flex-col shrink-0 gap-y-1.5 px-1 text-center" style="border-left: 0.0625rem solid rgba(255,255,255,0.1);">
+                                <div class="flex gap-1 text-[#60A5FA] justify-center"><div class="font-black w-[0.75rem]">R</div><div class="w-[0.75rem]">H</div><div class="w-[0.75rem]">E</div><div class="w-[0.75rem]">B</div></div>
+                                <div class="flex gap-1 mt-0.5 justify-center"><div class="text-white font-black w-[0.75rem]">${aScoreBanner}</div><div class="text-gray-400 w-[0.75rem]">${aHit}</div><div class="text-gray-400 w-[0.75rem]">${aErr}</div><div class="text-gray-400 w-[0.75rem]">${aBase}</div></div>
+                                <div class="flex gap-1 mt-0.5 justify-center"><div class="text-white font-black w-[0.75rem]">${hScoreBanner}</div><div class="text-gray-400 w-[0.75rem]">${hHit}</div><div class="text-gray-400 w-[0.75rem]">${hErr}</div><div class="text-gray-400 w-[0.75rem]">${hBase}</div></div>
                             </div>
                         </div>
                     </div>
@@ -1401,7 +1401,7 @@
 
             if (aLineupSrc.length === 0 && hLineupSrc.length === 0) {
                 const starterPreview = expectedStarterPreviewHtml(m, awayStarterInfo, homeStarterInfo);
-                c.innerHTML = sbh + wpb + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[15px] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[11px] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
+                c.innerHTML = sbh + wpb + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
                 return;
             }
             
@@ -1409,16 +1409,16 @@
             let lg2 = uiTeamLogo(m.team2, 'w-6 h-6', 'w-6 h-6');
             
             // 투수 행 렌더 헬퍼 (선발/불펜 공통)
-            const _pf_img = (nm) => playerImages[nm] ? `<img src="${playerImages[nm]}" class="w-full h-full object-contain object-bottom scale-[1.3] drop-shadow-md origin-bottom">` : `<i class="fa-solid fa-user text-gray-500 text-[16px] mt-1.5"></i>`;
+            const _pf_img = (nm) => playerImages[nm] ? `<img src="${playerImages[nm]}" class="w-full h-full object-contain object-bottom scale-[1.3] drop-shadow-md origin-bottom">` : `<i class="fa-solid fa-user text-gray-500 text-[1rem] mt-1.5"></i>`;
             const _pf_box = (nm) => playerImages[nm] ? "w-9 h-9 flex items-end justify-center shrink-0" : "w-9 h-9 bg-[#222224] rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-white/10";
             const pitcherRow = (raw, hx, label, recHtml, filled) => {
                 let nm = (typeof raw === 'object' && raw !== null) ? raw.name : raw;
                 if (!nm || nm === '-') return '';
                 let pos = (typeof raw === 'object' && raw !== null && raw.position) ? raw.position : '투수';
                 let thr = _throwsOf(raw);
-                let bat = thr ? `<span class="text-[9px] font-bold text-gray-500 border border-gray-600/50 rounded-sm px-1 ml-1 leading-none inline-flex items-center justify-center h-[14px] opacity-80 shrink-0">${thr}</span>` : '';
-                let bs = filled ? `background-color:${hx};border:1px solid ${hx};color:#ffffff !important;` : `background:transparent;border:1px solid ${hx};color:${hx};`;
-                return `<div class="mb-3.5"><div class="flex items-center gap-2"><div class="w-[22px] flex justify-center shrink-0"><span style="${bs}" class="text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-sm">${label}</span></div><div class="${_pf_box(nm)}">${_pf_img(nm)}</div><div class="flex flex-col min-w-0 flex-1"><div class="flex items-center gap-x-1"><span class="text-[clamp(11px,3vw,14px)] font-bold text-white whitespace-nowrap tracking-tight shrink">${nm}</span>${bat}</div><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${pos}</span></div></div>${recHtml || ''}</div>`;
+                let bat = thr ? `<span class="text-[0.5625rem] font-bold text-gray-500 border border-gray-600/50 rounded-sm px-1 ml-1 leading-none inline-flex items-center justify-center h-[0.875rem] opacity-80 shrink-0">${thr}</span>` : '';
+                let bs = filled ? `background-color:${hx};border:0.0625rem solid ${hx};color:#ffffff !important;` : `background:transparent;border:0.0625rem solid ${hx};color:${hx};`;
+                return `<div class="mb-3.5"><div class="flex items-center gap-2"><div class="w-[1.375rem] flex justify-center shrink-0"><span style="${bs}" class="text-[0.5rem] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-sm">${label}</span></div><div class="${_pf_box(nm)}">${_pf_img(nm)}</div><div class="flex flex-col min-w-0 flex-1"><div class="flex items-center gap-x-1"><span class="text-[clamp(0.6875rem,3vw,0.875rem)] font-bold text-white whitespace-nowrap tracking-tight shrink">${nm}</span>${bat}</div><span class="text-[0.625rem] text-gray-400 whitespace-nowrap mt-0.5">${pos}</span></div></div>${recHtml || ''}</div>`;
             };
             // 선발 = 상세 객체(awayStarterDetail/awayPitcherDetail, 사진·좌우 포함), 현재(마운드) 투수 = 라이브에서 갱신되는 문자열(awayPitcher)
             let aStarterRaw = awayStarterInfo.raw || '-';
@@ -1439,7 +1439,7 @@
                     `<span style="color:${hx}">시즌 ${r.seasonW}승 ${r.seasonL}패</span>`,
                     `<span class="text-gray-400">${opp}전 ${r.vsW}승 ${r.vsL}패</span>`
                 ];
-                return `<div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-2 text-[10px] font-bold leading-tight">${parts.join('<span class="text-gray-600">·</span>')}</div>`;
+                return `<div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-2 text-[0.625rem] font-bold leading-tight">${parts.join('<span class="text-gray-600">·</span>')}</div>`;
             };
             let apRecHtml = isClassic ? '' : starterRecHtml(aStarterDisp, m.team1, m.team2, h1);
             let hpRecHtml = isClassic ? '' : starterRecHtml(hStarterDisp, m.team2, m.team1, h2);
@@ -1455,18 +1455,18 @@
                 let pos = position || role || '타자';
                 if (isSub && position && role && role !== '교체') pos = `${position} · ${role}`;
                 let batRaw = pObj && pObj.batsThrows ? pObj.batsThrows : '';
-                let bat = batRaw ? `<span class="text-[9px] font-bold text-gray-500 border border-gray-600/50 rounded-sm px-1 ml-1 leading-none inline-flex items-center justify-center h-[14px] opacity-80 shrink-0">${batRaw}</span>` : '';
-                let hi = playerImages[p], pim = hi ? `<img src="${hi}" class="w-full h-full object-contain object-bottom scale-[1.3] drop-shadow-md origin-bottom">` : `<i class="fa-solid fa-user text-gray-500 text-[16px] mt-1.5"></i>`;
+                let bat = batRaw ? `<span class="text-[0.5625rem] font-bold text-gray-500 border border-gray-600/50 rounded-sm px-1 ml-1 leading-none inline-flex items-center justify-center h-[0.875rem] opacity-80 shrink-0">${batRaw}</span>` : '';
+                let hi = playerImages[p], pim = hi ? `<img src="${hi}" class="w-full h-full object-contain object-bottom scale-[1.3] drop-shadow-md origin-bottom">` : `<i class="fa-solid fa-user text-gray-500 text-[1rem] mt-1.5"></i>`;
                 let pf = hi ? 'w-9 h-9 flex items-end justify-center shrink-0' : 'w-9 h-9 bg-[#222224] rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-white/10';
                 let marker = isSub ? '<span class="lineup-sub-arrow">↑</span>' : String(_lineupOrderOf(pObj, i + 1));
                 let markerStyle = isSub ? '' : `color:${hex}`;
-                return `<div class="flex items-center gap-2 mb-3.5"><span class="w-[22px] min-h-[20px] flex items-center justify-center text-center text-[15px] font-black shrink-0" style="${markerStyle}">${marker}</span><div class="${pf}">${pim}</div><div class="flex flex-col min-w-0 flex-1"><div class="flex items-center gap-x-1"><span class="text-[clamp(11px,3vw,14px)] font-bold text-white whitespace-nowrap tracking-tight shrink">${p}</span>${bat}</div><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${pos}</span></div></div>`;
+                return `<div class="flex items-center gap-2 mb-3.5"><span class="w-[1.375rem] min-h-[1.25rem] flex items-center justify-center text-center text-[0.9375rem] font-black shrink-0" style="${markerStyle}">${marker}</span><div class="${pf}">${pim}</div><div class="flex flex-col min-w-0 flex-1"><div class="flex items-center gap-x-1"><span class="text-[clamp(0.6875rem,3vw,0.875rem)] font-bold text-white whitespace-nowrap tracking-tight shrink">${p}</span>${bat}</div><span class="text-[0.625rem] text-gray-400 whitespace-nowrap mt-0.5">${pos}</span></div></div>`;
             }).join('') : '<div class="text-center text-xs text-gray-500 py-4">라인업 정보 없음</div>';
 
             let abh = lineupRows(aLineupSrc, h1);
             let hbh = lineupRows(hLineupSrc, h2);
             
-            c.innerHTML = sbh + wpb + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[14px] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[14px] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
+            c.innerHTML = sbh + wpb + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
         }
 
     window.switchGameInfoTab = switchGameInfoTab;

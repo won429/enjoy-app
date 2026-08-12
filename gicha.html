@@ -17,6 +17,14 @@
     <script src="gyeongbu_general_train_timetable.js"></script>
     
     <style>
+        /* 기기 폭에 따라 화면 전체가 같은 비율로 커지고 작아진다.
+           기준 375px, 배율은 0.9~1.1 사이로 묶어 작은 폰에서도 터치 영역을 지킨다.
+           OS 글꼴 크기 설정은 따르지 않는다(레이아웃이 기기마다 달라지지 않도록). */
+        html {
+            font-size: clamp(14.4px, 4.2667vw, 17.6px);
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
         /* =======================================================
            디자인 시스템 리뉴얼 — 강한 글래스 + 단색 + 미니멀
            (그라데이션 미사용 / JS가 참조하는 ID·클래스는 모두 보존)
@@ -30,8 +38,8 @@
             --glass-strong: rgba(255,255,255,0.78);
             --line: rgba(15,23,42,0.06);
             --line-2: rgba(15,23,42,0.10);
-            --shadow-card: 0 10px 30px -10px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.06);
-            --shadow-soft: 0 6px 18px -8px rgba(15,23,42,0.14);
+            --shadow-card: 0 0.625rem 1.875rem -0.625rem rgba(15,23,42,0.18), 0 0.125rem 0.375rem rgba(15,23,42,0.06);
+            --shadow-soft: 0 0.375rem 1.125rem -0.5rem rgba(15,23,42,0.14);
         }
 
         * { -webkit-tap-highlight-color: transparent; }
@@ -55,18 +63,18 @@
         #home-screen > header,
         #main-header {
             background-color: rgba(246,248,252,0.72) !important;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid var(--line);
+            backdrop-filter: blur(1.25rem) saturate(180%);
+            -webkit-backdrop-filter: blur(1.25rem) saturate(180%);
+            border-bottom: 0.0625rem solid var(--line);
         }
 
         /* 유리 재질 공통 카드 */
         .toss-card {
             background: var(--glass-strong);
-            backdrop-filter: blur(22px) saturate(190%);
-            -webkit-backdrop-filter: blur(22px) saturate(190%);
-            border: 1px solid rgba(255,255,255,0.6);
-            border-radius: 26px;
+            backdrop-filter: blur(1.375rem) saturate(190%);
+            -webkit-backdrop-filter: blur(1.375rem) saturate(190%);
+            border: 0.0625rem solid rgba(255,255,255,0.6);
+            border-radius: 1.625rem;
             box-shadow: var(--shadow-card);
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
         }
@@ -74,16 +82,16 @@
         /* 리스트/정보 카드: 반투명 글래스 타일 */
         .list-card {
             background: var(--glass);
-            backdrop-filter: blur(14px) saturate(160%);
-            -webkit-backdrop-filter: blur(14px) saturate(160%);
-            border: 1px solid rgba(255,255,255,0.55);
-            border-radius: 22px;
+            backdrop-filter: blur(0.875rem) saturate(160%);
+            -webkit-backdrop-filter: blur(0.875rem) saturate(160%);
+            border: 0.0625rem solid rgba(255,255,255,0.55);
+            border-radius: 1.375rem;
             box-shadow: var(--shadow-soft);
             transition: transform 0.12s ease, box-shadow 0.2s ease;
         }
         .list-card:active {
             transform: scale(0.975);
-            box-shadow: 0 3px 10px -6px rgba(15,23,42,0.16);
+            box-shadow: 0 0.1875rem 0.625rem -0.375rem rgba(15,23,42,0.16);
         }
 
         /* 하단 네비게이션 인디케이터 */
@@ -93,10 +101,10 @@
         /* 하단 네비 글래스 강화 */
         #bottom-nav > div {
             background-color: rgba(255,255,255,0.7) !important;
-            backdrop-filter: blur(22px) saturate(190%);
-            -webkit-backdrop-filter: blur(22px) saturate(190%);
-            border: 1px solid rgba(255,255,255,0.65) !important;
-            box-shadow: 0 12px 34px -10px rgba(15,23,42,0.28) !important;
+            backdrop-filter: blur(1.375rem) saturate(190%);
+            -webkit-backdrop-filter: blur(1.375rem) saturate(190%);
+            border: 0.0625rem solid rgba(255,255,255,0.65) !important;
+            box-shadow: 0 0.75rem 2.125rem -0.625rem rgba(15,23,42,0.28) !important;
         }
 
         /* 커스텀 스크롤바 숨김 */
@@ -105,14 +113,14 @@
 
         .text-main { color: var(--ink); }
         .text-sub { color: var(--ink-soft); }
-        .pt-safe { padding-top: max(20px, env(safe-area-inset-top)); }
+        .pt-safe { padding-top: max(1.25rem, env(safe-area-inset-top)); }
 
         /* 모달 시트 글래스 처리 */
         #timetable-modal > div,
         #station-selector-modal > div {
             background-color: rgba(246,248,252,0.92) !important;
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            backdrop-filter: blur(1.5rem) saturate(180%);
+            -webkit-backdrop-filter: blur(1.5rem) saturate(180%);
         }
 
         /* 애니메이션 설정 */
@@ -131,16 +139,16 @@
 
         /* 역명판: 더 단단하고 프리미엄한 단색 캡슐 */
         .station-plate-base {
-            height: 40px;
+            height: 2.5rem;
             background-color: #0054A6;
-            border-radius: 9999px;
+            border-radius: 624.9375rem;
             position: relative;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) var(--station-pill-width, 126px) minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1fr) var(--station-pill-width, 7.875rem) minmax(0, 1fr);
             align-items: center;
-            gap: 6px;
-            padding: 0 10px;
-            box-shadow: 0 14px 30px -10px rgba(0,84,166,0.45), inset 0 1px 0 rgba(255,255,255,0.18);
+            gap: 0.375rem;
+            padding: 0 0.625rem;
+            box-shadow: 0 0.875rem 1.875rem -0.625rem rgba(0,84,166,0.45), inset 0 0.0625rem 0 rgba(255,255,255,0.18);
             transition: background-color 0.3s, box-shadow 0.3s;
         }
         .station-plate-side {
@@ -162,43 +170,43 @@
         }
         .station-plate-pill {
             background-color: #ffffff;
-            height: 56px;
-            width: var(--station-pill-width, 126px);
+            height: 3.5rem;
+            width: var(--station-pill-width, 7.875rem);
             max-width: 54%;
             min-width: 0;
-            padding: 0 clamp(9px, 3vw, 16px);
-            border-radius: 9999px;
-            border: 3px solid #0054A6;
+            padding: 0 clamp(0.5625rem, 3vw, 1rem);
+            border-radius: 624.9375rem;
+            border: 0.1875rem solid #0054A6;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 7px;
+            gap: 0.4375rem;
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            box-shadow: 0 10px 24px -10px rgba(15,23,42,0.30), 0 0 0 4px rgba(255,255,255,0.7);
+            box-shadow: 0 0.625rem 1.5rem -0.625rem rgba(15,23,42,0.30), 0 0 0 0.25rem rgba(255,255,255,0.7);
             transition: border-color 0.3s;
         }
         #home-station-name {
             flex: 0 1 auto;
-            max-width: calc(100% - 35px);
+            max-width: calc(100% - 2.1875rem);
             min-width: 0;
             overflow: hidden;
             white-space: nowrap;
             line-height: 1;
         }
         .metro-logo-circle {
-            width: 28px;
-            height: 28px;
+            width: 1.75rem;
+            height: 1.75rem;
             background-color: #0054A6;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 13px;
+            font-size: 0.8125rem;
             font-weight: 900;
-            box-shadow: 0 3px 8px -2px rgba(15,23,42,0.30);
+            box-shadow: 0 0.1875rem 0.5rem -0.125rem rgba(15,23,42,0.30);
             transition: background-color 0.3s;
         }
 
@@ -206,13 +214,13 @@
         .sect-title {
             display: flex;
             align-items: center;
-            gap: 9px;
+            gap: 0.5625rem;
         }
         .sect-title::before {
             content: "";
-            width: 4px;
-            height: 17px;
-            border-radius: 4px;
+            width: 0.25rem;
+            height: 1.0625rem;
+            border-radius: 0.25rem;
             background-color: var(--theme, #0054A6);
             transition: background-color 0.3s;
         }
@@ -238,28 +246,28 @@
         /* 수도권 지원 예정 팝업 */
         #capital-modal .capital-card {
             background: rgba(255,255,255,0.96);
-            border: 1px solid rgba(255,255,255,0.82);
-            box-shadow: 0 28px 70px -24px rgba(15,23,42,0.42), 0 8px 24px -12px rgba(37,99,235,0.28);
+            border: 0.0625rem solid rgba(255,255,255,0.82);
+            box-shadow: 0 1.75rem 4.375rem -1.5rem rgba(15,23,42,0.42), 0 0.5rem 1.5rem -0.75rem rgba(37,99,235,0.28);
         }
         .capital-route-line {
-            height: 5px;
-            border-radius: 9999px;
+            height: 0.3125rem;
+            border-radius: 624.9375rem;
             background-color: #2563EB;
-            box-shadow: 0 8px 18px -8px rgba(37,99,235,0.75);
+            box-shadow: 0 0.5rem 1.125rem -0.5rem rgba(37,99,235,0.75);
         }
         .capital-route-dot {
-            width: 15px;
-            height: 15px;
-            border: 4px solid #2563EB;
-            border-radius: 9999px;
+            width: 0.9375rem;
+            height: 0.9375rem;
+            border: 0.25rem solid #2563EB;
+            border-radius: 624.9375rem;
             background-color: #ffffff;
-            box-shadow: 0 0 0 4px rgba(219,234,254,0.9);
+            box-shadow: 0 0 0 0.25rem rgba(219,234,254,0.9);
         }
         #subway-map { background: #eef2f6; touch-action: none; }
         .subway-map-station {
             display: block;
-            width: 34px;
-            height: 34px;
+            width: 2.125rem;
+            height: 2.125rem;
             padding: 0;
             border: 0;
             border-radius: 50%;
@@ -290,11 +298,11 @@
         }
         .subway-map-train {
             position: relative;
-            width: 100px;
-            height: 30px;
+            width: 6.25rem;
+            height: 1.875rem;
             pointer-events: auto;
             cursor: pointer;
-            filter: drop-shadow(0 2px 1.5px rgba(15,23,42,.24)) drop-shadow(0 5px 6px rgba(15,23,42,.18));
+            filter: drop-shadow(0 0.125rem 0.09375rem rgba(15,23,42,.24)) drop-shadow(0 0.3125rem 0.375rem rgba(15,23,42,.18));
             transition: filter .2s ease, transform .16s ease;
             -webkit-tap-highlight-color: transparent;
             transform: translateZ(0);
@@ -305,16 +313,16 @@
             transform: translate(-50%, -50%) translateZ(0);
         }
         .subway-map-train.is-selected {
-            filter: drop-shadow(0 4px 3px rgba(15,23,42,.30)) drop-shadow(0 6px 9px rgba(15,23,42,.25)) drop-shadow(0 0 5px rgba(255,255,255,.95));
+            filter: drop-shadow(0 0.25rem 0.1875rem rgba(15,23,42,.30)) drop-shadow(0 0.375rem 0.5625rem rgba(15,23,42,.25)) drop-shadow(0 0 0.3125rem rgba(255,255,255,.95));
         }
         .subway-map-train.is-nationwide {
-            width: 27.5px;
-            height: 8.25px;
-            filter: drop-shadow(0 1px 1px rgba(15,23,42,.24));
+            width: 1.71875rem;
+            height: 0.515625rem;
+            filter: drop-shadow(0 0.0625rem 0.0625rem rgba(15,23,42,.24));
             opacity: .9;
         }
         .subway-map-train.is-nationwide.is-selected {
-            filter: drop-shadow(0 3px 4px rgba(15,23,42,.38)) drop-shadow(0 0 4px rgba(255,255,255,.9));
+            filter: drop-shadow(0 0.1875rem 0.25rem rgba(15,23,42,.38)) drop-shadow(0 0 0.25rem rgba(255,255,255,.9));
         }
         .subway-map-train-body {
             position: relative;
@@ -339,17 +347,17 @@
             left: 68.5%;
             top: 54.3%;
             display: flex;
-            width: 21px;
-            height: 21px;
+            width: 1.3125rem;
+            height: 1.3125rem;
             align-items: center;
             justify-content: center;
             transform: translate(-50%, -50%);
             color: #fff;
-            font-size: 13px;
+            font-size: 0.8125rem;
             font-weight: 900;
             line-height: 1;
-            letter-spacing: -.5px;
-            text-shadow: 0 1px 1px rgba(15,23,42,.42);
+            letter-spacing: -0.03125rem;
+            text-shadow: 0 0.0625rem 0.0625rem rgba(15,23,42,.42);
             pointer-events: none;
         }
         .subway-map-train-label-text {
@@ -357,17 +365,17 @@
             transform-origin: 50% 50%;
         }
         .subway-map-train-label.is-wide {
-            font-size: 9px;
-            letter-spacing: -1px;
+            font-size: 0.5625rem;
+            letter-spacing: -0.0625rem;
         }
         .subway-map-train.is-nationwide .subway-map-train-label {
-            width: 5.75px;
-            height: 5.75px;
-            font-size: 3.1px;
-            letter-spacing: -.15px;
+            width: 0.359375rem;
+            height: 0.359375rem;
+            font-size: 0.19375rem;
+            letter-spacing: -0.009375rem;
         }
         .subway-map-train.is-nationwide .subway-map-train-label.is-wide {
-            font-size: 2.2px;
+            font-size: 0.1375rem;
         }
         .subway-map-train:active { transform: scale(.94) translateZ(0); }
 
@@ -391,116 +399,116 @@
         }
         .rail-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
         .rail-moon {
-            position: absolute; top: 52px; right: 2px;
-            width: 76px; height: 76px; border-radius: 50%;
-            box-shadow: inset -25px 9px 0 0 rgba(255,255,255,.95);
-            filter: drop-shadow(0 0 26px rgba(178,205,255,.34));
+            position: absolute; top: 3.25rem; right: 0.125rem;
+            width: 4.75rem; height: 4.75rem; border-radius: 50%;
+            box-shadow: inset -1.5625rem 0.5625rem 0 0 rgba(255,255,255,.95);
+            filter: drop-shadow(0 0 1.625rem rgba(178,205,255,.34));
             transform: rotate(-12deg);
         }
         .rail-star {
             position: absolute; left: var(--x); top: var(--y);
             width: var(--s); height: var(--s); border-radius: 50%;
             background: #fff; opacity: var(--o);
-            box-shadow: 0 0 6px rgba(255,255,255,.75);
+            box-shadow: 0 0 0.375rem rgba(255,255,255,.75);
         }
         .rail-brand {
-            font-size: clamp(17px, 5vw, 20px); font-weight: 800; letter-spacing: -.045em; color: #fff;
-            text-shadow: 0 1px 6px rgba(4,8,20,.7);
+            font-size: clamp(1.0625rem, 5vw, 1.25rem); font-weight: 800; letter-spacing: -.045em; color: #fff;
+            text-shadow: 0 0.0625rem 0.375rem rgba(4,8,20,.7);
         }
-        .rail-title { font-size: clamp(19px, 5.6vw, 22.5px); font-weight: 800; letter-spacing: -.045em; color: #fff; line-height: 1.25; }
+        .rail-title { font-size: clamp(1.1875rem, 5.6vw, 1.40625rem); font-weight: 800; letter-spacing: -.045em; color: #fff; line-height: 1.25; }
         .rail-card {
-            border-radius: 26px; overflow: hidden;
+            border-radius: 1.625rem; overflow: hidden;
             background: rgba(255,255,255,.062);
-            border: 1px solid rgba(255,255,255,.075);
-            box-shadow: 0 22px 48px -24px rgba(0,0,0,.85);
+            border: 0.0625rem solid rgba(255,255,255,.075);
+            box-shadow: 0 1.375rem 3rem -1.5rem rgba(0,0,0,.85);
         }
-        .rail-sublabel { font-size: clamp(10.5px, 3.05vw, 12.5px); font-weight: 700; color: #8B94AA; letter-spacing: -.02em; }
+        .rail-sublabel { font-size: clamp(0.65625rem, 3.05vw, 0.78125rem); font-weight: 700; color: #8B94AA; letter-spacing: -.02em; }
         .rail-station {
-            display: flex; align-items: center; justify-content: center; gap: 7px;
-            margin-top: 6px; font-size: clamp(20px, 6.4vw, 24px); font-weight: 800;
+            display: flex; align-items: center; justify-content: center; gap: 0.4375rem;
+            margin-top: 0.375rem; font-size: clamp(1.25rem, 6.4vw, 1.5rem); font-weight: 800;
             letter-spacing: -.05em; color: #fff; line-height: 1.1;
         }
         .rail-station span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .rail-caret { width: 8px; height: 11px; color: #7C859B; flex: none; }
+        .rail-caret { width: 0.5rem; height: 0.6875rem; color: #7C859B; flex: none; }
         .rail-swap {
-            width: clamp(34px, 9.9vw, 40px); height: clamp(34px, 9.9vw, 40px); flex: none;
+            width: clamp(2.125rem, 9.9vw, 2.5rem); height: clamp(2.125rem, 9.9vw, 2.5rem); flex: none;
             border-radius: 50%; background: #2C6BF3;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 20px -8px rgba(44,107,243,.9);
+            box-shadow: 0 0.625rem 1.25rem -0.5rem rgba(44,107,243,.9);
             transition: transform .3s cubic-bezier(.34,1.56,.64,1);
         }
         .rail-swap:active { transform: scale(.9); }
         .rail-swap.is-turn { transform: rotate(180deg); }
         .rail-field {
-            display: flex; align-items: center; gap: 8px;
-            height: clamp(39px, 11.2vw, 45px); padding: 0 14px;
-            border-radius: 14px; border: 1px solid rgba(255,255,255,.13);
+            display: flex; align-items: center; gap: 0.5rem;
+            height: clamp(2.4375rem, 11.2vw, 2.8125rem); padding: 0 0.875rem;
+            border-radius: 0.875rem; border: 0.0625rem solid rgba(255,255,255,.13);
             background: rgba(255,255,255,.02);
             transition: background-color .15s ease, transform .12s ease;
         }
         .rail-field:active { transform: scale(.985); background: rgba(255,255,255,.06); }
-        .rail-field-label { font-size: clamp(10.5px, 2.95vw, 12px); font-weight: 700; color: #8B94AA; flex: none; letter-spacing: -.02em; }
+        .rail-field-label { font-size: clamp(0.65625rem, 2.95vw, 0.75rem); font-weight: 700; color: #8B94AA; flex: none; letter-spacing: -.02em; }
         .rail-field-value {
-            flex: 1; text-align: center; font-size: clamp(13px, 3.85vw, 15.5px); font-weight: 800;
+            flex: 1; text-align: center; font-size: clamp(0.8125rem, 3.85vw, 0.96875rem); font-weight: 800;
             color: #fff; letter-spacing: -.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .rail-cta { background: #2C6BF3; }
         .rail-cta button {
-            padding: clamp(13px, 3.9vw, 16px) 0; font-size: clamp(14px, 4.1vw, 16.5px); font-weight: 800; color: #fff; letter-spacing: -.03em;
+            padding: clamp(0.8125rem, 3.9vw, 1rem) 0; font-size: clamp(0.875rem, 4.1vw, 1.03125rem); font-weight: 800; color: #fff; letter-spacing: -.03em;
             transition: background-color .15s ease;
         }
         .rail-cta button:active { background: #1F57D4; }
 
         /* ---- 열차 조회 결과 화면 ---- */
-        .rail-rt-title { font-size: clamp(15px, 4.4vw, 17.5px); font-weight: 800; letter-spacing: -.04em; color: #fff; }
+        .rail-rt-title { font-size: clamp(0.9375rem, 4.4vw, 1.09375rem); font-weight: 800; letter-spacing: -.04em; color: #fff; }
         .rail-rt-edit {
-            height: 28px; padding: 0 13px; border-radius: 999px;
-            border: 1px solid rgba(255,255,255,.45); color: #fff;
-            font-size: 12.5px; font-weight: 700; letter-spacing: -.02em;
+            height: 1.75rem; padding: 0 0.8125rem; border-radius: 62.4375rem;
+            border: 0.0625rem solid rgba(255,255,255,.45); color: #fff;
+            font-size: 0.78125rem; font-weight: 700; letter-spacing: -.02em;
         }
         .rail-rt-edit:active { background: rgba(255,255,255,.12); }
         .rail-rt-select {
-            display: flex; align-items: center; justify-content: space-between; gap: 4px;
-            height: clamp(34px, 9.7vw, 39px); padding: 0 11px; border-radius: 11px;
-            border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.03);
-            font-size: clamp(11.5px, 3.35vw, 13.5px); font-weight: 700; color: #E7ECF6; letter-spacing: -.03em;
+            display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;
+            height: clamp(2.125rem, 9.7vw, 2.4375rem); padding: 0 0.6875rem; border-radius: 0.6875rem;
+            border: 0.0625rem solid rgba(255,255,255,.16); background: rgba(255,255,255,.03);
+            font-size: clamp(0.71875rem, 3.35vw, 0.84375rem); font-weight: 700; color: #E7ECF6; letter-spacing: -.03em;
         }
         .rail-rt-select:active { background: rgba(255,255,255,.1); }
         .rail-row {
             display: block; width: 100%; text-align: left;
-            padding: 15px 15px; border-bottom: 1px solid rgba(255,255,255,.07);
+            padding: 0.9375rem 0.9375rem; border-bottom: 0.0625rem solid rgba(255,255,255,.07);
             background: #0A0B0E; transition: background-color .12s ease;
         }
         .rail-row:active { background: #14161C; }
         .rail-row.is-soldout { opacity: .45; }
         .rail-type-badge {
-            display: inline-flex; align-items: center; flex: none; height: 20px; padding: 0 7px;
-            border-radius: 5px; font-size: 11.5px; font-weight: 900; color: #fff; letter-spacing: -.02em;
+            display: inline-flex; align-items: center; flex: none; height: 1.25rem; padding: 0 0.4375rem;
+            border-radius: 0.3125rem; font-size: 0.71875rem; font-weight: 900; color: #fff; letter-spacing: -.02em;
             white-space: nowrap;
         }
-        .rail-time { font-size: clamp(19px, 5.6vw, 22.5px); font-weight: 800; color: #fff; letter-spacing: -.04em; line-height: 1.1; }
+        .rail-time { font-size: clamp(1.1875rem, 5.6vw, 1.40625rem); font-weight: 800; color: #fff; letter-spacing: -.04em; line-height: 1.1; }
         .rail-dur-chip {
-            display: inline-flex; align-items: center; height: 24px; padding: 0 9px;
-            border-radius: 6px; background: rgba(255,255,255,.07);
-            font-size: clamp(11px, 3.2vw, 12.5px); font-weight: 700; color: #B7BFCE; letter-spacing: -.02em;
+            display: inline-flex; align-items: center; height: 1.5rem; padding: 0 0.5625rem;
+            border-radius: 0.375rem; background: rgba(255,255,255,.07);
+            font-size: clamp(0.6875rem, 3.2vw, 0.78125rem); font-weight: 700; color: #B7BFCE; letter-spacing: -.02em;
         }
-        .rail-fare { font-size: clamp(15.5px, 4.6vw, 18.5px); font-weight: 800; color: #fff; letter-spacing: -.04em; }
-        .rail-fare-label { font-size: clamp(11.5px, 3.35vw, 13.5px); font-weight: 700; color: #8B94AA; letter-spacing: -.02em; }
+        .rail-fare { font-size: clamp(0.96875rem, 4.6vw, 1.15625rem); font-weight: 800; color: #fff; letter-spacing: -.04em; }
+        .rail-fare-label { font-size: clamp(0.71875rem, 3.35vw, 0.84375rem); font-weight: 700; color: #8B94AA; letter-spacing: -.02em; }
         .rail-mile {
-            display: inline-flex; align-items: center; gap: 3px; height: 21px; padding: 0 7px;
-            border-radius: 5px; background: rgba(196,102,20,.28);
-            font-size: 11px; font-weight: 800; color: #F0A860; letter-spacing: -.02em;
+            display: inline-flex; align-items: center; gap: 0.1875rem; height: 1.3125rem; padding: 0 0.4375rem;
+            border-radius: 0.3125rem; background: rgba(196,102,20,.28);
+            font-size: 0.6875rem; font-weight: 800; color: #F0A860; letter-spacing: -.02em;
         }
         .rail-mile i {
-            width: 13px; height: 13px; border-radius: 50%; background: #C4761A; color: #fff;
-            font-style: normal; font-size: 8.5px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+            width: 0.8125rem; height: 0.8125rem; border-radius: 50%; background: #C4761A; color: #fff;
+            font-style: normal; font-size: 0.53125rem; font-weight: 900; display: flex; align-items: center; justify-content: center;
         }
-        .rail-daypill { height: clamp(37px, 10.8vw, 44px); }
-        .rail-daytext { font-size: clamp(13px, 3.9vw, 15.5px); }
+        .rail-daypill { height: clamp(2.3125rem, 10.8vw, 2.75rem); }
+        .rail-daytext { font-size: clamp(0.8125rem, 3.9vw, 0.96875rem); }
         .rail-nextday {
-            display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px;
-            border-radius: 999px; border: 1px solid rgba(255,255,255,.28);
-            font-size: 14.5px; font-weight: 700; color: #E7ECF6; letter-spacing: -.03em;
+            display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.375rem;
+            border-radius: 62.4375rem; border: 0.0625rem solid rgba(255,255,255,.28);
+            font-size: 0.90625rem; font-weight: 700; color: #E7ECF6; letter-spacing: -.03em;
         }
         .rail-nextday:active { background: rgba(255,255,255,.08); }
 
@@ -508,14 +516,14 @@
         #rail-sheet-panel { transition: transform .28s cubic-bezier(.22,1,.36,1); }
         .rail-list-row {
             width: 100%; display: flex; align-items: center; justify-content: space-between;
-            padding: 13px 14px; border-radius: 14px; background: rgba(255,255,255,.05);
-            border: 1px solid rgba(255,255,255,.06);
-            font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -.02em;
+            padding: 0.8125rem 0.875rem; border-radius: 0.875rem; background: rgba(255,255,255,.05);
+            border: 0.0625rem solid rgba(255,255,255,.06);
+            font-size: 0.875rem; font-weight: 700; color: #fff; letter-spacing: -.02em;
         }
         .rail-list-row.is-on { background: rgba(44,107,243,.22); border-color: #2C6BF3; }
         .rail-cal-cell {
             aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #E7ECF6;
+            border-radius: 0.75rem; font-size: 0.84375rem; font-weight: 800; color: #E7ECF6;
         }
         .rail-cal-cell.is-off { color: #4A5468; }
         .rail-cal-cell.is-on { background: #2C6BF3; color: #fff; }
@@ -523,9 +531,9 @@
         .rail-cal-cell.is-sat { color: #7BB2FF; }
         .rail-cal-cell.is-off.is-sun, .rail-cal-cell.is-off.is-sat { color: #4A5468; }
         .rail-time-btn {
-            flex: none; min-width: 44px; padding: 7px 10px; border-radius: 11px;
-            background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08);
-            font-size: 13px; font-weight: 800; color: #C9D2E4;
+            flex: none; min-width: 2.75rem; padding: 0.4375rem 0.625rem; border-radius: 0.6875rem;
+            background: rgba(255,255,255,.06); border: 0.0625rem solid rgba(255,255,255,.08);
+            font-size: 0.8125rem; font-weight: 800; color: #C9D2E4;
         }
         .rail-time-btn.is-on { background: #2C6BF3; border-color: #2C6BF3; color: #fff; }
     </style>
@@ -705,24 +713,24 @@
             <div class="rail-bg"></div>
             <div class="rail-sky" aria-hidden="true">
                 <div class="rail-moon"></div>
-                <span class="rail-star" style="--x:7%;--y:12%;--s:3px;--o:.6"></span>
-                <span class="rail-star" style="--x:20%;--y:6%;--s:2px;--o:.45"></span>
-                <span class="rail-star" style="--x:33%;--y:17%;--s:2px;--o:.35"></span>
-                <span class="rail-star" style="--x:46%;--y:9%;--s:3px;--o:.5"></span>
-                <span class="rail-star" style="--x:58%;--y:19%;--s:2px;--o:.4"></span>
-                <span class="rail-star" style="--x:69%;--y:5%;--s:2px;--o:.5"></span>
-                <span class="rail-star" style="--x:88%;--y:23%;--s:3px;--o:.7"></span>
-                <span class="rail-star" style="--x:96%;--y:13%;--s:2px;--o:.45"></span>
-                <span class="rail-star" style="--x:78%;--y:28%;--s:2px;--o:.35"></span>
-                <span class="rail-star" style="--x:12%;--y:29%;--s:2px;--o:.4"></span>
-                <span class="rail-star" style="--x:5%;--y:47%;--s:2px;--o:.3"></span>
-                <span class="rail-star" style="--x:94%;--y:44%;--s:2px;--o:.35"></span>
-                <span class="rail-star" style="--x:9%;--y:86%;--s:3px;--o:.5"></span>
-                <span class="rail-star" style="--x:24%;--y:93%;--s:2px;--o:.4"></span>
-                <span class="rail-star" style="--x:52%;--y:96%;--s:2px;--o:.35"></span>
-                <span class="rail-star" style="--x:73%;--y:89%;--s:2px;--o:.45"></span>
-                <span class="rail-star" style="--x:91%;--y:80%;--s:3px;--o:.55"></span>
-                <span class="rail-star" style="--x:41%;--y:82%;--s:2px;--o:.3"></span>
+                <span class="rail-star" style="--x:7%;--y:12%;--s:0.1875rem;--o:.6"></span>
+                <span class="rail-star" style="--x:20%;--y:6%;--s:0.125rem;--o:.45"></span>
+                <span class="rail-star" style="--x:33%;--y:17%;--s:0.125rem;--o:.35"></span>
+                <span class="rail-star" style="--x:46%;--y:9%;--s:0.1875rem;--o:.5"></span>
+                <span class="rail-star" style="--x:58%;--y:19%;--s:0.125rem;--o:.4"></span>
+                <span class="rail-star" style="--x:69%;--y:5%;--s:0.125rem;--o:.5"></span>
+                <span class="rail-star" style="--x:88%;--y:23%;--s:0.1875rem;--o:.7"></span>
+                <span class="rail-star" style="--x:96%;--y:13%;--s:0.125rem;--o:.45"></span>
+                <span class="rail-star" style="--x:78%;--y:28%;--s:0.125rem;--o:.35"></span>
+                <span class="rail-star" style="--x:12%;--y:29%;--s:0.125rem;--o:.4"></span>
+                <span class="rail-star" style="--x:5%;--y:47%;--s:0.125rem;--o:.3"></span>
+                <span class="rail-star" style="--x:94%;--y:44%;--s:0.125rem;--o:.35"></span>
+                <span class="rail-star" style="--x:9%;--y:86%;--s:0.1875rem;--o:.5"></span>
+                <span class="rail-star" style="--x:24%;--y:93%;--s:0.125rem;--o:.4"></span>
+                <span class="rail-star" style="--x:52%;--y:96%;--s:0.125rem;--o:.35"></span>
+                <span class="rail-star" style="--x:73%;--y:89%;--s:0.125rem;--o:.45"></span>
+                <span class="rail-star" style="--x:91%;--y:80%;--s:0.1875rem;--o:.55"></span>
+                <span class="rail-star" style="--x:41%;--y:82%;--s:0.125rem;--o:.3"></span>
             </div>
 
             <div class="relative z-10 flex flex-col px-[22px] pt-safe pb-32">
@@ -746,7 +754,7 @@
                                 </div>
                             </button>
                             <button id="rail-swap-btn" class="rail-swap" onclick="railSwap()" aria-label="출발역과 도착역 바꾸기">
-                                <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="21" height="21" style="width:1.3125rem;height:1.3125rem" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M4 9h14.5"/><path d="M15.5 5.6 19 9l-3.5 3.4"/>
                                     <path d="M20 15H5.5"/><path d="M8.5 11.6 5 15l3.5 3.4"/>
                                 </svg>
@@ -876,7 +884,7 @@
         <!-- 5. 하단 네비게이션 -->
         <nav id="bottom-nav" class="absolute bottom-7 left-1/2 -translate-x-1/2 z-[100] w-[88%] max-w-[330px] px-1.5 touch-pan-x select-none">
             <div class="flex items-center justify-between rounded-full p-1.5 gap-1 relative transition-all duration-300">
-                <div id="nav-indicator" class="absolute top-1.5 bottom-1.5 rounded-full z-0 nav-transition" style="left: 6px; width: 70px; background-color: #0054A6;"></div>
+                <div id="nav-indicator" class="absolute top-1.5 bottom-1.5 rounded-full z-0 nav-transition" style="left: 0.375rem; width: 4.375rem; background-color: #0054A6;"></div>
 
                 <button id="tab-back" onclick="returnToEnjoyHome()" class="relative py-2 flex-1 rounded-full group z-10 active:scale-90 transition-transform">
                     <div class="flex flex-col items-center gap-[3px] pointer-events-none">
@@ -910,45 +918,45 @@
             <header class="shrink-0 bg-[#0A0F1B] px-4 pt-safe pb-3">
                 <div class="flex items-start gap-2 pt-1">
                     <button onclick="railCloseResult()" class="w-9 h-9 -ml-2 mt-0.5 flex items-center justify-center text-white active:scale-90 transition-transform" aria-label="뒤로">
-                        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
+                        <svg viewBox="0 0 24 24" width="21" height="21" style="width:1.3125rem;height:1.3125rem" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
                     </button>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5 min-w-0">
                             <span id="rail-result-dep" class="rail-rt-title truncate">동대구</span>
-                            <svg viewBox="0 0 26 14" width="20" height="11" fill="none" stroke="#DDE3EE" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M1 10h22"/><path d="M17 3.5 23.5 10"/></svg>
+                            <svg viewBox="0 0 26 14" width="20" height="11" style="width:1.25rem;height:0.6875rem" fill="none" stroke="#DDE3EE" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M1 10h22"/><path d="M17 3.5 23.5 10"/></svg>
                             <span id="rail-result-arr" class="rail-rt-title truncate">서울</span>
                         </div>
                         <div id="rail-result-sub" class="mt-0.5 text-[12.5px] font-semibold text-white/50 truncate">직통 열차</div>
                     </div>
                     <button onclick="railCloseResult()" class="rail-rt-edit shrink-0 mt-1">수정</button>
                     <button onclick="railRenderResult()" class="w-8 h-8 mt-0.5 flex items-center justify-center text-white/85 active:scale-90 transition-transform shrink-0" aria-label="새로고침">
-                        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-1.6 5.7"/><path d="M20 4.5V11h-6.2"/></svg>
+                        <svg viewBox="0 0 24 24" width="19" height="19" style="width:1.1875rem;height:1.1875rem" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-1.6 5.7"/><path d="M20 4.5V11h-6.2"/></svg>
                     </button>
                 </div>
 
                 <div class="mt-3 flex items-center rounded-full bg-white/[0.07] rail-daypill px-1">
                     <button onclick="railShiftDay(-1)" id="rail-day-prev" class="w-9 h-9 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="이전날">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
+                        <svg viewBox="0 0 24 24" width="16" height="16" style="width:1rem;height:1rem" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
                     </button>
                     <button onclick="railOpenSheet('date')" class="flex-1 h-full flex items-center justify-center gap-1.5 min-w-0">
                         <span id="rail-day-text" class="rail-daytext font-extrabold tracking-tight text-white truncate">2026년 08월 10일 (월) 22:43</span>
-                        <svg viewBox="0 0 12 8" width="10" height="7" fill="currentColor" class="text-white shrink-0" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg>
+                        <svg viewBox="0 0 12 8" width="10" height="7" style="width:0.625rem;height:0.4375rem" fill="currentColor" class="text-white shrink-0" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg>
                     </button>
                     <button onclick="railShiftDay(1)" class="w-9 h-9 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="다음날">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                        <svg viewBox="0 0 24 24" width="16" height="16" style="width:1rem;height:1rem" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
                     </button>
                 </div>
 
                 <div class="mt-3 grid grid-cols-3 gap-2">
-                    <button onclick="railOpenSheet('type')" class="rail-rt-select"><span id="rail-sel-type" class="truncate">전체 열차</span><svg viewBox="0 0 12 8" width="10" height="7" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
-                    <button onclick="railOpenSheet('direct')" class="rail-rt-select"><span id="rail-sel-direct" class="truncate">직통</span><svg viewBox="0 0 12 8" width="10" height="7" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
-                    <button onclick="railOpenSheet('near')" class="rail-rt-select"><span id="rail-sel-near" class="truncate">인접역 미포함</span><svg viewBox="0 0 12 8" width="10" height="7" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
+                    <button onclick="railOpenSheet('type')" class="rail-rt-select"><span id="rail-sel-type" class="truncate">전체 열차</span><svg viewBox="0 0 12 8" width="10" height="7" style="width:0.625rem;height:0.4375rem" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
+                    <button onclick="railOpenSheet('direct')" class="rail-rt-select"><span id="rail-sel-direct" class="truncate">직통</span><svg viewBox="0 0 12 8" width="10" height="7" style="width:0.625rem;height:0.4375rem" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
+                    <button onclick="railOpenSheet('near')" class="rail-rt-select"><span id="rail-sel-near" class="truncate">인접역 미포함</span><svg viewBox="0 0 12 8" width="10" height="7" style="width:0.625rem;height:0.4375rem" fill="currentColor" class="shrink-0 opacity-70" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg></button>
                 </div>
             </header>
 
             <div class="shrink-0 flex items-center justify-between px-4 py-3 bg-[#050608] border-b border-white/[0.08]">
                 <button onclick="railOpenSheet('sort')" class="flex items-center gap-2 active:opacity-70 transition-opacity">
-                    <svg viewBox="0 0 20 18" width="18" height="16" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg viewBox="0 0 20 18" width="18" height="16" style="width:1.125rem;height:1rem" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M4 2v14"/><path d="M1 13l3 3 3-3"/><path d="M9.5 3.5h9"/><path d="M9.5 8.5h6.5"/><path d="M9.5 13.5h4"/>
                     </svg>
                     <span id="rail-sort-text" class="rail-daytext font-extrabold text-white tracking-tight">출발 빠른 순</span>
@@ -968,7 +976,7 @@
                 <div class="px-5 pt-2 pb-3 flex items-center justify-between shrink-0">
                     <h3 id="rail-sheet-title" class="text-[17px] font-extrabold tracking-tight text-white">선택</h3>
                     <button onclick="railCloseSheet()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="닫기">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                        <svg viewBox="0 0 24 24" width="14" height="14" style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
                     </button>
                 </div>
                 <div id="rail-sheet-body" class="flex-1 overflow-y-auto hide-scrollbar px-5 pb-6"></div>
@@ -5201,7 +5209,7 @@
                 dom.navIndicator.style.width = `${targetBtn.offsetWidth}px`;
                 dom.navIndicator.style.transform = `translateX(${targetBtn.offsetLeft - 6}px)`;
                 dom.navIndicator.style.backgroundColor = THEME_COLOR;
-                dom.navIndicator.style.boxShadow = `0 6px 16px -4px ${THEME_COLOR}80`;
+                dom.navIndicator.style.boxShadow = `0 0.375rem 1rem -0.25rem ${THEME_COLOR}80`;
             }
             tabs.forEach(id => {
                 const el = document.getElementById(id); if (!el) return;
@@ -5305,7 +5313,7 @@
                         const timeClass = t.isExpress ? '' : (isPast ? 'text-gray-400' : 'text-[#111827] tracking-tight');
                         const destClass = t.isExpress ? '' : (isPast ? 'text-gray-400' : 'text-gray-600');
                         const trainColor = t.isExpress ? getSpecialServiceMeta(t.service).color : curColor;
-                        listHtml += `<div class="${rowClass} transition-colors rounded-[14px] py-2.5 px-3.5 flex justify-between items-center ${isPast ? 'opacity-40' : 'future-time'}"><div class="flex items-center gap-2.5"><span class="text-[14px] font-bold ${timeClass}" style="${t.isExpress ? `color:${trainColor}` : ''}">${t.time.slice(0,5)}</span><span class="text-[11px] font-medium ${destClass}" style="${t.isExpress ? `color:${trainColor}` : ''}">${t.dest}행</span>${renderExpressBadge(t.isExpress, t.service)}</div><span class="text-[10px] font-bold ${isPast && !t.isExpress ? 'text-gray-400 bg-gray-100 border-black/5' : 'text-white shadow-sm'}" style="${!isPast || t.isExpress ? `background-color: ${trainColor}; border-color: ${trainColor};` : ''} padding: 2px 8px; border-radius: 4px; border-width: 1px;">${t.id}</span></div>`;
+                        listHtml += `<div class="${rowClass} transition-colors rounded-[14px] py-2.5 px-3.5 flex justify-between items-center ${isPast ? 'opacity-40' : 'future-time'}"><div class="flex items-center gap-2.5"><span class="text-[14px] font-bold ${timeClass}" style="${t.isExpress ? `color:${trainColor}` : ''}">${t.time.slice(0,5)}</span><span class="text-[11px] font-medium ${destClass}" style="${t.isExpress ? `color:${trainColor}` : ''}">${t.dest}행</span>${renderExpressBadge(t.isExpress, t.service)}</div><span class="text-[10px] font-bold ${isPast && !t.isExpress ? 'text-gray-400 bg-gray-100 border-black/5' : 'text-white shadow-sm'}" style="${!isPast || t.isExpress ? `background-color: ${trainColor}; border-color: ${trainColor};` : ''} padding: 0.125rem 0.5rem; border-radius: 0.25rem; border-width: 0.0625rem;">${t.id}</span></div>`;
                     });
                 }
                 listHtml += `</div>`; return listHtml;
@@ -5451,7 +5459,7 @@
         const renderTwoCarTrain = (color, specialService = '') => {
             const specialMeta = getSpecialServiceMeta(specialService);
             return `
-            <svg width="72" height="30" viewBox="-36 -13 72 26" style="overflow:visible; filter:drop-shadow(0 2px 2px rgba(15,23,42,.25))">
+            <svg width="72" height="30" viewBox="-36 -13 72 26" style="width:4.5rem;height:1.875rem; overflow:visible; filter:drop-shadow(0 2px 2px rgba(15,23,42,.25))">
                 <rect x="-34" y="-9.5" width="31" height="19" rx="3.8" fill="#F8FAFC" stroke="#BFC9D3" stroke-width="1" />
                 <path d="M1-9.5h24.5c5 0 8.5 3.3 9.5 8.2v3.5c-1.3 4.5-4.7 7.3-9.5 7.3H1Z" fill="#F8FAFC" stroke="#BFC9D3" stroke-width="1" />
                 <rect x="-3.2" y="-2.3" width="4.2" height="4.6" rx="1.2" fill="#718096" />
@@ -6390,7 +6398,7 @@
                         <span class="block text-[14.5px] font-extrabold text-white">${railEsc(o.label)}</span>
                         ${o.desc ? `<span class="block text-[11px] font-semibold text-white/45 mt-0.5">${railEsc(o.desc)}</span>` : ''}
                     </span>
-                    ${currentId === o.id ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6E9BFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 5 5 9-11"/></svg>' : ''}
+                    ${currentId === o.id ? '<svg viewBox="0 0 24 24" width="18" height="18" style="width:1.125rem;height:1.125rem" fill="none" stroke="#6E9BFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 5 5 9-11"/></svg>' : ''}
                 </button>`).join('')}</div>`;
         }
 
@@ -6446,7 +6454,7 @@
             let html = `
                 <div class="sticky top-0 -mx-5 px-5 pt-1 pb-3 bg-[#111A2C] z-10">
                     <div class="flex items-center gap-2 h-11 px-3.5 rounded-xl bg-white/[0.08] border border-white/[0.12]">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#8B94AA" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+                        <svg viewBox="0 0 24 24" width="16" height="16" style="width:1rem;height:1rem" fill="none" stroke="#8B94AA" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
                         <input id="rail-station-search" type="search" inputmode="search" autocomplete="off" value="${railEsc(q)}"
                                oninput="railStationSearch(this.value)" placeholder="역 이름 검색 (예: 동대구)"
                                class="flex-1 bg-transparent outline-none text-[14px] font-semibold text-white placeholder:text-white/35" />
@@ -6571,11 +6579,11 @@
             return `
             <div class="flex items-center justify-between mb-3">
                 <button ${prevDisabled ? 'disabled' : ''} onclick="railMoveMonth(-1)" class="w-9 h-9 rounded-full bg-white/[0.08] flex items-center justify-center text-white ${prevDisabled ? 'opacity-30' : ''}">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5 8 12l7 7"/></svg>
+                    <svg viewBox="0 0 24 24" width="15" height="15" style="width:0.9375rem;height:0.9375rem" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5 8 12l7 7"/></svg>
                 </button>
                 <div class="text-[15.5px] font-extrabold text-white">${railTmp.viewY}년 ${railTmp.viewM + 1}월</div>
                 <button ${nextDisabled ? 'disabled' : ''} onclick="railMoveMonth(1)" class="w-9 h-9 rounded-full bg-white/[0.08] flex items-center justify-center text-white ${nextDisabled ? 'opacity-30' : ''}">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg>
+                    <svg viewBox="0 0 24 24" width="15" height="15" style="width:0.9375rem;height:0.9375rem" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg>
                 </button>
             </div>
             <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[11px] font-extrabold text-white/40">
@@ -6696,14 +6704,14 @@
                     <p class="text-[15px] font-bold text-white/60 tracking-tight">원하는 열차를 찾지 못하셨나요?</p>
                     <button onclick="railShiftDay(1)" class="rail-nextday mt-4">
                         <span><b class="text-[#4E8BFF] font-extrabold">다음날(${nextDay.getMonth() + 1}월 ${nextDay.getDate()}일)</b> 열차 찾아보기</span>
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                        <svg viewBox="0 0 24 24" width="14" height="14" style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
                     </button>
                 </div>`;
 
             if (!list.length) {
                 listEl.innerHTML = `
                     <div class="pt-16 flex flex-col items-center text-center px-8">
-                        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#4A5468" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" width="40" height="40" style="width:2.5rem;height:2.5rem" fill="none" stroke="#4A5468" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="5" y="3" width="14" height="14" rx="4"/><path d="M5 10h14"/><path d="m7 21 2-3M17 21l-2-3"/><circle cx="9" cy="13.5" r="1"/><circle cx="15" cy="13.5" r="1"/>
                         </svg>
                         <p class="mt-4 text-[14.5px] font-extrabold text-white/70">${railTrains.length ? '해당 조건의 열차가 없습니다.' : '직통 열차를 찾지 못했습니다.'}</p>
@@ -6742,7 +6750,7 @@
                                     <div class="rail-time">${railMinToClock(t.depMin)}</div>
                                     <div class="mt-1 text-[13px] font-semibold text-white/45">${railEsc(t.depName)}</div>
                                 </div>
-                                <svg viewBox="0 0 26 12" width="22" height="10" fill="none" stroke="#7C859B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="mt-2.5 shrink-0"><path d="M1 9h22"/><path d="M17 3 23 9"/></svg>
+                                <svg viewBox="0 0 26 12" width="22" height="10" style="width:1.375rem;height:0.625rem" fill="none" stroke="#7C859B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="mt-2.5 shrink-0"><path d="M1 9h22"/><path d="M17 3 23 9"/></svg>
                                 <div>
                                     <div class="rail-time">${railMinToClock(t.arrMin)}</div>
                                     <div class="mt-1 text-[13px] font-semibold text-white/45">${railEsc(t.arrName)}</div>
@@ -6802,7 +6810,7 @@
                     <div class="mt-3 flex items-end gap-2 flex-wrap">
                         <span class="text-[22px] font-extrabold text-white tracking-tight">${railMinToClock(t.depMin)}</span>
                         <span class="text-[13px] font-bold text-white/55 mb-0.5">${railEsc(t.depName)}</span>
-                        <svg viewBox="0 0 24 12" width="18" height="10" fill="none" stroke="#7C859B" stroke-width="2" stroke-linecap="round" class="mb-1.5"><path d="M1 9h21"/><path d="M16 3l6 6"/></svg>
+                        <svg viewBox="0 0 24 12" width="18" height="10" style="width:1.125rem;height:0.625rem" fill="none" stroke="#7C859B" stroke-width="2" stroke-linecap="round" class="mb-1.5"><path d="M1 9h21"/><path d="M16 3l6 6"/></svg>
                         <span class="text-[22px] font-extrabold text-white tracking-tight">${railMinToClock(t.arrMin)}</span>
                         <span class="text-[13px] font-bold text-white/55 mb-0.5">${railEsc(t.arrName)}</span>
                     </div>
