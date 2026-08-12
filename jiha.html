@@ -1392,42 +1392,50 @@
         ].map(([first, second]) => [first, second].sort().join('|')));
         const SEOUL_LINE2_SCHEMATIC = (() => {
             const positions = {};
-            const centerX = 200, centerY = 1690, radiusX = 108, radiusY = 1540;
-            const ellipseSamples = Array.from({ length:2049 }, (_, index) => {
-                const angle = -Math.PI / 2 + Math.PI * 2 * index / 2048;
-                return { x:centerX + Math.cos(angle) * radiusX, y:centerY + Math.sin(angle) * radiusY };
-            });
-            const ellipseDistances = [0];
-            for (let index = 1; index < ellipseSamples.length; index++) {
-                ellipseDistances.push(ellipseDistances[index - 1] + Math.hypot(
-                    ellipseSamples[index].x - ellipseSamples[index - 1].x,
-                    ellipseSamples[index].y - ellipseSamples[index - 1].y
-                ));
-            }
-            const ellipseLength = ellipseDistances[ellipseDistances.length - 1];
-            SEOUL_LINE2_LOOP_STATIONS.forEach((name, index, stations) => {
-                const targetDistance = ellipseLength * index / stations.length;
-                let sampleIndex = 1;
-                while (sampleIndex < ellipseDistances.length - 1 && ellipseDistances[sampleIndex] < targetDistance) sampleIndex++;
-                const previousDistance = ellipseDistances[sampleIndex - 1];
-                const nextDistance = ellipseDistances[sampleIndex];
-                const fraction = nextDistance === previousDistance ? 0 : (targetDistance - previousDistance) / (nextDistance - previousDistance);
-                const previous = ellipseSamples[sampleIndex - 1], next = ellipseSamples[sampleIndex];
+            const leftX = 135, rightX = 265, topY = 90, upperCornerY = 145, lowerCornerY = 1445, bottomY = 1500;
+            positions['시청'] = { x:160, y:topY, branch:'loop' };
+            positions['을지로입구'] = { x:200, y:topY, branch:'loop' };
+            SEOUL_LINE2_LOOP_STATIONS.slice(2, 23).forEach((name, index, stations) => {
                 positions[name] = {
-                    x:previous.x + (next.x - previous.x) * fraction,
-                    y:previous.y + (next.y - previous.y) * fraction,
+                    x:rightX,
+                    y:upperCornerY + (lowerCornerY - upperCornerY) * index / (stations.length - 1),
                     branch:'loop'
                 };
             });
-            const branchGap = 112;
+            positions['서초'] = { x:200, y:bottomY, branch:'loop' };
+            positions['방배'] = { x:leftX, y:lowerCornerY, branch:'loop' };
+            SEOUL_LINE2_LOOP_STATIONS.slice(25).forEach((name, index, stations) => {
+                positions[name] = {
+                    x:leftX,
+                    y:lowerCornerY - (lowerCornerY - upperCornerY) * (index + 1) / stations.length,
+                    branch:'loop'
+                };
+            });
+            const branchGap = 92;
             SEOUL_LINE2_SEONGSU_BRANCH.slice(1).forEach((name, index) => {
-                positions[name] = { x:358, y:positions['성수'].y - branchGap * (index + 1), branch:'seongsu' };
+                positions[name] = { x:358, y:positions['성수'].y - branchGap * index, branch:'seongsu' };
             });
             SEOUL_LINE2_SINJEONG_BRANCH.slice(1).forEach((name, index) => {
-                positions[name] = { x:42, y:positions['신도림'].y - branchGap * (index + 1), branch:'sinjeong' };
+                positions[name] = { x:42, y:positions['신도림'].y + branchGap * index, branch:'sinjeong' };
             });
             const pathThrough = names => names.map((name, index) => `${index ? 'L' : 'M'} ${positions[name].x.toFixed(2)} ${positions[name].y.toFixed(2)}`).join(' ');
-            const loopPath = `${pathThrough(SEOUL_LINE2_LOOP_STATIONS)} Z`;
+            const rightContinuation = SEOUL_LINE2_LOOP_STATIONS.slice(3, 23).map(name =>
+                `L ${positions[name].x.toFixed(2)} ${positions[name].y.toFixed(2)}`
+            ).join(' ');
+            const leftContinuation = SEOUL_LINE2_LOOP_STATIONS.slice(25).map(name =>
+                `L ${positions[name].x.toFixed(2)} ${positions[name].y.toFixed(2)}`
+            ).join(' ');
+            const loopPath = [
+                `M ${positions['시청'].x} ${positions['시청'].y}`,
+                `L ${positions['을지로입구'].x} ${positions['을지로입구'].y}`,
+                `Q ${rightX} ${topY} ${positions['을지로3가'].x} ${positions['을지로3가'].y}`,
+                rightContinuation,
+                `Q ${rightX} ${bottomY} ${positions['서초'].x} ${positions['서초'].y}`,
+                `Q ${leftX} ${bottomY} ${positions['방배'].x} ${positions['방배'].y}`,
+                leftContinuation,
+                `Q ${leftX} ${topY} ${positions['시청'].x} ${positions['시청'].y}`,
+                'Z'
+            ].join(' ');
             return {
                 positions,
                 paths:[
@@ -1435,7 +1443,13 @@
                     pathThrough(SEOUL_LINE2_SEONGSU_BRANCH),
                     pathThrough(SEOUL_LINE2_SINJEONG_BRANCH)
                 ],
-                height:Math.max(...Object.values(positions).map(position => position.y)) + 110
+                cornerControls:{
+                    [['을지로입구','을지로3가'].sort().join('|')]:{ x:rightX, y:topY },
+                    [['교대','서초'].sort().join('|')]:{ x:rightX, y:bottomY },
+                    [['서초','방배'].sort().join('|')]:{ x:leftX, y:bottomY },
+                    [['충정로','시청'].sort().join('|')]:{ x:leftX, y:topY }
+                },
+                height:bottomY + 110
             };
         })();
 
@@ -5486,6 +5500,22 @@
             return SEOUL_LINE2_LOOP_STATIONS;
         };
 
+        const getSeoulLine2SegmentPoints = (fromName, toName) => {
+            const from = SEOUL_LINE2_SCHEMATIC.positions[fromName];
+            const to = SEOUL_LINE2_SCHEMATIC.positions[toName];
+            if (!from || !to) return [];
+            const control = SEOUL_LINE2_SCHEMATIC.cornerControls[[fromName, toName].sort().join('|')];
+            if (!control) return [from, to];
+            return Array.from({ length:17 }, (_, index) => {
+                const fraction = index / 16;
+                const inverse = 1 - fraction;
+                return {
+                    x:inverse * inverse * from.x + 2 * inverse * fraction * control.x + fraction * fraction * to.x,
+                    y:inverse * inverse * from.y + 2 * inverse * fraction * control.y + fraction * fraction * to.y
+                };
+            });
+        };
+
         const getSeoulLine2DiagramTrainPlacement = train => {
             const routeStations = getSeoulLine2RouteStations(train);
             const from = SEOUL_LINE2_SCHEMATIC.positions[train.curr?.name];
@@ -5495,26 +5525,34 @@
             const fraction = train.isStopped || train.isWaiting || !denominator
                 ? 0
                 : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
-            const baseX = from.x + (to.x - from.x) * fraction;
-            const baseY = from.y + (to.y - from.y) * fraction;
             const fromIndex = routeStations.indexOf(train.curr?.name);
             const toIndex = routeStations.indexOf(train.next?.name);
             const isLoop = routeStations === SEOUL_LINE2_LOOP_STATIONS;
             const canonicalNextIndex = fromIndex < 0 ? -1 : (isLoop ? (fromIndex + 1) % routeStations.length : Math.min(routeStations.length - 1, fromIndex + 1));
             const canonicalPreviousIndex = fromIndex < 0 ? -1 : (isLoop ? (fromIndex - 1 + routeStations.length) % routeStations.length : Math.max(0, fromIndex - 1));
-            let canonicalStart = from, canonicalEnd = SEOUL_LINE2_SCHEMATIC.positions[routeStations[canonicalNextIndex]] || to;
-            if (toIndex === canonicalPreviousIndex) {
-                canonicalStart = SEOUL_LINE2_SCHEMATIC.positions[routeStations[canonicalPreviousIndex]] || from;
-                canonicalEnd = from;
+            const routePoints = getSeoulLine2SegmentPoints(train.curr?.name, train.next?.name);
+            if (routePoints.length < 2) return { point:from, angle:train.direction === 'up' ? -90 : 90 };
+            const cumulative = [0];
+            for (let index = 1; index < routePoints.length; index++) {
+                cumulative.push(cumulative[index - 1] + Math.hypot(
+                    routePoints[index].x - routePoints[index - 1].x,
+                    routePoints[index].y - routePoints[index - 1].y
+                ));
             }
-            let movementDx = to.x - from.x, movementDy = to.y - from.y;
-            if (Math.hypot(movementDx, movementDy) < .01) {
-                movementDx = canonicalEnd.x - canonicalStart.x;
-                movementDy = canonicalEnd.y - canonicalStart.y;
-                if (train.direction === 'down') { movementDx *= -1; movementDy *= -1; }
-            }
-            const canonicalDx = canonicalEnd.x - canonicalStart.x;
-            const canonicalDy = canonicalEnd.y - canonicalStart.y;
+            const targetDistance = cumulative[cumulative.length - 1] * fraction;
+            let segmentIndex = 1;
+            while (segmentIndex < cumulative.length - 1 && cumulative[segmentIndex] < targetDistance) segmentIndex++;
+            const segmentStart = routePoints[segmentIndex - 1];
+            const segmentEnd = routePoints[segmentIndex];
+            const segmentLength = cumulative[segmentIndex] - cumulative[segmentIndex - 1];
+            const segmentFraction = segmentLength ? (targetDistance - cumulative[segmentIndex - 1]) / segmentLength : 0;
+            const baseX = segmentStart.x + (segmentEnd.x - segmentStart.x) * segmentFraction;
+            const baseY = segmentStart.y + (segmentEnd.y - segmentStart.y) * segmentFraction;
+            const movementDx = segmentEnd.x - segmentStart.x;
+            const movementDy = segmentEnd.y - segmentStart.y;
+            const followsCanonicalOrder = toIndex === canonicalNextIndex || (toIndex !== canonicalPreviousIndex && toIndex > fromIndex);
+            const canonicalDx = followsCanonicalOrder ? movementDx : -movementDx;
+            const canonicalDy = followsCanonicalOrder ? movementDy : -movementDy;
             const canonicalLength = Math.hypot(canonicalDx, canonicalDy) || 1;
             const offset = train.direction === 'up' ? 11 : -11;
             return {
