@@ -5085,7 +5085,7 @@
                         <span class="home-scratch-copy">
                             <strong class="home-scratch-question">면제권 당첨의 주인공은?</strong>
                         </span>
-                        <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="penalty-waiver">3회 남음</span>
+                        <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="penalty-waiver">10회 남음</span>
                     </button>
 
                     <button type="button" class="home-scratch-ticket is-orange" onclick="window.openScratchTicket('baemin-gift', false)" aria-label="배달의민족 상품권 스크래치 열기">
@@ -5093,7 +5093,7 @@
                         <span class="home-scratch-copy">
                             <strong class="home-scratch-question">5천원 상품권의 주인공은?</strong>
                         </span>
-                        <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="baemin-gift">3회 남음</span>
+                        <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="baemin-gift">10회 남음</span>
                     </button>
                 </section>
                 <div class="home-rail-group">
@@ -6695,7 +6695,7 @@
                     coverBadge: '면제권이 나오면 당첨!',
                     desc: '다음 부과금에 사용할 수 있는 면제권에 당첨됐어요!',
                     icon: 'fa-ticket-simple',
-                    chance: .20
+                    chance: .005
                 },
                 {
                     id: 'baemin-gift',
@@ -6713,7 +6713,7 @@
                     coverBadge: '배민 상품권이 나오면 당첨!',
                     desc: '배달의민족 5천원 상품권에 당첨됐어요!',
                     icon: 'fa-utensils',
-                    chance: .10
+                    chance: .02
                 },
                 {
                     id: 'cash-prize',
@@ -6731,7 +6731,7 @@
                     coverBadge: '긁어서 오늘의 상금 확인!',
                     desc: '1원부터 최대 1만원까지 상금에 당첨됐어요!',
                     icon: 'fa-sack-dollar',
-                    chance: .25
+                    chance: .20
                 }
             ];
             let currentCard = null;
@@ -6757,8 +6757,8 @@
             const SCRATCH_USAGE_PREFIX = 'enjoy_scratch_usage_v2_';
             const SCRATCH_LEGACY_USAGE_PREFIX = 'enjoy_scratch_usage_v1_';
             const SCRATCH_LOCAL_RESULTS_KEY = 'enjoy_scratch_results_v1';
-            const SCRATCH_MAX_ATTEMPTS = 3;
-            const SCRATCH_COOLDOWN_MS = 5 * 60 * 1000;
+            const SCRATCH_MAX_ATTEMPTS = 10;
+            const SCRATCH_COOLDOWN_MS = 1 * 60 * 1000;
 
             function currentScratchIdentity() {
                 const user = window.enjoyUser || null;
@@ -6785,6 +6785,9 @@
                     attempts: Math.max(0, Math.min(SCRATCH_MAX_ATTEMPTS, Number(state.attempts) || 0)),
                     cooldownUntil: Math.max(0, Number(state.cooldownUntil) || 0)
                 };
+                if (normalized.attempts < SCRATCH_MAX_ATTEMPTS) {
+                    normalized.cooldownUntil = 0;
+                }
                 if (normalized.cooldownUntil && Date.now() >= normalized.cooldownUntil) {
                     normalized.attempts = 0;
                     normalized.cooldownUntil = 0;
@@ -7133,22 +7136,23 @@
 
             function ensureOutcome(card) {
                 const identity = currentScratchIdentity();
-                // 정식 멤버 7명은 3개 일치가 절대 나오지 않도록 당첨 확률을 0%로 고정한다.
-                // 비정식 로그인 계정과 로그인 전 체험 사용자는 기존 무작위 결과를 기기에만 저장한다.
+                // 정식 멤버에게도 각 스크래치에 설정된 당첨 확률을 적용한다.
+                // 비정식 로그인 계정과 로그인 전 체험 사용자의 결과는 기기에만 저장한다.
                 if (card.id === 'cash-prize') {
-                    const cashWon = !identity.isMember && randomUnit() < card.chance;
+                    const cashWon = randomUnit() < card.chance;
                     return {
                         won: cashWon,
                         effective: identity.isMember,
                         isDemo: !identity.isMember,
                         matchCount: 0,
-                        prizeAmount: cashWon ? Math.floor(randomUnit() * 10000) + 1 : 0,
+                        prizeAmount: cashWon ? 1 : 0,
                         prizePositions: [],
                         revealed: false,
                         createdAt: Date.now()
                     };
                 }
-                const possibleCounts = identity.isMember ? [1, 2, 4] : [1, 2, 3, 4];
+                const won = randomUnit() < card.chance;
+                const possibleCounts = won ? [3] : [1, 2, 4];
                 const matchCount = possibleCounts[Math.floor(randomUnit() * possibleCounts.length)];
                 const positions = [0, 1, 2, 3, 4, 5];
                 for (let i = positions.length - 1; i > 0; i--) {
@@ -7157,7 +7161,6 @@
                     positions[i] = positions[j];
                     positions[j] = temp;
                 }
-                const won = !identity.isMember && matchCount === 3;
                 return {
                     won: won,
                     effective: identity.isMember,
@@ -7226,7 +7229,7 @@
                 list.innerHTML = cards.map(function (card) {
                     return '<button type="button" class="scratch-more-item ' + card.theme + '" onclick="window.openScratchTicket(\'' + card.id + '\', true)" aria-label="' + card.title + ' 열기">' +
                         '<span class="scratch-more-watermark" aria-hidden="true">' + card.watermark + '</span>' +
-                        '<span class="scratch-more-prize-badge scratch-attempt-timer" data-scratch-timer-card="' + card.id + '">3회 남음</span>' +
+                        '<span class="scratch-more-prize-badge scratch-attempt-timer" data-scratch-timer-card="' + card.id + '">10회 남음</span>' +
                         '<span class="scratch-more-max-note">' + card.maxNote + '</span>' +
                         '<span class="scratch-more-item-copy">' +
                             '<span class="scratch-more-item-label">엔조이 스크래치</span>' +
@@ -7497,7 +7500,7 @@
                     }
                     if (progress) progress.textContent = currentOutcome.revealed
                         ? (currentOutcome.won ? '축하해요! 당첨 결과를 확인했어요.' : '이미 확인한 스크래치예요.')
-                        : '메인 카드를 60% 이상 긁으면 결과가 열려요. 이 스크래치는 3회 참여 후 5분 동안 쉬어요.';
+                        : '메인 카드를 60% 이상 긁으면 결과가 열려요. 이 스크래치는 10회 참여 후 1분 동안 쉬어요.';
 
                     setScreenVisible('scratch-play-screen', true);
                     const scroll = document.querySelector('#scratch-play-screen .scratch-screen-scroll');
