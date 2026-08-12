@@ -788,10 +788,10 @@
         <header id="main-header" class="hidden absolute top-0 left-0 w-full z-20 bg-white/90 backdrop-blur-md flex flex-col pt-safe pb-1.5 shadow-sm text-[#111827] transition-all">
             <div class="px-4 pt-2 flex justify-between items-center mb-2">
                 <div class="flex items-center gap-2">
-                    <h1 id="line-header-title" class="text-[17px] font-extrabold tracking-tight text-[#111827] drop-shadow-sm">대구권 대경선 지하철 현황</h1>
+                    <h1 id="line-header-title" class="text-[17px] font-extrabold tracking-tight text-[#111827] drop-shadow-sm">경부선 일반열차 현황</h1>
                     <select id="direction-toggle" class="bg-gray-100 text-gray-700 text-[11px] font-bold px-2 py-1 rounded-md outline-none cursor-pointer border border-black/5 shadow-sm transition-all focus:ring-2 focus:ring-[#0054A6]/50 appearance-none pr-5 relative" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 4px center;">
-                        <option value="up" class="text-gray-900">상행 (구미 방면)</option>
-                        <option value="down" class="text-gray-900">하행 (경산 방면)</option>
+                        <option value="up" class="text-gray-900">상행 (서울 방면)</option>
+                        <option value="down" class="text-gray-900">하행 (부산 방면)</option>
                     </select>
                 </div>
                 <div class="flex flex-col items-end gap-1 shrink-0">
@@ -1072,10 +1072,10 @@
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
 
-        let currentRegion = 'daegu';
-        let currentLineId = 'daegyeong';
-        let THEME_COLOR = "#0054A6";
-        let DOWN_COLOR = "#5998D6";
+        let currentRegion = 'seoul';
+        let currentLineId = 'gyeongbu';
+        let THEME_COLOR = "#00587A";
+        let DOWN_COLOR = "#4E93AE";
         const STOP_DURATION = 25; 
 
         function returnToEnjoyHome() {
@@ -2117,8 +2117,69 @@
             busan_line4: { src: './busan_line4_timetable.js', globalName: 'BUSAN_LINE4_TIMETABLE' },
             busan_bglrt: { src: './busan_gimhae_lrt_timetable.js', globalName: 'BUSAN_GIMHAE_LRT_TIMETABLE' },
             busan_donghae: { src: './donghae_line_timetable.js', globalName: 'DONGHAE_LINE_TIMETABLE' },
-            gyeongbu: { src: './gyeongbu_line_timetable.js', globalName: 'GYEONGBU_LINE_TIMETABLE' }
+            gyeongbu: { src: './gyeongbu_general_train_timetable.js', globalName: 'GYEONGBU_LINE_TIMETABLE' }
         };
+
+        /* 경부선은 별도 시간표 파일을 두지 않는다.
+           이미 불러온 gyeongbu_general_train_timetable.js(열차별 정차 목록)를
+           노선탭이 읽는 형식(역별 · 요일별 · 방향별 시각 목록)으로 그 자리에서 바꾼다.
+           ※ 원본 엑셀에 운행요일 정보가 없어 평일 · 토요일 · 공휴일을 같은 시간표로 채운다.
+           ※ 정차역마다 시각이 하나뿐이라 도착시각과 출발시각이 같다. */
+        (function buildGyeongbuLineTimetable() {
+            const raw = window.GYEONGBU_GENERAL_TRAIN_TIMETABLE;
+            if (!raw || !Array.isArray(raw.trains) || window.GYEONGBU_LINE_TIMETABLE) return;
+            const seq = Object.keys(STATIONS_ALL.gyeongbu || {});   // 노선탭 역 순서(서울 → 부산)를 그대로 쓴다
+            if (seq.length < 2) return;
+
+            const strip = (name) => String(name || '').replace(/역$/, '');
+            const baseId = 41000;
+            const idOf = (name) => baseId + seq.indexOf(name);
+            const rows = {};
+            seq.forEach(n => { rows[n] = { up: [], down: [] }; });
+
+            raw.trains.forEach(train => {
+                const dir = train.direction === 'up' ? 'up' : 'down';
+                const start = strip(train.origin), dest = strip(train.destination);
+                const stops = (train.stops || [])
+                    .map(s => ({ name: strip(s.station), time: s.time }))
+                    .filter(s => rows[s.name] && /^\d{1,2}:\d{2}$/.test(String(s.time || '')));
+                if (stops.length < 2) return;
+                stops.forEach((stop, index) => {
+                    rows[stop.name][dir].push({
+                        time: stop.time, arrivalTime: stop.time, departureTime: stop.time,
+                        destination: dest, destinationId: idOf(dest),
+                        startStation: start, startStationId: idOf(start),
+                        trainNo: String(train.trainNo), service: train.trainType || '일반',
+                        isFirstTrip: index === 0, isLastTrip: index === stops.length - 1
+                    });
+                });
+            });
+
+            const toMin = (t) => { const p = t.split(':'); return Number(p[0]) * 60 + Number(p[1]); };
+            seq.forEach(n => ['up', 'down'].forEach(d => rows[n][d].sort((a, b) => toMin(a.time) - toMin(b.time))));
+
+            window.GYEONGBU_LINE_TIMETABLE = {
+                line: '경부선', lineId: baseId, routeName: '경부선 일반열차(서울-부산)',
+                source: { name: 'gyeongbu_general_train_timetable.js 변환', trainCount: raw.trains.length },
+                directions: {
+                    up:   { label: '상행', toward: seq[0], terminalStationId: idOf(seq[0]) },
+                    down: { label: '하행', toward: seq[seq.length - 1], terminalStationId: idOf(seq[seq.length - 1]) }
+                },
+                calendars: {
+                    weekday:  { id: 1, name: '평일',   dows: 62 },
+                    saturday: { id: 2, name: '토요일', dows: 64 },
+                    holiday:  { id: 3, name: '공휴일', dows: 1 }
+                },
+                stations: seq.map(name => ({
+                    id: idOf(name), name, displayName: name + '역',
+                    timetable: {
+                        weekday:  { up: rows[name].up, down: rows[name].down },
+                        saturday: { up: rows[name].up, down: rows[name].down },
+                        holiday:  { up: rows[name].up, down: rows[name].down }
+                    }
+                }))
+            };
+        })();
 
         const STATION_TIMETABLE_ALIASES = {
             suinbundang: {
@@ -5801,8 +5862,8 @@
                     await window.switchLine(fallbackFavorite.lineId, true);
                     homeSelectedStation = fallbackFavorite.station;
                 } else {
-                    await window.switchRegion('daegu', true);
-                    await window.switchLine('daegyeong', true);
+                    await window.switchRegion(LINE_REGION['gyeongbu'], true);
+                    await window.switchLine('gyeongbu', true);
                 }
             }
 
