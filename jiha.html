@@ -753,6 +753,7 @@
     <script src="./seoul_line2_rail_paths.js?v=20260812"></script>
     <script src="./seoul_line3_rail_paths.js?v=20260812"></script>
     <script src="./seoul_line4_rail_paths.js?v=20260813"></script>
+    <script src="./seoul_line5_rail_paths.js?v=20260813"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -1509,6 +1510,53 @@
             ...SEOUL_LINE5_HANAM_STATIONS.slice(1),
             ...SEOUL_LINE5_MACHEON_STATIONS.slice(1)
         ];
+        const SEOUL_LINE5_SCHEMATIC = (() => {
+            const positions = {};
+            const top = 88, gap = 76, leftX = 70, centerX = 200, rightX = 330;
+            const westernStations = SEOUL_LINE5_COMMON_STATIONS.slice(0, 25);
+            const easternStations = SEOUL_LINE5_COMMON_STATIONS.slice(26);
+            westernStations.forEach((name, index) => {
+                positions[name] = { x:leftX, y:top + index * gap, branch:'common' };
+            });
+            const commonBottomY = positions['종로3가'].y;
+            const turnY = commonBottomY + gap;
+            positions['을지로4가'] = { x:135, y:turnY, branch:'common' };
+            positions['동대문역사문화공원'] = { x:centerX, y:commonBottomY, branch:'common' };
+            easternStations.slice(1).forEach((name, index) => {
+                positions[name] = { x:centerX, y:commonBottomY - (index + 1) * gap, branch:'common' };
+            });
+
+            const junctionY = positions['강동'].y;
+            SEOUL_LINE5_HANAM_STATIONS.slice(1, 6).forEach((name, index) => {
+                positions[name] = { x:centerX, y:junctionY - (index + 1) * gap, branch:'hanam' };
+            });
+            positions['강일'] = { x:242, y:junctionY - 6 * gap, branch:'hanam' };
+            positions['미사'] = { x:298, y:junctionY - 6 * gap, branch:'hanam' };
+            SEOUL_LINE5_HANAM_STATIONS.slice(8).forEach((name, index) => {
+                positions[name] = { x:rightX, y:junctionY - (5 - index) * gap, branch:'hanam' };
+            });
+            SEOUL_LINE5_MACHEON_STATIONS.slice(1).forEach((name, index) => {
+                positions[name] = { x:rightX, y:junctionY + (index + 1) * gap, branch:'macheon' };
+            });
+
+            const pathThrough = names => names.map((name, index) =>
+                `${index ? 'L' : 'M'} ${positions[name].x} ${positions[name].y}`
+            ).join(' ');
+            const easternContinuation = easternStations.slice(1).map(name =>
+                `L ${positions[name].x} ${positions[name].y}`
+            ).join(' ');
+            const commonPath = `${pathThrough(westernStations)} Q ${leftX} ${turnY} ${positions['을지로4가'].x} ${turnY} Q ${centerX} ${turnY} ${centerX} ${commonBottomY} ${easternContinuation}`;
+            return {
+                positions,
+                paths:[
+                    commonPath,
+                    pathThrough(SEOUL_LINE5_HANAM_STATIONS),
+                    pathThrough(SEOUL_LINE5_MACHEON_STATIONS)
+                ],
+                turnY,
+                height:turnY + 100
+            };
+        })();
         const SEOUL_LINE5_TRANSFER_META = {
             '김포공항':{ transfer:[{name:'9',color:'#BDB092'},{name:'공',color:'#0090D2'},{name:'서',color:'#8FC31F'},{name:'김',color:'#AD8605'}] },
             '까치산':{ transfer:[{name:'2',color:'#00A84D'}] }, '영등포구청':{ transfer:[{name:'2',color:'#00A84D'}] },
@@ -2688,7 +2736,7 @@
         const LINE_VIEW_LENGTHS = Object.freeze({
             seoul_line1:SEOUL_LINE1_SCHEMATIC.height - 60,
             seoul_line2:SEOUL_LINE2_SCHEMATIC.height - 60,
-            seoul_line3:3400, seoul_line4:3950, seoul_line5:4300, seoul_line6:3100, seoul_line7:4100, seoul_line8:2000, seoul_line9:3000,
+            seoul_line3:3400, seoul_line4:3950, seoul_line5:SEOUL_LINE5_SCHEMATIC.height - 60, seoul_line6:3100, seoul_line7:4100, seoul_line8:2000, seoul_line9:3000,
             incheon_line1:2400, incheon_line2:2400, gyeongui_jungang:2400,
             gtx_a:1400, seohae:2400, gimpo_goldline:1600, gyeonggang:1600, gyeongchun:2800,
             airport:1800, shinbundang:2100, suinbundang:5800, sillim_line:1500, ui_sinseol_line:1700,
@@ -3251,7 +3299,7 @@
                 dom.svgWrapper.style.height = `${lineLen + 160 + 80}px`;
                 
                 const pathY2 = 60 + lineLen;
-                const usesCustomSchematic = lineId === 'seoul_line1' || lineId === 'seoul_line2';
+                const usesCustomSchematic = lineId === 'seoul_line1' || lineId === 'seoul_line2' || lineId === 'seoul_line5';
                 document.getElementById('line-path-down-bg').setAttribute('d', `M 120 60 L 120 ${pathY2}`);
                 document.getElementById('line-path-up-bg').setAttribute('d', `M 280 60 L 280 ${pathY2}`);
                 dom.linePathDown.setAttribute('d', `M 120 60 L 120 ${pathY2}`);
@@ -3983,23 +4031,9 @@
             .map(name => window.SEOUL_LINE3_OSM_STATION_COORDS?.[name]);
         STATION_COORD_LISTS.seoul_line4 = SEOUL_LINE4_STATIONS
             .map(name => window.SEOUL_LINE4_OSM_STATION_COORDS?.[name]);
-        // 수도권 5호선 역 좌표 (방화-강동, 하남검단산·마천 지선 순서).
-        STATION_COORD_LISTS.seoul_line5 = [
-            [37.5774,126.8128],[37.5724,126.8062],[37.5619,126.8022],[37.5612,126.8125],
-            [37.5602,126.8250],[37.5586,126.8377],[37.5489,126.8363],[37.5415,126.8404],
-            [37.5318,126.8467],[37.5249,126.8562],[37.5261,126.8643],[37.5245,126.8750],
-            [37.5256,126.8860],[37.5242,126.8950],[37.5227,126.9052],[37.5171,126.9177],
-            [37.5217,126.9240],[37.5271,126.9329],[37.5395,126.9459],[37.5441,126.9517],
-            [37.5537,126.9568],[37.5597,126.9645],[37.5658,126.9666],[37.5716,126.9764],
-            [37.5716,126.9919],[37.5667,126.9980],[37.5651,127.0079],[37.5602,127.0130],
-            [37.5545,127.0204],[37.5573,127.0295],[37.5615,127.0377],[37.5661,127.0429],
-            [37.5667,127.0527],[37.5614,127.0644],[37.5571,127.0795],[37.5516,127.0898],
-            [37.5453,127.1036],[37.5384,127.1236],[37.5358,127.1325],[37.5378,127.1400],
-            [37.5455,127.1428],[37.5513,127.1440],[37.5550,127.1541],[37.5567,127.1662],
-            [37.5575,127.1759],[37.5609,127.1938],[37.5521,127.2039],[37.5421,127.2061],
-            [37.5397,127.2234],[37.5278,127.1363],[37.5160,127.1308],[37.5087,127.1261],
-            [37.5022,127.1280],[37.4981,127.1348],[37.4933,127.1438],[37.4949,127.1520]
-        ];
+        // 수도권 5호선 역 좌표 (OpenStreetMap ODbL).
+        STATION_COORD_LISTS.seoul_line5 = SEOUL_LINE5_STATIONS
+            .map(name => window.SEOUL_LINE5_OSM_STATION_COORDS?.[name]);
         // 수도권 6호선 역 좌표 (응암순환 이후 신내 순서).
         STATION_COORD_LISTS.seoul_line6 = [
             [37.5987,126.9155],[37.6060,126.9227],[37.6105,126.9298],[37.6184,126.9330],
@@ -4123,7 +4157,7 @@
             || SEOUL_LINE3_STATIONS.map(name => STATION_COORDS.seoul_line3[name]).filter(Boolean);
         RAIL_ROUTE_PATHS.seoul_line4 = window.SEOUL_LINE4_OSM_RAIL_PATH
             || SEOUL_LINE4_STATIONS.map(name => STATION_COORDS.seoul_line4[name]).filter(Boolean);
-        const SEOUL_LINE5_RAIL_PATHS = {
+        const SEOUL_LINE5_RAIL_PATHS = window.SEOUL_LINE5_OSM_RAIL_PATHS || {
             hanam:[...SEOUL_LINE5_COMMON_STATIONS, ...SEOUL_LINE5_HANAM_STATIONS.slice(1)].map(name=>STATION_COORDS.seoul_line5[name]).filter(Boolean),
             macheon:[...SEOUL_LINE5_COMMON_STATIONS, ...SEOUL_LINE5_MACHEON_STATIONS.slice(1)].map(name=>STATION_COORDS.seoul_line5[name]).filter(Boolean)
         };
@@ -5502,6 +5536,101 @@
             return `<g class="pointer-events-none">${railPaths}${labels}</g>`;
         };
 
+        const getSeoulLine5RouteStations = train => {
+            const names = new Set((train.schedule || []).map(stop => stop.name));
+            const branch = SEOUL_LINE5_MACHEON_STATIONS.slice(1).some(name => names.has(name))
+                ? SEOUL_LINE5_MACHEON_STATIONS
+                : SEOUL_LINE5_HANAM_STATIONS;
+            return [...SEOUL_LINE5_COMMON_STATIONS, ...branch.slice(1)];
+        };
+
+        const getSeoulLine5SegmentPoints = (fromName, toName) => {
+            const from = SEOUL_LINE5_SCHEMATIC.positions[fromName];
+            const to = SEOUL_LINE5_SCHEMATIC.positions[toName];
+            if (!from || !to) return [];
+            const edge = [fromName, toName].sort().join('|');
+            let control = null;
+            if (edge === ['종로3가', '을지로4가'].sort().join('|')) {
+                control = { x:70, y:SEOUL_LINE5_SCHEMATIC.turnY };
+            } else if (edge === ['을지로4가', '동대문역사문화공원'].sort().join('|')) {
+                control = { x:200, y:SEOUL_LINE5_SCHEMATIC.turnY };
+            }
+            if (!control) return [from, to];
+            return Array.from({ length:17 }, (_, index) => {
+                const fraction = index / 16;
+                const inverse = 1 - fraction;
+                return {
+                    x:inverse * inverse * from.x + 2 * inverse * fraction * control.x + fraction * fraction * to.x,
+                    y:inverse * inverse * from.y + 2 * inverse * fraction * control.y + fraction * fraction * to.y
+                };
+            });
+        };
+
+        const getSeoulLine5DiagramTrainPlacement = train => {
+            const routeStations = getSeoulLine5RouteStations(train);
+            const fromIndex = routeStations.indexOf(train.curr?.name);
+            const toIndex = routeStations.indexOf(train.next?.name);
+            const fallback = { point:{ x:train.direction === 'down' ? 211 : 189, y:88 }, angle:train.direction === 'up' ? -90 : 90 };
+            if (fromIndex < 0 || toIndex < 0) return fallback;
+            const denominator = (train.next?.progress || 0) - (train.curr?.progress || 0);
+            const fraction = train.isStopped || train.isWaiting || !denominator
+                ? 0
+                : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
+            const step = toIndex >= fromIndex ? 1 : -1;
+            const routePoints = [];
+            for (let index = fromIndex; index !== toIndex; index += step) {
+                const segmentPoints = getSeoulLine5SegmentPoints(routeStations[index], routeStations[index + step]);
+                routePoints.push(...(routePoints.length ? segmentPoints.slice(1) : segmentPoints));
+            }
+            if (routePoints.length < 2) {
+                const point = SEOUL_LINE5_SCHEMATIC.positions[train.curr?.name];
+                return point ? { point, angle:train.direction === 'up' ? -90 : 90 } : fallback;
+            }
+            const cumulative = [0];
+            for (let index = 1; index < routePoints.length; index++) {
+                cumulative.push(cumulative[index - 1] + Math.hypot(
+                    routePoints[index].x - routePoints[index - 1].x,
+                    routePoints[index].y - routePoints[index - 1].y
+                ));
+            }
+            const targetDistance = cumulative[cumulative.length - 1] * fraction;
+            let segmentIndex = 1;
+            while (segmentIndex < cumulative.length - 1 && cumulative[segmentIndex] < targetDistance) segmentIndex++;
+            const segmentStart = routePoints[segmentIndex - 1];
+            const segmentEnd = routePoints[segmentIndex];
+            const segmentLength = cumulative[segmentIndex] - cumulative[segmentIndex - 1];
+            const segmentFraction = segmentLength ? (targetDistance - cumulative[segmentIndex - 1]) / segmentLength : 0;
+            const baseX = segmentStart.x + (segmentEnd.x - segmentStart.x) * segmentFraction;
+            const baseY = segmentStart.y + (segmentEnd.y - segmentStart.y) * segmentFraction;
+            const movementDx = segmentEnd.x - segmentStart.x;
+            const movementDy = segmentEnd.y - segmentStart.y;
+            const canonicalDx = step > 0 ? movementDx : -movementDx;
+            const canonicalDy = step > 0 ? movementDy : -movementDy;
+            const canonicalLength = Math.hypot(canonicalDx, canonicalDy) || 1;
+            const trackOffset = train.direction === 'up' ? 11 : -11;
+            return {
+                point:{
+                    x:baseX - canonicalDy / canonicalLength * trackOffset,
+                    y:baseY + canonicalDx / canonicalLength * trackOffset
+                },
+                angle:Math.atan2(movementDy, movementDx) * 180 / Math.PI
+            };
+        };
+
+        const renderSeoulLine5DiagramRails = () => {
+            const railPaths = SEOUL_LINE5_SCHEMATIC.paths.map(path =>
+                `<path d="${path}" fill="none" stroke="#996CAC" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".24"/>`
+            ).join('');
+            const labels = [
+                [70, SEOUL_LINE5_SCHEMATIC.positions['방화'].y - 22, '방화 방면'],
+                [330, SEOUL_LINE5_SCHEMATIC.positions['하남검단산'].y + 34, '하남검단산 방면'],
+                [330, SEOUL_LINE5_SCHEMATIC.positions['마천'].y + 34, '마천 방면']
+            ].map(([x, y, label]) =>
+                `<text x="${x}" y="${y}" text-anchor="middle" fill="#996CAC" font-size="9" font-weight="800" opacity=".82">${label}</text>`
+            ).join('');
+            return `<g class="pointer-events-none">${railPaths}${labels}</g>`;
+        };
+
         window.render = () => {
             dom.clock.textContent = secondsToTime(currentSec);
             if (activeTab === 'home') window.renderHomeArrivalInfo();
@@ -5532,6 +5661,9 @@
                     return { ...t, ...placement };
                 } else if (currentLineId === 'seoul_line2') {
                     const placement = getSeoulLine2DiagramTrainPlacement(t);
+                    return { ...t, ...placement };
+                } else if (currentLineId === 'seoul_line5') {
+                    const placement = getSeoulLine5DiagramTrainPlacement(t);
                     return { ...t, ...placement };
                 }
                 const ref = t.direction === 'up' ? dom.linePathUp : dom.linePathDown;
@@ -5578,12 +5710,16 @@
             renderedT.forEach(t => { if (t.isStopped && t.curr) stoppedAt[t.curr.name] = getTrainColor(t); });
             let lineHTML = currentLineId === 'seoul_line1'
                 ? renderSeoulLine1DiagramRails()
-                : (currentLineId === 'seoul_line2' ? renderSeoulLine2DiagramRails() : '');
+                : (currentLineId === 'seoul_line2'
+                    ? renderSeoulLine2DiagramRails()
+                    : (currentLineId === 'seoul_line5' ? renderSeoulLine5DiagramRails() : ''));
             for (const stationName in STATIONS) {
                 const s = STATIONS[stationName]; const isSel = selectedStation === stationName;
                 const schematicPosition = currentLineId === 'seoul_line1'
                     ? SEOUL_LINE1_SCHEMATIC.positions[stationName]
-                    : (currentLineId === 'seoul_line2' ? SEOUL_LINE2_SCHEMATIC.positions[stationName] : null);
+                    : (currentLineId === 'seoul_line2'
+                        ? SEOUL_LINE2_SCHEMATIC.positions[stationName]
+                        : (currentLineId === 'seoul_line5' ? SEOUL_LINE5_SCHEMATIC.positions[stationName] : null));
                 const lineX = schematicPosition?.x ?? 200;
                 const lineY = schematicPosition?.y ?? (60 + lineLen * s.progress);
                 const stopColor = stoppedAt[stationName];
@@ -5608,7 +5744,7 @@
                 const dotStroke = stopColor || (isSel ? THEME_COLOR : '#9CA3AF');
                 const dotFill = stopColor || '#ffffff';
                 const ringHtml = stopColor ? `<circle class="station-ring" r="7" fill="${stopColor}" /><circle class="station-ring" r="7" fill="${stopColor}" style="animation-delay:0.7s" />` : '';
-                const hasCustomSchematic = currentLineId === 'seoul_line1' || currentLineId === 'seoul_line2';
+                const hasCustomSchematic = currentLineId === 'seoul_line1' || currentLineId === 'seoul_line2' || currentLineId === 'seoul_line5';
                 const stationGuideHalfWidth = hasCustomSchematic ? 38 : 80;
                 const stationHitWidth = hasCustomSchematic ? 126 : 184;
                 const stationFontSize = hasCustomSchematic ? '11px' : '12px';
