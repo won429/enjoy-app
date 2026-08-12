@@ -15,6 +15,8 @@
 
     <!-- 실제 열차 시간표 데이터 (노선별로 추가) -->
     <script src="gyeongbu_general_train_timetable.js"></script>
+    <!-- 일반열차(무궁화호 · 누리로 · ITX) 실제 운임표 -->
+    <script src="general_train_fares.js"></script>
     
     <style>
         /* 기기 폭에 따라 화면 전체가 같은 비율로 커지고 작아진다.
@@ -5969,13 +5971,29 @@
            - 데이터가 없는 구간은 아래 RAIL_ROUTES 기반 추정 시간표로 대체한다.
            ======================================================= */
         const RAIL_REAL_SOURCES = [
-            { line: '경부선', routeId: 'gyeongbu', global: 'GYEONGBU_GENERAL_TRAIN_TIMETABLE' }
+            // seq: 서울 기점 정차역 순서. 원본 엑셀에 영업거리가 없어 순서만 정의하고,
+            //      거리는 RAIL_ROUTES 의 기준 역 km 사이를 보간해 채운다. (railFillRealKm)
+            { line: '경부선', routeId: 'gyeongbu', global: 'GYEONGBU_GENERAL_TRAIN_TIMETABLE',
+              seq: ['서울','용산','영등포','안양','수원','오산','서정리','평택','성환','천안','전의','조치원','부강',
+                    '신탄진','대전','옥천','이원','지탄','심천','각계','영동','황간','추풍령','김천','구미','약목',
+                    '왜관','신동','대구','동대구','경산','남성현','청도','상동','밀양','삼랑진','원동','물금',
+                    '화명','구포','사상','부산'] }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
 
         const railReal = {};   // { 노선명: { stations, order, km, fare, trains, serviceDate, source } }
 
         function railStripSuffix(name) { return String(name).replace(/역$/, ''); }
+        // 데이터 파일의 열차 등급 표기를 RAIL_TYPES 키로 맞춘다. (예: '무궁화' → '무궁화호')
+        const RAIL_TYPE_ALIAS = {
+            '무궁화': '무궁화호', '무궁화호': '무궁화호', '새마을': 'ITX-새마을', '새마을호': 'ITX-새마을',
+            'ITX새마을': 'ITX-새마을', 'ITX마음': 'ITX-마음', 'ITX청춘': 'ITX-청춘', '누리로': '누리로'
+        };
+        function railNormalizeType(name) {
+            const raw = String(name == null ? '' : name).trim();
+            if (RAIL_TYPES[raw]) return raw;
+            return RAIL_TYPE_ALIAS[raw.replace(/\s+/g, '')] || '무궁화호';
+        }
         function railClockToMin(t) {
             const m = /^(\d{1,2}):(\d{2})$/.exec(String(t).trim());
             return m ? Number(m[1]) * 60 + Number(m[2]) : null;
@@ -6009,9 +6027,9 @@
                 });
                 if (stops.length < 2) return null;
                 return {
-                    trainNo: String(t.trainNo), type: t.type,
+                    trainNo: String(t.trainNo), type: railNormalizeType(t.trainType != null ? t.trainType : t.type),
                     dir: t.direction === 'up' ? 'up' : 'down',
-                    origin: t.origin || '', terminal: t.terminal || '', note: t.note || '',
+                    origin: t.origin || '', terminal: t.terminal || t.destination || '', note: t.note || '',
                     stops
                 };
             }).filter(Boolean);
@@ -6031,7 +6049,46 @@
             if (built) railReal[src.line] = built;
         });
 
+        /* ---------------- 실제 운임표 (general_train_fares.js) ----------------
+           코레일 일반열차 운임표 두 부(무궁화호용 · ITX용)를 구간별로 찾아 쓴다.
+           - 운임표에 없는 구간(KTX · SRT · 관광열차 · 경춘선 등)은 railFare() 의 거리비례 추정값을 쓴다.
+           - 같은 구간이 여러 노선 시트에 다른 값으로 있으면(경유 경로가 다른 경우) 최저값을 쓴다. */
+        const RAIL_FARE_SOURCE_TYPES = {
+            'general_train_fares_xls':     ['무궁화호', '누리로'],
+            'general_train_fares_2_xlsx':  ['ITX-새마을', 'ITX-마음']
+        };
+        const RAIL_FARE_NAME_ALIAS = { '여수EXPO': '여수엑스포' };   // 운임표 표기 → 앱 역 이름
+        const railFareTable = {};   // { 등급: { '서울|부산': 28600 } }
+        (function railBuildFareTable() {
+            // 운임표 파일은 window 에 붙이지 않고 const 로만 선언한다 → 전역 이름으로 직접 읽는다.
+            const raw = (typeof GENERAL_TRAIN_FARES !== 'undefined') ? GENERAL_TRAIN_FARES
+                      : ((typeof window !== 'undefined') ? window.GENERAL_TRAIN_FARES : null);
+            if (!raw || !Array.isArray(raw.fares)) return;
+            const bySource = {};
+            const fix = (n) => RAIL_FARE_NAME_ALIAS[n] || n;
+            raw.fares.forEach(row => {
+                if (!row || typeof row.fare !== 'number' || !row.from || !row.to) return;
+                const t = bySource[row.sourceId] || (bySource[row.sourceId] = {});
+                const k = fix(row.from) + '|' + fix(row.to);
+                if (t[k] == null || row.fare < t[k]) t[k] = row.fare;
+            });
+            Object.keys(RAIL_FARE_SOURCE_TYPES).forEach(id => {
+                if (!bySource[id]) return;
+                RAIL_FARE_SOURCE_TYPES[id].forEach(type => { railFareTable[type] = bySource[id]; });
+            });
+        })();
+
+        // 운임표에서 등급 · 구간으로 운임을 찾는다. 없으면 null.
+        function railTableFare(type, a, b) {
+            const t = railFareTable[type];
+            if (!t) return null;
+            const v = t[a + '|' + b] != null ? t[a + '|' + b] : t[b + '|' + a];
+            return v == null ? null : Math.max(RAIL_MIN_FARE[type] || 2600, v);
+        }
+
         function railRealFare(lineData, type, a, b) {
+            const real = railTableFare(type, a, b);
+            if (real != null) return real;
             const tbl = lineData.fare[type];
             if (!tbl || tbl[a] == null || tbl[b] == null) return null;
             return Math.max(RAIL_MIN_FARE[type] || 2600, Math.abs(tbl[a] - tbl[b]));
@@ -6072,16 +6129,41 @@
             return out;
         }
 
+        // 원본에 영업거리가 없는 노선은 src.seq(정차역 순서)를 따라
+        // RAIL_ROUTES 의 기준 역 km 사이를 선형 보간해 각 역의 거리를 채운다.
+        // 거리가 0 이면 운임이 기본요금으로만 계산되므로 반드시 필요하다.
+        function railFillRealKm(L, route, src) {
+            if (!Array.isArray(src.seq) || Object.keys(L.km).length) return;
+            const anchor = {};
+            route.stops.forEach(s => { anchor[s[0]] = s[1]; });
+            const seq = src.seq.filter(n => L.order[n] != null);
+            const known = [];
+            seq.forEach((n, i) => { if (anchor[n] != null) known.push({ i, km: anchor[n] }); });
+            if (known.length < 2) return;
+            seq.forEach((name, i) => {
+                if (anchor[name] != null) { L.km[name] = anchor[name]; return; }
+                let lo = known[0], hi = known[known.length - 1];
+                for (let k = 0; k < known.length; k++) {
+                    if (known[k].i <= i) lo = known[k];
+                    if (known[k].i >= i) { hi = known[k]; break; }
+                }
+                if (lo.i === hi.i) { L.km[name] = lo.km; return; }   // 기준 역 바깥이면 가장 가까운 값
+                L.km[name] = Math.round((lo.km + (hi.km - lo.km) * ((i - lo.i) / (hi.i - lo.i))) * 10) / 10;
+            });
+        }
+
         // 실제 시간표가 있는 노선은 정차역 · 영업거리 · 운행 등급을 실제 값으로 교체한다.
         RAIL_REAL_SOURCES.forEach(src => {
             const L = railReal[src.line];
             const route = RAIL_ROUTES.find(r => r.id === src.routeId);
             if (!L || !route) return;
+            railFillRealKm(L, route, src);
             route.realLine = src.line;
             route.name = src.line;
             const types = Array.from(new Set(L.trains.map(t => t.type))).filter(t => RAIL_TYPES[t]);
             if (types.length) route.types = types;
-            const stops = L.stations.filter(n => L.km[n] != null).map(n => [n, L.km[n]]);
+            // 원본 stations 배열은 정차역 순서가 어긋난 역이 섞여 있어 거리순으로 정렬한다.
+            const stops = L.stations.filter(n => L.km[n] != null).map(n => [n, L.km[n]]).sort((a, b) => a[1] - b[1]);
             if (stops.length > 2) route.stops = stops;
         });
 
@@ -6182,7 +6264,7 @@
 
         /* ---------------- 운임 ---------------- */
         function railFare(type, km) {
-            const T = RAIL_TYPES[type];
+            const T = RAIL_TYPES[type] || RAIL_TYPES['무궁화호'];
             const near = Math.min(km, 300), far = Math.max(0, km - 300);
             const raw = T.base + near * T.per + far * T.per * 0.8;
             return Math.max(T.base, Math.round(raw / 100) * 100);
@@ -6279,7 +6361,9 @@
                                     const sSeed = railHash(`${trainNo}|${route.id}|${railDateKey(baseDate)}|${dayOffset}|${depName}|${arrName}`);
                                     const soldOut = sSeed % 29 === 0;
                                     const realLine = route.realLine ? railReal[route.realLine] : null;
-                                    const fare = (realLine && railRealFare(realLine, type, depName, arrName)) || railFare(type, distance);
+                                    const fare = railTableFare(type, depName, arrName)
+                                        || (realLine && railRealFare(realLine, type, depName, arrName))
+                                        || railFare(type, distance);
                                     list.push({
                                         source: 'est',
                                         type, typeColor: T.color, cat: T.cat, hasSpecial: T.special, hasMile: T.mile,
