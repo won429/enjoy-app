@@ -6713,7 +6713,7 @@
                     coverBadge: '배민 상품권이 나오면 당첨!',
                     desc: '배달의민족 5천원 상품권에 당첨됐어요!',
                     icon: 'fa-utensils',
-                    chance: .02
+                    chance: .002
                 },
                 {
                     id: 'cash-prize',
@@ -6739,6 +6739,7 @@
             let openedFromMore = false;
             let scratchCtx = null;
             let scratching = false;
+            let currentAttemptConsumed = false;
             let lastPoint = null;
             let lastCoverageCheck = 0;
             let scratchCoverReady = false;
@@ -7390,6 +7391,10 @@
                 canvas.classList.remove('is-cleared');
                 canvas.onpointerdown = function (event) {
                     if (!scratchCoverReady || (currentOutcome && currentOutcome.revealed)) return;
+                    if (!currentAttemptConsumed && currentCard) {
+                        consumeScratchAttempt(currentCard);
+                        currentAttemptConsumed = true;
+                    }
                     scratching = true;
                     lastPoint = null;
                     try { canvas.setPointerCapture(event.pointerId); } catch (e) {}
@@ -7419,7 +7424,10 @@
                 saved.revealed = true;
                 saved.revealedAt = saved.revealedAt || Date.now();
                 currentOutcome = saved;
-                consumeScratchAttempt(currentCard);
+                if (!currentAttemptConsumed) {
+                    consumeScratchAttempt(currentCard);
+                    currentAttemptConsumed = true;
+                }
                 storeScratchResult(currentCard, saved);
 
                 const card = document.getElementById('scratch-reveal-card');
@@ -7476,6 +7484,7 @@
                     window.haptic && window.haptic();
                     currentCard = card;
                     currentOutcome = ensureOutcome(card);
+                    currentAttemptConsumed = false;
                     openedFromMore = !!fromMore;
 
                     const title = document.getElementById('scratch-play-title');
@@ -7524,6 +7533,7 @@
                 scratchCtx = null;
                 currentCard = null;
                 currentOutcome = null;
+                currentAttemptConsumed = false;
             };
 
             window.addEventListener('resize', function () {
