@@ -312,25 +312,6 @@
         .subway-map-train.is-selected {
             filter: drop-shadow(0 0.25rem 0.1875rem rgba(15,23,42,.30)) drop-shadow(0 0.375rem 0.5625rem rgba(15,23,42,.25)) drop-shadow(0 0 0.3125rem rgba(255,255,255,.95));
         }
-        .subway-map-train.is-journey-target::after {
-            content: attr(data-train-id);
-            position: absolute;
-            left: 50%;
-            top: -1.15rem;
-            transform: translateX(-50%);
-            min-width: 2.35rem;
-            padding: .2rem .42rem;
-            border: .125rem solid #fff;
-            border-radius: 999px;
-            background: #111827;
-            color: #fff;
-            font-size: .625rem;
-            font-weight: 900;
-            line-height: 1;
-            text-align: center;
-            box-shadow: 0 .18rem .5rem rgba(15,23,42,.28);
-            pointer-events: none;
-        }
         .subway-map-train.is-nationwide {
             width: 1.71875rem;
             height: 0.515625rem;
@@ -637,60 +618,7 @@
             </div>
         </main>
 
-        <!-- 4. 길찾기 -->
-        <main id="journey-screen" class="hidden absolute inset-0 z-[25] flex-col overflow-y-auto bg-white pb-28 hide-scrollbar">
-            <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-5 pt-safe backdrop-blur-xl">
-                <div class="flex items-end justify-between pt-3">
-                    <div class="flex items-end gap-7">
-                        <button type="button" class="relative pb-3 text-[17px] font-black text-slate-800">최단시간<span class="absolute inset-x-0 bottom-0 h-[3px] bg-slate-800"></span></button>
-                        <span class="pb-3 text-[17px] font-bold text-slate-300">최소환승</span>
-                    </div>
-                    <div class="flex items-center gap-1 pb-2">
-                        <button id="journey-header-swap" type="button" class="flex h-9 w-9 items-center justify-center rounded-full text-slate-500" aria-label="출발역과 도착역 바꾸기"><i class="fa-solid fa-arrow-right-arrow-left text-[14px]"></i></button>
-                    </div>
-                </div>
-            </header>
-            <div class="px-4 py-4">
-                <section id="journey-search-panel" class="border-b border-slate-100 bg-white pb-5">
-                    <div class="mb-4 flex items-center justify-between px-1">
-                        <div><h2 class="text-[20px] font-black tracking-tight text-slate-900">어디로 갈까요?</h2><p class="mt-1 text-[10px] font-semibold text-slate-400">현재 시각 이후 실제 열차 시간표 기준</p></div>
-                        <span id="journey-region-label" class="rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-black text-[#1769C2]">현재 권역</span>
-                    </div>
-                    <div class="flex items-stretch gap-3">
-                        <div class="flex w-5 shrink-0 flex-col items-center py-5">
-                            <span class="h-3 w-3 rounded-full bg-[#1769C2]"></span>
-                            <span class="my-1 min-h-10 w-[3px] flex-1 bg-slate-200"></span>
-                            <span class="h-3 w-3 rounded-full border-[3px] border-[#1769C2] bg-white"></span>
-                        </div>
-                        <div class="min-w-0 flex-1 space-y-2">
-                            <button id="journey-start-button" type="button" class="flex min-h-[58px] w-full items-center justify-between border-b border-slate-200 px-2 text-left transition active:bg-slate-50" aria-label="출발역 선택">
-                                <span><span class="block text-[9px] font-extrabold text-[#1769C2]">출발</span><span id="journey-start-label" class="mt-1 block text-[16px] font-extrabold text-slate-400">출발역을 선택하세요</span></span>
-                                <i class="fa-solid fa-chevron-right text-[12px] text-slate-300"></i>
-                            </button>
-                            <button id="journey-end-button" type="button" class="flex min-h-[58px] w-full items-center justify-between border-b border-slate-200 px-2 text-left transition active:bg-slate-50" aria-label="도착역 선택">
-                                <span><span class="block text-[9px] font-extrabold text-slate-500">도착</span><span id="journey-end-label" class="mt-1 block text-[16px] font-extrabold text-slate-400">도착역을 선택하세요</span></span>
-                                <i class="fa-solid fa-chevron-right text-[12px] text-slate-300"></i>
-                            </button>
-                        </div>
-                        <button id="journey-swap-button" type="button" class="my-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition active:rotate-180" aria-label="출발역과 도착역 바꾸기">
-                            <i class="fa-solid fa-arrow-right-arrow-left rotate-90 text-[12px]"></i>
-                        </button>
-                    </div>
-                    <button id="journey-search-button" type="button" class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1769C2] py-3.5 text-[14px] font-black text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300">
-                        <i class="fa-solid fa-route"></i> 지금 출발 길찾기
-                    </button>
-                </section>
-                <section id="journey-result" class="pt-5" aria-live="polite">
-                    <div class="border border-dashed border-slate-200 px-6 py-10 text-center">
-                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#1769C2]"><i class="fa-solid fa-train-subway"></i></div>
-                        <p class="mt-3 text-[13px] font-extrabold text-slate-600">출발역과 도착역을 선택해 주세요</p>
-                        <p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-400">탑승 시각, 열차번호, 환승 경로를<br>한 번에 계산합니다.</p>
-                    </div>
-                </section>
-            </div>
-        </main>
-
-        <!-- 5. 카카오 지도 노선 뷰 -->
+        <!-- 4. 카카오 지도 노선 뷰 -->
         <main id="subway-map-screen" class="hidden absolute inset-0 z-10 bg-[#eef2f6]">
             <div id="subway-map" class="absolute inset-0"></div>
             <div id="subway-map-fallback" class="absolute inset-0 flex flex-col items-center justify-center px-8 text-center text-gray-400">
@@ -714,8 +642,8 @@
 
         <div id="floating-panel" class="hidden absolute bottom-[100px] left-0 right-0 px-4 z-[90] min-h-[72px] transition-all duration-300"></div>
 
-        <!-- 6. 하단 네비게이션 -->
-        <nav id="bottom-nav" class="absolute bottom-7 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-[390px] px-1.5 touch-pan-x select-none">
+        <!-- 5. 하단 네비게이션 -->
+        <nav id="bottom-nav" class="absolute bottom-7 left-1/2 -translate-x-1/2 z-[100] w-[88%] max-w-[330px] px-1.5 touch-pan-x select-none">
             <div class="flex items-center justify-between rounded-full p-1.5 gap-1 relative transition-all duration-300">
                 <div id="nav-indicator" class="absolute top-1.5 bottom-1.5 rounded-full z-0 nav-transition" style="left: 0.375rem; width: 4.375rem; background-color: #0054A6;"></div>
 
@@ -729,12 +657,6 @@
                     <div class="flex flex-col items-center gap-[3px] pointer-events-none">
                         <i class="fa-solid fa-house text-[15px] text-white drop-shadow-sm transition-colors"></i>
                         <span class="text-[9px] text-white font-bold whitespace-nowrap transition-colors">홈</span>
-                    </div>
-                </button>
-                <button id="tab-journey" class="relative py-2 flex-1 rounded-full group z-10 active:scale-90 transition-transform">
-                    <div class="flex flex-col items-center gap-[3px] pointer-events-none">
-                        <i class="fa-solid fa-route text-[15px] text-gray-400 transition-colors"></i>
-                        <span class="text-[9px] font-semibold text-gray-400 whitespace-nowrap transition-colors">길찾기</span>
                     </div>
                 </button>
                 <button id="tab-line" class="relative py-2 flex-1 rounded-full group z-10 active:scale-90 transition-transform">
@@ -753,31 +675,6 @@
         </nav>
 
         <!-- 모달들 -->
-        <div id="journey-station-modal" class="hidden absolute inset-0 z-[170] flex flex-col justify-end bg-black/40 backdrop-blur-sm">
-            <div class="flex h-[82%] w-full flex-col rounded-t-[30px] border-t border-white/70 bg-white shadow-[0_-20px_50px_rgba(0,0,0,0.16)]">
-                <div class="shrink-0 border-b border-slate-100 px-5 pb-3 pt-4">
-                    <div class="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200"></div>
-                    <div class="flex items-center justify-between">
-                        <div><h2 id="journey-picker-title" class="text-[18px] font-black text-slate-900">출발역 선택</h2><p class="mt-0.5 text-[10px] font-semibold text-slate-400">역 이름 또는 노선으로 검색</p></div>
-                        <button id="journey-picker-close" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-label="닫기"><i class="fa-solid fa-xmark text-[12px]"></i></button>
-                    </div>
-                    <label class="mt-3 flex h-11 items-center gap-2 rounded-2xl bg-slate-100 px-4">
-                        <i class="fa-solid fa-magnifying-glass text-[12px] text-slate-400"></i>
-                        <input id="journey-station-search" type="search" autocomplete="off" placeholder="예: 강남, 2호선" class="min-w-0 flex-1 bg-transparent text-[13px] font-bold text-slate-800 outline-none placeholder:font-semibold placeholder:text-slate-400">
-                    </label>
-                </div>
-                <div id="journey-station-list" class="flex-1 overflow-y-auto px-4 py-2 pb-10 hide-scrollbar"></div>
-            </div>
-        </div>
-
-        <div id="journey-alert-modal" class="hidden absolute inset-0 z-[190] flex items-center justify-center bg-black/45 px-8 backdrop-blur-sm">
-            <div class="w-full max-w-[310px] rounded-[26px] bg-white p-6 text-center shadow-2xl">
-                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#2563EB]"><i class="fa-solid fa-circle-info text-[18px]"></i></div>
-                <p id="journey-alert-message" class="mt-4 whitespace-pre-line text-[14px] font-extrabold leading-relaxed text-slate-800"></p>
-                <button id="journey-alert-confirm" type="button" class="mt-5 h-11 w-full rounded-2xl bg-[#2563EB] text-[13px] font-black text-white">확인</button>
-            </div>
-        </div>
-
         <div id="timetable-modal" class="hidden absolute inset-0 z-[150] flex flex-col justify-end bg-black/40 backdrop-blur-sm transition-opacity">
             <div class="bg-white w-full h-[75%] rounded-t-[32px] shadow-[0_-20px_40px_rgba(0,0,0,0.1)] flex flex-col animate-in border-t border-black/5">
                 <div class="flex flex-col items-center pt-4 pb-2 border-b border-black/5 shrink-0 relative">
@@ -852,24 +749,10 @@
     </div>
 
     <!-- 스크립트 (통합 로직) -->
-    <script src="./seoul_line1_rail_paths.js?v=20260812"></script>
-    <script src="./seoul_line2_rail_paths.js?v=20260812"></script>
-    <script src="./seoul_line3_rail_paths.js?v=20260812"></script>
-    <script src="./seoul_line4_rail_paths.js?v=20260813"></script>
-    <script src="./seoul_line5_rail_paths.js?v=20260813"></script>
-    <script src="./seoul_line6_rail_paths.js?v=20260813"></script>
-    <script src="./seoul_line7_rail_path.js?v=20260813"></script>
-    <script src="./seoul_line8_rail_path.js?v=20260813"></script>
-    <script src="./seoul_line9_rail_path.js?v=20260813"></script>
-    <script src="./daejeon_line1_rail_path.js?v=20260813"></script>
-    <script src="./gwangju_line1_rail_path.js?v=20260813"></script>
-    <script src="./daegyeong_rail_path.js?v=20260813"></script>
-    <script src="./donghae_line_rail_path.js?v=20260813"></script>
-    <script src="./daegu_line1_rail_path.js?v=20260813"></script>
-    <script src="./daegu_line2_rail_path.js?v=20260813"></script>
-    <script src="./daegu_line3_rail_path.js?v=20260813"></script>
-    <script src="./gyeongui_jungang_rail_paths.js?v=20260813"></script>
-    <script src="./gyeongchun_rail_paths.js?v=20260813"></script>
+    <script src="./seoul_line1_rail_paths.js"></script>
+    <script src="./seoul_line2_rail_paths.js"></script>
+    <script src="./seoul_line3_rail_paths.js"></script>
+    <script src="./seoul_line4_rail_paths.js"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -1508,50 +1391,42 @@
         ].map(([first, second]) => [first, second].sort().join('|')));
         const SEOUL_LINE2_SCHEMATIC = (() => {
             const positions = {};
-            const leftX = 135, rightX = 265, topY = 90, upperCornerY = 145, lowerCornerY = 1445, bottomY = 1500;
-            positions['시청'] = { x:160, y:topY, branch:'loop' };
-            positions['을지로입구'] = { x:200, y:topY, branch:'loop' };
-            SEOUL_LINE2_LOOP_STATIONS.slice(2, 23).forEach((name, index, stations) => {
+            const centerX = 200, centerY = 1690, radiusX = 108, radiusY = 1540;
+            const ellipseSamples = Array.from({ length:2049 }, (_, index) => {
+                const angle = -Math.PI / 2 + Math.PI * 2 * index / 2048;
+                return { x:centerX + Math.cos(angle) * radiusX, y:centerY + Math.sin(angle) * radiusY };
+            });
+            const ellipseDistances = [0];
+            for (let index = 1; index < ellipseSamples.length; index++) {
+                ellipseDistances.push(ellipseDistances[index - 1] + Math.hypot(
+                    ellipseSamples[index].x - ellipseSamples[index - 1].x,
+                    ellipseSamples[index].y - ellipseSamples[index - 1].y
+                ));
+            }
+            const ellipseLength = ellipseDistances[ellipseDistances.length - 1];
+            SEOUL_LINE2_LOOP_STATIONS.forEach((name, index, stations) => {
+                const targetDistance = ellipseLength * index / stations.length;
+                let sampleIndex = 1;
+                while (sampleIndex < ellipseDistances.length - 1 && ellipseDistances[sampleIndex] < targetDistance) sampleIndex++;
+                const previousDistance = ellipseDistances[sampleIndex - 1];
+                const nextDistance = ellipseDistances[sampleIndex];
+                const fraction = nextDistance === previousDistance ? 0 : (targetDistance - previousDistance) / (nextDistance - previousDistance);
+                const previous = ellipseSamples[sampleIndex - 1], next = ellipseSamples[sampleIndex];
                 positions[name] = {
-                    x:rightX,
-                    y:upperCornerY + (lowerCornerY - upperCornerY) * index / (stations.length - 1),
+                    x:previous.x + (next.x - previous.x) * fraction,
+                    y:previous.y + (next.y - previous.y) * fraction,
                     branch:'loop'
                 };
             });
-            positions['서초'] = { x:200, y:bottomY, branch:'loop' };
-            positions['방배'] = { x:leftX, y:lowerCornerY, branch:'loop' };
-            SEOUL_LINE2_LOOP_STATIONS.slice(25).forEach((name, index, stations) => {
-                positions[name] = {
-                    x:leftX,
-                    y:lowerCornerY - (lowerCornerY - upperCornerY) * (index + 1) / stations.length,
-                    branch:'loop'
-                };
-            });
-            const branchGap = 92;
+            const branchGap = 112;
             SEOUL_LINE2_SEONGSU_BRANCH.slice(1).forEach((name, index) => {
-                positions[name] = { x:358, y:positions['성수'].y - branchGap * index, branch:'seongsu' };
+                positions[name] = { x:358, y:positions['성수'].y - branchGap * (index + 1), branch:'seongsu' };
             });
             SEOUL_LINE2_SINJEONG_BRANCH.slice(1).forEach((name, index) => {
-                positions[name] = { x:42, y:positions['신도림'].y + branchGap * index, branch:'sinjeong' };
+                positions[name] = { x:42, y:positions['신도림'].y - branchGap * (index + 1), branch:'sinjeong' };
             });
             const pathThrough = names => names.map((name, index) => `${index ? 'L' : 'M'} ${positions[name].x.toFixed(2)} ${positions[name].y.toFixed(2)}`).join(' ');
-            const rightContinuation = SEOUL_LINE2_LOOP_STATIONS.slice(3, 23).map(name =>
-                `L ${positions[name].x.toFixed(2)} ${positions[name].y.toFixed(2)}`
-            ).join(' ');
-            const leftContinuation = SEOUL_LINE2_LOOP_STATIONS.slice(25).map(name =>
-                `L ${positions[name].x.toFixed(2)} ${positions[name].y.toFixed(2)}`
-            ).join(' ');
-            const loopPath = [
-                `M ${positions['시청'].x} ${positions['시청'].y}`,
-                `L ${positions['을지로입구'].x} ${positions['을지로입구'].y}`,
-                `Q ${rightX} ${topY} ${positions['을지로3가'].x} ${positions['을지로3가'].y}`,
-                rightContinuation,
-                `Q ${rightX} ${bottomY} ${positions['서초'].x} ${positions['서초'].y}`,
-                `Q ${leftX} ${bottomY} ${positions['방배'].x} ${positions['방배'].y}`,
-                leftContinuation,
-                `Q ${leftX} ${topY} ${positions['시청'].x} ${positions['시청'].y}`,
-                'Z'
-            ].join(' ');
+            const loopPath = `${pathThrough(SEOUL_LINE2_LOOP_STATIONS)} Z`;
             return {
                 positions,
                 paths:[
@@ -1559,13 +1434,7 @@
                     pathThrough(SEOUL_LINE2_SEONGSU_BRANCH),
                     pathThrough(SEOUL_LINE2_SINJEONG_BRANCH)
                 ],
-                cornerControls:{
-                    [['을지로입구','을지로3가'].sort().join('|')]:{ x:rightX, y:topY },
-                    [['교대','서초'].sort().join('|')]:{ x:rightX, y:bottomY },
-                    [['서초','방배'].sort().join('|')]:{ x:leftX, y:bottomY },
-                    [['충정로','시청'].sort().join('|')]:{ x:leftX, y:topY }
-                },
-                height:bottomY + 110
+                height:Math.max(...Object.values(positions).map(position => position.y)) + 110
             };
         })();
 
@@ -1640,53 +1509,6 @@
             ...SEOUL_LINE5_HANAM_STATIONS.slice(1),
             ...SEOUL_LINE5_MACHEON_STATIONS.slice(1)
         ];
-        const SEOUL_LINE5_SCHEMATIC = (() => {
-            const positions = {};
-            const top = 88, gap = 76, leftX = 70, centerX = 200, rightX = 330;
-            const westernStations = SEOUL_LINE5_COMMON_STATIONS.slice(0, 25);
-            const easternStations = SEOUL_LINE5_COMMON_STATIONS.slice(26);
-            westernStations.forEach((name, index) => {
-                positions[name] = { x:leftX, y:top + index * gap, branch:'common' };
-            });
-            const commonBottomY = positions['종로3가'].y;
-            const turnY = commonBottomY + gap;
-            positions['을지로4가'] = { x:135, y:turnY, branch:'common' };
-            positions['동대문역사문화공원'] = { x:centerX, y:commonBottomY, branch:'common' };
-            easternStations.slice(1).forEach((name, index) => {
-                positions[name] = { x:centerX, y:commonBottomY - (index + 1) * gap, branch:'common' };
-            });
-
-            const junctionY = positions['강동'].y;
-            SEOUL_LINE5_HANAM_STATIONS.slice(1, 6).forEach((name, index) => {
-                positions[name] = { x:centerX, y:junctionY - (index + 1) * gap, branch:'hanam' };
-            });
-            positions['강일'] = { x:242, y:junctionY - 6 * gap, branch:'hanam' };
-            positions['미사'] = { x:298, y:junctionY - 6 * gap, branch:'hanam' };
-            SEOUL_LINE5_HANAM_STATIONS.slice(8).forEach((name, index) => {
-                positions[name] = { x:rightX, y:junctionY - (5 - index) * gap, branch:'hanam' };
-            });
-            SEOUL_LINE5_MACHEON_STATIONS.slice(1).forEach((name, index) => {
-                positions[name] = { x:rightX, y:junctionY + (index + 1) * gap, branch:'macheon' };
-            });
-
-            const pathThrough = names => names.map((name, index) =>
-                `${index ? 'L' : 'M'} ${positions[name].x} ${positions[name].y}`
-            ).join(' ');
-            const easternContinuation = easternStations.slice(1).map(name =>
-                `L ${positions[name].x} ${positions[name].y}`
-            ).join(' ');
-            const commonPath = `${pathThrough(westernStations)} Q ${leftX} ${turnY} ${positions['을지로4가'].x} ${turnY} Q ${centerX} ${turnY} ${centerX} ${commonBottomY} ${easternContinuation}`;
-            return {
-                positions,
-                paths:[
-                    commonPath,
-                    pathThrough(SEOUL_LINE5_HANAM_STATIONS),
-                    pathThrough(SEOUL_LINE5_MACHEON_STATIONS)
-                ],
-                turnY,
-                height:turnY + 100
-            };
-        })();
         const SEOUL_LINE5_TRANSFER_META = {
             '김포공항':{ transfer:[{name:'9',color:'#BDB092'},{name:'공',color:'#0090D2'},{name:'서',color:'#8FC31F'},{name:'김',color:'#AD8605'}] },
             '까치산':{ transfer:[{name:'2',color:'#00A84D'}] }, '영등포구청':{ transfer:[{name:'2',color:'#00A84D'}] },
@@ -1710,66 +1532,9 @@
         const SEOUL_LINE6_LOOP_STATIONS = ['응암','역촌','불광','독바위','연신내','구산','응암'];
         const SEOUL_LINE6_MAIN_STATIONS = [
             '응암','새절','증산','디지털미디어시티','월드컵경기장','마포구청','망원','합정','상수','광흥창','대흥','공덕','효창공원앞','삼각지','녹사평','이태원','한강진',
-            '버티고개','약수','청구','신당','동묘앞','창신','보문','안암','고려대','월곡','상월곡','돌곶이','석계','태릉입구','화랑대','봉화산','신내'
+            '버티고개','약수','청구','신당','동묘앞','창신','보문','안암','고려대','월곡','상월곡','돌곧이','석계','태릉입구','화랑대','봉화산','신내'
         ];
         const SEOUL_LINE6_STATIONS = [...SEOUL_LINE6_LOOP_STATIONS.slice(0,-1), ...SEOUL_LINE6_MAIN_STATIONS.slice(1)];
-        const SEOUL_LINE6_SCHEMATIC = (() => {
-            const positions = {};
-            const leftX = 135, rightX = 265, bottomY = 1500, lowerCornerY = 1430, gap = 76;
-            SEOUL_LINE6_MAIN_STATIONS.slice(0, 14).forEach((name, index) => {
-                positions[name] = { x:leftX, y:442 + index * gap, branch:'main' };
-            });
-            positions['녹사평'] = { x:170, y:bottomY, branch:'main' };
-            positions['이태원'] = { x:215, y:bottomY, branch:'main' };
-            positions['한강진'] = { x:260, y:bottomY, branch:'main' };
-            SEOUL_LINE6_MAIN_STATIONS.slice(17).forEach((name, index) => {
-                positions[name] = { x:rightX, y:lowerCornerY - index * gap, branch:'main' };
-            });
-
-            positions['역촌'] = { x:190, y:330, branch:'loop' };
-            positions['불광'] = { x:190, y:240, branch:'loop' };
-            positions['독바위'] = { x:135, y:170, branch:'loop' };
-            positions['연신내'] = { x:80, y:240, branch:'loop' };
-            positions['구산'] = { x:80, y:330, branch:'loop' };
-
-            const pathThrough = names => names.map((name, index) =>
-                `${index ? 'L' : 'M'} ${positions[name].x} ${positions[name].y}`
-            ).join(' ');
-            const leftMain = SEOUL_LINE6_MAIN_STATIONS.slice(0, 14);
-            const rightContinuation = SEOUL_LINE6_MAIN_STATIONS.slice(18).map(name =>
-                `L ${positions[name].x} ${positions[name].y}`
-            ).join(' ');
-            const mainPath = [
-                pathThrough(leftMain),
-                `Q ${leftX} ${bottomY} ${positions['녹사평'].x} ${positions['녹사평'].y}`,
-                `L ${positions['이태원'].x} ${positions['이태원'].y}`,
-                `L ${positions['한강진'].x} ${positions['한강진'].y}`,
-                `Q ${rightX} ${bottomY} ${positions['버티고개'].x} ${positions['버티고개'].y}`,
-                rightContinuation
-            ].join(' ');
-            const loopPath = [
-                `M ${positions['응암'].x} ${positions['응암'].y}`,
-                `Q 190 390 ${positions['역촌'].x} ${positions['역촌'].y}`,
-                `L ${positions['불광'].x} ${positions['불광'].y}`,
-                `Q 190 170 ${positions['독바위'].x} ${positions['독바위'].y}`,
-                `Q 80 170 ${positions['연신내'].x} ${positions['연신내'].y}`,
-                `L ${positions['구산'].x} ${positions['구산'].y}`,
-                `Q 80 390 ${positions['응암'].x} ${positions['응암'].y}`
-            ].join(' ');
-            return {
-                positions,
-                paths:[loopPath, mainPath],
-                cornerControls:{
-                    [['응암','역촌'].sort().join('|')]:{ x:190, y:390 },
-                    [['불광','독바위'].sort().join('|')]:{ x:190, y:170 },
-                    [['독바위','연신내'].sort().join('|')]:{ x:80, y:170 },
-                    [['구산','응암'].sort().join('|')]:{ x:80, y:390 },
-                    [['삼각지','녹사평'].sort().join('|')]:{ x:leftX, y:bottomY },
-                    [['한강진','버티고개'].sort().join('|')]:{ x:rightX, y:bottomY }
-                },
-                height:bottomY + 110
-            };
-        })();
         const SEOUL_LINE6_TRANSFER_META = {
             '불광':{ transfer:[{name:'3',color:'#EF7C1C'}] }, '연신내':{ transfer:[{name:'3',color:'#EF7C1C'},{name:'G',color:'#9A6292'}] },
             '디지털미디어시티':{ transfer:[{name:'경중',color:'#77C4A3'},{name:'공',color:'#0090D2'}] }, '합정':{ transfer:[{name:'2',color:'#00A84D'}] },
@@ -1938,7 +1703,6 @@
         let subwayMapFollowLayer = null;
         let selectedMapTrainKey = null;
         let mapFollowTrainKey = null;
-        let mapSoloTrainKey = null;
         let selectedMapStationLineId = null;
         const regionMapTimetables = new Map();
         let mapNationwideMode = false;
@@ -1991,25 +1755,6 @@
         const dom = {
             mainHeader: document.getElementById('main-header'),
             homeScreen: document.getElementById('home-screen'),
-            journeyScreen: document.getElementById('journey-screen'),
-            journeySearchPanel: document.getElementById('journey-search-panel'),
-            journeyHeaderSwap: document.getElementById('journey-header-swap'),
-            journeyRegionLabel: document.getElementById('journey-region-label'),
-            journeyStartButton: document.getElementById('journey-start-button'),
-            journeyStartLabel: document.getElementById('journey-start-label'),
-            journeyEndButton: document.getElementById('journey-end-button'),
-            journeyEndLabel: document.getElementById('journey-end-label'),
-            journeySwapButton: document.getElementById('journey-swap-button'),
-            journeySearchButton: document.getElementById('journey-search-button'),
-            journeyResult: document.getElementById('journey-result'),
-            journeyStationModal: document.getElementById('journey-station-modal'),
-            journeyPickerTitle: document.getElementById('journey-picker-title'),
-            journeyPickerClose: document.getElementById('journey-picker-close'),
-            journeyStationSearch: document.getElementById('journey-station-search'),
-            journeyStationList: document.getElementById('journey-station-list'),
-            journeyAlertModal: document.getElementById('journey-alert-modal'),
-            journeyAlertMessage: document.getElementById('journey-alert-message'),
-            journeyAlertConfirm: document.getElementById('journey-alert-confirm'),
             clock: document.getElementById('clock-display'),
             dayTypeDisplay: document.getElementById('day-type-display'),
             directionToggle: document.getElementById('direction-toggle'),
@@ -2024,7 +1769,6 @@
             autoScrollBtn: document.getElementById('auto-scroll-btn'),
             floatingPanel: document.getElementById('floating-panel'),
             tabHome: document.getElementById('tab-home'),
-            tabJourney: document.getElementById('tab-journey'),
             tabLine: document.getElementById('tab-line'),
             tabMap: document.getElementById('tab-map'),
             mapScreen: document.getElementById('subway-map-screen'),
@@ -2944,7 +2688,7 @@
         const LINE_VIEW_LENGTHS = Object.freeze({
             seoul_line1:SEOUL_LINE1_SCHEMATIC.height - 60,
             seoul_line2:SEOUL_LINE2_SCHEMATIC.height - 60,
-            seoul_line3:3400, seoul_line4:3950, seoul_line5:SEOUL_LINE5_SCHEMATIC.height - 60, seoul_line6:SEOUL_LINE6_SCHEMATIC.height - 60, seoul_line7:4100, seoul_line8:2000, seoul_line9:3000,
+            seoul_line3:3400, seoul_line4:3950, seoul_line5:4300, seoul_line6:3100, seoul_line7:4100, seoul_line8:2000, seoul_line9:3000,
             incheon_line1:2400, incheon_line2:2400, gyeongui_jungang:2400,
             gtx_a:1400, seohae:2400, gimpo_goldline:1600, gyeonggang:1600, gyeongchun:2800,
             airport:1800, shinbundang:2100, suinbundang:5800, sillim_line:1500, ui_sinseol_line:1700,
@@ -3507,7 +3251,7 @@
                 dom.svgWrapper.style.height = `${lineLen + 160 + 80}px`;
                 
                 const pathY2 = 60 + lineLen;
-                const usesCustomSchematic = lineId === 'seoul_line1' || lineId === 'seoul_line2' || lineId === 'seoul_line5' || lineId === 'seoul_line6';
+                const usesCustomSchematic = lineId === 'seoul_line1' || lineId === 'seoul_line2';
                 document.getElementById('line-path-down-bg').setAttribute('d', `M 120 60 L 120 ${pathY2}`);
                 document.getElementById('line-path-up-bg').setAttribute('d', `M 280 60 L 280 ${pathY2}`);
                 dom.linePathDown.setAttribute('d', `M 120 60 L 120 ${pathY2}`);
@@ -4239,48 +3983,75 @@
             .map(name => window.SEOUL_LINE3_OSM_STATION_COORDS?.[name]);
         STATION_COORD_LISTS.seoul_line4 = SEOUL_LINE4_STATIONS
             .map(name => window.SEOUL_LINE4_OSM_STATION_COORDS?.[name]);
-        // 수도권 5호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.seoul_line5 = SEOUL_LINE5_STATIONS
-            .map(name => window.SEOUL_LINE5_OSM_STATION_COORDS?.[name]);
-        // 수도권 6호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.seoul_line6 = SEOUL_LINE6_STATIONS
-            .map(name => window.SEOUL_LINE6_OSM_STATION_COORDS?.[name]);
-        // 수도권 7호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.seoul_line7 = SEOUL_LINE7_STATIONS
-            .map(name => window.SEOUL_LINE7_OSM_STATION_COORDS?.[name]);
-        // 수도권 8호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.seoul_line8 = SEOUL_LINE8_STATIONS
-            .map(name => window.SEOUL_LINE8_OSM_STATION_COORDS?.[name]);
-        // 수도권 9호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.seoul_line9 = SEOUL_LINE9_STATIONS
-            .map(name => window.SEOUL_LINE9_OSM_STATION_COORDS?.[name]);
-        // 대전 도시철도 1호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.daejeon_line1 = Object.keys(STATIONS_ALL.daejeon_line1)
-            .map(name => window.DAEJEON_LINE1_OSM_STATION_COORDS?.[name]);
-        // 광주 도시철도 1호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.gwangju_line1 = Object.keys(STATIONS_ALL.gwangju_line1)
-            .map(name => window.GWANGJU_LINE1_OSM_STATION_COORDS?.[name]);
-        // 대경선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.daegyeong = Object.keys(STATIONS_ALL.daegyeong)
-            .map(name => window.DAEGYEONG_OSM_STATION_COORDS?.[name]);
-        // 동해선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.busan_donghae = Object.keys(STATIONS_ALL.busan_donghae)
-            .map(name => window.DONGHAE_LINE_OSM_STATION_COORDS?.[name]);
-        // 대구 도시철도 1호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.line1 = Object.keys(STATIONS_ALL.line1)
-            .map(name => window.DAEGU_LINE1_OSM_STATION_COORDS?.[name]);
-        // 대구 도시철도 2호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.line2 = Object.keys(STATIONS_ALL.line2)
-            .map(name => window.DAEGU_LINE2_OSM_STATION_COORDS?.[name]);
-        // 대구 도시철도 3호선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.line3 = Object.keys(STATIONS_ALL.line3)
-            .map(name => window.DAEGU_LINE3_OSM_STATION_COORDS?.[name]);
-        // 경의중앙선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.gyeongui_jungang = Object.keys(STATIONS_ALL.gyeongui_jungang)
-            .map(name => window.GYEONGUI_JUNGANG_OSM_STATION_COORDS?.[name]);
-        // 경춘선 역 좌표 (OpenStreetMap ODbL).
-        STATION_COORD_LISTS.gyeongchun = Object.keys(STATIONS_ALL.gyeongchun)
-            .map(name => window.GYEONGCHUN_OSM_STATION_COORDS?.[name]);
+        // 수도권 5호선 역 좌표 (방화-강동, 하남검단산·마천 지선 순서).
+        STATION_COORD_LISTS.seoul_line5 = [
+            [37.5774,126.8128],[37.5724,126.8062],[37.5619,126.8022],[37.5612,126.8125],
+            [37.5602,126.8250],[37.5586,126.8377],[37.5489,126.8363],[37.5415,126.8404],
+            [37.5318,126.8467],[37.5249,126.8562],[37.5261,126.8643],[37.5245,126.8750],
+            [37.5256,126.8860],[37.5242,126.8950],[37.5227,126.9052],[37.5171,126.9177],
+            [37.5217,126.9240],[37.5271,126.9329],[37.5395,126.9459],[37.5441,126.9517],
+            [37.5537,126.9568],[37.5597,126.9645],[37.5658,126.9666],[37.5716,126.9764],
+            [37.5716,126.9919],[37.5667,126.9980],[37.5651,127.0079],[37.5602,127.0130],
+            [37.5545,127.0204],[37.5573,127.0295],[37.5615,127.0377],[37.5661,127.0429],
+            [37.5667,127.0527],[37.5614,127.0644],[37.5571,127.0795],[37.5516,127.0898],
+            [37.5453,127.1036],[37.5384,127.1236],[37.5358,127.1325],[37.5378,127.1400],
+            [37.5455,127.1428],[37.5513,127.1440],[37.5550,127.1541],[37.5567,127.1662],
+            [37.5575,127.1759],[37.5609,127.1938],[37.5521,127.2039],[37.5421,127.2061],
+            [37.5397,127.2234],[37.5278,127.1363],[37.5160,127.1308],[37.5087,127.1261],
+            [37.5022,127.1280],[37.4981,127.1348],[37.4933,127.1438],[37.4949,127.1520]
+        ];
+        // 수도권 6호선 역 좌표 (응암순환 이후 신내 순서).
+        STATION_COORD_LISTS.seoul_line6 = [
+            [37.5987,126.9155],[37.6060,126.9227],[37.6105,126.9298],[37.6184,126.9330],
+            [37.6190,126.9210],[37.6112,126.9172],[37.5911,126.9135],[37.5839,126.9096],
+            [37.5766,126.9000],[37.5695,126.8990],[37.5635,126.9033],[37.5560,126.9100],
+            [37.5494,126.9138],[37.5477,126.9229],[37.5475,126.9319],[37.5477,126.9421],
+            [37.5441,126.9517],[37.5393,126.9613],[37.5347,126.9731],[37.5347,126.9866],
+            [37.5345,126.9946],[37.5398,127.0018],[37.5480,127.0060],[37.5543,127.0109],
+            [37.5602,127.0130],[37.5662,127.0160],[37.5726,127.0164],[37.5797,127.0153],
+            [37.5854,127.0194],[37.5863,127.0292],[37.5904,127.0363],[37.6019,127.0415],
+            [37.6064,127.0485],[37.6105,127.0564],[37.6148,127.0658],[37.6173,127.0751],
+            [37.6202,127.0839],[37.6173,127.0913],[37.6128,127.1032]
+        ];
+        // 수도권 7호선 역 좌표 (북쪽 장암에서 서쪽 석남 순서).
+        STATION_COORD_LISTS.seoul_line7 = [
+            [37.7001,127.0532],[37.6896,127.0462],[37.6778,127.0553],[37.6649,127.0577],
+            [37.6556,127.0606],[37.6447,127.0642],[37.6364,127.0679],[37.6257,127.0729],
+            [37.6173,127.0751],[37.6106,127.0777],[37.6025,127.0793],[37.5964,127.0850],
+            [37.5887,127.0875],[37.5809,127.0885],[37.5736,127.0869],[37.5659,127.0843],
+            [37.5571,127.0795],[37.5480,127.0747],[37.5404,127.0692],[37.5315,127.0667],
+            [37.5194,127.0537],[37.5172,127.0413],[37.5142,127.0317],[37.5111,127.0214],
+            [37.5082,127.0117],[37.5048,127.0049],[37.4876,126.9935],[37.4863,126.9817],
+            [37.4846,126.9713],[37.4960,126.9538],[37.5028,126.9479],[37.5049,126.9392],
+            [37.4997,126.9282],[37.4999,126.9206],[37.5001,126.9099],[37.4933,126.8962],
+            [37.4863,126.8874],[37.4816,126.8826],[37.4760,126.8682],[37.4793,126.8549],
+            [37.4866,126.8387],[37.4923,126.8240],[37.5062,126.8109],[37.5054,126.7973],
+            [37.5037,126.7871],[37.5030,126.7759],[37.5047,126.7637],[37.5058,126.7531],
+            [37.5064,126.7422],[37.5082,126.7314],[37.5084,126.7206],[37.5086,126.7035],
+            [37.5062,126.6763]
+        ];
+        // 수도권 8호선 역 좌표 (북쪽 별내에서 남쪽 모란 순서).
+        STATION_COORD_LISTS.seoul_line8 = [
+            [37.6420,127.1273],[37.6243,127.1490],[37.6112,127.1383],[37.6033,127.1439],
+            [37.5732,127.1375],[37.5576,127.1280],[37.5502,127.1275],[37.5384,127.1236],
+            [37.5303,127.1205],[37.5177,127.1127],[37.5133,127.1002],[37.5054,127.1069],
+            [37.4997,127.1122],[37.4925,127.1182],[37.4859,127.1225],[37.4786,127.1262],
+            [37.4707,127.1267],[37.4624,127.1390],[37.4569,127.1490],[37.4515,127.1598],
+            [37.4450,127.1567],[37.4409,127.1476],[37.4375,127.1408],[37.4321,127.1291]
+        ];
+        // 수도권 9호선 역 좌표 (서쪽 개화에서 동쪽 중앙보훈병원 순서).
+        STATION_COORD_LISTS.seoul_line9 = [
+            [37.5784,126.7986],[37.5619,126.8022],[37.5639,126.8106],[37.5675,126.8166],
+            [37.5668,126.8276],[37.5683,126.8410],[37.5614,126.8544],[37.5574,126.8619],
+            [37.5506,126.8657],[37.5469,126.8749],[37.5443,126.8831],[37.5380,126.8935],
+            [37.5346,126.9027],[37.5281,126.9179],[37.5217,126.9240],[37.5174,126.9284],
+            [37.5134,126.9409],[37.5129,126.9532],[37.5088,126.9637],[37.5029,126.9803],
+            [37.5014,126.9874],[37.5035,126.9961],[37.5048,127.0049],[37.5042,127.0153],
+            [37.5046,127.0251],[37.5073,127.0339],[37.5109,127.0437],[37.5129,127.0530],
+            [37.5142,127.0602],[37.5111,127.0738],[37.5045,127.0871],[37.5025,127.0976],
+            [37.5054,127.1069],[37.5104,127.1122],[37.5164,127.1160],[37.5160,127.1308],
+            [37.5197,127.1380],[37.5292,127.1480]
+        ];
         const STATION_COORDS = Object.fromEntries(Object.entries(STATION_COORD_LISTS).map(([lineId, coords]) => {
             const stationNames = Object.keys(STATIONS_ALL[lineId] || {});
             return [lineId, Object.fromEntries(stationNames.map((stationName, index) => [stationName, coords[index]]).filter(([, coord]) => Array.isArray(coord)))];
@@ -4300,7 +4071,7 @@
 
         // 김포골드라인과 경의중앙선 본선/서울역 지선의 실제 선로 형상 (OSM ODbL).
         RAIL_ROUTE_PATHS.gimpo_goldline = [[37.5623889,126.8018953],[37.5621516,126.8045244],[37.5622142,126.8052072],[37.5624091,126.8056643],[37.5626677,126.8058918],[37.5629534,126.8060677],[37.5638243,126.8063295],[37.5644332,126.8062265],[37.5659776,126.8057201],[37.5736469,126.80315],[37.5742418,126.8028541],[37.5799047,126.7990144],[37.5816321,126.7973327],[37.5885893,126.7888086],[37.5934906,126.7808165],[37.5949626,126.7788057],[37.5999513,126.7713685],[37.6005749,126.7706778],[37.6012452,126.7702004],[37.6021685,126.7693572],[37.6024282,126.7690052],[37.6034043,126.7664708],[37.6036423,126.7653807],[37.6038259,126.7625998],[37.6040842,126.7611407],[37.6045194,126.7595442],[37.6047506,126.7580937],[37.6050294,126.7544888],[37.6058942,126.7488166],[37.6063713,126.7470202],[37.610479,126.7374562],[37.6123738,126.7323963],[37.6162349,126.72655],[37.6194563,126.7211203],[37.6207597,126.7185292],[37.6219415,126.715631],[37.6224242,126.7148757],[37.6235731,126.714026],[37.6272304,126.7116399],[37.6283452,126.710464],[37.6330627,126.7036233],[37.6340754,126.7025246],[37.6348231,126.7020182],[37.6374672,126.7007737],[37.6454144,126.697508],[37.6484034,126.6961121],[37.6490281,126.6956266],[37.6495855,126.6948983],[37.6531546,126.6873346],[37.6536736,126.6856959],[37.6537732,126.6849876],[37.6537732,126.6836776],[37.6533627,126.6817243],[37.652839,126.6806137],[37.6489929,126.6745198],[37.6472705,126.6719915],[37.642066,126.6673243],[37.639479,126.6651915],[37.6392275,126.6646765],[37.6392547,126.6642645],[37.6420753,126.6590202],[37.6424219,126.6575697],[37.642619,126.6555012],[37.6424287,126.6530035],[37.6406888,126.6448839],[37.6403286,126.6429956],[37.6403354,126.6422232],[37.640855,126.6411151],[37.6440666,126.6358974],[37.6460783,126.6339491],[37.6462014,126.6337144],[37.6462273,126.6334057],[37.6435668,126.620007],[37.6432141,126.6179936],[37.6429042,126.6150636],[37.6427022,126.6147012],[37.6424117,126.6145118],[37.642029,126.6145556],[37.6416585,126.6148224]];
-        const GYEONGUI_JUNGANG_RAIL_PATHS = window.GYEONGUI_JUNGANG_OSM_RAIL_PATHS || {
+        const GYEONGUI_JUNGANG_RAIL_PATHS = {
             main: [[37.8882254,126.7492154],[37.8798294,126.7699418],[37.8536263,126.7879859],[37.8441563,126.7876654],[37.8361563,126.7876528],[37.8319405,126.7878444],[37.8051926,126.7952461],[37.804295,126.7953932],[37.8032268,126.7953372],[37.8021032,126.795001],[37.7846052,126.7878824],[37.78268,126.7877775],[37.7752701,126.7886009],[37.7738896,126.7883213],[37.7726251,126.7876471],[37.7714347,126.7864367],[37.7707186,126.7852174],[37.7691519,126.7812597],[37.7633159,126.7680529],[37.762754,126.7671249],[37.7616874,126.7659903],[37.7609855,126.7654941],[37.7597834,126.7650181],[37.7541076,126.7645018],[37.7525595,126.764778],[37.7506152,126.7657991],[37.7401826,126.7719899],[37.7392046,126.7723222],[37.7378759,126.7724163],[37.7364109,126.7719976],[37.7139789,126.7619474],[37.7121076,126.7613347],[37.7107739,126.7611796],[37.690212,126.76101],[37.6882293,126.7611524],[37.6870062,126.761629],[37.68579,126.7625417],[37.6844889,126.7644675],[37.6768073,126.7821987],[37.6760356,126.7835577],[37.6749977,126.7846637],[37.6741335,126.7853043],[37.6246576,126.8141955],[37.6234244,126.8151751],[37.6220306,126.8168224],[37.6208261,126.8184873],[37.6137642,126.827112],[37.6127087,126.8290396],[37.6123224,126.8305922],[37.6122341,126.8320053],[37.61238,126.8436763],[37.6126035,126.8502015],[37.6125332,126.8513409],[37.6122743,126.8523683],[37.6118082,126.853335],[37.6100814,126.8556112],[37.6090934,126.8572715],[37.6063889,126.8637143],[37.6049856,126.8657204],[37.6033463,126.8676922],[37.5850579,126.8890265],[37.5762276,126.9021402],[37.5713189,126.9088221],[37.5670128,126.9185384],[37.5666396,126.9191177],[37.557918,126.9262451],[37.5573063,126.9271637],[37.5555315,126.9307699],[37.5511107,126.93698],[37.5506544,126.9375226],[37.5483079,126.939358],[37.5474148,126.9404067],[37.5466728,126.9420018],[37.5454961,126.9456598],[37.5414287,126.9545607],[37.5399947,126.9572035],[37.5378723,126.9654836],[37.5371389,126.9671293],[37.5358862,126.9683565],[37.5348025,126.9691001],[37.5338614,126.9692875],[37.5331259,126.96915],[37.5324957,126.9688317],[37.5318903,126.9682568],[37.5284315,126.9635296],[37.5274104,126.9618587],[37.526699,126.9611753],[37.5257533,126.9607792],[37.5245179,126.9609162],[37.5233415,126.9615634],[37.5226006,126.9625783],[37.5222083,126.9639156],[37.5221204,126.9654258],[37.5228629,126.9701195],[37.5228328,126.9717758],[37.5224385,126.9734408],[37.5196754,126.9822209],[37.519454,126.9840722],[37.5197543,126.9928033],[37.5198986,126.9942351],[37.5201709,126.9951871],[37.521879,126.999397],[37.5225053,127.0006385],[37.5233,127.0015441],[37.5252538,127.0028279],[37.5262163,127.0038131],[37.5284772,127.0069799],[37.5299359,127.0104271],[37.5307562,127.0115305],[37.5314708,127.012114],[37.5385944,127.0164978],[37.5397203,127.0175382],[37.5420195,127.0210792],[37.5443106,127.0242609],[37.5459458,127.0288434],[37.5478571,127.0326372],[37.5487483,127.0336365],[37.5504137,127.0347938],[37.551226,127.0355406],[37.5527554,127.0378865],[37.5534689,127.0386897],[37.5546346,127.0393905],[37.5558377,127.0395323],[37.5655746,127.0376374],[37.5663673,127.0376652],[37.5673274,127.0380067],[37.5819873,127.049177],[37.5862503,127.0526172],[37.5872983,127.0537994],[37.5882746,127.0553208],[37.5916615,127.0618004],[37.5923015,127.0639165],[37.595224,127.0771185],[37.5966043,127.0843555],[37.5971822,127.086567],[37.6024418,127.1002033],[37.603241,127.1015517],[37.6051146,127.1037438],[37.6057848,127.1050326],[37.6070575,127.1097561],[37.6075215,127.1137479],[37.6074138,127.1173257],[37.6071169,127.1199929],[37.6064641,127.1229567],[37.6025549,127.1363178],[37.6023502,127.1378328],[37.6023942,127.1391286],[37.6056884,127.1537488],[37.6061362,127.1550908],[37.6112494,127.1667446],[37.6118172,127.1683027],[37.6142849,127.1766939],[37.614571,127.178491],[37.6146145,127.1805953],[37.6143456,127.1826795],[37.6139607,127.1841466],[37.6134287,127.1855201],[37.6121607,127.1876494],[37.610515,127.1894298],[37.604472,127.1944038],[37.6025914,127.1954979],[37.5933169,127.2001123],[37.5921277,127.2009075],[37.5906666,127.2023868],[37.5889172,127.2051719],[37.5830749,127.2158061],[37.5807858,127.2194557],[37.5802374,127.2207422],[37.578727,127.2255164],[37.5780819,127.226741],[37.5769069,127.2282007],[37.5759792,127.2290086],[37.5750153,127.2295874],[37.5675718,127.2322847],[37.5572913,127.2372262],[37.5550274,127.2383937],[37.5497813,127.2415449],[37.5483206,127.2428204],[37.5469257,127.2446783],[37.5443568,127.2500405],[37.5436422,127.2519973],[37.5433016,127.2537987],[37.5431831,127.2556106],[37.5433016,127.2573385],[37.5437025,127.2592823],[37.557277,127.2938694],[37.5579804,127.296768],[37.5581447,127.2981548],[37.5582136,127.2997305],[37.5580313,127.3015921],[37.557402,127.3039999],[37.5562874,127.3065886],[37.5501386,127.3203192],[37.5427613,127.3360748],[37.5361293,127.3603561],[37.5353077,127.3626683],[37.5343067,127.3647054],[37.5328994,127.3667825],[37.5308158,127.3688332],[37.517206,127.379703],[37.51598,127.3813469],[37.5148748,127.3837297],[37.514568,127.3845695],[37.5142143,127.3862471],[37.5140794,127.3879027],[37.514146,127.3895792],[37.5178283,127.4067361],[37.5184952,127.4105298],[37.5188047,127.41339],[37.5189299,127.4159831],[37.5188618,127.4201712],[37.5186716,127.4225589],[37.5184308,127.4246344],[37.5175812,127.4288969],[37.5059117,127.4749661],[37.5049954,127.4775412],[37.5037173,127.4804389],[37.501574,127.4840558],[37.5002342,127.4857394],[37.4988803,127.487201],[37.4936369,127.4914509],[37.4876775,127.4959055],[37.4870084,127.4965016],[37.4859314,127.4979666],[37.485177,127.500015],[37.4822031,127.5184923],[37.4815245,127.521141],[37.4806948,127.5229685],[37.4796363,127.5244717],[37.4747172,127.5290797],[37.4733884,127.5307336],[37.4715023,127.5342499],[37.4706347,127.5363963],[37.4701801,127.5380413],[37.4676,127.5539549],[37.467468,127.5558539],[37.4675021,127.5597538],[37.4680301,127.5636095],[37.4684069,127.5652626],[37.4694559,127.5686015],[37.470069,127.5701089],[37.4734353,127.5762239],[37.4772329,127.583577],[37.4823229,127.5945812],[37.47681,127.6290656]],
             seoul: [[37.8882254,126.7492154],[37.8798294,126.7699418],[37.8536263,126.7879859],[37.8441563,126.7876654],[37.8361563,126.7876528],[37.8319405,126.7878444],[37.8051926,126.7952461],[37.804295,126.7953932],[37.8032268,126.7953372],[37.8021032,126.795001],[37.7846052,126.7878824],[37.78268,126.7877775],[37.7752701,126.7886009],[37.7738896,126.7883213],[37.7726251,126.7876471],[37.7714347,126.7864367],[37.7707186,126.7852174],[37.7691519,126.7812597],[37.7633159,126.7680529],[37.762754,126.7671249],[37.7616874,126.7659903],[37.7609855,126.7654941],[37.7597834,126.7650181],[37.7541076,126.7645018],[37.7525595,126.764778],[37.7506152,126.7657991],[37.7401826,126.7719899],[37.7392046,126.7723222],[37.7378759,126.7724163],[37.7364109,126.7719976],[37.7139789,126.7619474],[37.7121076,126.7613347],[37.7107739,126.7611796],[37.690212,126.76101],[37.6882293,126.7611524],[37.686741,126.7617907],[37.68579,126.7625417],[37.6844889,126.7644675],[37.6768073,126.7821987],[37.6760356,126.7835577],[37.6752246,126.7844673],[37.6741335,126.7853043],[37.6242783,126.8144372],[37.6234244,126.8151751],[37.6220306,126.8168224],[37.6208261,126.8184873],[37.6132434,126.8277879],[37.6125237,126.8293654],[37.6121356,126.8315413],[37.612261,126.8435261],[37.6124862,126.8493943],[37.6123155,126.8513369],[37.6116956,126.8531831],[37.6097535,126.8566217],[37.608621,126.859025],[37.6069202,126.8633175],[37.6054292,126.865489],[37.5853458,126.888811],[37.5802597,126.896618],[37.5721939,126.90805],[37.5711357,126.9097816],[37.5671174,126.9186491],[37.5666,126.9203949],[37.5659506,126.9239197],[37.5654422,126.9253441],[37.5644297,126.9269444],[37.5605549,126.9316676],[37.5599559,126.9328649],[37.5596857,126.9340363],[37.5596408,126.9355353],[37.5599862,126.9465046],[37.5614148,126.9542571],[37.5623514,126.9621427],[37.5624436,126.966246],[37.562226,126.967579],[37.5618602,126.9685579],[37.5608163,126.9701774],[37.5592218,126.9711107],[37.5572572,126.9712392]]
         };
@@ -4323,7 +4094,7 @@
         const GYEONGCHUN_MAIN_PREFIX = [[37.5807488,127.0480007],[37.5817433,127.0487426],[37.5827821,127.0497222],[37.5840441,127.0507177],[37.5850518,127.0516234],[37.5860029,127.0523925],[37.5870511,127.0534813],[37.5875258,127.0541163],[37.5882746,127.0553208],[37.5914998,127.0614389],[37.5918419,127.0622327],[37.5921905,127.0634202],[37.5944862,127.0739527],[37.595224,127.0771185],[37.5960198,127.0813239],[37.5963065,127.0824351]];
         const GYEONGCHUN_GWANGUNDAE_PREFIX = [[37.6235166,127.0621851],[37.6220687,127.0628122],[37.6199587,127.063582],[37.6151453,127.0658],[37.611494,127.0673421],[37.6103113,127.0676262],[37.6094869,127.0677477],[37.6029026,127.0679572],[37.6021102,127.068182],[37.6013579,127.0686423],[37.6007715,127.0692234],[37.6004339,127.0697205],[37.5973612,127.0750766],[37.5968454,127.0760073],[37.5964291,127.0769448],[37.5962216,127.0775931],[37.596069,127.0782833],[37.595973,127.0789648],[37.5959397,127.0796621],[37.5960231,127.0810199],[37.5963065,127.0824351]];
         const GYEONGCHUN_SHARED_PATH = [[37.5963065,127.0824351],[37.5970694,127.085182],[37.5975308,127.0865782],[37.5979717,127.0875185],[37.5992188,127.089633],[37.6003719,127.0926713],[37.6011492,127.0963781],[37.6022803,127.0994544],[37.6026562,127.1003335],[37.6031167,127.1011497],[37.6036079,127.1017942],[37.6043642,127.1025418],[37.6051493,127.1030555],[37.6059709,127.1033089],[37.6065344,127.1033858],[37.6099228,127.1033568],[37.6119019,127.1031928],[37.6131785,127.1032885],[37.6145924,127.1036508],[37.6183667,127.1052764],[37.619301,127.1057316],[37.62051,127.1064681],[37.6279171,127.1114975],[37.6301423,127.1129478],[37.6315561,127.1136835],[37.6348118,127.1150381],[37.6355707,127.1154437],[37.6362904,127.1159455],[37.6368044,127.1164053],[37.6373499,127.1169914],[37.6378628,127.1176391],[37.6383252,127.1183787],[37.6388829,127.1194724],[37.6433631,127.1299399],[37.645986,127.1362299],[37.6466125,127.1380994],[37.6514913,127.153978],[37.6522185,127.156225],[37.652974,127.1582125],[37.654663,127.1621149],[37.6551159,127.1634272],[37.6554172,127.1648749],[37.6555187,127.1659131],[37.6555347,127.1665405],[37.6554818,127.1675566],[37.6553379,127.1685826],[37.6549713,127.1699966],[37.6545692,127.1710071],[37.6540474,127.1719795],[37.6487781,127.1809223],[37.6480319,127.1821074],[37.6474626,127.1828781],[37.6468745,127.1835206],[37.6460189,127.1842631],[37.6447744,127.1849971],[37.643682,127.185469],[37.6405869,127.1869943],[37.6394665,127.1876157],[37.6385925,127.1882665],[37.6377535,127.1891407],[37.6371098,127.1900189],[37.6367765,127.1905834],[37.6364512,127.191187],[37.6359679,127.1924538],[37.6357303,127.1935386],[37.6356065,127.194325],[37.6355272,127.1953287],[37.6355501,127.1964966],[37.63581,127.198473],[37.6375838,127.2088611],[37.6379029,127.2105245],[37.6382021,127.2116564],[37.6383853,127.2121781],[37.6389789,127.2135391],[37.6398096,127.2149532],[37.6405749,127.2159265],[37.641101,127.2164867],[37.6469486,127.2219438],[37.6481476,127.223159],[37.6491893,127.2243162],[37.6503138,127.2258356],[37.6506729,127.2264511],[37.6514031,127.2279597],[37.651884,127.2292356],[37.6521317,127.2300497],[37.6524555,127.2314983],[37.6526667,127.2329082],[37.6527699,127.2340325],[37.6533931,127.2478629],[37.653576,127.2512044],[37.6536679,127.2522704],[37.6538158,127.2532135],[37.6539947,127.2540341],[37.6542555,127.2549349],[37.6554219,127.258015],[37.6573976,127.2612705],[37.6580749,127.2625171],[37.6586723,127.2638141],[37.6591029,127.2648878],[37.6595485,127.2661642],[37.6599279,127.2674391],[37.6601883,127.268507],[37.6616936,127.2759487],[37.6618058,127.2769321],[37.6618342,127.2776061],[37.6618324,127.2781934],[37.6617479,127.2792215],[37.6616477,127.2798593],[37.661431,127.280789],[37.6610928,127.28181],[37.6606418,127.2827896],[37.6600276,127.2838541],[37.6573093,127.2880493],[37.6565024,127.2895442],[37.6556283,127.2914458],[37.6552356,127.2924637],[37.6546055,127.2943694],[37.6539172,127.2971747],[37.653643,127.2989979],[37.6534861,127.3006105],[37.6528507,127.3105626],[37.6526436,127.3144866],[37.6524522,127.316999],[37.6524414,127.3192796],[37.6527429,127.3213144],[37.6529395,127.3221079],[37.6532696,127.3231275],[37.6536583,127.3241238],[37.6541617,127.3251336],[37.6572882,127.3305301],[37.662096,127.3398125],[37.6627226,127.3410663],[37.6632429,127.3423043],[37.6636431,127.3434284],[37.6677679,127.3562743],[37.6719214,127.3685449],[37.6723031,127.3699465],[37.6734879,127.3736645],[37.6741355,127.3748647],[37.6746238,127.3755748],[37.6751426,127.3761895],[37.6760903,127.3770234],[37.6767225,127.3774565],[37.6774249,127.37782],[37.6782326,127.3781295],[37.6906856,127.3813366],[37.6927907,127.382468],[37.6958767,127.3846105],[37.6974999,127.3854763],[37.6985763,127.3859544],[37.6998639,127.3863645],[37.7136994,127.3898524],[37.7143497,127.3902451],[37.7153715,127.3909887],[37.7168822,127.392215],[37.7178107,127.3931044],[37.7188665,127.3942508],[37.7206669,127.3964867],[37.7220631,127.3986419],[37.7226747,127.3997464],[37.7271732,127.4090029],[37.730267,127.4156623],[37.7404475,127.4369414],[37.7412375,127.4384409],[37.7417381,127.4392402],[37.7422454,127.4399118],[37.742817,127.4405389],[37.7433946,127.4410633],[37.7439651,127.4414922],[37.7451469,127.4420694],[37.7598928,127.4459153],[37.7608177,127.4462876],[37.7620351,127.4470644],[37.7636749,127.4483359],[37.7685519,127.4524754],[37.7693401,127.45331],[37.7696851,127.4537349],[37.7704169,127.4548213],[37.7712444,127.4564873],[37.7734644,127.463402],[37.7740093,127.4647608],[37.7746298,127.4661254],[37.776032,127.4686521],[37.7776008,127.4708462],[37.791103,127.4854763],[37.7932406,127.4877387],[37.7953626,127.4900667],[37.7962794,127.491144],[37.8009824,127.4962458],[37.802739,127.4978486],[37.8085714,127.5025674],[37.8099406,127.5037897],[37.8107486,127.5046785],[37.8118717,127.5065156],[37.819386,127.5183719],[37.819789,127.5191137],[37.8206459,127.5210409],[37.8210222,127.5220932],[37.8276404,127.5411256],[37.8291722,127.545822],[37.8296276,127.547419],[37.830092,127.5492167],[37.8317769,127.5563776],[37.8341196,127.5673511],[37.8345297,127.5699963],[37.8346542,127.5722407],[37.8346153,127.5735619],[37.8344747,127.5744168],[37.8341596,127.5756575],[37.8334939,127.5774992],[37.8323122,127.5804994],[37.832133,127.5810195],[37.8318866,127.5820418],[37.8311538,127.5867169],[37.8294714,127.5983265],[37.8291733,127.5997103],[37.8287852,127.6009445],[37.8285377,127.6015741],[37.8283449,127.6019783],[37.8276254,127.6031962],[37.8270877,127.6039703],[37.8265576,127.6046001],[37.8259161,127.6052669],[37.8253214,127.6057814],[37.8247504,127.6062209],[37.8236258,127.6069672],[37.8116201,127.6147548],[37.8108149,127.615347],[37.809988,127.6161061],[37.8091959,127.6169939],[37.808508,127.617953],[37.8079045,127.6189599],[37.806964,127.6210322],[37.8065745,127.622111],[37.8062499,127.6232917],[37.8058481,127.6252073],[37.8055641,127.6273145],[37.8055272,127.6281068],[37.8059186,127.6396463],[37.8060546,127.6463713],[37.8071438,127.6773497],[37.8072171,127.6874819],[37.8073327,127.6894124],[37.8075512,127.6913104],[37.8080838,127.6949574],[37.8084643,127.6968069],[37.8103733,127.702475],[37.8113284,127.7044141],[37.8120501,127.7056919],[37.8131283,127.707367],[37.813767,127.7082379],[37.8240032,127.7214585],[37.8252214,127.7227868],[37.8263348,127.7236913],[37.8277691,127.7245869],[37.8312768,127.7265861],[37.8321612,127.7271677],[37.8356495,127.7296857],[37.8362676,127.7300709],[37.8367758,127.7303148],[37.8377055,127.7306326],[37.8388306,127.7308134],[37.8422328,127.7309043],[37.8433998,127.7310188],[37.8443917,127.7312124],[37.8455116,127.7315325],[37.8507935,127.733606],[37.8519844,127.7339118],[37.8529963,127.7339275],[37.8537879,127.7338326],[37.8550531,127.7336033],[37.8556676,127.7334262],[37.8565555,127.7333163],[37.8571009,127.7331824],[37.8580091,127.7328434],[37.8587759,127.7323859],[37.859254,127.73198],[37.8597816,127.7314325],[37.8600174,127.7311001],[37.8611579,127.7292113],[37.8665752,127.719114],[37.8671577,127.7181053],[37.8680535,127.7170545],[37.8689125,127.7164474],[37.8697309,127.7160785],[37.8718764,127.7153547],[37.8769642,127.7137337],[37.8776135,127.7135917],[37.8783571,127.7135425],[37.8790515,127.7136342],[37.8799517,127.7139305],[37.8845276,127.7166203]];
-        const GYEONGCHUN_RAIL_PATHS = window.GYEONGCHUN_OSM_RAIL_PATHS || {
+        const GYEONGCHUN_RAIL_PATHS = {
             main: GYEONGCHUN_MAIN_PREFIX.slice(0, -1).concat(GYEONGCHUN_SHARED_PATH),
             gwangundae: GYEONGCHUN_GWANGUNDAE_PREFIX.slice(0, -1).concat(GYEONGCHUN_SHARED_PATH)
         };
@@ -4352,41 +4123,23 @@
             || SEOUL_LINE3_STATIONS.map(name => STATION_COORDS.seoul_line3[name]).filter(Boolean);
         RAIL_ROUTE_PATHS.seoul_line4 = window.SEOUL_LINE4_OSM_RAIL_PATH
             || SEOUL_LINE4_STATIONS.map(name => STATION_COORDS.seoul_line4[name]).filter(Boolean);
-        const SEOUL_LINE5_RAIL_PATHS = window.SEOUL_LINE5_OSM_RAIL_PATHS || {
+        const SEOUL_LINE5_RAIL_PATHS = {
             hanam:[...SEOUL_LINE5_COMMON_STATIONS, ...SEOUL_LINE5_HANAM_STATIONS.slice(1)].map(name=>STATION_COORDS.seoul_line5[name]).filter(Boolean),
             macheon:[...SEOUL_LINE5_COMMON_STATIONS, ...SEOUL_LINE5_MACHEON_STATIONS.slice(1)].map(name=>STATION_COORDS.seoul_line5[name]).filter(Boolean)
         };
         RAIL_ROUTE_PATHS.seoul_line5 = SEOUL_LINE5_RAIL_PATHS.hanam;
-        const SEOUL_LINE6_RAIL_PATHS = window.SEOUL_LINE6_OSM_RAIL_PATHS || {
-            main:SEOUL_LINE6_MAIN_STATIONS.map(name => STATION_COORDS.seoul_line6[name]).filter(Boolean),
-            loop:SEOUL_LINE6_LOOP_STATIONS.map(name => STATION_COORDS.seoul_line6[name]).filter(Boolean)
-        };
-        RAIL_ROUTE_PATHS.seoul_line6 = SEOUL_LINE6_RAIL_PATHS.main;
-        RAIL_ROUTE_PATHS.seoul_line7 = window.SEOUL_LINE7_OSM_RAIL_PATH
-            || SEOUL_LINE7_STATIONS.map(name => STATION_COORDS.seoul_line7[name]).filter(Boolean);
-        RAIL_ROUTE_PATHS.seoul_line8 = window.SEOUL_LINE8_OSM_RAIL_PATH
-            || SEOUL_LINE8_STATIONS.map(name => STATION_COORDS.seoul_line8[name]).filter(Boolean);
-        RAIL_ROUTE_PATHS.seoul_line9 = window.SEOUL_LINE9_OSM_RAIL_PATH
-            || SEOUL_LINE9_STATIONS.map(name => STATION_COORDS.seoul_line9[name]).filter(Boolean);
-        RAIL_ROUTE_PATHS.daejeon_line1 = window.DAEJEON_LINE1_OSM_RAIL_PATH
-            || RAIL_ROUTE_PATHS.daejeon_line1;
-        RAIL_ROUTE_PATHS.gwangju_line1 = window.GWANGJU_LINE1_OSM_RAIL_PATH
-            || RAIL_ROUTE_PATHS.gwangju_line1;
-        RAIL_ROUTE_PATHS.daegyeong = window.DAEGYEONG_OSM_RAIL_PATH
-            || RAIL_ROUTE_PATHS.daegyeong;
-        RAIL_ROUTE_PATHS.busan_donghae = window.DONGHAE_LINE_OSM_RAIL_PATH
-            || RAIL_ROUTE_PATHS.busan_donghae;
-        RAIL_ROUTE_PATHS.line1 = window.DAEGU_LINE1_OSM_RAIL_PATH
-            || RAIL_ROUTE_PATHS.line1;
-        RAIL_ROUTE_PATHS.line2 = window.DAEGU_LINE2_OSM_RAIL_PATH
-            || RAIL_ROUTE_PATHS.line2;
-        RAIL_ROUTE_PATHS.line3 = window.DAEGU_LINE3_OSM_RAIL_PATH
-            || RAIL_ROUTE_PATHS.line3;
+        RAIL_ROUTE_PATHS.seoul_line6 = SEOUL_LINE6_STATIONS
+            .map(name => STATION_COORDS.seoul_line6[name]).filter(Boolean);
+        RAIL_ROUTE_PATHS.seoul_line7 = SEOUL_LINE7_STATIONS
+            .map(name => STATION_COORDS.seoul_line7[name]).filter(Boolean);
+        RAIL_ROUTE_PATHS.seoul_line8 = SEOUL_LINE8_STATIONS
+            .map(name => STATION_COORDS.seoul_line8[name]).filter(Boolean);
+        RAIL_ROUTE_PATHS.seoul_line9 = SEOUL_LINE9_STATIONS
+            .map(name => STATION_COORDS.seoul_line9[name]).filter(Boolean);
         const RAIL_ROUTE_PATH_VARIANTS = {
             seoul_line1: SEOUL_LINE1_RAIL_PATHS,
             seoul_line2: SEOUL_LINE2_RAIL_PATHS,
             seoul_line5: SEOUL_LINE5_RAIL_PATHS,
-            seoul_line6: SEOUL_LINE6_RAIL_PATHS,
             gtx_a: GTX_A_RAIL_PATHS,
             gyeongchun: GYEONGCHUN_RAIL_PATHS,
             gyeongui_jungang: GYEONGUI_JUNGANG_RAIL_PATHS
@@ -4446,7 +4199,16 @@
                 '석천사거리':[37.4567643,126.7103554], '모래내시장':[37.4558219,126.7195757], '만수':[37.4549495,126.7317626],
                 '남동구청':[37.4481627,126.7365795], '인천대공원':[37.4483834,126.7530203], '운연':[37.4393136,126.7594871]
             },
-            busan_donghae: window.DONGHAE_LINE_OSM_STATION_COORDS
+            busan_donghae: {
+                '부전':[35.163734,129.059216], '거제해맞이':[35.182056,129.069309], '거제':[35.190158,129.07493],
+                '교대':[35.194301,129.0805], '동래':[35.19702,129.092227], '안락':[35.196027,129.101529],
+                '재송':[35.187408,129.120197], '센텀':[35.178466,129.125346], '벡스코':[35.171213,129.136817],
+                '신해운대':[35.181662,129.177204], '송정':[35.188359,129.202431], '오시리아':[35.196922,129.208991],
+                '기장':[35.245339,129.218879], '일광':[35.269278,129.233555], '좌천':[35.312382,129.245773],
+                '월내':[35.328619,129.27711], '서생':[35.34684,129.29307], '남창':[35.420553,129.281698],
+                '망양':[35.457238,129.288051], '덕하':[35.494735,129.303447], '개운포':[35.508222,129.321935],
+                '태화강':[35.538327,129.353578]
+            }
         };
 
         // OSM 선형에는 간혹 수십 m를 되짚는 짧은 스파이크가 섞여 있다. 그대로 보간하면
@@ -4514,7 +4276,6 @@
                 }
                 stationDistances[name] = bestAlong;
             });
-            if (lineId === 'seoul_line6' && variant === 'loop') stationDistances['응암'] = 0;
             const metric = { path, cumulative, stationDistances };
             railPathMetricCache.set(cacheKey, metric);
             return metric;
@@ -4626,10 +4387,7 @@
         };
         const getRegionMapTrains = (atSec = currentSec) => {
             refreshMapActiveTrainSources(atSec);
-            return mapActiveTrainSources
-                .map(({ train, direction, lineId }) => getActiveTrainItems([train], direction, lineId, atSec)[0])
-                .filter(Boolean)
-                .filter(train => !mapSoloTrainKey || `${train.lineId}:${train.direction}:${train.id}` === mapSoloTrainKey);
+            return mapActiveTrainSources.map(({ train, direction, lineId }) => getActiveTrainItems([train], direction, lineId, atSec)[0]).filter(Boolean);
         };
         const loadRegionMapTimetables = async () => {
             const lineIds = getVisibleMapLineIds();
@@ -4663,7 +4421,6 @@
         window.toggleNationwideMapView = async () => {
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps) return;
             mapFollowTrainKey = null;
-            mapSoloTrainKey = null;
             selectedTrainId = null;
             selectedMapTrainKey = null;
             selectedStation = null;
@@ -4871,8 +4628,6 @@
             const specialMeta = getSpecialServiceMeta(train.service);
             const trainBadge = getTrainLineBadge(train.lineId);
             element.className = 'subway-map-train';
-            if (mapSoloTrainKey === key) element.classList.add('is-journey-target');
-            element.dataset.trainId = train.id;
             element.setAttribute('role', 'button');
             element.setAttribute('aria-label', `${train.id} ${train.isExpress ? `${specialMeta.label} ` : ''}열차 따라가기`);
             const body = document.createElement('div');
@@ -4930,9 +4685,6 @@
             } else if (lineId === 'seoul_line5') {
                 const scheduleNames = new Set((train.schedule || []).map(stop => stop.name));
                 routeVariant = SEOUL_LINE5_MACHEON_STATIONS.slice(1).some(name => scheduleNames.has(name)) ? 'macheon' : 'hanam';
-            } else if (lineId === 'seoul_line6') {
-                const loopOnlyStations = new Set(SEOUL_LINE6_LOOP_STATIONS.slice(1, -1));
-                routeVariant = loopOnlyStations.has(train.curr?.name) || loopOnlyStations.has(train.next?.name) ? 'loop' : 'main';
             } else if (lineId === 'gyeongui_jungang' && train.schedule?.some(stop => stop.name === '신촌')) {
                 routeVariant = 'seoul';
             } else if (lineId === 'gtx_a') {
@@ -4946,14 +4698,13 @@
             const fraction = train.isStopped || train.isWaiting || !denominator ? 0 : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
             const totalDistance = metric.cumulative[metric.cumulative.length - 1] || 0;
             let adjustedToDistance = toDistance;
-            const isLoopRoute = routeVariant === 'loop' && (lineId === 'seoul_line2' || lineId === 'seoul_line6');
-            if (isLoopRoute && totalDistance > 0) {
+            if (lineId === 'seoul_line2' && routeVariant === 'loop' && totalDistance > 0) {
                 const directDelta = adjustedToDistance - fromDistance;
                 if (directDelta > totalDistance / 2) adjustedToDistance -= totalDistance;
                 else if (directDelta < -totalDistance / 2) adjustedToDistance += totalDistance;
             }
             const rawDistance = fromDistance + (adjustedToDistance - fromDistance) * fraction;
-            const normalizeLoopDistance = distance => isLoopRoute && totalDistance > 0
+            const normalizeLoopDistance = distance => lineId === 'seoul_line2' && routeVariant === 'loop' && totalDistance > 0
                 ? ((distance % totalDistance) + totalDistance) % totalDistance
                 : distance;
             const distance = normalizeLoopDistance(rawDistance);
@@ -5202,13 +4953,7 @@
             };
             kakao.maps.event.addListener(subwayMap, 'zoom_start', pauseTrainInterpolation);
             kakao.maps.event.addListener(subwayMap, 'zoom_changed', resumeTrainInterpolation);
-            kakao.maps.event.addListener(subwayMap, 'dragstart', () => {
-                if (!mapSoloTrainKey) {
-                    mapFollowTrainKey = null;
-                    setMapRegionHeader();
-                }
-                pauseTrainInterpolation();
-            });
+            kakao.maps.event.addListener(subwayMap, 'dragstart', () => { mapFollowTrainKey = null; setMapRegionHeader(); pauseTrainInterpolation(); });
             kakao.maps.event.addListener(subwayMap, 'dragend', resumeTrainInterpolation);
             const fallback = document.getElementById('subway-map-fallback');
             if (fallback) fallback.classList.add('hidden');
@@ -5219,7 +4964,6 @@
 
         window.handleMapStationClick = async (lineId, stationName) => {
             if (currentLineId !== lineId) await window.switchLine(lineId);
-            mapSoloTrainKey = null;
             selectedMapStationLineId = lineId;
             selectedStation = stationName;
             selectedTrainId = null;
@@ -5239,12 +4983,8 @@
             seoul_line7: 'seoul',
             seoul_line8: 'seoul',
             seoul_line9: 'seoul',
-            incheon_line1: 'seoul',
-            incheon_line2: 'seoul',
             gtx_a: 'seoul',
             seohae: 'seoul',
-            gyeongui_jungang: 'seoul',
-            gimpo_goldline: 'seoul',
             gyeonggang: 'seoul',
             gyeongchun: 'seoul',
             airport: 'seoul',
@@ -5256,480 +4996,6 @@
             daejeon_line1: 'daejeon', gwangju_line1: 'gwangju',
             busan_line1: 'busan', busan_line2: 'busan', busan_line3: 'busan',
             busan_line4: 'busan', busan_bglrt: 'busan', busan_donghae: 'busan'
-        };
-
-        const JOURNEY_TRANSFER_SECONDS = 300;
-        const JOURNEY_STATION_ALIASES = { '동대구역':'동대구' };
-        const JOURNEY_REGION_ORDER = ['seoul', 'daegu', 'busan', 'daejeon', 'gwangju'];
-        const JOURNEY_REGION_LABELS = { seoul:'수도권·강원', daegu:'대구권', busan:'부산권', daejeon:'대전', gwangju:'광주' };
-        const JOURNEY_SAME_NAME_EXCEPTIONS = new Set(['seoul|신촌', 'seoul|양평']);
-        const journeyTimetableCache = new Map();
-        const journeyLiveTargets = new Map();
-        let journeyStationChoices = [];
-        let journeyStationByKey = new Map();
-        let journeyStart = null;
-        let journeyEnd = null;
-        let journeyPlannerNetwork = null;
-        let journeyPickerTarget = 'start';
-        let journeySearchToken = 0;
-
-        const escapeJourneyHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({
-            '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
-        })[character]);
-
-        const getJourneyNetwork = lineId => LINE_REGION[lineId] || 'seoul';
-        const getJourneyCanonicalName = stationName => JOURNEY_STATION_ALIASES[stationName] || stationName;
-        const getJourneyLineMeta = lineId => FAVORITE_LINE_META[lineId] || { label:lineId, color:'#64748B' };
-        const getJourneyTransferSeconds = (fromLineId, toLineId) => fromLineId === 'daegyeong' || toLineId === 'daegyeong' ? 600 : JOURNEY_TRANSFER_SECONDS;
-        const getJourneyMinutes = seconds => Math.max(1, Math.ceil(seconds / 60));
-        const getJourneyClock = seconds => secondsToTime(seconds).slice(0, 5);
-
-        const buildJourneyStations = () => {
-            if (journeyStationChoices.length) return journeyStationChoices;
-            const candidates = new Map();
-            Object.entries(STATIONS_ALL).forEach(([lineId, stations]) => {
-                const network = getJourneyNetwork(lineId);
-                if (!JOURNEY_REGION_ORDER.includes(network)) return;
-                Object.entries(stations || {}).forEach(([stationName, stationMeta]) => {
-                    const canonical = getJourneyCanonicalName(stationName);
-                    const baseKey = `${network}|${canonical}`;
-                    if (!candidates.has(baseKey)) candidates.set(baseKey, []);
-                    candidates.get(baseKey).push({ lineId, stationName, stationMeta });
-                });
-            });
-
-            const choices = [];
-            candidates.forEach((refs, baseKey) => {
-                const [network, canonical] = baseKey.split('|');
-                const hasDeclaredTransfer = refs.some(ref => Array.isArray(ref.stationMeta?.transfer) && ref.stationMeta.transfer.length);
-                const hasAliasTransfer = refs.some(ref => ref.stationName !== canonical);
-                const shouldGroup = refs.length === 1 || hasDeclaredTransfer || hasAliasTransfer;
-                if (shouldGroup && !JOURNEY_SAME_NAME_EXCEPTIONS.has(baseKey)) {
-                    choices.push({ key:baseKey, network, name:canonical, refs });
-                } else {
-                    refs.forEach(ref => choices.push({
-                        key:`${baseKey}|${ref.lineId}`,
-                        network,
-                        name:canonical,
-                        refs:[ref]
-                    }));
-                }
-            });
-            journeyStationChoices = choices.sort((a, b) => {
-                const regionDelta = JOURNEY_REGION_ORDER.indexOf(a.network) - JOURNEY_REGION_ORDER.indexOf(b.network);
-                return regionDelta || a.name.localeCompare(b.name, 'ko');
-            });
-            journeyStationByKey = new Map(journeyStationChoices.map(choice => [choice.key, choice]));
-            return journeyStationChoices;
-        };
-
-        const getJourneyChoiceLineText = choice => [...new Set(choice.refs.map(ref => getJourneyLineMeta(ref.lineId).label))].join(' · ');
-        const renderJourneyStationList = (query = '') => {
-            const normalizedQuery = query.trim().toLowerCase().replace(/\s+/g, '');
-            const currentNetwork = journeyPlannerNetwork || getJourneyNetwork(currentLineId);
-            const matches = buildJourneyStations().filter(choice => {
-                if (choice.network !== currentNetwork) return false;
-                if (!normalizedQuery) return true;
-                const haystack = `${choice.name}${getJourneyChoiceLineText(choice)}${JOURNEY_REGION_LABELS[choice.network] || ''}`.toLowerCase().replace(/\s+/g, '');
-                return haystack.includes(normalizedQuery);
-            }).sort((a, b) => {
-                const currentDelta = Number(b.network === currentNetwork) - Number(a.network === currentNetwork);
-                return currentDelta || JOURNEY_REGION_ORDER.indexOf(a.network) - JOURNEY_REGION_ORDER.indexOf(b.network) || a.name.localeCompare(b.name, 'ko');
-            });
-
-            if (!matches.length) {
-                dom.journeyStationList.innerHTML = '<div class="py-16 text-center text-[12px] font-bold text-slate-400">검색 결과가 없습니다.</div>';
-                return;
-            }
-            dom.journeyStationList.innerHTML = matches.map(choice => {
-                const lineDots = [...new Map(choice.refs.map(ref => [ref.lineId, getJourneyLineMeta(ref.lineId)])).entries()]
-                    .map(([, meta]) => `<span class="h-2.5 w-2.5 rounded-full" style="background:${meta.color}"></span>`).join('');
-                return `<button type="button" data-journey-station-key="${escapeJourneyHtml(choice.key)}" class="flex w-full items-center gap-3 border-b border-slate-100 px-2 py-3.5 text-left transition active:bg-slate-50">
-                    <span class="flex min-w-[18px] items-center gap-0.5">${lineDots}</span>
-                    <span class="min-w-0 flex-1"><span class="block text-[14px] font-extrabold text-slate-800">${escapeJourneyHtml(choice.name)}</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-400">${escapeJourneyHtml(getJourneyChoiceLineText(choice))}</span></span>
-                    <span class="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[8px] font-extrabold text-slate-500">${escapeJourneyHtml(JOURNEY_REGION_LABELS[choice.network] || choice.network)}</span>
-                </button>`;
-            }).join('');
-        };
-
-        const updateJourneySelectionUI = () => {
-            const updateLabel = (label, choice, emptyText) => {
-                label.textContent = choice ? choice.name : emptyText;
-                label.className = `mt-1 block truncate text-[15px] font-extrabold ${choice ? 'text-slate-900' : 'text-slate-400'}`;
-                if (choice) label.title = getJourneyChoiceLineText(choice);
-                else label.removeAttribute('title');
-            };
-            updateLabel(dom.journeyStartLabel, journeyStart, '출발역을 선택하세요');
-            updateLabel(dom.journeyEndLabel, journeyEnd, '도착역을 선택하세요');
-        };
-
-        window.openJourneyStationPicker = target => {
-            journeyPickerTarget = target === 'end' ? 'end' : 'start';
-            dom.journeyPickerTitle.textContent = journeyPickerTarget === 'start' ? '출발역 선택' : '도착역 선택';
-            dom.journeyStationSearch.value = '';
-            renderJourneyStationList();
-            dom.journeyStationModal.classList.remove('hidden');
-            requestAnimationFrame(() => dom.journeyStationSearch.focus());
-        };
-        window.closeJourneyStationPicker = () => dom.journeyStationModal.classList.add('hidden');
-
-        const showJourneyAlert = message => {
-            dom.journeyAlertMessage.textContent = message;
-            dom.journeyAlertModal.classList.remove('hidden');
-            requestAnimationFrame(() => dom.journeyAlertConfirm.focus());
-        };
-        window.closeJourneyAlert = () => dom.journeyAlertModal.classList.add('hidden');
-
-        const createJourneyLineIndex = (lineId, dayType, timetable) => {
-            const departuresByStation = new Map();
-            ['up', 'down'].forEach(direction => {
-                (timetable[direction] || []).forEach(train => {
-                    train.schedule.forEach((stop, index) => {
-                        if (!departuresByStation.has(stop.name)) departuresByStation.set(stop.name, []);
-                        departuresByStation.get(stop.name).push({ lineId, direction, train, index, sec:stop.sec });
-                    });
-                });
-            });
-            departuresByStation.forEach(events => events.sort((a, b) => a.sec - b.sec));
-            return { lineId, dayType, ...timetable, departuresByStation };
-        };
-
-        const getJourneyLineData = async (lineId, dayType) => {
-            const key = `${lineId}:${dayType}`;
-            if (!journeyTimetableCache.has(key)) {
-                const promise = loadLineTimetableData(dayType, lineId)
-                    .then(timetable => createJourneyLineIndex(lineId, dayType, timetable))
-                    .catch(error => {
-                        journeyTimetableCache.delete(key);
-                        throw error;
-                    });
-                journeyTimetableCache.set(key, promise);
-            }
-            return await journeyTimetableCache.get(key);
-        };
-
-        class JourneyMinHeap {
-            constructor() { this.items = []; }
-            push(value) {
-                this.items.push(value);
-                let index = this.items.length - 1;
-                while (index > 0) {
-                    const parent = Math.floor((index - 1) / 2);
-                    if (this.items[parent].time <= value.time) break;
-                    this.items[index] = this.items[parent]; index = parent;
-                }
-                this.items[index] = value;
-            }
-            pop() {
-                if (!this.items.length) return null;
-                const root = this.items[0], tail = this.items.pop();
-                if (this.items.length && tail) {
-                    let index = 0;
-                    while (true) {
-                        const left = index * 2 + 1, right = left + 1;
-                        if (left >= this.items.length) break;
-                        let child = right < this.items.length && this.items[right].time < this.items[left].time ? right : left;
-                        if (this.items[child].time >= tail.time) break;
-                        this.items[index] = this.items[child]; index = child;
-                    }
-                    this.items[index] = tail;
-                }
-                return root;
-            }
-        }
-
-        const lowerBoundJourneyDepartures = (events, time) => {
-            let low = 0, high = events.length;
-            while (low < high) {
-                const middle = Math.floor((low + high) / 2);
-                if (events[middle].sec < time) low = middle + 1;
-                else high = middle;
-            }
-            return low;
-        };
-
-        const getJourneyAllowedLines = (startChoice, endChoice) => {
-            const networkChoices = buildJourneyStations().filter(choice => choice.network === startChoice.network && choice.refs.length > 1);
-            const adjacency = new Map();
-            const addEdge = (from, to) => {
-                if (!adjacency.has(from)) adjacency.set(from, new Set());
-                adjacency.get(from).add(to);
-            };
-            networkChoices.forEach(choice => {
-                const lines = [...new Set(choice.refs.map(ref => ref.lineId))];
-                lines.forEach(from => lines.forEach(to => { if (from !== to) addEdge(from, to); }));
-            });
-
-            const endLines = new Set(endChoice.refs.map(ref => ref.lineId));
-            const queue = [...new Set(startChoice.refs.map(ref => ref.lineId))].map(lineId => [lineId]);
-            const completedPaths = [];
-            let shortestLength = Infinity;
-            while (queue.length) {
-                const path = queue.shift();
-                if (path.length > shortestLength || path.length > 5) continue;
-                const tail = path[path.length - 1];
-                if (endLines.has(tail)) {
-                    shortestLength = path.length;
-                    completedPaths.push(path);
-                    if (completedPaths.length >= 6) break;
-                    continue;
-                }
-                (adjacency.get(tail) || []).forEach(nextLine => {
-                    if (!path.includes(nextLine)) queue.push([...path, nextLine]);
-                });
-            }
-            if (!completedPaths.length) return new Set([...startChoice.refs, ...endChoice.refs].map(ref => ref.lineId));
-            return new Set(completedPaths.flat());
-        };
-
-        const findJourney = async (startChoice, endChoice, startSec, dayType) => {
-            if (startChoice.network !== endChoice.network) return null;
-            const allowedLineIds = getJourneyAllowedLines(startChoice, endChoice);
-            const choiceRefsByState = new Map();
-            buildJourneyStations().filter(choice => choice.network === startChoice.network).forEach(choice => {
-                const allowedRefs = choice.refs.filter(ref => allowedLineIds.has(ref.lineId));
-                if (!allowedRefs.length) return;
-                const allowedChoice = { ...choice, refs:allowedRefs };
-                allowedRefs.forEach(ref => choiceRefsByState.set(`${ref.lineId}|${ref.stationName}`, allowedChoice));
-            });
-
-            const goalStates = new Set(endChoice.refs.filter(ref => allowedLineIds.has(ref.lineId)).map(ref => `${ref.lineId}|${ref.stationName}`));
-            const distance = new Map();
-            const previous = new Map();
-            const queue = new JourneyMinHeap();
-            startChoice.refs.filter(ref => allowedLineIds.has(ref.lineId)).forEach(ref => {
-                const key = `${ref.lineId}|${ref.stationName}`;
-                distance.set(key, startSec);
-                queue.push({ key, time:startSec });
-            });
-
-            let goalKey = null;
-            let iterations = 0;
-            while (queue.items.length && iterations++ < 5000) {
-                const current = queue.pop();
-                if (!current || current.time !== distance.get(current.key)) continue;
-                if (goalStates.has(current.key)) { goalKey = current.key; break; }
-                if (current.time > startSec + 8 * 3600) continue;
-
-                const separator = current.key.indexOf('|');
-                const lineId = current.key.slice(0, separator);
-                const stationName = current.key.slice(separator + 1);
-                const physicalChoice = choiceRefsByState.get(current.key);
-                if (physicalChoice?.refs.length > 1) {
-                    physicalChoice.refs.forEach(ref => {
-                        const nextKey = `${ref.lineId}|${ref.stationName}`;
-                        if (nextKey === current.key) return;
-                        const transferSeconds = getJourneyTransferSeconds(lineId, ref.lineId);
-                        const nextTime = current.time + transferSeconds;
-                        if (nextTime < (distance.get(nextKey) ?? Infinity)) {
-                            distance.set(nextKey, nextTime);
-                            previous.set(nextKey, { fromKey:current.key, type:'transfer', station:physicalChoice.name, fromLineId:lineId, toLineId:ref.lineId, seconds:transferSeconds });
-                            queue.push({ key:nextKey, time:nextTime });
-                        }
-                    });
-                }
-
-                const lineData = await getJourneyLineData(lineId, dayType);
-                const events = lineData.departuresByStation.get(stationName) || [];
-                const firstEventIndex = lowerBoundJourneyDepartures(events, current.time);
-                const eventLimit = Math.min(events.length, firstEventIndex + 24);
-                for (let eventIndex = firstEventIndex; eventIndex < eventLimit; eventIndex++) {
-                    const event = events[eventIndex];
-                    if (event.sec > current.time + 90 * 60) break;
-                    for (let stopIndex = event.index + 1; stopIndex < event.train.schedule.length; stopIndex++) {
-                        const arrivalStop = event.train.schedule[stopIndex];
-                        if (arrivalStop.sec <= event.sec) continue;
-                        const nextKey = `${lineId}|${arrivalStop.name}`;
-                        if (arrivalStop.sec >= (distance.get(nextKey) ?? Infinity)) continue;
-                        distance.set(nextKey, arrivalStop.sec);
-                        previous.set(nextKey, {
-                            fromKey:current.key,
-                            type:'ride',
-                            lineId,
-                            direction:event.direction,
-                            trainId:event.train.id,
-                            train:event.train,
-                            fromName:stationName,
-                            toName:arrivalStop.name,
-                            departSec:event.sec,
-                            arriveSec:arrivalStop.sec,
-                            isExpress:event.train.isExpress,
-                            service:event.train.service || ''
-                        });
-                        queue.push({ key:nextKey, time:arrivalStop.sec });
-                    }
-                }
-            }
-
-            if (!goalKey) return null;
-            const steps = [];
-            let cursor = goalKey;
-            while (previous.has(cursor)) {
-                const step = previous.get(cursor);
-                steps.push(step);
-                cursor = step.fromKey;
-            }
-            steps.reverse();
-
-            const merged = [];
-            steps.forEach(step => {
-                const last = merged[merged.length - 1];
-                if (step.type === 'ride' && last?.type === 'ride' && last.lineId === step.lineId && last.direction === step.direction && last.trainId === step.trainId && last.toName === step.fromName) {
-                    last.toName = step.toName;
-                    last.arriveSec = step.arriveSec;
-                } else {
-                    merged.push({ ...step });
-                }
-            });
-            return { startSec, arrivalSec:distance.get(goalKey), steps:merged, dayType };
-        };
-
-        const renderJourneyResult = route => {
-            const rides = route.steps.filter(step => step.type === 'ride');
-            const transfers = route.steps.filter(step => step.type === 'transfer');
-            journeyLiveTargets.clear();
-            const firstRide = rides[0];
-            const summaryWait = firstRide ? Math.max(0, firstRide.departSec - route.startSec) : 0;
-            let liveIndex = 0;
-            const getIntermediateStops = step => {
-                const schedule = step.train?.schedule || [];
-                const fromIndex = schedule.findIndex(stop => stop.name === step.fromName && Math.abs(stop.sec - step.departSec) < 2);
-                const toIndex = schedule.findIndex((stop, index) => index > fromIndex && stop.name === step.toName && Math.abs(stop.sec - step.arriveSec) < 2);
-                return fromIndex >= 0 && toIndex > fromIndex ? schedule.slice(fromIndex + 1, toIndex) : [];
-            };
-            const detailHtml = route.steps.map(step => {
-                if (step.type === 'transfer') {
-                    const toMeta = getJourneyLineMeta(step.toLineId);
-                    return `<div class="grid grid-cols-[44px_28px_1fr] py-1.5">
-                        <span></span><span class="flex items-center justify-center"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500"><i class="fa-solid fa-arrow-right-arrow-left text-[9px]"></i></span></span>
-                        <div class="ml-2.5 rounded-lg bg-slate-50 px-3 py-2"><p class="text-[10px] font-black text-slate-700">${escapeJourneyHtml(step.station)} 환승</p><p class="mt-0.5 text-[8px] font-semibold text-slate-400">약 ${getJourneyMinutes(step.seconds)}분 이동 · ${escapeJourneyHtml(toMeta.label)}</p></div>
-                    </div>`;
-                }
-                const meta = getJourneyLineMeta(step.lineId);
-                const liveId = `journey-live-${liveIndex++}`;
-                journeyLiveTargets.set(liveId, step);
-                const expressLabel = step.service || (step.isExpress ? '급행' : '일반');
-                const intermediateStops = getIntermediateStops(step);
-                const previewStop = intermediateStops.length ? intermediateStops[Math.floor(intermediateStops.length / 2)] : null;
-                const badgeText = (meta.label.match(/(\d+)호선/)?.[1] || meta.label.replace(/수도권|대구|부산|인천|호선|\s/g, '').slice(0, 2) || '철');
-                return `<section class="py-1.5">
-                    <div class="mb-2.5 flex justify-center"><button type="button" data-journey-live-id="${liveId}" class="inline-flex h-8 items-center justify-center gap-1.5 rounded-full px-4 text-[10px] font-black text-white shadow-sm transition active:scale-95" style="background:${meta.color}"><i class="fa-solid fa-location-crosshairs text-[9px]"></i> ${escapeJourneyHtml(step.trainId)} 실시간보기</button></div>
-                    <div class="grid grid-cols-[44px_28px_1fr] items-center">
-                        <time class="text-[11px] font-bold text-slate-500">${getJourneyClock(step.departSec)}</time>
-                        <span class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-black text-white" style="background:${meta.color}">${escapeJourneyHtml(badgeText)}</span>
-                        <div class="ml-2.5"><div class="flex items-center gap-1.5"><h3 class="text-[15px] font-black text-slate-900">${escapeJourneyHtml(step.fromName)}</h3><i class="fa-solid fa-chevron-right text-[8px] text-slate-300"></i></div><p class="mt-0.5 text-[8px] font-bold text-slate-400">${escapeJourneyHtml(meta.label)} · ${escapeJourneyHtml(expressLabel)} · 열차 ${escapeJourneyHtml(step.trainId)}</p></div>
-                    </div>
-                    <div class="grid min-h-[74px] grid-cols-[44px_28px_1fr]">
-                        <div class="flex items-center text-[10px] font-bold text-slate-400">${previewStop ? getJourneyClock(previewStop.sec) : ''}</div>
-                        <div class="relative flex justify-center"><span class="h-full w-1" style="background:${meta.color}"></span>${previewStop ? '<span class="absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full border-2 border-white" style="background:'+meta.color+'"></span>' : ''}</div>
-                        <div class="ml-2.5 flex flex-col justify-center"><p class="text-[10px] font-black text-slate-700">${intermediateStops.length}개 역 <span class="text-slate-400">(${getJourneyMinutes(step.arriveSec - step.departSec)}분)</span></p>${previewStop ? `<p class="mt-1.5 text-[10px] font-bold text-slate-500">${escapeJourneyHtml(previewStop.name)}</p>` : ''}</div>
-                    </div>
-                    <div class="grid grid-cols-[44px_28px_1fr] items-center">
-                        <time class="text-[11px] font-bold text-slate-500">${getJourneyClock(step.arriveSec)}</time>
-                        <span class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-[5px] border-white" style="background:${meta.color};box-shadow:0 0 0 2px ${meta.color}"></span>
-                        <div class="ml-2.5"><div class="flex items-center gap-1.5"><h3 class="text-[15px] font-black text-slate-900">${escapeJourneyHtml(step.toName)}</h3><i class="fa-solid fa-chevron-right text-[8px] text-slate-300"></i></div><p class="mt-0.5 text-[8px] font-bold text-slate-400">${getJourneyClock(step.arriveSec)} 도착 예정</p></div>
-                    </div>
-                </section>`;
-            }).join('');
-
-            dom.journeySearchPanel.classList.add('hidden');
-            dom.journeyResult.classList.remove('hidden');
-            dom.journeyResult.innerHTML = `<section class="px-1 pb-3">
-                <div class="flex items-center justify-between"><div><p class="text-[11px] font-black text-slate-400">소요시간</p><div class="mt-1 flex items-end gap-2.5"><strong class="text-[34px] font-black leading-none tracking-[-0.06em] text-slate-900">${getJourneyMinutes(route.arrivalSec - route.startSec)}분</strong><span class="pb-0.5 text-[10px] font-bold text-slate-500">${transfers.length ? `환승 ${transfers.length}회` : '환승없음'} · ${summaryWait < 60 ? '곧 출발' : `${getJourneyMinutes(summaryWait)}분 후 출발`}</span></div></div><button id="journey-change-button" type="button" class="flex h-8 items-center gap-1 rounded-full border border-slate-200 px-2.5 text-[9px] font-black text-slate-600"><i class="fa-solid fa-pen text-[8px]"></i> 변경</button></div>
-                <div class="mt-3 grid grid-cols-2 overflow-hidden rounded-[3px] border border-slate-300 bg-slate-50"><div class="border-r border-slate-300 py-2.5 text-center text-[11px] font-black text-slate-600">출발&nbsp; ${getJourneyClock(firstRide?.departSec || route.startSec)} <i class="fa-solid fa-caret-down ml-1 text-slate-400"></i></div><div class="py-2.5 text-center text-[11px] font-black text-slate-600">도착&nbsp; ${getJourneyClock(route.arrivalSec)} <i class="fa-solid fa-caret-down ml-1 text-slate-400"></i></div></div>
-                <div class="mt-2.5 flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5"><div class="min-w-0"><p class="truncate text-[11px] font-black text-slate-800">${escapeJourneyHtml(journeyStart?.name || '')} <i class="fa-solid fa-arrow-right-long mx-1.5 text-[8px] text-slate-300"></i> ${escapeJourneyHtml(journeyEnd?.name || '')}</p><p class="mt-0.5 text-[8px] font-semibold text-slate-400">${JOURNEY_REGION_LABELS[journeyPlannerNetwork] || '현재 권역'} 시간표 기준</p></div><i class="fa-solid fa-chevron-right text-[8px] text-slate-300"></i></div>
-            </section>
-            <div class="border-t border-slate-100 pt-2">${detailHtml}</div>
-            <button type="button" id="journey-refresh-button" class="mx-auto mt-4 flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 text-[9px] font-extrabold text-slate-600"><i class="fa-solid fa-rotate-right text-[8px]"></i> 현재 시각으로 다시 조회</button>`;
-        };
-
-        window.searchJourneyNow = async () => {
-            if (!journeyStart || !journeyEnd) {
-                showJourneyAlert('출발역과 도착역을 모두 선택해 주세요.');
-                return;
-            }
-            if (journeyStart.network !== journeyPlannerNetwork || journeyEnd.network !== journeyPlannerNetwork) {
-                showJourneyAlert(`${JOURNEY_REGION_LABELS[journeyPlannerNetwork] || '현재 권역'} 안에서 역을 다시 선택해 주세요.`);
-                return;
-            }
-            if (journeyStart.key === journeyEnd.key) {
-                showJourneyAlert('출발역과 도착역이 같습니다.');
-                return;
-            }
-            if (journeyStart.network !== journeyEnd.network) {
-                showJourneyAlert('서로 다른 도시권의 경로는 아직 연결할 수 없습니다.');
-                return;
-            }
-            const token = ++journeySearchToken;
-            const nowSec = Math.floor(getLiveCurrentSeconds());
-            const dayType = getDayType(new Date());
-            dom.journeyResult.classList.remove('hidden');
-            dom.journeySearchButton.disabled = true;
-            dom.journeySearchButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 실제 시간표 계산 중';
-            dom.journeyResult.innerHTML = '<div class="rounded-[24px] bg-white px-6 py-12 text-center"><i class="fa-solid fa-spinner fa-spin text-[20px] text-[#2563EB]"></i><p class="mt-3 text-[12px] font-extrabold text-slate-600">탑승 가능한 열차와 환승편을 찾고 있습니다.</p></div>';
-            try {
-                const route = await findJourney(journeyStart, journeyEnd, nowSec, dayType);
-                if (token !== journeySearchToken) return;
-                if (!route || !route.steps.some(step => step.type === 'ride')) {
-                    dom.journeyResult.innerHTML = '<div class="rounded-[24px] bg-white px-6 py-12 text-center"><i class="fa-solid fa-triangle-exclamation text-[22px] text-amber-400"></i><p class="mt-3 text-[13px] font-extrabold text-slate-700">현재 시각 이후 이용 가능한 경로가 없습니다.</p><p class="mt-1 text-[10px] font-semibold text-slate-400">운행 종료 또는 시간표 미등록 여부를 확인해 주세요.</p></div>';
-                    return;
-                }
-                renderJourneyResult(route);
-            } catch (error) {
-                console.error('Journey search failed', error);
-                if (token === journeySearchToken) dom.journeyResult.innerHTML = '<div class="rounded-[24px] bg-white px-6 py-12 text-center"><p class="text-[13px] font-extrabold text-slate-700">길찾기 데이터를 불러오지 못했습니다.</p><p class="mt-1 text-[10px] font-semibold text-slate-400">잠시 후 다시 시도해 주세요.</p></div>';
-            } finally {
-                if (token === journeySearchToken) {
-                    dom.journeySearchButton.disabled = false;
-                    dom.journeySearchButton.innerHTML = '<i class="fa-solid fa-route"></i> 지금 출발 길찾기';
-                }
-            }
-        };
-
-        window.openJourneyTrainLive = async liveId => {
-            const step = journeyLiveTargets.get(liveId);
-            if (!step) return;
-            const nowSec = getLiveCurrentSeconds();
-            const trainStartSec = step.train.schedule[0]?.sec;
-            const trainEndSec = step.train.schedule[step.train.schedule.length - 1]?.sec;
-            if (Number.isFinite(trainStartSec) && nowSec < trainStartSec) {
-                showJourneyAlert('아직 운행 전입니다.');
-                return;
-            }
-            if (Number.isFinite(trainEndSec) && nowSec > trainEndSec + STOP_DURATION) {
-                showJourneyAlert('이미 운행을 종료한 열차입니다.');
-                return;
-            }
-
-            const targetRegion = LINE_REGION[step.lineId] || currentRegion;
-            if (targetRegion !== currentRegion) await window.switchRegion(targetRegion, true);
-            if (step.lineId !== currentLineId) await window.switchLine(step.lineId, true);
-            mapNationwideMode = false;
-            window.switchTab('map');
-            await loadRegionMapTimetables();
-            mapActiveTrainSourceKey = '';
-            const key = `${step.lineId}:${step.direction}:${step.trainId}`;
-            selectedTrainId = step.trainId;
-            selectedMapTrainKey = key;
-            mapFollowTrainKey = key;
-            mapSoloTrainKey = key;
-            clearSubwayMapTrains();
-            mapLastCameraUpdateTime = 0;
-            mapCameraLat = null;
-            mapCameraLng = null;
-            const meta = getJourneyLineMeta(step.lineId);
-            const applyJourneyFollowHeader = () => {
-                if (activeTab !== 'map' || selectedMapTrainKey !== key) return;
-                if (dom.mapTitle) dom.mapTitle.textContent = `${meta.label} 열차 추적`;
-                if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = meta.color;
-                if (dom.mapStatus) dom.mapStatus.textContent = `${step.trainId} 확대 추적 중`;
-                if (subwayMap?.getLevel?.() > 3) subwayMap.setLevel(3, { animate:{ duration:450 } });
-            };
-            window.initSubwayMap();
-            window.render();
-            window.ensureMapAnimationLoop();
-            requestAnimationFrame(applyJourneyFollowHeader);
-            setTimeout(applyJourneyFollowHeader, 120);
         };
 
         const haversine = (lat1, lon1, lat2, lon2) => {
@@ -5805,35 +5071,15 @@
                 mapNationwideMode = false;
                 mapActiveTrainSourceKey = '';
             }
-            selectedStation = null; selectedMapStationLineId = null; selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; mapSoloTrainKey = null; modalDayType = null; modalViewMode = 'all';
-            dom.timetableModal.classList.add('hidden'); dom.stationSelectorModal.classList.add('hidden'); dom.journeyStationModal.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
+            selectedStation = null; selectedMapStationLineId = null; selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; modalDayType = null; modalViewMode = 'all';
+            dom.timetableModal.classList.add('hidden'); dom.stationSelectorModal.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
             if (tabId === 'home') {
                 dom.homeScreen.classList.remove('hidden'); dom.homeScreen.classList.add('flex');
-                dom.journeyScreen.classList.add('hidden'); dom.journeyScreen.classList.remove('flex');
                 dom.mapScreen.classList.add('hidden');
                 dom.scrollContainer.classList.add('hidden'); dom.mainHeader.classList.add('hidden');
                 dom.autoScrollBtn.classList.add('hidden'); window.updateHomeUI(); window.renderHomeArrivalInfo();
-            } else if (tabId === 'journey') {
-                dom.homeScreen.classList.add('hidden');
-                dom.journeyScreen.classList.remove('hidden'); dom.journeyScreen.classList.add('flex');
-                dom.mapScreen.classList.add('hidden');
-                dom.scrollContainer.classList.add('hidden'); dom.mainHeader.classList.add('hidden');
-                dom.autoScrollBtn.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
-                const nextJourneyNetwork = getJourneyNetwork(currentLineId);
-                if (journeyPlannerNetwork !== nextJourneyNetwork) {
-                    journeyPlannerNetwork = nextJourneyNetwork;
-                    if (journeyStart?.network !== journeyPlannerNetwork) journeyStart = null;
-                    if (journeyEnd?.network !== journeyPlannerNetwork) journeyEnd = null;
-                    journeyLiveTargets.clear();
-                    dom.journeySearchPanel.classList.remove('hidden');
-                    dom.journeyResult.classList.add('hidden');
-                }
-                dom.journeyRegionLabel.textContent = `${JOURNEY_REGION_LABELS[journeyPlannerNetwork] || '현재 권역'} 전용`;
-                buildJourneyStations();
-                updateJourneySelectionUI();
             } else if (tabId === 'map') {
                 dom.homeScreen.classList.add('hidden');
-                dom.journeyScreen.classList.add('hidden'); dom.journeyScreen.classList.remove('flex');
                 dom.scrollContainer.classList.add('hidden'); dom.mainHeader.classList.add('hidden');
                 dom.mapScreen.classList.remove('hidden');
                 dom.autoScrollBtn.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
@@ -5843,7 +5089,7 @@
                     if (activeTab === 'map') { window.render(); window.ensureMapAnimationLoop(); }
                 });
             } else {
-                dom.homeScreen.classList.add('hidden'); dom.journeyScreen.classList.add('hidden'); dom.journeyScreen.classList.remove('flex'); dom.scrollContainer.classList.remove('hidden');
+                dom.homeScreen.classList.add('hidden'); dom.scrollContainer.classList.remove('hidden');
                 dom.mapScreen.classList.add('hidden');
                 dom.mainHeader.classList.remove('hidden'); dom.mainHeader.classList.add('flex');
                 dom.directionToggle.classList.toggle('hidden', tabId === 'line');
@@ -5856,7 +5102,7 @@
         };
 
         function updateTabUI(activeTabId) {
-            const tabs = ['tab-back', 'tab-home', 'tab-journey', 'tab-line', 'tab-map'];
+            const tabs = ['tab-back', 'tab-home', 'tab-line', 'tab-map'];
             const activeIndex = tabs.indexOf(activeTabId);
             const navButtons = document.querySelectorAll('#bottom-nav button');
             if (navButtons[activeIndex]) {
@@ -5873,7 +5119,6 @@
                 let iconClass = 'fa-solid text-[15px] ';
                 if (id === 'tab-back') iconClass += 'fa-chevron-left ';
                 if (id === 'tab-home') iconClass += 'fa-house ';
-                if (id === 'tab-journey') iconClass += 'fa-route ';
                 if (id === 'tab-line') iconClass += 'fa-train-subway ';
                 if (id === 'tab-map') iconClass += 'fa-map-location-dot ';
 
@@ -5889,7 +5134,7 @@
 
         window.handleStationClick = (n) => { selectedStation = n; if(n) stationDetailDirection = currentDirection; else selectedMapStationLineId = null; window.render(); };
         window.handleTrainClick = (id) => { selectedTrainId = id; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = true; selectedStation = null; window.render(); };
-        window.closeTrainDetail = () => { selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; mapSoloTrainKey = null; isAutoScroll = false; dom.floatingPanel.classList.add('hidden'); if (activeTab === 'map') setMapRegionHeader(); window.render(); };
+        window.closeTrainDetail = () => { selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = false; dom.floatingPanel.classList.add('hidden'); if (activeTab === 'map') setMapRegionHeader(); window.render(); };
         window.setStationDetailDirection = (d) => { stationDetailDirection = d; window.render(); };
 
         window.openModal = async (forcedDayType = null) => {
@@ -6207,22 +5452,6 @@
             return SEOUL_LINE2_LOOP_STATIONS;
         };
 
-        const getSeoulLine2SegmentPoints = (fromName, toName) => {
-            const from = SEOUL_LINE2_SCHEMATIC.positions[fromName];
-            const to = SEOUL_LINE2_SCHEMATIC.positions[toName];
-            if (!from || !to) return [];
-            const control = SEOUL_LINE2_SCHEMATIC.cornerControls[[fromName, toName].sort().join('|')];
-            if (!control) return [from, to];
-            return Array.from({ length:17 }, (_, index) => {
-                const fraction = index / 16;
-                const inverse = 1 - fraction;
-                return {
-                    x:inverse * inverse * from.x + 2 * inverse * fraction * control.x + fraction * fraction * to.x,
-                    y:inverse * inverse * from.y + 2 * inverse * fraction * control.y + fraction * fraction * to.y
-                };
-            });
-        };
-
         const getSeoulLine2DiagramTrainPlacement = train => {
             const routeStations = getSeoulLine2RouteStations(train);
             const from = SEOUL_LINE2_SCHEMATIC.positions[train.curr?.name];
@@ -6232,34 +5461,26 @@
             const fraction = train.isStopped || train.isWaiting || !denominator
                 ? 0
                 : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
+            const baseX = from.x + (to.x - from.x) * fraction;
+            const baseY = from.y + (to.y - from.y) * fraction;
             const fromIndex = routeStations.indexOf(train.curr?.name);
             const toIndex = routeStations.indexOf(train.next?.name);
             const isLoop = routeStations === SEOUL_LINE2_LOOP_STATIONS;
             const canonicalNextIndex = fromIndex < 0 ? -1 : (isLoop ? (fromIndex + 1) % routeStations.length : Math.min(routeStations.length - 1, fromIndex + 1));
             const canonicalPreviousIndex = fromIndex < 0 ? -1 : (isLoop ? (fromIndex - 1 + routeStations.length) % routeStations.length : Math.max(0, fromIndex - 1));
-            const routePoints = getSeoulLine2SegmentPoints(train.curr?.name, train.next?.name);
-            if (routePoints.length < 2) return { point:from, angle:train.direction === 'up' ? -90 : 90 };
-            const cumulative = [0];
-            for (let index = 1; index < routePoints.length; index++) {
-                cumulative.push(cumulative[index - 1] + Math.hypot(
-                    routePoints[index].x - routePoints[index - 1].x,
-                    routePoints[index].y - routePoints[index - 1].y
-                ));
+            let canonicalStart = from, canonicalEnd = SEOUL_LINE2_SCHEMATIC.positions[routeStations[canonicalNextIndex]] || to;
+            if (toIndex === canonicalPreviousIndex) {
+                canonicalStart = SEOUL_LINE2_SCHEMATIC.positions[routeStations[canonicalPreviousIndex]] || from;
+                canonicalEnd = from;
             }
-            const targetDistance = cumulative[cumulative.length - 1] * fraction;
-            let segmentIndex = 1;
-            while (segmentIndex < cumulative.length - 1 && cumulative[segmentIndex] < targetDistance) segmentIndex++;
-            const segmentStart = routePoints[segmentIndex - 1];
-            const segmentEnd = routePoints[segmentIndex];
-            const segmentLength = cumulative[segmentIndex] - cumulative[segmentIndex - 1];
-            const segmentFraction = segmentLength ? (targetDistance - cumulative[segmentIndex - 1]) / segmentLength : 0;
-            const baseX = segmentStart.x + (segmentEnd.x - segmentStart.x) * segmentFraction;
-            const baseY = segmentStart.y + (segmentEnd.y - segmentStart.y) * segmentFraction;
-            const movementDx = segmentEnd.x - segmentStart.x;
-            const movementDy = segmentEnd.y - segmentStart.y;
-            const followsCanonicalOrder = toIndex === canonicalNextIndex || (toIndex !== canonicalPreviousIndex && toIndex > fromIndex);
-            const canonicalDx = followsCanonicalOrder ? movementDx : -movementDx;
-            const canonicalDy = followsCanonicalOrder ? movementDy : -movementDy;
+            let movementDx = to.x - from.x, movementDy = to.y - from.y;
+            if (Math.hypot(movementDx, movementDy) < .01) {
+                movementDx = canonicalEnd.x - canonicalStart.x;
+                movementDy = canonicalEnd.y - canonicalStart.y;
+                if (train.direction === 'down') { movementDx *= -1; movementDy *= -1; }
+            }
+            const canonicalDx = canonicalEnd.x - canonicalStart.x;
+            const canonicalDy = canonicalEnd.y - canonicalStart.y;
             const canonicalLength = Math.hypot(canonicalDx, canonicalDy) || 1;
             const offset = train.direction === 'up' ? 11 : -11;
             return {
@@ -6277,178 +5498,6 @@
                 [42, SEOUL_LINE2_SCHEMATIC.positions['까치산'].y + 32, '신정지선']
             ].map(([x, y, label]) =>
                 `<text x="${x}" y="${y}" text-anchor="middle" fill="#00A84D" font-size="9" font-weight="800" opacity=".78">${label}</text>`
-            ).join('');
-            return `<g class="pointer-events-none">${railPaths}${labels}</g>`;
-        };
-
-        const getSeoulLine5RouteStations = train => {
-            const names = new Set((train.schedule || []).map(stop => stop.name));
-            const branch = SEOUL_LINE5_MACHEON_STATIONS.slice(1).some(name => names.has(name))
-                ? SEOUL_LINE5_MACHEON_STATIONS
-                : SEOUL_LINE5_HANAM_STATIONS;
-            return [...SEOUL_LINE5_COMMON_STATIONS, ...branch.slice(1)];
-        };
-
-        const getSeoulLine5SegmentPoints = (fromName, toName) => {
-            const from = SEOUL_LINE5_SCHEMATIC.positions[fromName];
-            const to = SEOUL_LINE5_SCHEMATIC.positions[toName];
-            if (!from || !to) return [];
-            const edge = [fromName, toName].sort().join('|');
-            let control = null;
-            if (edge === ['종로3가', '을지로4가'].sort().join('|')) {
-                control = { x:70, y:SEOUL_LINE5_SCHEMATIC.turnY };
-            } else if (edge === ['을지로4가', '동대문역사문화공원'].sort().join('|')) {
-                control = { x:200, y:SEOUL_LINE5_SCHEMATIC.turnY };
-            }
-            if (!control) return [from, to];
-            return Array.from({ length:17 }, (_, index) => {
-                const fraction = index / 16;
-                const inverse = 1 - fraction;
-                return {
-                    x:inverse * inverse * from.x + 2 * inverse * fraction * control.x + fraction * fraction * to.x,
-                    y:inverse * inverse * from.y + 2 * inverse * fraction * control.y + fraction * fraction * to.y
-                };
-            });
-        };
-
-        const getSeoulLine5DiagramTrainPlacement = train => {
-            const routeStations = getSeoulLine5RouteStations(train);
-            const fromIndex = routeStations.indexOf(train.curr?.name);
-            const toIndex = routeStations.indexOf(train.next?.name);
-            const fallback = { point:{ x:train.direction === 'down' ? 211 : 189, y:88 }, angle:train.direction === 'up' ? -90 : 90 };
-            if (fromIndex < 0 || toIndex < 0) return fallback;
-            const denominator = (train.next?.progress || 0) - (train.curr?.progress || 0);
-            const fraction = train.isStopped || train.isWaiting || !denominator
-                ? 0
-                : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
-            const step = toIndex >= fromIndex ? 1 : -1;
-            const routePoints = [];
-            for (let index = fromIndex; index !== toIndex; index += step) {
-                const segmentPoints = getSeoulLine5SegmentPoints(routeStations[index], routeStations[index + step]);
-                routePoints.push(...(routePoints.length ? segmentPoints.slice(1) : segmentPoints));
-            }
-            if (routePoints.length < 2) {
-                const point = SEOUL_LINE5_SCHEMATIC.positions[train.curr?.name];
-                return point ? { point, angle:train.direction === 'up' ? -90 : 90 } : fallback;
-            }
-            const cumulative = [0];
-            for (let index = 1; index < routePoints.length; index++) {
-                cumulative.push(cumulative[index - 1] + Math.hypot(
-                    routePoints[index].x - routePoints[index - 1].x,
-                    routePoints[index].y - routePoints[index - 1].y
-                ));
-            }
-            const targetDistance = cumulative[cumulative.length - 1] * fraction;
-            let segmentIndex = 1;
-            while (segmentIndex < cumulative.length - 1 && cumulative[segmentIndex] < targetDistance) segmentIndex++;
-            const segmentStart = routePoints[segmentIndex - 1];
-            const segmentEnd = routePoints[segmentIndex];
-            const segmentLength = cumulative[segmentIndex] - cumulative[segmentIndex - 1];
-            const segmentFraction = segmentLength ? (targetDistance - cumulative[segmentIndex - 1]) / segmentLength : 0;
-            const baseX = segmentStart.x + (segmentEnd.x - segmentStart.x) * segmentFraction;
-            const baseY = segmentStart.y + (segmentEnd.y - segmentStart.y) * segmentFraction;
-            const movementDx = segmentEnd.x - segmentStart.x;
-            const movementDy = segmentEnd.y - segmentStart.y;
-            const canonicalDx = step > 0 ? movementDx : -movementDx;
-            const canonicalDy = step > 0 ? movementDy : -movementDy;
-            const canonicalLength = Math.hypot(canonicalDx, canonicalDy) || 1;
-            const trackOffset = train.direction === 'up' ? 11 : -11;
-            return {
-                point:{
-                    x:baseX - canonicalDy / canonicalLength * trackOffset,
-                    y:baseY + canonicalDx / canonicalLength * trackOffset
-                },
-                angle:Math.atan2(movementDy, movementDx) * 180 / Math.PI
-            };
-        };
-
-        const renderSeoulLine5DiagramRails = () => {
-            const railPaths = SEOUL_LINE5_SCHEMATIC.paths.map(path =>
-                `<path d="${path}" fill="none" stroke="#996CAC" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".24"/>`
-            ).join('');
-            const labels = [
-                [70, SEOUL_LINE5_SCHEMATIC.positions['방화'].y - 22, '방화 방면'],
-                [330, SEOUL_LINE5_SCHEMATIC.positions['하남검단산'].y + 34, '하남검단산 방면'],
-                [330, SEOUL_LINE5_SCHEMATIC.positions['마천'].y + 34, '마천 방면']
-            ].map(([x, y, label]) =>
-                `<text x="${x}" y="${y}" text-anchor="middle" fill="#996CAC" font-size="9" font-weight="800" opacity=".82">${label}</text>`
-            ).join('');
-            return `<g class="pointer-events-none">${railPaths}${labels}</g>`;
-        };
-
-        const SEOUL_LINE6_FORWARD_EDGES = new Set([
-            ...SEOUL_LINE6_LOOP_STATIONS.slice(1).map((name, index) => `${SEOUL_LINE6_LOOP_STATIONS[index]}|${name}`),
-            ...SEOUL_LINE6_MAIN_STATIONS.slice(1).map((name, index) => `${SEOUL_LINE6_MAIN_STATIONS[index]}|${name}`)
-        ]);
-
-        const getSeoulLine6SegmentPoints = (fromName, toName) => {
-            const from = SEOUL_LINE6_SCHEMATIC.positions[fromName];
-            const to = SEOUL_LINE6_SCHEMATIC.positions[toName];
-            if (!from || !to) return [];
-            const control = SEOUL_LINE6_SCHEMATIC.cornerControls[[fromName, toName].sort().join('|')];
-            if (!control) return [from, to];
-            return Array.from({ length:17 }, (_, index) => {
-                const fraction = index / 16;
-                const inverse = 1 - fraction;
-                return {
-                    x:inverse * inverse * from.x + 2 * inverse * fraction * control.x + fraction * fraction * to.x,
-                    y:inverse * inverse * from.y + 2 * inverse * fraction * control.y + fraction * fraction * to.y
-                };
-            });
-        };
-
-        const getSeoulLine6DiagramTrainPlacement = train => {
-            const from = SEOUL_LINE6_SCHEMATIC.positions[train.curr?.name];
-            const to = SEOUL_LINE6_SCHEMATIC.positions[train.next?.name] || from;
-            const fallback = { point:{ x:train.direction === 'down' ? 146 : 124, y:442 }, angle:train.direction === 'up' ? -90 : 90 };
-            if (!from || !to) return fallback;
-            const denominator = (train.next?.progress || 0) - (train.curr?.progress || 0);
-            const fraction = train.isStopped || train.isWaiting || !denominator
-                ? 0
-                : Math.max(0, Math.min(1, (train.overallProgress - train.curr.progress) / denominator));
-            const routePoints = getSeoulLine6SegmentPoints(train.curr?.name, train.next?.name);
-            if (routePoints.length < 2) return { point:from, angle:train.direction === 'up' ? -90 : 90 };
-            const cumulative = [0];
-            for (let index = 1; index < routePoints.length; index++) {
-                cumulative.push(cumulative[index - 1] + Math.hypot(
-                    routePoints[index].x - routePoints[index - 1].x,
-                    routePoints[index].y - routePoints[index - 1].y
-                ));
-            }
-            const targetDistance = cumulative[cumulative.length - 1] * fraction;
-            let segmentIndex = 1;
-            while (segmentIndex < cumulative.length - 1 && cumulative[segmentIndex] < targetDistance) segmentIndex++;
-            const segmentStart = routePoints[segmentIndex - 1];
-            const segmentEnd = routePoints[segmentIndex];
-            const segmentLength = cumulative[segmentIndex] - cumulative[segmentIndex - 1];
-            const segmentFraction = segmentLength ? (targetDistance - cumulative[segmentIndex - 1]) / segmentLength : 0;
-            const baseX = segmentStart.x + (segmentEnd.x - segmentStart.x) * segmentFraction;
-            const baseY = segmentStart.y + (segmentEnd.y - segmentStart.y) * segmentFraction;
-            const movementDx = segmentEnd.x - segmentStart.x;
-            const movementDy = segmentEnd.y - segmentStart.y;
-            const followsCanonicalOrder = SEOUL_LINE6_FORWARD_EDGES.has(`${train.curr?.name}|${train.next?.name}`);
-            const canonicalDx = followsCanonicalOrder ? movementDx : -movementDx;
-            const canonicalDy = followsCanonicalOrder ? movementDy : -movementDy;
-            const canonicalLength = Math.hypot(canonicalDx, canonicalDy) || 1;
-            const trackOffset = train.direction === 'up' ? 11 : -11;
-            return {
-                point:{
-                    x:baseX - canonicalDy / canonicalLength * trackOffset,
-                    y:baseY + canonicalDx / canonicalLength * trackOffset
-                },
-                angle:Math.atan2(movementDy, movementDx) * 180 / Math.PI
-            };
-        };
-
-        const renderSeoulLine6DiagramRails = () => {
-            const railPaths = SEOUL_LINE6_SCHEMATIC.paths.map(path =>
-                `<path d="${path}" fill="none" stroke="#CD7C2F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".25"/>`
-            ).join('');
-            const labels = [
-                [135, 285, '응암순환'],
-                [265, SEOUL_LINE6_SCHEMATIC.positions['신내'].y - 24, '신내 방면']
-            ].map(([x, y, label]) =>
-                `<text x="${x}" y="${y}" text-anchor="middle" fill="#CD7C2F" font-size="9" font-weight="800" opacity=".82">${label}</text>`
             ).join('');
             return `<g class="pointer-events-none">${railPaths}${labels}</g>`;
         };
@@ -6483,12 +5532,6 @@
                     return { ...t, ...placement };
                 } else if (currentLineId === 'seoul_line2') {
                     const placement = getSeoulLine2DiagramTrainPlacement(t);
-                    return { ...t, ...placement };
-                } else if (currentLineId === 'seoul_line5') {
-                    const placement = getSeoulLine5DiagramTrainPlacement(t);
-                    return { ...t, ...placement };
-                } else if (currentLineId === 'seoul_line6') {
-                    const placement = getSeoulLine6DiagramTrainPlacement(t);
                     return { ...t, ...placement };
                 }
                 const ref = t.direction === 'up' ? dom.linePathUp : dom.linePathDown;
@@ -6535,20 +5578,12 @@
             renderedT.forEach(t => { if (t.isStopped && t.curr) stoppedAt[t.curr.name] = getTrainColor(t); });
             let lineHTML = currentLineId === 'seoul_line1'
                 ? renderSeoulLine1DiagramRails()
-                : (currentLineId === 'seoul_line2'
-                    ? renderSeoulLine2DiagramRails()
-                    : (currentLineId === 'seoul_line5'
-                        ? renderSeoulLine5DiagramRails()
-                        : (currentLineId === 'seoul_line6' ? renderSeoulLine6DiagramRails() : '')));
+                : (currentLineId === 'seoul_line2' ? renderSeoulLine2DiagramRails() : '');
             for (const stationName in STATIONS) {
                 const s = STATIONS[stationName]; const isSel = selectedStation === stationName;
                 const schematicPosition = currentLineId === 'seoul_line1'
                     ? SEOUL_LINE1_SCHEMATIC.positions[stationName]
-                    : (currentLineId === 'seoul_line2'
-                        ? SEOUL_LINE2_SCHEMATIC.positions[stationName]
-                        : (currentLineId === 'seoul_line5'
-                            ? SEOUL_LINE5_SCHEMATIC.positions[stationName]
-                            : (currentLineId === 'seoul_line6' ? SEOUL_LINE6_SCHEMATIC.positions[stationName] : null)));
+                    : (currentLineId === 'seoul_line2' ? SEOUL_LINE2_SCHEMATIC.positions[stationName] : null);
                 const lineX = schematicPosition?.x ?? 200;
                 const lineY = schematicPosition?.y ?? (60 + lineLen * s.progress);
                 const stopColor = stoppedAt[stationName];
@@ -6573,7 +5608,7 @@
                 const dotStroke = stopColor || (isSel ? THEME_COLOR : '#9CA3AF');
                 const dotFill = stopColor || '#ffffff';
                 const ringHtml = stopColor ? `<circle class="station-ring" r="7" fill="${stopColor}" /><circle class="station-ring" r="7" fill="${stopColor}" style="animation-delay:0.7s" />` : '';
-                const hasCustomSchematic = currentLineId === 'seoul_line1' || currentLineId === 'seoul_line2' || currentLineId === 'seoul_line5' || currentLineId === 'seoul_line6';
+                const hasCustomSchematic = currentLineId === 'seoul_line1' || currentLineId === 'seoul_line2';
                 const stationGuideHalfWidth = hasCustomSchematic ? 38 : 80;
                 const stationHitWidth = hasCustomSchematic ? 126 : 184;
                 const stationFontSize = hasCustomSchematic ? '11px' : '12px';
@@ -6688,45 +5723,8 @@
         };
         
         dom.tabHome.onclick = () => window.switchTab('home');
-        dom.tabJourney.onclick = () => window.switchTab('journey');
         dom.tabLine.onclick = () => window.switchTab('line');
         dom.tabMap.onclick = () => window.switchTab('map');
-        dom.journeyStartButton.addEventListener('click', () => window.openJourneyStationPicker('start'));
-        dom.journeyEndButton.addEventListener('click', () => window.openJourneyStationPicker('end'));
-        const swapJourneyStations = () => {
-            [journeyStart, journeyEnd] = [journeyEnd, journeyStart];
-            updateJourneySelectionUI();
-            dom.journeySearchPanel.classList.remove('hidden');
-            dom.journeyResult.classList.add('hidden');
-            dom.journeyScreen.scrollTo({ top:0, behavior:'smooth' });
-        };
-        dom.journeySwapButton.addEventListener('click', swapJourneyStations);
-        dom.journeyHeaderSwap.addEventListener('click', swapJourneyStations);
-        dom.journeySearchButton.addEventListener('click', () => window.searchJourneyNow());
-        dom.journeyPickerClose.addEventListener('click', () => window.closeJourneyStationPicker());
-        dom.journeyStationSearch.addEventListener('input', event => renderJourneyStationList(event.target.value));
-        dom.journeyStationList.addEventListener('click', event => {
-            const button = event.target.closest('[data-journey-station-key]');
-            if (!button) return;
-            const choice = journeyStationByKey.get(button.dataset.journeyStationKey);
-            if (!choice) return;
-            if (journeyPickerTarget === 'start') journeyStart = choice;
-            else journeyEnd = choice;
-            updateJourneySelectionUI();
-            window.closeJourneyStationPicker();
-        });
-        dom.journeyResult.addEventListener('click', event => {
-            const liveButton = event.target.closest('[data-journey-live-id]');
-            if (liveButton) { window.openJourneyTrainLive(liveButton.dataset.journeyLiveId); return; }
-            if (event.target.closest('#journey-refresh-button')) window.searchJourneyNow();
-            if (event.target.closest('#journey-change-button')) {
-                dom.journeySearchPanel.classList.remove('hidden');
-                dom.journeyResult.classList.add('hidden');
-                dom.journeyScreen.scrollTo({ top:0, behavior:'smooth' });
-            }
-        });
-        dom.journeyAlertConfirm.addEventListener('click', () => window.closeJourneyAlert());
-        dom.journeyAlertModal.addEventListener('click', event => { if (event.target === dom.journeyAlertModal) window.closeJourneyAlert(); });
         dom.directionToggle.addEventListener('change', async (e) => { currentDirection = e.target.value; await loadTimetable(); isAutoScroll = true; window.render(); });
         dom.scrollContainer.addEventListener('touchstart', () => isAutoScroll = false, {passive: true});
         dom.scrollContainer.addEventListener('wheel', () => isAutoScroll = false, {passive: true});
