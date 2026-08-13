@@ -29,6 +29,7 @@
     <script src="donghae_general_train_timetable.js"></script>
     <script src="donghae_highspeed_train_timetable.js"></script>
     <script src="gangneung_ktx_train_timetable.js"></script>
+    <script src="jungbunaeryuk_ktx_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1181,7 +1182,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu', 'donghae', 'donghae_ktx', 'gangneung'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu', 'donghae', 'donghae_ktx', 'gangneung', 'jungbunaeryuk'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1326,6 +1327,14 @@
                 color: '#4D7C0F', downColor: '#B0CC8A',
                 upToward: '행신 · 서울 · 청량리', downToward: '강릉 · 동해',
                 tabLabel: '강릉선', trainLabel: 'KTX-이음'
+            },
+            /* 중부내륙선. 판교에서 경강선을 타고 부발까지 간 뒤
+               부발~문경이 중부내륙선이다. 8편 모두 10개 역에 전부 정차한다. */
+            jungbunaeryuk: {
+                label: '중부내륙선', badge: '내',
+                color: '#475569', downColor: '#A8B3C4',
+                upToward: '판교', downToward: '문경',
+                tabLabel: '중부내륙선', trainLabel: 'KTX-이음'
             }
         };
 
@@ -1808,6 +1817,20 @@
                 "정동진": { progress: 0.8667, ktx: true },
                 "묵호": { progress: 0.9333, ktx: true },
                 "동해": { progress: 1.0000, ktx: true }
+            },
+            /* 중부내륙선 KTX-이음. 지선 없이 한 줄이고,
+               8편 모두 10개 역에 빠짐없이 선다(통과역 없음). */
+            'jungbunaeryuk': {
+                "판교(경기)": { progress: 0.0000, ktx: true, transfer: [{name: '신분당', color: '#D4003B'}, {name: '경강', color: '#0054A6'}] },
+                "부발": { progress: 0.1111, ktx: true, transfer: [{name: '경강', color: '#0054A6'}] },
+                "가남": { progress: 0.2222, ktx: true },
+                "감곡장호원": { progress: 0.3333, ktx: true },
+                "앙성온천": { progress: 0.4444, ktx: true },
+                "충주": { progress: 0.5556, ktx: true },
+                "살미": { progress: 0.6667, ktx: true },
+                "수안보온천": { progress: 0.7778, ktx: true },
+                "연풍": { progress: 0.8889, ktx: true },
+                "문경": { progress: 1.0000, ktx: true }
             }
         };
 
@@ -2008,7 +2031,8 @@
             daegu:               { src: './daegu_general_train_timetable.js',       globalName: 'DAEGU_LINE_TIMETABLE' },
             donghae:             { src: './donghae_general_train_timetable.js',     globalName: 'DONGHAE_LINE_TIMETABLE' },
             donghae_ktx:         { src: './donghae_highspeed_train_timetable.js',   globalName: 'DONGHAE_KTX_LINE_TIMETABLE' },
-            gangneung:           { src: './gangneung_ktx_train_timetable.js',       globalName: 'GANGNEUNG_LINE_TIMETABLE' }
+            gangneung:           { src: './gangneung_ktx_train_timetable.js',       globalName: 'GANGNEUNG_LINE_TIMETABLE' },
+            jungbunaeryuk:       { src: './jungbunaeryuk_ktx_train_timetable.js',   globalName: 'JUNGBUNAERYUK_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -2167,6 +2191,12 @@
             routeName: '강릉선 KTX-이음(행신/서울/청량리-강릉/동해)',
             sourceGlobal: 'GANGNEUNG_KTX_TRAIN_TIMETABLE',
             targetGlobal: 'GANGNEUNG_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'jungbunaeryuk', baseId: 56000, label: '중부내륙선',
+            routeName: '중부내륙선 KTX-이음(판교-문경)',
+            sourceGlobal: 'JUNGBUNAERYUK_KTX_TRAIN_TIMETABLE',
+            targetGlobal: 'JUNGBUNAERYUK_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2413,7 +2443,8 @@
             daegu:1100,
             donghae:3000,
             donghae_ktx:2000,
-            gangneung:1800
+            gangneung:1800,
+            jungbunaeryuk:1300
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -4292,6 +4323,8 @@
               stops: [['동대구',0],['하양',21],['영천',38],['아화',52],['서경주',66],['경주',70],['안강',78],['포항',92]] },
             { id: 'chungbuk', name: '충북선', types: ['ITX-마음', '무궁화호'],
               stops: [['대전',0],['신탄진',18],['부강',27],['조치원',37],['오송',44],['청주',55],['오근장',63],['청주공항',68],['증평',79],['음성',98],['주덕',117],['충주',126],['삼탄',141],['봉양',152],['제천',157],['단양',183],['풍기',207],['영주',221]] },
+            { id: 'jungbunaeryuk', name: '중부내륙선', types: ['KTX-이음'],
+              stops: [['판교(경기)',0],['부발',39],['가남',52],['감곡장호원',63],['앙성온천',77],['충주',93],['살미',101],['수안보온천',109],['연풍',117],['문경',126]] },
             { id: 'gangneung', name: '강릉선', types: ['KTX-이음'],
               stops: [['서울',0],['청량리',12],['상봉',18],['양평',55],['만종',100],['횡성',110],['둔내',131],['평창',155],['진부(오대산)',177],['강릉',223]] },
             { id: 'janghang', name: '장항선', types: ['ITX-마음', '무궁화호', '누리로'],
@@ -4498,6 +4531,15 @@
                   '양평': 56, '서원주': 91, '만종': 100, '횡성': 110, '둔내': 131,
                   '평창': 155, '진부(오대산)': 177, '강릉': 223,
                   '정동진': 240, '묵호': 253, '동해': 257
+              } },
+
+            /* 중부내륙선 KTX-이음. 판교 기점 km 를 직접 준다.
+               판교~부발은 경강선, 부발~문경이 중부내륙선이다. */
+            { line: '중부내륙선', routeId: 'jungbunaeryuk', global: 'JUNGBUNAERYUK_KTX_TRAIN_TIMETABLE',
+              km: {
+                  '판교(경기)': 0, '부발': 39, '가남': 52, '감곡장호원': 63,
+                  '앙성온천': 77, '충주': 93, '살미': 101, '수안보온천': 109,
+                  '연풍': 117, '문경': 126
               } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
@@ -4798,11 +4840,11 @@
 
         /* ---------------- 역 · 지역 ---------------- */
         const RAIL_REGION_MAP = {
-            '수도권': ['서울','용산','영등포','청량리','상봉','광명','수서','동탄','평택지제','수원','평택','평내호평','마석','안양','오산','서정리','행신'],
+            '수도권': ['서울','용산','영등포','청량리','상봉','광명','수서','동탄','평택지제','수원','평택','평내호평','마석','안양','오산','서정리','행신','판교(경기)','부발','가남'],
             '강원': ['춘천','남춘천','강촌','가평','청평','양평','원주','만종','횡성','둔내','평창','진부(오대산)','강릉','정동진','묵호','동해','추암','삼척해변','삼척','근덕','임원','옥원','도계','태백','민둥산','영월','정선'],
-            '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','청주','오근장','청주공항','증평','음성','주덕','충주','삼탄','봉양','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
+            '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','청주','오근장','청주공항','증평','음성','주덕','충주','삼탄','봉양','감곡장호원','앙성온천','살미','수안보온천','연풍','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
             '전라': ['익산','정읍','광주송정','나주','목포','김제','장성','함평','무안','전주','남원','곡성','구례구','순천','여천','여수엑스포','군산','벌교','보성'],
-            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','하양','아화','서경주','안강','영덕','울진','월포','장사','강구','영해','고래불','후포','평해','기성','매화','죽변','흥부','군위','북울산','기장','신해운대','센텀','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
+            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','하양','아화','서경주','안강','영덕','울진','문경','월포','장사','강구','영해','고래불','후포','평해','기성','매화','죽변','흥부','군위','북울산','기장','신해운대','센텀','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
         };
         const RAIL_POPULAR = ['서울','부산','동대구','대전','광주송정','강릉','목포','여수엑스포','수서','용산','전주','포항'];
 
