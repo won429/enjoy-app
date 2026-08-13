@@ -134,19 +134,46 @@
         @keyframes slide-in-from-bottom { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
         .animate-in { animation: slide-in-from-bottom 0.34s cubic-bezier(0.2,0.9,0.2,1) forwards; }
 
-        /* 역명판: 기존 캡슐 디자인 */
+        /* 역명판: 승강장 벽에 볼트로 고정된 법랑 사인
+           배경 그래픽의 재질(강철 프레임 · 법랑 표면 · 위에서 내려오는 조명)에 맞춘 디자인.
+           background-color 는 JS 가 노선색으로 덮어쓰므로 음영은 background-image 로만 얹는다. */
         .station-plate-base {
             height: 2.5rem;
             background-color: #0054A6;
+            background-image: linear-gradient(180deg,
+                rgba(255,255,255,0.30) 0%,
+                rgba(255,255,255,0.11) 20%,
+                rgba(255,255,255,0) 47%,
+                rgba(0,0,0,0.10) 78%,
+                rgba(0,0,0,0.20) 100%);
             border-radius: 624.9375rem;
             position: relative;
             display: grid;
             grid-template-columns: minmax(0, 1fr) var(--station-pill-width, 7.875rem) minmax(0, 1fr);
             align-items: center;
             gap: 0.375rem;
-            padding: 0 0.625rem;
-            box-shadow: 0 0.875rem 1.875rem -0.625rem rgba(0,84,166,0.45), inset 0 0.0625rem 0 rgba(255,255,255,0.18);
+            padding: 0 1.75rem;
+            box-shadow:
+                0 0 0 0.1875rem #3b4243,
+                0 0 0 0.25rem rgba(255,250,238,0.30),
+                0 0.875rem 1.625rem -0.75rem rgba(28,22,14,0.55),
+                inset 0 0 0 0.0625rem rgba(255,255,255,0.22),
+                inset 0 0.0625rem 0 rgba(255,255,255,0.34),
+                inset 0 -0.1875rem 0.375rem rgba(0,0,0,0.20);
             transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        /* 캡슐 양 끝 고정 볼트 */
+        .station-plate-base::before {
+            content: "";
+            position: absolute;
+            inset: 0 0.6875rem;
+            pointer-events: none;
+            background-image:
+                radial-gradient(circle at 50% 40%, rgba(255,255,255,0.75) 0 24%, rgba(18,24,26,0.72) 34% 66%, rgba(18,24,26,0) 70%),
+                radial-gradient(circle at 50% 40%, rgba(255,255,255,0.75) 0 24%, rgba(18,24,26,0.72) 34% 66%, rgba(18,24,26,0) 70%);
+            background-size: 0.3125rem 0.3125rem;
+            background-repeat: no-repeat;
+            background-position: left center, right center;
         }
         .station-plate-side {
             min-width: 0;
@@ -165,8 +192,10 @@
             white-space: nowrap;
             line-height: 1.1;
         }
+        /* 역명판 중앙 — 사인 위에 덧대어 붙인 법랑 명판 */
         .station-plate-pill {
             background-color: #ffffff;
+            background-image: linear-gradient(180deg, #ffffff 0%, #fbf9f4 58%, #eeebe2 100%);
             height: 3.5rem;
             width: var(--station-pill-width, 7.875rem);
             max-width: 54%;
@@ -181,7 +210,12 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            box-shadow: 0 0.625rem 1.5rem -0.625rem rgba(15,23,42,0.30), 0 0 0 0.25rem rgba(255,255,255,0.7);
+            box-shadow:
+                0 0 0 0.125rem #3b4243,
+                0 0 0 0.1875rem rgba(255,250,238,0.34),
+                0 0.75rem 1.25rem -0.5rem rgba(28,22,14,0.52),
+                inset 0 0.0625rem 0 rgba(255,255,255,0.95),
+                inset 0 -0.125rem 0.3125rem rgba(120,105,80,0.14);
             transition: border-color 0.3s;
         }
         #home-station-name {
@@ -203,7 +237,10 @@
             color: white;
             font-size: 0.8125rem;
             font-weight: 900;
-            box-shadow: 0 0.1875rem 0.5rem -0.125rem rgba(15,23,42,0.30);
+            box-shadow:
+                inset 0 0.0625rem 0 rgba(255,255,255,0.42),
+                inset 0 -0.0625rem 0.125rem rgba(0,0,0,0.24),
+                0 0.1875rem 0.4375rem -0.125rem rgba(28,22,14,0.45);
             transition: background-color 0.3s;
         }
 
@@ -280,20 +317,29 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            filter: drop-shadow(0 .5rem .75rem rgba(15,23,42,.2));
+            /* 타일 벽에 드리우는 그림자 — 장면의 따뜻한 조명색에 맞춘 색조 */
+            filter: drop-shadow(0 .5rem .6875rem rgba(46,34,18,.34));
         }
         .home-platform-station-plate .station-plate-base {
             z-index: 1;
             height: 2.75rem;
-            border: .125rem solid rgba(255,255,255,.72);
-            box-shadow: 0 .75rem 1.625rem -.75rem rgba(15,23,42,.48), inset 0 .0625rem 0 rgba(255,255,255,.22);
         }
         .home-platform-station-plate .station-plate-pill {
             top: 50%;
             z-index: 2;
             height: 3.75rem;
             transform: translate(-50%, -50%);
-            background-color: rgba(255,255,255,.97);
+        }
+        /* 법랑에 새긴 듯한 인접역 표기 */
+        .home-platform-station-plate #home-prev-station,
+        .home-platform-station-plate #home-next-station {
+            color: rgba(255,253,247,.94);
+            letter-spacing: -.02em;
+            text-shadow: 0 .0625rem .0625rem rgba(0,0,0,.34);
+        }
+        .home-platform-station-plate #home-station-name {
+            color: #1b2124;
+            text-shadow: 0 .0625rem 0 rgba(255,255,255,.85);
         }
         .home-platform-message {
             position: absolute;
@@ -3892,9 +3938,9 @@
             const prevStation = idx > 0 ? stationNames[idx - 1] : null;
             const nextStation = idx < stationNames.length - 1 ? stationNames[idx + 1] : null;
             dom.homeStationName.textContent = homeSelectedStation;
-            if (prevStation) { dom.homePrevStation.textContent = `< ${prevStation}`; dom.homePrevStationContainer.classList.replace('opacity-0', 'opacity-100'); } 
+            if (prevStation) { dom.homePrevStation.textContent = `< ${prevStation}`; dom.homePrevStationContainer.classList.replace('opacity-0', 'opacity-100'); }
             else { dom.homePrevStationContainer.classList.replace('opacity-100', 'opacity-0'); }
-            if (nextStation) { dom.homeNextStation.textContent = `${nextStation} >`; dom.homeNextStationContainer.classList.replace('opacity-0', 'opacity-100'); } 
+            if (nextStation) { dom.homeNextStation.textContent = `${nextStation} >`; dom.homeNextStationContainer.classList.replace('opacity-0', 'opacity-100'); }
             else { dom.homeNextStationContainer.classList.replace('opacity-100', 'opacity-0'); }
 
             const stationAddress = STATION_ADDRESSES[currentLineId]?.[homeSelectedStation] || '주소 정보가 없습니다.';
