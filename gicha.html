@@ -28,6 +28,7 @@
     <script src="daegu_general_train_timetable.js"></script>
     <script src="donghae_general_train_timetable.js"></script>
     <script src="donghae_highspeed_train_timetable.js"></script>
+    <script src="gangneung_ktx_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1180,7 +1181,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu', 'donghae', 'donghae_ktx'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu', 'donghae', 'donghae_ktx', 'gangneung'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1317,6 +1318,14 @@
                     { from: '평택지제', to: '천안아산' },
                     { from: '경주', to: '포항' }
                 ]
+            },
+            /* 강릉선(경강선). 서원주에서 갈라져 강릉까지 가는 준고속 신선이고,
+               강릉 아래 정동진 · 묵호 · 동해는 동해선을 이어 달린다. */
+            gangneung: {
+                label: '강릉선', badge: '강',
+                color: '#4D7C0F', downColor: '#B0CC8A',
+                upToward: '행신 · 서울 · 청량리', downToward: '강릉 · 동해',
+                tabLabel: '강릉선', trainLabel: 'KTX-이음'
             }
         };
 
@@ -1778,6 +1787,27 @@
                 "묵호": { progress: 0.8824, ktx: true },
                 "정동진": { progress: 0.9412, ktx: true },
                 "강릉": { progress: 1.0000, ktx: true }
+            },
+            /* 강릉선 KTX-이음. 지선 없이 한 줄이다.
+               서울 · 청량리 어느 쪽에서 출발하든 같은 선을 타고,
+               일부 열차는 강릉에서 동해선을 이어 정동진 · 묵호 · 동해까지 간다. */
+            'gangneung': {
+                "행신": { progress: 0.0000, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "서울": { progress: 0.0667, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '4', color: '#00A4E3'}] },
+                "청량리": { progress: 0.1333, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '경의중앙', color: '#77C4A3'}, {name: '경춘', color: '#0C8E72'}] },
+                "상봉": { progress: 0.2000, ktx: true, transfer: [{name: '7', color: '#54640D'}, {name: '경의중앙', color: '#77C4A3'}, {name: '경춘', color: '#0C8E72'}] },
+                "덕소": { progress: 0.2667, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "양평": { progress: 0.3333, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "서원주": { progress: 0.4000, ktx: true },
+                "만종": { progress: 0.4667, ktx: true },
+                "횡성": { progress: 0.5333, ktx: true },
+                "둔내": { progress: 0.6000, ktx: true },
+                "평창": { progress: 0.6667, ktx: true },
+                "진부(오대산)": { progress: 0.7333, ktx: true },
+                "강릉": { progress: 0.8000, ktx: true },
+                "정동진": { progress: 0.8667, ktx: true },
+                "묵호": { progress: 0.9333, ktx: true },
+                "동해": { progress: 1.0000, ktx: true }
             }
         };
 
@@ -1977,7 +2007,8 @@
             chungbuk:            { src: './chungbuk_general_train_timetable.js',    globalName: 'CHUNGBUK_LINE_TIMETABLE' },
             daegu:               { src: './daegu_general_train_timetable.js',       globalName: 'DAEGU_LINE_TIMETABLE' },
             donghae:             { src: './donghae_general_train_timetable.js',     globalName: 'DONGHAE_LINE_TIMETABLE' },
-            donghae_ktx:         { src: './donghae_highspeed_train_timetable.js',   globalName: 'DONGHAE_KTX_LINE_TIMETABLE' }
+            donghae_ktx:         { src: './donghae_highspeed_train_timetable.js',   globalName: 'DONGHAE_KTX_LINE_TIMETABLE' },
+            gangneung:           { src: './gangneung_ktx_train_timetable.js',       globalName: 'GANGNEUNG_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -2130,6 +2161,12 @@
             routeName: '동해선 KTX · SRT(서울/수서-포항, 부전-강릉)',
             sourceGlobal: 'DONGHAE_HIGHSPEED_TRAIN_TIMETABLE',
             targetGlobal: 'DONGHAE_KTX_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'gangneung', baseId: 55000, label: '강릉선',
+            routeName: '강릉선 KTX-이음(행신/서울/청량리-강릉/동해)',
+            sourceGlobal: 'GANGNEUNG_KTX_TRAIN_TIMETABLE',
+            targetGlobal: 'GANGNEUNG_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2375,7 +2412,8 @@
             chungbuk:2000,
             daegu:1100,
             donghae:3000,
-            donghae_ktx:2000
+            donghae_ktx:2000,
+            gangneung:1800
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -4450,6 +4488,16 @@
                   '부전': 190, '태화강': 228, '경주': 294,
                   '영덕': 376, '울진': 444, '삼척': 498, '동해': 511,
                   '묵호': 515, '정동진': 528, '강릉': 545
+              } },
+
+            /* 강릉선 KTX-이음. 서울 기점 km 를 직접 준다.
+               강릉 아래(정동진 · 묵호 · 동해)는 동해선 거리를 이어 붙였다. */
+            { line: '강릉선', routeId: 'gangneung', global: 'GANGNEUNG_KTX_TRAIN_TIMETABLE',
+              km: {
+                  '행신': -19, '서울': 0, '청량리': 12, '상봉': 18, '덕소': 31,
+                  '양평': 56, '서원주': 91, '만종': 100, '횡성': 110, '둔내': 131,
+                  '평창': 155, '진부(오대산)': 177, '강릉': 223,
+                  '정동진': 240, '묵호': 253, '동해': 257
               } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
@@ -4546,7 +4594,7 @@
             'general_train_fares_2_xlsx':  ['ITX-새마을', 'ITX-마음']
         };
         // 운임표 표기 → 앱 역 이름
-        const RAIL_FARE_NAME_ALIAS = { '여수EXPO': '여수엑스포', '울산': '울산(통도사)' };
+        const RAIL_FARE_NAME_ALIAS = { '여수EXPO': '여수엑스포', '울산': '울산(통도사)', '진부': '진부(오대산)' };
         const railFareFix = (n) => RAIL_FARE_NAME_ALIAS[n] || n;
 
         // { 등급: { '서울|부산': [ { via:['수원','경주'], std:48800, spc:68300 } ] } }
