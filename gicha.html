@@ -402,8 +402,15 @@
         /* ===== 열차 조회 화면 색 (라이트 · 다크) =====
            기본은 다크. 기기 설정이 라이트면 코레일 앱과 같은 밝은 화면으로 바뀐다. */
         :root {
-            --rail-accent:      #2C6BF3;
-            --rail-accent-dark: #1F57D4;
+            /* 열차 등급색 — 코레일 앱 기준. 같은 계열은 한 색으로 통일한다. */
+            --rail-grade-ktx:    #2C55C9;   /* KTX · 산천 · 청룡 · 이음 */
+            --rail-grade-srt:    #4B2E83;   /* SRT */
+            --rail-grade-itx:    #009D4F;   /* ITX-새마을 · 마음 · 청춘 */
+            --rail-grade-mugung: #E4007F;   /* 무궁화호 · 누리로 */
+            --rail-grade-tour:   #C08A2A;   /* 관광열차 */
+
+            --rail-accent:      #1B64F2;
+            --rail-accent-dark: #1450C8;
             --rail-page:        #050608;   /* 결과 화면 바탕 */
             --rail-head:        #0A0F1B;   /* 결과 화면 헤더 */
             --rail-head-fg:     #ffffff;
@@ -437,23 +444,24 @@
         }
         @media (prefers-color-scheme: light) {
             :root {
-                --rail-page:        #F2F4F8;
-                --rail-head:        #1B6BF0;
+                --rail-page:        #F5F6F8;
+                /* 헤더는 위쪽이 밝은 하늘색, 아래로 갈수록 진한 파랑 */
+                --rail-head:        linear-gradient(170deg, #4FA1FF 0%, #2C7BF5 38%, #1B64F2 100%);
                 --rail-head-fg:     #ffffff;
                 --rail-row:         #ffffff;
-                --rail-row-active:  #EEF3FD;
+                --rail-row-active:  #EDF3FE;
                 --rail-panel:       #ffffff;
-                --rail-line:        rgba(17,24,39,.08);
-                --rail-line-strong: rgba(17,24,39,.16);
-                --rail-fg:          #111827;
-                --rail-fg-2:        #4B5563;
-                --rail-fg-3:        #6B7280;
+                --rail-line:        rgba(17,24,39,.07);
+                --rail-line-strong: rgba(17,24,39,.14);
+                --rail-fg:          #16181D;
+                --rail-fg-2:        #5A6170;
+                --rail-fg-3:        #71767F;
                 --rail-fill:        rgba(17,24,39,.05);
                 --rail-fill-2:      rgba(17,24,39,.03);
                 --rail-hover:       rgba(17,24,39,.08);
-                --rail-sky-1:       #2E7BF6;
-                --rail-sky-2:       #1B6BF0;
-                --rail-sky-3:       #F2F4F8;
+                --rail-sky-1:       #5CA9FF;
+                --rail-sky-2:       #2C7BF5;
+                --rail-sky-3:       #F5F6F8;
                 --rail-glow-1:      rgba(255,255,255,.35);
                 --rail-glow-2:      rgba(255,255,255,.18);
                 --rail-card:        #ffffff;
@@ -491,6 +499,30 @@
                 linear-gradient(180deg, var(--rail-sky-1) 0%, var(--rail-sky-2) var(--rail-sky-mid), var(--rail-sky-3) var(--rail-sky-end));
         }
         .rail-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; opacity: var(--rail-night); }
+
+        /* 낮 하늘 — 해와 구름. 밤(다크)에는 --rail-night 이 1 이라 사라진다. */
+        .rail-day { position: absolute; inset: 0; pointer-events: none; overflow: hidden; opacity: calc(1 - var(--rail-night)); }
+        .rail-sun {
+            position: absolute; top: -2.5rem; right: -1.5rem;
+            width: 13rem; height: 13rem; border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%,
+                rgba(255,238,170,.95) 0%, rgba(255,222,130,.72) 32%,
+                rgba(255,205,110,.38) 55%, rgba(255,205,110,0) 74%);
+            filter: blur(0.75rem);
+        }
+        .rail-cloud {
+            position: absolute; left: var(--x); top: var(--y);
+            width: var(--w); height: calc(var(--w) * .42);
+            background: rgba(255,255,255,var(--o));
+            border-radius: 62.4375rem;
+            filter: blur(var(--b));
+        }
+        .rail-cloud::before, .rail-cloud::after {
+            content: ''; position: absolute; border-radius: 50%;
+            background: inherit;
+        }
+        .rail-cloud::before { width: 54%; height: 105%; left: 12%; top: -46%; }
+        .rail-cloud::after  { width: 40%; height: 82%;  right: 14%; top: -32%; }
         .rail-moon {
             position: absolute; top: 3.25rem; right: 0.125rem;
             width: 4.75rem; height: 4.75rem; border-radius: 50%;
@@ -760,6 +792,16 @@
                 <span class="rail-star" style="--x:73%;--y:89%;--s:0.125rem;--o:.45"></span>
                 <span class="rail-star" style="--x:91%;--y:80%;--s:0.1875rem;--o:.55"></span>
                 <span class="rail-star" style="--x:41%;--y:82%;--s:0.125rem;--o:.3"></span>
+            </div>
+
+            <!-- 낮 하늘: 해와 구름 (라이트 모드에서만 보인다) -->
+            <div class="rail-day" aria-hidden="true">
+                <span class="rail-sun"></span>
+                <span class="rail-cloud" style="--x:-6%;--y:9%;--w:11rem;--o:.55;--b:0.9rem"></span>
+                <span class="rail-cloud" style="--x:52%;--y:4%;--w:9rem;--o:.42;--b:1.1rem"></span>
+                <span class="rail-cloud" style="--x:18%;--y:20%;--w:14rem;--o:.32;--b:1.4rem"></span>
+                <span class="rail-cloud" style="--x:66%;--y:26%;--w:10rem;--o:.28;--b:1.2rem"></span>
+                <span class="rail-cloud" style="--x:-10%;--y:33%;--w:12rem;--o:.22;--b:1.5rem"></span>
             </div>
 
             <div class="relative z-10 flex flex-col px-[22px] pt-safe pb-32">
@@ -3831,17 +3873,17 @@
 
         /* ---------------- 열차 종별 제원 ---------------- */
         const RAIL_TYPES = {
-            'KTX':       { color: '#2C6BF3', speed: 172, base: 2000, per: 140, headway: 32,  offset: 4,  no: 100,  special: true,  mile: true,  cat: '고속' },
-            'KTX-산천':   { color: '#2C6BF3', speed: 172, base: 2000, per: 140, headway: 55,  offset: 21, no: 400,  special: true,  mile: true,  cat: '고속' },
-            'KTX-청룡':   { color: '#12327A', speed: 188, base: 2400, per: 148, headway: 210, offset: 46, no: 2,    special: true,  mile: true,  cat: '고속' },
-            'KTX-이음':   { color: '#0E8A7D', speed: 112, base: 2000, per: 118, headway: 68,  offset: 17, no: 700,  special: true,  mile: true,  cat: '고속' },
-            'SRT':       { color: '#4B2E83', speed: 176, base: 2000, per: 127, headway: 38,  offset: 13, no: 300,  special: true,  mile: true,  cat: '고속' },
-            'ITX-새마을': { color: '#0F5FA6', speed: 100, base: 3200, per: 89,  headway: 96,  offset: 27, no: 1000, special: false, mile: false, cat: 'ITX' },
-            'ITX-마음':   { color: '#00A0B0', speed: 96,  base: 3000, per: 70,  headway: 104, offset: 43, no: 1200, special: false, mile: false, cat: 'ITX' },
-            'ITX-청춘':   { color: '#E1523F', speed: 72,  base: 2600, per: 66,  headway: 58,  offset: 9,  no: 2000, special: false, mile: false, cat: 'ITX' },
-            '무궁화호':   { color: '#D9534F', speed: 88,  base: 2600, per: 58.5, headway: 74, offset: 34, no: 1700, special: false, mile: false, cat: '일반' },
-            '누리로':     { color: '#7A4FBF', speed: 88,  base: 2600, per: 58.5, headway: 155, offset: 51, no: 1600, special: false, mile: false, cat: '일반' },
-            '관광열차':   { color: '#C08A2A', speed: 58,  base: 8000, per: 75,  headway: 420, offset: 92, no: 4300, special: false, mile: false, cat: '관광' }
+            'KTX':       { color: 'var(--rail-grade-ktx)', speed: 172, base: 2000, per: 140, headway: 32,  offset: 4,  no: 100,  special: true,  mile: true,  cat: '고속' },
+            'KTX-산천':   { color: 'var(--rail-grade-ktx)', speed: 172, base: 2000, per: 140, headway: 55,  offset: 21, no: 400,  special: true,  mile: true,  cat: '고속' },
+            'KTX-청룡':   { color: 'var(--rail-grade-ktx)', speed: 188, base: 2400, per: 148, headway: 210, offset: 46, no: 2,    special: true,  mile: true,  cat: '고속' },
+            'KTX-이음':   { color: 'var(--rail-grade-ktx)', speed: 112, base: 2000, per: 118, headway: 68,  offset: 17, no: 700,  special: true,  mile: true,  cat: '고속' },
+            'SRT':       { color: 'var(--rail-grade-srt)', speed: 176, base: 2000, per: 127, headway: 38,  offset: 13, no: 300,  special: true,  mile: true,  cat: '고속' },
+            'ITX-새마을': { color: 'var(--rail-grade-itx)', speed: 100, base: 3200, per: 89,  headway: 96,  offset: 27, no: 1000, special: false, mile: false, cat: 'ITX' },
+            'ITX-마음':   { color: 'var(--rail-grade-itx)', speed: 96,  base: 3000, per: 70,  headway: 104, offset: 43, no: 1200, special: false, mile: false, cat: 'ITX' },
+            'ITX-청춘':   { color: 'var(--rail-grade-itx)', speed: 72,  base: 2600, per: 66,  headway: 58,  offset: 9,  no: 2000, special: false, mile: false, cat: 'ITX' },
+            '무궁화호':   { color: 'var(--rail-grade-mugung)', speed: 88,  base: 2600, per: 58.5, headway: 74, offset: 34, no: 1700, special: false, mile: false, cat: '일반' },
+            '누리로':     { color: 'var(--rail-grade-mugung)', speed: 88,  base: 2600, per: 58.5, headway: 155, offset: 51, no: 1600, special: false, mile: false, cat: '일반' },
+            '관광열차':   { color: 'var(--rail-grade-tour)', speed: 58,  base: 8000, per: 75,  headway: 420, offset: 92, no: 4300, special: false, mile: false, cat: '관광' }
         };
 
         /* ---------------- 운행 계통(노선) ---------------- */

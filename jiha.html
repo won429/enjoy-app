@@ -618,7 +618,51 @@
             </div>
         </main>
 
-        <!-- 4. 카카오 지도 노선 뷰 -->
+        <!-- 4. 길찾기 -->
+        <main id="journey-screen" class="hidden absolute inset-0 z-[25] flex-col overflow-y-auto bg-[#F4F7FB] pb-28 hide-scrollbar">
+            <header class="sticky top-0 z-30 border-b border-black/5 bg-white/90 px-5 pb-4 pt-safe backdrop-blur-xl">
+                <div class="pt-2">
+                    <h2 class="text-[21px] font-black tracking-tight text-[#0B1220]">길찾기</h2>
+                    <p class="mt-1 text-[11px] font-semibold text-slate-400">현재 시각 이후 실제 시간표 기준</p>
+                </div>
+            </header>
+            <div class="space-y-4 px-5 py-5">
+                <section class="rounded-[26px] border border-white/80 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+                    <div class="flex items-stretch gap-3">
+                        <div class="flex w-6 shrink-0 flex-col items-center py-5">
+                            <span class="h-3 w-3 rounded-full border-[3px] border-[#2563EB] bg-white"></span>
+                            <span class="my-1 min-h-10 w-px flex-1 border-l-2 border-dotted border-slate-200"></span>
+                            <span class="h-3 w-3 rounded-[3px] bg-[#EF4444]"></span>
+                        </div>
+                        <div class="min-w-0 flex-1 space-y-2">
+                            <button id="journey-start-button" type="button" class="flex min-h-[58px] w-full items-center justify-between rounded-2xl bg-slate-50 px-4 text-left transition active:scale-[0.98]" aria-label="출발역 선택">
+                                <span><span class="block text-[9px] font-extrabold text-[#2563EB]">출발</span><span id="journey-start-label" class="mt-1 block text-[15px] font-extrabold text-slate-400">출발역을 선택하세요</span></span>
+                                <i class="fa-solid fa-chevron-right text-[11px] text-slate-300"></i>
+                            </button>
+                            <button id="journey-end-button" type="button" class="flex min-h-[58px] w-full items-center justify-between rounded-2xl bg-slate-50 px-4 text-left transition active:scale-[0.98]" aria-label="도착역 선택">
+                                <span><span class="block text-[9px] font-extrabold text-[#EF4444]">도착</span><span id="journey-end-label" class="mt-1 block text-[15px] font-extrabold text-slate-400">도착역을 선택하세요</span></span>
+                                <i class="fa-solid fa-chevron-right text-[11px] text-slate-300"></i>
+                            </button>
+                        </div>
+                        <button id="journey-swap-button" type="button" class="my-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition active:rotate-180" aria-label="출발역과 도착역 바꾸기">
+                            <i class="fa-solid fa-arrow-right-arrow-left rotate-90 text-[12px]"></i>
+                        </button>
+                    </div>
+                    <button id="journey-search-button" type="button" class="mt-4 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-[#2563EB] py-3.5 text-[14px] font-black text-white shadow-[0_10px_22px_rgba(37,99,235,0.28)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
+                        <i class="fa-solid fa-route"></i> 지금 출발 길찾기
+                    </button>
+                </section>
+                <section id="journey-result" aria-live="polite">
+                    <div class="rounded-[24px] border border-dashed border-slate-200 bg-white/70 px-6 py-10 text-center">
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#2563EB]"><i class="fa-solid fa-train-subway"></i></div>
+                        <p class="mt-3 text-[13px] font-extrabold text-slate-600">출발역과 도착역을 선택해 주세요</p>
+                        <p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-400">탑승 시각, 열차번호, 환승 경로를<br>한 번에 계산합니다.</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- 5. 카카오 지도 노선 뷰 -->
         <main id="subway-map-screen" class="hidden absolute inset-0 z-10 bg-[#eef2f6]">
             <div id="subway-map" class="absolute inset-0"></div>
             <div id="subway-map-fallback" class="absolute inset-0 flex flex-col items-center justify-center px-8 text-center text-gray-400">
@@ -642,8 +686,8 @@
 
         <div id="floating-panel" class="hidden absolute bottom-[100px] left-0 right-0 px-4 z-[90] min-h-[72px] transition-all duration-300"></div>
 
-        <!-- 5. 하단 네비게이션 -->
-        <nav id="bottom-nav" class="absolute bottom-7 left-1/2 -translate-x-1/2 z-[100] w-[88%] max-w-[330px] px-1.5 touch-pan-x select-none">
+        <!-- 6. 하단 네비게이션 -->
+        <nav id="bottom-nav" class="absolute bottom-7 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-[390px] px-1.5 touch-pan-x select-none">
             <div class="flex items-center justify-between rounded-full p-1.5 gap-1 relative transition-all duration-300">
                 <div id="nav-indicator" class="absolute top-1.5 bottom-1.5 rounded-full z-0 nav-transition" style="left: 0.375rem; width: 4.375rem; background-color: #0054A6;"></div>
 
@@ -657,6 +701,12 @@
                     <div class="flex flex-col items-center gap-[3px] pointer-events-none">
                         <i class="fa-solid fa-house text-[15px] text-white drop-shadow-sm transition-colors"></i>
                         <span class="text-[9px] text-white font-bold whitespace-nowrap transition-colors">홈</span>
+                    </div>
+                </button>
+                <button id="tab-journey" class="relative py-2 flex-1 rounded-full group z-10 active:scale-90 transition-transform">
+                    <div class="flex flex-col items-center gap-[3px] pointer-events-none">
+                        <i class="fa-solid fa-route text-[15px] text-gray-400 transition-colors"></i>
+                        <span class="text-[9px] font-semibold text-gray-400 whitespace-nowrap transition-colors">길찾기</span>
                     </div>
                 </button>
                 <button id="tab-line" class="relative py-2 flex-1 rounded-full group z-10 active:scale-90 transition-transform">
@@ -675,6 +725,31 @@
         </nav>
 
         <!-- 모달들 -->
+        <div id="journey-station-modal" class="hidden absolute inset-0 z-[170] flex flex-col justify-end bg-black/40 backdrop-blur-sm">
+            <div class="flex h-[82%] w-full flex-col rounded-t-[30px] border-t border-white/70 bg-white shadow-[0_-20px_50px_rgba(0,0,0,0.16)]">
+                <div class="shrink-0 border-b border-slate-100 px-5 pb-3 pt-4">
+                    <div class="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200"></div>
+                    <div class="flex items-center justify-between">
+                        <div><h2 id="journey-picker-title" class="text-[18px] font-black text-slate-900">출발역 선택</h2><p class="mt-0.5 text-[10px] font-semibold text-slate-400">역 이름 또는 노선으로 검색</p></div>
+                        <button id="journey-picker-close" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-label="닫기"><i class="fa-solid fa-xmark text-[12px]"></i></button>
+                    </div>
+                    <label class="mt-3 flex h-11 items-center gap-2 rounded-2xl bg-slate-100 px-4">
+                        <i class="fa-solid fa-magnifying-glass text-[12px] text-slate-400"></i>
+                        <input id="journey-station-search" type="search" autocomplete="off" placeholder="예: 강남, 2호선" class="min-w-0 flex-1 bg-transparent text-[13px] font-bold text-slate-800 outline-none placeholder:font-semibold placeholder:text-slate-400">
+                    </label>
+                </div>
+                <div id="journey-station-list" class="flex-1 overflow-y-auto px-4 py-2 pb-10 hide-scrollbar"></div>
+            </div>
+        </div>
+
+        <div id="journey-alert-modal" class="hidden absolute inset-0 z-[190] flex items-center justify-center bg-black/45 px-8 backdrop-blur-sm">
+            <div class="w-full max-w-[310px] rounded-[26px] bg-white p-6 text-center shadow-2xl">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#2563EB]"><i class="fa-solid fa-circle-info text-[18px]"></i></div>
+                <p id="journey-alert-message" class="mt-4 whitespace-pre-line text-[14px] font-extrabold leading-relaxed text-slate-800"></p>
+                <button id="journey-alert-confirm" type="button" class="mt-5 h-11 w-full rounded-2xl bg-[#2563EB] text-[13px] font-black text-white">확인</button>
+            </div>
+        </div>
+
         <div id="timetable-modal" class="hidden absolute inset-0 z-[150] flex flex-col justify-end bg-black/40 backdrop-blur-sm transition-opacity">
             <div class="bg-white w-full h-[75%] rounded-t-[32px] shadow-[0_-20px_40px_rgba(0,0,0,0.1)] flex flex-col animate-in border-t border-black/5">
                 <div class="flex flex-col items-center pt-4 pb-2 border-b border-black/5 shrink-0 relative">
@@ -1887,6 +1962,22 @@
         const dom = {
             mainHeader: document.getElementById('main-header'),
             homeScreen: document.getElementById('home-screen'),
+            journeyScreen: document.getElementById('journey-screen'),
+            journeyStartButton: document.getElementById('journey-start-button'),
+            journeyStartLabel: document.getElementById('journey-start-label'),
+            journeyEndButton: document.getElementById('journey-end-button'),
+            journeyEndLabel: document.getElementById('journey-end-label'),
+            journeySwapButton: document.getElementById('journey-swap-button'),
+            journeySearchButton: document.getElementById('journey-search-button'),
+            journeyResult: document.getElementById('journey-result'),
+            journeyStationModal: document.getElementById('journey-station-modal'),
+            journeyPickerTitle: document.getElementById('journey-picker-title'),
+            journeyPickerClose: document.getElementById('journey-picker-close'),
+            journeyStationSearch: document.getElementById('journey-station-search'),
+            journeyStationList: document.getElementById('journey-station-list'),
+            journeyAlertModal: document.getElementById('journey-alert-modal'),
+            journeyAlertMessage: document.getElementById('journey-alert-message'),
+            journeyAlertConfirm: document.getElementById('journey-alert-confirm'),
             clock: document.getElementById('clock-display'),
             dayTypeDisplay: document.getElementById('day-type-display'),
             directionToggle: document.getElementById('direction-toggle'),
@@ -1901,6 +1992,7 @@
             autoScrollBtn: document.getElementById('auto-scroll-btn'),
             floatingPanel: document.getElementById('floating-panel'),
             tabHome: document.getElementById('tab-home'),
+            tabJourney: document.getElementById('tab-journey'),
             tabLine: document.getElementById('tab-line'),
             tabMap: document.getElementById('tab-map'),
             mapScreen: document.getElementById('subway-map-screen'),
@@ -5102,8 +5194,12 @@
             seoul_line7: 'seoul',
             seoul_line8: 'seoul',
             seoul_line9: 'seoul',
+            incheon_line1: 'seoul',
+            incheon_line2: 'seoul',
             gtx_a: 'seoul',
             seohae: 'seoul',
+            gyeongui_jungang: 'seoul',
+            gimpo_goldline: 'seoul',
             gyeonggang: 'seoul',
             gyeongchun: 'seoul',
             airport: 'seoul',
@@ -5115,6 +5211,447 @@
             daejeon_line1: 'daejeon', gwangju_line1: 'gwangju',
             busan_line1: 'busan', busan_line2: 'busan', busan_line3: 'busan',
             busan_line4: 'busan', busan_bglrt: 'busan', busan_donghae: 'busan'
+        };
+
+        const JOURNEY_TRANSFER_SECONDS = 300;
+        const JOURNEY_STATION_ALIASES = { '동대구역':'동대구' };
+        const JOURNEY_REGION_ORDER = ['seoul', 'daegu', 'busan', 'daejeon', 'gwangju'];
+        const JOURNEY_REGION_LABELS = { seoul:'수도권·강원', daegu:'대구권', busan:'부산권', daejeon:'대전', gwangju:'광주' };
+        const JOURNEY_SAME_NAME_EXCEPTIONS = new Set(['seoul|신촌', 'seoul|양평']);
+        const journeyTimetableCache = new Map();
+        const journeyLiveTargets = new Map();
+        let journeyStationChoices = [];
+        let journeyStationByKey = new Map();
+        let journeyStart = null;
+        let journeyEnd = null;
+        let journeyPickerTarget = 'start';
+        let journeySearchToken = 0;
+
+        const escapeJourneyHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({
+            '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+        })[character]);
+
+        const getJourneyNetwork = lineId => LINE_REGION[lineId] || 'seoul';
+        const getJourneyCanonicalName = stationName => JOURNEY_STATION_ALIASES[stationName] || stationName;
+        const getJourneyLineMeta = lineId => FAVORITE_LINE_META[lineId] || { label:lineId, color:'#64748B' };
+        const getJourneyMinutes = seconds => Math.max(1, Math.ceil(seconds / 60));
+        const getJourneyClock = seconds => secondsToTime(seconds).slice(0, 5);
+
+        const buildJourneyStations = () => {
+            if (journeyStationChoices.length) return journeyStationChoices;
+            const candidates = new Map();
+            Object.entries(STATIONS_ALL).forEach(([lineId, stations]) => {
+                const network = getJourneyNetwork(lineId);
+                if (!JOURNEY_REGION_ORDER.includes(network)) return;
+                Object.entries(stations || {}).forEach(([stationName, stationMeta]) => {
+                    const canonical = getJourneyCanonicalName(stationName);
+                    const baseKey = `${network}|${canonical}`;
+                    if (!candidates.has(baseKey)) candidates.set(baseKey, []);
+                    candidates.get(baseKey).push({ lineId, stationName, stationMeta });
+                });
+            });
+
+            const choices = [];
+            candidates.forEach((refs, baseKey) => {
+                const [network, canonical] = baseKey.split('|');
+                const hasDeclaredTransfer = refs.some(ref => Array.isArray(ref.stationMeta?.transfer) && ref.stationMeta.transfer.length);
+                const hasAliasTransfer = refs.some(ref => ref.stationName !== canonical);
+                const shouldGroup = refs.length === 1 || hasDeclaredTransfer || hasAliasTransfer;
+                if (shouldGroup && !JOURNEY_SAME_NAME_EXCEPTIONS.has(baseKey)) {
+                    choices.push({ key:baseKey, network, name:canonical, refs });
+                } else {
+                    refs.forEach(ref => choices.push({
+                        key:`${baseKey}|${ref.lineId}`,
+                        network,
+                        name:canonical,
+                        refs:[ref]
+                    }));
+                }
+            });
+            journeyStationChoices = choices.sort((a, b) => {
+                const regionDelta = JOURNEY_REGION_ORDER.indexOf(a.network) - JOURNEY_REGION_ORDER.indexOf(b.network);
+                return regionDelta || a.name.localeCompare(b.name, 'ko');
+            });
+            journeyStationByKey = new Map(journeyStationChoices.map(choice => [choice.key, choice]));
+            return journeyStationChoices;
+        };
+
+        const getJourneyChoiceLineText = choice => [...new Set(choice.refs.map(ref => getJourneyLineMeta(ref.lineId).label))].join(' · ');
+        const renderJourneyStationList = (query = '') => {
+            const normalizedQuery = query.trim().toLowerCase().replace(/\s+/g, '');
+            const currentNetwork = getJourneyNetwork(currentLineId);
+            const matches = buildJourneyStations().filter(choice => {
+                if (!normalizedQuery) return true;
+                const haystack = `${choice.name}${getJourneyChoiceLineText(choice)}${JOURNEY_REGION_LABELS[choice.network] || ''}`.toLowerCase().replace(/\s+/g, '');
+                return haystack.includes(normalizedQuery);
+            }).sort((a, b) => {
+                const currentDelta = Number(b.network === currentNetwork) - Number(a.network === currentNetwork);
+                return currentDelta || JOURNEY_REGION_ORDER.indexOf(a.network) - JOURNEY_REGION_ORDER.indexOf(b.network) || a.name.localeCompare(b.name, 'ko');
+            });
+
+            if (!matches.length) {
+                dom.journeyStationList.innerHTML = '<div class="py-16 text-center text-[12px] font-bold text-slate-400">검색 결과가 없습니다.</div>';
+                return;
+            }
+            dom.journeyStationList.innerHTML = matches.map(choice => {
+                const lineDots = [...new Map(choice.refs.map(ref => [ref.lineId, getJourneyLineMeta(ref.lineId)])).entries()]
+                    .map(([, meta]) => `<span class="h-2.5 w-2.5 rounded-full" style="background:${meta.color}"></span>`).join('');
+                return `<button type="button" data-journey-station-key="${escapeJourneyHtml(choice.key)}" class="flex w-full items-center gap-3 border-b border-slate-100 px-2 py-3.5 text-left transition active:bg-slate-50">
+                    <span class="flex min-w-[18px] items-center gap-0.5">${lineDots}</span>
+                    <span class="min-w-0 flex-1"><span class="block text-[14px] font-extrabold text-slate-800">${escapeJourneyHtml(choice.name)}</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-400">${escapeJourneyHtml(getJourneyChoiceLineText(choice))}</span></span>
+                    <span class="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[8px] font-extrabold text-slate-500">${escapeJourneyHtml(JOURNEY_REGION_LABELS[choice.network] || choice.network)}</span>
+                </button>`;
+            }).join('');
+        };
+
+        const updateJourneySelectionUI = () => {
+            const updateLabel = (label, choice, emptyText) => {
+                label.textContent = choice ? choice.name : emptyText;
+                label.className = `mt-1 block truncate text-[15px] font-extrabold ${choice ? 'text-slate-900' : 'text-slate-400'}`;
+                if (choice) label.title = getJourneyChoiceLineText(choice);
+                else label.removeAttribute('title');
+            };
+            updateLabel(dom.journeyStartLabel, journeyStart, '출발역을 선택하세요');
+            updateLabel(dom.journeyEndLabel, journeyEnd, '도착역을 선택하세요');
+        };
+
+        window.openJourneyStationPicker = target => {
+            journeyPickerTarget = target === 'end' ? 'end' : 'start';
+            dom.journeyPickerTitle.textContent = journeyPickerTarget === 'start' ? '출발역 선택' : '도착역 선택';
+            dom.journeyStationSearch.value = '';
+            renderJourneyStationList();
+            dom.journeyStationModal.classList.remove('hidden');
+            requestAnimationFrame(() => dom.journeyStationSearch.focus());
+        };
+        window.closeJourneyStationPicker = () => dom.journeyStationModal.classList.add('hidden');
+
+        const showJourneyAlert = message => {
+            dom.journeyAlertMessage.textContent = message;
+            dom.journeyAlertModal.classList.remove('hidden');
+            requestAnimationFrame(() => dom.journeyAlertConfirm.focus());
+        };
+        window.closeJourneyAlert = () => dom.journeyAlertModal.classList.add('hidden');
+
+        const createJourneyLineIndex = (lineId, dayType, timetable) => {
+            const departuresByStation = new Map();
+            ['up', 'down'].forEach(direction => {
+                (timetable[direction] || []).forEach(train => {
+                    train.schedule.forEach((stop, index) => {
+                        if (!departuresByStation.has(stop.name)) departuresByStation.set(stop.name, []);
+                        departuresByStation.get(stop.name).push({ lineId, direction, train, index, sec:stop.sec });
+                    });
+                });
+            });
+            departuresByStation.forEach(events => events.sort((a, b) => a.sec - b.sec));
+            return { lineId, dayType, ...timetable, departuresByStation };
+        };
+
+        const getJourneyLineData = async (lineId, dayType) => {
+            const key = `${lineId}:${dayType}`;
+            if (!journeyTimetableCache.has(key)) {
+                const promise = loadLineTimetableData(dayType, lineId)
+                    .then(timetable => createJourneyLineIndex(lineId, dayType, timetable))
+                    .catch(error => {
+                        journeyTimetableCache.delete(key);
+                        throw error;
+                    });
+                journeyTimetableCache.set(key, promise);
+            }
+            return await journeyTimetableCache.get(key);
+        };
+
+        class JourneyMinHeap {
+            constructor() { this.items = []; }
+            push(value) {
+                this.items.push(value);
+                let index = this.items.length - 1;
+                while (index > 0) {
+                    const parent = Math.floor((index - 1) / 2);
+                    if (this.items[parent].time <= value.time) break;
+                    this.items[index] = this.items[parent]; index = parent;
+                }
+                this.items[index] = value;
+            }
+            pop() {
+                if (!this.items.length) return null;
+                const root = this.items[0], tail = this.items.pop();
+                if (this.items.length && tail) {
+                    let index = 0;
+                    while (true) {
+                        const left = index * 2 + 1, right = left + 1;
+                        if (left >= this.items.length) break;
+                        let child = right < this.items.length && this.items[right].time < this.items[left].time ? right : left;
+                        if (this.items[child].time >= tail.time) break;
+                        this.items[index] = this.items[child]; index = child;
+                    }
+                    this.items[index] = tail;
+                }
+                return root;
+            }
+        }
+
+        const lowerBoundJourneyDepartures = (events, time) => {
+            let low = 0, high = events.length;
+            while (low < high) {
+                const middle = Math.floor((low + high) / 2);
+                if (events[middle].sec < time) low = middle + 1;
+                else high = middle;
+            }
+            return low;
+        };
+
+        const getJourneyAllowedLines = (startChoice, endChoice) => {
+            const networkChoices = buildJourneyStations().filter(choice => choice.network === startChoice.network && choice.refs.length > 1);
+            const adjacency = new Map();
+            const addEdge = (from, to) => {
+                if (!adjacency.has(from)) adjacency.set(from, new Set());
+                adjacency.get(from).add(to);
+            };
+            networkChoices.forEach(choice => {
+                const lines = [...new Set(choice.refs.map(ref => ref.lineId))];
+                lines.forEach(from => lines.forEach(to => { if (from !== to) addEdge(from, to); }));
+            });
+
+            const endLines = new Set(endChoice.refs.map(ref => ref.lineId));
+            const queue = [...new Set(startChoice.refs.map(ref => ref.lineId))].map(lineId => [lineId]);
+            const completedPaths = [];
+            let shortestLength = Infinity;
+            while (queue.length) {
+                const path = queue.shift();
+                if (path.length > shortestLength || path.length > 5) continue;
+                const tail = path[path.length - 1];
+                if (endLines.has(tail)) {
+                    shortestLength = path.length;
+                    completedPaths.push(path);
+                    if (completedPaths.length >= 6) break;
+                    continue;
+                }
+                (adjacency.get(tail) || []).forEach(nextLine => {
+                    if (!path.includes(nextLine)) queue.push([...path, nextLine]);
+                });
+            }
+            if (!completedPaths.length) return new Set([...startChoice.refs, ...endChoice.refs].map(ref => ref.lineId));
+            return new Set(completedPaths.flat());
+        };
+
+        const findJourney = async (startChoice, endChoice, startSec, dayType) => {
+            if (startChoice.network !== endChoice.network) return null;
+            const allowedLineIds = getJourneyAllowedLines(startChoice, endChoice);
+            const choiceRefsByState = new Map();
+            buildJourneyStations().filter(choice => choice.network === startChoice.network).forEach(choice => {
+                const allowedRefs = choice.refs.filter(ref => allowedLineIds.has(ref.lineId));
+                if (!allowedRefs.length) return;
+                const allowedChoice = { ...choice, refs:allowedRefs };
+                allowedRefs.forEach(ref => choiceRefsByState.set(`${ref.lineId}|${ref.stationName}`, allowedChoice));
+            });
+
+            const goalStates = new Set(endChoice.refs.filter(ref => allowedLineIds.has(ref.lineId)).map(ref => `${ref.lineId}|${ref.stationName}`));
+            const distance = new Map();
+            const previous = new Map();
+            const queue = new JourneyMinHeap();
+            startChoice.refs.filter(ref => allowedLineIds.has(ref.lineId)).forEach(ref => {
+                const key = `${ref.lineId}|${ref.stationName}`;
+                distance.set(key, startSec);
+                queue.push({ key, time:startSec });
+            });
+
+            let goalKey = null;
+            let iterations = 0;
+            while (queue.items.length && iterations++ < 5000) {
+                const current = queue.pop();
+                if (!current || current.time !== distance.get(current.key)) continue;
+                if (goalStates.has(current.key)) { goalKey = current.key; break; }
+                if (current.time > startSec + 8 * 3600) continue;
+
+                const separator = current.key.indexOf('|');
+                const lineId = current.key.slice(0, separator);
+                const stationName = current.key.slice(separator + 1);
+                const physicalChoice = choiceRefsByState.get(current.key);
+                if (physicalChoice?.refs.length > 1) {
+                    physicalChoice.refs.forEach(ref => {
+                        const nextKey = `${ref.lineId}|${ref.stationName}`;
+                        if (nextKey === current.key) return;
+                        const nextTime = current.time + JOURNEY_TRANSFER_SECONDS;
+                        if (nextTime < (distance.get(nextKey) ?? Infinity)) {
+                            distance.set(nextKey, nextTime);
+                            previous.set(nextKey, { fromKey:current.key, type:'transfer', station:physicalChoice.name, fromLineId:lineId, toLineId:ref.lineId, seconds:JOURNEY_TRANSFER_SECONDS });
+                            queue.push({ key:nextKey, time:nextTime });
+                        }
+                    });
+                }
+
+                const lineData = await getJourneyLineData(lineId, dayType);
+                const events = lineData.departuresByStation.get(stationName) || [];
+                const firstEventIndex = lowerBoundJourneyDepartures(events, current.time);
+                const eventLimit = Math.min(events.length, firstEventIndex + 24);
+                for (let eventIndex = firstEventIndex; eventIndex < eventLimit; eventIndex++) {
+                    const event = events[eventIndex];
+                    if (event.sec > current.time + 90 * 60) break;
+                    for (let stopIndex = event.index + 1; stopIndex < event.train.schedule.length; stopIndex++) {
+                        const arrivalStop = event.train.schedule[stopIndex];
+                        if (arrivalStop.sec <= event.sec) continue;
+                        const nextKey = `${lineId}|${arrivalStop.name}`;
+                        if (arrivalStop.sec >= (distance.get(nextKey) ?? Infinity)) continue;
+                        distance.set(nextKey, arrivalStop.sec);
+                        previous.set(nextKey, {
+                            fromKey:current.key,
+                            type:'ride',
+                            lineId,
+                            direction:event.direction,
+                            trainId:event.train.id,
+                            train:event.train,
+                            fromName:stationName,
+                            toName:arrivalStop.name,
+                            departSec:event.sec,
+                            arriveSec:arrivalStop.sec,
+                            isExpress:event.train.isExpress,
+                            service:event.train.service || ''
+                        });
+                        queue.push({ key:nextKey, time:arrivalStop.sec });
+                    }
+                }
+            }
+
+            if (!goalKey) return null;
+            const steps = [];
+            let cursor = goalKey;
+            while (previous.has(cursor)) {
+                const step = previous.get(cursor);
+                steps.push(step);
+                cursor = step.fromKey;
+            }
+            steps.reverse();
+
+            const merged = [];
+            steps.forEach(step => {
+                const last = merged[merged.length - 1];
+                if (step.type === 'ride' && last?.type === 'ride' && last.lineId === step.lineId && last.direction === step.direction && last.trainId === step.trainId && last.toName === step.fromName) {
+                    last.toName = step.toName;
+                    last.arriveSec = step.arriveSec;
+                } else {
+                    merged.push({ ...step });
+                }
+            });
+            return { startSec, arrivalSec:distance.get(goalKey), steps:merged, dayType };
+        };
+
+        const renderJourneyResult = route => {
+            const rides = route.steps.filter(step => step.type === 'ride');
+            const transfers = route.steps.filter(step => step.type === 'transfer');
+            journeyLiveTargets.clear();
+            const firstRide = rides[0];
+            const summaryWait = firstRide ? Math.max(0, firstRide.departSec - route.startSec) : 0;
+            let liveIndex = 0;
+            const detailHtml = route.steps.map((step, index) => {
+                if (step.type === 'transfer') {
+                    const toMeta = getJourneyLineMeta(step.toLineId);
+                    return `<div class="ml-[19px] flex gap-3 border-l-2 border-dotted border-slate-200 py-3 pl-6">
+                        <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"><i class="fa-solid fa-arrow-right-arrow-left text-[10px]"></i></span>
+                        <div><p class="text-[12px] font-extrabold text-slate-700">${escapeJourneyHtml(step.station)}에서 환승</p><p class="mt-1 text-[9px] font-semibold text-slate-400">도보·대기 약 ${getJourneyMinutes(step.seconds)}분 · ${escapeJourneyHtml(toMeta.label)} 이동</p></div>
+                    </div>`;
+                }
+                const meta = getJourneyLineMeta(step.lineId);
+                const liveId = `journey-live-${liveIndex++}`;
+                journeyLiveTargets.set(liveId, step);
+                const expressLabel = step.service || (step.isExpress ? '급행' : '일반');
+                return `<div class="rounded-[22px] border border-slate-100 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex min-w-0 items-center gap-2"><span class="h-3 w-3 shrink-0 rounded-full" style="background:${meta.color}"></span><span class="truncate text-[12px] font-black text-slate-800">${escapeJourneyHtml(meta.label)}</span><span class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[8px] font-extrabold text-slate-500">${escapeJourneyHtml(expressLabel)}</span></div>
+                        <span class="shrink-0 text-[10px] font-black text-[#2563EB]">${getJourneyClock(step.departSec)} 탑승</span>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2 text-[15px] font-black text-slate-900"><span>${escapeJourneyHtml(step.fromName)}</span><i class="fa-solid fa-arrow-right-long text-[11px] text-slate-300"></i><span>${escapeJourneyHtml(step.toName)}</span></div>
+                    <div class="mt-2 flex items-center justify-between gap-2"><p class="text-[10px] font-bold text-slate-500"><span class="text-slate-800">열차 ${escapeJourneyHtml(step.trainId)}</span> · ${getJourneyClock(step.arriveSec)} 도착 · ${getJourneyMinutes(step.arriveSec - step.departSec)}분</p></div>
+                    <button type="button" data-journey-live-id="${liveId}" class="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-blue-50 text-[11px] font-black text-[#2563EB] transition active:scale-[0.98]"><i class="fa-solid fa-location-crosshairs"></i> 열차 실시간보기</button>
+                </div>`;
+            }).join('');
+
+            dom.journeyResult.innerHTML = `<section class="overflow-hidden rounded-[26px] bg-[#0F172A] p-5 text-white shadow-[0_16px_36px_rgba(15,23,42,0.18)]">
+                <div class="flex items-end justify-between"><div><p class="text-[10px] font-bold text-slate-400">가장 빠른 경로</p><p class="mt-1 text-[25px] font-black tracking-tight">${getJourneyMinutes(route.arrivalSec - route.startSec)}분</p></div><div class="text-right"><p class="text-[10px] font-bold text-slate-400">도착 예정</p><p class="mt-1 text-[18px] font-black">${getJourneyClock(route.arrivalSec)}</p></div></div>
+                <div class="mt-4 grid grid-cols-3 gap-2 border-t border-white/10 pt-4 text-center"><div><p class="text-[8px] font-bold text-slate-400">출발</p><p class="mt-1 text-[11px] font-black">${getJourneyClock(route.startSec)}</p></div><div><p class="text-[8px] font-bold text-slate-400">첫 열차</p><p class="mt-1 text-[11px] font-black">${summaryWait < 60 ? '곧 도착' : `${getJourneyMinutes(summaryWait)}분 후`}</p></div><div><p class="text-[8px] font-bold text-slate-400">환승</p><p class="mt-1 text-[11px] font-black">${transfers.length}회</p></div></div>
+            </section>
+            <div class="mt-4 space-y-2">${detailHtml}</div>
+            <button type="button" id="journey-refresh-button" class="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-[11px] font-extrabold text-slate-600"><i class="fa-solid fa-rotate-right"></i> 현재 시각으로 다시 조회</button>`;
+        };
+
+        window.searchJourneyNow = async () => {
+            if (!journeyStart || !journeyEnd) {
+                showJourneyAlert('출발역과 도착역을 모두 선택해 주세요.');
+                return;
+            }
+            if (journeyStart.key === journeyEnd.key) {
+                showJourneyAlert('출발역과 도착역이 같습니다.');
+                return;
+            }
+            if (journeyStart.network !== journeyEnd.network) {
+                showJourneyAlert('서로 다른 도시권의 경로는 아직 연결할 수 없습니다.');
+                return;
+            }
+            const token = ++journeySearchToken;
+            const nowSec = Math.floor(getLiveCurrentSeconds());
+            const dayType = getDayType(new Date());
+            dom.journeySearchButton.disabled = true;
+            dom.journeySearchButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 실제 시간표 계산 중';
+            dom.journeyResult.innerHTML = '<div class="rounded-[24px] bg-white px-6 py-12 text-center"><i class="fa-solid fa-spinner fa-spin text-[20px] text-[#2563EB]"></i><p class="mt-3 text-[12px] font-extrabold text-slate-600">탑승 가능한 열차와 환승편을 찾고 있습니다.</p></div>';
+            try {
+                const route = await findJourney(journeyStart, journeyEnd, nowSec, dayType);
+                if (token !== journeySearchToken) return;
+                if (!route || !route.steps.some(step => step.type === 'ride')) {
+                    dom.journeyResult.innerHTML = '<div class="rounded-[24px] bg-white px-6 py-12 text-center"><i class="fa-solid fa-triangle-exclamation text-[22px] text-amber-400"></i><p class="mt-3 text-[13px] font-extrabold text-slate-700">현재 시각 이후 이용 가능한 경로가 없습니다.</p><p class="mt-1 text-[10px] font-semibold text-slate-400">운행 종료 또는 시간표 미등록 여부를 확인해 주세요.</p></div>';
+                    return;
+                }
+                renderJourneyResult(route);
+            } catch (error) {
+                console.error('Journey search failed', error);
+                if (token === journeySearchToken) dom.journeyResult.innerHTML = '<div class="rounded-[24px] bg-white px-6 py-12 text-center"><p class="text-[13px] font-extrabold text-slate-700">길찾기 데이터를 불러오지 못했습니다.</p><p class="mt-1 text-[10px] font-semibold text-slate-400">잠시 후 다시 시도해 주세요.</p></div>';
+            } finally {
+                if (token === journeySearchToken) {
+                    dom.journeySearchButton.disabled = false;
+                    dom.journeySearchButton.innerHTML = '<i class="fa-solid fa-route"></i> 지금 출발 길찾기';
+                }
+            }
+        };
+
+        window.openJourneyTrainLive = async liveId => {
+            const step = journeyLiveTargets.get(liveId);
+            if (!step) return;
+            const nowSec = getLiveCurrentSeconds();
+            const trainStartSec = step.train.schedule[0]?.sec;
+            const trainEndSec = step.train.schedule[step.train.schedule.length - 1]?.sec;
+            if (Number.isFinite(trainStartSec) && nowSec < trainStartSec) {
+                showJourneyAlert('아직 운행 전입니다.');
+                return;
+            }
+            if (Number.isFinite(trainEndSec) && nowSec > trainEndSec + STOP_DURATION) {
+                showJourneyAlert('이미 운행을 종료한 열차입니다.');
+                return;
+            }
+
+            const targetRegion = LINE_REGION[step.lineId] || currentRegion;
+            if (targetRegion !== currentRegion) await window.switchRegion(targetRegion, true);
+            if (step.lineId !== currentLineId) await window.switchLine(step.lineId, true);
+            mapNationwideMode = false;
+            window.switchTab('map');
+            await loadRegionMapTimetables();
+            mapActiveTrainSourceKey = '';
+            const key = `${step.lineId}:${step.direction}:${step.trainId}`;
+            selectedTrainId = step.trainId;
+            selectedMapTrainKey = key;
+            mapFollowTrainKey = key;
+            mapLastCameraUpdateTime = 0;
+            mapCameraLat = null;
+            mapCameraLng = null;
+            const meta = getJourneyLineMeta(step.lineId);
+            const applyJourneyFollowHeader = () => {
+                if (activeTab !== 'map' || selectedMapTrainKey !== key) return;
+                if (dom.mapTitle) dom.mapTitle.textContent = `${meta.label} 열차 추적`;
+                if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = meta.color;
+                if (dom.mapStatus) dom.mapStatus.textContent = `${step.trainId} 따라가는 중`;
+            };
+            window.initSubwayMap();
+            window.render();
+            window.ensureMapAnimationLoop();
+            requestAnimationFrame(applyJourneyFollowHeader);
+            setTimeout(applyJourneyFollowHeader, 120);
         };
 
         const haversine = (lat1, lon1, lat2, lon2) => {
@@ -5191,14 +5728,24 @@
                 mapActiveTrainSourceKey = '';
             }
             selectedStation = null; selectedMapStationLineId = null; selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; modalDayType = null; modalViewMode = 'all';
-            dom.timetableModal.classList.add('hidden'); dom.stationSelectorModal.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
+            dom.timetableModal.classList.add('hidden'); dom.stationSelectorModal.classList.add('hidden'); dom.journeyStationModal.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
             if (tabId === 'home') {
                 dom.homeScreen.classList.remove('hidden'); dom.homeScreen.classList.add('flex');
+                dom.journeyScreen.classList.add('hidden'); dom.journeyScreen.classList.remove('flex');
                 dom.mapScreen.classList.add('hidden');
                 dom.scrollContainer.classList.add('hidden'); dom.mainHeader.classList.add('hidden');
                 dom.autoScrollBtn.classList.add('hidden'); window.updateHomeUI(); window.renderHomeArrivalInfo();
+            } else if (tabId === 'journey') {
+                dom.homeScreen.classList.add('hidden');
+                dom.journeyScreen.classList.remove('hidden'); dom.journeyScreen.classList.add('flex');
+                dom.mapScreen.classList.add('hidden');
+                dom.scrollContainer.classList.add('hidden'); dom.mainHeader.classList.add('hidden');
+                dom.autoScrollBtn.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
+                buildJourneyStations();
+                updateJourneySelectionUI();
             } else if (tabId === 'map') {
                 dom.homeScreen.classList.add('hidden');
+                dom.journeyScreen.classList.add('hidden'); dom.journeyScreen.classList.remove('flex');
                 dom.scrollContainer.classList.add('hidden'); dom.mainHeader.classList.add('hidden');
                 dom.mapScreen.classList.remove('hidden');
                 dom.autoScrollBtn.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
@@ -5208,7 +5755,7 @@
                     if (activeTab === 'map') { window.render(); window.ensureMapAnimationLoop(); }
                 });
             } else {
-                dom.homeScreen.classList.add('hidden'); dom.scrollContainer.classList.remove('hidden');
+                dom.homeScreen.classList.add('hidden'); dom.journeyScreen.classList.add('hidden'); dom.journeyScreen.classList.remove('flex'); dom.scrollContainer.classList.remove('hidden');
                 dom.mapScreen.classList.add('hidden');
                 dom.mainHeader.classList.remove('hidden'); dom.mainHeader.classList.add('flex');
                 dom.directionToggle.classList.toggle('hidden', tabId === 'line');
@@ -5221,7 +5768,7 @@
         };
 
         function updateTabUI(activeTabId) {
-            const tabs = ['tab-back', 'tab-home', 'tab-line', 'tab-map'];
+            const tabs = ['tab-back', 'tab-home', 'tab-journey', 'tab-line', 'tab-map'];
             const activeIndex = tabs.indexOf(activeTabId);
             const navButtons = document.querySelectorAll('#bottom-nav button');
             if (navButtons[activeIndex]) {
@@ -5238,6 +5785,7 @@
                 let iconClass = 'fa-solid text-[15px] ';
                 if (id === 'tab-back') iconClass += 'fa-chevron-left ';
                 if (id === 'tab-home') iconClass += 'fa-house ';
+                if (id === 'tab-journey') iconClass += 'fa-route ';
                 if (id === 'tab-line') iconClass += 'fa-train-subway ';
                 if (id === 'tab-map') iconClass += 'fa-map-location-dot ';
 
@@ -6052,8 +6600,35 @@
         };
         
         dom.tabHome.onclick = () => window.switchTab('home');
+        dom.tabJourney.onclick = () => window.switchTab('journey');
         dom.tabLine.onclick = () => window.switchTab('line');
         dom.tabMap.onclick = () => window.switchTab('map');
+        dom.journeyStartButton.addEventListener('click', () => window.openJourneyStationPicker('start'));
+        dom.journeyEndButton.addEventListener('click', () => window.openJourneyStationPicker('end'));
+        dom.journeySwapButton.addEventListener('click', () => {
+            [journeyStart, journeyEnd] = [journeyEnd, journeyStart];
+            updateJourneySelectionUI();
+        });
+        dom.journeySearchButton.addEventListener('click', () => window.searchJourneyNow());
+        dom.journeyPickerClose.addEventListener('click', () => window.closeJourneyStationPicker());
+        dom.journeyStationSearch.addEventListener('input', event => renderJourneyStationList(event.target.value));
+        dom.journeyStationList.addEventListener('click', event => {
+            const button = event.target.closest('[data-journey-station-key]');
+            if (!button) return;
+            const choice = journeyStationByKey.get(button.dataset.journeyStationKey);
+            if (!choice) return;
+            if (journeyPickerTarget === 'start') journeyStart = choice;
+            else journeyEnd = choice;
+            updateJourneySelectionUI();
+            window.closeJourneyStationPicker();
+        });
+        dom.journeyResult.addEventListener('click', event => {
+            const liveButton = event.target.closest('[data-journey-live-id]');
+            if (liveButton) { window.openJourneyTrainLive(liveButton.dataset.journeyLiveId); return; }
+            if (event.target.closest('#journey-refresh-button')) window.searchJourneyNow();
+        });
+        dom.journeyAlertConfirm.addEventListener('click', () => window.closeJourneyAlert());
+        dom.journeyAlertModal.addEventListener('click', event => { if (event.target === dom.journeyAlertModal) window.closeJourneyAlert(); });
         dom.directionToggle.addEventListener('change', async (e) => { currentDirection = e.target.value; await loadTimetable(); isAutoScroll = true; window.render(); });
         dom.scrollContainer.addEventListener('touchstart', () => isAutoScroll = false, {passive: true});
         dom.scrollContainer.addEventListener('wheel', () => isAutoScroll = false, {passive: true});
