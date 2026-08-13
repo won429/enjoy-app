@@ -20,6 +20,7 @@
     <script src="honam_highspeed_train_timetable.js"></script>
     <script src="gyeongjeon_general_train_timetable.js"></script>
     <script src="gyeongjeon_highspeed_train_timetable.js"></script>
+    <script src="jeolla_general_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1100,7 +1101,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1165,6 +1166,12 @@
                 branchLinks: [
                     { from: '평택지제', to: '천안아산' }
                 ]
+            },
+            jeolla: {
+                label: '전라선', badge: '라',
+                color: '#6D28D9', downColor: '#B4A0E8',
+                upToward: '용산', downToward: '여수엑스포',
+                tabLabel: '전라선', trainLabel: '일반열차'
             }
         };
 
@@ -1399,6 +1406,38 @@
                 "창원": { progress: 0.8750, ktx: true, srt: true },
                 "마산": { progress: 0.9375, ktx: true, srt: true },
                 "진주": { progress: 1.0000, ktx: true, srt: true }
+            },
+            /* 전라선. 용산~여수엑스포 한 갈래뿐이라 지선이 없다. */
+            'jeolla': {
+                "용산": { progress: 0.0000, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '경의중앙', color: '#77C4A3'}] },
+                "영등포": { progress: 0.0357, ktx: true, transfer: [{name: '1', color: '#0052A4'}] },
+                "안양": { progress: 0.0714, transfer: [{name: '1', color: '#0052A4'}] },
+                "수원": { progress: 0.1071, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '수인분당', color: '#FABE00'}] },
+                "서정리": { progress: 0.1429, transfer: [{name: '1', color: '#0052A4'}] },
+                "평택": { progress: 0.1786, transfer: [{name: '1', color: '#0052A4'}] },
+                "성환": { progress: 0.2143, transfer: [{name: '1', color: '#0052A4'}] },
+                "천안": { progress: 0.2500, transfer: [{name: '1', color: '#0052A4'}] },
+                "전의": { progress: 0.2857 },
+                "조치원": { progress: 0.3214, transfer: [{name: '1', color: '#0052A4'}] },
+                "부강": { progress: 0.3571 },
+                "신탄진": { progress: 0.3929, transfer: [{name: '1', color: '#0052A4'}] },
+                "서대전": { progress: 0.4286 },
+                "계룡": { progress: 0.4643 },
+                "연산": { progress: 0.5000 },
+                "논산": { progress: 0.5357 },
+                "강경": { progress: 0.5714 },
+                "함열": { progress: 0.6071 },
+                "익산": { progress: 0.6429, ktx: true, srt: true },
+                "삼례": { progress: 0.6786 },
+                "전주": { progress: 0.7143, ktx: true, srt: true },
+                "임실": { progress: 0.7500 },
+                "오수": { progress: 0.7857 },
+                "남원": { progress: 0.8214, ktx: true, srt: true },
+                "곡성": { progress: 0.8571, ktx: true },
+                "구례구": { progress: 0.8929, ktx: true },
+                "순천": { progress: 0.9286, ktx: true, srt: true },
+                "여천": { progress: 0.9643, ktx: true, srt: true },
+                "여수엑스포": { progress: 1.0000, ktx: true, srt: true }
             }
         };
 
@@ -1590,7 +1629,8 @@
             honam:               { src: './honam_general_train_timetable.js',      globalName: 'HONAM_LINE_TIMETABLE' },
             honam_highspeed:     { src: './honam_highspeed_train_timetable.js',    globalName: 'HONAM_HIGHSPEED_LINE_TIMETABLE' },
             gyeongjeon:          { src: './gyeongjeon_general_train_timetable.js', globalName: 'GYEONGJEON_LINE_TIMETABLE' },
-            gyeongjeon_ktx:      { src: './gyeongjeon_highspeed_train_timetable.js', globalName: 'GYEONGJEON_KTX_LINE_TIMETABLE' }
+            gyeongjeon_ktx:      { src: './gyeongjeon_highspeed_train_timetable.js', globalName: 'GYEONGJEON_KTX_LINE_TIMETABLE' },
+            jeolla:              { src: './jeolla_general_train_timetable.js',      globalName: 'JEOLLA_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1694,6 +1734,12 @@
             routeName: '경전선 KTX · SRT(서울/수서-진주)',
             sourceGlobal: 'GYEONGJEON_HIGHSPEED_TRAIN_TIMETABLE',
             targetGlobal: 'GYEONGJEON_KTX_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'jeolla', baseId: 47000, label: '전라선',
+            routeName: '전라선 일반열차(용산-여수엑스포)',
+            sourceGlobal: 'JEOLLA_GENERAL_TRAIN_TIMETABLE',
+            targetGlobal: 'JEOLLA_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -1931,7 +1977,8 @@
             honam:2900,
             honam_highspeed:2100,
             gyeongjeon:3300,
-            gyeongjeon_ktx:1900
+            gyeongjeon_ktx:1900,
+            jeolla:2500
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -3909,7 +3956,15 @@
                   '천안아산': 96, '오송': 129, '대전': 161,
                   '김천구미': 253, '서대구': 282, '동대구': 294, '경산': 308,
                   '밀양': 348, '진영': 375, '창원중앙': 396, '창원': 406, '마산': 414, '진주': 468
-              } }
+              } },
+
+            /* 전라선 일반열차. seq 는 용산 기점 정차역 순서.
+               원본 stations 배열은 성환 · 안양이 맨 뒤에 붙어 있어 순서를 따로 정의한다. */
+            { line: '전라선', routeId: 'jeolla', global: 'JEOLLA_GENERAL_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              seq: ['용산','영등포','안양','수원','서정리','평택','성환','천안','전의','조치원','부강','신탄진',
+                    '서대전','계룡','연산','논산','강경','함열','익산','삼례','전주','임실','오수','남원',
+                    '곡성','구례구','순천','여천','여수엑스포'] }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
 
