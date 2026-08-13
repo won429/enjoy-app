@@ -18,6 +18,7 @@
     <script src="gyeongbu_highspeed_train_timetable.js"></script>
     <script src="honam_general_train_timetable.js"></script>
     <script src="honam_highspeed_train_timetable.js"></script>
+    <script src="gyeongjeon_general_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1025,7 +1026,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1070,6 +1071,15 @@
                     { from: '평택지제', to: '천안아산' },
                     { from: '오송', to: '서대전', dashed: true },
                     { from: '논산', to: '익산', dashed: true }
+                ]
+            },
+            gyeongjeon: {
+                label: '경전선', badge: '전',
+                color: '#B0592C', downColor: '#D9A183',
+                upToward: '동대구 · 부전', downToward: '광주송정',
+                tabLabel: '경전선', trainLabel: '일반열차',
+                branchLinks: [
+                    { from: '원동', to: '삼랑진' }
                 ]
             }
         };
@@ -1232,6 +1242,54 @@
                 "광주송정": { progress: 0.8667, ktx: true, srt: true, transfer: [{name: '1', color: '#009088'}] },
                 "나주": { progress: 0.9333, ktx: true, srt: true },
                 "목포": { progress: 1.0000, ktx: true, srt: true }
+            },
+            /* 경전선. 삼랑진에서 두 갈래가 만난다.
+               동대구 계통(동대구~밀양)은 열차가 많아 본선 칸에 두고,
+               부전 계통(부전~원동)을 지선 칸에 둔다. 두 구간 모두 경부선을 타고 와 삼랑진에서 합류한다. */
+            'gyeongjeon': {
+                "동대구": { progress: 0.0000, ktx: true, srt: true, transfer: [{name: '1', color: '#D93F5C'}] },
+                "부전": { col: 1, group: 'bujeon', progress: 0.0000, transfer: [{name: '동해', color: '#003DA5'}] },
+                "경산": { progress: 0.0278, ktx: true, transfer: [{name: '1', color: '#D93F5C'}] },
+                "사상": { col: 1, group: 'bujeon', progress: 0.0278, transfer: [{name: '2', color: '#81C147'}] },
+                "남성현": { progress: 0.0556 },
+                "구포": { col: 1, group: 'bujeon', progress: 0.0556, ktx: true, transfer: [{name: '3', color: '#B07C4A'}] },
+                "청도": { progress: 0.0833 },
+                "화명": { col: 1, group: 'bujeon', progress: 0.0833, transfer: [{name: '2', color: '#81C147'}] },
+                "상동": { progress: 0.1111 },
+                "물금": { col: 1, group: 'bujeon', progress: 0.1111 },
+                "밀양": { progress: 0.1389, ktx: true },
+                "원동": { col: 1, group: 'bujeon', progress: 0.1389 },
+                "삼랑진": { progress: 0.1667 },
+                "한림정": { progress: 0.1944 },
+                "진영": { progress: 0.2222 },
+                "진례": { progress: 0.2500 },
+                "창원중앙": { progress: 0.2778, ktx: true },
+                "창원": { progress: 0.3056, ktx: true },
+                "마산": { progress: 0.3333, ktx: true },
+                "중리": { progress: 0.3611 },
+                "함안": { progress: 0.3889, ktx: true },
+                "군북": { progress: 0.4167 },
+                "반성": { progress: 0.4444 },
+                "진주": { progress: 0.4722, ktx: true },
+                "완사": { progress: 0.5000 },
+                "북천": { progress: 0.5278 },
+                "횡천": { progress: 0.5556 },
+                "하동": { progress: 0.5833 },
+                "진상": { progress: 0.6111 },
+                "광양": { progress: 0.6389 },
+                "순천": { progress: 0.6667, ktx: true },
+                "벌교": { progress: 0.6944 },
+                "조성": { progress: 0.7222 },
+                "예당": { progress: 0.7500 },
+                "득량": { progress: 0.7778 },
+                "보성": { progress: 0.8056 },
+                "명봉": { progress: 0.8333 },
+                "이양": { progress: 0.8611 },
+                "능주": { progress: 0.8889 },
+                "화순": { progress: 0.9167 },
+                "효천": { progress: 0.9444 },
+                "서광주": { progress: 0.9722 },
+                "광주송정": { progress: 1.0000, ktx: true, srt: true, transfer: [{name: '1', color: '#009088'}] }
             }
         };
 
@@ -1421,7 +1479,8 @@
             gyeongbu:            { src: './gyeongbu_general_train_timetable.js',   globalName: 'GYEONGBU_LINE_TIMETABLE' },
             gyeongbu_highspeed:  { src: './gyeongbu_highspeed_train_timetable.js', globalName: 'GYEONGBU_HIGHSPEED_LINE_TIMETABLE' },
             honam:               { src: './honam_general_train_timetable.js',      globalName: 'HONAM_LINE_TIMETABLE' },
-            honam_highspeed:     { src: './honam_highspeed_train_timetable.js',    globalName: 'HONAM_HIGHSPEED_LINE_TIMETABLE' }
+            honam_highspeed:     { src: './honam_highspeed_train_timetable.js',    globalName: 'HONAM_HIGHSPEED_LINE_TIMETABLE' },
+            gyeongjeon:          { src: './gyeongjeon_general_train_timetable.js', globalName: 'GYEONGJEON_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1513,6 +1572,12 @@
             routeName: '호남고속선 KTX · SRT(행신/수서-목포)',
             sourceGlobal: 'HONAM_HIGHSPEED_TRAIN_TIMETABLE',
             targetGlobal: 'HONAM_HIGHSPEED_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'gyeongjeon', baseId: 45000, label: '경전선',
+            routeName: '경전선 일반열차(동대구/부전-광주송정)',
+            sourceGlobal: 'GYEONGJEON_GENERAL_TRAIN_TIMETABLE',
+            targetGlobal: 'GYEONGJEON_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -1748,7 +1813,8 @@
             gyeongbu:3400,
             gyeongbu_highspeed:2100,
             honam:2900,
-            honam_highspeed:2100
+            honam_highspeed:2100,
+            gyeongjeon:3300
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -3696,6 +3762,24 @@
                   '서대전': 167, '계룡': 188, '논산': 211,
                   '익산': 219, '김제': 231, '정읍': 264, '장성': 297,
                   '광주송정': 313, '나주': 328, '목포': 371
+              } },
+
+            /* 경전선 일반열차. 삼랑진을 0 으로 두고 남쪽(광주송정 방향)을 +,
+               북쪽(동대구 · 부전 방향)을 - 로 잡은 거리다.
+               두 갈래가 삼랑진에서 만나므로 한 축으로는 표현할 수 없어
+               계통이 다른 역끼리는 거리가 겹칠 수 있다. 같은 열차가 서는 역끼리만 계산하므로 문제되지 않는다.
+               ※ 운임은 실제 운임표를 쓰고, 이 거리는 화면 표시용 근사값이다. */
+            { line: '경전선', routeId: 'gyeongjeon', global: 'GYEONGJEON_GENERAL_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              km: {
+                  '동대구': -84, '경산': -70, '남성현': -64, '청도': -49, '상동': -40, '밀양': -13,
+                  '부전': -52, '사상': -47, '구포': -40, '화명': -35, '물금': -23, '원동': -11,
+                  '삼랑진': 0, '한림정': 13, '진영': 19, '진례': 25, '창원중앙': 37, '창원': 46,
+                  '마산': 52, '중리': 59, '함안': 68, '군북': 78, '반성': 96, '진주': 112,
+                  '완사': 124, '북천': 138, '횡천': 148, '하동': 157, '진상': 169, '광양': 187,
+                  '순천': 201, '벌교': 226, '조성': 240, '예당': 246, '득량': 253, '보성': 262,
+                  '명봉': 274, '이양': 289, '능주': 302, '화순': 310, '효천': 324, '서광주': 328,
+                  '광주송정': 337
               } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
