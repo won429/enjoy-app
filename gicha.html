@@ -24,6 +24,7 @@
     <script src="jeolla_highspeed_train_timetable.js"></script>
     <script src="jungang_general_train_timetable.js"></script>
     <script src="jungang_ktx_train_timetable.js"></script>
+    <script src="chungbuk_general_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -398,8 +399,8 @@
         #home-screen { display: none !important; }
 
         #rail-home {
-            background: #080D1B;
-            color: #fff;
+            background: var(--rail-home-bg);
+            color: var(--rail-fg);
             -webkit-font-smoothing: antialiased;
         }
         /* ===== 열차 조회 화면 색 (라이트 · 다크) =====
@@ -444,6 +445,16 @@
             --rail-sky-mid:     44%;
             --rail-sky-end:     100%;
             --rail-night:       1;         /* 달 · 별 표시 여부 */
+            /* 알림색. 라이트 모드에서는 흰 배경에서도 읽히는 진한 색으로 바뀐다. */
+            --rail-warn:        #FCD34D;   /* '추정' 배지 */
+            --rail-warn-bg:     rgba(251,191,36,.20);
+            --rail-warn-2:      rgba(253,230,138,.85);   /* 상단 안내 문구 */
+            --rail-warn-2-bg:   rgba(251,191,36,.08);
+            --rail-warn-line:   rgba(252,211,77,.20);
+            --rail-danger:      #FF8A8A;   /* 매진 */
+            --rail-info:        #8EB4FF;   /* '인접역' 배지 */
+            --rail-info-bg:     rgba(44,107,243,.25);
+            --rail-home-bg:     #080D1B;   /* 홈 화면 바탕(하늘 그러데이션 뒤) */
         }
         @media (prefers-color-scheme: light) {
             :root {
@@ -478,6 +489,15 @@
                 --rail-sky-mid:     20%;
                 --rail-sky-end:     44%;
                 --rail-night:       0;
+                --rail-warn:        #B45309;
+                --rail-warn-bg:     rgba(180,83,9,.12);
+                --rail-warn-2:      #92400E;
+                --rail-warn-2-bg:   rgba(180,83,9,.07);
+                --rail-warn-line:   rgba(180,83,9,.18);
+                --rail-danger:      #C81E1E;
+                --rail-info:        #1D4ED8;
+                --rail-info-bg:     rgba(29,78,216,.10);
+                --rail-home-bg:     #F5F6F8;
             }
         }
         /* 토큰을 그대로 쓰는 유틸 (조회 화면 전용) */
@@ -1157,7 +1177,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1256,6 +1276,14 @@
                 color: '#0891B2', downColor: '#9BD3E2',
                 upToward: '서울 · 청량리', downToward: '부전',
                 tabLabel: '중앙선', trainLabel: 'KTX-이음'
+            },
+            /* 충북선. 대전에서 경부선을 타고 조치원까지 올라가 충북선(조치원~봉양)을 달리고,
+               봉양부터 중앙선을 타고 제천 · 영주까지 간다. */
+            chungbuk: {
+                label: '충북선', badge: '충',
+                color: '#A16207', downColor: '#DCC08A',
+                upToward: '대전', downToward: '제천 · 영주',
+                tabLabel: '충북선', trainLabel: '일반열차'
             }
         };
 
@@ -1612,6 +1640,28 @@
                 "신해운대": { progress: 0.9048, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] },
                 "센텀": { progress: 0.9524, ktx: true, transfer: [{name: '동해', color: '#003DA5'}, {name: '2', color: '#81C147'}] },
                 "부전": { progress: 1.0000, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] }
+            },
+            /* 충북선. 대전~조치원은 경부선, 조치원~봉양이 충북선, 봉양~영주는 중앙선이다.
+               지선 없이 한 줄로 이어지고, 열차 절반은 제천에서 끊고 4301~4304 만 영주까지 간다. */
+            'chungbuk': {
+                "대전": { progress: 0.0000, ktx: true, srt: true, transfer: [{name: '1', color: '#007448'}] },
+                "신탄진": { progress: 0.0588 },
+                "부강": { progress: 0.1176 },
+                "조치원": { progress: 0.1765, transfer: [{name: '1', color: '#0052A4'}] },
+                "오송": { progress: 0.2353, ktx: true, srt: true },
+                "청주": { progress: 0.2941 },
+                "오근장": { progress: 0.3529 },
+                "청주공항": { progress: 0.4118 },
+                "증평": { progress: 0.4706 },
+                "음성": { progress: 0.5294 },
+                "주덕": { progress: 0.5882 },
+                "충주": { progress: 0.6471 },
+                "삼탄": { progress: 0.7059 },
+                "봉양": { progress: 0.7647 },
+                "제천": { progress: 0.8235, ktx: true },
+                "단양": { progress: 0.8824, ktx: true },
+                "풍기": { progress: 0.9412, ktx: true },
+                "영주": { progress: 1.0000, ktx: true }
             }
         };
 
@@ -1807,7 +1857,8 @@
             jeolla:              { src: './jeolla_general_train_timetable.js',      globalName: 'JEOLLA_LINE_TIMETABLE' },
             jeolla_ktx:          { src: './jeolla_highspeed_train_timetable.js',    globalName: 'JEOLLA_KTX_LINE_TIMETABLE' },
             jungang:             { src: './jungang_general_train_timetable.js',     globalName: 'JUNGANG_LINE_TIMETABLE' },
-            jungang_ktx:         { src: './jungang_ktx_train_timetable.js',         globalName: 'JUNGANG_KTX_LINE_TIMETABLE' }
+            jungang_ktx:         { src: './jungang_ktx_train_timetable.js',         globalName: 'JUNGANG_KTX_LINE_TIMETABLE' },
+            chungbuk:            { src: './chungbuk_general_train_timetable.js',    globalName: 'CHUNGBUK_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1936,6 +1987,12 @@
             routeName: '중앙선 KTX-이음(서울/청량리-부전)',
             sourceGlobal: 'JUNGANG_KTX_TRAIN_TIMETABLE',
             targetGlobal: 'JUNGANG_KTX_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'chungbuk', baseId: 51000, label: '충북선',
+            routeName: '충북선 일반열차(대전-제천/영주)',
+            sourceGlobal: 'CHUNGBUK_GENERAL_TRAIN_TIMETABLE',
+            targetGlobal: 'CHUNGBUK_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2177,7 +2234,8 @@
             jeolla:2500,
             jeolla_ktx:2000,
             jungang:2900,
-            jungang_ktx:2100
+            jungang_ktx:2100,
+            chungbuk:2000
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -4050,6 +4108,8 @@
               stops: [['용산',0],['익산',250],['전주',274],['남원',331],['곡성',362],['구례구',376],['순천',411],['여천',446],['여수엑스포',456]] },
             { id: 'jungang', name: '중앙선', types: ['KTX-이음', 'ITX-마음', '무궁화호'],
               stops: [['청량리',0],['양평',44],['원주',84],['제천',130],['단양',156],['풍기',180],['영주',194],['안동',232],['의성',266],['영천',320],['경주',348],['태화강',388],['부전',453]] },
+            { id: 'chungbuk', name: '충북선', types: ['ITX-마음', '무궁화호'],
+              stops: [['대전',0],['신탄진',18],['부강',27],['조치원',37],['오송',44],['청주',55],['오근장',63],['청주공항',68],['증평',79],['음성',98],['주덕',117],['충주',126],['삼탄',141],['봉양',152],['제천',157],['단양',183],['풍기',207],['영주',221]] },
             { id: 'gangneung', name: '강릉선', types: ['KTX-이음'],
               stops: [['서울',0],['청량리',12],['상봉',18],['양평',55],['만종',100],['횡성',110],['둔내',131],['평창',155],['진부(오대산)',177],['강릉',223]] },
             { id: 'janghang', name: '장항선', types: ['ITX-마음', '무궁화호', '누리로'],
@@ -4197,6 +4257,16 @@
                   '영주': 194, '안동': 232, '의성': 266, '영천': 320, '경주': 348,
                   '북울산': 370, '태화강': 388, '남창': 406, '기장': 427,
                   '신해운대': 439, '센텀': 443, '부전': 453
+              } },
+
+            /* 충북선 일반열차. 대전 기점 km 를 직접 준다.
+               대전~조치원은 경부선, 조치원~봉양이 충북선, 봉양~영주는 중앙선 거리다. */
+            { line: '충북선', routeId: 'chungbuk', global: 'CHUNGBUK_GENERAL_TRAIN_TIMETABLE',
+              km: {
+                  '대전': 0, '신탄진': 18, '부강': 27, '조치원': 37, '오송': 44,
+                  '청주': 55, '오근장': 63, '청주공항': 68, '증평': 79, '음성': 98,
+                  '주덕': 117, '충주': 126, '삼탄': 141, '봉양': 152,
+                  '제천': 157, '단양': 183, '풍기': 207, '영주': 221
               } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
@@ -4441,6 +4511,8 @@
                         depName: dep, arrName: arr, isNearDep: false, isNearArr: false,
                         depMin, arrMin, dayOffset: 0,
                         duration: arrMin - depMin, distance, midStops,
+                        // 운임표에 없는 구간은 거리비례 추정값을 쓴다 → 화면에 '추정'으로 표시한다.
+                        fareEstimated: fare == null,
                         fare: fare != null ? fare : railFare(t.type, distance),
                         fareSpecial: fareSpecial || 0,
                         mile: 0, soldOut: false,
@@ -4497,7 +4569,7 @@
         const RAIL_REGION_MAP = {
             '수도권': ['서울','용산','영등포','청량리','상봉','광명','수서','동탄','평택지제','수원','평택','평내호평','마석','안양','오산','서정리','행신'],
             '강원': ['춘천','남춘천','강촌','가평','청평','양평','원주','만종','횡성','둔내','평창','진부(오대산)','강릉','정동진','동해','도계','태백','민둥산','영월','정선'],
-            '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
+            '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','청주','오근장','청주공항','증평','음성','주덕','충주','삼탄','봉양','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
             '전라': ['익산','정읍','광주송정','나주','목포','김제','장성','함평','무안','전주','남원','곡성','구례구','순천','여천','여수엑스포','군산','벌교','보성'],
             '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
         };
@@ -5108,6 +5180,7 @@
             const list = railSortedTrains();
             const realCount = list.filter(t => t.source === 'real').length;
             const estCount = list.length - realCount;
+            const fareEstCount = list.filter(t => t.source === 'real' && t.fareEstimated).length;
             setText('rail-result-sub', estCount === 0
                 ? `직통 · 열차 ${list.length}개 · 실제 시간표`
                 : (realCount === 0 ? `직통 · 열차 ${list.length}개 · 추정 시간표`
@@ -5135,22 +5208,24 @@
                 return;
             }
 
-            const noteBar = estCount ? `<div class="px-4 py-2.5 bg-amber-400/[0.08] border-b border-amber-300/20 text-[11.5px] font-semibold text-amber-200/85 leading-relaxed">
-                    <b class="font-extrabold text-amber-200">추정</b> 표시는 실제 시간표 데이터가 없어 계산한 값입니다.${realCount ? '' : ' 이 구간·방향은 아직 실제 시간표가 없습니다.'}
+            const noteBar = (estCount || fareEstCount) ? `<div class="px-4 py-2.5 border-b text-[11.5px] font-semibold leading-relaxed" style="background:var(--rail-warn-2-bg); border-color:var(--rail-warn-line); color:var(--rail-warn-2)">
+                    <b class="font-extrabold" style="color:var(--rail-warn)">추정</b> 표시는 실제 데이터가 없어 계산한 값입니다.${estCount ? ` 시간표 ${estCount}건${realCount ? '' : ' (이 구간·방향은 아직 실제 시간표가 없습니다)'}` : ''}${fareEstCount ? ` 운임 ${fareEstCount}건(운임표에 없는 구간)` : ''}
                 </div>` : '';
 
             listEl.innerHTML = noteBar + list.map(t => {
                 const mile = t.hasMile ? `<div class="mt-1 flex justify-end"><span class="rail-mile"><i>M</i>${t.mile}%적립</span></div>` : '';
+                // 운임표에 없는 구간은 거리로 계산한 값이라 따로 알려 준다.
+                const fareEst = t.fareEstimated ? `<div class="mt-1 flex justify-end"><span class="px-1.5 py-0.5 rounded text-[9.5px] font-extrabold whitespace-nowrap" style="background:var(--rail-warn-bg); color:var(--rail-warn)">운임 추정</span></div>` : '';
                 const fareBlock = t.soldOut
-                    ? `<div class="flex items-baseline justify-between gap-2"><span class="rail-fare-label">일반실</span><span class="rail-fare text-[#FF8A8A]">매진</span></div>`
+                    ? `<div class="flex items-baseline justify-between gap-2"><span class="rail-fare-label">일반실</span><span class="rail-fare" style="color:var(--rail-danger)">매진</span></div>`
                     : `<div class="flex items-baseline justify-between gap-2">
                            <span class="rail-fare-label">일반실</span><span class="rail-fare">${railComma(t.fare)}원</span>
-                       </div>${mile}
+                       </div>${fareEst}${mile}
                        ${t.hasSpecial ? `<div class="mt-2.5 flex items-baseline justify-between gap-2">
                            <span class="rail-fare-label">특실</span><span class="rail-fare">${railComma(t.fareSpecial)}원</span>
                        </div>${mile}` : ''}`;
-                const nearTag = (t.isNearDep || t.isNearArr) ? `<span class="ml-1 px-1.5 py-0.5 rounded bg-[#2C6BF3]/25 text-[10px] font-extrabold text-[#8EB4FF]">인접역</span>` : '';
-                const estTag = t.source === 'real' ? '' : `<span class="ml-1 px-1.5 py-0.5 rounded bg-amber-400/20 text-[10px] font-extrabold text-amber-300">추정</span>`;
+                const nearTag = (t.isNearDep || t.isNearArr) ? `<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold" style="background:var(--rail-info-bg); color:var(--rail-info)">인접역</span>` : '';
+                const estTag = t.source === 'real' ? '' : `<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold" style="background:var(--rail-warn-bg); color:var(--rail-warn)">추정</span>`;
                 const dayTag = t.dayOffset ? `<span class="ml-1 px-1.5 py-0.5 rounded rail-fill text-[10px] font-extrabold rail-t2">익일</span>` : '';
                 return `
                 <button class="rail-row ${t.soldOut ? 'is-soldout' : ''}" onclick="railOpenTrainInfo(${railTrains.indexOf(t)})">
