@@ -760,6 +760,7 @@
     <script src="./seoul_line9_rail_path.js?v=20260813"></script>
     <script src="./daejeon_line1_rail_path.js?v=20260813"></script>
     <script src="./gwangju_line1_rail_path.js?v=20260813"></script>
+    <script src="./daegyeong_rail_path.js?v=20260813"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -4129,6 +4130,9 @@
         // 광주 도시철도 1호선 역 좌표 (OpenStreetMap ODbL).
         STATION_COORD_LISTS.gwangju_line1 = Object.keys(STATIONS_ALL.gwangju_line1)
             .map(name => window.GWANGJU_LINE1_OSM_STATION_COORDS?.[name]);
+        // 대경선 역 좌표 (OpenStreetMap ODbL).
+        STATION_COORD_LISTS.daegyeong = Object.keys(STATIONS_ALL.daegyeong)
+            .map(name => window.DAEGYEONG_OSM_STATION_COORDS?.[name]);
         const STATION_COORDS = Object.fromEntries(Object.entries(STATION_COORD_LISTS).map(([lineId, coords]) => {
             const stationNames = Object.keys(STATIONS_ALL[lineId] || {});
             return [lineId, Object.fromEntries(stationNames.map((stationName, index) => [stationName, coords[index]]).filter(([, coord]) => Array.isArray(coord)))];
@@ -4220,6 +4224,8 @@
             || RAIL_ROUTE_PATHS.daejeon_line1;
         RAIL_ROUTE_PATHS.gwangju_line1 = window.GWANGJU_LINE1_OSM_RAIL_PATH
             || RAIL_ROUTE_PATHS.gwangju_line1;
+        RAIL_ROUTE_PATHS.daegyeong = window.DAEGYEONG_OSM_RAIL_PATH
+            || RAIL_ROUTE_PATHS.daegyeong;
         const RAIL_ROUTE_PATH_VARIANTS = {
             seoul_line1: SEOUL_LINE1_RAIL_PATHS,
             seoul_line2: SEOUL_LINE2_RAIL_PATHS,
