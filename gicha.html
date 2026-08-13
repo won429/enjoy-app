@@ -26,6 +26,7 @@
     <script src="jungang_ktx_train_timetable.js"></script>
     <script src="chungbuk_general_train_timetable.js"></script>
     <script src="daegu_general_train_timetable.js"></script>
+    <script src="donghae_bujeon_gangneung_ktx_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1178,7 +1179,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu', 'donghae_ktx'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1297,6 +1298,13 @@
                     { from: '아화', to: '경주' },
                     { from: '경주', to: '서경주' }
                 ]
+            },
+            /* 동해선도 고속선이 아니다. KTX-이음이 동해안을 따라 부전~강릉을 잇는다. */
+            donghae_ktx: {
+                label: '동해선', badge: '동',
+                color: '#1E3A8A', downColor: '#93A6D8',
+                upToward: '부전', downToward: '강릉',
+                tabLabel: '동해선', trainLabel: 'KTX-이음'
             }
         };
 
@@ -1688,6 +1696,22 @@
                 "서경주": { progress: 0.7174 },
                 "안강": { progress: 0.8478 },
                 "포항": { progress: 1.0000, ktx: true }
+            },
+            /* 동해선 KTX-이음. 동해선에는 고속선이 없다.
+               2024년 말 영덕~삼척이 이어지면서 부전에서 강릉까지 한 번에 간다.
+               6편 모두 11개 역에 전부 정차한다. */
+            'donghae_ktx': {
+                "부전": { progress: 0.0000, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] },
+                "태화강": { progress: 0.1000, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] },
+                "경주": { progress: 0.2000, ktx: true },
+                "포항": { progress: 0.3000, ktx: true },
+                "영덕": { progress: 0.4000, ktx: true },
+                "울진": { progress: 0.5000, ktx: true },
+                "삼척": { progress: 0.6000, ktx: true },
+                "동해": { progress: 0.7000, ktx: true },
+                "묵호": { progress: 0.8000, ktx: true },
+                "정동진": { progress: 0.9000, ktx: true },
+                "강릉": { progress: 1.0000, ktx: true }
             }
         };
 
@@ -1885,7 +1909,8 @@
             jungang:             { src: './jungang_general_train_timetable.js',     globalName: 'JUNGANG_LINE_TIMETABLE' },
             jungang_ktx:         { src: './jungang_ktx_train_timetable.js',         globalName: 'JUNGANG_KTX_LINE_TIMETABLE' },
             chungbuk:            { src: './chungbuk_general_train_timetable.js',    globalName: 'CHUNGBUK_LINE_TIMETABLE' },
-            daegu:               { src: './daegu_general_train_timetable.js',       globalName: 'DAEGU_LINE_TIMETABLE' }
+            daegu:               { src: './daegu_general_train_timetable.js',       globalName: 'DAEGU_LINE_TIMETABLE' },
+            donghae_ktx:         { src: './donghae_bujeon_gangneung_ktx_train_timetable.js', globalName: 'DONGHAE_KTX_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -2026,6 +2051,12 @@
             routeName: '대구선 일반열차(동대구-경주/포항)',
             sourceGlobal: 'DAEGU_GENERAL_TRAIN_TIMETABLE',
             targetGlobal: 'DAEGU_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'donghae_ktx', baseId: 53000, label: '동해선 KTX-이음',
+            routeName: '동해선 KTX-이음(부전-강릉)',
+            sourceGlobal: 'DONGHAE_BUJEON_GANGNEUNG_KTX_TRAIN_TIMETABLE',
+            targetGlobal: 'DONGHAE_KTX_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2269,7 +2300,8 @@
             jungang:2900,
             jungang_ktx:2100,
             chungbuk:2000,
-            daegu:1600
+            daegu:1100,
+            donghae_ktx:1300
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -4142,6 +4174,8 @@
               stops: [['용산',0],['익산',250],['전주',274],['남원',331],['곡성',362],['구례구',376],['순천',411],['여천',446],['여수엑스포',456]] },
             { id: 'jungang', name: '중앙선', types: ['KTX-이음', 'ITX-마음', '무궁화호'],
               stops: [['청량리',0],['양평',44],['원주',84],['제천',130],['단양',156],['풍기',180],['영주',194],['안동',232],['의성',266],['영천',320],['경주',348],['태화강',388],['부전',453]] },
+            { id: 'donghae_ktx', name: '동해선(부전-강릉)', types: ['KTX-이음'],
+              stops: [['부전',0],['태화강',66],['경주',104],['포항',142],['영덕',186],['울진',254],['삼척',308],['동해',321],['묵호',325],['정동진',338],['강릉',355]] },
             { id: 'daegu', name: '대구선', types: ['ITX-마음', '누리로', '무궁화호'],
               stops: [['동대구',0],['하양',21],['영천',38],['아화',52],['서경주',66],['경주',70],['안강',78],['포항',92]] },
             { id: 'chungbuk', name: '충북선', types: ['ITX-마음', '무궁화호'],
@@ -4312,6 +4346,16 @@
               km: {
                   '동대구': 0, '하양': 21, '영천': 38, '아화': 52,
                   '서경주': 66, '경주': 70, '안강': 78, '포항': 92
+              } },
+
+            /* 동해선 KTX-이음. 동해선에는 고속선이 없다.
+               부전 기점 km 를 직접 준다(영덕~삼척은 2024년 개통 구간이라 근사값). */
+            { line: '동해선 KTX-이음', routeId: 'donghae_ktx', global: 'DONGHAE_BUJEON_GANGNEUNG_KTX_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              km: {
+                  '부전': 0, '태화강': 66, '경주': 104, '포항': 142, '영덕': 186,
+                  '울진': 254, '삼척': 308, '동해': 321, '묵호': 325,
+                  '정동진': 338, '강릉': 355
               } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
@@ -4613,10 +4657,10 @@
         /* ---------------- 역 · 지역 ---------------- */
         const RAIL_REGION_MAP = {
             '수도권': ['서울','용산','영등포','청량리','상봉','광명','수서','동탄','평택지제','수원','평택','평내호평','마석','안양','오산','서정리','행신'],
-            '강원': ['춘천','남춘천','강촌','가평','청평','양평','원주','만종','횡성','둔내','평창','진부(오대산)','강릉','정동진','동해','도계','태백','민둥산','영월','정선'],
+            '강원': ['춘천','남춘천','강촌','가평','청평','양평','원주','만종','횡성','둔내','평창','진부(오대산)','강릉','정동진','묵호','동해','삼척','도계','태백','민둥산','영월','정선'],
             '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','청주','오근장','청주공항','증평','음성','주덕','충주','삼탄','봉양','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
             '전라': ['익산','정읍','광주송정','나주','목포','김제','장성','함평','무안','전주','남원','곡성','구례구','순천','여천','여수엑스포','군산','벌교','보성'],
-            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','하양','아화','서경주','안강','군위','북울산','기장','신해운대','센텀','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
+            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','하양','아화','서경주','안강','영덕','울진','군위','북울산','기장','신해운대','센텀','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
         };
         const RAIL_POPULAR = ['서울','부산','동대구','대전','광주송정','강릉','목포','여수엑스포','수서','용산','전주','포항'];
 
