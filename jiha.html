@@ -758,6 +758,7 @@
     <script src="./seoul_line7_rail_path.js?v=20260813"></script>
     <script src="./seoul_line8_rail_path.js?v=20260813"></script>
     <script src="./seoul_line9_rail_path.js?v=20260813"></script>
+    <script src="./daejeon_line1_rail_path.js?v=20260813"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -4121,6 +4122,9 @@
         // 수도권 9호선 역 좌표 (OpenStreetMap ODbL).
         STATION_COORD_LISTS.seoul_line9 = SEOUL_LINE9_STATIONS
             .map(name => window.SEOUL_LINE9_OSM_STATION_COORDS?.[name]);
+        // 대전 도시철도 1호선 역 좌표 (OpenStreetMap ODbL).
+        STATION_COORD_LISTS.daejeon_line1 = Object.keys(STATIONS_ALL.daejeon_line1)
+            .map(name => window.DAEJEON_LINE1_OSM_STATION_COORDS?.[name]);
         const STATION_COORDS = Object.fromEntries(Object.entries(STATION_COORD_LISTS).map(([lineId, coords]) => {
             const stationNames = Object.keys(STATIONS_ALL[lineId] || {});
             return [lineId, Object.fromEntries(stationNames.map((stationName, index) => [stationName, coords[index]]).filter(([, coord]) => Array.isArray(coord)))];
@@ -4208,6 +4212,8 @@
             || SEOUL_LINE8_STATIONS.map(name => STATION_COORDS.seoul_line8[name]).filter(Boolean);
         RAIL_ROUTE_PATHS.seoul_line9 = window.SEOUL_LINE9_OSM_RAIL_PATH
             || SEOUL_LINE9_STATIONS.map(name => STATION_COORDS.seoul_line9[name]).filter(Boolean);
+        RAIL_ROUTE_PATHS.daejeon_line1 = window.DAEJEON_LINE1_OSM_RAIL_PATH
+            || RAIL_ROUTE_PATHS.daejeon_line1;
         const RAIL_ROUTE_PATH_VARIANTS = {
             seoul_line1: SEOUL_LINE1_RAIL_PATHS,
             seoul_line2: SEOUL_LINE2_RAIL_PATHS,
