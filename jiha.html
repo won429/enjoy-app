@@ -289,6 +289,8 @@
         }
         /* ── 스크린도어: 대구 3호선식 반높이형 ──────────────────────────
            --u 로 프레임 굵기를 조절해 가까운 쪽은 굵게, 건너편은 가늘게.
+           띠 색은 노선색(--psd-band*)을 따르고, 실제로 열리는 문짝은 고정
+           유리벽보다 한 단계 진한 색으로 칠해 한눈에 구분되게 한다.
            열차 진입 시 window.setPlatformDoors(true) 로 개폐한다. */
         .psd {
             position: absolute;
@@ -297,7 +299,7 @@
             pointer-events: none;
         }
         .psd--far  { --u: 1.6px; --psd-door-w: 16%; top: 63.6%; height: 8.3%; z-index: 2; }
-        .psd--near { --u: 2.6px; --psd-door-w: 22%; top: 84.7%; height: 11.2%; z-index: 3; }
+        .psd--near { --u: 2.6px; --psd-door-w: 22%; top: 84.7%; height: 11.2%; z-index: 6; }
         /* 상단 손잡이 레일 */
         .psd::before {
             content: "";
@@ -331,15 +333,18 @@
         .psd-panel,
         .psd-leaf {
             position: relative;
-            /* 위는 노란 프레임, 좌우는 금속 기둥, 아래는 하단판이 덮는다 */
+            /* 위는 노선색 프레임, 좌우는 금속 기둥, 아래는 하단판이 덮는다 */
             border-style: solid;
             border-width: calc(var(--u) * 1.6) var(--u) 0 var(--u);
-            border-color: #f2c62a #8d9598 transparent #8d9598;
-            /* 유리 — 뒤 선로가 비쳐 보이도록 투과 */
-            background-color: rgba(26,44,54,.30);
             box-shadow: 0 0 0 calc(var(--u) * .35) rgba(30,22,12,.20);
         }
-        .psd-panel { flex: 1 1 auto; }
+        /* 고정 유리벽 — 열리지 않는 구간. 밝은 노선색 띠 + 옅은 유리 */
+        .psd-panel {
+            flex: 1 1 auto;
+            border-color: var(--psd-band-hi, var(--theme, #0054A6)) #8d9598 transparent #8d9598;
+            /* 유리 — 뒤 선로가 비쳐 보이도록 투과 */
+            background-color: rgba(26,44,54,.30);
+        }
         /* 유리 반사 */
         .psd-panel::before,
         .psd-leaf::before {
@@ -351,31 +356,62 @@
                 rgba(255,255,255,.05) 28% 62%,
                 rgba(255,255,255,.22) 74% 100%);
         }
-        /* 하단 옐로우 판 */
-        .psd-panel::after,
-        .psd-leaf::after {
+        /* 하단 노선색 판 — 고정벽 쪽 */
+        .psd-panel::after {
             content: "";
             position: absolute;
             inset: 48% 0 0 0;
-            background: linear-gradient(180deg, #ffdb54 0%, #f2c31e 46%, #d9a600 100%);
+            background: linear-gradient(180deg,
+                var(--psd-band-hi, var(--theme, #3b7fd4)) 0%,
+                var(--psd-band, var(--theme, #0054A6)) 46%,
+                var(--psd-band-mid, #00478d) 100%);
             box-shadow:
-                inset 0 var(--u) 0 rgba(84,62,0,.30),
-                inset 0 calc(var(--u) * -1) 0 rgba(0,0,0,.16);
+                inset 0 var(--u) 0 rgba(255,255,255,.24),
+                inset 0 calc(var(--u) * -1) 0 rgba(0,0,0,.18);
         }
-        /* 문짝 맞물리는 가장자리 */
-        .psd-leaf.is-left  { border-right-color: #6f7779; }
-        .psd-leaf.is-right { border-left-color: #6f7779; }
-        .psd-door {
-            position: relative;
-            flex: 0 0 var(--psd-door-w, 22%);
-            overflow: hidden;
-        }
+        /* 열리는 문짝 — 진한 유리·진한 띠·짙은 기둥으로 고정벽과 구분 */
         .psd-leaf {
             position: absolute;
             top: 0;
             bottom: 0;
             width: 50%;
+            border-color: var(--psd-band-lo, #003c78) #454e51 transparent #454e51;
+            background-color: rgba(4,14,20,.62);
             transition: transform .9s cubic-bezier(.22,.61,.36,1);
+        }
+        /* 하단 노선색 판 — 문짝 쪽은 두 단계 어둡게 */
+        .psd-leaf::after {
+            content: "";
+            position: absolute;
+            inset: 48% 0 0 0;
+            background: linear-gradient(180deg,
+                var(--psd-band-lo, #003c78) 0%,
+                var(--psd-band-deep, #002a55) 62%,
+                var(--psd-band-deep, #002a55) 100%);
+            box-shadow:
+                inset 0 var(--u) 0 rgba(255,255,255,.12),
+                inset 0 calc(var(--u) * -1) 0 rgba(0,0,0,.32);
+        }
+        /* 문짝 맞물리는 가장자리 */
+        .psd-leaf.is-left  { border-right-color: #8b9598; }
+        .psd-leaf.is-right { border-left-color: #8b9598; }
+        .psd-door {
+            position: relative;
+            flex: 0 0 var(--psd-door-w, 22%);
+            overflow: hidden;
+            /* 문이 열리면 드러나는 개구부 안쪽 */
+            background-color: rgba(6,14,20,.55);
+        }
+        /* 문틀 — 벽보다 깊게 파인 개구부로 보이게 양옆에 그늘 */
+        .psd-door::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            box-shadow:
+                inset calc(var(--u) * 1.3) 0 0 rgba(10,16,18,.55),
+                inset calc(var(--u) * -1.3) 0 0 rgba(10,16,18,.55);
         }
         .psd-leaf.is-left  { left: 0; }
         .psd-leaf.is-right { right: 0; }
@@ -383,6 +419,202 @@
         .psd.is-open .psd-leaf.is-right { transform: translateX(100%); }
         @media (prefers-reduced-motion: reduce) {
             .psd-leaf { transition-duration: .01ms; }
+        }
+
+        /* ── 승강장 진입 열차 ──────────────────────────────────────────
+           스크린도어와 똑같은 [벽·문·벽…] 플렉스 규칙으로 짜서, 정차했을 때
+           열차 문과 스크린도어 문이 정확히 맞물린다.
+           상행은 건너편(far) 선로로 오른쪽에서, 하행은 내 쪽(near) 선로로
+           왼쪽에서 들어온다. 두 방향이 겹치면 두 대가 함께 들어온다. */
+        .ptrain {
+            position: absolute;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            visibility: hidden;
+            transform: translateX(var(--pt-park, 130%));
+            will-change: transform;
+        }
+        .ptrain.from-right { --pt-park: 130%;  --pt-exit: -130%; }
+        .ptrain.from-left  { --pt-park: -130%; --pt-exit: 130%; }
+        .ptrain.is-live { visibility: visible; }
+        .ptrain.is-arriving {
+            transform: translateX(0);
+            transition: transform var(--pt-arrive, 8s) cubic-bezier(.14,.62,.22,1);
+        }
+        .ptrain.is-stopped { transform: translateX(0); }
+        .ptrain.is-departing {
+            transform: translateX(var(--pt-exit, -130%));
+            transition: transform var(--pt-depart, 6s) cubic-bezier(.5,.02,.86,.5);
+        }
+        .ptrain--far  { --pt-door-w: 16%; --v: 1.3px; top: 62%;   height: 12.5%; z-index: 3; }
+        .ptrain--near { --pt-door-w: 22%; --v: 2.4px; top: 74.5%; height: 21.5%; z-index: 4; }
+
+        /* 지붕 위 냉방장치 — 차체 위로 삐져나온다 */
+        .pt-roof {
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            bottom: calc(100% - var(--v));
+            height: 13%;
+            background-image:
+                repeating-linear-gradient(90deg, rgba(0,0,0,0) 0 7%, #93aebe 7% 20%, rgba(0,0,0,0) 20% 33.34%),
+                repeating-linear-gradient(90deg, rgba(0,0,0,0) 0 7%, #4d6675 7% 20%, rgba(0,0,0,0) 20% 33.34%);
+            background-size: 100% 34%, 100% 100%;
+            background-position: 0 0, 0 0;
+            background-repeat: no-repeat;
+        }
+        /* 차체 — 사진의 크림/카키 도장 */
+        .ptrain-body {
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(180deg,
+                #9d9880 0 2.5%,
+                #e9e4cb 2.5% 7%,
+                #ddd7bc 7% 58%,
+                #d2cbae 58% 78%,
+                #bdb69a 78% 92%,
+                #9a9479 92% 100%);
+            box-shadow: 0 calc(var(--v) * 1.6) calc(var(--v) * 3.4) rgba(18,12,4,.5);
+        }
+        .ptrain.from-right .ptrain-body {
+            border-radius: calc(var(--v) * 9) 0 0 calc(var(--v) * 2.5) / calc(var(--v) * 11) 0 0 calc(var(--v) * 2.5);
+        }
+        .ptrain.from-left .ptrain-body {
+            border-radius: 0 calc(var(--v) * 9) calc(var(--v) * 2.5) 0 / 0 calc(var(--v) * 11) calc(var(--v) * 2.5) 0;
+        }
+        .pt-run {
+            display: flex;
+            align-items: stretch;
+            height: 100%;
+        }
+        /* 창문 구간 */
+        .pt-bay {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+            gap: calc(var(--v) * 2);
+            padding: 0 calc(var(--v) * 2.2);
+        }
+        .pt-win {
+            flex: 1 1 0;
+            height: 44%;
+            /* 창은 차체 가운데보다 위쪽에 붙는다 */
+            transform: translateY(-20%);
+            border-radius: calc(var(--v) * 2.2);
+            background: linear-gradient(180deg, #f6d68a 0 20%, #f0c15b 20% 58%, #e2a939 58% 100%);
+            box-shadow:
+                0 0 0 var(--v) #8d876c,
+                inset 0 0 0 calc(var(--v) * .7) rgba(122,84,14,.32),
+                0 calc(var(--v) * .6) calc(var(--v) * 2) rgba(255,196,86,.35);
+            position: relative;
+            overflow: hidden;
+        }
+        /* 창 안쪽 좌석 실루엣 */
+        .pt-win::after {
+            content: "";
+            position: absolute;
+            left: 16%;
+            right: 16%;
+            bottom: 0;
+            height: 46%;
+            border-radius: calc(var(--v) * 1.4) calc(var(--v) * 1.4) 0 0;
+            background: linear-gradient(180deg, #f9e2a8, #eec368);
+        }
+        /* 출입문 */
+        .pt-door {
+            position: relative;
+            flex: 0 0 var(--pt-door-w, 22%);
+            overflow: hidden;
+            /* 문이 열리면 보이는 객실 안쪽 — 조명이 든 어둑한 실내 */
+            background:
+                radial-gradient(130% 90% at 50% 26%, rgba(255,208,126,.30), rgba(255,208,126,0) 72%),
+                linear-gradient(180deg, #6a6350 0 10%, #3a3931 10% 58%, #23231d 58% 100%);
+        }
+        .pt-door::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+            box-shadow:
+                inset 0 var(--v) 0 rgba(0,0,0,.35),
+                inset calc(var(--v) * 1.5) 0 0 #1e2c32,
+                inset calc(var(--v) * -1.5) 0 0 #1e2c32;
+        }
+        .pt-leaf {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%;
+            z-index: 2;
+            background: linear-gradient(180deg, #46606b 0 5%, #354a53 5% 84%, #223138 84% 100%);
+            transition: transform .85s cubic-bezier(.22,.61,.36,1);
+        }
+        .pt-leaf.is-left  { left: 0;  box-shadow: inset calc(var(--v) * -.9) 0 0 rgba(0,0,0,.5); }
+        .pt-leaf.is-right { right: 0; box-shadow: inset calc(var(--v) * .9) 0 0 rgba(0,0,0,.5); }
+        /* 문 유리 */
+        .pt-leaf::before {
+            content: "";
+            position: absolute;
+            left: 17%;
+            right: 17%;
+            top: 16%;
+            height: 44%;
+            border-radius: calc(var(--v) * 2);
+            background: linear-gradient(180deg, #f6d68a 0 22%, #edbc55 22% 100%);
+            box-shadow: inset 0 0 0 calc(var(--v) * .7) rgba(122,84,14,.3);
+        }
+        .ptrain.is-open .pt-leaf.is-left  { transform: translateX(-100%); }
+        .ptrain.is-open .pt-leaf.is-right { transform: translateX(100%); }
+        /* 운전실 — 진행 방향 앞쪽 끝 */
+        .pt-cab {
+            position: relative;
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+            padding: 0 calc(var(--v) * 2.2);
+        }
+        .ptrain.from-right .pt-cab { justify-content: flex-start; padding-left: calc(var(--v) * 6); }
+        .ptrain.from-left  .pt-cab { justify-content: flex-end;    padding-right: calc(var(--v) * 6); }
+        .pt-cab-glass {
+            width: 40%;
+            height: 50%;
+            transform: translateY(-18%);
+            border-radius: calc(var(--v) * 2.2);
+            background: linear-gradient(180deg, #f6d68a 0 16%, #f0c15b 16% 62%, #dfa432 62% 100%);
+            box-shadow:
+                0 0 0 var(--v) #8d876c,
+                inset 0 0 0 calc(var(--v) * .7) rgba(122,84,14,.32);
+        }
+        /* 전조등 */
+        .pt-headlight {
+            position: absolute;
+            top: 9%;
+            width: calc(var(--v) * 4.6);
+            height: calc(var(--v) * 4.6);
+            border-radius: calc(var(--v) * 1.2);
+            background: radial-gradient(circle at 50% 45%, #fffbe4 0 34%, #ffd45f 34% 100%);
+            box-shadow:
+                0 0 0 calc(var(--v) * .8) #8d876c,
+                0 0 calc(var(--v) * 6) rgba(255,212,95,.85);
+        }
+        .ptrain.from-right .pt-headlight { left: calc(var(--v) * 2.2); }
+        .ptrain.from-left  .pt-headlight { right: calc(var(--v) * 2.2); }
+        /* 하부 스커트 */
+        .pt-skirt {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 11%;
+            z-index: 4;
+            background: linear-gradient(180deg, #7d7760 0 20%, #4a4636 20% 58%, #2b2920 58% 100%);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .pt-leaf { transition-duration: .01ms; }
+            .ptrain.is-arriving, .ptrain.is-departing { transition-duration: .01ms; }
         }
 
         .home-platform-home-block {
@@ -408,7 +640,7 @@
         }
         .home-platform-station-plate {
             position: absolute;
-            z-index: 5;
+            z-index: 8;
             top: 12.75rem;
             left: 1.125rem;
             right: 1.125rem;
@@ -441,7 +673,7 @@
         }
         .home-platform-message {
             position: absolute;
-            z-index: 4;
+            z-index: 7;
             /* 2줄로 높아진 만큼 위로 — 천장 행거와 역명판 사이 간격 확보 */
             top: 6rem;
             left: 50%;
@@ -815,6 +1047,10 @@
                                 <div class="psd-panel"></div>
                             </div>
                         </div>
+                        <!-- 건너편 선로 열차(상행) — 오른쪽에서 진입. 내용은 스크립트가 채운다 -->
+                        <div id="ptrain-far" class="ptrain ptrain--far from-right" aria-hidden="true"></div>
+                        <!-- 내 쪽 선로 열차(하행) — 왼쪽에서 진입 -->
+                        <div id="ptrain-near" class="ptrain ptrain--near from-left" aria-hidden="true"></div>
                         <!-- 스크린도어 — 내가 서 있는 쪽 승강장 -->
                         <div id="psd-near" class="psd psd--near" aria-hidden="true">
                             <div class="psd-run">
@@ -1202,7 +1438,30 @@
         let currentLineId = 'daegyeong';
         let THEME_COLOR = "#0054A6";
         let DOWN_COLOR = "#5998D6";
-        const STOP_DURATION = 25; 
+        const STOP_DURATION = 25;
+
+        /* 노선색 명암 변형 — ratio > 0 이면 흰색 쪽, < 0 이면 검정 쪽으로 섞는다. */
+        const shadeHex = (hex, ratio) => {
+            const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+            if (!m) return hex;
+            const n = parseInt(m[1], 16);
+            const mixTo = ratio >= 0 ? 255 : 0;
+            const k = Math.min(1, Math.abs(ratio));
+            const ch = (shift) => {
+                const v = (n >> shift) & 255;
+                return Math.round(v + (mixTo - v) * k).toString(16).padStart(2, '0');
+            };
+            return `#${ch(16)}${ch(8)}${ch(0)}`;
+        };
+        /* 스크린도어 띠(고정벽/문짝)에 쓸 노선색 계열을 CSS 변수로 내보낸다. */
+        const applyPlatformDoorTheme = (color) => {
+            const root = document.documentElement.style;
+            root.setProperty('--psd-band-hi', shadeHex(color, 0.34));
+            root.setProperty('--psd-band', color);
+            root.setProperty('--psd-band-mid', shadeHex(color, -0.12));
+            root.setProperty('--psd-band-lo', shadeHex(color, -0.36));
+            root.setProperty('--psd-band-deep', shadeHex(color, -0.58));
+        };
 
         function returnToEnjoyHome() {
             if (window.parent !== window) {
@@ -3835,6 +4094,7 @@
             document.documentElement.style.setProperty('--theme', THEME_COLOR);
             document.documentElement.style.setProperty('--theme-down', DOWN_COLOR);
             document.documentElement.style.setProperty('--theme-soft', THEME_COLOR + '14');
+            applyPlatformDoorTheme(THEME_COLOR);
             const appEl = document.getElementById('app');
             if (appEl) appEl.style.backgroundColor = THEME_COLOR + '08';
             const heroBand = document.getElementById('hero-band');
@@ -4186,6 +4446,114 @@
             platformDoorTimer = setTimeout(() => window.setPlatformDoors(false, side), holdMs);
         };
 
+        /* ── 승강장 진입 열차 ───────────────────────────────────────────
+           시간표의 해당 역 도착 시각을 기준으로 진입 → 정차·개문 → 출발까지
+           한 사이클을 돌린다. 상행은 건너편 선로에 오른쪽에서, 하행은 내 쪽
+           선로에 왼쪽에서 들어오고, 두 방향 시각이 겹치면 두 대가 함께 든다. */
+        const PLATFORM_TRACKS = {
+            up:   { el: 'ptrain-far',  psd: 'far',  doors: 3 },
+            down: { el: 'ptrain-near', psd: 'near', doors: 2 },
+        };
+        const PT_APPROACH_SEC = 8;      // 도착 몇 초 전부터 진입 애니메이션
+        const PT_DEPART_SEC = 6;        // 출발 애니메이션 길이
+        const PT_DOOR_OPEN_AFTER = 2;   // 정차 후 문이 열리기까지
+        const PT_DOOR_CLOSE_BEFORE = 6; // 출발 전 문이 닫히는 시점
+        const platformTrainState = { up: null, down: null };
+
+        const buildPlatformTrain = (el, doorCount) => {
+            const bay = '<div class="pt-bay"><i class="pt-win"></i><i class="pt-win"></i></div>';
+            const door = '<div class="pt-door"><i class="pt-leaf is-left"></i><i class="pt-leaf is-right"></i></div>';
+            const cab = '<div class="pt-cab"><i class="pt-headlight"></i><i class="pt-cab-glass"></i></div>';
+            // 스크린도어와 같은 [벽·문·벽…] 배열이라 정차 시 문 위치가 맞물린다
+            const parts = [];
+            for (let i = 0; i < doorCount; i++) parts.push(bay, door);
+            parts.push(bay);
+            // 진행 방향 앞쪽 칸을 운전실로 바꾼다
+            if (el.classList.contains('from-right')) parts[0] = cab;
+            else parts[parts.length - 1] = cab;
+            el.innerHTML =
+                '<div class="pt-roof"></div>' +
+                `<div class="ptrain-body"><div class="pt-run">${parts.join('')}</div><div class="pt-skirt"></div></div>`;
+        };
+
+        // 이 역에 진입 중이거나 정차·출발 중인 열차 한 대를 고른다.
+        const findPlatformTrain = (list, station) => {
+            if (!list || !list.length) return null;
+            let best = null;
+            for (const t of list) {
+                const stop = t.schedule.find(s => s.name === station);
+                if (!stop) continue;
+                const diff = stop.sec - currentSec;
+                if (diff > PT_APPROACH_SEC) continue;
+                if (diff < -(STOP_DURATION + PT_DEPART_SEC)) continue;
+                if (!best || Math.abs(diff) < Math.abs(best.diff)) best = { id: t.id, diff };
+            }
+            return best;
+        };
+
+        const resetPlatformTrain = (dir) => {
+            const cfg = PLATFORM_TRACKS[dir];
+            const el = document.getElementById(cfg.el);
+            if (el) {
+                el.classList.remove('is-live', 'is-arriving', 'is-stopped', 'is-departing', 'is-open');
+                el.style.removeProperty('--pt-arrive');
+            }
+            window.setPlatformDoors(false, cfg.psd);
+            platformTrainState[dir] = null;
+        };
+
+        const drivePlatformTrain = (dir, train) => {
+            const cfg = PLATFORM_TRACKS[dir];
+            const el = document.getElementById(cfg.el);
+            if (!el) return;
+            const prev = platformTrainState[dir];
+            if (!train) {
+                if (prev) resetPlatformTrain(dir);
+                return;
+            }
+            if (prev && prev.id !== train.id) resetPlatformTrain(dir);
+
+            const diff = train.diff;
+            const phase = diff > 0 ? 'arriving' : (diff > -STOP_DURATION ? 'stopped' : 'departing');
+            const open = phase === 'stopped'
+                && -diff >= PT_DOOR_OPEN_AFTER
+                && -diff <= STOP_DURATION - PT_DOOR_CLOSE_BEFORE;
+            const now = platformTrainState[dir];
+
+            if (!now || now.phase !== phase) {
+                if (!now) {
+                    // 대기 위치를 한 번 그린 뒤 전환해야 진입 트랜지션이 걸린다
+                    el.classList.add('is-live');
+                    void el.offsetWidth;
+                }
+                el.classList.remove('is-arriving', 'is-stopped', 'is-departing');
+                if (phase === 'arriving') {
+                    el.style.setProperty('--pt-arrive', `${Math.max(0.6, diff)}s`);
+                    el.classList.add('is-arriving');
+                } else if (phase === 'stopped') {
+                    el.classList.add('is-stopped');
+                } else {
+                    el.classList.add('is-departing');
+                }
+            }
+            if (!now || now.open !== open) {
+                el.classList.toggle('is-open', open);
+                window.setPlatformDoors(open, cfg.psd);
+            }
+            platformTrainState[dir] = { id: train.id, phase, open };
+        };
+
+        window.updatePlatformTrains = (upTrains, downTrains) => {
+            drivePlatformTrain('up', upTrains);
+            drivePlatformTrain('down', downTrains);
+        };
+        window.resetPlatformTrains = () => { resetPlatformTrain('up'); resetPlatformTrain('down'); };
+
+        Object.values(PLATFORM_TRACKS).forEach(cfg => {
+            const el = document.getElementById(cfg.el);
+            if (el) buildPlatformTrain(el, cfg.doors);
+        });
+
         // 노선별 편성 량수 — 전광판 표기용. 미등록 노선은 량 칸을 비워 둔다.
         const TRAIN_CAR_COUNT = {
             daegyeong: 2,
@@ -4248,6 +4616,12 @@
                     boardRow(upTrains, timetableLoaded.up, isFirst, stationNames[0]) +
                     boardRow(downTrains, timetableLoaded.down, isLast, stationNames[stationNames.length - 1]);
             }
+
+            // 승강장 열차 — 시간표 도착 시각에 맞춰 진입 → 정차·개문 → 출발
+            window.updatePlatformTrains(
+                (!isFirst && timetableLoaded.up) ? findPlatformTrain(parsedTrainsUp, homeSelectedStation) : null,
+                (!isLast && timetableLoaded.down) ? findPlatformTrain(parsedTrainsDown, homeSelectedStation) : null
+            );
         };
 
         window.openStationSelector = () => {
