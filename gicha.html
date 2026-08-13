@@ -25,6 +25,7 @@
     <script src="jungang_general_train_timetable.js"></script>
     <script src="jungang_ktx_train_timetable.js"></script>
     <script src="chungbuk_general_train_timetable.js"></script>
+    <script src="daegu_general_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1177,7 +1178,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1284,6 +1285,18 @@
                 color: '#A16207', downColor: '#DCC08A',
                 upToward: '대전', downToward: '제천 · 영주',
                 tabLabel: '충북선', trainLabel: '일반열차'
+            },
+            /* 대구선. 동대구에서 대구선을 타고 영천까지 가서 중앙선 · 동해선으로 이어진다.
+               경주는 서경주 쪽 삼각선에서 갈라지는 지선으로 둔다. */
+            daegu: {
+                label: '대구선', badge: '대',
+                color: '#BE123C', downColor: '#E79AAE',
+                upToward: '동대구', downToward: '경주 · 포항',
+                tabLabel: '대구선', trainLabel: '일반열차',
+                branchLinks: [
+                    { from: '아화', to: '경주' },
+                    { from: '경주', to: '서경주' }
+                ]
             }
         };
 
@@ -1662,6 +1675,19 @@
                 "단양": { progress: 0.8824, ktx: true },
                 "풍기": { progress: 0.9412, ktx: true },
                 "영주": { progress: 1.0000, ktx: true }
+            },
+            /* 대구선. 동대구~영천이 대구선, 영천~아화가 중앙선, 서경주~포항이 동해선이다.
+               아화 다음에서 경주(중앙선)와 서경주(동해선 포항 방면)로 갈라지고
+               경주 · 서경주 사이도 이어져 있다(삼각선) → 경주를 지선 칸에 둔다. */
+            'daegu': {
+                "동대구": { progress: 0.0000, ktx: true, srt: true, transfer: [{name: '1', color: '#D93F5C'}] },
+                "하양": { progress: 0.2283, transfer: [{name: '1', color: '#D93F5C'}] },
+                "영천": { progress: 0.4130 },
+                "아화": { progress: 0.5652 },
+                "경주": { col: 1, group: 'gyeongju', progress: 0.6400, ktx: true },
+                "서경주": { progress: 0.7174 },
+                "안강": { progress: 0.8478 },
+                "포항": { progress: 1.0000, ktx: true }
             }
         };
 
@@ -1858,7 +1884,8 @@
             jeolla_ktx:          { src: './jeolla_highspeed_train_timetable.js',    globalName: 'JEOLLA_KTX_LINE_TIMETABLE' },
             jungang:             { src: './jungang_general_train_timetable.js',     globalName: 'JUNGANG_LINE_TIMETABLE' },
             jungang_ktx:         { src: './jungang_ktx_train_timetable.js',         globalName: 'JUNGANG_KTX_LINE_TIMETABLE' },
-            chungbuk:            { src: './chungbuk_general_train_timetable.js',    globalName: 'CHUNGBUK_LINE_TIMETABLE' }
+            chungbuk:            { src: './chungbuk_general_train_timetable.js',    globalName: 'CHUNGBUK_LINE_TIMETABLE' },
+            daegu:               { src: './daegu_general_train_timetable.js',       globalName: 'DAEGU_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1993,6 +2020,12 @@
             routeName: '충북선 일반열차(대전-제천/영주)',
             sourceGlobal: 'CHUNGBUK_GENERAL_TRAIN_TIMETABLE',
             targetGlobal: 'CHUNGBUK_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'daegu', baseId: 52000, label: '대구선',
+            routeName: '대구선 일반열차(동대구-경주/포항)',
+            sourceGlobal: 'DAEGU_GENERAL_TRAIN_TIMETABLE',
+            targetGlobal: 'DAEGU_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2235,7 +2268,8 @@
             jeolla_ktx:2000,
             jungang:2900,
             jungang_ktx:2100,
-            chungbuk:2000
+            chungbuk:2000,
+            daegu:1600
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -4108,6 +4142,8 @@
               stops: [['용산',0],['익산',250],['전주',274],['남원',331],['곡성',362],['구례구',376],['순천',411],['여천',446],['여수엑스포',456]] },
             { id: 'jungang', name: '중앙선', types: ['KTX-이음', 'ITX-마음', '무궁화호'],
               stops: [['청량리',0],['양평',44],['원주',84],['제천',130],['단양',156],['풍기',180],['영주',194],['안동',232],['의성',266],['영천',320],['경주',348],['태화강',388],['부전',453]] },
+            { id: 'daegu', name: '대구선', types: ['ITX-마음', '누리로', '무궁화호'],
+              stops: [['동대구',0],['하양',21],['영천',38],['아화',52],['서경주',66],['경주',70],['안강',78],['포항',92]] },
             { id: 'chungbuk', name: '충북선', types: ['ITX-마음', '무궁화호'],
               stops: [['대전',0],['신탄진',18],['부강',27],['조치원',37],['오송',44],['청주',55],['오근장',63],['청주공항',68],['증평',79],['음성',98],['주덕',117],['충주',126],['삼탄',141],['봉양',152],['제천',157],['단양',183],['풍기',207],['영주',221]] },
             { id: 'gangneung', name: '강릉선', types: ['KTX-이음'],
@@ -4267,6 +4303,15 @@
                   '청주': 55, '오근장': 63, '청주공항': 68, '증평': 79, '음성': 98,
                   '주덕': 117, '충주': 126, '삼탄': 141, '봉양': 152,
                   '제천': 157, '단양': 183, '풍기': 207, '영주': 221
+              } },
+
+            /* 대구선 일반열차. 동대구 기점 km 를 직접 준다.
+               ※ 경주 · 서경주 · 아화는 삼각선이라 한 줄 거리로는 정확히 담기지 않는다.
+                  동대구 기준 거리를 맞추고 경주~서경주 사이는 근사값으로 둔다. */
+            { line: '대구선', routeId: 'daegu', global: 'DAEGU_GENERAL_TRAIN_TIMETABLE',
+              km: {
+                  '동대구': 0, '하양': 21, '영천': 38, '아화': 52,
+                  '서경주': 66, '경주': 70, '안강': 78, '포항': 92
               } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
@@ -4571,7 +4616,7 @@
             '강원': ['춘천','남춘천','강촌','가평','청평','양평','원주','만종','횡성','둔내','평창','진부(오대산)','강릉','정동진','동해','도계','태백','민둥산','영월','정선'],
             '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','청주','오근장','청주공항','증평','음성','주덕','충주','삼탄','봉양','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
             '전라': ['익산','정읍','광주송정','나주','목포','김제','장성','함평','무안','전주','남원','곡성','구례구','순천','여천','여수엑스포','군산','벌교','보성'],
-            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
+            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','하양','아화','서경주','안강','군위','북울산','기장','신해운대','센텀','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
         };
         const RAIL_POPULAR = ['서울','부산','동대구','대전','광주송정','강릉','목포','여수엑스포','수서','용산','전주','포항'];
 
