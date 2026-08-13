@@ -16,6 +16,7 @@
     <!-- 실제 열차 시간표 데이터 (노선별로 추가) -->
     <script src="gyeongbu_general_train_timetable.js"></script>
     <script src="gyeongbu_highspeed_train_timetable.js"></script>
+    <script src="honam_general_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -747,12 +748,14 @@
                     </div>
                 </div>
             </div>
+            <!-- 노선 선택 탭 -->
+            <div id="line-tabs" class="flex gap-1.5 overflow-x-auto px-4 pb-2 hide-scrollbar"></div>
             <!-- 열차 버튼 리스트 영역 -->
             <div id="train-list" class="flex gap-2 overflow-x-auto px-4 pb-1 hide-scrollbar"></div>
         </header>
 
         <!-- 3. 트래커 맵 스크롤 뷰 -->
-        <main id="scroll-container" class="hidden flex-1 w-full h-full overflow-y-auto overflow-x-hidden bg-white scroll-smooth relative pt-[80px] pb-32">
+        <main id="scroll-container" class="hidden flex-1 w-full h-full overflow-y-auto overflow-x-hidden bg-white scroll-smooth relative pt-[118px] pb-32">
             <div id="svg-wrapper" class="relative w-full h-[1500px]">
                 <div id="line-view" class="absolute top-0 left-0 w-full transition-opacity duration-500 opacity-0 z-0 pointer-events-none">
                     <svg id="line-svg" viewBox="0 0 400 1300" class="w-full h-[1300px]">
@@ -1011,7 +1014,17 @@
            여기에 있는 노선만 화면 · 위치검색 · 즐겨찾기 · 지도에 나온다.
            (기차 노선을 추가할 때 노선 id 를 넣고 LINE_META 에 정보를 채운다)
            ──────────────────────────────────────────────────────────── */
-        const TRAIN_LINE_IDS = ['gyeongbu'];
+        /* 환승 배지 표기 → 노선 이름. 숫자는 'n호선' 으로 자동 변환된다. */
+        const RAIL_TRANSFER_LINE_NAMES = {
+            '경의중앙': '경의중앙선', '수인분당': '수인분당선', '신분당': '신분당선', '경춘': '경춘선',
+            '경강': '경강선', '서해': '서해선', '동해': '동해선', '공항': '공항철도',
+            '김포골드': '김포골드라인', '용인': '용인경전철', 'A': 'GTX-A',
+            '인1': '인천 1호선', '인2': '인천 2호선'
+        };
+        const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
+            || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
+
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1021,7 +1034,31 @@
             gyeongbu: {
                 label: '경부선', badge: '경',
                 color: '#00587A', downColor: '#4E93AE',
-                upToward: '서울', downToward: '부산'
+                upToward: '서울', downToward: '부산',
+                tabLabel: '경부선', trainLabel: '일반열차'
+            },
+            gyeongbu_highspeed: {
+                label: '경부고속선', badge: '고',
+                color: '#2C6BF3', downColor: '#7FA8F5',
+                upToward: '서울', downToward: '부산',
+                tabLabel: '경부고속선', trainLabel: 'KTX · SRT',
+                /* 지선이 본선에서 갈라지고 합쳐지는 지점.
+                   수서 계통은 수서에서 시작하므로 합류(천안아산)만 있고,
+                   구포 경유는 동대구에서 갈라져 부산에서 다시 만난다. */
+                branchLinks: [
+                    { from: '평택지제', to: '천안아산' },
+                    { from: '동대구', to: '경산', dashed: true },
+                    { from: '구포', to: '부산', dashed: true }
+                ]
+            },
+            honam: {
+                label: '호남선', badge: '호',
+                color: '#0F7A5A', downColor: '#66B79C',
+                upToward: '용산', downToward: '목포',
+                tabLabel: '호남선', trainLabel: '일반열차',
+                branchLinks: [
+                    { from: '광주송정', to: '극락강' }
+                ]
             }
         };
 
@@ -1075,18 +1112,88 @@
                 "신동": { progress: 0.6585 },
                 "대구": { progress: 0.6829, transfer: [{name: '1', color: '#D93F5C'}] },
                 "동대구": { progress: 0.7073, ktx: true, srt: true, transfer: [{name: '1', color: '#D93F5C'}] },
-                "경산": { progress: 0.7317, ktx: true },
+                "경산": { group: 'gupo', progress: 0.7317, ktx: true },
                 "남성현": { progress: 0.7561 },
                 "청도": { progress: 0.7805 },
                 "상동": { progress: 0.8049 },
-                "밀양": { progress: 0.8293, ktx: true },
+                "밀양": { group: 'gupo', progress: 0.8293, ktx: true },
                 "삼랑진": { progress: 0.8537 },
                 "원동": { progress: 0.8780 },
-                "물금": { progress: 0.9024 },
+                "물금": { group: 'gupo', progress: 0.9024 },
                 "화명": { progress: 0.9268, transfer: [{name: '2', color: '#81C147'}] },
-                "구포": { progress: 0.9512, ktx: true, transfer: [{name: '3', color: '#B07C4A'}] },
+                "구포": { group: 'gupo', progress: 0.9512, ktx: true, transfer: [{name: '3', color: '#B07C4A'}] },
                 "사상": { progress: 0.9756, transfer: [{name: '2', color: '#81C147'}] },
                 "부산": { progress: 1.0000, ktx: true, srt: true, transfer: [{name: '1', color: '#F06A00'}] }
+            },
+            /* 경부고속선.
+               col: 1 은 본선에서 갈라져 나오는 지선 칸에 그린다.
+                    · 수서 계통(수서 · 동탄 · 평택지제) — 천안아산에서 본선과 합류
+                    · 구포 경유(경산 · 밀양 · 물금 · 구포) — 동대구에서 갈라져 부산에서 합류
+               dashed: true 는 고속선이 아닌 일반선 구간(구포 경유)이라 점선으로 그린다.
+               progress 는 실제 거리가 아니라 노선도 세로 위치다(두 계통을 나란히 놓아야 해서). */
+            'gyeongbu_highspeed': {
+                "행신": { progress: 0.0000, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "서울": { progress: 0.0667, ktx: true, srt: true, transfer: [{name: '1', color: '#0052A4'}, {name: '4', color: '#00A4E3'}] },
+                "수서": { group: 'suseo', progress: 0.0667, col: 1, srt: true, transfer: [{name: '3', color: '#EF7C1C'}, {name: '수인분당', color: '#FABE00'}, {name: 'A', color: '#9A6292'}] },
+                "영등포": { progress: 0.1333, transfer: [{name: '1', color: '#0052A4'}] },
+                "동탄": { group: 'suseo', progress: 0.1333, col: 1, srt: true, transfer: [{name: 'A', color: '#9A6292'}] },
+                "광명": { progress: 0.2000, ktx: true },
+                "평택지제": { group: 'suseo', progress: 0.2000, col: 1, srt: true, transfer: [{name: '1', color: '#0052A4'}] },
+                "수원": { progress: 0.2667, transfer: [{name: '1', color: '#0052A4'}, {name: '수인분당', color: '#FABE00'}] },
+                "천안아산": { progress: 0.3333, ktx: true, srt: true },
+                "오송": { progress: 0.4000, ktx: true, srt: true },
+                "대전": { progress: 0.4667, ktx: true, srt: true, transfer: [{name: '1', color: '#007448'}] },
+                "김천구미": { progress: 0.5333, ktx: true, srt: true },
+                "서대구": { progress: 0.6000, ktx: true, srt: true },
+                "동대구": { progress: 0.6667, ktx: true, srt: true, transfer: [{name: '1', color: '#D93F5C'}] },
+                "신경주": { progress: 0.7333, ktx: true, srt: true },
+                "경산": { group: 'gupo', progress: 0.7333, col: 1, dashed: true, transfer: [{name: '1', color: '#D93F5C'}] },
+                "울산(통도사)": { progress: 0.8000, ktx: true, srt: true },
+                "밀양": { group: 'gupo', progress: 0.8000, col: 1, dashed: true },
+                "물금": { group: 'gupo', progress: 0.8667, col: 1, dashed: true },
+                "구포": { group: 'gupo', progress: 0.9333, col: 1, dashed: true, transfer: [{name: '3', color: '#B07C4A'}] },
+                "부산": { progress: 1.0000, ktx: true, srt: true, transfer: [{name: '1', color: '#F06A00'}] }
+            },
+            /* 호남선. 광주선(극락강 · 광주)은 광주송정에서 갈라지는 지선이다.
+               광주행 열차는 장성 다음 극락강 · 광주로 들어가고,
+               광주 출발 목포행은 광주 → 광주송정으로 되돌아 나온다. */
+            'honam': {
+                "용산": { progress: 0.0000, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '경의중앙', color: '#77C4A3'}] },
+                "영등포": { progress: 0.0303, ktx: true, transfer: [{name: '1', color: '#0052A4'}] },
+                "안양": { progress: 0.0606, transfer: [{name: '1', color: '#0052A4'}] },
+                "수원": { progress: 0.0909, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '수인분당', color: '#FABE00'}] },
+                "오산": { progress: 0.1212, transfer: [{name: '1', color: '#0052A4'}] },
+                "서정리": { progress: 0.1515, transfer: [{name: '1', color: '#0052A4'}] },
+                "평택": { progress: 0.1818, transfer: [{name: '1', color: '#0052A4'}] },
+                "성환": { progress: 0.2121, transfer: [{name: '1', color: '#0052A4'}] },
+                "천안": { progress: 0.2424, transfer: [{name: '1', color: '#0052A4'}] },
+                "전의": { progress: 0.2727 },
+                "조치원": { progress: 0.3030, transfer: [{name: '1', color: '#0052A4'}] },
+                "부강": { progress: 0.3333 },
+                "신탄진": { progress: 0.3636, transfer: [{name: '1', color: '#0052A4'}] },
+                "서대전": { progress: 0.3939 },
+                "계룡": { progress: 0.4242 },
+                "연산": { progress: 0.4545 },
+                "논산": { progress: 0.4848 },
+                "강경": { progress: 0.5152 },
+                "함열": { progress: 0.5455 },
+                "익산": { progress: 0.5758, ktx: true, srt: true },
+                "김제": { progress: 0.6061 },
+                "신태인": { progress: 0.6364 },
+                "정읍": { progress: 0.6667, ktx: true, srt: true },
+                "백양사": { progress: 0.6970 },
+                "장성": { progress: 0.7273 },
+                "광주송정": { progress: 0.7576, ktx: true, srt: true, transfer: [{name: '1', color: '#009088'}] },
+                "나주": { progress: 0.7879, ktx: true, srt: true },
+                "극락강": { col: 1, group: 'gwangju', progress: 0.7879 },
+                "다시": { progress: 0.8182 },
+                "광주": { col: 1, group: 'gwangju', progress: 0.8182 },
+                "함평": { progress: 0.8485 },
+                "무안": { progress: 0.8788 },
+                "몽탄": { progress: 0.9091 },
+                "일로": { progress: 0.9394 },
+                "임성리": { progress: 0.9697 },
+                "목포": { progress: 1.0000, ktx: true, srt: true }
             }
         };
 
@@ -1177,6 +1284,7 @@
             dayTypeDisplay: document.getElementById('day-type-display'),
             directionToggle: document.getElementById('direction-toggle'),
             trainList: document.getElementById('train-list'),
+            lineTabs: document.getElementById('line-tabs'),
             scrollContainer: document.getElementById('scroll-container'),
             lineView: document.getElementById('line-view'),
             linePathDown: document.getElementById('line-path-down'),
@@ -1272,31 +1380,37 @@
             : '';
 
         const STATION_TIMETABLE_FILES = {
-            gyeongbu: { src: './gyeongbu_general_train_timetable.js', globalName: 'GYEONGBU_LINE_TIMETABLE' }
+            gyeongbu:            { src: './gyeongbu_general_train_timetable.js',   globalName: 'GYEONGBU_LINE_TIMETABLE' },
+            gyeongbu_highspeed:  { src: './gyeongbu_highspeed_train_timetable.js', globalName: 'GYEONGBU_HIGHSPEED_LINE_TIMETABLE' },
+            honam:               { src: './honam_general_train_timetable.js',      globalName: 'HONAM_LINE_TIMETABLE' }
         };
 
-        /* 경부선은 별도 시간표 파일을 두지 않는다.
-           이미 불러온 gyeongbu_general_train_timetable.js(열차별 정차 목록)를
+        /* 노선탭용 시간표는 따로 파일을 두지 않는다.
+           이미 불러온 시간표 파일(열차별 정차 목록)을
            노선탭이 읽는 형식(역별 · 요일별 · 방향별 시각 목록)으로 그 자리에서 바꾼다.
            ※ 원본 엑셀에 운행요일 정보가 없어 평일 · 토요일 · 공휴일을 같은 시간표로 채운다.
            ※ 정차역마다 시각이 하나뿐이라 도착시각과 출발시각이 같다. */
-        (function buildGyeongbuLineTimetable() {
-            const raw = window.GYEONGBU_GENERAL_TRAIN_TIMETABLE;
-            if (!raw || !Array.isArray(raw.trains) || window.GYEONGBU_LINE_TIMETABLE) return;
-            const seq = Object.keys(STATIONS_ALL.gyeongbu || {});   // 노선탭 역 순서(서울 → 부산)를 그대로 쓴다
+        const buildLineTimetable = (options) => {
+            const raw = window[options.sourceGlobal];
+            if (!raw || !Array.isArray(raw.trains) || window[options.targetGlobal]) return;
+            const seq = Object.keys(STATIONS_ALL[options.lineId] || {});   // 노선탭 역 순서를 그대로 쓴다
             if (seq.length < 2) return;
 
-            const strip = (name) => String(name || '').replace(/역$/, '');
-            const baseId = 41000;
+            const alias = options.alias || {};
+            const fix = (name) => {
+                const n = String(name || '').replace(/역$/, '');
+                return alias[n] || n;
+            };
+            const baseId = options.baseId;
             const idOf = (name) => baseId + seq.indexOf(name);
             const rows = {};
             seq.forEach(n => { rows[n] = { up: [], down: [] }; });
 
             raw.trains.forEach(train => {
                 const dir = train.direction === 'up' ? 'up' : 'down';
-                const start = strip(train.origin), dest = strip(train.destination);
+                const start = fix(train.origin), dest = fix(train.destination);
                 const stops = (train.stops || [])
-                    .map(s => ({ name: strip(s.station), time: s.time }))
+                    .map(s => ({ name: fix(s.station), time: s.time }))
                     .filter(s => rows[s.name] && /^\d{1,2}:\d{2}$/.test(String(s.time || '')));
                 if (stops.length < 2) return;
                 stops.forEach((stop, index) => {
@@ -1313,9 +1427,9 @@
             const toMin = (t) => { const p = t.split(':'); return Number(p[0]) * 60 + Number(p[1]); };
             seq.forEach(n => ['up', 'down'].forEach(d => rows[n][d].sort((a, b) => toMin(a.time) - toMin(b.time))));
 
-            window.GYEONGBU_LINE_TIMETABLE = {
-                line: '경부선', lineId: baseId, routeName: '경부선 일반열차(서울-부산)',
-                source: { name: 'gyeongbu_general_train_timetable.js 변환', trainCount: raw.trains.length },
+            window[options.targetGlobal] = {
+                line: options.label, lineId: baseId, routeName: options.routeName,
+                source: { name: options.sourceGlobal + ' 변환', trainCount: raw.trains.length },
                 directions: {
                     up:   { label: '상행', toward: seq[0], terminalStationId: idOf(seq[0]) },
                     down: { label: '하행', toward: seq[seq.length - 1], terminalStationId: idOf(seq[seq.length - 1]) }
@@ -1334,7 +1448,27 @@
                     }
                 }))
             };
-        })();
+        };
+
+        buildLineTimetable({
+            lineId: 'gyeongbu', baseId: 41000, label: '경부선',
+            routeName: '경부선 일반열차(서울-부산)',
+            sourceGlobal: 'GYEONGBU_GENERAL_TRAIN_TIMETABLE',
+            targetGlobal: 'GYEONGBU_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'gyeongbu_highspeed', baseId: 42000, label: '경부고속선',
+            routeName: '경부고속선 KTX · SRT(행신/수서-부산)',
+            sourceGlobal: 'GYEONGBU_HIGHSPEED_TRAIN_TIMETABLE',
+            targetGlobal: 'GYEONGBU_HIGHSPEED_LINE_TIMETABLE',
+            alias: { '경주': '신경주', '울산': '울산(통도사)' }
+        });
+        buildLineTimetable({
+            lineId: 'honam', baseId: 43000, label: '호남선',
+            routeName: '호남선 일반열차(용산-목포)',
+            sourceGlobal: 'HONAM_GENERAL_TRAIN_TIMETABLE',
+            targetGlobal: 'HONAM_LINE_TIMETABLE'
+        });
 
         const stationTimetableLoadPromises = new Map();
         const stationTimetableCache = new Map();
@@ -1566,7 +1700,9 @@
         };
 
         const LINE_VIEW_LENGTHS = Object.freeze({
-            gyeongbu:3400
+            gyeongbu:3400,
+            gyeongbu_highspeed:2100,
+            honam:2900
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -1580,6 +1716,84 @@
                 .filter(gap => gap > 0);
             const smallestGap = progressGaps.length ? Math.min(...progressGaps) : 1;
             return Math.max(1600, Math.ceil(MIN_NEW_LINE_STATION_GAP_PX / smallestGap));
+        };
+
+        /* ---------------- 노선도 좌표 ----------------
+           역은 기본적으로 가운데(본선) 칸에 세우고, col:1 인 역은 오른쪽 지선 칸에 세운다.
+           열차는 역과 역 사이를 직선으로 이어 그 위를 지나가므로, 지선을 타는 열차는
+           자연스럽게 지선 쪽으로 붙는다. */
+        /* 지선이 없으면 가운데 한 칸(상행 · 하행 선을 따로 긋는다),
+           지선이 있으면 400 폭 안에 두 칸을 나눠 쓰고 칸마다 선을 하나만 긋는다.
+           singleRail 이면 열차만 선의 좌(하행) · 우(상행)로 벌려 놓는다. */
+        const LINE_COLS_SINGLE = { x: [200], lane: 80, singleRail: false };
+        const LINE_COLS_BRANCH = { x: [122, 300], lane: 52, singleRail: true };
+        const hasBranch = (stations) => Object.values(stations || {}).some(st => st.col);
+        const lineCols = () => hasBranch(STATIONS) ? LINE_COLS_BRANCH : LINE_COLS_SINGLE;
+        const stationX = (station) => {
+            const cols = lineCols().x;
+            return cols[Math.min(station && station.col ? 1 : 0, cols.length - 1)];
+        };
+        const stationY = (station, lineLen) => 60 + lineLen * (station ? station.progress : 0);
+        const laneOffset = () => lineCols().lane;
+        const stationPoint = (name, lineLen, stations) => {
+            const st = (stations || STATIONS)[name];
+            if (!st) return null;
+            return { x: stationX(st), y: stationY(st, lineLen) };
+        };
+
+        /* 본선 · 지선을 잇는 선을 그린다.
+           같은 칸에 있는 이웃 역끼리는 세로선으로, 칸이 바뀌는 곳은 비스듬한 연결선으로 잇는다.
+           dashed 인 역으로 들어가는 구간은 점선(고속선이 아닌 일반선 경유)으로 그린다. */
+        const renderBranchRails = (lineLen) => {
+            if (!hasBranch(STATIONS)) return '';
+            const cols = lineCols();
+            const links = (LINE_META[currentLineId] || {}).branchLinks || [];
+            const railColor = THEME_COLOR;
+            const line = (d, dashed) => `<path d="${d}" fill="none" stroke="${railColor}" stroke-width="5.5"
+                stroke-linecap="round" opacity="0.3"${dashed ? ' stroke-dasharray="10 9"' : ''} />`;
+            const pt = (name) => stationPoint(name, lineLen);
+            // 분기 · 합류는 직각으로 꺾지 않고 완만한 S 자 곡선으로 잇는다.
+            const curve = (a, b, dashed) => {
+                const pa = pt(a), pb = pt(b);
+                if (!pa || !pb) return '';
+                if (Math.abs(pa.x - pb.x) < 0.5) return line(`M ${pa.x} ${pa.y} L ${pb.x} ${pb.y}`, dashed);
+                const bend = (pb.y - pa.y) * 0.45;
+                return line(`M ${pa.x} ${pa.y} C ${pa.x} ${pa.y + bend}, ${pb.x} ${pb.y - bend}, ${pb.x} ${pb.y}`, dashed);
+            };
+            // 같은 칸 · 같은 계통끼리 위에서 아래로 잇는다.
+            const groups = {};
+            Object.keys(STATIONS).forEach(n => {
+                const st = STATIONS[n];
+                const key = `${st.col ? 1 : 0}:${st.group || ''}`;
+                (groups[key] = groups[key] || []).push(n);
+            });
+            let out = '';
+            Object.values(groups).forEach(list => {
+                const sorted = list.slice().sort((a, b) => STATIONS[a].progress - STATIONS[b].progress);
+                for (let i = 1; i < sorted.length; i++) {
+                    out += curve(sorted[i - 1], sorted[i], STATIONS[sorted[i]].dashed);
+                }
+            });
+            links.forEach(link => { out += curve(link.from, link.to, link.dashed); });
+            return out;
+        };
+
+        /* 노선탭 상단의 노선 선택 버튼.
+           TRAIN_LINE_IDS 에 노선을 추가하면 여기에도 자동으로 나온다. */
+        const renderLineTabs = () => {
+            if (!dom.lineTabs) return;
+            if (TRAIN_LINE_IDS.length < 2) { dom.lineTabs.classList.add('hidden'); return; }
+            dom.lineTabs.classList.remove('hidden');
+            dom.lineTabs.innerHTML = TRAIN_LINE_IDS.map(id => {
+                const meta = LINE_META[id] || {};
+                const on = id === currentLineId;
+                const style = on
+                    ? `background-color:${meta.color};border-color:${meta.color};color:#fff;box-shadow:0 2px 8px ${meta.color}4D`
+                    : '';
+                return `<button onclick="switchLine('${id}')" aria-pressed="${on}"
+                    class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all active:scale-95 ${on ? '' : 'bg-gray-100 text-gray-500 border-black/5 hover:bg-gray-200'}"
+                    style="${style}">${meta.tabLabel || meta.label || id}${meta.trainLabel ? `<span class="ml-1 font-semibold opacity-70">${meta.trainLabel}</span>` : ''}</button>`;
+            }).join('');
         };
 
         window.switchLine = async (lineId, isInit = false) => {
@@ -1598,7 +1812,7 @@
             const downToward = meta.downToward || stationNames[stationNames.length - 1];
 
             document.querySelector('#home-screen h2').textContent = `${meta.label} 기차역`;
-            dom.lineHeaderTitle.textContent = `${meta.label} 일반열차 현황`;
+            dom.lineHeaderTitle.textContent = `${meta.label} ${meta.trainLabel || '열차'} 현황`;
             dom.directionToggle.innerHTML =
                 `<option value="up" class="text-gray-900">상행 (${upToward} 방면)</option>`
               + `<option value="down" class="text-gray-900">하행 (${downToward} 방면)</option>`;
@@ -1606,6 +1820,7 @@
             document.getElementById('home-down-dir-label').textContent = `${downToward} 방면`;
             document.getElementById('data-status-display').className = 'text-[10px] font-bold';
             document.getElementById('data-status-display').style.color = THEME_COLOR;
+            renderLineTabs();
 
             document.querySelector('.metro-logo-circle').textContent = meta.badge || '1';
             document.querySelector('.metro-logo-circle').style.backgroundColor = THEME_COLOR;
@@ -1627,15 +1842,35 @@
             const lineLen = getLineViewLength(currentLineId);
             const svg = document.getElementById('line-svg');
             if (svg) {
+                // 지선이 있는 노선은 곧은 세로선 대신 지선 레일을 그린다.
+                const branched = hasBranch(STATIONS);
                 svg.setAttribute('viewBox', `0 0 400 ${lineLen + 160}`);
                 svg.style.height = `${lineLen + 160}px`;
                 dom.svgWrapper.style.height = `${lineLen + 160 + 80}px`;
-                
+
                 const pathY2 = 60 + lineLen;
                 document.getElementById('line-path-down-bg').setAttribute('d', `M 120 60 L 120 ${pathY2}`);
                 document.getElementById('line-path-up-bg').setAttribute('d', `M 280 60 L 280 ${pathY2}`);
                 dom.linePathDown.setAttribute('d', `M 120 60 L 120 ${pathY2}`);
                 dom.linePathUp.setAttribute('d', `M 280 60 L 280 ${pathY2}`);
+                // 상 · 하행 칩을 본선 칸 위치에 맞춘다
+                const mainX = lineCols().x[0], laneX = laneOffset();
+                const moveChip = (groupId, cx) => {
+                    const g = document.getElementById(groupId);
+                    if (!g) return;
+                    const rect = g.querySelector('rect'), text = g.querySelector('text');
+                    if (rect) rect.setAttribute('x', cx - 26);
+                    if (text) text.setAttribute('x', cx);
+                };
+                ['svg-down-top', 'svg-down-bottom'].forEach(id => moveChip(id, mainX - laneX));
+                ['svg-up-top', 'svg-up-bottom'].forEach(id => moveChip(id, mainX + laneX));
+                ['line-path-down-bg', 'line-path-up-bg'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = branched ? 'none' : '';
+                });
+                [dom.linePathDown, dom.linePathUp].forEach(el => {
+                    if (el) el.style.display = branched ? 'none' : '';
+                });
 
                 document.getElementById('svg-down-bottom').setAttribute('transform', `translate(0, ${lineLen - 1140})`);
                 document.getElementById('svg-up-bottom').setAttribute('transform', `translate(0, ${lineLen - 1140})`);
@@ -1865,23 +2100,11 @@
                     let trHtml = '';
                     if (s.transfer) {
                         s.transfer.forEach(tr => {
-                            let lineName = tr.name + '호선';
-                            if(tr.name === '대') lineName = '대경선';
-                            else if(tr.name === '동') lineName = '동해선';
-                            else if(tr.name === '부') lineName = '부산김해';
-                            else if(tr.name === '신') lineName = '신분당선';
-                            else if(tr.name === 'A') lineName = 'GTX-A';
-                            else if(tr.name === '수') lineName = '수인분당선';
-                            else if(tr.name === '경') lineName = '경의중앙선';
-                            else if(tr.name === '서') lineName = '서해선';
-                            else if(tr.name === '공') lineName = '공항철도';
-                            else if(tr.name === '김') lineName = '김포골드라인';
-                            else if(tr.name === '강') lineName = '경강선';
-                            else if(tr.name === '춘') lineName = '경춘선';
-                            else if(tr.name === '용') lineName = '용인경전철';
-                            else if(tr.name === '인1') lineName = '인천 1호선';
-                            else if(tr.name === '인2') lineName = '인천 2호선';
-                            trHtml += `<div class="flex items-center gap-1.5 bg-white border border-black/10 px-2.5 py-1 rounded-full shadow-sm"><div class="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-black" style="background-color: ${tr.color}">${tr.name}</div><span class="text-[11px] font-bold text-[#111827] tracking-tight">${lineName}</span></div>`;
+                            // 한 글자(호선 번호)는 색 원 안에 넣고, 여러 글자는 색 점 + 노선명으로 보여준다.
+                            const mark = String(tr.name).length <= 1
+                                ? `<div class="w-4 h-4 shrink-0 rounded-full flex items-center justify-center text-white text-[9px] font-black" style="background-color: ${tr.color}">${tr.name}</div>`
+                                : `<div class="w-2.5 h-2.5 shrink-0 rounded-full" style="background-color: ${tr.color}"></div>`;
+                            trHtml += `<div class="flex items-center gap-1.5 bg-white border border-black/10 px-2.5 py-1 rounded-full shadow-sm">${mark}<span class="text-[11px] font-bold text-[#111827] tracking-tight">${railTransferLineName(tr.name)}</span></div>`;
                         });
                     }
                     if (s.ktx) {
@@ -3043,14 +3266,23 @@
             let activeT = (activeTab === 'line' || activeTab === 'map') ? [...activeTrainsUp, ...activeTrainsDown] : (currentDirection === 'up' ? activeTrainsUp : activeTrainsDown);
             
             const lineLen = getLineViewLength(currentLineId);
+            const LANE = laneOffset();
+            const lane = (dir) => dir === 'up' ? LANE : -LANE;
             const renderedT = activeT.map(t => {
-                const ref = t.direction === 'up' ? dom.linePathUp : dom.linePathDown;
-                let p = {x: 0, y: 0}, angle = 0;
-                if (ref) {
-                    const currentLen = lineLen * (t.overallProgress || 0); p = ref.getPointAtLength(currentLen);
-                    const np = ref.getPointAtLength(Math.max(0, Math.min(lineLen, currentLen + (t.direction === 'up' ? -1 : 1))));
-                    angle = (Math.abs(np.x - p.x) > 0.001 || Math.abs(np.y - p.y) > 0.001) ? Math.atan2(np.y - p.y, np.x - p.x) * 180 / Math.PI : (t.direction === 'up' ? -90 : 90);
-                }
+                // 지금 지나는 두 역 사이를 직선으로 이어 그 위에 열차를 놓는다.
+                // 지선을 타는 열차는 지선 칸의 역을 지나므로 자연스럽게 지선으로 붙는다.
+                const from = stationPoint(t.curr?.name, lineLen) || { x: LINE_COL_X[0], y: 60 };
+                const to = stationPoint(t.next?.name, lineLen) || from;
+                const span = (t.next?.progress ?? 0) - (t.curr?.progress ?? 0);
+                const ratio = (t.isStopped || t.isWaiting || !span)
+                    ? 0
+                    : Math.max(0, Math.min(1, ((t.overallProgress || 0) - (t.curr?.progress ?? 0)) / span));
+                const off = lane(t.direction);
+                const p = { x: from.x + (to.x - from.x) * ratio + off, y: from.y + (to.y - from.y) * ratio };
+                const dx = to.x - from.x, dy = to.y - from.y;
+                const angle = (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001)
+                    ? Math.atan2(dy, dx) * 180 / Math.PI
+                    : (t.direction === 'up' ? -90 : 90);
                 return { ...t, point: p, angle };
             });
             const mapTrains = activeTab === 'map' ? getRegionMapTrains() : [];
@@ -3086,19 +3318,27 @@
             }
             const stoppedAt = {};
             renderedT.forEach(t => { if (t.isStopped && t.curr) stoppedAt[t.curr.name] = getTrainColor(t); });
-            let lineHTML = '';
+            let lineHTML = renderBranchRails(lineLen);
             for (const stationName in STATIONS) {
                 const s = STATIONS[stationName]; const isSel = selectedStation === stationName;
-                const lineX = 200;
-                const lineY = 60 + lineLen * s.progress;
+                const lineX = stationX(s);
+                const lineY = stationY(s, lineLen);
                 const stopColor = stoppedAt[stationName];
                 let transferHtml = '';
                 if (s.transfer && s.transfer.length > 0) {
-                    const totalW = s.transfer.length * 16;
-                    let startX = -(totalW / 2) + 8;
-                    s.transfer.forEach((tr, i) => {
-                        const trX = startX + (i * 16);
-                        transferHtml += `<circle cx="${trX}" cy="-28" r="6.5" fill="${tr.color}" stroke="#fff" stroke-width="1.5" /><text x="${trX}" y="-25.5" text-anchor="middle" fill="#fff" class="text-[8px] font-black pointer-events-none">${tr.name}</text>`;
+                    // 숫자 한 글자는 원, 여러 글자(경의중앙 등)는 글자 수에 맞춰 늘어나는 알약으로 그린다.
+                    // 역 이름 글자 윗변이 -23 이므로 배지는 그보다 위(-27)에서 끝나야 겹치지 않는다.
+                    const H = 15, GAP = 3, TOP = -42, BASE = -31.5;
+                    const items = s.transfer.map(tr => {
+                        const label = String(tr.name);
+                        return { tr, label, w: label.length <= 1 ? H : Math.round(label.length * 9.4 + 10) };
+                    });
+                    const totalW = items.reduce((sum, it) => sum + it.w, 0) + GAP * (items.length - 1);
+                    let x = -totalW / 2;
+                    items.forEach(it => {
+                        transferHtml += `<rect x="${x}" y="${TOP}" width="${it.w}" height="${H}" rx="${H / 2}" fill="${it.tr.color}" stroke="#fff" stroke-width="1.5" />`
+                            + `<text x="${x + it.w / 2}" y="${BASE}" text-anchor="middle" fill="#fff" style="font-size:${it.label.length <= 1 ? 9 : 9.5}px;letter-spacing:-0.3px" class="font-black pointer-events-none">${it.label}</text>`;
+                        x += it.w + GAP;
                     });
                 }
                 
@@ -3382,7 +3622,16 @@
                   '동탄': 44, '평택지제': 63, '천안아산': 96, '오송': 129, '대전': 161,
                   '김천구미': 253, '서대구': 282, '동대구': 294, '경산': 308,
                   '신경주': 369, '울산(통도사)': 409, '밀양': 393, '물금': 422, '구포': 434, '부산': 442
-              } }
+              } },
+
+            /* 호남선 일반열차. seq 는 용산 기점 정차역 순서다.
+               광주선(극락강 · 광주)은 광주송정에서 갈라지지만 거리 계산만 하면 되므로
+               광주송정 다음에 이어 두고 기준 역 사이를 보간한다. */
+            { line: '호남선', routeId: 'honam', global: 'HONAM_GENERAL_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              seq: ['용산','영등포','안양','수원','오산','서정리','평택','성환','천안','전의','조치원','부강',
+                    '신탄진','서대전','계룡','연산','논산','강경','함열','익산','김제','신태인','정읍','백양사',
+                    '장성','광주송정','극락강','광주','나주','다시','함평','무안','몽탄','일로','임성리','목포'] }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
 
