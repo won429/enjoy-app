@@ -21,6 +21,7 @@
     <script src="gyeongjeon_general_train_timetable.js"></script>
     <script src="gyeongjeon_highspeed_train_timetable.js"></script>
     <script src="jeolla_general_train_timetable.js"></script>
+    <script src="jeolla_highspeed_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1154,7 +1155,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1225,6 +1226,18 @@
                 color: '#6D28D9', downColor: '#B4A0E8',
                 upToward: '용산', downToward: '여수엑스포',
                 tabLabel: '전라선', trainLabel: '일반열차'
+            },
+            /* 전라선에도 고속선은 없다. 노선 이름이 아니라 열차 등급으로 구분한다. */
+            jeolla_ktx: {
+                label: '전라선', badge: '라',
+                color: '#7C3AED', downColor: '#C4B0F0',
+                upToward: '행신 · 수서', downToward: '여수엑스포',
+                tabLabel: '전라선', trainLabel: 'KTX · SRT',
+                branchLinks: [
+                    { from: '평택지제', to: '천안아산' },
+                    { from: '오송', to: '서대전', dashed: true },
+                    { from: '논산', to: '익산', dashed: true }
+                ]
             }
         };
 
@@ -1491,6 +1504,33 @@
                 "순천": { progress: 0.9286, ktx: true, srt: true },
                 "여천": { progress: 0.9643, ktx: true, srt: true },
                 "여수엑스포": { progress: 1.0000, ktx: true, srt: true }
+            },
+            /* 전라선 KTX · SRT. 전라선에는 고속선이 없다.
+               경부 · 호남고속선을 타고 익산까지 내려와 전라선 일반선을 달리는 열차다.
+               수서 계통(수서 · 동탄 · 평택지제)은 천안아산에서 합류하고,
+               서대전 경유(서대전 · 계룡 · 논산)는 오송에서 갈라져 익산에서 합류한다(점선). */
+            'jeolla_ktx': {
+                "행신": { progress: 0.0000, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "서울": { progress: 0.0625, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '4', color: '#00A4E3'}] },
+                "수서": { col: 1, group: 'suseo', progress: 0.0625, srt: true, transfer: [{name: '3', color: '#EF7C1C'}, {name: '수인분당', color: '#FABE00'}, {name: 'A', color: '#9A6292'}] },
+                "용산": { progress: 0.1250, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '경의중앙', color: '#77C4A3'}] },
+                "동탄": { col: 1, group: 'suseo', progress: 0.1250, srt: true, transfer: [{name: 'A', color: '#9A6292'}] },
+                "광명": { progress: 0.1875, ktx: true },
+                "평택지제": { col: 1, group: 'suseo', progress: 0.1875, srt: true, transfer: [{name: '1', color: '#0052A4'}] },
+                "천안아산": { progress: 0.2500, ktx: true, srt: true },
+                "오송": { progress: 0.3125, ktx: true, srt: true },
+                "공주": { progress: 0.3750, ktx: true, srt: true },
+                "서대전": { col: 1, group: 'seodaejeon', progress: 0.3750, dashed: true, ktx: true },
+                "계룡": { col: 1, group: 'seodaejeon', progress: 0.4375, dashed: true, ktx: true },
+                "논산": { col: 1, group: 'seodaejeon', progress: 0.5000, dashed: true, ktx: true },
+                "익산": { progress: 0.5625, ktx: true, srt: true },
+                "전주": { progress: 0.6250, ktx: true, srt: true },
+                "남원": { progress: 0.6875, ktx: true, srt: true },
+                "곡성": { progress: 0.7500, ktx: true, srt: true },
+                "구례구": { progress: 0.8125, ktx: true, srt: true },
+                "순천": { progress: 0.8750, ktx: true, srt: true },
+                "여천": { progress: 0.9375, ktx: true, srt: true },
+                "여수엑스포": { progress: 1.0000, ktx: true, srt: true }
             }
         };
 
@@ -1683,7 +1723,8 @@
             honam_highspeed:     { src: './honam_highspeed_train_timetable.js',    globalName: 'HONAM_HIGHSPEED_LINE_TIMETABLE' },
             gyeongjeon:          { src: './gyeongjeon_general_train_timetable.js', globalName: 'GYEONGJEON_LINE_TIMETABLE' },
             gyeongjeon_ktx:      { src: './gyeongjeon_highspeed_train_timetable.js', globalName: 'GYEONGJEON_KTX_LINE_TIMETABLE' },
-            jeolla:              { src: './jeolla_general_train_timetable.js',      globalName: 'JEOLLA_LINE_TIMETABLE' }
+            jeolla:              { src: './jeolla_general_train_timetable.js',      globalName: 'JEOLLA_LINE_TIMETABLE' },
+            jeolla_ktx:          { src: './jeolla_highspeed_train_timetable.js',    globalName: 'JEOLLA_KTX_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1793,6 +1834,13 @@
             routeName: '전라선 일반열차(용산-여수엑스포)',
             sourceGlobal: 'JEOLLA_GENERAL_TRAIN_TIMETABLE',
             targetGlobal: 'JEOLLA_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'jeolla_ktx', baseId: 48000, label: '전라선 KTX · SRT',
+            routeName: '전라선 KTX · SRT(행신/수서-여수엑스포)',
+            sourceGlobal: 'JEOLLA_HIGHSPEED_TRAIN_TIMETABLE',
+            targetGlobal: 'JEOLLA_KTX_LINE_TIMETABLE',
+            alias: { '여수EXPO': '여수엑스포' }
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2031,7 +2079,8 @@
             honam_highspeed:2100,
             gyeongjeon:3300,
             gyeongjeon_ktx:1900,
-            jeolla:2500
+            jeolla:2500,
+            jeolla_ktx:2000
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -4017,7 +4066,21 @@
               keepRouteStops: true,
               seq: ['용산','영등포','안양','수원','서정리','평택','성환','천안','전의','조치원','부강','신탄진',
                     '서대전','계룡','연산','논산','강경','함열','익산','삼례','전주','임실','오수','남원',
-                    '곡성','구례구','순천','여천','여수엑스포'] }
+                    '곡성','구례구','순천','여천','여수엑스포'] },
+
+            /* 전라선 KTX · SRT. 고속선이 아니라 익산까지 고속선을 타고 와 전라선을 달린다.
+               거리는 용산 기점(수서 계통은 용산 기점으로 환산, 익산 이후는 전라선 실거리). */
+            { line: '전라선 KTX · SRT', routeId: 'jeolla', global: 'JEOLLA_HIGHSPEED_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              alias: { '여수EXPO': '여수엑스포' },
+              km: {
+                  '행신': -19, '서울': -3, '용산': 0, '광명': 22,
+                  '수서': 12, '동탄': 44, '평택지제': 63,
+                  '천안아산': 96, '오송': 129, '공주': 168,
+                  '서대전': 167, '계룡': 188, '논산': 211,
+                  '익산': 219, '전주': 244, '남원': 300, '곡성': 331,
+                  '구례구': 345, '순천': 380, '여천': 415, '여수엑스포': 425
+              } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
 
@@ -4967,7 +5030,8 @@
                             <div class="flex items-center gap-2 min-w-0">
                                 <span class="rail-type-badge" style="background:${t.typeColor}">${t.type}</span>
                                 <span class="text-[15px] font-extrabold rail-t tracking-tight">${String(t.trainNo).padStart(3, '0')}</span>
-                                ${t.midStops != null ? `<span class="text-[12.5px] font-semibold rail-t3 truncate">· ${t.midStops}개역 정차</span>` : ''}
+                                ${t.midStops ? `<span class="text-[12.5px] font-semibold rail-t3 truncate">· ${t.midStops}개역 정차</span>`
+                                    : (t.midStops === 0 ? `<span class="text-[12.5px] font-semibold rail-t3 truncate">· 무정차</span>` : '')}
                             </div>
                             <div class="mt-2 flex items-start gap-2.5">
                                 <div>
