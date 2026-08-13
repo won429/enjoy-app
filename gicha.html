@@ -17,6 +17,7 @@
     <script src="gyeongbu_general_train_timetable.js"></script>
     <script src="gyeongbu_highspeed_train_timetable.js"></script>
     <script src="honam_general_train_timetable.js"></script>
+    <script src="honam_highspeed_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1024,7 +1025,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1058,6 +1059,17 @@
                 tabLabel: '호남선', trainLabel: '일반열차',
                 branchLinks: [
                     { from: '광주송정', to: '극락강' }
+                ]
+            },
+            honam_highspeed: {
+                label: '호남고속선', badge: '호',
+                color: '#12A07C', downColor: '#7CCBB5',
+                upToward: '용산', downToward: '목포',
+                tabLabel: '호남고속선', trainLabel: 'KTX · SRT',
+                branchLinks: [
+                    { from: '평택지제', to: '천안아산' },
+                    { from: '오송', to: '서대전', dashed: true },
+                    { from: '논산', to: '익산', dashed: true }
                 ]
             }
         };
@@ -1193,6 +1205,32 @@
                 "몽탄": { progress: 0.9091 },
                 "일로": { progress: 0.9394 },
                 "임성리": { progress: 0.9697 },
+                "목포": { progress: 1.0000, ktx: true, srt: true }
+            },
+            /* 호남고속선.
+               지선 두 갈래 — 수서 계통(수서 · 동탄 · 평택지제)은 천안아산에서 합류하고,
+               서대전 경유(서대전 · 계룡 · 논산)는 오송에서 갈라져 익산에서 합류한다.
+               서대전 경유 구간은 고속선이 아닌 호남 일반선이라 점선으로 그린다. */
+            'honam_highspeed': {
+                "행신": { progress: 0.0000, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "서울": { progress: 0.0667, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '4', color: '#00A4E3'}] },
+                "수서": { col: 1, group: 'suseo', progress: 0.0667, ktx: true, srt: true, transfer: [{name: '3', color: '#EF7C1C'}, {name: '수인분당', color: '#FABE00'}, {name: 'A', color: '#9A6292'}] },
+                "용산": { progress: 0.1333, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '경의중앙', color: '#77C4A3'}] },
+                "동탄": { col: 1, group: 'suseo', progress: 0.1333, ktx: true, srt: true, transfer: [{name: 'A', color: '#9A6292'}] },
+                "광명": { progress: 0.2000, ktx: true },
+                "평택지제": { col: 1, group: 'suseo', progress: 0.2000, ktx: true, srt: true, transfer: [{name: '1', color: '#0052A4'}] },
+                "천안아산": { progress: 0.2667, ktx: true, srt: true },
+                "오송": { progress: 0.3333, ktx: true, srt: true },
+                "공주": { progress: 0.4000, ktx: true, srt: true },
+                "서대전": { col: 1, group: 'seodaejeon', progress: 0.4000, dashed: true, ktx: true },
+                "계룡": { col: 1, group: 'seodaejeon', progress: 0.4667, dashed: true, ktx: true },
+                "논산": { col: 1, group: 'seodaejeon', progress: 0.5333, dashed: true, ktx: true },
+                "익산": { progress: 0.6000, ktx: true, srt: true },
+                "김제": { progress: 0.6667, ktx: true },
+                "정읍": { progress: 0.7333, ktx: true, srt: true },
+                "장성": { progress: 0.8000, ktx: true },
+                "광주송정": { progress: 0.8667, ktx: true, srt: true, transfer: [{name: '1', color: '#009088'}] },
+                "나주": { progress: 0.9333, ktx: true, srt: true },
                 "목포": { progress: 1.0000, ktx: true, srt: true }
             }
         };
@@ -1382,7 +1420,8 @@
         const STATION_TIMETABLE_FILES = {
             gyeongbu:            { src: './gyeongbu_general_train_timetable.js',   globalName: 'GYEONGBU_LINE_TIMETABLE' },
             gyeongbu_highspeed:  { src: './gyeongbu_highspeed_train_timetable.js', globalName: 'GYEONGBU_HIGHSPEED_LINE_TIMETABLE' },
-            honam:               { src: './honam_general_train_timetable.js',      globalName: 'HONAM_LINE_TIMETABLE' }
+            honam:               { src: './honam_general_train_timetable.js',      globalName: 'HONAM_LINE_TIMETABLE' },
+            honam_highspeed:     { src: './honam_highspeed_train_timetable.js',    globalName: 'HONAM_HIGHSPEED_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1468,6 +1507,12 @@
             routeName: '호남선 일반열차(용산-목포)',
             sourceGlobal: 'HONAM_GENERAL_TRAIN_TIMETABLE',
             targetGlobal: 'HONAM_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'honam_highspeed', baseId: 44000, label: '호남고속선',
+            routeName: '호남고속선 KTX · SRT(행신/수서-목포)',
+            sourceGlobal: 'HONAM_HIGHSPEED_TRAIN_TIMETABLE',
+            targetGlobal: 'HONAM_HIGHSPEED_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -1702,7 +1747,8 @@
         const LINE_VIEW_LENGTHS = Object.freeze({
             gyeongbu:3400,
             gyeongbu_highspeed:2100,
-            honam:2900
+            honam:2900,
+            honam_highspeed:2100
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -1794,6 +1840,11 @@
                     class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all active:scale-95 ${on ? '' : 'bg-gray-100 text-gray-500 border-black/5 hover:bg-gray-200'}"
                     style="${style}">${meta.tabLabel || meta.label || id}${meta.trainLabel ? `<span class="ml-1 font-semibold opacity-70">${meta.trainLabel}</span>` : ''}</button>`;
             }).join('');
+            // 노선이 늘어나 탭이 화면을 넘치면 고른 탭이 잘려 보이므로 안쪽으로 끌어온다.
+            const active = dom.lineTabs.children[TRAIN_LINE_IDS.indexOf(currentLineId)];
+            if (active && dom.lineTabs.scrollWidth > dom.lineTabs.clientWidth) {
+                active.scrollIntoView({ block: 'nearest', inline: 'center' });
+            }
         };
 
         window.switchLine = async (lineId, isInit = false) => {
@@ -3631,7 +3682,21 @@
               keepRouteStops: true,
               seq: ['용산','영등포','안양','수원','오산','서정리','평택','성환','천안','전의','조치원','부강',
                     '신탄진','서대전','계룡','연산','논산','강경','함열','익산','김제','신태인','정읍','백양사',
-                    '장성','광주송정','극락강','광주','나주','다시','함평','무안','몽탄','일로','임성리','목포'] }
+                    '장성','광주송정','극락강','광주','나주','다시','함평','무안','몽탄','일로','임성리','목포'] },
+
+            /* 호남고속선(KTX · KTX-산천 · KTX-청룡 · SRT).
+               용산 기점 km 를 직접 준다(수서 계통은 용산 기점으로 환산).
+               ※ 서대전 경유 구간은 호남 일반선이라 km 가 고속선 기준과 다르다(근사값). */
+            { line: '호남고속선', routeId: 'ktx_honam', global: 'HONAM_HIGHSPEED_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              km: {
+                  '행신': -19, '서울': -3, '용산': 0, '광명': 22,
+                  '수서': 12, '동탄': 44, '평택지제': 63,
+                  '천안아산': 96, '오송': 129, '공주': 168,
+                  '서대전': 167, '계룡': 188, '논산': 211,
+                  '익산': 219, '김제': 231, '정읍': 264, '장성': 297,
+                  '광주송정': 313, '나주': 328, '목포': 371
+              } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
 
