@@ -312,6 +312,25 @@
         .subway-map-train.is-selected {
             filter: drop-shadow(0 0.25rem 0.1875rem rgba(15,23,42,.30)) drop-shadow(0 0.375rem 0.5625rem rgba(15,23,42,.25)) drop-shadow(0 0 0.3125rem rgba(255,255,255,.95));
         }
+        .subway-map-train.is-journey-target::after {
+            content: attr(data-train-id);
+            position: absolute;
+            left: 50%;
+            top: -1.15rem;
+            transform: translateX(-50%);
+            min-width: 2.35rem;
+            padding: .2rem .42rem;
+            border: .125rem solid #fff;
+            border-radius: 999px;
+            background: #111827;
+            color: #fff;
+            font-size: .625rem;
+            font-weight: 900;
+            line-height: 1;
+            text-align: center;
+            box-shadow: 0 .18rem .5rem rgba(15,23,42,.28);
+            pointer-events: none;
+        }
         .subway-map-train.is-nationwide {
             width: 1.71875rem;
             height: 0.515625rem;
@@ -619,42 +638,51 @@
         </main>
 
         <!-- 4. 길찾기 -->
-        <main id="journey-screen" class="hidden absolute inset-0 z-[25] flex-col overflow-y-auto bg-[#F4F7FB] pb-28 hide-scrollbar">
-            <header class="sticky top-0 z-30 border-b border-black/5 bg-white/90 px-5 pb-4 pt-safe backdrop-blur-xl">
-                <div class="pt-2">
-                    <h2 class="text-[21px] font-black tracking-tight text-[#0B1220]">길찾기</h2>
-                    <p class="mt-1 text-[11px] font-semibold text-slate-400">현재 시각 이후 실제 시간표 기준</p>
+        <main id="journey-screen" class="hidden absolute inset-0 z-[25] flex-col overflow-y-auto bg-white pb-28 hide-scrollbar">
+            <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-5 pt-safe backdrop-blur-xl">
+                <div class="flex items-end justify-between pt-3">
+                    <div class="flex items-end gap-7">
+                        <button type="button" class="relative pb-3 text-[17px] font-black text-slate-800">최단시간<span class="absolute inset-x-0 bottom-0 h-[3px] bg-slate-800"></span></button>
+                        <span class="pb-3 text-[17px] font-bold text-slate-300">최소환승</span>
+                    </div>
+                    <div class="flex items-center gap-1 pb-2">
+                        <button id="journey-header-swap" type="button" class="flex h-9 w-9 items-center justify-center rounded-full text-slate-500" aria-label="출발역과 도착역 바꾸기"><i class="fa-solid fa-arrow-right-arrow-left text-[14px]"></i></button>
+                    </div>
                 </div>
             </header>
-            <div class="space-y-4 px-5 py-5">
-                <section class="rounded-[26px] border border-white/80 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+            <div class="px-4 py-4">
+                <section id="journey-search-panel" class="border-b border-slate-100 bg-white pb-5">
+                    <div class="mb-4 flex items-center justify-between px-1">
+                        <div><h2 class="text-[20px] font-black tracking-tight text-slate-900">어디로 갈까요?</h2><p class="mt-1 text-[10px] font-semibold text-slate-400">현재 시각 이후 실제 열차 시간표 기준</p></div>
+                        <span id="journey-region-label" class="rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-black text-[#1769C2]">현재 권역</span>
+                    </div>
                     <div class="flex items-stretch gap-3">
-                        <div class="flex w-6 shrink-0 flex-col items-center py-5">
-                            <span class="h-3 w-3 rounded-full border-[3px] border-[#2563EB] bg-white"></span>
-                            <span class="my-1 min-h-10 w-px flex-1 border-l-2 border-dotted border-slate-200"></span>
-                            <span class="h-3 w-3 rounded-[3px] bg-[#EF4444]"></span>
+                        <div class="flex w-5 shrink-0 flex-col items-center py-5">
+                            <span class="h-3 w-3 rounded-full bg-[#1769C2]"></span>
+                            <span class="my-1 min-h-10 w-[3px] flex-1 bg-slate-200"></span>
+                            <span class="h-3 w-3 rounded-full border-[3px] border-[#1769C2] bg-white"></span>
                         </div>
                         <div class="min-w-0 flex-1 space-y-2">
-                            <button id="journey-start-button" type="button" class="flex min-h-[58px] w-full items-center justify-between rounded-2xl bg-slate-50 px-4 text-left transition active:scale-[0.98]" aria-label="출발역 선택">
-                                <span><span class="block text-[9px] font-extrabold text-[#2563EB]">출발</span><span id="journey-start-label" class="mt-1 block text-[15px] font-extrabold text-slate-400">출발역을 선택하세요</span></span>
-                                <i class="fa-solid fa-chevron-right text-[11px] text-slate-300"></i>
+                            <button id="journey-start-button" type="button" class="flex min-h-[58px] w-full items-center justify-between border-b border-slate-200 px-2 text-left transition active:bg-slate-50" aria-label="출발역 선택">
+                                <span><span class="block text-[9px] font-extrabold text-[#1769C2]">출발</span><span id="journey-start-label" class="mt-1 block text-[16px] font-extrabold text-slate-400">출발역을 선택하세요</span></span>
+                                <i class="fa-solid fa-chevron-right text-[12px] text-slate-300"></i>
                             </button>
-                            <button id="journey-end-button" type="button" class="flex min-h-[58px] w-full items-center justify-between rounded-2xl bg-slate-50 px-4 text-left transition active:scale-[0.98]" aria-label="도착역 선택">
-                                <span><span class="block text-[9px] font-extrabold text-[#EF4444]">도착</span><span id="journey-end-label" class="mt-1 block text-[15px] font-extrabold text-slate-400">도착역을 선택하세요</span></span>
-                                <i class="fa-solid fa-chevron-right text-[11px] text-slate-300"></i>
+                            <button id="journey-end-button" type="button" class="flex min-h-[58px] w-full items-center justify-between border-b border-slate-200 px-2 text-left transition active:bg-slate-50" aria-label="도착역 선택">
+                                <span><span class="block text-[9px] font-extrabold text-slate-500">도착</span><span id="journey-end-label" class="mt-1 block text-[16px] font-extrabold text-slate-400">도착역을 선택하세요</span></span>
+                                <i class="fa-solid fa-chevron-right text-[12px] text-slate-300"></i>
                             </button>
                         </div>
-                        <button id="journey-swap-button" type="button" class="my-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition active:rotate-180" aria-label="출발역과 도착역 바꾸기">
+                        <button id="journey-swap-button" type="button" class="my-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition active:rotate-180" aria-label="출발역과 도착역 바꾸기">
                             <i class="fa-solid fa-arrow-right-arrow-left rotate-90 text-[12px]"></i>
                         </button>
                     </div>
-                    <button id="journey-search-button" type="button" class="mt-4 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-[#2563EB] py-3.5 text-[14px] font-black text-white shadow-[0_10px_22px_rgba(37,99,235,0.28)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
+                    <button id="journey-search-button" type="button" class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1769C2] py-3.5 text-[14px] font-black text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300">
                         <i class="fa-solid fa-route"></i> 지금 출발 길찾기
                     </button>
                 </section>
-                <section id="journey-result" aria-live="polite">
-                    <div class="rounded-[24px] border border-dashed border-slate-200 bg-white/70 px-6 py-10 text-center">
-                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#2563EB]"><i class="fa-solid fa-train-subway"></i></div>
+                <section id="journey-result" class="pt-5" aria-live="polite">
+                    <div class="border border-dashed border-slate-200 px-6 py-10 text-center">
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#1769C2]"><i class="fa-solid fa-train-subway"></i></div>
                         <p class="mt-3 text-[13px] font-extrabold text-slate-600">출발역과 도착역을 선택해 주세요</p>
                         <p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-400">탑승 시각, 열차번호, 환승 경로를<br>한 번에 계산합니다.</p>
                     </div>
@@ -1910,6 +1938,7 @@
         let subwayMapFollowLayer = null;
         let selectedMapTrainKey = null;
         let mapFollowTrainKey = null;
+        let mapSoloTrainKey = null;
         let selectedMapStationLineId = null;
         const regionMapTimetables = new Map();
         let mapNationwideMode = false;
@@ -1963,6 +1992,9 @@
             mainHeader: document.getElementById('main-header'),
             homeScreen: document.getElementById('home-screen'),
             journeyScreen: document.getElementById('journey-screen'),
+            journeySearchPanel: document.getElementById('journey-search-panel'),
+            journeyHeaderSwap: document.getElementById('journey-header-swap'),
+            journeyRegionLabel: document.getElementById('journey-region-label'),
             journeyStartButton: document.getElementById('journey-start-button'),
             journeyStartLabel: document.getElementById('journey-start-label'),
             journeyEndButton: document.getElementById('journey-end-button'),
@@ -4594,7 +4626,10 @@
         };
         const getRegionMapTrains = (atSec = currentSec) => {
             refreshMapActiveTrainSources(atSec);
-            return mapActiveTrainSources.map(({ train, direction, lineId }) => getActiveTrainItems([train], direction, lineId, atSec)[0]).filter(Boolean);
+            return mapActiveTrainSources
+                .map(({ train, direction, lineId }) => getActiveTrainItems([train], direction, lineId, atSec)[0])
+                .filter(Boolean)
+                .filter(train => !mapSoloTrainKey || `${train.lineId}:${train.direction}:${train.id}` === mapSoloTrainKey);
         };
         const loadRegionMapTimetables = async () => {
             const lineIds = getVisibleMapLineIds();
@@ -4628,6 +4663,7 @@
         window.toggleNationwideMapView = async () => {
             if (!subwayMap || typeof kakao === 'undefined' || !kakao.maps) return;
             mapFollowTrainKey = null;
+            mapSoloTrainKey = null;
             selectedTrainId = null;
             selectedMapTrainKey = null;
             selectedStation = null;
@@ -4835,6 +4871,8 @@
             const specialMeta = getSpecialServiceMeta(train.service);
             const trainBadge = getTrainLineBadge(train.lineId);
             element.className = 'subway-map-train';
+            if (mapSoloTrainKey === key) element.classList.add('is-journey-target');
+            element.dataset.trainId = train.id;
             element.setAttribute('role', 'button');
             element.setAttribute('aria-label', `${train.id} ${train.isExpress ? `${specialMeta.label} ` : ''}열차 따라가기`);
             const body = document.createElement('div');
@@ -5164,7 +5202,13 @@
             };
             kakao.maps.event.addListener(subwayMap, 'zoom_start', pauseTrainInterpolation);
             kakao.maps.event.addListener(subwayMap, 'zoom_changed', resumeTrainInterpolation);
-            kakao.maps.event.addListener(subwayMap, 'dragstart', () => { mapFollowTrainKey = null; setMapRegionHeader(); pauseTrainInterpolation(); });
+            kakao.maps.event.addListener(subwayMap, 'dragstart', () => {
+                if (!mapSoloTrainKey) {
+                    mapFollowTrainKey = null;
+                    setMapRegionHeader();
+                }
+                pauseTrainInterpolation();
+            });
             kakao.maps.event.addListener(subwayMap, 'dragend', resumeTrainInterpolation);
             const fallback = document.getElementById('subway-map-fallback');
             if (fallback) fallback.classList.add('hidden');
@@ -5175,6 +5219,7 @@
 
         window.handleMapStationClick = async (lineId, stationName) => {
             if (currentLineId !== lineId) await window.switchLine(lineId);
+            mapSoloTrainKey = null;
             selectedMapStationLineId = lineId;
             selectedStation = stationName;
             selectedTrainId = null;
@@ -5224,6 +5269,7 @@
         let journeyStationByKey = new Map();
         let journeyStart = null;
         let journeyEnd = null;
+        let journeyPlannerNetwork = null;
         let journeyPickerTarget = 'start';
         let journeySearchToken = 0;
 
@@ -5234,6 +5280,7 @@
         const getJourneyNetwork = lineId => LINE_REGION[lineId] || 'seoul';
         const getJourneyCanonicalName = stationName => JOURNEY_STATION_ALIASES[stationName] || stationName;
         const getJourneyLineMeta = lineId => FAVORITE_LINE_META[lineId] || { label:lineId, color:'#64748B' };
+        const getJourneyTransferSeconds = (fromLineId, toLineId) => fromLineId === 'daegyeong' || toLineId === 'daegyeong' ? 600 : JOURNEY_TRANSFER_SECONDS;
         const getJourneyMinutes = seconds => Math.max(1, Math.ceil(seconds / 60));
         const getJourneyClock = seconds => secondsToTime(seconds).slice(0, 5);
 
@@ -5279,8 +5326,9 @@
         const getJourneyChoiceLineText = choice => [...new Set(choice.refs.map(ref => getJourneyLineMeta(ref.lineId).label))].join(' · ');
         const renderJourneyStationList = (query = '') => {
             const normalizedQuery = query.trim().toLowerCase().replace(/\s+/g, '');
-            const currentNetwork = getJourneyNetwork(currentLineId);
+            const currentNetwork = journeyPlannerNetwork || getJourneyNetwork(currentLineId);
             const matches = buildJourneyStations().filter(choice => {
+                if (choice.network !== currentNetwork) return false;
                 if (!normalizedQuery) return true;
                 const haystack = `${choice.name}${getJourneyChoiceLineText(choice)}${JOURNEY_REGION_LABELS[choice.network] || ''}`.toLowerCase().replace(/\s+/g, '');
                 return haystack.includes(normalizedQuery);
@@ -5471,10 +5519,11 @@
                     physicalChoice.refs.forEach(ref => {
                         const nextKey = `${ref.lineId}|${ref.stationName}`;
                         if (nextKey === current.key) return;
-                        const nextTime = current.time + JOURNEY_TRANSFER_SECONDS;
+                        const transferSeconds = getJourneyTransferSeconds(lineId, ref.lineId);
+                        const nextTime = current.time + transferSeconds;
                         if (nextTime < (distance.get(nextKey) ?? Infinity)) {
                             distance.set(nextKey, nextTime);
-                            previous.set(nextKey, { fromKey:current.key, type:'transfer', station:physicalChoice.name, fromLineId:lineId, toLineId:ref.lineId, seconds:JOURNEY_TRANSFER_SECONDS });
+                            previous.set(nextKey, { fromKey:current.key, type:'transfer', station:physicalChoice.name, fromLineId:lineId, toLineId:ref.lineId, seconds:transferSeconds });
                             queue.push({ key:nextKey, time:nextTime });
                         }
                     });
@@ -5542,40 +5591,65 @@
             const firstRide = rides[0];
             const summaryWait = firstRide ? Math.max(0, firstRide.departSec - route.startSec) : 0;
             let liveIndex = 0;
-            const detailHtml = route.steps.map((step, index) => {
+            const getIntermediateStops = step => {
+                const schedule = step.train?.schedule || [];
+                const fromIndex = schedule.findIndex(stop => stop.name === step.fromName && Math.abs(stop.sec - step.departSec) < 2);
+                const toIndex = schedule.findIndex((stop, index) => index > fromIndex && stop.name === step.toName && Math.abs(stop.sec - step.arriveSec) < 2);
+                return fromIndex >= 0 && toIndex > fromIndex ? schedule.slice(fromIndex + 1, toIndex) : [];
+            };
+            const detailHtml = route.steps.map(step => {
                 if (step.type === 'transfer') {
                     const toMeta = getJourneyLineMeta(step.toLineId);
-                    return `<div class="ml-[19px] flex gap-3 border-l-2 border-dotted border-slate-200 py-3 pl-6">
-                        <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"><i class="fa-solid fa-arrow-right-arrow-left text-[10px]"></i></span>
-                        <div><p class="text-[12px] font-extrabold text-slate-700">${escapeJourneyHtml(step.station)}에서 환승</p><p class="mt-1 text-[9px] font-semibold text-slate-400">도보·대기 약 ${getJourneyMinutes(step.seconds)}분 · ${escapeJourneyHtml(toMeta.label)} 이동</p></div>
+                    return `<div class="grid grid-cols-[44px_28px_1fr] py-1.5">
+                        <span></span><span class="flex items-center justify-center"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500"><i class="fa-solid fa-arrow-right-arrow-left text-[9px]"></i></span></span>
+                        <div class="ml-2.5 rounded-lg bg-slate-50 px-3 py-2"><p class="text-[10px] font-black text-slate-700">${escapeJourneyHtml(step.station)} 환승</p><p class="mt-0.5 text-[8px] font-semibold text-slate-400">약 ${getJourneyMinutes(step.seconds)}분 이동 · ${escapeJourneyHtml(toMeta.label)}</p></div>
                     </div>`;
                 }
                 const meta = getJourneyLineMeta(step.lineId);
                 const liveId = `journey-live-${liveIndex++}`;
                 journeyLiveTargets.set(liveId, step);
                 const expressLabel = step.service || (step.isExpress ? '급행' : '일반');
-                return `<div class="rounded-[22px] border border-slate-100 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex min-w-0 items-center gap-2"><span class="h-3 w-3 shrink-0 rounded-full" style="background:${meta.color}"></span><span class="truncate text-[12px] font-black text-slate-800">${escapeJourneyHtml(meta.label)}</span><span class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[8px] font-extrabold text-slate-500">${escapeJourneyHtml(expressLabel)}</span></div>
-                        <span class="shrink-0 text-[10px] font-black text-[#2563EB]">${getJourneyClock(step.departSec)} 탑승</span>
+                const intermediateStops = getIntermediateStops(step);
+                const previewStop = intermediateStops.length ? intermediateStops[Math.floor(intermediateStops.length / 2)] : null;
+                const badgeText = (meta.label.match(/(\d+)호선/)?.[1] || meta.label.replace(/수도권|대구|부산|인천|호선|\s/g, '').slice(0, 2) || '철');
+                return `<section class="py-1.5">
+                    <div class="mb-2.5 flex justify-center"><button type="button" data-journey-live-id="${liveId}" class="inline-flex h-8 items-center justify-center gap-1.5 rounded-full px-4 text-[10px] font-black text-white shadow-sm transition active:scale-95" style="background:${meta.color}"><i class="fa-solid fa-location-crosshairs text-[9px]"></i> ${escapeJourneyHtml(step.trainId)} 실시간보기</button></div>
+                    <div class="grid grid-cols-[44px_28px_1fr] items-center">
+                        <time class="text-[11px] font-bold text-slate-500">${getJourneyClock(step.departSec)}</time>
+                        <span class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-black text-white" style="background:${meta.color}">${escapeJourneyHtml(badgeText)}</span>
+                        <div class="ml-2.5"><div class="flex items-center gap-1.5"><h3 class="text-[15px] font-black text-slate-900">${escapeJourneyHtml(step.fromName)}</h3><i class="fa-solid fa-chevron-right text-[8px] text-slate-300"></i></div><p class="mt-0.5 text-[8px] font-bold text-slate-400">${escapeJourneyHtml(meta.label)} · ${escapeJourneyHtml(expressLabel)} · 열차 ${escapeJourneyHtml(step.trainId)}</p></div>
                     </div>
-                    <div class="mt-3 flex items-center gap-2 text-[15px] font-black text-slate-900"><span>${escapeJourneyHtml(step.fromName)}</span><i class="fa-solid fa-arrow-right-long text-[11px] text-slate-300"></i><span>${escapeJourneyHtml(step.toName)}</span></div>
-                    <div class="mt-2 flex items-center justify-between gap-2"><p class="text-[10px] font-bold text-slate-500"><span class="text-slate-800">열차 ${escapeJourneyHtml(step.trainId)}</span> · ${getJourneyClock(step.arriveSec)} 도착 · ${getJourneyMinutes(step.arriveSec - step.departSec)}분</p></div>
-                    <button type="button" data-journey-live-id="${liveId}" class="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-blue-50 text-[11px] font-black text-[#2563EB] transition active:scale-[0.98]"><i class="fa-solid fa-location-crosshairs"></i> 열차 실시간보기</button>
-                </div>`;
+                    <div class="grid min-h-[74px] grid-cols-[44px_28px_1fr]">
+                        <div class="flex items-center text-[10px] font-bold text-slate-400">${previewStop ? getJourneyClock(previewStop.sec) : ''}</div>
+                        <div class="relative flex justify-center"><span class="h-full w-1" style="background:${meta.color}"></span>${previewStop ? '<span class="absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full border-2 border-white" style="background:'+meta.color+'"></span>' : ''}</div>
+                        <div class="ml-2.5 flex flex-col justify-center"><p class="text-[10px] font-black text-slate-700">${intermediateStops.length}개 역 <span class="text-slate-400">(${getJourneyMinutes(step.arriveSec - step.departSec)}분)</span></p>${previewStop ? `<p class="mt-1.5 text-[10px] font-bold text-slate-500">${escapeJourneyHtml(previewStop.name)}</p>` : ''}</div>
+                    </div>
+                    <div class="grid grid-cols-[44px_28px_1fr] items-center">
+                        <time class="text-[11px] font-bold text-slate-500">${getJourneyClock(step.arriveSec)}</time>
+                        <span class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-[5px] border-white" style="background:${meta.color};box-shadow:0 0 0 2px ${meta.color}"></span>
+                        <div class="ml-2.5"><div class="flex items-center gap-1.5"><h3 class="text-[15px] font-black text-slate-900">${escapeJourneyHtml(step.toName)}</h3><i class="fa-solid fa-chevron-right text-[8px] text-slate-300"></i></div><p class="mt-0.5 text-[8px] font-bold text-slate-400">${getJourneyClock(step.arriveSec)} 도착 예정</p></div>
+                    </div>
+                </section>`;
             }).join('');
 
-            dom.journeyResult.innerHTML = `<section class="overflow-hidden rounded-[26px] bg-[#0F172A] p-5 text-white shadow-[0_16px_36px_rgba(15,23,42,0.18)]">
-                <div class="flex items-end justify-between"><div><p class="text-[10px] font-bold text-slate-400">가장 빠른 경로</p><p class="mt-1 text-[25px] font-black tracking-tight">${getJourneyMinutes(route.arrivalSec - route.startSec)}분</p></div><div class="text-right"><p class="text-[10px] font-bold text-slate-400">도착 예정</p><p class="mt-1 text-[18px] font-black">${getJourneyClock(route.arrivalSec)}</p></div></div>
-                <div class="mt-4 grid grid-cols-3 gap-2 border-t border-white/10 pt-4 text-center"><div><p class="text-[8px] font-bold text-slate-400">출발</p><p class="mt-1 text-[11px] font-black">${getJourneyClock(route.startSec)}</p></div><div><p class="text-[8px] font-bold text-slate-400">첫 열차</p><p class="mt-1 text-[11px] font-black">${summaryWait < 60 ? '곧 도착' : `${getJourneyMinutes(summaryWait)}분 후`}</p></div><div><p class="text-[8px] font-bold text-slate-400">환승</p><p class="mt-1 text-[11px] font-black">${transfers.length}회</p></div></div>
+            dom.journeySearchPanel.classList.add('hidden');
+            dom.journeyResult.classList.remove('hidden');
+            dom.journeyResult.innerHTML = `<section class="px-1 pb-3">
+                <div class="flex items-center justify-between"><div><p class="text-[11px] font-black text-slate-400">소요시간</p><div class="mt-1 flex items-end gap-2.5"><strong class="text-[34px] font-black leading-none tracking-[-0.06em] text-slate-900">${getJourneyMinutes(route.arrivalSec - route.startSec)}분</strong><span class="pb-0.5 text-[10px] font-bold text-slate-500">${transfers.length ? `환승 ${transfers.length}회` : '환승없음'} · ${summaryWait < 60 ? '곧 출발' : `${getJourneyMinutes(summaryWait)}분 후 출발`}</span></div></div><button id="journey-change-button" type="button" class="flex h-8 items-center gap-1 rounded-full border border-slate-200 px-2.5 text-[9px] font-black text-slate-600"><i class="fa-solid fa-pen text-[8px]"></i> 변경</button></div>
+                <div class="mt-3 grid grid-cols-2 overflow-hidden rounded-[3px] border border-slate-300 bg-slate-50"><div class="border-r border-slate-300 py-2.5 text-center text-[11px] font-black text-slate-600">출발&nbsp; ${getJourneyClock(firstRide?.departSec || route.startSec)} <i class="fa-solid fa-caret-down ml-1 text-slate-400"></i></div><div class="py-2.5 text-center text-[11px] font-black text-slate-600">도착&nbsp; ${getJourneyClock(route.arrivalSec)} <i class="fa-solid fa-caret-down ml-1 text-slate-400"></i></div></div>
+                <div class="mt-2.5 flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5"><div class="min-w-0"><p class="truncate text-[11px] font-black text-slate-800">${escapeJourneyHtml(journeyStart?.name || '')} <i class="fa-solid fa-arrow-right-long mx-1.5 text-[8px] text-slate-300"></i> ${escapeJourneyHtml(journeyEnd?.name || '')}</p><p class="mt-0.5 text-[8px] font-semibold text-slate-400">${JOURNEY_REGION_LABELS[journeyPlannerNetwork] || '현재 권역'} 시간표 기준</p></div><i class="fa-solid fa-chevron-right text-[8px] text-slate-300"></i></div>
             </section>
-            <div class="mt-4 space-y-2">${detailHtml}</div>
-            <button type="button" id="journey-refresh-button" class="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-[11px] font-extrabold text-slate-600"><i class="fa-solid fa-rotate-right"></i> 현재 시각으로 다시 조회</button>`;
+            <div class="border-t border-slate-100 pt-2">${detailHtml}</div>
+            <button type="button" id="journey-refresh-button" class="mx-auto mt-4 flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 text-[9px] font-extrabold text-slate-600"><i class="fa-solid fa-rotate-right text-[8px]"></i> 현재 시각으로 다시 조회</button>`;
         };
 
         window.searchJourneyNow = async () => {
             if (!journeyStart || !journeyEnd) {
                 showJourneyAlert('출발역과 도착역을 모두 선택해 주세요.');
+                return;
+            }
+            if (journeyStart.network !== journeyPlannerNetwork || journeyEnd.network !== journeyPlannerNetwork) {
+                showJourneyAlert(`${JOURNEY_REGION_LABELS[journeyPlannerNetwork] || '현재 권역'} 안에서 역을 다시 선택해 주세요.`);
                 return;
             }
             if (journeyStart.key === journeyEnd.key) {
@@ -5589,6 +5663,7 @@
             const token = ++journeySearchToken;
             const nowSec = Math.floor(getLiveCurrentSeconds());
             const dayType = getDayType(new Date());
+            dom.journeyResult.classList.remove('hidden');
             dom.journeySearchButton.disabled = true;
             dom.journeySearchButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 실제 시간표 계산 중';
             dom.journeyResult.innerHTML = '<div class="rounded-[24px] bg-white px-6 py-12 text-center"><i class="fa-solid fa-spinner fa-spin text-[20px] text-[#2563EB]"></i><p class="mt-3 text-[12px] font-extrabold text-slate-600">탑승 가능한 열차와 환승편을 찾고 있습니다.</p></div>';
@@ -5637,6 +5712,8 @@
             selectedTrainId = step.trainId;
             selectedMapTrainKey = key;
             mapFollowTrainKey = key;
+            mapSoloTrainKey = key;
+            clearSubwayMapTrains();
             mapLastCameraUpdateTime = 0;
             mapCameraLat = null;
             mapCameraLng = null;
@@ -5645,7 +5722,8 @@
                 if (activeTab !== 'map' || selectedMapTrainKey !== key) return;
                 if (dom.mapTitle) dom.mapTitle.textContent = `${meta.label} 열차 추적`;
                 if (dom.mapLineDot) dom.mapLineDot.style.backgroundColor = meta.color;
-                if (dom.mapStatus) dom.mapStatus.textContent = `${step.trainId} 따라가는 중`;
+                if (dom.mapStatus) dom.mapStatus.textContent = `${step.trainId} 확대 추적 중`;
+                if (subwayMap?.getLevel?.() > 3) subwayMap.setLevel(3, { animate:{ duration:450 } });
             };
             window.initSubwayMap();
             window.render();
@@ -5727,7 +5805,7 @@
                 mapNationwideMode = false;
                 mapActiveTrainSourceKey = '';
             }
-            selectedStation = null; selectedMapStationLineId = null; selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; modalDayType = null; modalViewMode = 'all';
+            selectedStation = null; selectedMapStationLineId = null; selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; mapSoloTrainKey = null; modalDayType = null; modalViewMode = 'all';
             dom.timetableModal.classList.add('hidden'); dom.stationSelectorModal.classList.add('hidden'); dom.journeyStationModal.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
             if (tabId === 'home') {
                 dom.homeScreen.classList.remove('hidden'); dom.homeScreen.classList.add('flex');
@@ -5741,6 +5819,16 @@
                 dom.mapScreen.classList.add('hidden');
                 dom.scrollContainer.classList.add('hidden'); dom.mainHeader.classList.add('hidden');
                 dom.autoScrollBtn.classList.add('hidden'); dom.floatingPanel.classList.add('hidden');
+                const nextJourneyNetwork = getJourneyNetwork(currentLineId);
+                if (journeyPlannerNetwork !== nextJourneyNetwork) {
+                    journeyPlannerNetwork = nextJourneyNetwork;
+                    if (journeyStart?.network !== journeyPlannerNetwork) journeyStart = null;
+                    if (journeyEnd?.network !== journeyPlannerNetwork) journeyEnd = null;
+                    journeyLiveTargets.clear();
+                    dom.journeySearchPanel.classList.remove('hidden');
+                    dom.journeyResult.classList.add('hidden');
+                }
+                dom.journeyRegionLabel.textContent = `${JOURNEY_REGION_LABELS[journeyPlannerNetwork] || '현재 권역'} 전용`;
                 buildJourneyStations();
                 updateJourneySelectionUI();
             } else if (tabId === 'map') {
@@ -5801,7 +5889,7 @@
 
         window.handleStationClick = (n) => { selectedStation = n; if(n) stationDetailDirection = currentDirection; else selectedMapStationLineId = null; window.render(); };
         window.handleTrainClick = (id) => { selectedTrainId = id; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = true; selectedStation = null; window.render(); };
-        window.closeTrainDetail = () => { selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; isAutoScroll = false; dom.floatingPanel.classList.add('hidden'); if (activeTab === 'map') setMapRegionHeader(); window.render(); };
+        window.closeTrainDetail = () => { selectedTrainId = null; selectedMapTrainKey = null; mapFollowTrainKey = null; mapSoloTrainKey = null; isAutoScroll = false; dom.floatingPanel.classList.add('hidden'); if (activeTab === 'map') setMapRegionHeader(); window.render(); };
         window.setStationDetailDirection = (d) => { stationDetailDirection = d; window.render(); };
 
         window.openModal = async (forcedDayType = null) => {
@@ -6605,10 +6693,15 @@
         dom.tabMap.onclick = () => window.switchTab('map');
         dom.journeyStartButton.addEventListener('click', () => window.openJourneyStationPicker('start'));
         dom.journeyEndButton.addEventListener('click', () => window.openJourneyStationPicker('end'));
-        dom.journeySwapButton.addEventListener('click', () => {
+        const swapJourneyStations = () => {
             [journeyStart, journeyEnd] = [journeyEnd, journeyStart];
             updateJourneySelectionUI();
-        });
+            dom.journeySearchPanel.classList.remove('hidden');
+            dom.journeyResult.classList.add('hidden');
+            dom.journeyScreen.scrollTo({ top:0, behavior:'smooth' });
+        };
+        dom.journeySwapButton.addEventListener('click', swapJourneyStations);
+        dom.journeyHeaderSwap.addEventListener('click', swapJourneyStations);
         dom.journeySearchButton.addEventListener('click', () => window.searchJourneyNow());
         dom.journeyPickerClose.addEventListener('click', () => window.closeJourneyStationPicker());
         dom.journeyStationSearch.addEventListener('input', event => renderJourneyStationList(event.target.value));
@@ -6626,6 +6719,11 @@
             const liveButton = event.target.closest('[data-journey-live-id]');
             if (liveButton) { window.openJourneyTrainLive(liveButton.dataset.journeyLiveId); return; }
             if (event.target.closest('#journey-refresh-button')) window.searchJourneyNow();
+            if (event.target.closest('#journey-change-button')) {
+                dom.journeySearchPanel.classList.remove('hidden');
+                dom.journeyResult.classList.add('hidden');
+                dom.journeyScreen.scrollTo({ top:0, behavior:'smooth' });
+            }
         });
         dom.journeyAlertConfirm.addEventListener('click', () => window.closeJourneyAlert());
         dom.journeyAlertModal.addEventListener('click', event => { if (event.target === dom.journeyAlertModal) window.closeJourneyAlert(); });

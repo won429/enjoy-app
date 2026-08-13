@@ -22,6 +22,7 @@
     <script src="gyeongjeon_highspeed_train_timetable.js"></script>
     <script src="jeolla_general_train_timetable.js"></script>
     <script src="jeolla_highspeed_train_timetable.js"></script>
+    <script src="jungang_general_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1155,7 +1156,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1237,6 +1238,15 @@
                     { from: '평택지제', to: '천안아산' },
                     { from: '오송', to: '서대전', dashed: true },
                     { from: '논산', to: '익산', dashed: true }
+                ]
+            },
+            jungang: {
+                label: '중앙선', badge: '중',
+                color: '#0E7490', downColor: '#7FC4D6',
+                upToward: '청량리', downToward: '부전',
+                tabLabel: '중앙선', trainLabel: '일반열차',
+                branchLinks: [
+                    { from: '군위', to: '하양' }
                 ]
             }
         };
@@ -1531,6 +1541,42 @@
                 "순천": { progress: 0.8750, ktx: true, srt: true },
                 "여천": { progress: 0.9375, ktx: true, srt: true },
                 "여수엑스포": { progress: 1.0000, ktx: true, srt: true }
+            },
+            /* 중앙선. 청량리에서 영주 · 안동을 거쳐 동해선을 타고 부전까지 간다.
+               대구선(하양 · 동대구)은 군위에서 갈라지는 지선이다. */
+            'jungang': {
+                "청량리": { progress: 0.0000, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '경의중앙', color: '#77C4A3'}, {name: '경춘', color: '#0C8E72'}] },
+                "덕소": { progress: 0.0345, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "양평": { progress: 0.0690, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "용문": { progress: 0.1034, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "지평": { progress: 0.1379, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "석불": { progress: 0.1724 },
+                "일신": { progress: 0.2069 },
+                "매곡": { progress: 0.2414 },
+                "양동": { progress: 0.2759 },
+                "삼산": { progress: 0.3103 },
+                "서원주": { progress: 0.3448, ktx: true },
+                "원주": { progress: 0.3793, ktx: true },
+                "봉양": { progress: 0.4138 },
+                "제천": { progress: 0.4483, ktx: true },
+                "단양": { progress: 0.4828, ktx: true },
+                "풍기": { progress: 0.5172, ktx: true },
+                "영주": { progress: 0.5517, ktx: true },
+                "안동": { progress: 0.5862, ktx: true },
+                "의성": { progress: 0.6207, ktx: true },
+                "군위": { progress: 0.6552 },
+                "영천": { progress: 0.6897, ktx: true },
+                "하양": { col: 1, group: 'daegu', progress: 0.6897, transfer: [{name: '1', color: '#D93F5C'}] },
+                "아화": { progress: 0.7241 },
+                "동대구": { col: 1, group: 'daegu', progress: 0.7241, ktx: true, srt: true, transfer: [{name: '1', color: '#D93F5C'}] },
+                "경주": { progress: 0.7586, ktx: true },
+                "북울산": { progress: 0.7931, ktx: true },
+                "태화강": { progress: 0.8276, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] },
+                "남창": { progress: 0.8621, transfer: [{name: '동해', color: '#003DA5'}] },
+                "기장": { progress: 0.8966, transfer: [{name: '동해', color: '#003DA5'}] },
+                "신해운대": { progress: 0.9310, transfer: [{name: '동해', color: '#003DA5'}] },
+                "센텀": { progress: 0.9655, transfer: [{name: '동해', color: '#003DA5'}, {name: '2', color: '#81C147'}] },
+                "부전": { progress: 1.0000, transfer: [{name: '동해', color: '#003DA5'}] }
             }
         };
 
@@ -1724,7 +1770,8 @@
             gyeongjeon:          { src: './gyeongjeon_general_train_timetable.js', globalName: 'GYEONGJEON_LINE_TIMETABLE' },
             gyeongjeon_ktx:      { src: './gyeongjeon_highspeed_train_timetable.js', globalName: 'GYEONGJEON_KTX_LINE_TIMETABLE' },
             jeolla:              { src: './jeolla_general_train_timetable.js',      globalName: 'JEOLLA_LINE_TIMETABLE' },
-            jeolla_ktx:          { src: './jeolla_highspeed_train_timetable.js',    globalName: 'JEOLLA_KTX_LINE_TIMETABLE' }
+            jeolla_ktx:          { src: './jeolla_highspeed_train_timetable.js',    globalName: 'JEOLLA_KTX_LINE_TIMETABLE' },
+            jungang:             { src: './jungang_general_train_timetable.js',     globalName: 'JUNGANG_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1841,6 +1888,12 @@
             sourceGlobal: 'JEOLLA_HIGHSPEED_TRAIN_TIMETABLE',
             targetGlobal: 'JEOLLA_KTX_LINE_TIMETABLE',
             alias: { '여수EXPO': '여수엑스포' }
+        });
+        buildLineTimetable({
+            lineId: 'jungang', baseId: 49000, label: '중앙선',
+            routeName: '중앙선 일반열차(청량리-부전)',
+            sourceGlobal: 'JUNGANG_GENERAL_TRAIN_TIMETABLE',
+            targetGlobal: 'JUNGANG_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2080,7 +2133,8 @@
             gyeongjeon:3300,
             gyeongjeon_ktx:1900,
             jeolla:2500,
-            jeolla_ktx:2000
+            jeolla_ktx:2000,
+            jungang:2900
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -4080,7 +4134,15 @@
                   '서대전': 167, '계룡': 188, '논산': 211,
                   '익산': 219, '전주': 244, '남원': 300, '곡성': 331,
                   '구례구': 345, '순천': 380, '여천': 415, '여수엑스포': 425
-              } }
+              } },
+
+            /* 중앙선 일반열차. seq 는 청량리 기점 정차역 순서.
+               대구선 지선(하양 · 동대구)은 군위 다음에 이어 두고 기준 역 사이를 보간한다. */
+            { line: '중앙선', routeId: 'jungang', global: 'JUNGANG_GENERAL_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              seq: ['청량리','덕소','양평','용문','지평','석불','일신','매곡','양동','삼산','서원주','원주',
+                    '봉양','제천','단양','풍기','영주','안동','의성','군위','하양','동대구','영천','아화',
+                    '경주','북울산','태화강','남창','기장','신해운대','센텀','부전'] }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
 
