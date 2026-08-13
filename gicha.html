@@ -397,14 +397,87 @@
             color: #fff;
             -webkit-font-smoothing: antialiased;
         }
+        /* ===== 열차 조회 화면 색 (라이트 · 다크) =====
+           기본은 다크. 기기 설정이 라이트면 코레일 앱과 같은 밝은 화면으로 바뀐다. */
+        :root {
+            --rail-accent:      #2C6BF3;
+            --rail-accent-dark: #1F57D4;
+            --rail-page:        #050608;   /* 결과 화면 바탕 */
+            --rail-head:        #0A0F1B;   /* 결과 화면 헤더 */
+            --rail-head-fg:     #ffffff;
+            --rail-row:         #0A0B0E;   /* 열차 한 줄 */
+            --rail-row-active:  #14161C;
+            --rail-panel:       #111A2C;   /* 바텀시트 */
+            --rail-line:        rgba(255,255,255,.07);
+            --rail-line-strong: rgba(255,255,255,.16);
+            --rail-fg:          #ffffff;   /* 본문 글자 */
+            --rail-fg-2:        #B7BFCE;   /* 보조 글자 */
+            --rail-fg-3:        #8B94AA;   /* 흐린 글자 */
+            --rail-fill:        rgba(255,255,255,.07);   /* 옅은 배경 */
+            --rail-fill-2:      rgba(255,255,255,.03);
+            --rail-hover:       rgba(255,255,255,.1);
+            --rail-sky-1:       #070C19;   /* 홈 화면 하늘 */
+            --rail-sky-2:       #0B1223;
+            --rail-sky-3:       #101930;
+            --rail-glow-1:      rgba(96,131,214,.30);
+            --rail-glow-2:      rgba(38,60,120,.30);
+            --rail-card:        rgba(255,255,255,.062);
+            --rail-card-line:   rgba(255,255,255,.075);
+            --rail-card-shadow: 0 1.375rem 3rem -1.5rem rgba(0,0,0,.85);
+            --rail-sky-mid:     44%;
+            --rail-sky-end:     100%;
+            --rail-night:       1;         /* 달 · 별 표시 여부 */
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --rail-page:        #F2F4F8;
+                --rail-head:        #1B6BF0;
+                --rail-head-fg:     #ffffff;
+                --rail-row:         #ffffff;
+                --rail-row-active:  #EEF3FD;
+                --rail-panel:       #ffffff;
+                --rail-line:        rgba(17,24,39,.08);
+                --rail-line-strong: rgba(17,24,39,.16);
+                --rail-fg:          #111827;
+                --rail-fg-2:        #4B5563;
+                --rail-fg-3:        #6B7280;
+                --rail-fill:        rgba(17,24,39,.05);
+                --rail-fill-2:      rgba(17,24,39,.03);
+                --rail-hover:       rgba(17,24,39,.08);
+                --rail-sky-1:       #2E7BF6;
+                --rail-sky-2:       #1B6BF0;
+                --rail-sky-3:       #F2F4F8;
+                --rail-glow-1:      rgba(255,255,255,.35);
+                --rail-glow-2:      rgba(255,255,255,.18);
+                --rail-card:        #ffffff;
+                --rail-card-line:   rgba(17,24,39,.06);
+                --rail-card-shadow: 0 0.75rem 1.75rem -0.75rem rgba(17,24,39,.18);
+                --rail-sky-mid:     20%;
+                --rail-sky-end:     44%;
+                --rail-night:       0;
+            }
+        }
+        /* 토큰을 그대로 쓰는 유틸 (조회 화면 전용) */
+        .rail-page   { background: var(--rail-page); }
+        .rail-head   { background: var(--rail-head); }
+        .rail-panel  { background: var(--rail-panel); }
+        .rail-fill   { background: var(--rail-fill); }
+        .rail-t      { color: var(--rail-fg); }
+        .rail-t2     { color: var(--rail-fg-2); }
+        .rail-t3     { color: var(--rail-fg-3); }
+        .rail-head-t { color: var(--rail-head-fg); }
+        .rail-bd     { border-color: var(--rail-line); }
+        .rail-bd-s   { border-color: var(--rail-line-strong); }
+        .rail-divider{ background: var(--rail-line); }
+
         .rail-bg {
             position: absolute; inset: 0; pointer-events: none;
             background:
-                radial-gradient(120% 52% at 88% -6%, rgba(96,131,214,.30) 0%, rgba(10,16,32,0) 62%),
-                radial-gradient(90% 40% at 10% 8%, rgba(38,60,120,.30) 0%, rgba(10,16,32,0) 60%),
-                linear-gradient(180deg, #070C19 0%, #0B1223 44%, #101930 100%);
+                radial-gradient(120% 52% at 88% -6%, var(--rail-glow-1) 0%, rgba(10,16,32,0) 62%),
+                radial-gradient(90% 40% at 10% 8%, var(--rail-glow-2) 0%, rgba(10,16,32,0) 60%),
+                linear-gradient(180deg, var(--rail-sky-1) 0%, var(--rail-sky-2) var(--rail-sky-mid), var(--rail-sky-3) var(--rail-sky-end));
         }
-        .rail-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .rail-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; opacity: var(--rail-night); }
         .rail-moon {
             position: absolute; top: 3.25rem; right: 0.125rem;
             width: 4.75rem; height: 4.75rem; border-radius: 50%;
@@ -425,21 +498,21 @@
         .rail-title { font-size: clamp(1.1875rem, 5.6vw, 1.40625rem); font-weight: 800; letter-spacing: -.045em; color: #fff; line-height: 1.25; }
         .rail-card {
             border-radius: 1.625rem; overflow: hidden;
-            background: rgba(255,255,255,.062);
-            border: 0.0625rem solid rgba(255,255,255,.075);
-            box-shadow: 0 1.375rem 3rem -1.5rem rgba(0,0,0,.85);
+            background: var(--rail-card);
+            border: 0.0625rem solid var(--rail-card-line);
+            box-shadow: var(--rail-card-shadow);
         }
-        .rail-sublabel { font-size: clamp(0.65625rem, 3.05vw, 0.78125rem); font-weight: 700; color: #8B94AA; letter-spacing: -.02em; }
+        .rail-sublabel { font-size: clamp(0.65625rem, 3.05vw, 0.78125rem); font-weight: 700; color: var(--rail-fg-3); letter-spacing: -.02em; }
         .rail-station {
             display: flex; align-items: center; justify-content: center; gap: 0.4375rem;
             margin-top: 0.375rem; font-size: clamp(1.25rem, 6.4vw, 1.5rem); font-weight: 800;
-            letter-spacing: -.05em; color: #fff; line-height: 1.1;
+            letter-spacing: -.05em; color: var(--rail-fg); line-height: 1.1;
         }
         .rail-station span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .rail-caret { width: 0.5rem; height: 0.6875rem; color: #7C859B; flex: none; }
+        .rail-caret { width: 0.5rem; height: 0.6875rem; color: var(--rail-fg-3); flex: none; }
         .rail-swap {
             width: clamp(2.125rem, 9.9vw, 2.5rem); height: clamp(2.125rem, 9.9vw, 2.5rem); flex: none;
-            border-radius: 50%; background: #2C6BF3;
+            border-radius: 50%; background: var(--rail-accent);
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 0.625rem 1.25rem -0.5rem rgba(44,107,243,.9);
             transition: transform .3s cubic-bezier(.34,1.56,.64,1);
@@ -449,100 +522,100 @@
         .rail-field {
             display: flex; align-items: center; gap: 0.5rem;
             height: clamp(2.4375rem, 11.2vw, 2.8125rem); padding: 0 0.875rem;
-            border-radius: 0.875rem; border: 0.0625rem solid rgba(255,255,255,.13);
-            background: rgba(255,255,255,.02);
+            border-radius: 0.875rem; border: 0.0625rem solid var(--rail-line-strong);
+            background: var(--rail-fill-2);
             transition: background-color .15s ease, transform .12s ease;
         }
-        .rail-field:active { transform: scale(.985); background: rgba(255,255,255,.06); }
-        .rail-field-label { font-size: clamp(0.65625rem, 2.95vw, 0.75rem); font-weight: 700; color: #8B94AA; flex: none; letter-spacing: -.02em; }
+        .rail-field:active { transform: scale(.985); background: var(--rail-hover); }
+        .rail-field-label { font-size: clamp(0.65625rem, 2.95vw, 0.75rem); font-weight: 700; color: var(--rail-fg-3); flex: none; letter-spacing: -.02em; }
         .rail-field-value {
             flex: 1; text-align: center; font-size: clamp(0.8125rem, 3.85vw, 0.96875rem); font-weight: 800;
-            color: #fff; letter-spacing: -.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: var(--rail-fg); letter-spacing: -.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .rail-cta { background: #2C6BF3; }
+        .rail-cta { background: var(--rail-accent); }
         .rail-cta button {
-            padding: clamp(0.8125rem, 3.9vw, 1rem) 0; font-size: clamp(0.875rem, 4.1vw, 1.03125rem); font-weight: 800; color: #fff; letter-spacing: -.03em;
+            padding: clamp(0.8125rem, 3.9vw, 1rem) 0; font-size: clamp(0.875rem, 4.1vw, 1.03125rem); font-weight: 800; color: var(--rail-fg); letter-spacing: -.03em;
             transition: background-color .15s ease;
         }
-        .rail-cta button:active { background: #1F57D4; }
+        .rail-cta button:active { background: var(--rail-accent-dark); }
 
         /* ---- 열차 조회 결과 화면 ---- */
-        .rail-rt-title { font-size: clamp(0.9375rem, 4.4vw, 1.09375rem); font-weight: 800; letter-spacing: -.04em; color: #fff; }
+        .rail-rt-title { font-size: clamp(0.9375rem, 4.4vw, 1.09375rem); font-weight: 800; letter-spacing: -.04em; color: var(--rail-head-fg); }
         .rail-rt-edit {
             height: 1.75rem; padding: 0 0.8125rem; border-radius: 62.4375rem;
-            border: 0.0625rem solid rgba(255,255,255,.45); color: #fff;
+            border: 0.0625rem solid rgba(255,255,255,.55); color: var(--rail-head-fg);
             font-size: 0.78125rem; font-weight: 700; letter-spacing: -.02em;
         }
-        .rail-rt-edit:active { background: rgba(255,255,255,.12); }
+        .rail-rt-edit:active { background: rgba(255,255,255,.18); }
         .rail-rt-select {
             display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;
             height: clamp(2.125rem, 9.7vw, 2.4375rem); padding: 0 0.6875rem; border-radius: 0.6875rem;
-            border: 0.0625rem solid rgba(255,255,255,.16); background: rgba(255,255,255,.03);
-            font-size: clamp(0.71875rem, 3.35vw, 0.84375rem); font-weight: 700; color: #E7ECF6; letter-spacing: -.03em;
+            border: 0.0625rem solid var(--rail-line-strong); background: var(--rail-fill-2);
+            font-size: clamp(0.71875rem, 3.35vw, 0.84375rem); font-weight: 700; color: var(--rail-fg); letter-spacing: -.03em;
         }
-        .rail-rt-select:active { background: rgba(255,255,255,.1); }
+        .rail-rt-select:active { background: var(--rail-hover); }
         .rail-row {
             display: block; width: 100%; text-align: left;
-            padding: 0.9375rem 0.9375rem; border-bottom: 0.0625rem solid rgba(255,255,255,.07);
-            background: #0A0B0E; transition: background-color .12s ease;
+            padding: 0.9375rem 0.9375rem; border-bottom: 0.0625rem solid var(--rail-line);
+            background: var(--rail-row); transition: background-color .12s ease;
         }
-        .rail-row:active { background: #14161C; }
+        .rail-row:active { background: var(--rail-row-active); }
         .rail-row.is-soldout { opacity: .45; }
         .rail-type-badge {
             display: inline-flex; align-items: center; flex: none; height: 1.25rem; padding: 0 0.4375rem;
-            border-radius: 0.3125rem; font-size: 0.71875rem; font-weight: 900; color: #fff; letter-spacing: -.02em;
+            border-radius: 0.3125rem; font-size: 0.71875rem; font-weight: 900; color: var(--rail-fg); letter-spacing: -.02em;
             white-space: nowrap;
         }
-        .rail-time { font-size: clamp(1.1875rem, 5.6vw, 1.40625rem); font-weight: 800; color: #fff; letter-spacing: -.04em; line-height: 1.1; }
+        .rail-time { font-size: clamp(1.1875rem, 5.6vw, 1.40625rem); font-weight: 800; color: var(--rail-fg); letter-spacing: -.04em; line-height: 1.1; }
         .rail-dur-chip {
             display: inline-flex; align-items: center; height: 1.5rem; padding: 0 0.5625rem;
-            border-radius: 0.375rem; background: rgba(255,255,255,.07);
-            font-size: clamp(0.6875rem, 3.2vw, 0.78125rem); font-weight: 700; color: #B7BFCE; letter-spacing: -.02em;
+            border-radius: 0.375rem; background: var(--rail-fill);
+            font-size: clamp(0.6875rem, 3.2vw, 0.78125rem); font-weight: 700; color: var(--rail-fg-2); letter-spacing: -.02em;
         }
-        .rail-fare { font-size: clamp(0.96875rem, 4.6vw, 1.15625rem); font-weight: 800; color: #fff; letter-spacing: -.04em; }
-        .rail-fare-label { font-size: clamp(0.71875rem, 3.35vw, 0.84375rem); font-weight: 700; color: #8B94AA; letter-spacing: -.02em; }
+        .rail-fare { font-size: clamp(0.96875rem, 4.6vw, 1.15625rem); font-weight: 800; color: var(--rail-fg); letter-spacing: -.04em; }
+        .rail-fare-label { font-size: clamp(0.71875rem, 3.35vw, 0.84375rem); font-weight: 700; color: var(--rail-fg-3); letter-spacing: -.02em; }
         .rail-mile {
             display: inline-flex; align-items: center; gap: 0.1875rem; height: 1.3125rem; padding: 0 0.4375rem;
             border-radius: 0.3125rem; background: rgba(196,102,20,.28);
             font-size: 0.6875rem; font-weight: 800; color: #F0A860; letter-spacing: -.02em;
         }
         .rail-mile i {
-            width: 0.8125rem; height: 0.8125rem; border-radius: 50%; background: #C4761A; color: #fff;
+            width: 0.8125rem; height: 0.8125rem; border-radius: 50%; background: #C4761A; color: var(--rail-fg);
             font-style: normal; font-size: 0.53125rem; font-weight: 900; display: flex; align-items: center; justify-content: center;
         }
         .rail-daypill { height: clamp(2.3125rem, 10.8vw, 2.75rem); }
         .rail-daytext { font-size: clamp(0.8125rem, 3.9vw, 0.96875rem); }
         .rail-nextday {
             display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.375rem;
-            border-radius: 62.4375rem; border: 0.0625rem solid rgba(255,255,255,.28);
-            font-size: 0.90625rem; font-weight: 700; color: #E7ECF6; letter-spacing: -.03em;
+            border-radius: 62.4375rem; border: 0.0625rem solid var(--rail-line-strong);
+            font-size: 0.90625rem; font-weight: 700; color: var(--rail-fg); letter-spacing: -.03em;
         }
-        .rail-nextday:active { background: rgba(255,255,255,.08); }
+        .rail-nextday:active { background: var(--rail-hover); }
 
         /* ---- 바텀시트 ---- */
         #rail-sheet-panel { transition: transform .28s cubic-bezier(.22,1,.36,1); }
         .rail-list-row {
             width: 100%; display: flex; align-items: center; justify-content: space-between;
-            padding: 0.8125rem 0.875rem; border-radius: 0.875rem; background: rgba(255,255,255,.05);
-            border: 0.0625rem solid rgba(255,255,255,.06);
-            font-size: 0.875rem; font-weight: 700; color: #fff; letter-spacing: -.02em;
+            padding: 0.8125rem 0.875rem; border-radius: 0.875rem; background: var(--rail-fill);
+            border: 0.0625rem solid var(--rail-line);
+            font-size: 0.875rem; font-weight: 700; color: var(--rail-fg); letter-spacing: -.02em;
         }
-        .rail-list-row.is-on { background: rgba(44,107,243,.22); border-color: #2C6BF3; }
+        .rail-list-row.is-on { background: rgba(44,107,243,.18); border-color: var(--rail-accent); }
         .rail-cal-cell {
             aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-radius: 0.75rem; font-size: 0.84375rem; font-weight: 800; color: #E7ECF6;
+            border-radius: 0.75rem; font-size: 0.84375rem; font-weight: 800; color: var(--rail-fg);
         }
-        .rail-cal-cell.is-off { color: #4A5468; }
-        .rail-cal-cell.is-on { background: #2C6BF3; color: #fff; }
+        .rail-cal-cell.is-off { color: var(--rail-fg-3); opacity: .5; }
+        .rail-cal-cell.is-on { background: var(--rail-accent); color: #fff; }
         .rail-cal-cell.is-sun { color: #FF7B7B; }
         .rail-cal-cell.is-sat { color: #7BB2FF; }
-        .rail-cal-cell.is-off.is-sun, .rail-cal-cell.is-off.is-sat { color: #4A5468; }
+        .rail-cal-cell.is-off.is-sun, .rail-cal-cell.is-off.is-sat { color: var(--rail-fg-3); opacity: .5; }
         .rail-time-btn {
             flex: none; min-width: 2.75rem; padding: 0.4375rem 0.625rem; border-radius: 0.6875rem;
-            background: rgba(255,255,255,.06); border: 0.0625rem solid rgba(255,255,255,.08);
-            font-size: 0.8125rem; font-weight: 800; color: #C9D2E4;
+            background: var(--rail-fill); border: 0.0625rem solid var(--rail-line);
+            font-size: 0.8125rem; font-weight: 800; color: var(--rail-fg-2);
         }
-        .rail-time-btn.is-on { background: #2C6BF3; border-color: #2C6BF3; color: #fff; }
+        .rail-time-btn.is-on { background: var(--rail-accent); border-color: var(--rail-accent); color: #fff; }
     </style>
 </head>
 <body class="w-full h-[100dvh] flex justify-center items-center overflow-hidden">
@@ -859,10 +932,10 @@
         </nav>
 
         <!-- 5-B. 열차 조회 결과 화면 -->
-        <div id="rail-result" class="hidden absolute inset-0 z-[130] flex-col bg-[#050608]">
-            <header class="shrink-0 bg-[#0A0F1B] px-4 pt-safe pb-3">
+        <div id="rail-result" class="hidden absolute inset-0 z-[130] flex-col rail-page">
+            <header class="shrink-0 rail-head px-4 pt-safe pb-3">
                 <div class="flex items-start gap-2 pt-1">
-                    <button onclick="railCloseResult()" class="w-9 h-9 -ml-2 mt-0.5 flex items-center justify-center text-white active:scale-90 transition-transform" aria-label="뒤로">
+                    <button onclick="railCloseResult()" class="w-9 h-9 -ml-2 mt-0.5 flex items-center justify-center rail-head-t active:scale-90 transition-transform" aria-label="뒤로">
                         <svg viewBox="0 0 24 24" width="21" height="21" style="width:1.3125rem;height:1.3125rem" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
                     </button>
                     <div class="flex-1 min-w-0">
@@ -871,23 +944,23 @@
                             <svg viewBox="0 0 26 14" width="20" height="11" style="width:1.25rem;height:0.6875rem" fill="none" stroke="#DDE3EE" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M1 10h22"/><path d="M17 3.5 23.5 10"/></svg>
                             <span id="rail-result-arr" class="rail-rt-title truncate">서울</span>
                         </div>
-                        <div id="rail-result-sub" class="mt-0.5 text-[12.5px] font-semibold text-white/50 truncate">직통 열차</div>
+                        <div id="rail-result-sub" class="mt-0.5 text-[12.5px] font-semibold rail-head-t opacity-60 truncate">직통 열차</div>
                     </div>
                     <button onclick="railCloseResult()" class="rail-rt-edit shrink-0 mt-1">수정</button>
-                    <button onclick="railRenderResult()" class="w-8 h-8 mt-0.5 flex items-center justify-center text-white/85 active:scale-90 transition-transform shrink-0" aria-label="새로고침">
+                    <button onclick="railRenderResult()" class="w-8 h-8 mt-0.5 flex items-center justify-center rail-head-t opacity-90 active:scale-90 transition-transform shrink-0" aria-label="새로고침">
                         <svg viewBox="0 0 24 24" width="19" height="19" style="width:1.1875rem;height:1.1875rem" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-1.6 5.7"/><path d="M20 4.5V11h-6.2"/></svg>
                     </button>
                 </div>
 
-                <div class="mt-3 flex items-center rounded-full bg-white/[0.07] rail-daypill px-1">
-                    <button onclick="railShiftDay(-1)" id="rail-day-prev" class="w-9 h-9 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="이전날">
+                <div class="mt-3 flex items-center rounded-full bg-white/[0.14] rail-daypill px-1">
+                    <button onclick="railShiftDay(-1)" id="rail-day-prev" class="w-9 h-9 flex items-center justify-center rail-head-t opacity-75 active:scale-90 transition-transform" aria-label="이전날">
                         <svg viewBox="0 0 24 24" width="16" height="16" style="width:1rem;height:1rem" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
                     </button>
                     <button onclick="railOpenSheet('date')" class="flex-1 h-full flex items-center justify-center gap-1.5 min-w-0">
-                        <span id="rail-day-text" class="rail-daytext font-extrabold tracking-tight text-white truncate">2026년 08월 10일 (월) 22:43</span>
-                        <svg viewBox="0 0 12 8" width="10" height="7" style="width:0.625rem;height:0.4375rem" fill="currentColor" class="text-white shrink-0" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg>
+                        <span id="rail-day-text" class="rail-daytext font-extrabold tracking-tight rail-head-t truncate">2026년 08월 10일 (월) 22:43</span>
+                        <svg viewBox="0 0 12 8" width="10" height="7" style="width:0.625rem;height:0.4375rem" fill="currentColor" class="rail-head-t shrink-0" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5Z"/></svg>
                     </button>
-                    <button onclick="railShiftDay(1)" class="w-9 h-9 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="다음날">
+                    <button onclick="railShiftDay(1)" class="w-9 h-9 flex items-center justify-center rail-head-t opacity-75 active:scale-90 transition-transform" aria-label="다음날">
                         <svg viewBox="0 0 24 24" width="16" height="16" style="width:1rem;height:1rem" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
                     </button>
                 </div>
@@ -899,15 +972,15 @@
                 </div>
             </header>
 
-            <div class="shrink-0 flex items-center justify-between px-4 py-3 bg-[#050608] border-b border-white/[0.08]">
+            <div class="shrink-0 flex items-center justify-between px-4 py-3 rail-page border-b rail-bd">
                 <button onclick="railOpenSheet('sort')" class="flex items-center gap-2 active:opacity-70 transition-opacity">
                     <svg viewBox="0 0 20 18" width="18" height="16" style="width:1.125rem;height:1rem" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M4 2v14"/><path d="M1 13l3 3 3-3"/><path d="M9.5 3.5h9"/><path d="M9.5 8.5h6.5"/><path d="M9.5 13.5h4"/>
                     </svg>
-                    <span id="rail-sort-text" class="rail-daytext font-extrabold text-white tracking-tight">출발 빠른 순</span>
+                    <span id="rail-sort-text" class="rail-daytext font-extrabold rail-t tracking-tight">출발 빠른 순</span>
                 </button>
-                <div class="text-[12.5px] font-semibold text-white/45 whitespace-nowrap">
-                    일반실 <b class="text-white/85 font-extrabold">운임</b> <span class="text-white/25">|</span> 특·우등실 <b class="text-white/85 font-extrabold">운임+요금</b>
+                <div class="text-[12.5px] font-semibold rail-t3 whitespace-nowrap">
+                    일반실 <b class="rail-t font-extrabold">운임</b> <span class="rail-t3 opacity-50">|</span> 특·우등실 <b class="rail-t font-extrabold">운임+요금</b>
                 </div>
             </div>
 
@@ -916,16 +989,16 @@
 
         <!-- 5-C. 기차 예매 바텀시트 -->
         <div id="rail-sheet" class="hidden absolute inset-0 z-[170] flex-col justify-end bg-black/55 opacity-0 transition-opacity duration-200" onclick="if(event.target===this) railCloseSheet()">
-            <div id="rail-sheet-panel" class="w-full max-h-[88%] flex flex-col rounded-t-[26px] bg-[#111A2C] border-t border-white/10 translate-y-8">
-                <div class="pt-3 pb-1 flex justify-center shrink-0"><div class="h-1 w-10 rounded-full bg-white/25"></div></div>
+            <div id="rail-sheet-panel" class="w-full max-h-[88%] flex flex-col rounded-t-[26px] rail-panel border-t rail-bd translate-y-8">
+                <div class="pt-3 pb-1 flex justify-center shrink-0"><div class="h-1 w-10 rounded-full rail-divider"></div></div>
                 <div class="px-5 pt-2 pb-3 flex items-center justify-between shrink-0">
-                    <h3 id="rail-sheet-title" class="text-[17px] font-extrabold tracking-tight text-white">선택</h3>
-                    <button onclick="railCloseSheet()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 active:scale-90 transition-transform" aria-label="닫기">
+                    <h3 id="rail-sheet-title" class="text-[17px] font-extrabold tracking-tight rail-t">선택</h3>
+                    <button onclick="railCloseSheet()" class="w-8 h-8 rounded-full rail-fill flex items-center justify-center rail-t2 active:scale-90 transition-transform" aria-label="닫기">
                         <svg viewBox="0 0 24 24" width="14" height="14" style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
                     </button>
                 </div>
                 <div id="rail-sheet-body" class="flex-1 overflow-y-auto hide-scrollbar px-5 pb-6"></div>
-                <div id="rail-sheet-foot" class="hidden px-5 pb-7 pt-2 shrink-0 border-t border-white/10"></div>
+                <div id="rail-sheet-foot" class="hidden px-5 pb-7 pt-2 shrink-0 border-t rail-bd"></div>
             </div>
         </div>
 
@@ -3999,6 +4072,8 @@
 
                     const T = RAIL_TYPES[t.type] || RAIL_TYPES['무궁화호'];
                     const stopNames = new Set(t.stops.map(s => s.name));
+                    // 출발역과 도착역 사이에 서는 역 수 (코레일 앱의 'N개역 정차')
+                    const midStops = Math.max(0, j - i - 1);
                     const fare = railRealFare(L, t.type, dep, arr, stopNames);
                     const fareSpecial = railTableFareSpecial(t.type, dep, arr, stopNames);
                     const distance = (L.km[dep] != null && L.km[arr] != null)
@@ -4010,7 +4085,7 @@
                         routeName: L.line, trainNo: t.trainNo,
                         depName: dep, arrName: arr, isNearDep: false, isNearArr: false,
                         depMin, arrMin, dayOffset: 0,
-                        duration: arrMin - depMin, distance,
+                        duration: arrMin - depMin, distance, midStops,
                         fare: fare != null ? fare : railFare(t.type, distance),
                         fareSpecial: fareSpecial || 0,
                         mile: 0, soldOut: false,
@@ -4273,7 +4348,7 @@
                                         depMin: tDep, arrMin: tArr, dayOffset,
                                         sortKey: abs, arrKey: dayOffset * 1440 + tArr,
                                         duration: tArr - tDep,
-                                        distance,
+                                        distance, midStops: Math.max(0, Math.abs(j - i) - 1),
                                         fare, fareSpecial,
                                         mile: (sSeed % 3 === 0) ? 10 : 5,
                                         soldOut
@@ -4379,8 +4454,8 @@
             return `<div class="space-y-2">${options.map(o => `
                 <button onclick="${handler}('${o.id}')" class="rail-list-row ${currentId === o.id ? 'is-on' : ''}">
                     <span class="text-left">
-                        <span class="block text-[14.5px] font-extrabold text-white">${railEsc(o.label)}</span>
-                        ${o.desc ? `<span class="block text-[11px] font-semibold text-white/45 mt-0.5">${railEsc(o.desc)}</span>` : ''}
+                        <span class="block text-[14.5px] font-extrabold rail-t">${railEsc(o.label)}</span>
+                        ${o.desc ? `<span class="block text-[11px] font-semibold rail-t3 mt-0.5">${railEsc(o.desc)}</span>` : ''}
                     </span>
                     ${currentId === o.id ? '<svg viewBox="0 0 24 24" width="18" height="18" style="width:1.125rem;height:1.125rem" fill="none" stroke="#6E9BFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 5 5 9-11"/></svg>' : ''}
                 </button>`).join('')}</div>`;
@@ -4397,7 +4472,7 @@
 
         function railSheetDirect() {
             railShowSheet('경유', railOptionRows([{ id: 'direct', label: '직통', desc: '환승 없이 한 번에 가는 열차' }], 'direct', 'railPickDirect')
-                + `<p class="mt-3 text-[11.5px] font-semibold text-white/40 leading-relaxed">· 현재는 직통 운행 열차만 조회합니다.<br>· 환승 경로는 주요 환승역(서울 · 대전 · 동대구 · 익산 등)에서 각각 조회해 주세요.</p>`);
+                + `<p class="mt-3 text-[11.5px] font-semibold rail-t3 leading-relaxed">· 현재는 직통 운행 열차만 조회합니다.<br>· 환승 경로는 주요 환승역(서울 · 대전 · 동대구 · 익산 등)에서 각각 조회해 주세요.</p>`);
         }
         window.railPickDirect = function () { railCloseSheet(); };
 
@@ -4436,12 +4511,12 @@
             const q = (query || '').trim();
             const other = railTmp.which === 'dep' ? railState.arr : railState.dep;
             let html = `
-                <div class="sticky top-0 -mx-5 px-5 pt-1 pb-3 bg-[#111A2C] z-10">
-                    <div class="flex items-center gap-2 h-11 px-3.5 rounded-xl bg-white/[0.08] border border-white/[0.12]">
-                        <svg viewBox="0 0 24 24" width="16" height="16" style="width:1rem;height:1rem" fill="none" stroke="#8B94AA" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+                <div class="sticky top-0 -mx-5 px-5 pt-1 pb-3 rail-panel z-10">
+                    <div class="flex items-center gap-2 h-11 px-3.5 rounded-xl rail-fill border rail-bd-s">
+                        <svg viewBox="0 0 24 24" width="16" height="16" style="width:1rem;height:1rem" fill="none" stroke="currentColor" class="rail-t3" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
                         <input id="rail-station-search" type="search" inputmode="search" autocomplete="off" value="${railEsc(q)}"
                                oninput="railStationSearch(this.value)" placeholder="역 이름 검색 (예: 동대구)"
-                               class="flex-1 bg-transparent outline-none text-[14px] font-semibold text-white placeholder:text-white/35" />
+                               class="flex-1 bg-transparent outline-none text-[14px] font-semibold rail-t placeholder:opacity-50" />
                     </div>
                 </div>`;
 
@@ -4449,18 +4524,18 @@
                 if (railState.recent.length) {
                     html += `<div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-[12px] font-extrabold text-white/50">최근 검색</span>
-                            <button onclick="railClearRecent()" class="text-[11px] font-bold text-white/35">지우기</button>
+                            <span class="text-[12px] font-extrabold rail-t3">최근 검색</span>
+                            <button onclick="railClearRecent()" class="text-[11px] font-bold rail-t3">지우기</button>
                         </div>
                         <div class="flex flex-wrap gap-1.5">
-                            ${railState.recent.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="px-3 py-1.5 rounded-full bg-white/[0.08] border border-white/10 text-[12.5px] font-bold text-white/85">${railEsc(n)}</button>`).join('')}
+                            ${railState.recent.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="px-3 py-1.5 rounded-full rail-fill border rail-bd text-[12.5px] font-bold rail-t">${railEsc(n)}</button>`).join('')}
                         </div>
                     </div>`;
                 }
                 html += `<div class="mb-4">
-                    <div class="text-[12px] font-extrabold text-white/50 mb-2">많이 찾는 역</div>
+                    <div class="text-[12px] font-extrabold rail-t3 mb-2">많이 찾는 역</div>
                     <div class="grid grid-cols-3 gap-1.5">
-                        ${RAIL_POPULAR.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] font-bold text-white/90 ${n === other ? 'opacity-40' : ''}">${railEsc(n)}</button>`).join('')}
+                        ${RAIL_POPULAR.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="py-2.5 rounded-xl rail-fill border rail-bd text-[13px] font-bold rail-t ${n === other ? 'opacity-40' : ''}">${railEsc(n)}</button>`).join('')}
                     </div>
                 </div>`;
             }
@@ -4469,15 +4544,15 @@
                 const items = RAIL_ALL_STATIONS.filter(n => RAIL_STATION_REGION[n] === region && (!q || n.includes(q)));
                 if (!items.length) return;
                 html += `<div class="mb-4">
-                    <div class="text-[12px] font-extrabold text-white/50 mb-2">${region}</div>
+                    <div class="text-[12px] font-extrabold rail-t3 mb-2">${region}</div>
                     <div class="grid grid-cols-3 gap-1.5">
-                        ${items.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="py-2.5 px-1 rounded-xl bg-white/[0.05] border border-white/[0.08] text-[12.5px] font-bold text-white/85 truncate ${n === other ? 'opacity-40' : ''}">${railEsc(n)}</button>`).join('')}
+                        ${items.map(n => `<button onclick="railPickStation('${railEsc(n)}')" class="py-2.5 px-1 rounded-xl rail-fill border rail-bd text-[12.5px] font-bold rail-t truncate ${n === other ? 'opacity-40' : ''}">${railEsc(n)}</button>`).join('')}
                     </div>
                 </div>`;
             });
 
             if (q && !RAIL_ALL_STATIONS.some(n => n.includes(q))) {
-                html += `<div class="py-10 text-center text-[13px] font-bold text-white/40">'${railEsc(q)}' 검색 결과가 없습니다.</div>`;
+                html += `<div class="py-10 text-center text-[13px] font-bold rail-t3">'${railEsc(q)}' 검색 결과가 없습니다.</div>`;
             }
             return html;
         }
@@ -4521,7 +4596,7 @@
             const d = railState.date;
             railTmp = { y: d.getFullYear(), m: d.getMonth(), day: d.getDate(), h: d.getHours(), mi: Math.floor(d.getMinutes() / 10) * 10, viewY: d.getFullYear(), viewM: d.getMonth() };
             railShowSheet('가는날 선택', railDateSheetHtml(),
-                `<button onclick="railApplyDate()" class="w-full py-3.5 rounded-2xl bg-[#2C6BF3] text-white text-[15px] font-extrabold active:scale-[.99] transition-transform">확인</button>`);
+                `<button onclick="railApplyDate()" class="w-full py-3.5 rounded-2xl text-white" style="background:var(--rail-accent) text-[15px] font-extrabold active:scale-[.99] transition-transform">확인</button>`);
             requestAnimationFrame(railScrollHourStrip);
         }
         function railScrollHourStrip() {
@@ -4562,27 +4637,27 @@
 
             return `
             <div class="flex items-center justify-between mb-3">
-                <button ${prevDisabled ? 'disabled' : ''} onclick="railMoveMonth(-1)" class="w-9 h-9 rounded-full bg-white/[0.08] flex items-center justify-center text-white ${prevDisabled ? 'opacity-30' : ''}">
+                <button ${prevDisabled ? 'disabled' : ''} onclick="railMoveMonth(-1)" class="w-9 h-9 rounded-full rail-fill flex items-center justify-center rail-t ${prevDisabled ? 'opacity-30' : ''}">
                     <svg viewBox="0 0 24 24" width="15" height="15" style="width:0.9375rem;height:0.9375rem" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5 8 12l7 7"/></svg>
                 </button>
-                <div class="text-[15.5px] font-extrabold text-white">${railTmp.viewY}년 ${railTmp.viewM + 1}월</div>
-                <button ${nextDisabled ? 'disabled' : ''} onclick="railMoveMonth(1)" class="w-9 h-9 rounded-full bg-white/[0.08] flex items-center justify-center text-white ${nextDisabled ? 'opacity-30' : ''}">
+                <div class="text-[15.5px] font-extrabold rail-t">${railTmp.viewY}년 ${railTmp.viewM + 1}월</div>
+                <button ${nextDisabled ? 'disabled' : ''} onclick="railMoveMonth(1)" class="w-9 h-9 rounded-full rail-fill flex items-center justify-center rail-t ${nextDisabled ? 'opacity-30' : ''}">
                     <svg viewBox="0 0 24 24" width="15" height="15" style="width:0.9375rem;height:0.9375rem" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg>
                 </button>
             </div>
-            <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[11px] font-extrabold text-white/40">
+            <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[11px] font-extrabold rail-t3">
                 ${RAIL_DOW.map((d, i) => `<div class="${i === 0 ? 'text-[#FF7B7B]' : i === 6 ? 'text-[#7BB2FF]' : ''}">${d}</div>`).join('')}
             </div>
             <div class="grid grid-cols-7 gap-1">${cells}</div>
 
-            <div class="mt-5 text-[12px] font-extrabold text-white/50 mb-2">출발 시각</div>
+            <div class="mt-5 text-[12px] font-extrabold rail-t3 mb-2">출발 시각</div>
             <div id="rail-hour-strip" class="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1">
                 ${hours.map(h => `<button onclick="railPickHour(${h})" class="rail-time-btn ${railTmp.h === h ? 'is-on' : ''}">${pad2(h)}시</button>`).join('')}
             </div>
             <div class="flex gap-1.5 overflow-x-auto hide-scrollbar mt-2 pb-1">
                 ${mins.map(m => `<button onclick="railPickMinute(${m})" class="rail-time-btn ${railTmp.mi === m ? 'is-on' : ''}">${pad2(m)}분</button>`).join('')}
             </div>
-            <div class="mt-4 px-4 py-3 rounded-xl bg-white/[0.05] border border-white/[0.08] text-center text-[13.5px] font-extrabold text-white">
+            <div class="mt-4 px-4 py-3 rounded-xl rail-fill border rail-bd text-center text-[13.5px] font-extrabold rail-t">
                 ${railTmp.y}년 ${railTmp.m + 1}월 ${railTmp.day}일 (${RAIL_DOW[new Date(railTmp.y, railTmp.m, railTmp.day).getDay()]}) ${pad2(railTmp.h)}:${pad2(railTmp.mi)}
             </div>`;
         }
@@ -4685,7 +4760,7 @@
             const nextDay = new Date(railState.date.getFullYear(), railState.date.getMonth(), railState.date.getDate() + 1);
             const footer = `
                 <div class="py-10 flex flex-col items-center px-6">
-                    <p class="text-[15px] font-bold text-white/60 tracking-tight">원하는 열차를 찾지 못하셨나요?</p>
+                    <p class="text-[15px] font-bold rail-t2 tracking-tight">원하는 열차를 찾지 못하셨나요?</p>
                     <button onclick="railShiftDay(1)" class="rail-nextday mt-4">
                         <span><b class="text-[#4E8BFF] font-extrabold">다음날(${nextDay.getMonth() + 1}월 ${nextDay.getDate()}일)</b> 열차 찾아보기</span>
                         <svg viewBox="0 0 24 24" width="14" height="14" style="width:0.875rem;height:0.875rem" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
@@ -4698,8 +4773,8 @@
                         <svg viewBox="0 0 24 24" width="40" height="40" style="width:2.5rem;height:2.5rem" fill="none" stroke="#4A5468" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="5" y="3" width="14" height="14" rx="4"/><path d="M5 10h14"/><path d="m7 21 2-3M17 21l-2-3"/><circle cx="9" cy="13.5" r="1"/><circle cx="15" cy="13.5" r="1"/>
                         </svg>
-                        <p class="mt-4 text-[14.5px] font-extrabold text-white/70">${railTrains.length ? '해당 조건의 열차가 없습니다.' : '직통 열차를 찾지 못했습니다.'}</p>
-                        <p class="mt-2 text-[12.5px] font-semibold text-white/40 leading-relaxed">${railTrains.length ? '열차 종류를 바꾸어 다시 조회해 보세요.' : '두 역을 잇는 직통 운행 계통이 없습니다.<br>서울 · 대전 · 동대구 · 익산 등 주요 환승역을 이용해 주세요.'}</p>
+                        <p class="mt-4 text-[14.5px] font-extrabold rail-t2">${railTrains.length ? '해당 조건의 열차가 없습니다.' : '직통 열차를 찾지 못했습니다.'}</p>
+                        <p class="mt-2 text-[12.5px] font-semibold rail-t3 leading-relaxed">${railTrains.length ? '열차 종류를 바꾸어 다시 조회해 보세요.' : '두 역을 잇는 직통 운행 계통이 없습니다.<br>서울 · 대전 · 동대구 · 익산 등 주요 환승역을 이용해 주세요.'}</p>
                     </div>${footer}`;
                 return;
             }
@@ -4720,29 +4795,30 @@
                        </div>${mile}` : ''}`;
                 const nearTag = (t.isNearDep || t.isNearArr) ? `<span class="ml-1 px-1.5 py-0.5 rounded bg-[#2C6BF3]/25 text-[10px] font-extrabold text-[#8EB4FF]">인접역</span>` : '';
                 const estTag = t.source === 'real' ? '' : `<span class="ml-1 px-1.5 py-0.5 rounded bg-amber-400/20 text-[10px] font-extrabold text-amber-300">추정</span>`;
-                const dayTag = t.dayOffset ? `<span class="ml-1 px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-extrabold text-white/60">익일</span>` : '';
+                const dayTag = t.dayOffset ? `<span class="ml-1 px-1.5 py-0.5 rounded rail-fill text-[10px] font-extrabold rail-t2">익일</span>` : '';
                 return `
                 <button class="rail-row ${t.soldOut ? 'is-soldout' : ''}" onclick="railOpenTrainInfo(${railTrains.indexOf(t)})">
                     <div class="flex items-stretch gap-2.5">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 min-w-0">
                                 <span class="rail-type-badge" style="background:${t.typeColor}">${t.type}</span>
-                                <span class="text-[15px] font-extrabold text-white tracking-tight">${String(t.trainNo).padStart(3, '0')}</span>
+                                <span class="text-[15px] font-extrabold rail-t tracking-tight">${String(t.trainNo).padStart(3, '0')}</span>
+                                ${t.midStops != null ? `<span class="text-[12.5px] font-semibold rail-t3 truncate">· ${t.midStops}개역 정차</span>` : ''}
                             </div>
                             <div class="mt-2 flex items-start gap-2.5">
                                 <div>
                                     <div class="rail-time">${railMinToClock(t.depMin)}</div>
-                                    <div class="mt-1 text-[13px] font-semibold text-white/45">${railEsc(t.depName)}</div>
+                                    <div class="mt-1 text-[13px] font-semibold rail-t3">${railEsc(t.depName)}</div>
                                 </div>
-                                <svg viewBox="0 0 26 12" width="22" height="10" style="width:1.375rem;height:0.625rem" fill="none" stroke="#7C859B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="mt-2.5 shrink-0"><path d="M1 9h22"/><path d="M17 3 23 9"/></svg>
+                                <svg viewBox="0 0 26 12" width="22" height="10" style="width:1.375rem;height:0.625rem" fill="none" stroke="currentColor" class="rail-t3" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="mt-2.5 shrink-0"><path d="M1 9h22"/><path d="M17 3 23 9"/></svg>
                                 <div>
                                     <div class="rail-time">${railMinToClock(t.arrMin)}</div>
-                                    <div class="mt-1 text-[13px] font-semibold text-white/45">${railEsc(t.arrName)}</div>
+                                    <div class="mt-1 text-[13px] font-semibold rail-t3">${railEsc(t.arrName)}</div>
                                 </div>
                             </div>
                             <div class="mt-2.5"><span class="rail-dur-chip">${railDur(t.duration)} 소요</span>${estTag}${nearTag}${dayTag}</div>
                         </div>
-                        <div class="w-px bg-white/[0.09] shrink-0"></div>
+                        <div class="w-px shrink-0 rail-divider"></div>
                         <div class="w-[124px] shrink-0 pt-0.5">${fareBlock}</div>
                     </div>
                 </button>`;
@@ -4770,43 +4846,43 @@
             const iDep = Array.isArray(t.stops) ? t.stops.findIndex(x => x.name === t.depName) : -1;
             const iArr = Array.isArray(t.stops) ? t.stops.findIndex(x => x.name === t.arrName) : -1;
             const stopList = (t.source === 'real' && iDep > -1 && iArr > iDep)
-                ? `<div class="mt-3 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
-                        <div class="text-[12px] font-extrabold text-white/50 mb-2">정차역 시각 <span class="text-white/30 font-semibold">(수집된 구간)</span></div>
+                ? `<div class="mt-3 px-4 py-3 rounded-2xl rail-fill border rail-bd">
+                        <div class="text-[12px] font-extrabold rail-t3 mb-2">정차역 시각 <span class="rail-t3 font-semibold opacity-70">(수집된 구간)</span></div>
                         ${t.stops.map((x, i) => {
                             const inRange = i >= iDep && i <= iArr;
                             const time = x.dep != null ? x.dep : x.arr;
                             return `<div class="flex items-center justify-between py-1.5 ${inRange ? '' : 'opacity-35'}">
-                                <span class="flex items-center gap-2 text-[13px] font-bold ${inRange ? 'text-white' : 'text-white/60'}">
+                                <span class="flex items-center gap-2 text-[13px] font-bold ${inRange ? 'rail-t' : 'rail-t2'}">
                                     <span class="w-1.5 h-1.5 rounded-full" style="background:${inRange ? t.typeColor : 'rgba(255,255,255,.25)'}"></span>${railEsc(x.name)}
                                 </span>
-                                <span class="text-[13px] font-extrabold ${inRange ? 'text-white' : 'text-white/45'}">${railMinToClock(time)}</span>
+                                <span class="text-[13px] font-extrabold ${inRange ? 'rail-t' : 'rail-t3'}">${railMinToClock(time)}</span>
                             </div>`;
                         }).join('')}
                    </div>`
                 : '';
             railShowSheet('열차 정보', `
-                <div class="px-4 py-4 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
+                <div class="px-4 py-4 rounded-2xl rail-fill border rail-bd">
                     <div class="flex items-center gap-2">
                         <span class="rail-type-badge" style="background:${t.typeColor}">${t.type}</span>
-                        <span class="text-[15px] font-extrabold text-white">${t.trainNo}</span>
-                        <span class="text-[11.5px] font-bold text-white/35 ml-auto">${t.routeName}</span>
+                        <span class="text-[15px] font-extrabold rail-t">${t.trainNo}</span>
+                        <span class="text-[11.5px] font-bold rail-t3 ml-auto">${t.routeName}</span>
                     </div>
                     <div class="mt-3 flex items-end gap-2 flex-wrap">
-                        <span class="text-[22px] font-extrabold text-white tracking-tight">${railMinToClock(t.depMin)}</span>
-                        <span class="text-[13px] font-bold text-white/55 mb-0.5">${railEsc(t.depName)}</span>
-                        <svg viewBox="0 0 24 12" width="18" height="10" style="width:1.125rem;height:0.625rem" fill="none" stroke="#7C859B" stroke-width="2" stroke-linecap="round" class="mb-1.5"><path d="M1 9h21"/><path d="M16 3l6 6"/></svg>
-                        <span class="text-[22px] font-extrabold text-white tracking-tight">${railMinToClock(t.arrMin)}</span>
-                        <span class="text-[13px] font-bold text-white/55 mb-0.5">${railEsc(t.arrName)}</span>
+                        <span class="text-[22px] font-extrabold rail-t tracking-tight">${railMinToClock(t.depMin)}</span>
+                        <span class="text-[13px] font-bold rail-t2 mb-0.5">${railEsc(t.depName)}</span>
+                        <svg viewBox="0 0 24 12" width="18" height="10" style="width:1.125rem;height:0.625rem" fill="none" stroke="currentColor" class="rail-t3" stroke-width="2" stroke-linecap="round" class="mb-1.5"><path d="M1 9h21"/><path d="M16 3l6 6"/></svg>
+                        <span class="text-[22px] font-extrabold rail-t tracking-tight">${railMinToClock(t.arrMin)}</span>
+                        <span class="text-[13px] font-bold rail-t2 mb-0.5">${railEsc(t.arrName)}</span>
                     </div>
                 </div>
-                <div class="mt-3 px-4 py-2 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
-                    ${rows.map(([k, v]) => `<div class="flex items-start justify-between gap-3 py-2.5 border-b border-white/[0.06] last:border-0">
-                        <span class="text-[12.5px] font-semibold text-white/45 shrink-0">${k}</span>
-                        <span class="text-[13px] font-bold text-white text-right">${railEsc(v)}</span>
+                <div class="mt-3 px-4 py-2 rounded-2xl rail-fill border rail-bd">
+                    ${rows.map(([k, v]) => `<div class="flex items-start justify-between gap-3 py-2.5 border-b rail-bd last:border-0">
+                        <span class="text-[12.5px] font-semibold rail-t3 shrink-0">${k}</span>
+                        <span class="text-[13px] font-bold rail-t text-right">${railEsc(v)}</span>
                     </div>`).join('')}
                 </div>
                 ${stopList}
-                <p class="mt-3 text-[11px] font-semibold text-white/35 leading-relaxed">· 본 화면은 열차 정보 조회 전용이며 승차권을 발권하지 않습니다.<br>· 실제 예매는 코레일톡 · 레츠코레일에서 진행해 주세요.</p>`);
+                <p class="mt-3 text-[11px] font-semibold rail-t3 leading-relaxed">· 본 화면은 열차 정보 조회 전용이며 승차권을 발권하지 않습니다.<br>· 실제 예매는 코레일톡 · 레츠코레일에서 진행해 주세요.</p>`);
         };
 
         /* ---------------- 초기화 ---------------- */
