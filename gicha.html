@@ -23,6 +23,7 @@
     <script src="jeolla_general_train_timetable.js"></script>
     <script src="jeolla_highspeed_train_timetable.js"></script>
     <script src="jungang_general_train_timetable.js"></script>
+    <script src="jungang_ktx_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1156,7 +1157,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1248,6 +1249,13 @@
                 branchLinks: [
                     { from: '군위', to: '하양' }
                 ]
+            },
+            /* 중앙선에도 고속선은 없다. KTX-이음이 개량한 중앙선 · 동해선을 달린다. */
+            jungang_ktx: {
+                label: '중앙선', badge: '중',
+                color: '#0891B2', downColor: '#9BD3E2',
+                upToward: '서울 · 청량리', downToward: '부전',
+                tabLabel: '중앙선', trainLabel: 'KTX-이음'
             }
         };
 
@@ -1335,7 +1343,7 @@
                 "김천구미": { progress: 0.5333, ktx: true, srt: true },
                 "서대구": { progress: 0.6000, ktx: true, srt: true },
                 "동대구": { progress: 0.6667, ktx: true, srt: true, transfer: [{name: '1', color: '#D93F5C'}] },
-                "신경주": { progress: 0.7333, ktx: true, srt: true },
+                "경주": { progress: 0.7333, ktx: true, srt: true },
                 "경산": { group: 'gupo', progress: 0.7333, col: 1, dashed: true, transfer: [{name: '1', color: '#D93F5C'}] },
                 "울산(통도사)": { progress: 0.8000, ktx: true, srt: true },
                 "밀양": { group: 'gupo', progress: 0.8000, col: 1, dashed: true },
@@ -1577,6 +1585,33 @@
                 "신해운대": { progress: 0.9310, transfer: [{name: '동해', color: '#003DA5'}] },
                 "센텀": { progress: 0.9655, transfer: [{name: '동해', color: '#003DA5'}, {name: '2', color: '#81C147'}] },
                 "부전": { progress: 1.0000, transfer: [{name: '동해', color: '#003DA5'}] }
+            },
+            /* 중앙선 KTX-이음. 중앙선에는 고속선이 없다.
+               개량한 중앙선을 그대로 달려 영천 · 경주에서 동해선을 타고 부전까지 간다.
+               서울 계통은 청량리 위쪽으로 이어 붙였다(상봉 · 덕소는 일부 열차만 선다). */
+            'jungang_ktx': {
+                "서울": { progress: 0.0000, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '4', color: '#00A4E3'}] },
+                "청량리": { progress: 0.0476, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '경의중앙', color: '#77C4A3'}, {name: '경춘', color: '#0C8E72'}] },
+                "상봉": { progress: 0.0952, ktx: true, transfer: [{name: '7', color: '#54640D'}, {name: '경의중앙', color: '#77C4A3'}, {name: '경춘', color: '#0C8E72'}] },
+                "덕소": { progress: 0.1429, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "양평": { progress: 0.1905, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "서원주": { progress: 0.2381, ktx: true },
+                "원주": { progress: 0.2857, ktx: true },
+                "제천": { progress: 0.3333, ktx: true },
+                "단양": { progress: 0.3810, ktx: true },
+                "풍기": { progress: 0.4286, ktx: true },
+                "영주": { progress: 0.4762, ktx: true },
+                "안동": { progress: 0.5238, ktx: true },
+                "의성": { progress: 0.5714, ktx: true },
+                "영천": { progress: 0.6190, ktx: true },
+                "경주": { progress: 0.6667, ktx: true },
+                "북울산": { progress: 0.7143, ktx: true },
+                "태화강": { progress: 0.7619, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] },
+                "남창": { progress: 0.8095, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] },
+                "기장": { progress: 0.8571, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] },
+                "신해운대": { progress: 0.9048, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] },
+                "센텀": { progress: 0.9524, ktx: true, transfer: [{name: '동해', color: '#003DA5'}, {name: '2', color: '#81C147'}] },
+                "부전": { progress: 1.0000, ktx: true, transfer: [{name: '동해', color: '#003DA5'}] }
             }
         };
 
@@ -1771,7 +1806,8 @@
             gyeongjeon_ktx:      { src: './gyeongjeon_highspeed_train_timetable.js', globalName: 'GYEONGJEON_KTX_LINE_TIMETABLE' },
             jeolla:              { src: './jeolla_general_train_timetable.js',      globalName: 'JEOLLA_LINE_TIMETABLE' },
             jeolla_ktx:          { src: './jeolla_highspeed_train_timetable.js',    globalName: 'JEOLLA_KTX_LINE_TIMETABLE' },
-            jungang:             { src: './jungang_general_train_timetable.js',     globalName: 'JUNGANG_LINE_TIMETABLE' }
+            jungang:             { src: './jungang_general_train_timetable.js',     globalName: 'JUNGANG_LINE_TIMETABLE' },
+            jungang_ktx:         { src: './jungang_ktx_train_timetable.js',         globalName: 'JUNGANG_KTX_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1850,7 +1886,7 @@
             routeName: '경부고속선 KTX · SRT(행신/수서-부산)',
             sourceGlobal: 'GYEONGBU_HIGHSPEED_TRAIN_TIMETABLE',
             targetGlobal: 'GYEONGBU_HIGHSPEED_LINE_TIMETABLE',
-            alias: { '경주': '신경주', '울산': '울산(통도사)' }
+            alias: { '울산': '울산(통도사)' }
         });
         buildLineTimetable({
             lineId: 'honam', baseId: 43000, label: '호남선',
@@ -1894,6 +1930,12 @@
             routeName: '중앙선 일반열차(청량리-부전)',
             sourceGlobal: 'JUNGANG_GENERAL_TRAIN_TIMETABLE',
             targetGlobal: 'JUNGANG_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'jungang_ktx', baseId: 50000, label: '중앙선 KTX-이음',
+            routeName: '중앙선 KTX-이음(서울/청량리-부전)',
+            sourceGlobal: 'JUNGANG_KTX_TRAIN_TIMETABLE',
+            targetGlobal: 'JUNGANG_KTX_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2134,7 +2176,8 @@
             gyeongjeon_ktx:1900,
             jeolla:2500,
             jeolla_ktx:2000,
-            jungang:2900
+            jungang:2900,
+            jungang_ktx:2100
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -3708,7 +3751,7 @@
             const renderedT = activeT.map(t => {
                 // 지금 지나는 두 역 사이를 직선으로 이어 그 위에 열차를 놓는다.
                 // 지선을 타는 열차는 지선 칸의 역을 지나므로 자연스럽게 지선으로 붙는다.
-                const from = stationPoint(t.curr?.name, lineLen) || { x: LINE_COL_X[0], y: 60 };
+                const from = stationPoint(t.curr?.name, lineLen) || { x: lineCols().x[0], y: 60 };
                 const to = stationPoint(t.next?.name, lineLen) || from;
                 const span = (t.next?.progress ?? 0) - (t.curr?.progress ?? 0);
                 const ratio = (t.isStopped || t.isWaiting || !span)
@@ -3992,9 +4035,9 @@
         /* ---------------- 운행 계통(노선) ---------------- */
         const RAIL_ROUTES = [
             { id: 'ktx_gyeongbu', name: '경부고속선', types: ['KTX', 'KTX-청룡'],
-              stops: [['서울',0],['광명',22],['천안아산',96],['오송',129],['대전',161],['김천구미',253],['동대구',294],['신경주',369],['울산(통도사)',409],['부산',442]] },
+              stops: [['서울',0],['광명',22],['천안아산',96],['오송',129],['대전',161],['김천구미',253],['동대구',294],['경주',369],['울산(통도사)',409],['부산',442]] },
             { id: 'srt_gyeongbu', name: '수서고속선(경부)', types: ['SRT'],
-              stops: [['수서',0],['동탄',32],['평택지제',51],['천안아산',84],['오송',117],['대전',149],['동대구',282],['신경주',357],['울산(통도사)',397],['부산',430]] },
+              stops: [['수서',0],['동탄',32],['평택지제',51],['천안아산',84],['오송',117],['대전',149],['동대구',282],['경주',357],['울산(통도사)',397],['부산',430]] },
             { id: 'gyeongbu', name: '경부선', types: ['ITX-새마을', 'ITX-마음', '무궁화호', '누리로'],
               stops: [['서울',0],['영등포',6],['수원',42],['평택',74],['천안',96],['조치원',129],['신탄진',148],['대전',166],['옥천',186],['영동',226],['김천',267],['구미',288],['왜관',312],['동대구',336],['경산',350],['청도',371],['밀양',407],['물금',436],['구포',448],['부산',456]] },
             { id: 'ktx_honam', name: '호남고속선', types: ['KTX'],
@@ -4006,7 +4049,7 @@
             { id: 'jeolla', name: '전라선', types: ['KTX', 'ITX-새마을', '무궁화호'],
               stops: [['용산',0],['익산',250],['전주',274],['남원',331],['곡성',362],['구례구',376],['순천',411],['여천',446],['여수엑스포',456]] },
             { id: 'jungang', name: '중앙선', types: ['KTX-이음', 'ITX-마음', '무궁화호'],
-              stops: [['청량리',0],['양평',44],['원주',87],['제천',134],['단양',163],['풍기',190],['영주',206],['안동',245],['의성',279],['영천',341],['경주',375],['태화강',419],['부전',456]] },
+              stops: [['청량리',0],['양평',44],['원주',84],['제천',130],['단양',156],['풍기',180],['영주',194],['안동',232],['의성',266],['영천',320],['경주',348],['태화강',388],['부전',453]] },
             { id: 'gangneung', name: '강릉선', types: ['KTX-이음'],
               stops: [['서울',0],['청량리',12],['상봉',18],['양평',55],['만종',100],['횡성',110],['둔내',131],['평창',155],['진부(오대산)',177],['강릉',223]] },
             { id: 'janghang', name: '장항선', types: ['ITX-마음', '무궁화호', '누리로'],
@@ -4053,12 +4096,12 @@
                alias: 시간표 표기 → 앱 역 이름 */
             { line: '경부고속선', routeId: 'ktx_gyeongbu', global: 'GYEONGBU_HIGHSPEED_TRAIN_TIMETABLE',
               keepRouteStops: true,
-              alias: { '경주': '신경주', '울산': '울산(통도사)' },
+              alias: { '울산': '울산(통도사)' },
               km: {
                   '행신': -16, '서울': 0, '수서': 12, '영등포': 6, '수원': 42, '광명': 22,
                   '동탄': 44, '평택지제': 63, '천안아산': 96, '오송': 129, '대전': 161,
                   '김천구미': 253, '서대구': 282, '동대구': 294, '경산': 308,
-                  '신경주': 369, '울산(통도사)': 409, '밀양': 393, '물금': 422, '구포': 434, '부산': 442
+                  '경주': 369, '울산(통도사)': 409, '밀양': 393, '물금': 422, '구포': 434, '부산': 442
               } },
 
             /* 호남선 일반열차. seq 는 용산 기점 정차역 순서다.
@@ -4142,7 +4185,19 @@
               keepRouteStops: true,
               seq: ['청량리','덕소','양평','용문','지평','석불','일신','매곡','양동','삼산','서원주','원주',
                     '봉양','제천','단양','풍기','영주','안동','의성','군위','하양','동대구','영천','아화',
-                    '경주','북울산','태화강','남창','기장','신해운대','센텀','부전'] }
+                    '경주','북울산','태화강','남창','기장','신해운대','센텀','부전'] },
+
+            /* 중앙선 KTX-이음. 중앙선에는 고속선이 없다.
+               청량리 기점 km 를 직접 준다(서울 계통은 청량리 기점으로 환산). */
+            { line: '중앙선 KTX-이음', routeId: 'jungang', global: 'JUNGANG_KTX_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              km: {
+                  '서울': -12, '청량리': 0, '상봉': 6, '덕소': 19, '양평': 44,
+                  '서원주': 79, '원주': 84, '제천': 130, '단양': 156, '풍기': 180,
+                  '영주': 194, '안동': 232, '의성': 266, '영천': 320, '경주': 348,
+                  '북울산': 370, '태화강': 388, '남창': 406, '기장': 427,
+                  '신해운대': 439, '센텀': 443, '부전': 453
+              } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
 
@@ -4238,14 +4293,14 @@
             'general_train_fares_2_xlsx':  ['ITX-새마을', 'ITX-마음']
         };
         // 운임표 표기 → 앱 역 이름
-        const RAIL_FARE_NAME_ALIAS = { '여수EXPO': '여수엑스포', '경주': '신경주', '울산': '울산(통도사)' };
+        const RAIL_FARE_NAME_ALIAS = { '여수EXPO': '여수엑스포', '울산': '울산(통도사)' };
         const railFareFix = (n) => RAIL_FARE_NAME_ALIAS[n] || n;
 
-        // { 등급: { '서울|부산': [ { via:['수원','신경주'], std:48800, spc:68300 } ] } }
+        // { 등급: { '서울|부산': [ { via:['수원','경주'], std:48800, spc:68300 } ] } }
         const railFareTable = {};
 
         // 운임표 시트 이름에서 경유역을 뽑는다.
-        //   '서울~(수원)~(경주)~부산' → ['수원','신경주']   '경부선(서울-구포-부산)' → ['구포']
+        //   '서울~(수원)~(경주)~부산' → ['수원','경주']   '경부선(서울-구포-부산)' → ['구포']
         function railFareVia(routeName) {
             const inner = /^[^(]*\((.+)\)\s*$/.exec(String(routeName || ''));
             const body = inner ? inner[1] : String(routeName || '');
@@ -4285,8 +4340,15 @@
         /* KTX · SRT 운임표.
            KTX 원본은 객실별 열이 나뉘어 있다 → 일반실 = 일반실_운임, 특실 = 특실 계(운임 + 요금).
            SRT 원본은 일반실 · 특실 값을 그대로 준다.
-           KTX-산천 · KTX-청룡 · KTX-이음은 KTX 운임표를 함께 쓴다. */
-        const RAIL_KTX_FARE_TYPES = ['KTX', 'KTX-산천', 'KTX-청룡', 'KTX-이음'];
+           KTX-산천 · KTX-청룡은 KTX 운임표를 함께 쓴다.
+
+           KTX-이음은 고속선이 아닌 노선(중앙선 · 강릉선 · 중부내륙선 · 동해선)만 달리고
+           운임표도 따로 있다. 고속선 표와 겹치는 구간(서울~경주 등)에서 서로 섞이면 안 되므로
+           등급을 나눠 담는다. 이 표는 '현재 운임(A)' 과 '속도 향상 시 운임(B)' 이 한 행에 있어
+           일반실은 A 운임, 우등실은 A 기준 계(운임 + 요금) 를 쓴다. */
+        const RAIL_KTX_FARE_TYPES = ['KTX', 'KTX-산천', 'KTX-청룡'];
+        const RAIL_EUM_FARE_ROUTES = ['서울~부전', '서울~청량리~강릉,동해', '강릉~부전', '판교(경기) ~ 충주'];
+        const RAIL_EUM_STD_KEY = '현재운임_현재운임_일반실_A_운임';
         (function railBuildHighSpeedFareTable() {
             const raw = (typeof HIGH_SPEED_TRAIN_FARES !== 'undefined') ? HIGH_SPEED_TRAIN_FARES
                       : ((typeof window !== 'undefined') ? window.HIGH_SPEED_TRAIN_FARES : null);
@@ -4294,10 +4356,14 @@
             raw.fares.forEach(row => {
                 if (!row || !row.from || !row.to) return;
                 const f = row.fares || {};
-                const std = row.standardFare != null ? row.standardFare : (f['일반실_운임'] != null ? f['일반실_운임'] : f['일반실']);
-                const spc = row.specialTotalFare != null ? row.specialTotalFare : (f['계_2'] != null ? f['계_2'] : (f['특실'] != null ? f['특실'] : f['계']));
+                const isEum = f[RAIL_EUM_STD_KEY] != null;
+                const std = isEum ? f[RAIL_EUM_STD_KEY]
+                          : (row.standardFare != null ? row.standardFare : (f['일반실_운임'] != null ? f['일반실_운임'] : f['일반실']));
+                const spc = isEum ? f['계']
+                          : (row.specialTotalFare != null ? row.specialTotalFare : (f['계_2'] != null ? f['계_2'] : (f['특실'] != null ? f['특실'] : f['계'])));
                 const via = railFareVia(row.routeName);
-                const types = row.trainType === 'SRT' ? ['SRT'] : RAIL_KTX_FARE_TYPES;
+                const types = row.trainType === 'SRT' ? ['SRT']
+                            : (RAIL_EUM_FARE_ROUTES.indexOf(row.routeName) >= 0 ? ['KTX-이음'] : RAIL_KTX_FARE_TYPES);
                 types.forEach(type => railFarePush(railFareTable, type, row.from, row.to, via, std, spc));
             });
         })();
@@ -4414,6 +4480,7 @@
             const route = RAIL_ROUTES.find(r => r.id === src.routeId);
             if (!L || !route) return;
             railFillRealKm(L, route, src);
+            route.realLines = (route.realLines || []).concat(src.line);
             route.realLine = src.line;
             route.name = src.line;
             const types = Array.from(new Set(L.trains.map(t => t.type))).filter(t => RAIL_TYPES[t]);
@@ -4432,7 +4499,7 @@
             '강원': ['춘천','남춘천','강촌','가평','청평','양평','원주','만종','횡성','둔내','평창','진부(오대산)','강릉','정동진','동해','도계','태백','민둥산','영월','정선'],
             '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
             '전라': ['익산','정읍','광주송정','나주','목포','김제','장성','함평','무안','전주','남원','곡성','구례구','순천','여천','여수엑스포','군산','벌교','보성'],
-            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','신경주','경주','울산(통도사)','태화강','남창','포항','영주','풍기','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
+            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
         };
         const RAIL_POPULAR = ['서울','부산','동대구','대전','광주송정','강릉','목포','여수엑스포','수서','용산','전주','포항'];
 
@@ -4581,7 +4648,7 @@
 
             // 2) 실제 시간표가 없는 노선만 추정 시간표로 생성한다.
             RAIL_ROUTES.forEach(route => {
-                if (route.realLine && realCovered.has(route.realLine)) return;
+                if (route.realLines && route.realLines.some(n => realCovered.has(n))) return;
                 const names = route.stops.map(s => s[0]);
                 const total = route.stops[route.stops.length - 1][1];
                 const n = route.stops.length;
