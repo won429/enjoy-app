@@ -311,7 +311,7 @@
         .home-platform-station-plate {
             position: absolute;
             z-index: 5;
-            top: 12.25rem;
+            top: 12.75rem;
             left: 1.125rem;
             right: 1.125rem;
             display: flex;
@@ -344,13 +344,15 @@
         .home-platform-message {
             position: absolute;
             z-index: 4;
-            top: 6.5rem;
+            /* 2줄로 높아진 만큼 위로 — 천장 행거와 역명판 사이 간격 확보 */
+            top: 6rem;
             left: 50%;
             width: min(72%, 18.75rem);
             transform: translateX(-50%);
             border: .375rem solid #444a4a;
             border-radius: .375rem;
-            padding: .9rem .7rem;
+            /* 상하 5px 씩 = 전광판 높이 10px 증가 */
+            padding: calc(.9rem + 5px) .7rem;
             background-color: #151b1c;
             color: #e9ff39;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -361,6 +363,41 @@
             text-align: center;
             text-shadow: 0 0 .1875rem rgba(233,255,57,.9), 0 0 .55rem rgba(233,255,57,.38);
             box-shadow: 0 .625rem 1rem -.5rem rgba(15,23,42,.5), inset 0 0 .875rem rgba(0,0,0,.62);
+        }
+        /* 전광판 기본 표시: [OO방면] [n량] [n분 후 도착] 2줄 */
+        .home-platform-message .platform-msg-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            align-items: baseline;
+            gap: 0 .5rem;
+            text-align: left;
+        }
+        .home-platform-message .platform-msg-row + .platform-msg-row {
+            margin-top: .28rem;
+        }
+        .home-platform-message .platform-msg-row > span {
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .home-platform-message .platform-msg-row > span:last-child { text-align: right; }
+        /* 실제 LED 안내기처럼 항목별 발광색 분리 */
+        .home-platform-message .msg-dir {
+            color: #ffc24a;
+            text-shadow: 0 0 .1875rem rgba(255,194,74,.9), 0 0 .55rem rgba(255,194,74,.36);
+        }
+        .home-platform-message .msg-cars {
+            color: #ff7c3f;
+            text-shadow: 0 0 .1875rem rgba(255,124,63,.9), 0 0 .55rem rgba(255,124,63,.36);
+        }
+        .home-platform-message .msg-eta {
+            color: #5ef06a;
+            text-shadow: 0 0 .1875rem rgba(94,240,106,.9), 0 0 .55rem rgba(94,240,106,.36);
+        }
+        .home-platform-message .msg-alert {
+            color: #ff5f4d;
+            text-shadow: 0 0 .1875rem rgba(255,95,77,.9), 0 0 .55rem rgba(255,95,77,.36);
         }
         .home-platform-message::before,
         .home-platform-message::after {
@@ -664,7 +701,10 @@
                                 <span id="home-station-name" class="font-black text-black">구미</span>
                             </span>
                         </button>
-                        <div class="home-platform-message">오늘 어떤 하루를 보내셨나요</div>
+                        <div id="home-platform-message" class="home-platform-message">
+                            <span class="platform-msg-row"><span class="msg-dir">확인 중</span><span class="msg-cars"></span><span class="msg-eta"></span></span>
+                            <span class="platform-msg-row"><span class="msg-dir">확인 중</span><span class="msg-cars"></span><span class="msg-eta"></span></span>
+                        </div>
                     </section>
 
                     <!-- 여러 역 즐겨찾기 바로가기 -->
@@ -2205,6 +2245,7 @@
             modalContent: document.getElementById('modal-content'),
             closeModalBtn: document.getElementById('close-modal-btn'),
             homeStationName: document.getElementById('home-station-name'),
+            homePlatformMessage: document.getElementById('home-platform-message'),
             homePrevStation: document.getElementById('home-prev-station'),
             homePrevStationContainer: document.getElementById('home-prev-station-container'),
             homeNextStation: document.getElementById('home-next-station'),
@@ -4008,6 +4049,15 @@
             }
         };
 
+        // 노선별 편성 량수 — 전광판 표기용. 미등록 노선은 량 칸을 비워 둔다.
+        const TRAIN_CAR_COUNT = {
+            daegyeong: 2,
+            line1: 6, line2: 6, line3: 3,   // 대구 1·2·3호선
+            daejeon_line1: 4,
+            gwangju_line1: 4,
+            busan_donghae: 4,               // 동해선
+        };
+
         window.renderHomeArrivalInfo = () => {
             if (activeTab !== 'home') return;
             dom.homeCurrentTime.textContent = formatAmPm(currentSec);
@@ -4040,6 +4090,27 @@
 
             dom.homeUpInfo.innerHTML = isFirst ? `<span class="text-gray-400 text-[12px] font-bold my-auto">종점</span>` : renderL(upTrains, timetableLoaded.up);
             dom.homeDownInfo.innerHTML = isLast ? `<span class="text-gray-400 text-[12px] font-bold my-auto">종점</span>` : renderL(downTrains, timetableLoaded.down);
+
+            // 승강장 전광판 — [OO방면] [n량] [n분 후 도착] 2줄
+            if (dom.homePlatformMessage) {
+                const cars = TRAIN_CAR_COUNT[currentLineId];
+                const carCell = cars ? `<span class="msg-cars">${cars}량</span>` : `<span class="msg-cars"></span>`;
+                const boardRow = (trains, isTimetableLoaded, isTerminus, lineEndName) => {
+                    if (isTerminus) return `<span class="platform-msg-row"><span class="msg-alert">종착역</span><span></span><span></span></span>`;
+                    if (!isTimetableLoaded) return `<span class="platform-msg-row"><span class="msg-alert">정보 없음</span><span></span><span></span></span>`;
+                    if (!trains || !trains.length) {
+                        return `<span class="platform-msg-row"><span class="msg-dir">${lineEndName} 방면</span><span></span><span class="msg-alert">운행 종료</span></span>`;
+                    }
+                    const t = trains[0];
+                    const diff = t.sec - currentSec;
+                    const etaClass = diff <= 0 ? 'msg-alert' : 'msg-eta';
+                    const eta = diff <= 0 ? '곧 도착' : (diff < 60 ? `${diff}초 후 도착` : `${Math.ceil(diff / 60)}분 후 도착`);
+                    return `<span class="platform-msg-row"><span class="msg-dir">${t.dest} 방면</span>${carCell}<span class="${etaClass}">${eta}</span></span>`;
+                };
+                dom.homePlatformMessage.innerHTML =
+                    boardRow(upTrains, timetableLoaded.up, isFirst, stationNames[0]) +
+                    boardRow(downTrains, timetableLoaded.down, isLast, stationNames[stationNames.length - 1]);
+            }
         };
 
         window.openStationSelector = () => {
