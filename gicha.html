@@ -19,6 +19,7 @@
     <script src="honam_general_train_timetable.js"></script>
     <script src="honam_highspeed_train_timetable.js"></script>
     <script src="gyeongjeon_general_train_timetable.js"></script>
+    <script src="gyeongjeon_highspeed_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1099,7 +1100,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1153,6 +1154,16 @@
                 tabLabel: '경전선', trainLabel: '일반열차',
                 branchLinks: [
                     { from: '원동', to: '삼랑진' }
+                ]
+            },
+            /* 경전선에는 고속선이 없다. 노선 이름이 아니라 열차 등급으로 구분한다. */
+            gyeongjeon_ktx: {
+                label: '경전선', badge: '전',
+                color: '#C2410C', downColor: '#F0A277',
+                upToward: '서울 · 수서', downToward: '진주',
+                tabLabel: '경전선', trainLabel: 'KTX · SRT',
+                branchLinks: [
+                    { from: '평택지제', to: '천안아산' }
                 ]
             }
         };
@@ -1363,6 +1374,31 @@
                 "효천": { progress: 0.9444 },
                 "서광주": { progress: 0.9722 },
                 "광주송정": { progress: 1.0000, ktx: true, srt: true, transfer: [{name: '1', color: '#009088'}] }
+            },
+            /* 경전선 KTX · SRT.
+               경전선에는 고속선이 없다. 서울 · 수서에서 경부고속선을 타고 내려와
+               동대구부터 경부선 · 경전선 일반선을 달리는 열차다.
+               수서 계통(수서 · 동탄 · 평택지제)은 천안아산에서 본선과 합류한다. */
+            'gyeongjeon_ktx': {
+                "행신": { progress: 0.0000, ktx: true, transfer: [{name: '경의중앙', color: '#77C4A3'}] },
+                "서울": { progress: 0.0625, ktx: true, transfer: [{name: '1', color: '#0052A4'}, {name: '4', color: '#00A4E3'}] },
+                "수서": { col: 1, group: 'suseo', progress: 0.0625, srt: true, transfer: [{name: '3', color: '#EF7C1C'}, {name: '수인분당', color: '#FABE00'}, {name: 'A', color: '#9A6292'}] },
+                "광명": { progress: 0.1250, ktx: true },
+                "동탄": { col: 1, group: 'suseo', progress: 0.1250, srt: true, transfer: [{name: 'A', color: '#9A6292'}] },
+                "평택지제": { col: 1, group: 'suseo', progress: 0.1875, srt: true, transfer: [{name: '1', color: '#0052A4'}] },
+                "천안아산": { progress: 0.2500, ktx: true, srt: true },
+                "오송": { progress: 0.3125, ktx: true, srt: true },
+                "대전": { progress: 0.3750, ktx: true, srt: true, transfer: [{name: '1', color: '#007448'}] },
+                "김천구미": { progress: 0.4375, ktx: true, srt: true },
+                "서대구": { progress: 0.5000, ktx: true },
+                "동대구": { progress: 0.5625, ktx: true, srt: true, transfer: [{name: '1', color: '#D93F5C'}] },
+                "경산": { progress: 0.6250, ktx: true, transfer: [{name: '1', color: '#D93F5C'}] },
+                "밀양": { progress: 0.6875, ktx: true, srt: true },
+                "진영": { progress: 0.7500, ktx: true, srt: true },
+                "창원중앙": { progress: 0.8125, ktx: true, srt: true },
+                "창원": { progress: 0.8750, ktx: true, srt: true },
+                "마산": { progress: 0.9375, ktx: true, srt: true },
+                "진주": { progress: 1.0000, ktx: true, srt: true }
             }
         };
 
@@ -1553,7 +1589,8 @@
             gyeongbu_highspeed:  { src: './gyeongbu_highspeed_train_timetable.js', globalName: 'GYEONGBU_HIGHSPEED_LINE_TIMETABLE' },
             honam:               { src: './honam_general_train_timetable.js',      globalName: 'HONAM_LINE_TIMETABLE' },
             honam_highspeed:     { src: './honam_highspeed_train_timetable.js',    globalName: 'HONAM_HIGHSPEED_LINE_TIMETABLE' },
-            gyeongjeon:          { src: './gyeongjeon_general_train_timetable.js', globalName: 'GYEONGJEON_LINE_TIMETABLE' }
+            gyeongjeon:          { src: './gyeongjeon_general_train_timetable.js', globalName: 'GYEONGJEON_LINE_TIMETABLE' },
+            gyeongjeon_ktx:      { src: './gyeongjeon_highspeed_train_timetable.js', globalName: 'GYEONGJEON_KTX_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -1651,6 +1688,12 @@
             routeName: '경전선 일반열차(동대구/부전-광주송정)',
             sourceGlobal: 'GYEONGJEON_GENERAL_TRAIN_TIMETABLE',
             targetGlobal: 'GYEONGJEON_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'gyeongjeon_ktx', baseId: 46000, label: '경전선 KTX · SRT',
+            routeName: '경전선 KTX · SRT(서울/수서-진주)',
+            sourceGlobal: 'GYEONGJEON_HIGHSPEED_TRAIN_TIMETABLE',
+            targetGlobal: 'GYEONGJEON_KTX_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -1887,7 +1930,8 @@
             gyeongbu_highspeed:2100,
             honam:2900,
             honam_highspeed:2100,
-            gyeongjeon:3300
+            gyeongjeon:3300,
+            gyeongjeon_ktx:1900
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -3853,6 +3897,18 @@
                   '순천': 201, '벌교': 226, '조성': 240, '예당': 246, '득량': 253, '보성': 262,
                   '명봉': 274, '이양': 289, '능주': 302, '화순': 310, '효천': 324, '서광주': 328,
                   '광주송정': 337
+              } },
+
+            /* 경전선 KTX · SRT. 경전선에는 고속선이 없고, 경부고속선을 타고 내려와
+               동대구부터 일반선을 달린다. 거리는 서울 기점(수서 계통은 서울 기점으로 환산). */
+            { line: '경전선 KTX · SRT', routeId: 'gyeongjeon', global: 'GYEONGJEON_HIGHSPEED_TRAIN_TIMETABLE',
+              keepRouteStops: true,
+              km: {
+                  '행신': -19, '서울': 0, '광명': 22,
+                  '수서': 12, '동탄': 44, '평택지제': 63,
+                  '천안아산': 96, '오송': 129, '대전': 161,
+                  '김천구미': 253, '서대구': 282, '동대구': 294, '경산': 308,
+                  '밀양': 348, '진영': 375, '창원중앙': 396, '창원': 406, '마산': 414, '진주': 468
               } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
