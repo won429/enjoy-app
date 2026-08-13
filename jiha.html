@@ -761,6 +761,7 @@
     <script src="./daejeon_line1_rail_path.js?v=20260813"></script>
     <script src="./gwangju_line1_rail_path.js?v=20260813"></script>
     <script src="./daegyeong_rail_path.js?v=20260813"></script>
+    <script src="./donghae_line_rail_path.js?v=20260813"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -4133,6 +4134,9 @@
         // 대경선 역 좌표 (OpenStreetMap ODbL).
         STATION_COORD_LISTS.daegyeong = Object.keys(STATIONS_ALL.daegyeong)
             .map(name => window.DAEGYEONG_OSM_STATION_COORDS?.[name]);
+        // 동해선 역 좌표 (OpenStreetMap ODbL).
+        STATION_COORD_LISTS.busan_donghae = Object.keys(STATIONS_ALL.busan_donghae)
+            .map(name => window.DONGHAE_LINE_OSM_STATION_COORDS?.[name]);
         const STATION_COORDS = Object.fromEntries(Object.entries(STATION_COORD_LISTS).map(([lineId, coords]) => {
             const stationNames = Object.keys(STATIONS_ALL[lineId] || {});
             return [lineId, Object.fromEntries(stationNames.map((stationName, index) => [stationName, coords[index]]).filter(([, coord]) => Array.isArray(coord)))];
@@ -4226,6 +4230,8 @@
             || RAIL_ROUTE_PATHS.gwangju_line1;
         RAIL_ROUTE_PATHS.daegyeong = window.DAEGYEONG_OSM_RAIL_PATH
             || RAIL_ROUTE_PATHS.daegyeong;
+        RAIL_ROUTE_PATHS.busan_donghae = window.DONGHAE_LINE_OSM_RAIL_PATH
+            || RAIL_ROUTE_PATHS.busan_donghae;
         const RAIL_ROUTE_PATH_VARIANTS = {
             seoul_line1: SEOUL_LINE1_RAIL_PATHS,
             seoul_line2: SEOUL_LINE2_RAIL_PATHS,
@@ -4290,16 +4296,7 @@
                 '석천사거리':[37.4567643,126.7103554], '모래내시장':[37.4558219,126.7195757], '만수':[37.4549495,126.7317626],
                 '남동구청':[37.4481627,126.7365795], '인천대공원':[37.4483834,126.7530203], '운연':[37.4393136,126.7594871]
             },
-            busan_donghae: {
-                '부전':[35.163734,129.059216], '거제해맞이':[35.182056,129.069309], '거제':[35.190158,129.07493],
-                '교대':[35.194301,129.0805], '동래':[35.19702,129.092227], '안락':[35.196027,129.101529],
-                '재송':[35.187408,129.120197], '센텀':[35.178466,129.125346], '벡스코':[35.171213,129.136817],
-                '신해운대':[35.181662,129.177204], '송정':[35.188359,129.202431], '오시리아':[35.196922,129.208991],
-                '기장':[35.245339,129.218879], '일광':[35.269278,129.233555], '좌천':[35.312382,129.245773],
-                '월내':[35.328619,129.27711], '서생':[35.34684,129.29307], '남창':[35.420553,129.281698],
-                '망양':[35.457238,129.288051], '덕하':[35.494735,129.303447], '개운포':[35.508222,129.321935],
-                '태화강':[35.538327,129.353578]
-            }
+            busan_donghae: window.DONGHAE_LINE_OSM_STATION_COORDS
         };
 
         // OSM 선형에는 간혹 수십 m를 되짚는 짧은 스파이크가 섞여 있다. 그대로 보간하면
