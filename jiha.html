@@ -757,6 +757,7 @@
     <script src="./seoul_line6_rail_paths.js?v=20260813"></script>
     <script src="./seoul_line7_rail_path.js?v=20260813"></script>
     <script src="./seoul_line8_rail_path.js?v=20260813"></script>
+    <script src="./seoul_line9_rail_path.js?v=20260813"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -4117,19 +4118,9 @@
         // 수도권 8호선 역 좌표 (OpenStreetMap ODbL).
         STATION_COORD_LISTS.seoul_line8 = SEOUL_LINE8_STATIONS
             .map(name => window.SEOUL_LINE8_OSM_STATION_COORDS?.[name]);
-        // 수도권 9호선 역 좌표 (서쪽 개화에서 동쪽 중앙보훈병원 순서).
-        STATION_COORD_LISTS.seoul_line9 = [
-            [37.5784,126.7986],[37.5619,126.8022],[37.5639,126.8106],[37.5675,126.8166],
-            [37.5668,126.8276],[37.5683,126.8410],[37.5614,126.8544],[37.5574,126.8619],
-            [37.5506,126.8657],[37.5469,126.8749],[37.5443,126.8831],[37.5380,126.8935],
-            [37.5346,126.9027],[37.5281,126.9179],[37.5217,126.9240],[37.5174,126.9284],
-            [37.5134,126.9409],[37.5129,126.9532],[37.5088,126.9637],[37.5029,126.9803],
-            [37.5014,126.9874],[37.5035,126.9961],[37.5048,127.0049],[37.5042,127.0153],
-            [37.5046,127.0251],[37.5073,127.0339],[37.5109,127.0437],[37.5129,127.0530],
-            [37.5142,127.0602],[37.5111,127.0738],[37.5045,127.0871],[37.5025,127.0976],
-            [37.5054,127.1069],[37.5104,127.1122],[37.5164,127.1160],[37.5160,127.1308],
-            [37.5197,127.1380],[37.5292,127.1480]
-        ];
+        // 수도권 9호선 역 좌표 (OpenStreetMap ODbL).
+        STATION_COORD_LISTS.seoul_line9 = SEOUL_LINE9_STATIONS
+            .map(name => window.SEOUL_LINE9_OSM_STATION_COORDS?.[name]);
         const STATION_COORDS = Object.fromEntries(Object.entries(STATION_COORD_LISTS).map(([lineId, coords]) => {
             const stationNames = Object.keys(STATIONS_ALL[lineId] || {});
             return [lineId, Object.fromEntries(stationNames.map((stationName, index) => [stationName, coords[index]]).filter(([, coord]) => Array.isArray(coord)))];
@@ -4215,8 +4206,8 @@
             || SEOUL_LINE7_STATIONS.map(name => STATION_COORDS.seoul_line7[name]).filter(Boolean);
         RAIL_ROUTE_PATHS.seoul_line8 = window.SEOUL_LINE8_OSM_RAIL_PATH
             || SEOUL_LINE8_STATIONS.map(name => STATION_COORDS.seoul_line8[name]).filter(Boolean);
-        RAIL_ROUTE_PATHS.seoul_line9 = SEOUL_LINE9_STATIONS
-            .map(name => STATION_COORDS.seoul_line9[name]).filter(Boolean);
+        RAIL_ROUTE_PATHS.seoul_line9 = window.SEOUL_LINE9_OSM_RAIL_PATH
+            || SEOUL_LINE9_STATIONS.map(name => STATION_COORDS.seoul_line9[name]).filter(Boolean);
         const RAIL_ROUTE_PATH_VARIANTS = {
             seoul_line1: SEOUL_LINE1_RAIL_PATHS,
             seoul_line2: SEOUL_LINE2_RAIL_PATHS,
