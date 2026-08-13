@@ -755,6 +755,7 @@
     <script src="./seoul_line4_rail_paths.js?v=20260813"></script>
     <script src="./seoul_line5_rail_paths.js?v=20260813"></script>
     <script src="./seoul_line6_rail_paths.js?v=20260813"></script>
+    <script src="./seoul_line7_rail_path.js?v=20260813"></script>
     <script>
         let favoriteStations = [];
         let lastFavoriteKey = localStorage.getItem('subway_last_favorite_v2') || null;
@@ -4109,23 +4110,9 @@
         // 수도권 6호선 역 좌표 (OpenStreetMap ODbL).
         STATION_COORD_LISTS.seoul_line6 = SEOUL_LINE6_STATIONS
             .map(name => window.SEOUL_LINE6_OSM_STATION_COORDS?.[name]);
-        // 수도권 7호선 역 좌표 (북쪽 장암에서 서쪽 석남 순서).
-        STATION_COORD_LISTS.seoul_line7 = [
-            [37.7001,127.0532],[37.6896,127.0462],[37.6778,127.0553],[37.6649,127.0577],
-            [37.6556,127.0606],[37.6447,127.0642],[37.6364,127.0679],[37.6257,127.0729],
-            [37.6173,127.0751],[37.6106,127.0777],[37.6025,127.0793],[37.5964,127.0850],
-            [37.5887,127.0875],[37.5809,127.0885],[37.5736,127.0869],[37.5659,127.0843],
-            [37.5571,127.0795],[37.5480,127.0747],[37.5404,127.0692],[37.5315,127.0667],
-            [37.5194,127.0537],[37.5172,127.0413],[37.5142,127.0317],[37.5111,127.0214],
-            [37.5082,127.0117],[37.5048,127.0049],[37.4876,126.9935],[37.4863,126.9817],
-            [37.4846,126.9713],[37.4960,126.9538],[37.5028,126.9479],[37.5049,126.9392],
-            [37.4997,126.9282],[37.4999,126.9206],[37.5001,126.9099],[37.4933,126.8962],
-            [37.4863,126.8874],[37.4816,126.8826],[37.4760,126.8682],[37.4793,126.8549],
-            [37.4866,126.8387],[37.4923,126.8240],[37.5062,126.8109],[37.5054,126.7973],
-            [37.5037,126.7871],[37.5030,126.7759],[37.5047,126.7637],[37.5058,126.7531],
-            [37.5064,126.7422],[37.5082,126.7314],[37.5084,126.7206],[37.5086,126.7035],
-            [37.5062,126.6763]
-        ];
+        // 수도권 7호선 역 좌표 (OpenStreetMap ODbL).
+        STATION_COORD_LISTS.seoul_line7 = SEOUL_LINE7_STATIONS
+            .map(name => window.SEOUL_LINE7_OSM_STATION_COORDS?.[name]);
         // 수도권 8호선 역 좌표 (북쪽 별내에서 남쪽 모란 순서).
         STATION_COORD_LISTS.seoul_line8 = [
             [37.6420,127.1273],[37.6243,127.1490],[37.6112,127.1383],[37.6033,127.1439],
@@ -4229,8 +4216,8 @@
             loop:SEOUL_LINE6_LOOP_STATIONS.map(name => STATION_COORDS.seoul_line6[name]).filter(Boolean)
         };
         RAIL_ROUTE_PATHS.seoul_line6 = SEOUL_LINE6_RAIL_PATHS.main;
-        RAIL_ROUTE_PATHS.seoul_line7 = SEOUL_LINE7_STATIONS
-            .map(name => STATION_COORDS.seoul_line7[name]).filter(Boolean);
+        RAIL_ROUTE_PATHS.seoul_line7 = window.SEOUL_LINE7_OSM_RAIL_PATH
+            || SEOUL_LINE7_STATIONS.map(name => STATION_COORDS.seoul_line7[name]).filter(Boolean);
         RAIL_ROUTE_PATHS.seoul_line8 = SEOUL_LINE8_STATIONS
             .map(name => STATION_COORDS.seoul_line8[name]).filter(Boolean);
         RAIL_ROUTE_PATHS.seoul_line9 = SEOUL_LINE9_STATIONS
