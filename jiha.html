@@ -287,6 +287,104 @@
             pointer-events: none;
             background: linear-gradient(180deg, rgba(255,250,240,.12), transparent 22%, transparent 78%, rgba(15,23,42,.1));
         }
+        /* ── 스크린도어: 대구 3호선식 반높이형 ──────────────────────────
+           --u 로 프레임 굵기를 조절해 가까운 쪽은 굵게, 건너편은 가늘게.
+           열차 진입 시 window.setPlatformDoors(true) 로 개폐한다. */
+        .psd {
+            position: absolute;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+        }
+        .psd--far  { --u: 1.6px; --psd-door-w: 16%; top: 63.6%; height: 8.3%; z-index: 2; }
+        .psd--near { --u: 2.6px; --psd-door-w: 22%; top: 84.7%; height: 11.2%; z-index: 3; }
+        /* 상단 손잡이 레일 */
+        .psd::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(var(--u) * -1.8);
+            height: calc(var(--u) * 3);
+            border-radius: 999px;
+            background: linear-gradient(180deg, #e4eaeb 0%, #b0b8ba 44%, #848c8e 78%, #626a6c 100%);
+            box-shadow:
+                0 calc(var(--u) * .8) calc(var(--u) * 1.6) rgba(28,20,10,.42),
+                inset 0 calc(var(--u) * .35) 0 rgba(255,255,255,.55);
+            z-index: 2;
+        }
+        /* 승강장 바닥에 지는 그림자 */
+        .psd::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: calc(var(--u) * -1.8);
+            height: calc(var(--u) * 2);
+            background: linear-gradient(180deg, rgba(34,24,12,.34), rgba(34,24,12,0));
+        }
+        .psd-run {
+            display: flex;
+            align-items: stretch;
+            height: 100%;
+        }
+        .psd-panel,
+        .psd-leaf {
+            position: relative;
+            /* 위는 노란 프레임, 좌우는 금속 기둥, 아래는 하단판이 덮는다 */
+            border-style: solid;
+            border-width: calc(var(--u) * 1.6) var(--u) 0 var(--u);
+            border-color: #f2c62a #8d9598 transparent #8d9598;
+            /* 유리 — 뒤 선로가 비쳐 보이도록 투과 */
+            background-color: rgba(26,44,54,.30);
+            box-shadow: 0 0 0 calc(var(--u) * .35) rgba(30,22,12,.20);
+        }
+        .psd-panel { flex: 1 1 auto; }
+        /* 유리 반사 */
+        .psd-panel::before,
+        .psd-leaf::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 52% 0;
+            background: linear-gradient(148deg,
+                rgba(255,255,255,.40) 0 16%,
+                rgba(255,255,255,.05) 28% 62%,
+                rgba(255,255,255,.22) 74% 100%);
+        }
+        /* 하단 옐로우 판 */
+        .psd-panel::after,
+        .psd-leaf::after {
+            content: "";
+            position: absolute;
+            inset: 48% 0 0 0;
+            background: linear-gradient(180deg, #ffdb54 0%, #f2c31e 46%, #d9a600 100%);
+            box-shadow:
+                inset 0 var(--u) 0 rgba(84,62,0,.30),
+                inset 0 calc(var(--u) * -1) 0 rgba(0,0,0,.16);
+        }
+        /* 문짝 맞물리는 가장자리 */
+        .psd-leaf.is-left  { border-right-color: #6f7779; }
+        .psd-leaf.is-right { border-left-color: #6f7779; }
+        .psd-door {
+            position: relative;
+            flex: 0 0 var(--psd-door-w, 22%);
+            overflow: hidden;
+        }
+        .psd-leaf {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%;
+            transition: transform .9s cubic-bezier(.22,.61,.36,1);
+        }
+        .psd-leaf.is-left  { left: 0; }
+        .psd-leaf.is-right { right: 0; }
+        .psd.is-open .psd-leaf.is-left  { transform: translateX(-100%); }
+        .psd.is-open .psd-leaf.is-right { transform: translateX(100%); }
+        @media (prefers-reduced-motion: reduce) {
+            .psd-leaf { transition-duration: .01ms; }
+        }
+
         .home-platform-home-block {
             position: relative;
         }
@@ -704,6 +802,28 @@
                         <div id="home-platform-message" class="home-platform-message">
                             <span class="platform-msg-row"><span class="msg-dir">확인 중</span><span class="msg-cars"></span><span class="msg-eta"></span></span>
                             <span class="platform-msg-row"><span class="msg-dir">확인 중</span><span class="msg-cars"></span><span class="msg-eta"></span></span>
+                        </div>
+                        <!-- 스크린도어 — 건너편(의자 있는) 승강장 -->
+                        <div id="psd-far" class="psd psd--far" aria-hidden="true">
+                            <div class="psd-run">
+                                <div class="psd-panel"></div>
+                                <div class="psd-door"><i class="psd-leaf is-left"></i><i class="psd-leaf is-right"></i></div>
+                                <div class="psd-panel"></div>
+                                <div class="psd-door"><i class="psd-leaf is-left"></i><i class="psd-leaf is-right"></i></div>
+                                <div class="psd-panel"></div>
+                                <div class="psd-door"><i class="psd-leaf is-left"></i><i class="psd-leaf is-right"></i></div>
+                                <div class="psd-panel"></div>
+                            </div>
+                        </div>
+                        <!-- 스크린도어 — 내가 서 있는 쪽 승강장 -->
+                        <div id="psd-near" class="psd psd--near" aria-hidden="true">
+                            <div class="psd-run">
+                                <div class="psd-panel"></div>
+                                <div class="psd-door"><i class="psd-leaf is-left"></i><i class="psd-leaf is-right"></i></div>
+                                <div class="psd-panel"></div>
+                                <div class="psd-door"><i class="psd-leaf is-left"></i><i class="psd-leaf is-right"></i></div>
+                                <div class="psd-panel"></div>
+                            </div>
                         </div>
                     </section>
 
@@ -4047,6 +4167,23 @@
                     transferList.innerHTML = '';
                 }
             }
+        };
+
+        /* 스크린도어 개폐 — 추후 열차 진입 연출에서 호출한다.
+           side: 'near' | 'far' | 'both'(기본)
+           예) setPlatformDoors(true, 'near')  → 내 쪽 문 열림
+               openPlatformDoorsFor(8000, 'near') → 8초 뒤 자동으로 닫힘 */
+        window.setPlatformDoors = (open, side = 'both') => {
+            const targets = side === 'both'
+                ? ['psd-near', 'psd-far']
+                : [side === 'near' ? 'psd-near' : 'psd-far'];
+            targets.forEach(id => document.getElementById(id)?.classList.toggle('is-open', !!open));
+        };
+        let platformDoorTimer = null;
+        window.openPlatformDoorsFor = (holdMs = 6000, side = 'both') => {
+            clearTimeout(platformDoorTimer);
+            window.setPlatformDoors(true, side);
+            platformDoorTimer = setTimeout(() => window.setPlatformDoors(false, side), holdMs);
         };
 
         // 노선별 편성 량수 — 전광판 표기용. 미등록 노선은 량 칸을 비워 둔다.
