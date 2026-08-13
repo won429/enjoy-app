@@ -30,6 +30,7 @@
     <script src="donghae_highspeed_train_timetable.js"></script>
     <script src="gangneung_ktx_train_timetable.js"></script>
     <script src="jungbunaeryuk_ktx_train_timetable.js"></script>
+    <script src="gyeongbuk_general_train_timetable.js"></script>
     <!-- 실제 운임표 -->
     <script src="general_train_fares.js"></script>
     <script src="high_speed_train_fares.js"></script>
@@ -1182,7 +1183,7 @@
         const railTransferLineName = (name) => RAIL_TRANSFER_LINE_NAMES[name]
             || (/^\d+$/.test(String(name)) ? name + '호선' : String(name));
 
-        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu', 'donghae', 'donghae_ktx', 'gangneung', 'jungbunaeryuk'];
+        const TRAIN_LINE_IDS = ['gyeongbu', 'gyeongbu_highspeed', 'honam', 'honam_highspeed', 'gyeongjeon', 'gyeongjeon_ktx', 'jeolla', 'jeolla_ktx', 'jungang', 'jungang_ktx', 'chungbuk', 'daegu', 'donghae', 'donghae_ktx', 'gangneung', 'jungbunaeryuk', 'gyeongbuk'];
         const isTrainLine = (lineId) => TRAIN_LINE_IDS.indexOf(lineId) >= 0;
 
         /* 노선 정보. 노선을 추가하면 여기에 한 줄 넣고 TRAIN_LINE_IDS 에 id 를 더한다.
@@ -1335,6 +1336,14 @@
                 color: '#475569', downColor: '#A8B3C4',
                 upToward: '판교', downToward: '문경',
                 tabLabel: '중부내륙선', trainLabel: 'KTX-이음'
+            },
+            /* 경북선. 경부선 김천에서 갈라져 중앙선 영주까지 경북 내륙을 가로지른다.
+               10편 모두 10개 역에 전부 정차한다. */
+            gyeongbuk: {
+                label: '경북선', badge: '북',
+                color: '#A21CAF', downColor: '#DCA3E4',
+                upToward: '김천', downToward: '영주',
+                tabLabel: '경북선', trainLabel: '일반열차'
             }
         };
 
@@ -1831,6 +1840,20 @@
                 "수안보온천": { progress: 0.7778, ktx: true },
                 "연풍": { progress: 0.8889, ktx: true },
                 "문경": { progress: 1.0000, ktx: true }
+            },
+            /* 경북선. 김천(경부선)에서 영주(중앙선)까지 지선 없이 한 줄이고,
+               10편 모두 10개 역에 빠짐없이 선다(통과역 없음). */
+            'gyeongbuk': {
+                "김천": { progress: 0.0000 },
+                "옥산": { progress: 0.1111 },
+                "청리": { progress: 0.2222 },
+                "상주": { progress: 0.3333 },
+                "함창": { progress: 0.4444 },
+                "점촌": { progress: 0.5556 },
+                "용궁": { progress: 0.6667 },
+                "개포": { progress: 0.7778 },
+                "예천": { progress: 0.8889 },
+                "영주": { progress: 1.0000, ktx: true }
             }
         };
 
@@ -2032,7 +2055,8 @@
             donghae:             { src: './donghae_general_train_timetable.js',     globalName: 'DONGHAE_LINE_TIMETABLE' },
             donghae_ktx:         { src: './donghae_highspeed_train_timetable.js',   globalName: 'DONGHAE_KTX_LINE_TIMETABLE' },
             gangneung:           { src: './gangneung_ktx_train_timetable.js',       globalName: 'GANGNEUNG_LINE_TIMETABLE' },
-            jungbunaeryuk:       { src: './jungbunaeryuk_ktx_train_timetable.js',   globalName: 'JUNGBUNAERYUK_LINE_TIMETABLE' }
+            jungbunaeryuk:       { src: './jungbunaeryuk_ktx_train_timetable.js',   globalName: 'JUNGBUNAERYUK_LINE_TIMETABLE' },
+            gyeongbuk:           { src: './gyeongbuk_general_train_timetable.js',   globalName: 'GYEONGBUK_LINE_TIMETABLE' }
         };
 
         /* 노선탭용 시간표는 따로 파일을 두지 않는다.
@@ -2197,6 +2221,12 @@
             routeName: '중부내륙선 KTX-이음(판교-문경)',
             sourceGlobal: 'JUNGBUNAERYUK_KTX_TRAIN_TIMETABLE',
             targetGlobal: 'JUNGBUNAERYUK_LINE_TIMETABLE'
+        });
+        buildLineTimetable({
+            lineId: 'gyeongbuk', baseId: 57000, label: '경북선',
+            routeName: '경북선 일반열차(김천-영주)',
+            sourceGlobal: 'GYEONGBUK_GENERAL_TRAIN_TIMETABLE',
+            targetGlobal: 'GYEONGBUK_LINE_TIMETABLE'
         });
 
         const stationTimetableLoadPromises = new Map();
@@ -2444,7 +2474,8 @@
             donghae:3000,
             donghae_ktx:2000,
             gangneung:1800,
-            jungbunaeryuk:1300
+            jungbunaeryuk:1300,
+            gyeongbuk:1300
         });
         const MIN_NEW_LINE_STATION_GAP_PX = 75;
         const getLineViewLength = lineId => {
@@ -4323,6 +4354,8 @@
               stops: [['동대구',0],['하양',21],['영천',38],['아화',52],['서경주',66],['경주',70],['안강',78],['포항',92]] },
             { id: 'chungbuk', name: '충북선', types: ['ITX-마음', '무궁화호'],
               stops: [['대전',0],['신탄진',18],['부강',27],['조치원',37],['오송',44],['청주',55],['오근장',63],['청주공항',68],['증평',79],['음성',98],['주덕',117],['충주',126],['삼탄',141],['봉양',152],['제천',157],['단양',183],['풍기',207],['영주',221]] },
+            { id: 'gyeongbuk', name: '경북선', types: ['무궁화호'],
+              stops: [['김천',0],['옥산',10],['청리',17],['상주',26],['함창',39],['점촌',46],['용궁',55],['개포',63],['예천',73],['영주',115]] },
             { id: 'jungbunaeryuk', name: '중부내륙선', types: ['KTX-이음'],
               stops: [['판교(경기)',0],['부발',39],['가남',52],['감곡장호원',63],['앙성온천',77],['충주',93],['살미',101],['수안보온천',109],['연풍',117],['문경',126]] },
             { id: 'gangneung', name: '강릉선', types: ['KTX-이음'],
@@ -4540,6 +4573,13 @@
                   '판교(경기)': 0, '부발': 39, '가남': 52, '감곡장호원': 63,
                   '앙성온천': 77, '충주': 93, '살미': 101, '수안보온천': 109,
                   '연풍': 117, '문경': 126
+              } },
+
+            /* 경북선 일반열차. 김천 기점 km 를 직접 준다. */
+            { line: '경북선', routeId: 'gyeongbuk', global: 'GYEONGBUK_GENERAL_TRAIN_TIMETABLE',
+              km: {
+                  '김천': 0, '옥산': 10, '청리': 17, '상주': 26, '함창': 39,
+                  '점촌': 46, '용궁': 55, '개포': 63, '예천': 73, '영주': 115
               } }
         ];
         const RAIL_MIN_FARE = { 'ITX-새마을': 4800, 'ITX-마음': 4800, '누리로': 2600, '무궁화호': 2600 };
@@ -4844,7 +4884,7 @@
             '강원': ['춘천','남춘천','강촌','가평','청평','양평','원주','만종','횡성','둔내','평창','진부(오대산)','강릉','정동진','묵호','동해','추암','삼척해변','삼척','근덕','임원','옥원','도계','태백','민둥산','영월','정선'],
             '충청': ['천안','천안아산','온양온천','조치원','오송','신탄진','대전','서대전','계룡','옥천','영동','공주','제천','단양','청주','오근장','청주공항','증평','음성','주덕','충주','삼탄','봉양','감곡장호원','앙성온천','살미','수안보온천','연풍','예산','홍성','광천','대천','웅천','서천','장항','논산','강경','성환','전의','부강','이원','지탄','심천','각계','황간'],
             '전라': ['익산','정읍','광주송정','나주','목포','김제','장성','함평','무안','전주','남원','곡성','구례구','순천','여천','여수엑스포','군산','벌교','보성'],
-            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','하양','아화','서경주','안강','영덕','울진','문경','월포','장사','강구','영해','고래불','후포','평해','기성','매화','죽변','흥부','군위','북울산','기장','신해운대','센텀','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
+            '경상': ['김천','김천구미','구미','왜관','동대구','서대구','경산','청도','밀양','물금','구포','부산','부전','경주','울산(통도사)','태화강','남창','포항','영주','풍기','하양','아화','서경주','안강','영덕','울진','문경','옥산','청리','상주','함창','점촌','용궁','개포','예천','월포','장사','강구','영해','고래불','후포','평해','기성','매화','죽변','흥부','군위','북울산','기장','신해운대','센텀','안동','의성','영천','진영','창원중앙','창원','마산','함안','진주','봉화','분천','양원','승부','철암','추풍령','약목','신동','대구','남성현','상동','삼랑진','화명','사상']
         };
         const RAIL_POPULAR = ['서울','부산','동대구','대전','광주송정','강릉','목포','여수엑스포','수서','용산','전주','포항'];
 
