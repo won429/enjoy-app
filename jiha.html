@@ -273,10 +273,10 @@
             position: relative;
             width: calc(100% + 2.5rem);
             margin-left: -1.25rem;
-            aspect-ratio: 4 / 5;
+            aspect-ratio: 1122 / 1190;
             overflow: hidden;
             background-color: #e9e1d4;
-            background-image: url('./assets/subway-platform-home-v4.png?v=20260813-4');
+            background-image: url('./assets/subway-platform-home-v9.png?v=20260814-9');
             background-size: 100% 100%;
             background-position: center;
             box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.8), 0 1.125rem 2.75rem -1.625rem rgba(69,55,38,.52);
@@ -294,18 +294,19 @@
            열차보다 앞, 스크린도어보다 뒤에서 하부를 자연스럽게 가린다. */
         .near-platform-foreground {
             position: absolute;
-            top: 92.8%;
+            top: 89.363%;
             right: 0;
             bottom: 0;
             left: 0;
+            height: auto;
             z-index: 5;
             pointer-events: none;
-            background-image: url('./assets/subway-platform-home-v4.png?v=20260813-4');
+            background-image: url('./assets/subway-platform-home-v9.png?v=20260814-9');
             background-repeat: no-repeat;
-            /* 원본의 승강장 바닥·점자블록·전면 턱(약 68.8~76%)만 복제한다. */
-            background-position: center 74.1%;
+            /* 새 배경 하단의 평평한 타일 바닥만 복제해 열차 하부를 가린다. */
+            background-position: center bottom;
             background-size: 100% auto;
-            box-shadow: inset 0 .08rem 0 rgba(255,255,255,.42);
+            box-shadow: none;
         }
         /* ── 스크린도어: 대구 3호선식 반높이형 ──────────────────────────
            --u 로 프레임 굵기를 조절해 가까운 쪽은 굵게, 건너편은 가늘게.
@@ -318,8 +319,8 @@
             right: 0;
             pointer-events: none;
         }
-        .psd--far  { --u: 1.6px; --psd-door-w: 16%; top: 63.6%; height: 8.3%; z-index: 2; }
-        .psd--near { --u: 2.6px; --psd-door-w: 22%; top: 84.7%; height: 11.2%; z-index: 6; }
+        .psd--far  { --u: 1.6px; --psd-door-w: 16%; top: 64.174%; height: 9.779%; z-index: 2; }
+        .psd--near { --u: 2.6px; --psd-door-w: 22%; top: 79.82%; height: 13.196%; z-index: 6; }
         /* 상단 손잡이 레일 */
         .psd::before {
             content: "";
@@ -585,8 +586,8 @@
             transition: transform var(--pt-depart, 6s) cubic-bezier(.5,.02,.86,.5);
         }
         /* 건너편은 낮은 원근 비율로, 가까운 쪽은 기존 크기로 표시한다. */
-        .ptrain--far  { --u: 2px; top: 60.7%; height: 17.3%;   z-index: 3; }
-        .ptrain--near { --u: 2.6px; top: 70.75%; height: 26%; z-index: 4; }
+        .ptrain--far  { --u: 2px; top: 60.757%; height: 20.382%; z-index: 3; }
+        .ptrain--near { --u: 2.6px; top: 63.385%; height: 30.632%; z-index: 4; }
         .ptrain-body {
             position: absolute;
             top: 0;
@@ -1224,17 +1225,26 @@
         .home-platform-home-block {
             position: relative;
         }
+        .home-platform-tabs-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            margin: 0 -1.25rem;
+            padding: max(.35rem, env(safe-area-inset-top)) 1.25rem .35rem;
+            background-color: rgba(250,245,236,.96);
+            box-shadow: 0 .125rem .5rem rgba(73,59,41,.09);
+            backdrop-filter: blur(.75rem);
+            -webkit-backdrop-filter: blur(.75rem);
+        }
         .home-platform-region-tabs,
         .home-platform-line-tabs {
-            position: absolute;
-            left: .75rem;
-            right: .75rem;
-            z-index: 7;
+            position: static;
+            width: 100%;
+            justify-content: flex-start;
             margin: 0 !important;
-            padding: .2rem .25rem !important;
+            padding: .15rem 0 !important;
         }
-        .home-platform-region-tabs { top: calc(.25rem - 3px); }
-        .home-platform-line-tabs { top: calc(1.9rem - 3px); }
+        .home-platform-line-tabs { margin-top: .12rem !important; }
         .home-platform-region-tabs button,
         .home-platform-line-tabs button {
             padding-top: .2rem !important;
@@ -1245,7 +1255,7 @@
         .home-platform-station-plate {
             position: absolute;
             z-index: 8;
-            top: 12.75rem;
+            top: 9.7rem;
             left: 1.125rem;
             right: 1.125rem;
             display: flex;
@@ -1264,7 +1274,15 @@
             top: 50%;
             z-index: 2;
             height: 3.75rem;
+            padding-left: .75rem;
+            padding-right: .75rem;
             transform: translate(-50%, -50%);
+        }
+        .home-platform-station-plate .metro-logo-circle {
+            position: absolute;
+            left: .625rem;
+            top: 50%;
+            transform: translateY(-50%);
         }
         /* 법랑에 새긴 듯한 인접역 표기 */
         .home-platform-station-plate #home-prev-station,
@@ -1274,6 +1292,12 @@
             text-shadow: 0 .0625rem .0625rem rgba(0,0,0,.34);
         }
         .home-platform-station-plate #home-station-name {
+            position: absolute;
+            left: 50%;
+            width: max-content;
+            max-width: calc(100% - 2.1875rem);
+            transform: translateX(-50%);
+            text-align: center;
             color: #1b2124;
             text-shadow: 0 .0625rem 0 rgba(255,255,255,.85);
         }
@@ -1281,7 +1305,7 @@
             position: absolute;
             z-index: 7;
             /* 2줄로 높아진 만큼 위로 — 천장 행거와 역명판 사이 간격 확보 */
-            top: 6rem;
+            top: 2.95rem;
             left: 50%;
             width: min(72%, 18.75rem);
             transform: translateX(-50%);
@@ -1352,9 +1376,50 @@
             padding: 0 .25rem !important;
         }
 
-        @media (max-height: 42rem) {
-            .home-platform-region-tabs { top: calc(.25rem - 3px); }
-            .home-platform-line-tabs { top: calc(1.9rem - 3px); }
+        /* 도착 정보 영역은 상단 승강장과 같은 타일·금속 게임 그래픽으로 연결한다. */
+        .home-arrival-card,
+        .home-arrival-action {
+            border: 0 !important;
+            background-color: transparent !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+            background-size: 100% 100% !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .home-arrival-card {
+            min-height: 8.75rem;
+            padding: 1.3rem 1.25rem 1.15rem !important;
+            background-image: url('./assets/home-arrival-card-v1.png') !important;
+        }
+        .home-arrival-card > span {
+            color: #655e53 !important;
+            text-shadow: 0 .0625rem 0 rgba(255,255,255,.72);
+        }
+        .home-arrival-card [id$="-info"] > div {
+            border-color: rgba(95,84,67,.18) !important;
+            background-color: rgba(255,250,240,.9) !important;
+            box-shadow:
+                inset 0 .0625rem 0 rgba(255,255,255,.82),
+                0 .125rem .25rem rgba(63,53,39,.12) !important;
+        }
+        .home-arrival-action {
+            min-height: 3.35rem;
+            padding: .8rem 1.1rem !important;
+            background-image: url('./assets/home-arrival-button-v1.png') !important;
+        }
+        .home-arrival-action:active {
+            filter: brightness(.96);
+        }
+        .home-arrival-time,
+        .home-arrival-refresh,
+        .home-arrival-tool {
+            border-color: rgba(70,65,57,.32) !important;
+            background-color: rgba(255,247,234,.9) !important;
+            box-shadow:
+                inset 0 .0625rem 0 rgba(255,255,255,.9),
+                0 .125rem .25rem rgba(62,51,37,.12) !important;
         }
 
         /* 위치 버튼 펄스 */
@@ -1532,25 +1597,10 @@
         
         <!-- 1. 홈 화면 -->
         <main id="home-screen" class="hidden absolute inset-0 z-[25] bg-white flex-col overflow-y-auto hide-scrollbar pb-24">
-            <header class="flex-none pt-safe bg-white/90 backdrop-blur-md z-40 sticky top-0">
-                <div class="px-5 pt-1 pb-2 flex justify-between items-center">
-                    <h2 class="sect-title text-[20px] font-extrabold text-[#0B1220] tracking-tight">대구권 대경선 지하철역</h2>
-                    <div class="flex items-center gap-2">
-                        <!-- 내 위치에서 가까운 역 찾기 -->
-                        <button id="locate-btn" onclick="findNearestStation()" class="w-9 h-9 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-500 hover:text-[#0054A6] active:scale-95 transition-all" aria-label="현재 위치에서 가장 가까운 역 찾기">
-                            <i id="locate-icon" class="fa-solid fa-location-crosshairs text-[15px]"></i>
-                        </button>
-                        <!-- 즐겨찾기 버튼 -->
-                        <button id="favorite-toggle-btn" onclick="toggleFavorite()" class="relative w-9 h-9 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-400 hover:text-yellow-400 active:scale-95 transition-all" aria-label="현재 역 즐겨찾기 전환">
-                            <i id="favorite-icon" class="fa-regular fa-star text-[15px]"></i>
-                            <span id="favorite-count-badge" class="hidden absolute -right-1 -top-1 min-w-[17px] h-[17px] px-1 items-center justify-center rounded-full bg-amber-400 text-[9px] font-black text-white border-2 border-white shadow-sm">0</span>
-                        </button>
-                    </div>
-                </div>
-            </header>
-
+            <h2 class="sr-only">대구권 대경선 지하철역</h2>
             <div class="px-5 pt-0 space-y-6">
                 <div class="home-platform-home-block">
+                    <div class="home-platform-tabs-header">
                     <!-- 지역 선택 탭 -->
                     <div class="home-platform-region-tabs flex gap-1.5 overflow-x-auto hide-scrollbar mb-2 pb-1">
                         <button id="btn-region-seoul" onclick="switchRegion('seoul')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-500 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">수도권</button>
@@ -1614,6 +1664,7 @@
                     <div id="line-tabs-gwangju" class="home-platform-line-tabs hidden gap-1.5 overflow-x-auto hide-scrollbar mb-4 pb-1">
                         <button id="btn-line-gwangju1" onclick="switchLine('gwangju_line1')" class="px-3 py-1 rounded-full text-[11px] font-bold bg-[#009088] text-white shadow-[0_2px_8px_rgba(0,144,136,0.3)] shrink-0 border border-[#009088] transition-all">1호선</button>
                         <button onclick="showPreparingPopup('전남광주 2호선', true)" class="px-3 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-400 shrink-0 border border-black/5 cursor-pointer hover:bg-gray-200 transition-all">2호선</button>
+                    </div>
                     </div>
 
                     <!-- 승강장 장면 + 기존 코레일 스타일 역명판 -->
@@ -1700,28 +1751,35 @@
                         <h3 class="sect-title text-[19px] font-extrabold text-[#0B1220] tracking-tight">도착 정보</h3>
                         <div class="flex items-center gap-2">
                             <span id="data-status-home" class="hidden text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">시간표 없음</span>
-                            <span id="home-current-time" class="text-xs font-bold text-gray-600 bg-white/70 border border-white/60 backdrop-blur px-2.5 py-1 rounded-full shadow-sm">오후 5:35</span>
-                            <button onclick="renderHomeArrivalInfo()" class="w-7 h-7 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-500 hover:text-black active:scale-95 transition-all"><i class="fa-solid fa-rotate-right text-[11px]"></i></button>
+                            <span id="home-current-time" class="home-arrival-time text-xs font-bold text-gray-600 bg-white/70 border border-white/60 backdrop-blur px-2.5 py-1 rounded-full shadow-sm">오후 5:35</span>
+                            <button id="locate-btn" onclick="findNearestStation()" class="home-arrival-tool w-7 h-7 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-500 hover:text-[#0054A6] active:scale-95 transition-all" aria-label="현재 위치에서 가장 가까운 역 찾기">
+                                <i id="locate-icon" class="fa-solid fa-location-crosshairs text-[11px]"></i>
+                            </button>
+                            <button id="favorite-toggle-btn" onclick="toggleFavorite()" class="home-arrival-tool relative w-7 h-7 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-400 hover:text-yellow-400 active:scale-95 transition-all" aria-label="현재 역 즐겨찾기 전환">
+                                <i id="favorite-icon" class="fa-regular fa-star text-[11px]"></i>
+                                <span id="favorite-count-badge" class="hidden absolute -right-1 -top-1 min-w-[15px] h-[15px] px-0.5 items-center justify-center rounded-full bg-amber-400 text-[8px] font-black text-white border-2 border-white shadow-sm">0</span>
+                            </button>
+                            <button onclick="renderHomeArrivalInfo()" class="home-arrival-refresh w-7 h-7 flex items-center justify-center bg-white/70 border border-white/60 shadow-sm backdrop-blur rounded-full text-gray-500 hover:text-black active:scale-95 transition-all"><i class="fa-solid fa-rotate-right text-[11px]"></i></button>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
-                        <div class="list-card p-3.5 flex flex-col min-h-[110px] relative overflow-hidden text-center">
+                        <div class="home-arrival-card list-card p-3.5 flex flex-col min-h-[110px] relative overflow-hidden text-center">
                             <span id="home-up-dir-label" class="text-[12px] font-bold text-gray-500 mb-2.5">구미 방면</span>
                             <div id="home-up-info" class="flex-1 flex flex-col justify-center items-center gap-1.5"></div>
                         </div>
-                        <div class="list-card p-3.5 flex flex-col min-h-[110px] relative overflow-hidden text-center">
+                        <div class="home-arrival-card list-card p-3.5 flex flex-col min-h-[110px] relative overflow-hidden text-center">
                             <span id="home-down-dir-label" class="text-[12px] font-bold text-gray-500 mb-2.5">경산 방면</span>
                             <div id="home-down-info" class="flex-1 flex flex-col justify-center gap-1.5"></div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5 mt-2">
-                        <button onclick="openHomeTimetable('all')" class="list-card py-3.5 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all">
+                        <button onclick="openHomeTimetable('all')" class="home-arrival-action list-card py-3.5 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all">
                             <i id="btn-icon-1" class="fa-regular fa-clock text-[#0054A6] text-[15px]"></i>
                             <span class="text-[12px] font-bold text-[#111827]">전체 시간표 <i class="fa-solid fa-chevron-down text-[8px] ml-0.5 text-gray-400"></i></span>
                         </button>
-                        <button onclick="openHomeTimetable('firstLast')" class="list-card py-3.5 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all">
+                        <button onclick="openHomeTimetable('firstLast')" class="home-arrival-action list-card py-3.5 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all">
                             <i id="btn-icon-2" class="fa-solid fa-train-tram text-[#0054A6] text-[15px]"></i>
                             <span class="text-[12px] font-bold text-[#111827]">첫차·막차 <i class="fa-solid fa-chevron-down text-[8px] ml-0.5 text-gray-400"></i></span>
                         </button>
