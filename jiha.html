@@ -55,7 +55,19 @@
         #app { background-color: var(--panel); }
 
         /* 홈은 따뜻한 아이보리, 스크롤 화면은 기존 패널색을 유지한다. */
-        #home-screen { background-color: var(--home-bg) !important; }
+        #home-screen {
+            min-height: 0;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            overscroll-behavior-y: contain;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            background-color: var(--home-bg) !important;
+        }
+        #home-screen > .home-scroll-content {
+            flex: 0 0 auto;
+            min-height: max-content;
+        }
         #scroll-container { background-color: var(--panel) !important; }
 
         /* 헤더 글래스 강화 */
@@ -1599,7 +1611,7 @@
         <!-- 1. 홈 화면 -->
         <main id="home-screen" class="hidden absolute inset-0 z-[25] bg-white flex-col overflow-y-auto hide-scrollbar pb-24">
             <h2 class="sr-only">대구권 대경선 지하철역</h2>
-            <div class="px-5 pt-0 space-y-6">
+            <div class="home-scroll-content px-5 pt-0 space-y-6">
                 <div class="home-platform-home-block">
                     <div class="home-platform-tabs-header">
                     <!-- 지역 선택 탭 -->
