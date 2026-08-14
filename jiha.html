@@ -1274,15 +1274,17 @@
             top: 50%;
             z-index: 2;
             height: 3.75rem;
+            display: grid;
+            grid-template-columns: 1.75rem minmax(0, 1fr);
+            align-items: center;
+            column-gap: .5rem;
             padding-left: .75rem;
             padding-right: .75rem;
             transform: translate(-50%, -50%);
         }
         .home-platform-station-plate .metro-logo-circle {
-            position: absolute;
-            left: .625rem;
-            top: 50%;
-            transform: translateY(-50%);
+            position: static;
+            transform: none;
         }
         /* 법랑에 새긴 듯한 인접역 표기 */
         .home-platform-station-plate #home-prev-station,
@@ -1292,11 +1294,10 @@
             text-shadow: 0 .0625rem .0625rem rgba(0,0,0,.34);
         }
         .home-platform-station-plate #home-station-name {
-            position: absolute;
-            left: 50%;
-            width: max-content;
-            max-width: calc(100% - 2.1875rem);
-            transform: translateX(-50%);
+            position: static;
+            width: 100%;
+            max-width: 100%;
+            transform: none;
             text-align: center;
             color: #1b2124;
             text-shadow: 0 .0625rem 0 rgba(255,255,255,.85);
@@ -1679,7 +1680,7 @@
                                 <div aria-hidden="true"></div>
                                 <div class="station-plate-side justify-end text-right">
                                     <div id="home-next-station-container" class="opacity-100 transition-opacity">
-                                        <span id="home-next-station" class="text-white font-bold tracking-tight">사곡 &gt;</span>
+                                        <span id="home-next-station" class="text-white font-bold tracking-tight">사곡 →</span>
                                     </div>
                                 </div>
                             </div>
@@ -4993,7 +4994,7 @@
             if (!plate || !pill || !dom.homeStationName) return;
             const availableWidth = plate.clientWidth || 390;
             const nameLength = Array.from(dom.homeStationName.textContent || '').length;
-            const pillWidth = Math.round(Math.min(availableWidth * 0.54, Math.max(126, 72 + nameLength * 13)));
+            const pillWidth = Math.round(Math.min(availableWidth * 0.54, Math.max(126, 86 + nameLength * 13)));
             plate.style.setProperty('--station-pill-width', `${pillWidth}px`);
             pill.style.setProperty('--station-pill-width', `${pillWidth}px`);
 
@@ -5025,9 +5026,9 @@
             const prevStation = idx > 0 ? stationNames[idx - 1] : null;
             const nextStation = idx < stationNames.length - 1 ? stationNames[idx + 1] : null;
             dom.homeStationName.textContent = homeSelectedStation;
-            if (prevStation) { dom.homePrevStation.textContent = `< ${prevStation}`; dom.homePrevStationContainer.classList.replace('opacity-0', 'opacity-100'); }
+            if (prevStation) { dom.homePrevStation.textContent = `← ${prevStation}`; dom.homePrevStationContainer.classList.replace('opacity-0', 'opacity-100'); }
             else { dom.homePrevStationContainer.classList.replace('opacity-100', 'opacity-0'); }
-            if (nextStation) { dom.homeNextStation.textContent = `${nextStation} >`; dom.homeNextStationContainer.classList.replace('opacity-0', 'opacity-100'); }
+            if (nextStation) { dom.homeNextStation.textContent = `${nextStation} →`; dom.homeNextStationContainer.classList.replace('opacity-0', 'opacity-100'); }
             else { dom.homeNextStationContainer.classList.replace('opacity-100', 'opacity-0'); }
 
             const stationAddress = STATION_ADDRESSES[currentLineId]?.[homeSelectedStation] || '주소 정보가 없습니다.';
