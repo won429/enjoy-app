@@ -422,10 +422,9 @@
         }
 
         /* ── 승강장 진입 열차 ──────────────────────────────────────────
-           차체 그림은 assets/train-near.svg · train-far.svg 를 그대로 깔고,
-           내 쪽 열차의 문짝만 DOM으로 얹어 여닫는다. SVG 안 문 개구부의
-           x 좌표가 스크린도어 문 위치(18.667% / 59.333%, 폭 22%)와 같아서
-           정차하면 정확히 맞물린다.
+           6량 편성으로 내 쪽은 두 량, 원근상 먼 건너편은 세 량이 보인다.
+           내 쪽 두 문은 18.667% / 59.333%(폭 22%), 건너편 세 문은
+           13% / 42% / 71%(폭 16%)의 스크린도어 위치와 정확히 맞물린다.
            상행은 건너편(far) 선로로 오른쪽에서, 하행은 내 쪽(near) 선로로
            왼쪽에서 들어오고, 겹치면 두 대가 함께 들어온다.
            건너편 열차는 문이 반대편 승강장 쪽으로 열리므로 닫힌 채 둔다. */
@@ -450,32 +449,356 @@
             transform: translateX(var(--pt-exit, -130%));
             transition: transform var(--pt-depart, 6s) cubic-bezier(.5,.02,.86,.5);
         }
-        /* 높이는 그림 비율(가로:세로 = 3.75 / 6.25)에 맞춰 잡아 왜곡이 없다 */
-        .ptrain--far  { top: 62%;   height: 12.8%;   z-index: 3; }
-        .ptrain--near { top: 74.5%; height: 21.333%; z-index: 4; }
+        /* 건너편 열차는 기존 차체 높이를 유지하고, 늘어난 하단 공간에 대차와 차륜을 노출한다. */
+        .ptrain--far  { --u: 2px; top: 60.7%; height: 22.49%;  z-index: 3; }
+        .ptrain--near { --u: 2.6px; top: 74.5%; height: 21.333%; z-index: 4; }
         .ptrain-body {
-            position: relative;
+            position: absolute;
+            top: 0;
+            display: flex;
+            width: 300%;
             height: 100%;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 100% 100%;
+            filter: saturate(.92) contrast(1.025) sepia(.08) drop-shadow(0 .18rem .16rem rgba(49,37,20,.5));
+            transform: translate3d(0,0,0);
+            will-change: transform;
         }
-        .ptrain--far .ptrain-body  { background-image: url('./assets/train-far.svg?v=20260814'); }
-        .ptrain--near .ptrain-body { background-image: url('./assets/train-near.svg?v=20260814'); }
-        /* 문 개구부 — SVG 좌표계의 y 36~284 (/320) 과 같은 자리 */
+        /* 건너편은 세 량(200%), 내 쪽은 두 량(300%)이 화면에 보이게 배치한다. */
+        .ptrain--far .ptrain-body  { left: 0; width: 200%; height: 76.923%; }
+        .ptrain--near .ptrain-body { left: -200%; }
+        /* 기존 출발 시간 안에서 편성 전체가 지나가게 하며 외부 열차의 구동값은 그대로 둔다. */
+        .ptrain.is-departing .ptrain-body {
+            transition: transform var(--pt-depart, 6s) cubic-bezier(.5,.02,.86,.5);
+        }
+        .ptrain--far.is-departing .ptrain-body  { transform: translate3d(-66.666667%,0,0); }
+        .ptrain--near.is-departing .ptrain-body { transform: translate3d(66.666667%,0,0); }
+        .ptrain-body::after {
+            content: '';
+            position: absolute;
+            right: 1.2%;
+            bottom: -.8%;
+            left: 1.2%;
+            height: 3.2%;
+            border-radius: 50%;
+            background: rgba(35,27,16,.5);
+            filter: blur(.16rem);
+            opacity: .72;
+        }
+        .ptrain--far .ptrain-body::after {
+            bottom: -30%;
+            height: 5.2%;
+            background: rgba(31,24,15,.62);
+            filter: blur(.11rem);
+            opacity: .9;
+        }
+        .pt-car {
+            position: relative;
+            flex: 0 0 16.666667%;
+            height: 100%;
+            isolation: isolate;
+        }
+        /* 측면 차체 — 배경 조명과 같은 따뜻한 아이보리 금속과 짙은 하부 구조 */
+        .pt-car::before {
+            content: '';
+            position: absolute;
+            inset: 13% .55% 3%;
+            z-index: 0;
+            clip-path: polygon(1.5% 0, 98.5% 0, 100% 5%, 100% 100%, 0 100%, 0 5%);
+            background:
+                linear-gradient(90deg, rgba(92,78,48,.16) 0 1%, transparent 1% 48%, rgba(255,255,255,.2) 49% 50%, transparent 51% 99%, rgba(92,78,48,.16) 99%),
+                linear-gradient(to bottom,
+                    #f5efd9 0 5%,
+                    #e7e0c8 5% 43%,
+                    #d7cfb4 43% 67%,
+                    #aaa184 67% 72%,
+                    #554f3c 72% 86%,
+                    #28271f 86% 100%);
+            border-inline: max(1px, calc(var(--u) * .5)) solid rgba(87,79,57,.72);
+            border-bottom: max(1px, calc(var(--u) * .7)) solid #27261e;
+            box-shadow:
+                inset 0 calc(var(--u) * 1.1) 0 rgba(255,253,237,.9),
+                inset 0 calc(var(--u) * -1.4) 0 rgba(36,29,17,.42);
+        }
+        .pt-car.has-cab-left::before  { clip-path: polygon(13% 0, 100% 0, 100% 100%, 4% 100%, 0 82%, 2% 30%); }
+        .pt-car.has-cab-right::before { clip-path: polygon(0 0, 87% 0, 98% 30%, 100% 82%, 96% 100%, 0 100%); }
+        .pt-car::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            right: -1.8%;
+            bottom: 8%;
+            z-index: 6;
+            width: 3.6%;
+            border-inline: max(1px, calc(var(--u) * .5)) solid rgba(30,27,19,.72);
+            background: repeating-linear-gradient(90deg, #262820 0 19%, #696956 19% 30%, #333429 30% 49%);
+            box-shadow: 0 0 calc(var(--u) * 1.3) rgba(37,28,16,.58);
+        }
+        .pt-car:last-child::after { display: none; }
+        /* 지붕 상면을 별도 사다리꼴로 그려 위에서 내려다보는 깊이를 만든다. */
+        .pt-roof-deck {
+            position: absolute;
+            top: 4.5%;
+            left: 2.5%;
+            z-index: 1;
+            width: 95%;
+            height: 11.5%;
+            clip-path: polygon(5% 100%, 10% 0, 90% 0, 95% 100%);
+            background:
+                linear-gradient(90deg, rgba(255,250,228,.12), rgba(255,254,240,.8) 38%, rgba(255,250,226,.2) 68%, rgba(83,76,57,.34)),
+                linear-gradient(#d8d2ba, #918b73);
+            box-shadow: inset 0 calc(var(--u) * .75) 0 rgba(255,254,238,.72);
+        }
+        .has-cab-left .pt-roof-deck  { left: 8%; width: 89%; clip-path: polygon(0 100%, 8% 0, 94% 0, 100% 100%); }
+        .has-cab-right .pt-roof-deck { left: 3%; width: 89%; clip-path: polygon(0 100%, 6% 0, 92% 0, 100% 100%); }
+        .pt-roof-unit {
+            position: absolute;
+            top: 1%;
+            left: 31%;
+            z-index: 2;
+            width: 38%;
+            height: 9.5%;
+            border: max(1px, calc(var(--u) * .42)) solid rgba(44,57,60,.72);
+            border-radius: calc(var(--u) * 1.7);
+            background:
+                repeating-linear-gradient(90deg, transparent 0 12%, rgba(20,35,38,.44) 12% 15%),
+                linear-gradient(#9aabb1, #50656c 70%, #30464d);
+            box-shadow: inset 0 calc(var(--u) * .8) 0 rgba(255,255,255,.34), 0 calc(var(--u) * .6) calc(var(--u) * .6) rgba(45,35,20,.32);
+        }
+        .pt-route-band {
+            position: absolute;
+            top: 56%;
+            left: .5%;
+            z-index: 1;
+            width: 99%;
+            height: 7.5%;
+            background: linear-gradient(#4d80c8 0 17%, #2f63a7 17% 76%, #244f87 76%);
+            box-shadow: 0 calc(var(--u) * .55) 0 rgba(255,250,226,.28), 0 calc(var(--u) * -0.55) 0 rgba(19,49,86,.4);
+        }
+        .pt-window {
+            position: absolute;
+            top: 22%;
+            z-index: 2;
+            height: 28%;
+            border: max(1px, calc(var(--u) * .65)) solid #766f58;
+            border-radius: calc(var(--u) * 1.4);
+            background:
+                linear-gradient(145deg, rgba(255,247,211,.74) 0 12%, transparent 13% 42%, rgba(255,209,113,.2) 43%),
+                linear-gradient(#433f32, #7f673a 44%, #e1b65e 46%, #a9792f 100%);
+            box-shadow: inset 0 0 calc(var(--u) * 1.35) rgba(47,34,13,.76), 0 calc(var(--u) * .45) 0 rgba(255,252,227,.44);
+        }
+        .pt-car.is-door-right .pt-window.is-a { left: 6%; width: 27%; }
+        .pt-car.is-door-right .pt-window.is-b { left: 85%; width: 10%; }
+        .pt-car.is-door-left  .pt-window.is-a { left: 5%; width: 10%; }
+        .pt-car.is-door-left  .pt-window.is-b { left: 67%; width: 27%; }
+        /* 건너편은 세 량이 한 화면에 보이며 각 문이 3개의 PSD 중심에 맞는다. */
+        .ptrain--far .pt-doorway { width: 48%; }
+        .ptrain--far .pt-car:nth-child(3n + 1) .pt-doorway { left: 39%; }
+        .ptrain--far .pt-car:nth-child(3n + 2) .pt-doorway { left: 26%; }
+        .ptrain--far .pt-car:nth-child(3n) .pt-doorway     { left: 13%; }
+        .ptrain--far .pt-car:nth-child(3n + 1) .pt-window.is-a { left: 6%; width: 28%; }
+        .ptrain--far .pt-car:nth-child(3n + 1) .pt-window.is-b { left: 90%; width: 7%; }
+        .ptrain--far .pt-car:nth-child(3n + 2) .pt-window.is-a { left: 5%; width: 15%; }
+        .ptrain--far .pt-car:nth-child(3n + 2) .pt-window.is-b { left: 79%; width: 16%; }
+        .ptrain--far .pt-car:nth-child(3n) .pt-window.is-a     { left: 3%; width: 7%; }
+        .ptrain--far .pt-car:nth-child(3n) .pt-window.is-b     { left: 66%; width: 28%; }
+        .pt-car.has-cab-left .pt-window.is-a,
+        .pt-car.has-cab-right .pt-window.is-b { display: none; }
+        .pt-bogie {
+            position: absolute;
+            bottom: .5%;
+            z-index: 2;
+            width: 19%;
+            height: 6.5%;
+            border-radius: 50% 50% 18% 18%;
+            background: linear-gradient(#625f4d, #23231c 52%);
+            box-shadow: inset calc(var(--u) * 2.7) 0 0 #161712, inset calc(var(--u) * -2.7) 0 0 #161712;
+        }
+        .pt-bogie.is-left  { left: 14%; }
+        .pt-bogie.is-right { right: 14%; }
+        .ptrain--far .pt-bogie {
+            bottom: -21%;
+            width: 31%;
+            height: 22%;
+            overflow: visible;
+            border-radius: 0;
+            background:
+                repeating-linear-gradient(to bottom, #56574f 0 12%, #242622 13% 25%) 25% 0 / 15% 48% no-repeat,
+                repeating-linear-gradient(to bottom, #56574f 0 12%, #242622 13% 25%) 75% 0 / 15% 48% no-repeat,
+                linear-gradient(#55574f, #292b27 58%, #1a1b18) center 28% / 92% 30% no-repeat;
+            box-shadow: none;
+        }
+        .ptrain--far .pt-bogie.is-left  { left: 7%; }
+        .ptrain--far .pt-bogie.is-right { right: 7%; }
+        .ptrain--far .pt-bogie::before,
+        .ptrain--far .pt-bogie::after {
+            content: '';
+            position: absolute;
+        }
+        .ptrain--far .pt-bogie::before {
+            inset: 9% 1% -18%;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 14% 25% at 21% 65%, #55574f 0 12%, #292b27 13% 46%, #11120f 47% 76%, #3c3e38 77% 88%, #171815 89% 100%, transparent 101%),
+                radial-gradient(ellipse 14% 25% at 79% 65%, #55574f 0 12%, #292b27 13% 46%, #11120f 47% 76%, #3c3e38 77% 88%, #171815 89% 100%, transparent 101%);
+            opacity: .76;
+        }
+        .ptrain--far .pt-bogie::after {
+            top: 20%;
+            right: 4%;
+            bottom: -5%;
+            left: 4%;
+            z-index: 1;
+            clip-path: polygon(3% 12%, 17% 0, 83% 0, 97% 12%, 91% 78%, 72% 91%, 59% 63%, 41% 63%, 28% 91%, 9% 78%);
+            background:
+                radial-gradient(circle at 16% 72%, #5b5d55 0 7%, #1d1f1c 8% 16%, transparent 17%),
+                radial-gradient(circle at 84% 72%, #5b5d55 0 7%, #1d1f1c 8% 16%, transparent 17%),
+                repeating-linear-gradient(to bottom, #5a5b53 0 9%, #242622 10% 18%) 28% 22% / 14% 58% no-repeat,
+                repeating-linear-gradient(to bottom, #5a5b53 0 9%, #242622 10% 18%) 72% 22% / 14% 58% no-repeat,
+                linear-gradient(to bottom, #55574f 0 17%, #2b2d29 18% 61%, #191a18 62% 100%);
+            box-shadow: inset 0 calc(var(--u) * .45) 0 rgba(150,148,132,.22);
+        }
+        /* 선두부는 차체와 같은 명암을 가진 곡면 셸 위에 큰 전면 유리를 얹는다. */
+        .pt-cab {
+            position: absolute;
+            top: 8.5%;
+            bottom: 3%;
+            z-index: 5;
+            width: 31%;
+            overflow: hidden;
+            background:
+                linear-gradient(to bottom, transparent 0 53%, #4d80c8 53% 56%, #2f63a7 56% 63%, #244f87 63% 65%, transparent 65%),
+                linear-gradient(105deg, #f6f0dc 0, #e1dac1 42%, #b7ae91 74%, #756e56 100%);
+            border-bottom: max(1px, calc(var(--u) * .75)) solid #353226;
+            box-shadow: inset 0 calc(var(--u) * 1.1) 0 rgba(255,253,235,.82), inset 0 calc(var(--u) * -1.1) 0 rgba(42,33,18,.38);
+        }
+        .pt-cab.is-left {
+            left: 0;
+            clip-path: polygon(52% 0, 100% 0, 100% 100%, 15% 100%, 2% 83%, 0 36%, 17% 10%);
+        }
+        .pt-cab.is-right {
+            right: 0;
+            clip-path: polygon(0 0, 48% 0, 83% 10%, 100% 36%, 98% 83%, 85% 100%, 0 100%);
+        }
+        .pt-cab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            z-index: 1;
+            width: 86%;
+            height: 14%;
+            background: linear-gradient(to bottom, #f4eed9, #aaa38a 72%, #77715c);
+            box-shadow: inset 0 calc(var(--u) * .7) 0 rgba(255,253,235,.86);
+        }
+        .pt-cab.is-left::before {
+            right: 0;
+            clip-path: polygon(18% 100%, 35% 0, 100% 0, 100% 100%);
+        }
+        .pt-cab.is-right::before {
+            left: 0;
+            clip-path: polygon(0 0, 65% 0, 82% 100%, 0 100%);
+        }
+        .pt-cab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            z-index: 1;
+            width: 54%;
+            height: 17%;
+            background: linear-gradient(#5f5a45, #333126 54%, #1d1d18 55%);
+            box-shadow: inset 0 calc(var(--u) * .7) 0 rgba(255,249,220,.12);
+        }
+        .pt-cab.is-left::after  { left: 0; clip-path: polygon(0 0, 100% 0, 78% 100%, 16% 100%); }
+        .pt-cab.is-right::after { right: 0; clip-path: polygon(0 0, 100% 0, 84% 100%, 22% 100%); }
+        .pt-cab.is-left .pt-cab-glass,
+        .pt-cab.is-right .pt-cab-glass {
+            z-index: 2;
+        }
+        .pt-cab-glass {
+            position: absolute;
+            top: 12%;
+            width: 82%;
+            height: 43%;
+            border: max(1px, calc(var(--u) * .68)) solid #716b55;
+            background:
+                linear-gradient(143deg, rgba(255,247,211,.82) 0 11%, transparent 12% 35%, rgba(255,207,109,.2) 36% 54%, transparent 55%),
+                linear-gradient(90deg, transparent 0 68%, rgba(35,25,10,.56) 69% 72%, transparent 73%),
+                linear-gradient(#3d392e, #82693d 46%, #e2b85f 48%, #8b6630 100%);
+            box-shadow: inset 0 0 calc(var(--u) * 1.8) rgba(49,34,12,.78), 0 calc(var(--u) * .65) 0 rgba(255,252,228,.48);
+        }
+        .pt-cab.is-left .pt-cab-glass {
+            left: 3%;
+            border-radius: 48% 8% 12% 32%;
+            clip-path: polygon(25% 0, 100% 0, 100% 100%, 8% 100%, 0 68%, 3% 25%);
+        }
+        .pt-cab.is-right .pt-cab-glass {
+            right: 3%;
+            border-radius: 8% 48% 32% 12%;
+            clip-path: polygon(0 0, 75% 0, 97% 25%, 100% 68%, 92% 100%, 0 100%);
+        }
+        .pt-headlight {
+            position: absolute;
+            bottom: 21%;
+            z-index: 3;
+            width: 8%;
+            aspect-ratio: 1;
+            border: max(1px, calc(var(--u) * .3)) solid #816825;
+            border-radius: 50%;
+            background: #fff4a7;
+            box-shadow: 0 0 calc(var(--u) * 2.4) rgba(255,222,95,.95);
+        }
+        .pt-cab.is-left .pt-headlight  { left: 12%; }
+        .pt-cab.is-right .pt-headlight { right: 12%; }
+        /* 문 개구부 — 두 량이 보일 때 기존 스크린도어 좌표와 같은 자리 */
         .pt-doorway {
             position: absolute;
             top: 11.25%;
             height: 77.5%;
-            width: 22%;
+            z-index: 4;
+            width: 44%;
             overflow: hidden;
+            border: max(1px, calc(var(--u) * .9)) solid #4e4c3d;
+            background:
+                linear-gradient(to bottom, #fff0b8 0 7%, #8b8a77 7% 12%, transparent 12%),
+                linear-gradient(to bottom, transparent 0 55%, #3f6fa5 55% 69%, #292b26 69% 74%, #403f34 74%);
+            box-shadow: inset 0 0 calc(var(--u) * 2.2) rgba(49,35,14,.58);
+        }
+        .pt-car.is-door-right .pt-doorway { left: 37.334%; }
+        .pt-car.is-door-left  .pt-doorway { left: 18.666%; }
+        .pt-doorway::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 11%;
+            width: 78%;
+            height: 30%;
+            border-radius: calc(var(--u) * 2);
+            background:
+                linear-gradient(145deg, rgba(255,248,215,.5) 0 16%, transparent 17%),
+                linear-gradient(#4a4536, #8b7243 58%, #e4ba63 60%);
+        }
+        .pt-doorway::after {
+            content: '';
+            position: absolute;
+            right: 7%;
+            bottom: 17%;
+            left: 7%;
+            height: 12%;
+            border-radius: calc(var(--u) * 2.2) calc(var(--u) * 2.2) 0 0;
+            background: linear-gradient(#4d80c8, #2f5f9d);
+            box-shadow: 0 calc(var(--u) * 1.2) 0 #2b2a22;
         }
         .pt-leaf {
             position: absolute;
             top: 0;
             bottom: 0;
+            z-index: 2;
             width: 50%;
-            background: url('./assets/train-door-leaf.svg?v=20260814') 0 0 / 100% 100% no-repeat;
+            background:
+                linear-gradient(145deg, rgba(255,253,230,.5) 0 10%, transparent 11% 33%, rgba(255,247,210,.14) 34% 38%, transparent 39%),
+                linear-gradient(to bottom, transparent 0 15%, #514b39 15% 49%, #a17d3f 49% 51%, transparent 51%),
+                linear-gradient(to bottom, #eee7cf 0 56%, #3b70ad 56% 64%, #bbb398 64% 91%, #6d6752 91% 100%);
+            box-shadow:
+                inset calc(var(--u) * 1.1) 0 0 rgba(255,253,230,.48),
+                inset calc(var(--u) * -1.1) 0 0 rgba(83,74,50,.5);
             transition: transform .95s cubic-bezier(.24,.6,.3,1);
         }
         .pt-leaf.is-left  { left: 0; }
@@ -485,6 +808,7 @@
         @media (prefers-reduced-motion: reduce) {
             .pt-leaf { transition-duration: .01ms; }
             .ptrain.is-arriving, .ptrain.is-departing { transition-duration: .01ms; }
+            .ptrain.is-departing .ptrain-body { transition-duration: .01ms; }
         }
 
         .home-platform-home-block {
@@ -692,7 +1016,7 @@
             height: 1.875rem;
             pointer-events: auto;
             cursor: pointer;
-            filter: drop-shadow(0 0.125rem 0.09375rem rgba(15,23,42,.24)) drop-shadow(0 0.3125rem 0.375rem rgba(15,23,42,.18));
+            filter: drop-shadow(0 .11rem .08rem rgba(15,23,42,.24)) drop-shadow(0 .31rem .34rem rgba(15,23,42,.2));
             transition: filter .2s ease, transform .16s ease;
             -webkit-tap-highlight-color: transparent;
             transform: translateZ(0);
@@ -703,7 +1027,7 @@
             transform: translate(-50%, -50%) translateZ(0);
         }
         .subway-map-train.is-selected {
-            filter: drop-shadow(0 0.25rem 0.1875rem rgba(15,23,42,.30)) drop-shadow(0 0.375rem 0.5625rem rgba(15,23,42,.25)) drop-shadow(0 0 0.3125rem rgba(255,255,255,.95));
+            filter: drop-shadow(0 .2rem .14rem rgba(15,23,42,.32)) drop-shadow(0 .4rem .5rem rgba(15,23,42,.26)) drop-shadow(0 0 .32rem rgba(255,255,255,.98));
         }
         .subway-map-train.is-journey-target::after {
             content: attr(data-train-id);
@@ -2422,25 +2746,25 @@
         // 지도 탭 열차는 한쪽 측면이 보이는 3/4 부감 차체를 100×30 좌표계에 코드로 그린다.
         // 진행 방향은 +x(오른쪽), 측면(창문이 있는 면)은 y가 작은 쪽이며,
         // 캔버스(지도 탭)와 SVG(노선 탭)가 같은 좌표값을 공유한다.
-        const MAP_TRAIN_SIDE_WALL_Y = 4.55;          // 지붕면과 측면의 경계
+        const MAP_TRAIN_SIDE_WALL_Y = 5.05;          // 지붕면과 측면의 경계
         const MAP_TRAIN_SIDE_WINDOW_STARTS = [7, 23, 53.8, 70];
         const MAP_TRAIN_SIDE_WINDOW_WIDTH = 13.6;
-        const MAP_TRAIN_SIDE_WINDOW_TOP = 1.95;
-        const MAP_TRAIN_SIDE_WINDOW_HEIGHT = 2.6;
+        const MAP_TRAIN_SIDE_WINDOW_TOP = 1.65;
+        const MAP_TRAIN_SIDE_WINDOW_HEIGHT = 3.05;
         const MAP_TRAIN_BAND_X = 38.65;              // 지붕면 기준 색 띠 시작
         const MAP_TRAIN_BAND_WIDTH = 9.65;
         const MAP_TRAIN_BAND_SKEW = 4.25;            // 측면에서 띠가 앞으로 밀리는 양
         // 앞유리는 사각형이 아니라, 노즈 외곽선에서 일정한 흰 여백을 두고 따라가는 모양이다.
-        const MAP_TRAIN_CAB_GLASS_PATH = 'M92 4.3L104 .2L104 31L92 26.4Q88.5 26.4 88.5 24.8L88.5 6.2Q88.5 4.3 92 4.3Z';
-        const MAP_TRAIN_CAB_MARGIN = 2.8;
-        const MAP_TRAIN_NOSE_CLIP_X = 84;
+        const MAP_TRAIN_CAB_GLASS_PATH = 'M91.8 4.1L95.1 4.1C97.5 4.5 98.8 7.2 99 10.1L99 16.2C98.5 20.5 96.2 23.7 92.1 25.2L90.1 25.2C89.2 25.2 88.7 24.5 88.7 23.5L88.7 6.1C88.7 4.9 89.7 4.1 91.8 4.1Z';
+        const MAP_TRAIN_CAB_MARGIN = 2.2;
+        const MAP_TRAIN_NOSE_CLIP_X = 85.2;
         const MAP_TRAIN_BADGE_X = 68.5;
         const MAP_TRAIN_BADGE_Y = 16.3;
         const MAP_TRAIN_BADGE_RADIUS = 10.9;
         const MAP_TRAIN_BODY_PATH = 'M7 .25L92.5 .25C96.3 .45 99.3 3.6 100 8.9L100 16.03C98.8 22.8 95 25.7 90 26.6C86 28.2 82 29.4 78 29.6L7 29.7C3.6 29.15 1.2 25 0 24L0 7.03C1.2 5 3.6 .8 7 .25Z';
-        const MAP_TRAIN_BODY_FILL = '#FFFFFF';
-        const MAP_TRAIN_GLASS_COLOR = '#313131';
-        const MAP_TRAIN_CAB_GLASS_COLOR = '#373737';
+        const MAP_TRAIN_BODY_FILL = '#F8FAFC';
+        const MAP_TRAIN_GLASS_COLOR = '#263746';
+        const MAP_TRAIN_CAB_GLASS_COLOR = '#1D2A35';
 
         const dom = {
             mainHeader: document.getElementById('main-header'),
@@ -4333,12 +4657,26 @@
         const platformTrainState = { up: null, down: null };
         const platformDoorLead = { up: null, down: null };
 
-        // 차체는 SVG 한 장, 여닫는 문짝만 그 위에 얹는다.
+        // 각 량의 폭은 기존 열차의 반 화면 크기로 유지하고 여섯 량을 이어 붙인다.
+        // 홀수/짝수 량의 문 위치를 엇갈리게 두면 정차 시 두 문이 PSD 좌표와 맞는다.
         const buildPlatformTrain = (el, cfg) => {
-            const doorways = cfg.doorsAt.map(left =>
-                `<div class="pt-doorway" style="left:${left}%"><i class="pt-leaf is-left"></i><i class="pt-leaf is-right"></i></div>`
-            ).join('');
-            el.innerHTML = `<div class="ptrain-body">${doorways}</div>`;
+            const cars = Array.from({ length: 6 }, (_, index) => {
+                const doorSide = index % 2 === 0 ? 'is-door-right' : 'is-door-left';
+                const cabSide = index === 0 ? 'left' : (index === 5 ? 'right' : '');
+                const cab = cabSide
+                    ? `<span class="pt-cab is-${cabSide}"><i class="pt-cab-glass"></i><i class="pt-headlight"></i></span>`
+                    : '';
+                return `<div class="pt-car ${doorSide} ${cabSide ? `has-cab-${cabSide}` : ''}">
+                    <i class="pt-roof-deck"></i>
+                    <i class="pt-roof-unit"></i>
+                    <i class="pt-route-band"></i>
+                    <i class="pt-window is-a"></i><i class="pt-window is-b"></i>
+                    <div class="pt-doorway"><i class="pt-leaf is-left"></i><i class="pt-leaf is-right"></i></div>
+                    <i class="pt-bogie is-left"></i><i class="pt-bogie is-right"></i>
+                    ${cab}
+                </div>`;
+            }).join('');
+            el.innerHTML = `<div class="ptrain-body">${cars}</div>`;
         };
 
         // 이 역에 진입 중이거나 정차·출발 중인 열차 한 대를 고른다.
@@ -4435,7 +4773,7 @@
 
         // 노선별 편성 량수 — 전광판 표기용. 미등록 노선은 량 칸을 비워 둔다.
         const TRAIN_CAR_COUNT = {
-            daegyeong: 2,
+            daegyeong: 6,
             line1: 6, line2: 6, line3: 3,   // 대구 1·2·3호선
             daejeon_line1: 4,
             gwangju_line1: 4,
@@ -5464,7 +5802,14 @@
             traceMapTrainBody(ctx);
             ctx.clip();
 
-            ctx.fillStyle = MAP_TRAIN_BODY_FILL;
+            // 차체는 단색 대신 지붕의 빛과 측면의 깊이가 느껴지는 금속 그라데이션으로 채운다.
+            const bodyGradient = ctx.createLinearGradient(0, 0, 0, height);
+            bodyGradient.addColorStop(0, '#D8E0E6');
+            bodyGradient.addColorStop(.08, '#F8FAFC');
+            bodyGradient.addColorStop(.42, '#FFFFFF');
+            bodyGradient.addColorStop(.78, '#EEF2F5');
+            bodyGradient.addColorStop(1, '#C7D0D7');
+            ctx.fillStyle = bodyGradient;
             ctx.fillRect(0, 0, width, height);
 
             // 진행 방향과 직각으로 지나가는 노선 색 띠
@@ -5472,11 +5817,59 @@
             ctx.fillStyle = color;
             ctx.fill();
 
-            // 측면 창 4개
-            ctx.fillStyle = MAP_TRAIN_GLASS_COLOR;
-            MAP_TRAIN_SIDE_WINDOW_STARTS.forEach(windowX => {
-                drawCanvasRoundRect(ctx, windowX, MAP_TRAIN_SIDE_WINDOW_TOP, MAP_TRAIN_SIDE_WINDOW_WIDTH, MAP_TRAIN_SIDE_WINDOW_HEIGHT, MAP_TRAIN_SIDE_WINDOW_HEIGHT / 2);
+            // 지붕 패널과 하부 스커트. 축소되어도 차체의 상·하 방향을 알아보기 쉽게 한다.
+            ctx.strokeStyle = 'rgba(71,85,105,.22)';
+            ctx.lineWidth = .55;
+            ctx.beginPath();
+            ctx.moveTo(3.5, MAP_TRAIN_SIDE_WALL_Y);
+            ctx.lineTo(94.5, MAP_TRAIN_SIDE_WALL_Y);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(51,65,85,.2)';
+            ctx.fillRect(4, 26.8, 82.5, 2.2);
+            ctx.fillStyle = 'rgba(15,23,42,.42)';
+            [[14, 8.8], [72, 8.8]].forEach(([x, wheelWidth]) => {
+                drawCanvasRoundRect(ctx, x, 27.1, wheelWidth, 2.45, 1.15);
                 ctx.fill();
+            });
+
+            // 지붕 패널 이음선과 중앙의 은은한 하이라이트.
+            ctx.strokeStyle = 'rgba(100,116,139,.16)';
+            ctx.lineWidth = .45;
+            [34, 65].forEach(panelX => {
+                ctx.beginPath();
+                ctx.moveTo(panelX, 7.2);
+                ctx.lineTo(panelX, 25.5);
+                ctx.stroke();
+            });
+            const roofHighlight = ctx.createLinearGradient(0, 7, 0, 20);
+            roofHighlight.addColorStop(0, 'rgba(255,255,255,.7)');
+            roofHighlight.addColorStop(.55, 'rgba(255,255,255,.06)');
+            roofHighlight.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = roofHighlight;
+            ctx.fillRect(3, 6, 84, 15);
+
+            // 측면 창 4개
+            MAP_TRAIN_SIDE_WINDOW_STARTS.forEach(windowX => {
+                const glassGradient = ctx.createLinearGradient(0, MAP_TRAIN_SIDE_WINDOW_TOP, 0, MAP_TRAIN_SIDE_WINDOW_TOP + MAP_TRAIN_SIDE_WINDOW_HEIGHT);
+                glassGradient.addColorStop(0, '#182733');
+                glassGradient.addColorStop(.55, MAP_TRAIN_GLASS_COLOR);
+                glassGradient.addColorStop(1, '#466072');
+                drawCanvasRoundRect(ctx, windowX, MAP_TRAIN_SIDE_WINDOW_TOP, MAP_TRAIN_SIDE_WINDOW_WIDTH, MAP_TRAIN_SIDE_WINDOW_HEIGHT, MAP_TRAIN_SIDE_WINDOW_HEIGHT / 2);
+                ctx.fillStyle = glassGradient;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(15,23,42,.46)';
+                ctx.lineWidth = .38;
+                ctx.stroke();
+                ctx.save();
+                drawCanvasRoundRect(ctx, windowX, MAP_TRAIN_SIDE_WINDOW_TOP, MAP_TRAIN_SIDE_WINDOW_WIDTH, MAP_TRAIN_SIDE_WINDOW_HEIGHT, MAP_TRAIN_SIDE_WINDOW_HEIGHT / 2);
+                ctx.clip();
+                ctx.strokeStyle = 'rgba(255,255,255,.52)';
+                ctx.lineWidth = .48;
+                ctx.beginPath();
+                ctx.moveTo(windowX + 2.2, MAP_TRAIN_SIDE_WINDOW_TOP + MAP_TRAIN_SIDE_WINDOW_HEIGHT);
+                ctx.lineTo(windowX + 5.6, MAP_TRAIN_SIDE_WINDOW_TOP);
+                ctx.stroke();
+                ctx.restore();
             });
 
             // 운전실 전면 유리. 차체 밖까지 넉넉히 그린 뒤 외곽선을 흰색으로 덧그어
@@ -5485,20 +5878,64 @@
             ctx.beginPath();
             ctx.rect(MAP_TRAIN_NOSE_CLIP_X, 0, width, height);
             ctx.clip();
-            ctx.fillStyle = MAP_TRAIN_CAB_GLASS_COLOR;
-            ctx.fill(new Path2D(MAP_TRAIN_CAB_GLASS_PATH));
+            const cabGlass = new Path2D(MAP_TRAIN_CAB_GLASS_PATH);
+            const cabGradient = ctx.createLinearGradient(88.5, 3, 99, 26);
+            cabGradient.addColorStop(0, '#526C7D');
+            cabGradient.addColorStop(.34, MAP_TRAIN_CAB_GLASS_COLOR);
+            cabGradient.addColorStop(1, '#111C24');
+            ctx.fillStyle = cabGradient;
+            ctx.fill(cabGlass);
             traceMapTrainBody(ctx);
             ctx.lineWidth = MAP_TRAIN_CAB_MARGIN * 2;
             ctx.strokeStyle = MAP_TRAIN_BODY_FILL;
             ctx.stroke();
+            ctx.save();
+            ctx.clip(cabGlass);
+            ctx.strokeStyle = 'rgba(255,255,255,.48)';
+            ctx.lineWidth = .9;
+            ctx.beginPath();
+            ctx.moveTo(90.5, 6.6);
+            ctx.lineTo(96.8, 3.8);
+            ctx.stroke();
+            ctx.restore();
             ctx.restore();
             ctx.restore();
 
-            // 노선 배지는 지붕면 위에 그대로 얹는다(참고 디자인에는 테두리가 없다).
+            // 노즈 외곽과 전조등을 마지막에 얹어 작은 지도 축척에서도 앞쪽이 선명하다.
+            ctx.save();
+            traceMapTrainBody(ctx);
+            ctx.lineWidth = .72;
+            ctx.strokeStyle = 'rgba(51,65,85,.62)';
+            ctx.stroke();
+            ctx.fillStyle = '#FFF4B8';
+            ctx.shadowColor = 'rgba(250,204,21,.9)';
+            ctx.shadowBlur = 2.2;
+            [[97.1, 8.1], [97.1, 19.1]].forEach(([x, y]) => {
+                ctx.beginPath();
+                ctx.arc(x, y, .9, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.restore();
+
+            // 노선 배지는 얇은 광택과 그림자를 더해 흰 차체 위에서도 또렷하게 분리한다.
+            ctx.save();
+            ctx.shadowColor = 'rgba(15,23,42,.28)';
+            ctx.shadowBlur = 1.5;
+            ctx.shadowOffsetY = .65;
             ctx.beginPath();
             ctx.arc(MAP_TRAIN_BADGE_X, MAP_TRAIN_BADGE_Y, MAP_TRAIN_BADGE_RADIUS, 0, Math.PI * 2);
             ctx.fillStyle = color;
             ctx.fill();
+            ctx.shadowColor = 'transparent';
+            ctx.lineWidth = .75;
+            ctx.strokeStyle = 'rgba(255,255,255,.72)';
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(MAP_TRAIN_BADGE_X - 2.5, MAP_TRAIN_BADGE_Y - 3, MAP_TRAIN_BADGE_RADIUS * .58, Math.PI * 1.08, Math.PI * 1.82);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255,255,255,.2)';
+            ctx.stroke();
+            ctx.restore();
 
             // 급행 등 특별 운행 표시는 차체 뒤쪽 지붕에 얹는다.
             if (isExpress) {
