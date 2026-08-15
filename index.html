@@ -6713,27 +6713,10 @@
                     coverBadge: '배민 상품권이 나오면 당첨!',
                     desc: '배달의민족 5천원 상품권에 당첨됐어요!',
                     icon: 'fa-utensils',
-                    chance: .05
-                },
-                {
-                    id: 'cash-prize',
-                    title: '상금 스크래치',
-                    subtitle: '1원부터 최대 1만원까지 도전',
-                    prize: '현금 상금',
-                    badge: '최대 10,000원',
-                    watermark: '10K',
-                    resultKey: 'cashPrize',
-                    maxNote: '최대 1만원',
-                    lead: '오늘의 상금은 얼마?',
-                    cardHeadline: '1원부터 만원까지<br>행운의 금액은?',
-                    theme: 'is-blue',
-                    coverImage: 'assets/scratch/cash-prize-card-v2.png',
-                    coverBadge: '긁어서 오늘의 상금 확인!',
-                    desc: '1원부터 최대 1만원까지 상금에 당첨됐어요!',
-                    icon: 'fa-sack-dollar',
-                    chance: .20
+                    chance: .03
                 }
             ];
+            const BAEMIN_GIFT_PRIORITY_MEMBERS = new Set(['이진누', '류짱', '홍박사']);
             let currentCard = null;
             let currentOutcome = null;
             let openedFromMore = false;
@@ -7152,7 +7135,10 @@
                         createdAt: Date.now()
                     };
                 }
-                const won = randomUnit() < card.chance;
+                const winChance = card.id === 'baemin-gift' && BAEMIN_GIFT_PRIORITY_MEMBERS.has(identity.name)
+                    ? .10
+                    : card.chance;
+                const won = randomUnit() < winChance;
                 const possibleCounts = won ? [3] : [1, 2, 4];
                 const matchCount = possibleCounts[Math.floor(randomUnit() * possibleCounts.length)];
                 const positions = [0, 1, 2, 3, 4, 5];
