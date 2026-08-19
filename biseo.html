@@ -737,7 +737,7 @@
         const starterMessages = [
             {
                 role: 'assistant',
-                text: '안녕하세요. 엔조이 비서실장입니다.\n일정 정리, 모임비 확인, 학교 공지 메모, 여행 계획처럼 귀찮은 일을 편하게 던져주세요.',
+                text: '안녕하세요. 엔조이 비서실장입니다. 무엇을 도와드릴까요?',
                 at: Date.now()
             }
         ];
@@ -802,6 +802,9 @@
             if (!thread || !Array.isArray(thread.messages)) return null;
             const messages = thread.messages.map(normalizeMessage).filter(Boolean).slice(-MAX_MESSAGES);
             if (!messages.length) return null;
+            if (messages.length === 1 && messages[0].role === 'assistant') {
+                messages[0].text = starterMessages[0].text;
+            }
             return {
                 id: String(thread.id || makeId()),
                 title: String(thread.title || '새로운 대화').slice(0, 60),
@@ -886,8 +889,6 @@
             });
 
             if (pendingReplies.has(thread.id)) html += renderTyping();
-            if (messages.length === 1 && !pendingReplies.has(thread.id)) html += renderQuickPrompts();
-
             messagesEl.innerHTML = html;
             activeTitleEl.textContent = thread.title;
             resizeInput();
@@ -1004,7 +1005,7 @@
             }).catch(function () {
                 const target = store.threads.find(function (item) { return item.id === threadId; });
                 if (!target) return;
-                target.messages.push({ role: 'assistant', text: createReply(text, target), at: Date.now() });
+                target.messages.push({ role: 'assistant', text: '지금은 비서실장이 출장 중이에요. 잠시 후 다시 방문해 주세요.', at: Date.now() });
                 target.messages = target.messages.slice(-MAX_MESSAGES);
                 target.updatedAt = Date.now();
                 pendingReplies.delete(threadId);
