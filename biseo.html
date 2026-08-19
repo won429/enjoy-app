@@ -714,6 +714,9 @@
         const THREAD_KEY_PREFIX = 'enjoy-secretary-threads-v2:';
         const MAX_THREADS = 40;
         const MAX_MESSAGES = 120;
+        const BISEO_AI_API = 'https://enjoy-biseo-ai.sungwon4867.workers.dev';
+        const AI_HISTORY_LIMIT = 20;
+        const AI_TIMEOUT_MS = 30000;
 
         const pageEl = document.getElementById('enjoy-page');
         const messagesEl = document.getElementById('messages');
@@ -984,7 +987,21 @@
             renderThreadList();
 
             const threadId = thread.id;
-            window.setTimeout(function () {
+            requestAiReply(thread).then(function (reply) {
+                const target = store.threads.find(function (item) { return item.id === threadId; });
+                if (!target) return;
+                target.messages.push({ role: 'assistant', text: reply, at: Date.now() });
+                target.messages = target.messages.slice(-MAX_MESSAGES);
+                target.updatedAt = Date.now();
+                pendingReplies.delete(threadId);
+                saveStore();
+
+                if (store.activeId === threadId) {
+                    setAssistantThinking(false);
+                    renderChat();
+                }
+                renderThreadList();
+            }).catch(function () {
                 const target = store.threads.find(function (item) { return item.id === threadId; });
                 if (!target) return;
                 target.messages.push({ role: 'assistant', text: createReply(text, target), at: Date.now() });
@@ -998,7 +1015,34 @@
                     renderChat();
                 }
                 renderThreadList();
-            }, Math.min(1100, 520 + text.length * 16));
+            });
+        }
+
+        async function requestAiReply(thread) {
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(function () { controller.abort(); }, AI_TIMEOUT_MS);
+            const messages = thread.messages.slice(-AI_HISTORY_LIMIT).map(function (message) {
+                return {
+                    role: message.role === 'user' ? 'user' : 'assistant',
+                    text: String(message.text || '').slice(0, 4000)
+                };
+            });
+
+            try {
+                const response = await fetch(BISEO_AI_API + '/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: messages }),
+                    signal: controller.signal
+                });
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok || typeof data.reply !== 'string' || !data.reply.trim()) {
+                    throw new Error('AI response unavailable');
+                }
+                return data.reply.trim().slice(0, 12000);
+            } finally {
+                window.clearTimeout(timeoutId);
+            }
         }
 
         function createReply(text, thread) {
