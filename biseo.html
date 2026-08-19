@@ -345,6 +345,28 @@
             background: var(--page);
             border-bottom-right-radius: 0.6875rem;
         }
+        .source-trigger {
+            width: 100%;
+            margin-top: 0.6875rem;
+            padding-top: 0.5625rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.625rem;
+            border-top: 0.0625rem solid var(--border);
+            color: var(--blue);
+            font-size: 0.75rem;
+            line-height: 1.125rem;
+            font-weight: 800;
+            text-align: left;
+            white-space: normal;
+        }
+        .source-trigger-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+        .source-trigger i { font-size: 0.6875rem; }
 
         .quick-prompts {
             display: grid;
@@ -467,7 +489,8 @@
             transform: none;
         }
 
-        .thread-drawer {
+        .thread-drawer,
+        .source-drawer {
             position: absolute;
             inset: 0;
             z-index: 80;
@@ -476,19 +499,23 @@
             pointer-events: none;
             visibility: hidden;
         }
-        .thread-drawer.open {
+        .thread-drawer.open,
+        .source-drawer.open {
             pointer-events: auto;
             visibility: visible;
         }
-        .thread-backdrop {
+        .thread-backdrop,
+        .source-backdrop {
             position: absolute;
             inset: 0;
             background: rgba(0, 0, 0, 0.25);
             opacity: 0;
             transition: opacity .24s ease;
         }
-        .thread-drawer.open .thread-backdrop { opacity: 1; }
-        .thread-sheet {
+        .thread-drawer.open .thread-backdrop,
+        .source-drawer.open .source-backdrop { opacity: 1; }
+        .thread-sheet,
+        .source-sheet {
             position: relative;
             width: 100%;
             max-height: min(76%, 38.75rem);
@@ -503,7 +530,8 @@
             -webkit-backdrop-filter: blur(1.75rem) saturate(1.6);
             backdrop-filter: blur(1.75rem) saturate(1.6);
         }
-        .thread-drawer.open .thread-sheet { transform: translateY(0); }
+        .thread-drawer.open .thread-sheet,
+        .source-drawer.open .source-sheet { transform: translateY(0); }
         .sheet-grabber {
             width: 2.375rem;
             height: 0.3125rem;
@@ -610,6 +638,60 @@
             line-height: 1.4;
             text-align: center;
         }
+        .source-sheet { max-height: min(70%, 32rem); }
+        .source-list {
+            min-height: 0;
+            overflow-y: auto;
+            padding: 0.125rem 0 0.25rem;
+            scrollbar-width: none;
+        }
+        .source-list::-webkit-scrollbar { display: none; }
+        .source-item {
+            display: grid;
+            grid-template-columns: 2.375rem minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 0.6875rem;
+            min-height: 3.625rem;
+            padding: 0.5625rem;
+            border-radius: 1rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .source-item + .source-item { margin-top: 0.125rem; }
+        .source-item:active { background: rgba(120, 120, 128, .13); }
+        .source-icon {
+            width: 2.375rem;
+            height: 2.375rem;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: rgba(49, 130, 246, .14);
+            color: var(--blue);
+            font-size: 0.8125rem;
+        }
+        .source-copy { min-width: 0; }
+        .source-name {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.875rem;
+            line-height: 1.125rem;
+            font-weight: 800;
+        }
+        .source-action {
+            display: block;
+            margin-top: 0.125rem;
+            color: var(--muted);
+            font-size: 0.6875rem;
+            line-height: 0.9375rem;
+            font-weight: 650;
+        }
+        .source-open-icon {
+            padding-right: 0.25rem;
+            color: var(--muted);
+            font-size: 0.6875rem;
+        }
 
         @media (max-width: 360px) {
             .chat-header-main { grid-template-columns: 2.375rem minmax(0, 1fr) 4.75rem; }
@@ -693,6 +775,20 @@
                 <div class="local-note">대화는 현재 기기의 이 계정 저장공간에만 보관됩니다.</div>
             </section>
         </div>
+
+        <div id="source-drawer" class="source-drawer" aria-hidden="true">
+            <button type="button" class="source-backdrop" id="source-backdrop" aria-label="출처 닫기"></button>
+            <section class="source-sheet" role="dialog" aria-modal="true" aria-labelledby="source-sheet-title">
+                <div class="sheet-grabber" aria-hidden="true"></div>
+                <div class="sheet-header">
+                    <div>
+                        <h2 id="source-sheet-title" class="sheet-title">출처</h2>
+                        <div id="source-sheet-count" class="sheet-account"></div>
+                    </div>
+                </div>
+                <div id="source-list" class="source-list"></div>
+            </section>
+        </div>
     </div>
 
     <script>
@@ -733,6 +829,9 @@
         const drawerEl = document.getElementById('thread-drawer');
         const threadListEl = document.getElementById('thread-list');
         const sheetAccountEl = document.getElementById('sheet-account');
+        const sourceDrawerEl = document.getElementById('source-drawer');
+        const sourceListEl = document.getElementById('source-list');
+        const sourceSheetCountEl = document.getElementById('source-sheet-count');
 
         const accountId = readAccountId();
         const accountLabel = readAccountLabel();
@@ -795,11 +894,49 @@
 
         function normalizeMessage(message) {
             if (!message || typeof message.text !== 'string') return null;
+            let text = message.text.slice(0, 12000);
+            let sources = normalizeSources(message.sources);
+            if (!sources.length) {
+                const legacy = extractLegacySources(text);
+                text = legacy.text;
+                sources = legacy.sources;
+            }
             return {
                 role: message.role === 'user' ? 'user' : 'assistant',
-                text: message.text.slice(0, 12000),
+                text: text,
+                sources: sources,
                 at: Number(message.at) || Date.now()
             };
+        }
+
+        function normalizeSources(rawSources) {
+            if (!Array.isArray(rawSources)) return [];
+            const seen = Object.create(null);
+            return rawSources.reduce(function (result, source) {
+                if (!source || result.length >= 5) return result;
+                const url = String(source.url || '').trim();
+                if (!/^https:\/\//i.test(url)) return result;
+                const title = String(source.title || '웹 검색 결과').replace(/\s+/g, ' ').trim().slice(0, 120) || '웹 검색 결과';
+                const key = title.toLowerCase();
+                if (seen[key]) return result;
+                seen[key] = true;
+                result.push({ title: title, url: url.slice(0, 4000) });
+                return result;
+            }, []);
+        }
+
+        function extractLegacySources(text) {
+            const marker = '\n\n출처\n';
+            const markerIndex = text.lastIndexOf(marker);
+            if (markerIndex < 0) return { text: text, sources: [] };
+            const sources = text.slice(markerIndex + marker.length).split('\n').map(function (line) {
+                const match = line.match(/^-\s+(.+?):\s+(https:\/\/\S+)$/);
+                return match ? { title: match[1], url: match[2] } : null;
+            }).filter(Boolean);
+            const normalized = normalizeSources(sources);
+            return normalized.length
+                ? { text: text.slice(0, markerIndex).trim(), sources: normalized }
+                : { text: text, sources: [] };
         }
 
         function normalizeThread(thread) {
@@ -888,7 +1025,8 @@
                 html += renderMessage(
                     message,
                     !previous || previous.role !== message.role,
-                    !next || next.role !== message.role
+                    !next || next.role !== message.role,
+                    index
                 );
             });
 
@@ -905,7 +1043,7 @@
             return '<div class="day-divider"><span>' + escapeHtml(label) + '</span></div>';
         }
 
-        function renderMessage(message, isStart, isEnd) {
+        function renderMessage(message, isStart, isEnd, messageIndex) {
             const role = message.role === 'user' ? 'user' : 'assistant';
             const classes = ['message-row', role];
             if (isStart) classes.push('group-start');
@@ -913,9 +1051,16 @@
             const avatar = role === 'assistant'
                 ? '<div class="message-avatar" aria-hidden="true"><img src="dhkfodshf.png" alt=""></div>'
                 : '';
+            const sources = role === 'assistant' ? normalizeSources(message.sources) : [];
+            const sourceButton = sources.length
+                ? '<button type="button" class="source-trigger" data-source-index="' + messageIndex + '">' +
+                    '<span class="source-trigger-copy"><i class="fa-solid fa-link" aria-hidden="true"></i>출처 ' + sources.length + '개 보기</span>' +
+                    '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>' +
+                '</button>'
+                : '';
             return '<div class="' + classes.join(' ') + '">' +
                 avatar +
-                '<div class="bubble">' + escapeHtml(message.text) + '</div>' +
+                '<div class="bubble">' + escapeHtml(message.text) + sourceButton + '</div>' +
             '</div>';
         }
 
@@ -995,7 +1140,7 @@
             requestAiReply(thread).then(function (reply) {
                 const target = store.threads.find(function (item) { return item.id === threadId; });
                 if (!target) return;
-                target.messages.push({ role: 'assistant', text: reply, at: Date.now() });
+                target.messages.push({ role: 'assistant', text: reply.text, sources: reply.sources, at: Date.now() });
                 target.messages = target.messages.slice(-MAX_MESSAGES);
                 target.updatedAt = Date.now();
                 pendingReplies.delete(threadId);
@@ -1044,7 +1189,12 @@
                 if (!response.ok || typeof data.reply !== 'string' || !data.reply.trim()) {
                     throw new Error('AI response unavailable');
                 }
-                return data.reply.trim().slice(0, 12000);
+                const legacy = extractLegacySources(data.reply.trim().slice(0, 12000));
+                const structuredSources = normalizeSources(data.sources);
+                return {
+                    text: structuredSources.length ? data.reply.trim().slice(0, 12000) : legacy.text,
+                    sources: structuredSources.length ? structuredSources : legacy.sources
+                };
             } finally {
                 window.clearTimeout(timeoutId);
             }
@@ -1288,6 +1438,7 @@
 
         function openThreadDrawer() {
             window.haptic();
+            closeSourceDrawer();
             renderThreadList();
             drawerEl.classList.add('open');
             drawerEl.setAttribute('aria-hidden', 'false');
@@ -1296,6 +1447,32 @@
         function closeThreadDrawer() {
             drawerEl.classList.remove('open');
             drawerEl.setAttribute('aria-hidden', 'true');
+        }
+
+        function openSourceDrawer(messageIndex) {
+            const message = activeThread().messages[messageIndex];
+            const sources = message ? normalizeSources(message.sources) : [];
+            if (!sources.length) return;
+            window.haptic();
+            closeThreadDrawer();
+            sourceSheetCountEl.textContent = '답변에 참고한 웹페이지 ' + sources.length + '개';
+            sourceListEl.innerHTML = sources.map(function (source) {
+                return '<a class="source-item" href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">' +
+                    '<span class="source-icon" aria-hidden="true"><i class="fa-solid fa-globe"></i></span>' +
+                    '<span class="source-copy">' +
+                        '<span class="source-name">' + escapeHtml(source.title) + '</span>' +
+                        '<span class="source-action">웹에서 열기</span>' +
+                    '</span>' +
+                    '<i class="fa-solid fa-arrow-up-right-from-square source-open-icon" aria-hidden="true"></i>' +
+                '</a>';
+            }).join('');
+            sourceDrawerEl.classList.add('open');
+            sourceDrawerEl.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeSourceDrawer() {
+            sourceDrawerEl.classList.remove('open');
+            sourceDrawerEl.setAttribute('aria-hidden', 'true');
         }
 
         function setAssistantThinking(active) {
@@ -1362,9 +1539,14 @@
             wasNearBottom = nearBottom();
         }, { passive: true });
         messagesEl.addEventListener('click', function (event) {
-            const button = event.target.closest('[data-prompt-index]');
-            if (!button) return;
-            const prompt = quickPrompts[Number(button.dataset.promptIndex)];
+            const sourceButton = event.target.closest('[data-source-index]');
+            if (sourceButton) {
+                openSourceDrawer(Number(sourceButton.dataset.sourceIndex));
+                return;
+            }
+            const promptButton = event.target.closest('[data-prompt-index]');
+            if (!promptButton) return;
+            const prompt = quickPrompts[Number(promptButton.dataset.promptIndex)];
             if (prompt) sendQuickPrompt(prompt.text);
         });
         threadListEl.addEventListener('click', function (event) {
@@ -1385,6 +1567,12 @@
             createNewThread(true);
         });
         document.getElementById('thread-backdrop').addEventListener('click', closeThreadDrawer);
+        document.getElementById('source-backdrop').addEventListener('click', closeSourceDrawer);
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+            closeThreadDrawer();
+            closeSourceDrawer();
+        });
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', handleViewportChange, { passive: true });
             window.visualViewport.addEventListener('scroll', handleViewportChange, { passive: true });
