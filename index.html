@@ -1844,6 +1844,34 @@
             mix-blend-mode: screen;
             pointer-events: none;
         }
+        .home-account-actions {
+            position: absolute;
+            top: 50%;
+            right: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.125rem;
+            transform: translateY(-50%);
+        }
+        .home-account-action {
+            width: 1.75rem;
+            height: 1.75rem;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 50%;
+            color: rgba(255,255,255,.76);
+            background: transparent;
+            font-size: 11pt;
+            transition: transform .15s ease, background-color .15s ease;
+        }
+        .home-account-action.hidden { display: none; }
+        .home-account-action:active {
+            transform: scale(.88);
+            background: rgba(255,255,255,.1);
+        }
+        .home-account-action--danger { color: #F87171; }
 
         /* 홈 다른 서비스 바로가기 */
         .home-service-menu {
@@ -4137,6 +4165,9 @@
                 filter: none;
                 mix-blend-mode: multiply;
             }
+            .home-account-action { color: rgba(20,20,20,.68); }
+            .home-account-action:active { background: rgba(0,0,0,.06); }
+            .home-account-action--danger { color: #E5484D; }
             .home-service-item { color: #4E4E52; }
             .home-service-item:active { background: rgba(0,0,0,.045); }
 
@@ -4826,6 +4857,10 @@
             <span class="home-wordmark" aria-hidden="true">
                 <img src="assets/enjoy-wordmark.png" alt="">
             </span>
+            <div class="home-account-actions" aria-label="계정 메뉴">
+                <button type="button" class="home-account-action" aria-label="로그아웃" title="로그아웃" onclick="window.haptic(); window.enjoyConfirm('로그아웃 하시겠어요?', { title: '로그아웃', confirmText: '로그아웃' }).then(function (confirmed) { if (confirmed) window.enjoyLogout && window.enjoyLogout(); });"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></button>
+                <button id="home-withdraw" type="button" class="home-account-action home-account-action--danger hidden" aria-label="회원 탈퇴" title="회원 탈퇴" onclick="window.haptic(); window.enjoyConfirm('정말 탈퇴하시겠어요?\n계정과 프로필 연결이 해제되고, 다시 로그인하면 프로필을 새로 입력해야 해요.', { title: '회원 탈퇴', confirmText: '탈퇴', danger: true }).then(function (confirmed) { if (confirmed) window.enjoyWithdraw && window.enjoyWithdraw(); });"><i class="fa-solid fa-user-xmark" aria-hidden="true"></i></button>
+            </div>
         </header>
         
         <!-- 카드 나열 (배너/슬라이더 제거, 각 항목을 사진 카드로 세로 나열) -->
@@ -13264,6 +13299,8 @@
             if (em) em.textContent = u.email || '';
             const wd = $('more-withdraw');
             if (wd) wd.classList.toggle('hidden', false);              // 로그인 사용자는 탈퇴 가능
+            const homeWd = $('home-withdraw');
+            if (homeWd) homeWd.classList.toggle('hidden', false);
         }
 
         /* ----- 멤버 트레이: 7명 멤버 항상 표시 + 활동 상태 ----- */
