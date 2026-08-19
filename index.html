@@ -9102,6 +9102,13 @@
             const isIncome = (entry) => entry && (entry.type === 'income' || entry.type === '입금' || entry.type === '수입');
             const amountOf = (entry) => Math.abs(Number(entry && entry.amount) || 0);
             const inRange = (date, start, end) => date && date >= start && date <= end;
+            const paidDateOf = (member) => {
+                const value = member && (member.paidDate || member.paidAt);
+                if (!value) return null;
+                if (typeof value.toDate === 'function') return atMidnight(value.toDate());
+                if (typeof value === 'number') return atMidnight(new Date(value));
+                return atMidnight(value);
+            };
             const recordsForMonth = (year, month) => {
                 const records = window.meetingData && window.meetingData.records ? window.meetingData.records : {};
                 const key = `${year}-${month}`;
@@ -9191,28 +9198,45 @@
             }).reduce((sum, entry) => sum + amountOf(entry), 0);
             const periodExpense = periodEntries.filter(entry => !isIncome(entry)).reduce((sum, entry) => sum + amountOf(entry), 0);
 
-            const sumDuesByMonth = (startMonth, endMonth) => {
-                if (!startMonth || !endMonth || startMonth > endMonth) return 0;
+            const monthBoundsForRecordKey = (recordKey) => {
+                const parts = String(recordKey || '').split('-').map(Number);
+                let year;
+                let month;
+                if (parts.length === 2 && parts.every(Number.isFinite)) {
+                    [year, month] = parts;
+                } else {
+                    month = Number(recordKey);
+                    // 기존 숫자 키는 2025년 10~12월, 2026년 1~9월 데이터다.
+                    year = month >= 10 ? 2025 : 2026;
+                }
+                if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
+                return {
+                    start: new Date(year, month - 1, 1),
+                    end: new Date(year, month, 0)
+                };
+            };
+            const sumDuesForPeriod = (startDate, endDate) => {
+                if (!startDate || !endDate || startDate > endDate) return 0;
+                const records = window.meetingData && window.meetingData.records ? window.meetingData.records : {};
                 let total = 0;
-                const cursor = new Date(startMonth.getFullYear(), startMonth.getMonth(), 1);
-                while (cursor <= endMonth) {
-                    recordsForMonth(cursor.getFullYear(), cursor.getMonth() + 1).forEach(member => {
+                Object.entries(records).forEach(([recordKey, monthRecords]) => {
+                    if (!Array.isArray(monthRecords)) return;
+                    const monthBounds = monthBoundsForRecordKey(recordKey);
+                    monthRecords.forEach(member => {
+                        const paidDate = paidDateOf(member);
+                        const belongsToPeriod = paidDate
+                            ? inRange(paidDate, startDate, endDate)
+                            : monthBounds && monthBounds.start >= startDate && monthBounds.end <= endDate;
+                        if (!belongsToPeriod) return;
                         total += Math.max(0, Number(member.amount) || 0);
                     });
-                    cursor.setMonth(cursor.getMonth() + 1);
-                }
+                });
                 return total;
             };
-            // 납부일을 따로 저장하지 않으므로 확정 수입은 지난 모임의 '다음 달'부터 계산한다.
-            const incomeStartMonth = previousMeeting
-                ? new Date(previousMeeting.end.getFullYear(), previousMeeting.end.getMonth() + 1, 1)
-                : new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
-            const incomeEndMonth = new Date(periodEnd.getFullYear(), periodEnd.getMonth(), 1);
-            const inclusiveStartMonth = previousMeeting
-                ? new Date(previousMeeting.end.getFullYear(), previousMeeting.end.getMonth(), 1)
-                : incomeStartMonth;
-            const periodIncome = sumDuesByMonth(incomeStartMonth, incomeEndMonth) + otherIncome;
-            const inclusiveIncome = sumDuesByMonth(inclusiveStartMonth, incomeEndMonth) + otherIncome;
+            // 회비는 실제 납부일을 기준으로 이전 모임 종료 다음 날부터 이번 모임 종료일까지 배정한다.
+            // 이번 모임 종료 다음 날 이후의 납부액은 다음 모임 가계부에 포함된다.
+            // 납부일이 없는 과거 기록은 해당 월 전체가 관리 기간 안에 들어오는 경우에만 포함한다.
+            const periodIncome = sumDuesForPeriod(periodStart, periodEnd) + otherIncome;
             const periodDateLabel = `${fmtDate(targetMeeting.start, true)}${targetMeeting.end > targetMeeting.start ? ' ~ ' + fmtDate(targetMeeting.end) : ''}`;
 
             const pastMeetingExpenses = meetingWindows.filter(item => item.end < today).map(item => {
@@ -9318,8 +9342,7 @@
                             <i class="fa-solid fa-piggy-bank text-[15px] text-[#3182F6]"></i>
                             <p class="text-[10.5px] text-gray-500 mt-3">모인 금액</p>
                             <strong class="block text-[18px] text-white mt-1">${periodIncome.toLocaleString()}원</strong>
-                            <span class="block text-[9.5px] text-gray-600 mt-1">지난 모임 다음 달부터</span>
-                            ${previousMeeting ? `<span class="block text-[9px] text-gray-600 mt-0.5">(지난 모임 달 포함 시 약 ${inclusiveIncome.toLocaleString()}원)</span>` : ''}
+                            <span class="block text-[9.5px] text-gray-600 mt-1">${fmtDate(periodStart)} ~ ${fmtDate(periodEnd)} 납부</span>
                         </div>
                         <div class="ledger-surface rounded-[20px] p-4">
                             <div class="w-8 h-8 rounded-full bg-[#F04452]/12 text-[#F04452] flex items-center justify-center"><i class="fa-solid fa-wallet text-[12px]"></i></div>
