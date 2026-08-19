@@ -3341,6 +3341,36 @@
             opacity: 0;
         }
         .vlog-region-option.is-selected i { opacity: 1; }
+        .ledger-meeting-picker {
+            width: 100%;
+            margin-bottom: 0;
+        }
+        .ledger-meeting-trigger {
+            width: 100%;
+            max-width: none;
+            min-height: 2.75rem;
+        }
+        .ledger-meeting-trigger span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ledger-meeting-menu {
+            left: 0;
+            right: 0;
+            max-height: 16rem;
+            overflow-y: auto;
+        }
+        .ledger-meeting-option span {
+            min-width: 0;
+            line-height: 1.35;
+            word-break: keep-all;
+        }
+        .ledger-meeting-trigger:disabled {
+            cursor: default;
+            opacity: .55;
+        }
         @media (prefers-reduced-motion: reduce) {
             .vlog-region-trigger,
             .vlog-region-trigger i,
@@ -4428,7 +4458,6 @@
             .ledger-ai-chip b { color: #080A0F; }
             .ledger-ai-disclaimer { color: #777D86; }
             .ledger-ai-disclaimer i { color: #858B94; }
-            #ledger-meeting-select { color-scheme: light !important; }
             .vlog-detail-screen { background-color: #F2F2F7; }
             .vlog-episode-card { border-color: rgba(0,0,0,.10); }
             .vlog-media-label { color: #FFFFFF !important; }
@@ -5708,7 +5737,7 @@
                 <div id="mpanel-expense" class="hidden">
                     <div class="ledger-surface rounded-[20px] p-4 mb-4">
                         <label class="text-[10.5px] font-bold text-[#3182F6] block mb-1.5"><i class="fa-regular fa-calendar-check mr-1"></i>모임별 가계부</label>
-                        <select id="ledger-meeting-select" onchange="window.selectLedgerMeeting(this.value)" class="w-full min-w-0 bg-transparent text-[14px] font-black text-white outline-none" style="color-scheme: dark;"></select>
+                        <div id="ledger-meeting-picker" class="vlog-region-picker ledger-meeting-picker"></div>
                         <p id="ledger-meeting-period" class="text-[10px] text-gray-500 mt-2"></p>
                     </div>
                     <div id="ledger-insights"></div>
@@ -9074,7 +9103,17 @@
 
         // 모임통장 가계부 — 회비 기록·일정·수입/지출을 함께 계산해 현황과 예측을 표시
         // 관리자 입력 항목: { date, title, amount, type:"expense"|"income", memo?, place?, category? }
-        window.selectLedgerMeeting = function(key) {
+        window.selectLedgerMeeting = function(key, event) {
+            if (event) {
+                event.stopPropagation();
+                const picker = event.currentTarget && event.currentTarget.closest('.ledger-meeting-picker');
+                if (picker) {
+                    picker.classList.remove('is-open');
+                    const trigger = picker.querySelector('.ledger-meeting-trigger');
+                    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                }
+            }
+            window.haptic && window.haptic();
             window.selectedLedgerMeetingKey = key || '';
             window.renderExpenses();
         };
@@ -9162,19 +9201,37 @@
                 meeting.periodEnd = meeting.end;
             });
 
-            const meetingSelect = document.getElementById('ledger-meeting-select');
+            const meetingPicker = document.getElementById('ledger-meeting-picker');
             const meetingPeriod = document.getElementById('ledger-meeting-period');
             if (!meetingWindows.some(item => item.key === window.selectedLedgerMeetingKey)) {
                 const latest = meetingWindows[meetingWindows.length - 1];
                 window.selectedLedgerMeetingKey = latest ? latest.key : '';
             }
             const targetMeeting = meetingWindows.find(item => item.key === window.selectedLedgerMeetingKey) || null;
-            if (meetingSelect) {
-                meetingSelect.innerHTML = meetingWindows.length
-                    ? meetingWindows.slice().reverse().map(meeting =>
-                        `<option value="${esc(meeting.key)}" ${meeting.key === window.selectedLedgerMeetingKey ? 'selected' : ''}>${fmtDate(meeting.start, true)} · ${esc(meeting.title)}</option>`
-                    ).join('')
-                    : '<option value="">등록된 정기모임이 없어요</option>';
+            if (meetingPicker) {
+                if (targetMeeting) {
+                    const currentLabel = `${fmtDate(targetMeeting.start, true)} · ${targetMeeting.title}`;
+                    meetingPicker.innerHTML = `
+                        <button type="button" class="vlog-region-trigger ledger-meeting-trigger" aria-label="가계부 모임 선택: ${esc(currentLabel)}" aria-haspopup="listbox" aria-expanded="false" onclick="window.toggleVlogRegionMenu(this, event)">
+                            <span>${esc(currentLabel)}</span>
+                            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <div class="vlog-region-menu ledger-meeting-menu" role="listbox" aria-label="가계부 모임 선택">
+                            ${meetingWindows.slice().reverse().map(meeting => {
+                                const selected = meeting.key === window.selectedLedgerMeetingKey;
+                                return `<button type="button" class="vlog-region-option ledger-meeting-option${selected ? ' is-selected' : ''}" role="option" aria-selected="${selected}" data-meeting-key="${esc(meeting.key)}" onclick="window.selectLedgerMeeting(this.dataset.meetingKey, event)">
+                                    <span>${fmtDate(meeting.start, true)} · ${esc(meeting.title)}</span>
+                                    <i class="fa-solid fa-check" aria-hidden="true"></i>
+                                </button>`;
+                            }).join('')}
+                        </div>`;
+                } else {
+                    meetingPicker.innerHTML = `
+                        <button type="button" class="vlog-region-trigger ledger-meeting-trigger" disabled>
+                            <span>등록된 정기모임이 없어요</span>
+                            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                        </button>`;
+                }
             }
             if (!targetMeeting) {
                 if (meetingPeriod) meetingPeriod.textContent = '일정에 정기모임을 등록하면 모임별 가계부가 만들어집니다.';
