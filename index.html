@@ -5071,31 +5071,6 @@
                     </div>
                 </section>
 
-                <!-- 엔조이 앱 출시 기념 이벤트 -->
-                <section class="home-scratch-strip assistant-scratch-strip" aria-label="엔조이 앱 출시 기념 이벤트">
-                    <div class="home-baseball-heading">
-                        <span class="home-baseball-heading-label"><i class="fa-solid fa-ticket"></i> 엔조이 앱 출시 기념 이벤트</span>
-                        <button type="button" class="home-baseball-more" onclick="window.openScratchMore()" aria-label="전체 스크래치 보기">
-                            <span>더보기</span><i class="fa-solid fa-chevron-right text-[7px]"></i>
-                        </button>
-                    </div>
-
-                    <button type="button" class="home-scratch-ticket is-mint" onclick="window.openScratchTicket('penalty-waiver', false)" aria-label="부과금 면제권 스크래치 열기">
-                        <span class="home-scratch-watermark" aria-hidden="true">FREE</span>
-                        <span class="home-scratch-copy">
-                            <strong class="home-scratch-question">면제권 당첨의 주인공은?</strong>
-                        </span>
-                        <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="penalty-waiver">5회 남음</span>
-                    </button>
-
-                    <button type="button" class="home-scratch-ticket is-orange" onclick="window.openScratchTicket('baemin-gift', false)" aria-label="배달의민족 상품권 스크래치 열기">
-                        <span class="home-scratch-watermark" aria-hidden="true">5K</span>
-                        <span class="home-scratch-copy">
-                            <strong class="home-scratch-question">5천원 상품권의 주인공은?</strong>
-                        </span>
-                        <span class="home-scratch-action scratch-attempt-timer" data-scratch-timer-card="baemin-gift">5회 남음</span>
-                    </button>
-                </section>
                 <div class="home-rail-group">
                     <div class="home-rail-heading">
                         <h3>여행 시리즈</h3>
@@ -5496,45 +5471,6 @@
             <span>경기 정보를 불러오는 중...</span>
         </div>
         <iframe id="baseball-game-frame" title="KBO 경기 정보" class="relative z-20 w-full h-full border-0 bg-[#F2F2F7] opacity-0 transition-opacity duration-200" allow="autoplay"></iframe>
-    </section>
-
-    <!-- 스크래치 전체 목록 화면 -->
-    <section id="scratch-more-screen" class="scratch-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md flex-col overflow-hidden" aria-label="스크래치 더보기">
-        <button type="button" onclick="window.closeScratchMore()" class="community-back-fab" aria-label="홈으로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
-        <header class="scratch-topbar">
-            <h2>엔조이 스크래치</h2>
-        </header>
-        <div class="scratch-screen-scroll scrollbar-hide">
-            <div id="scratch-more-list" class="scratch-more-list"></div>
-        </div>
-    </section>
-
-    <!-- 개별 스크래치 긁기 화면 -->
-    <section id="scratch-play-screen" class="scratch-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-[70] w-full max-w-md flex-col overflow-hidden" aria-label="스크래치 긁기">
-        <button type="button" onclick="window.closeScratchTicket()" class="community-back-fab" aria-label="이전 화면으로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
-        <header class="scratch-topbar">
-            <h2 id="scratch-play-title">부과금 면제권 스크래치</h2>
-        </header>
-        <div class="scratch-screen-scroll scrollbar-hide">
-            <div class="scratch-play-shell">
-                <div id="scratch-reveal-card" class="scratch-reveal">
-                    <div class="scratch-result-board" aria-live="polite">
-                        <strong id="scratch-result-rule" class="scratch-result-rule">같은 상품 3개가 나오면 당첨!</strong>
-                        <div id="scratch-symbol-grid" class="scratch-symbol-grid"></div>
-                        <span id="scratch-grid-result" class="scratch-grid-result">결과를 확인해보세요</span>
-                    </div>
-                    <canvas id="scratch-canvas" aria-label="손가락이나 마우스로 긁는 스크래치 영역"></canvas>
-                    <div class="scratch-entry-mask" aria-hidden="true"></div>
-                </div>
-
-                <div class="scratch-bonus-panel" aria-disabled="true">
-                    <span class="scratch-bonus-title"><i class="fa-solid fa-lock"></i> 보너스 포인트</span>
-                    <span class="scratch-bonus-status">포인트 기능 준비 중 · 나중에 이용 가능</span>
-                </div>
-
-                <p id="scratch-progress" class="scratch-progress" aria-live="polite">메인 카드를 60% 이상 긁으면 결과가 열려요.</p>
-            </div>
-        </div>
     </section>
 
     <!-- 💰 모임통장 화면 -->
@@ -6678,6 +6614,7 @@
 
         // 홈 스크래치 — 둥근 사각형 버튼은 입구로만 사용하고, 실제 긁기는 별도 화면에서 진행한다.
         (function () {
+            if (!document.querySelector('.home-scratch-strip')) return;
             const cards = [
                 {
                     id: 'penalty-waiver',
