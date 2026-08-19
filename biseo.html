@@ -987,7 +987,7 @@
             window.setTimeout(function () {
                 const target = store.threads.find(function (item) { return item.id === threadId; });
                 if (!target) return;
-                target.messages.push({ role: 'assistant', text: createReply(text), at: Date.now() });
+                target.messages.push({ role: 'assistant', text: createReply(text, target), at: Date.now() });
                 target.messages = target.messages.slice(-MAX_MESSAGES);
                 target.updatedAt = Date.now();
                 pendingReplies.delete(threadId);
@@ -1001,39 +1001,190 @@
             }, Math.min(1100, 520 + text.length * 16));
         }
 
-        function createReply(text) {
-            const lower = text.toLowerCase();
-            if (hasAny(lower, ['일정', '스케줄', '오늘', '내일', '약속'])) {
-                return '좋아요. 일정은 이렇게 정리하면 깔끔해요.\n\n1. 꼭 해야 하는 일\n2. 시간이 정해진 약속\n3. 미뤄도 되는 일\n\n시간이랑 해야 할 일을 보내주면 제가 우선순위대로 다시 정리해드릴게요.';
+        function createReply(text, thread) {
+            const lower = normalizeForMatch(text);
+            const nameInMessage = extractIntroducedName(text);
+            const rememberedName = findRememberedName(thread);
+            const topic = inferTopic(lower, thread);
+            const directTopic = inferTopic(lower);
+            const now = new Date();
+
+            if (nameInMessage) {
+                return nameInMessage + '님, 반가워요. 이 대화에서는 이름을 기억하고 있을게요. 무엇을 도와드릴까요?';
             }
-            if (hasAny(lower, ['모임비', '회비', '돈', '납부', '정산'])) {
-                return '모임비 관련이면 톤을 딱 맞춰드릴 수 있어요.\n\n예시 문구:\n이번 달 모임비 확인 부탁드려요. 납부하신 분은 따로 표시해둘게요. 아직 못 낸 분도 편할 때 알려주세요.';
+            if (hasAny(lower, ['내 이름 기억', '내 이름 뭐', '내가 누구'])) {
+                return rememberedName
+                    ? '물론이죠. ' + rememberedName + '님이잖아요.'
+                    : '아직 이름을 듣지 못했어요. “내 이름은 민지야”처럼 알려주시면 이 대화에서 기억할게요.';
             }
-            if (hasAny(lower, ['학교', '공지', '수업', '과제', '시험'])) {
-                return '학교 관련 내용은 공지 제목, 마감일, 해야 할 일을 나눠서 보면 좋아요.\n\n공지 내용을 붙여주면 제가 핵심만 요약하고 체크리스트로 바꿔드릴게요.';
+            if (hasAny(lower, ['너 이름', '넌 누구', '누구세요', '정체가 뭐'])) {
+                return '저는 엔조이 비서실장이에요. 가벼운 대화도 하고, 일정이나 공지처럼 복잡한 내용을 보기 좋게 정리해드려요.';
             }
-            if (hasAny(lower, ['여행', '숙소', '맛집', '코스', '계획'])) {
-                return '여행 계획은 날짜, 지역, 예산, 이동수단만 있으면 바로 틀을 잡을 수 있어요.\n\n어디로 몇 명이 가는지 알려주면 일정표처럼 정리해드릴게요.';
+            if (hasAny(lower, ['뭘 할 수', '뭐 할 수', '도와줄 수', '사용법', '도움말'])) {
+                return '간단한 대화는 물론이고 이런 일을 잘해요.\n\n• 일정과 할 일 정리\n• 모임비·공지 안내문 작성\n• 학교 공지 핵심 메모\n• 여행 계획의 기본 틀 만들기\n\n하고 싶은 일을 평소 말하듯 보내주세요.';
+            }
+            if (hasAny(lower, ['몇 시', '현재 시간', '지금 시간'])) {
+                return '지금은 ' + now.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' }) + '이에요.';
+            }
+            if (hasAny(lower, ['오늘 날짜', '며칠이야', '무슨 요일', '날짜 알려'])) {
+                return '오늘은 ' + now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }) + '이에요.';
+            }
+            if (hasAny(lower, ['날씨', '비 와', '눈 와', '기온'])) {
+                return '실시간 날씨는 아직 확인할 수 없어요. 지역과 예상 기온을 알려주시면 옷차림이나 준비물은 같이 골라드릴게요.';
+            }
+            if (hasAny(lower, ['힘들어', '지쳤어', '속상해', '우울해', '짜증나', '피곤해'])) {
+                return (rememberedName ? rememberedName + '님, ' : '') + '오늘 마음이 꽤 무거웠나 봐요. 지금은 해결책보다 그냥 들어주는 게 좋을까요, 아니면 할 일을 하나씩 정리해볼까요?';
+            }
+            if (hasAny(lower, ['심심해', '재미없어', '할 거 없어'])) {
+                return '그럼 가볍게 하나 골라볼까요? 오늘 있었던 일 이야기하기, 10분짜리 할 일 정하기, 주말 계획 세우기 중에서 마음 가는 걸 말해주세요.';
+            }
+            if (hasAny(lower, ['잘 지내', '뭐 해', '뭐하고', '어떻게 지내'])) {
+                return '저는 여기서 기다리며 잘 지내고 있어요. ' + (rememberedName ? rememberedName + '님은 ' : '오늘은 ') + '어떤 하루를 보내고 있어요?';
             }
             if (hasAny(lower, ['안녕', '하이', 'ㅎㅇ', '반가'])) {
-                return '안녕하세요. 오늘도 비서실은 열려 있습니다.\n필요한 일 하나만 던져주세요. 제가 정리해서 돌려드릴게요.';
+                return greetingForHour(now) + (rememberedName ? ', ' + rememberedName + '님.' : '.') + '\n오늘은 어떤 걸 같이 해볼까요?';
             }
             if (hasAny(lower, ['고마', '감사', '땡큐'])) {
-                return '언제든요. 이런 자잘한 정리는 제가 맡는 쪽이 마음 편하죠.';
+                return '별말씀을요' + (rememberedName ? ', ' + rememberedName + '님' : '') + '. 또 필요한 게 생기면 편하게 말씀해주세요.';
             }
-            return '좋아요. 제가 이해한 바로는 이걸 정리하거나 문장으로 다듬으면 될 것 같아요.\n\n조금 더 정확히 해드리려면 목적, 마감, 원하는 말투를 같이 보내주세요.';
+            if (hasAny(lower, ['미안', '죄송'])) {
+                return '괜찮아요. 저한테는 편하게 말씀하셔도 돼요.';
+            }
+            if (hasAny(lower, ['잘 자', '굿나잇', '다음에 봐', '또 봐', '바이'])) {
+                return '네, 푹 쉬세요' + (rememberedName ? ', ' + rememberedName + '님' : '') + '. 다음에 이어서 이야기해요.';
+            }
+
+            if (topic === 'schedule') return replyAboutSchedule(text, directTopic === 'schedule');
+            if (topic === 'fee') return replyAboutFee(text, directTopic === 'fee');
+            if (topic === 'school') return replyAboutSchool(text, directTopic === 'school');
+            if (topic === 'travel') return replyAboutTravel(text, directTopic === 'travel');
+
+            if (/^(응|어|네|예|그래|좋아|알겠어|ㅇㅇ)[.!?~ ]*$/.test(lower)) {
+                return '좋아요. 이어서 필요한 내용을 편하게 보내주세요.';
+            }
+            if (/^(아니|아니야|싫어|됐어)[.!?~ ]*$/.test(lower)) {
+                return '알겠어요. 그럼 다른 방식으로 도와드릴게요. 원하는 방향을 한마디로 알려주세요.';
+            }
+
+            return fallbackReply(text, rememberedName);
+        }
+
+        function normalizeForMatch(value) {
+            return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        }
+
+        function extractIntroducedName(text) {
+            const match = String(text).trim().match(/^(?:안녕[,! ]*)?(?:내 이름은|제 이름은)\s*([가-힣a-zA-Z]{2,12}?)(?:이야|야|이에요|예요|입니다)?[.!?~ ]*$/i);
+            return match ? match[1] : '';
+        }
+
+        function findRememberedName(thread) {
+            if (!thread || !Array.isArray(thread.messages)) return '';
+            for (let index = thread.messages.length - 1; index >= 0; index -= 1) {
+                if (thread.messages[index].role !== 'user') continue;
+                const name = extractIntroducedName(thread.messages[index].text);
+                if (name) return name;
+            }
+            return '';
+        }
+
+        function inferTopic(text, thread) {
+            const topics = [
+                { name: 'schedule', words: ['일정', '스케줄', '할 일', '오늘 할', '내일 할', '약속'] },
+                { name: 'fee', words: ['모임비', '회비', '납부', '정산', '입금', '안내문'] },
+                { name: 'school', words: ['학교', '공지', '수업', '과제', '시험', '준비물'] },
+                { name: 'travel', words: ['여행', '숙소', '맛집', '코스', '관광', '항공', '기차표', '제주', '부산', '강릉', '여수', '경주', '도쿄', '오사카', '후쿠오카', '대만', '유럽'] }
+            ];
+            const direct = topics.find(function (item) { return hasAny(text, item.words); });
+            if (direct) return direct.name;
+            if (!thread || !Array.isArray(thread.messages) || text.length > 120) return '';
+
+            const previous = thread.messages.slice(0, -1).filter(function (message) {
+                return message.role === 'user';
+            }).slice(-3).reverse();
+            for (let index = 0; index < previous.length; index += 1) {
+                const priorText = normalizeForMatch(previous[index].text);
+                const matched = topics.find(function (item) { return hasAny(priorText, item.words); });
+                if (matched) return matched.name;
+            }
+            return '';
+        }
+
+        function replyAboutSchedule(text, isDirect) {
+            const hasTime = /(?:오전|오후)?\s*\d{1,2}(?::\d{2})?\s*(?:시|분)?/.test(text);
+            if (hasTime && text.length > 8) {
+                return '확인했어요. 말씀해주신 일정은 이렇게 메모할게요.\n\n• ' + cleanForSummary(text) + '\n\n겹치는 일정이나 이동시간도 확인할까요?';
+            }
+            if (!isDirect && text.length > 3) {
+                return '좋아요. 방금 알려주신 내용까지 일정에 반영할게요. 시작 시간이나 마감 시간이 있으면 함께 알려주세요.';
+            }
+            return '좋아요. 날짜와 시간, 해야 할 일을 한꺼번에 적어주세요. 예: “내일 오후 2시 병원, 6시까지 보고서 제출.” 제가 순서대로 정리해드릴게요.';
+        }
+
+        function replyAboutFee(text, isDirect) {
+            const amount = text.match(/\d[\d,]*(?:만)?원/);
+            if (amount) {
+                return '바로 보낼 수 있게 적어봤어요.\n\n[모임비 안내]\n이번 모임비는 ' + amount[0] + '입니다. 확인 후 편하실 때 입금 부탁드려요. 입금하신 분은 알려주시면 확인해둘게요. 감사합니다.';
+            }
+            if (!isDirect && text.length > 3) {
+                return '확인했어요. 안내문에 넣을 금액, 납부 기한, 계좌 정보가 있으면 이어서 보내주세요. 말투는 부드럽게 정리할게요.';
+            }
+            return '모임비 안내문을 만들어드릴게요. 금액과 납부 기한을 알려주세요. 계좌 정보는 필요할 때만 넣으면 돼요.';
+        }
+
+        function replyAboutSchool(text, isDirect) {
+            const deadline = text.match(/(?:\d{1,2}월\s*)?\d{1,2}일|(?:오늘|내일|이번\s*주|다음\s*주)\s*(?:까지|전)?/);
+            if (deadline && text.length > 10) {
+                return '핵심만 메모해둘게요.\n\n• 내용: ' + cleanForSummary(text) + '\n• 확인할 기한: ' + deadline[0] + '\n\n준비물이나 제출 방법이 따로 있으면 이어서 알려주세요.';
+            }
+            if (!isDirect && text.length > 3) {
+                return '좋아요. 방금 내용도 공지 메모에 포함할게요. 마감일과 꼭 해야 하는 행동이 무엇인지 알려주시면 체크리스트로 마무리해드릴게요.';
+            }
+            return '공지 내용을 그대로 붙여주세요. 날짜, 준비물, 제출할 것처럼 놓치기 쉬운 부분만 뽑아 간단한 체크리스트로 정리해드릴게요.';
+        }
+
+        function replyAboutTravel(text, isDirect) {
+            const hasUsefulDetail = /\d+\s*(?:명|박|일)|제주|서울|부산|강릉|여수|경주|일본|도쿄|오사카|후쿠오카|대만|유럽/.test(text);
+            if (hasUsefulDetail && (!isDirect || text.length > 12)) {
+                return '좋아요. 말씀해주신 조건으로 잡아볼게요.\n\n• 기본 조건: ' + cleanForSummary(text) + '\n• 구성 순서: 이동 → 핵심 일정 → 식사 → 여유 시간\n\n출발지와 대략적인 예산까지 알려주시면 더 현실적인 일정으로 다듬을 수 있어요.';
+            }
+            if (!isDirect && text.length > 3) {
+                return '좋아요. 그 조건까지 반영할게요. 출발지와 여행 날짜, 꼭 하고 싶은 것 한 가지만 더 알려주세요.';
+            }
+            return '어디로, 언제, 몇 명이 가는지 알려주세요. 예산이나 꼭 가고 싶은 장소가 있으면 함께 적어주시면 일정의 기본 틀을 짜드릴게요.';
+        }
+
+        function cleanForSummary(text) {
+            const clean = String(text).replace(/\s+/g, ' ').trim();
+            return clean.length > 90 ? clean.slice(0, 90) + '…' : clean;
+        }
+
+        function fallbackReply(text, name) {
+            const summary = cleanForSummary(text);
+            if (/[?？]$/.test(summary)) {
+                return (name ? name + '님, ' : '') + '그 질문은 지금 가진 정보만으로 정확히 답하기 어려워요. 상황을 한두 문장만 더 알려주시면 같이 정리해볼게요.';
+            }
+            return '“' + summary + '”라고 하신 내용을 들었어요. 제가 정리해드릴까요, 답장을 써드릴까요, 아니면 그냥 이야기를 이어갈까요?';
+        }
+
+        function greetingForHour(date) {
+            const hour = date.getHours();
+            if (hour < 6) return '늦은 시간에도 안녕하세요';
+            if (hour < 12) return '좋은 아침이에요';
+            if (hour < 18) return '안녕하세요';
+            return '좋은 저녁이에요';
         }
 
         function hasAny(text, words) {
             return words.some(function (word) { return text.indexOf(word) > -1; });
         }
 
-        function createNewThread(focusInput) {
+        function createNewThread(shouldFocus) {
             const current = activeThread();
             const hasUserMessage = current.messages.some(function (message) { return message.role === 'user'; });
             if (!hasUserMessage && current.title === '새로운 대화') {
                 closeThreadDrawer();
-                if (focusInput !== false) focusInput();
+                if (shouldFocus !== false) focusInput();
                 return;
             }
 
@@ -1047,7 +1198,7 @@
             renderThreadList();
             inputEl.value = '';
             resizeInput();
-            if (focusInput !== false) focusInput();
+            if (shouldFocus !== false) focusInput();
         }
 
         function switchThread(threadId) {
