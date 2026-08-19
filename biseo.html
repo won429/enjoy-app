@@ -140,6 +140,7 @@
             background: var(--surface-strong);
         }
         .header-profile {
+            position: relative;
             min-width: 0;
             display: grid;
             grid-template-columns: 2.375rem minmax(0, 1fr);
@@ -179,22 +180,93 @@
             box-shadow: 0 0 0 0.0625rem rgba(52, 199, 89, 0.08);
         }
         .online-dot.thinking { background: #ff9f0a; }
-        .profile-name {
+        .assistant-version-trigger {
             width: 100%;
+            min-width: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            border: 0;
+            background: transparent;
+            color: var(--text);
             font-size: 1.0625rem;
             line-height: 1.3125rem;
             font-weight: 900;
             letter-spacing: -0.02em;
-            white-space: nowrap;
+            text-align: left;
+        }
+        .assistant-version-trigger span {
+            min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
+        .assistant-version-trigger i {
+            flex: none;
+            color: var(--muted);
+            font-size: 0.625rem;
+            transition: transform .18s ease;
+        }
+        .assistant-version-trigger[aria-expanded="true"] i { transform: rotate(180deg); }
         .profile-status {
             color: var(--muted);
             font-size: 0.71875rem;
             line-height: 0.9375rem;
             font-weight: 750;
         }
+        .assistant-version-menu {
+            position: absolute;
+            top: calc(100% + 0.625rem);
+            left: 2.75rem;
+            z-index: 50;
+            width: 14rem;
+            padding: 0.375rem;
+            display: none;
+            border: 0.0625rem solid var(--border);
+            border-radius: 1rem;
+            background: var(--sheet);
+            box-shadow: var(--shadow);
+            -webkit-backdrop-filter: blur(1.5rem) saturate(1.5);
+            backdrop-filter: blur(1.5rem) saturate(1.5);
+        }
+        .assistant-version-menu.open { display: block; }
+        .assistant-version-option {
+            width: 100%;
+            min-height: 3.25rem;
+            padding: 0.625rem 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            border-radius: 0.75rem;
+            background: transparent;
+            color: var(--text);
+            text-align: left;
+        }
+        .assistant-version-option + .assistant-version-option { margin-top: 0.125rem; }
+        .assistant-version-option.selected { background: rgba(49, 130, 246, 0.16); }
+        .assistant-version-copy { min-width: 0; }
+        .assistant-version-name {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 850;
+            line-height: 1.25;
+        }
+        .assistant-version-model {
+            display: block;
+            margin-top: 0.1875rem;
+            color: var(--muted);
+            font-size: 0.65625rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .assistant-version-option i {
+            color: var(--blue);
+            font-size: 0.75rem;
+            opacity: 0;
+        }
+        .assistant-version-option.selected i { opacity: 1; }
         .thread-title-bar {
             min-height: 1.125rem;
             display: flex;
@@ -643,8 +715,27 @@
                             <img src="dhkfodshf.png" alt="">
                             <span id="status-dot" class="online-dot"></span>
                         </div>
-                        <div class="profile-name">엔조이 비서실장</div>
+                        <button type="button" class="assistant-version-trigger" id="assistant-version-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <span id="assistant-version-label">엔조이 비서실장 1</span>
+                            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                        </button>
                         <div id="status-text" class="profile-status">온라인</div>
+                        <div id="assistant-version-menu" class="assistant-version-menu" role="listbox" aria-label="비서실장 버전 선택">
+                            <button type="button" class="assistant-version-option" data-assistant-version="1" role="option" aria-selected="false">
+                                <span class="assistant-version-copy">
+                                    <span class="assistant-version-name">엔조이 비서실장 1</span>
+                                    <span class="assistant-version-model">Gemma 4</span>
+                                </span>
+                                <i class="fa-solid fa-check" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="assistant-version-option" data-assistant-version="1.5" role="option" aria-selected="false">
+                                <span class="assistant-version-copy">
+                                    <span class="assistant-version-name">엔조이 비서실장 1.5</span>
+                                    <span class="assistant-version-model">Gemini</span>
+                                </span>
+                                <i class="fa-solid fa-check" aria-hidden="true"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="header-side right">
@@ -712,6 +803,7 @@
         const ACCOUNT_LABEL_KEY = 'enjoy_chat_account_label_v1';
         const LEGACY_KEY = 'enjoy-secretary-chat-v1';
         const THREAD_KEY_PREFIX = 'enjoy-secretary-threads-v2:';
+        const ASSISTANT_VERSION_KEY = 'enjoy-secretary-version-v1';
         const MAX_THREADS = 40;
         const MAX_MESSAGES = 120;
         const BISEO_AI_API = 'https://enjoy-biseo-ai.sungwon4867.workers.dev';
@@ -725,6 +817,9 @@
         const sendButton = document.getElementById('send-button');
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
+        const assistantVersionTriggerEl = document.getElementById('assistant-version-trigger');
+        const assistantVersionLabelEl = document.getElementById('assistant-version-label');
+        const assistantVersionMenuEl = document.getElementById('assistant-version-menu');
         const activeTitleEl = document.getElementById('active-thread-title');
         const drawerEl = document.getElementById('thread-drawer');
         const threadListEl = document.getElementById('thread-list');
@@ -733,6 +828,7 @@
         const accountId = readAccountId();
         const accountLabel = readAccountLabel();
         const storageKey = THREAD_KEY_PREFIX + accountId;
+        let selectedAssistantVersion = readAssistantVersion();
 
         const starterMessages = [
             {
@@ -753,6 +849,39 @@
         let pendingReplies = new Set();
         let wasNearBottom = true;
         let viewportSettleTimer = null;
+
+        function readAssistantVersion() {
+            try {
+                const saved = localStorage.getItem(ASSISTANT_VERSION_KEY);
+                return saved === '1.5' ? '1.5' : '1';
+            } catch (error) {
+                return '1';
+            }
+        }
+
+        function renderAssistantVersion() {
+            assistantVersionLabelEl.textContent = selectedAssistantVersion === '1.5'
+                ? '엔조이 비서실장 1.5'
+                : '엔조이 비서실장 1';
+            assistantVersionMenuEl.querySelectorAll('[data-assistant-version]').forEach(function (button) {
+                const selected = button.dataset.assistantVersion === selectedAssistantVersion;
+                button.classList.toggle('selected', selected);
+                button.setAttribute('aria-selected', String(selected));
+            });
+        }
+
+        function closeAssistantVersionMenu() {
+            assistantVersionMenuEl.classList.remove('open');
+            assistantVersionTriggerEl.setAttribute('aria-expanded', 'false');
+        }
+
+        function selectAssistantVersion(version) {
+            selectedAssistantVersion = version === '1.5' ? '1.5' : '1';
+            try { localStorage.setItem(ASSISTANT_VERSION_KEY, selectedAssistantVersion); } catch (error) {}
+            renderAssistantVersion();
+            closeAssistantVersionMenu();
+            window.haptic();
+        }
 
         function readAccountId() {
             try {
@@ -1022,6 +1151,7 @@
         async function requestAiReply(thread) {
             const controller = new AbortController();
             const timeoutId = window.setTimeout(function () { controller.abort(); }, AI_TIMEOUT_MS);
+            const assistantVersion = selectedAssistantVersion;
             const messages = thread.messages.slice(-AI_HISTORY_LIMIT).map(function (message) {
                 return {
                     role: message.role === 'user' ? 'user' : 'assistant',
@@ -1033,7 +1163,7 @@
                 const response = await fetch(BISEO_AI_API + '/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: messages }),
+                    body: JSON.stringify({ messages: messages, assistantVersion: assistantVersion }),
                     signal: controller.signal
                 });
                 const data = await response.json().catch(function () { return {}; });
@@ -1381,6 +1511,25 @@
             createNewThread(true);
         });
         document.getElementById('thread-backdrop').addEventListener('click', closeThreadDrawer);
+        assistantVersionTriggerEl.addEventListener('click', function (event) {
+            event.stopPropagation();
+            const shouldOpen = !assistantVersionMenuEl.classList.contains('open');
+            closeAssistantVersionMenu();
+            if (shouldOpen) {
+                assistantVersionMenuEl.classList.add('open');
+                assistantVersionTriggerEl.setAttribute('aria-expanded', 'true');
+            }
+            window.haptic();
+        });
+        assistantVersionMenuEl.addEventListener('click', function (event) {
+            event.stopPropagation();
+            const button = event.target.closest('[data-assistant-version]');
+            if (button) selectAssistantVersion(button.dataset.assistantVersion);
+        });
+        document.addEventListener('click', closeAssistantVersionMenu);
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') closeAssistantVersionMenu();
+        });
 
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', handleViewportChange, { passive: true });
@@ -1390,6 +1539,7 @@
         window.addEventListener('orientationchange', handleViewportChange, { passive: true });
 
         sheetAccountEl.textContent = accountLabel + ' · 로컬 저장';
+        renderAssistantVersion();
         saveStore();
         setAssistantThinking(pendingReplies.has(store.activeId));
         syncVisualViewport();
