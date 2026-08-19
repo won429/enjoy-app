@@ -1812,6 +1812,40 @@
             backdrop-filter: blur(0.875rem) saturate(1.45);
         }
 
+        /* 홈 상단 워드마크 */
+        .home-wordmark-bar {
+            position: sticky;
+            top: 0;
+            z-index: 24;
+            min-height: 2rem;
+            margin: 0 -1.25rem;
+            padding: max(0.25rem, env(safe-area-inset-top)) 1.25rem 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,.88);
+            -webkit-backdrop-filter: blur(1rem) saturate(1.45);
+            backdrop-filter: blur(1rem) saturate(1.45);
+        }
+        .home-wordmark {
+            position: relative;
+            width: 4.5rem;
+            height: 1.75rem;
+            overflow: hidden;
+            user-select: none;
+        }
+        .home-wordmark img {
+            position: absolute;
+            top: -0.625rem;
+            left: 50%;
+            width: 8.25rem;
+            max-width: none;
+            transform: translateX(-50%);
+            filter: invert(1);
+            mix-blend-mode: screen;
+            pointer-events: none;
+        }
+
         /* 공지사항 롤링 애니메이션 수정: 무한 루프 구현 */
         @keyframes marquee {
             0% { transform: translateX(0); }
@@ -4033,6 +4067,11 @@
 
         @media (prefers-color-scheme: light) {
             body { background-color: #F2F2F7 !important; color: #141414; }
+            .home-wordmark-bar { background: rgba(242,242,247,.9); }
+            .home-wordmark img {
+                filter: none;
+                mix-blend-mode: multiply;
+            }
 
             /* 로그인 화면/팝업 라이트 모드 */
             #login-screen { background: #F2F2F7; }
@@ -4716,9 +4755,14 @@
 
     <!-- 메인 컨텐츠 (홈 화면) -->
     <main id="home-screen" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pb-24 w-full max-w-md mx-auto relative min-h-full">
+        <header class="home-wordmark-bar" aria-label="enjoy">
+            <span class="home-wordmark" aria-hidden="true">
+                <img src="assets/enjoy-wordmark.png" alt="">
+            </span>
+        </header>
         
         <!-- 카드 나열 (배너/슬라이더 제거, 각 항목을 사진 카드로 세로 나열) -->
-        <div id="apple-tv-banner" class="fade-in-up delay-100 mt-4 mb-6 relative">
+        <div id="apple-tv-banner" class="fade-in-up delay-100 mt-1 mb-6 relative">
             <!-- 기존 JS 수정 없이 Apple TV 스타일 인디케이터를 구현하기 위한 로컬 스타일 -->
             <style>
                 #apple-tv-banner .bg-black\/60 { background-color: #ffffff !important; width: 1.25rem !important; border-radius: 0.25rem !important; }
@@ -4788,15 +4832,8 @@
             </style>
 
             <!-- 상단: 한 명의 엔조이 비서가 오늘의 소식을 요약 -->
-            <div id="enjoy-assistant" class="mb-3 mt-2 fade-in-up delay-100">
+            <div id="enjoy-assistant" class="mb-3 mt-0 fade-in-up delay-100">
                 <div class="assistant-stage">
-                    <div class="assistant-hero">
-                        <div class="min-w-0">
-                            <span id="assistant-date" class="assistant-date">오늘</span>
-                            <h2 id="assistant-greeting" class="text-[23px] font-black text-white tracking-tight leading-tight mb-1.5">오늘도 반가워요</h2>
-                        </div>
-                    </div>
-
                     <!-- 0. 엔조이 멤버 + 현재현황 (가입 여부 + 활동 상태) -->
                     <section>
                         <div id="story-tray" class="flex overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch; gap:0.3125rem;">
