@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <title>엔조이 비서실장</title>
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
@@ -1130,6 +1130,7 @@
             thread.updatedAt = now;
 
             inputEl.value = '';
+            dismissKeyboard();
             pendingReplies.add(thread.id);
             setAssistantThinking(true);
             saveStore();
@@ -1438,6 +1439,7 @@
 
         function openThreadDrawer() {
             window.haptic();
+            dismissKeyboard();
             closeSourceDrawer();
             renderThreadList();
             drawerEl.classList.add('open');
@@ -1454,6 +1456,7 @@
             const sources = message ? normalizeSources(message.sources) : [];
             if (!sources.length) return;
             window.haptic();
+            dismissKeyboard();
             closeThreadDrawer();
             sourceSheetCountEl.textContent = '답변에 참고한 웹페이지 ' + sources.length + '개';
             sourceListEl.innerHTML = sources.map(function (source) {
@@ -1490,17 +1493,25 @@
             lockPageScroll();
         }
 
+        function dismissKeyboard() {
+            if (document.activeElement === inputEl) inputEl.blur();
+            requestAnimationFrame(syncVisualViewport);
+            window.setTimeout(syncVisualViewport, 180);
+        }
+
         function syncVisualViewport() {
             const viewport = window.visualViewport;
             const height = viewport ? viewport.height : window.innerHeight;
+            const top = viewport ? viewport.offsetTop : 0;
             document.documentElement.style.setProperty('--visual-height', Math.round(height) + 'px');
-            document.documentElement.style.setProperty('--visual-top', '0px');
+            document.documentElement.style.setProperty('--visual-top', Math.round(top) + 'px');
             lockPageScroll();
             if (wasNearBottom) scrollToBottom();
         }
 
         function lockPageScroll() {
             pageEl.scrollTop = 0;
+            if (document.activeElement === inputEl) return;
             const scrollingElement = document.scrollingElement || document.documentElement;
             if (scrollingElement) scrollingElement.scrollTop = 0;
             if (window.scrollY) window.scrollTo(0, 0);
@@ -1523,11 +1534,15 @@
         });
         inputEl.addEventListener('input', resizeInput);
         inputEl.addEventListener('focus', function () {
-            wasNearBottom = nearBottom();
+            wasNearBottom = true;
             lockPageScroll();
             requestAnimationFrame(syncVisualViewport);
             window.setTimeout(syncVisualViewport, 90);
             window.setTimeout(syncVisualViewport, 280);
+        });
+        inputEl.addEventListener('blur', function () {
+            requestAnimationFrame(syncVisualViewport);
+            window.setTimeout(syncVisualViewport, 180);
         });
         inputEl.addEventListener('keydown', function (event) {
             if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
