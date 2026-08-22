@@ -1,5 +1,20 @@
 # Enjoy School Notion Worker
 
+## 에브리타임 공유 시간표 Worker
+
+`index.html`의 멤버 프로필 시간표 화면에서 에브리타임 공유 링크를 처음 등록하거나 수동 갱신할 때 사용합니다. 로그인한 엔조이 사용자만 호출할 수 있고, 가져온 결과는 앱이 해당 사용자의 `members/{uid}` 문서에 저장합니다. 평소 앱 로딩에서는 Worker를 호출하지 않습니다.
+
+```bash
+cd cloudflare-worker
+npm install
+npm run check:everytime
+npm run deploy:everytime
+```
+
+예상 배포 주소는 `https://enjoy-everytime-timetable.sungwon4867.workers.dev`이며, 다른 Cloudflare 계정에 배포할 경우 `index.html`의 `ENJOY_EVERYTIME_WORKER_URL`도 함께 변경해야 합니다.
+
+---
+
 `school.html`에서 Notion 공지 데이터를 자동으로 가져오기 위한 Cloudflare Worker입니다.
 
 ## 지금 들어간 구성
