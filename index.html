@@ -422,10 +422,23 @@
             color: var(--et-text);
             background: var(--et-surface-soft);
         }
-        .et-scroll { padding: 1rem 1.25rem max(6rem, calc(2rem + env(safe-area-inset-bottom))); }
+        .et-topbar-action {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+            margin-left: auto;
+            border-radius: 62.4375rem;
+            color: var(--et-text);
+            background: var(--et-surface-soft);
+            font-size: .875rem;
+        }
+        .et-topbar-action.hidden { display: none; }
+        .et-scroll { padding: .375rem 1.25rem max(6rem, calc(2rem + env(safe-area-inset-bottom))); }
         .et-member-card,
-        .et-import-card,
-        .et-grid-card {
+        .et-import-card {
             border: .0625rem solid var(--et-border);
             border-radius: 1.5rem;
             background: var(--et-surface);
@@ -498,7 +511,7 @@
         }
         .et-empty-title { color: var(--et-text); font-size: .9375rem; font-weight: 800; }
         .et-empty-desc { margin-top: .35rem; color: var(--et-sub); font-size: .75rem; line-height: 1.55; }
-        .et-grid-card { margin-top: .75rem; overflow: hidden; }
+        .et-grid-card { margin-top: .25rem; overflow: hidden; }
         .et-grid-heading { padding: .875rem 1rem; border-bottom: .0625rem solid var(--et-border); }
         .et-grid-title { color: var(--et-text); font-size: .875rem; font-weight: 800; }
         .et-grid-subtitle { margin-top: .125rem; color: var(--et-sub); font-size: .6875rem; font-weight: 600; }
@@ -529,7 +542,7 @@
             background: color-mix(in srgb, var(--course-color) 72%, #111 28%);
             box-shadow: 0 .125rem .5rem color-mix(in srgb, var(--course-color) 22%, transparent);
         }
-        .et-course-name { display: block; font-size: .625rem; font-weight: 800; line-height: 1.2; word-break: keep-all; }
+        .et-course-name { display: block; white-space: normal; overflow-wrap: anywhere; word-break: break-all; font-size: .625rem; font-weight: 800; line-height: 1.2; }
         .et-course-detail { display: block; margin-top: .18rem; color: rgba(255,255,255,.75); font-size: .53125rem; font-weight: 600; line-height: 1.25; }
         .et-course-time { display: block; margin-top: .18rem; color: rgba(255,255,255,.62); font-size: .5rem; font-weight: 600; }
         @media (prefers-color-scheme: light) {
@@ -542,7 +555,7 @@
                 --et-sub: #8B95A1;
                 --et-grid: rgba(15,23,42,.075);
             }
-            .et-member-card, .et-import-card, .et-grid-card { box-shadow: 0 .375rem 1.25rem rgba(15,23,42,.06); }
+            .et-member-card, .et-import-card { box-shadow: 0 .375rem 1.25rem rgba(15,23,42,.06); }
         }
 
         /* 홈 콘텐츠: 인스타그램 피드형 */
@@ -5692,10 +5705,11 @@
         <header class="et-topbar">
             <div class="flex items-center gap-3">
                 <button type="button" class="et-back-button" onclick="window.haptic && window.haptic(); window.closeMemberTimetable()" aria-label="시간표 닫기"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>
-                <div class="min-w-0">
+                <div class="min-w-0 flex-1">
                     <h2 id="member-timetable-title" class="text-[20px] font-black truncate">시간표</h2>
                     <p id="member-timetable-subtitle" class="text-[12px] font-semibold mt-0.5" style="color:var(--et-sub)">멤버 시간표</p>
                 </div>
+                <button id="member-timetable-edit-button" type="button" class="et-topbar-action hidden" onclick="window.haptic && window.haptic(); window.openMemberTimetableEditor()" aria-label="에브리타임 링크 변경"><i class="fa-solid fa-link"></i></button>
             </div>
         </header>
         <div id="member-timetable-scroll" class="et-scroll flex-1 overflow-y-auto scrollbar-hide">
@@ -13876,16 +13890,15 @@
             const own = isOwnMember(selectedMember);
             const title = document.getElementById('member-timetable-title');
             const subtitle = document.getElementById('member-timetable-subtitle');
+            const editButton = document.getElementById('member-timetable-edit-button');
             if (title) title.textContent = (selectedMember.name || '멤버') + ' 시간표';
             if (subtitle) subtitle.textContent = timetable ? (timetable.semester || '공유 시간표') : '멤버 시간표';
+            if (editButton) {
+                editButton.classList.toggle('hidden', !(timetable && own && !editorOpen));
+                editButton.disabled = importBusy;
+            }
 
             let html = '';
-            if (timetable && own && !editorOpen) {
-                html += '<div class="et-toolbar">' +
-                        '<button type="button" class="et-toolbar-button primary flex-[2]" onclick="window.refreshOwnEverytimeTimetable()" ' + (importBusy ? 'disabled' : '') + '><i class="fa-solid fa-rotate mr-1.5"></i>시간표 갱신</button>' +
-                        '<button type="button" class="et-toolbar-button flex-1" onclick="window.openMemberTimetableEditor()" ' + (importBusy ? 'disabled' : '') + '>링크 변경</button>' +
-                    '</div>';
-            }
             if (own && (editorOpen || !timetable)) html += importCardHtml(timetable);
             if (timetable) html += timetableGridHtml(timetable);
             else if (!own) html += emptyCardHtml(false);
