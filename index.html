@@ -436,7 +436,11 @@
             font-size: .875rem;
         }
         .et-topbar-action.hidden { display: none; }
-        .et-scroll { padding: .375rem 1.25rem max(6rem, calc(2rem + env(safe-area-inset-bottom))); }
+        .et-scroll {
+            overflow-x: hidden;
+            padding: .125rem 0 max(6rem, calc(2rem + env(safe-area-inset-bottom)));
+            overscroll-behavior-x: none;
+        }
         .et-member-card,
         .et-import-card {
             border: .0625rem solid var(--et-border);
@@ -478,7 +482,7 @@
         }
         .et-toolbar-button.primary { color: #fff; border-color: transparent; background: #3182F6; }
         .et-toolbar-button:disabled { opacity: .5; }
-        .et-import-card { margin-top: .75rem; padding: 1rem; }
+        .et-import-card { margin: .75rem 1.25rem 0; padding: 1rem; }
         .et-import-title { color: var(--et-text); font-size: .875rem; font-weight: 800; }
         .et-import-help { margin-top: .25rem; color: var(--et-sub); font-size: .71875rem; line-height: 1.55; }
         .et-link-input {
@@ -496,7 +500,7 @@
         .et-link-input:focus { border-color: #3182F6; box-shadow: 0 0 0 .1875rem rgba(49,130,246,.14); }
         .et-link-input::placeholder { color: color-mix(in srgb, var(--et-sub) 78%, transparent); }
         .et-import-status { min-height: 1.125rem; margin-top: .5rem; color: #F04452; font-size: .71875rem; font-weight: 600; }
-        .et-empty-card { margin-top: .75rem; padding: 2.5rem 1.25rem; text-align: center; }
+        .et-empty-card { margin: .75rem 1.25rem 0; padding: 2.5rem 1.25rem; text-align: center; }
         .et-empty-icon {
             width: 3.25rem;
             height: 3.25rem;
@@ -511,11 +515,15 @@
         }
         .et-empty-title { color: var(--et-text); font-size: .9375rem; font-weight: 800; }
         .et-empty-desc { margin-top: .35rem; color: var(--et-sub); font-size: .75rem; line-height: 1.55; }
-        .et-grid-card { margin-top: .25rem; overflow: hidden; }
-        .et-grid-heading { padding: .875rem 1rem; border-bottom: .0625rem solid var(--et-border); }
-        .et-grid-title { color: var(--et-text); font-size: .875rem; font-weight: 800; }
-        .et-grid-subtitle { margin-top: .125rem; color: var(--et-sub); font-size: .6875rem; font-weight: 600; }
-        .et-grid-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .et-grid-scroll {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-x: contain;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
         .et-grid-inner { min-width: 21.5rem; }
         .et-weekdays { display: flex; padding-left: 2.75rem; border-bottom: .0625rem solid var(--et-border); }
         .et-weekday { flex: 1; padding: .625rem 0; color: var(--et-sub); text-align: center; font-size: .6875rem; font-weight: 800; }
@@ -13873,12 +13881,54 @@
                     '</div>';
             });
 
-            return '<section class="et-grid-card">' +
-                    '<div class="et-grid-scroll"><div class="et-grid-inner" style="min-width:' + (dayCount > 5 ? '28rem' : '21.5rem') + '">' +
+            return '<div class="et-grid-scroll"><div class="et-grid-inner" style="min-width:' + (dayCount > 5 ? '28rem' : '21.5rem') + '">' +
                         '<div class="et-weekdays">' + dayLabels.map(function (day) { return '<span class="et-weekday">' + day + '</span>'; }).join('') + '</div>' +
                         '<div class="et-timebody" style="height:' + bodyHeight + 'px">' + labels + lines + courses + '</div>' +
-                    '</div></div>' +
-                '</section>';
+                    '</div></div>';
+        }
+
+        function bindTimetableAxisScroll(root) {
+            const scroller = root && root.querySelector('.et-grid-scroll');
+            if (!scroller) return;
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchStartScrollLeft = 0;
+            let lockedAxis = '';
+
+            scroller.addEventListener('touchstart', function (event) {
+                if (!event.touches || event.touches.length !== 1) return;
+                touchStartX = event.touches[0].clientX;
+                touchStartY = event.touches[0].clientY;
+                touchStartScrollLeft = scroller.scrollLeft;
+                lockedAxis = '';
+            }, { passive: true });
+
+            scroller.addEventListener('touchmove', function (event) {
+                if (!event.touches || event.touches.length !== 1) return;
+                const deltaX = event.touches[0].clientX - touchStartX;
+                const deltaY = event.touches[0].clientY - touchStartY;
+                if (!lockedAxis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 6) {
+                    lockedAxis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+                }
+                if (lockedAxis === 'x') {
+                    if (event.cancelable) event.preventDefault();
+                    scroller.scrollLeft = touchStartScrollLeft - deltaX;
+                }
+            }, { passive: false });
+
+            function releaseAxisLock() { lockedAxis = ''; }
+            scroller.addEventListener('touchend', releaseAxisLock, { passive: true });
+            scroller.addEventListener('touchcancel', releaseAxisLock, { passive: true });
+
+            scroller.addEventListener('wheel', function (event) {
+                const horizontalDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+                    ? event.deltaX
+                    : (event.shiftKey ? event.deltaY : 0);
+                if (!horizontalDelta) return;
+                event.preventDefault();
+                scroller.scrollLeft += horizontalDelta;
+            }, { passive: false });
         }
 
         function renderMemberTimetable() {
@@ -13901,6 +13951,7 @@
             if (timetable) html += timetableGridHtml(timetable);
             else if (!own) html += emptyCardHtml(false);
             root.innerHTML = html;
+            bindTimetableAxisScroll(root);
         }
 
         window.enjoyShowMemberTimetable = function (member) {
