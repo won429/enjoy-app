@@ -2259,19 +2259,7 @@
         .academic-event-copy { min-width: 0; flex: 1; text-align: left; }
         .academic-event-title { display: block; overflow: hidden; color: var(--academic-text); font-size: .875rem; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
         .academic-event-note { display: block; overflow: hidden; margin-top: .1875rem; color: var(--academic-sub); font-size: .6875rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-        .academic-event-delete { width: 2rem; height: 2rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: #F04452; background: rgba(240,68,82,.11); font-size: .6875rem; }
         .academic-empty { padding: 3rem 1rem; color: var(--academic-sub); text-align: center; font-size: .8125rem; line-height: 1.6; }
-        .academic-editor { margin-bottom: 1rem; padding: 1rem; border: .0625rem solid var(--academic-border); border-radius: 1.25rem; background: var(--academic-surface); }
-        .academic-editor-title { color: var(--academic-text); font-size: .9375rem; font-weight: 850; }
-        .academic-field { display: block; margin-top: .75rem; }
-        .academic-label { display: block; margin-bottom: .3125rem; color: var(--academic-sub); font-size: .6875rem; font-weight: 700; }
-        .academic-control { width: 100%; height: 2.75rem; padding: 0 .75rem; border: .0625rem solid var(--academic-border); border-radius: .8125rem; outline: none; color: var(--academic-text); background: var(--academic-soft); font-size: .8125rem; }
-        textarea.academic-control { height: 4.5rem; padding-top: .75rem; resize: none; }
-        .academic-control:focus { border-color: #3182F6; box-shadow: 0 0 0 .1875rem rgba(49,130,246,.14); }
-        .academic-editor-actions { display: flex; gap: .5rem; margin-top: .875rem; }
-        .academic-editor-button { min-height: 2.625rem; padding: .625rem .75rem; flex: 1; border-radius: .8125rem; color: var(--academic-text); background: var(--academic-soft); font-size: .75rem; font-weight: 850; }
-        .academic-editor-button.is-primary { flex: 2; color: #FFF; background: #3182F6; }
-        .academic-status { min-height: 1.125rem; margin-top: .5rem; color: #F04452; font-size: .6875rem; font-weight: 650; }
         @media (prefers-reduced-motion: reduce) {
             .home-side-menu-backdrop, .home-side-menu-panel { transition: none; }
         }
@@ -5876,22 +5864,13 @@
         </nav>
     </aside>
 
-    <!-- 개인 학사일정 화면 -->
+    <!-- 대학교 학사일정 화면 -->
     <section id="academic-schedule-screen" class="hidden flex-col" aria-hidden="true">
         <header class="academic-topbar">
             <button type="button" class="academic-icon-button" onclick="window.haptic && window.haptic(); window.closeAcademicSchedule()" aria-label="학사일정 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-            <div class="min-w-0 flex-1"><h2 class="text-[20px] font-black truncate">학사일정</h2><p class="text-[11px] font-semibold mt-0.5" style="color:var(--academic-sub)">내 학사 일정</p></div>
-            <button type="button" class="academic-icon-button" onclick="window.haptic && window.haptic(); window.openAcademicEventEditor()" aria-label="학사일정 추가"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+            <div class="min-w-0 flex-1"><h2 class="text-[20px] font-black truncate">학사일정</h2><p id="academic-school-name" class="text-[11px] font-semibold mt-0.5" style="color:var(--academic-sub)">대학교 학사일정</p></div>
         </header>
         <div class="academic-scroll flex-1 overflow-y-auto scrollbar-hide">
-            <div id="academic-event-editor" class="academic-editor hidden">
-                <div id="academic-editor-title" class="academic-editor-title">학사일정 추가</div>
-                <label class="academic-field"><span class="academic-label">일정명</span><input id="academic-event-title" class="academic-control" type="text" maxlength="50" autocomplete="off" placeholder="예: 수강신청"></label>
-                <label class="academic-field"><span class="academic-label">날짜</span><input id="academic-event-date" class="academic-control" type="date"></label>
-                <label class="academic-field"><span class="academic-label">메모</span><textarea id="academic-event-note" class="academic-control" maxlength="120" placeholder="선택 입력"></textarea></label>
-                <div id="academic-editor-status" class="academic-status"></div>
-                <div class="academic-editor-actions"><button type="button" class="academic-editor-button" onclick="window.closeAcademicEventEditor()">취소</button><button type="button" class="academic-editor-button is-primary" onclick="window.saveAcademicEvent()">저장</button></div>
-            </div>
             <div class="academic-month-nav">
                 <h3 id="academic-month-title" class="academic-month-title"></h3>
                 <div class="academic-month-buttons"><button type="button" class="academic-icon-button" onclick="window.changeAcademicMonth(-1)" aria-label="이전 달"><i class="fa-solid fa-chevron-left"></i></button><button type="button" class="academic-icon-button" onclick="window.changeAcademicMonth(1)" aria-label="다음 달"><i class="fa-solid fa-chevron-right"></i></button></div>
@@ -5906,17 +5885,11 @@
         let sideMenuCloseTimer = 0;
         let academicEvents = [];
         let academicMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        let academicEditingIndex = -1;
-        let academicBusy = false;
 
         function academicEscape(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
             });
-        }
-
-        function localDateKey(date) {
-            return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
         }
 
         function syncSideMenuFrame() {
@@ -5982,12 +5955,6 @@
             if (academicScreen && !academicScreen.classList.contains('hidden')) syncAcademicFrame();
         });
 
-        function requireMemberFeature() {
-            if (window.enjoyUser && window.enjoySync && window.fsDoc && window.fsSetDoc) return true;
-            window.enjoyAlert && window.enjoyAlert('이 기능은 엔조이 멤버 계정으로 이용할 수 있어요.', { title: '더보기' });
-            return false;
-        }
-
         function renderAcademicEvents() {
             const title = document.getElementById('academic-month-title');
             const list = document.getElementById('academic-event-list');
@@ -6000,7 +5967,10 @@
                 return String(first.item.date || '').localeCompare(String(second.item.date || '')) || String(first.item.title || '').localeCompare(String(second.item.title || ''), 'ko');
             });
             if (!visible.length) {
-                list.innerHTML = '<div class="academic-empty"><i class="fa-regular fa-calendar text-[24px] mb-3"></i><br>이달에 등록된 학사일정이 없어요.<br>상단 + 버튼으로 추가해주세요.</div>';
+                const message = academicEvents.length
+                    ? '이달의 학사일정이 없어요.'
+                    : '학교별 학사일정 데이터를 준비 중이에요.';
+                list.innerHTML = '<div class="academic-empty"><i class="fa-regular fa-calendar text-[24px] mb-3"></i><br>' + message + '</div>';
                 return;
             }
             list.innerHTML = visible.map(function (entry) {
@@ -6009,37 +5979,26 @@
                 const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()] || '';
                 return '<article class="academic-event">' +
                         '<div class="academic-event-date"><strong class="academic-event-day">' + String(parts[2] || '') + '</strong><span class="academic-event-weekday">' + weekday + '요일</span></div>' +
-                        '<button type="button" class="academic-event-copy" onclick="window.openAcademicEventEditor(' + entry.index + ')"><span class="academic-event-title">' + academicEscape(entry.item.title) + '</span>' +
-                        (entry.item.note ? '<span class="academic-event-note">' + academicEscape(entry.item.note) + '</span>' : '') + '</button>' +
-                        '<button type="button" class="academic-event-delete" onclick="window.deleteAcademicEvent(' + entry.index + ')" aria-label="' + academicEscape(entry.item.title) + ' 삭제"><i class="fa-solid fa-trash-can"></i></button>' +
+                        '<div class="academic-event-copy"><span class="academic-event-title">' + academicEscape(entry.item.title) + '</span>' +
+                        (entry.item.note ? '<span class="academic-event-note">' + academicEscape(entry.item.note) + '</span>' : '') + '</div>' +
                     '</article>';
             }).join('');
         }
 
-        async function loadAcademicEvents() {
-            const list = document.getElementById('academic-event-list');
-            if (list) list.innerHTML = '<div class="academic-empty"><i class="fa-solid fa-circle-notch fa-spin text-[20px] mb-3"></i><br>학사일정을 불러오는 중이에요.</div>';
-            try {
-                if (!window.getDoc) throw new Error('FIREBASE_NOT_READY');
-                const snapshot = await window.getDoc(window.fsDoc('members', window.enjoyUser.uid));
-                const data = snapshot && snapshot.exists() ? (snapshot.data() || {}) : {};
-                academicEvents = Array.isArray(data.academicSchedule) ? data.academicSchedule.filter(function (item) { return item && item.date && item.title; }) : [];
-                renderAcademicEvents();
-            } catch (error) {
-                console.error('Academic schedule load failed:', error);
-                if (list) list.innerHTML = '<div class="academic-empty">학사일정을 불러오지 못했어요.<br>잠시 후 다시 열어주세요.</div>';
-            }
+        function loadAcademicEvents() {
+            const source = window.ENJOY_UNIVERSITY_ACADEMIC_SCHEDULE;
+            academicEvents = Array.isArray(source)
+                ? source.filter(function (item) { return item && item.date && item.title; })
+                : [];
+            renderAcademicEvents();
         }
 
         window.openAcademicSchedule = function () {
-            if (!requireMemberFeature()) return;
             window.closeHomeSideMenu(false);
             const screen = document.getElementById('academic-schedule-screen');
             if (!screen) return;
             syncAcademicFrame();
             academicMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-            academicEditingIndex = -1;
-            window.closeAcademicEventEditor();
             screen.classList.remove('hidden');
             screen.classList.add('flex');
             screen.setAttribute('aria-hidden', 'false');
@@ -6048,102 +6007,15 @@
 
         window.closeAcademicSchedule = function () {
             const screen = document.getElementById('academic-schedule-screen');
-            if (!screen || academicBusy) return;
+            if (!screen) return;
             screen.classList.add('hidden');
             screen.classList.remove('flex');
             screen.setAttribute('aria-hidden', 'true');
-            window.closeAcademicEventEditor();
         };
 
         window.changeAcademicMonth = function (delta) {
             academicMonth = new Date(academicMonth.getFullYear(), academicMonth.getMonth() + Number(delta || 0), 1);
             renderAcademicEvents();
-        };
-
-        window.openAcademicEventEditor = function (index) {
-            if (academicBusy) return;
-            const editor = document.getElementById('academic-event-editor');
-            const heading = document.getElementById('academic-editor-title');
-            const title = document.getElementById('academic-event-title');
-            const date = document.getElementById('academic-event-date');
-            const note = document.getElementById('academic-event-note');
-            const status = document.getElementById('academic-editor-status');
-            academicEditingIndex = Number.isInteger(Number(index)) && Number(index) >= 0 ? Number(index) : -1;
-            const item = academicEditingIndex >= 0 ? academicEvents[academicEditingIndex] : null;
-            if (heading) heading.textContent = item ? '학사일정 수정' : '학사일정 추가';
-            if (title) title.value = item ? String(item.title || '') : '';
-            if (date) date.value = item ? String(item.date || '') : localDateKey(new Date());
-            if (note) note.value = item ? String(item.note || '') : '';
-            if (status) status.textContent = '';
-            if (editor) editor.classList.remove('hidden');
-            if (title) window.setTimeout(function () { title.focus({ preventScroll: true }); }, 0);
-        };
-
-        window.closeAcademicEventEditor = function () {
-            const editor = document.getElementById('academic-event-editor');
-            const status = document.getElementById('academic-editor-status');
-            if (editor) editor.classList.add('hidden');
-            if (status) status.textContent = '';
-            academicEditingIndex = -1;
-        };
-
-        async function persistAcademicEvents() {
-            await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid), {
-                academicSchedule: academicEvents,
-                academicScheduleUpdatedAt: Date.now()
-            }, { merge: true });
-        }
-
-        window.saveAcademicEvent = async function () {
-            if (academicBusy) return;
-            const titleInput = document.getElementById('academic-event-title');
-            const dateInput = document.getElementById('academic-event-date');
-            const noteInput = document.getElementById('academic-event-note');
-            const status = document.getElementById('academic-editor-status');
-            const title = String(titleInput && titleInput.value || '').trim();
-            const date = String(dateInput && dateInput.value || '');
-            const note = String(noteInput && noteInput.value || '').trim();
-            if (!title || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                if (status) status.textContent = '일정명과 날짜를 입력해주세요.';
-                return;
-            }
-            const before = academicEvents.slice();
-            const eventData = { id: academicEditingIndex >= 0 ? String(academicEvents[academicEditingIndex].id || '') : ('academic-' + Date.now()), title: title, date: date, note: note };
-            if (academicEditingIndex >= 0) academicEvents[academicEditingIndex] = eventData;
-            else academicEvents.push(eventData);
-            academicBusy = true;
-            if (status) status.textContent = '저장하는 중이에요.';
-            try {
-                await persistAcademicEvents();
-                academicMonth = new Date(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, 1);
-                window.closeAcademicEventEditor();
-                renderAcademicEvents();
-            } catch (error) {
-                academicEvents = before;
-                console.error('Academic schedule save failed:', error);
-                if (status) status.textContent = '학사일정을 저장하지 못했어요.';
-            } finally {
-                academicBusy = false;
-            }
-        };
-
-        window.deleteAcademicEvent = async function (index) {
-            if (academicBusy || index < 0 || index >= academicEvents.length) return;
-            const confirmed = window.enjoyConfirm ? await window.enjoyConfirm('이 학사일정을 삭제할까요?', { title: '학사일정 삭제', confirmText: '삭제', danger: true }) : true;
-            if (!confirmed) return;
-            const before = academicEvents.slice();
-            academicEvents.splice(index, 1);
-            academicBusy = true;
-            renderAcademicEvents();
-            try {
-                await persistAcademicEvents();
-            } catch (error) {
-                academicEvents = before;
-                renderAcademicEvents();
-                window.enjoyAlert && window.enjoyAlert('학사일정을 삭제하지 못했어요.', { title: '학사일정' });
-            } finally {
-                academicBusy = false;
-            }
         };
 
         document.addEventListener('keydown', function (event) {
