@@ -518,6 +518,73 @@
         .et-link-input:focus { border-color: #3182F6; box-shadow: 0 0 0 .1875rem rgba(49,130,246,.14); }
         .et-link-input::placeholder { color: color-mix(in srgb, var(--et-sub) 78%, transparent); }
         .et-import-status { min-height: 1.125rem; margin-top: .5rem; color: #F04452; font-size: .71875rem; font-weight: 600; }
+        .et-course-editor {
+            margin: .75rem 1.25rem 0;
+            padding: 1rem;
+            border: .0625rem solid var(--et-border);
+            border-radius: 1.5rem;
+            background: var(--et-surface);
+            box-shadow: 0 .5rem 1.75rem rgba(0,0,0,.2);
+        }
+        .et-course-editor-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+        .et-course-editor-title { color: var(--et-text); font-size: .9375rem; font-weight: 850; }
+        .et-course-editor-help { margin-top: .25rem; color: var(--et-sub); font-size: .71875rem; line-height: 1.5; }
+        .et-course-editor-list { display: flex; flex-direction: column; gap: .75rem; margin-top: .875rem; }
+        .et-course-editor-item {
+            padding: .875rem;
+            border: .0625rem solid var(--et-border);
+            border-radius: 1rem;
+            background: var(--et-surface-soft);
+        }
+        .et-course-editor-item-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
+        .et-course-editor-item-title { color: var(--et-text); font-size: .75rem; font-weight: 850; }
+        .et-course-editor-remove {
+            width: 1.75rem;
+            height: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 62.4375rem;
+            color: #F04452;
+            background: rgba(240,68,82,.12);
+            font-size: .6875rem;
+        }
+        .et-course-editor-grid { display: grid; grid-template-columns: .8fr 1fr 1fr; gap: .5rem; margin-top: .625rem; }
+        .et-course-editor-grid.is-details { grid-template-columns: 1fr 1fr; }
+        .et-course-field { min-width: 0; }
+        .et-course-label { display: block; margin-bottom: .3125rem; color: var(--et-sub); font-size: .625rem; font-weight: 750; }
+        .et-course-control {
+            width: 100%;
+            height: 2.625rem;
+            min-width: 0;
+            padding: 0 .6875rem;
+            border: .0625rem solid var(--et-border);
+            border-radius: .75rem;
+            outline: none;
+            color: var(--et-text);
+            background: var(--et-surface);
+            font-size: .75rem;
+            font-weight: 650;
+        }
+        select.et-course-control { padding-right: .25rem; }
+        .et-course-control:focus { border-color: #3182F6; box-shadow: 0 0 0 .1875rem rgba(49,130,246,.14); }
+        .et-course-control::placeholder { color: color-mix(in srgb, var(--et-sub) 78%, transparent); }
+        .et-course-editor-add {
+            width: 100%;
+            min-height: 2.75rem;
+            margin-top: .75rem;
+            border: .0625rem dashed color-mix(in srgb, #3182F6 55%, var(--et-border));
+            border-radius: .875rem;
+            color: #5BA1FF;
+            background: rgba(49,130,246,.08);
+            font-size: .75rem;
+            font-weight: 850;
+        }
+        .et-course-editor-status { min-height: 1.125rem; margin-top: .5rem; color: #F04452; font-size: .71875rem; font-weight: 650; }
+        .et-course-editor-empty { padding: 1.5rem .75rem; color: var(--et-sub); text-align: center; font-size: .75rem; line-height: 1.5; }
+        .et-course-editor button:disabled,
+        .et-course-editor input:disabled,
+        .et-course-editor select:disabled { opacity: .5; }
         .et-empty-card { margin: .75rem 1.25rem 0; padding: 2.5rem 1.25rem; text-align: center; }
         .et-empty-icon {
             width: 3.25rem;
@@ -581,7 +648,7 @@
                 --et-sub: #8B95A1;
                 --et-grid: rgba(15,23,42,.075);
             }
-            .et-member-card, .et-import-card { box-shadow: 0 .375rem 1.25rem rgba(15,23,42,.06); }
+            .et-member-card, .et-import-card, .et-course-editor { box-shadow: 0 .375rem 1.25rem rgba(15,23,42,.06); }
         }
 
         /* 홈 콘텐츠: 인스타그램 피드형 */
@@ -5735,6 +5802,7 @@
                     <h2 id="member-timetable-title" class="text-[20px] font-black truncate">시간표</h2>
                     <p id="member-timetable-subtitle" class="text-[12px] font-semibold mt-0.5" style="color:var(--et-sub)">멤버 시간표</p>
                 </div>
+                <button id="member-timetable-course-edit-button" type="button" class="et-topbar-action hidden" onclick="window.haptic && window.haptic(); window.openMemberTimetableCourseEditor()" aria-label="과목 수정"><i class="fa-solid fa-pen"></i></button>
                 <button id="member-timetable-edit-button" type="button" class="et-topbar-action hidden" onclick="window.haptic && window.haptic(); window.openMemberTimetableEditor()" aria-label="에브리타임 링크 변경"><i class="fa-solid fa-link"></i></button>
             </div>
         </header>
@@ -13831,12 +13899,18 @@
     (function () {
         const ENJOY_EVERYTIME_WORKER_URL = 'https://enjoy-everytime-timetable.sungwon4867.workers.dev';
         const COURSE_COLORS = ['#3182F6', '#8B5CF6', '#EC4899', '#F97316', '#14B8A6', '#22C55E', '#EAB308', '#06B6D4', '#6366F1', '#F04452', '#84CC16', '#A855F7'];
+        const COURSE_DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
         let selectedMember = null;
         let previousFocus = null;
         let editorOpen = false;
         let importBusy = false;
         let importStatus = '';
         let draftUrl = '';
+        let courseEditorOpen = false;
+        let courseEditorBusy = false;
+        let courseEditorStatus = '';
+        let courseDraft = [];
+        let manualCourseSequence = 0;
 
         function escapeHtml(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
@@ -13850,6 +13924,40 @@
 
         function validTimetable(value) {
             return !!(value && typeof value === 'object' && Array.isArray(value.classes));
+        }
+
+        function courseMinutesToTime(value) {
+            const minutes = Math.max(0, Math.min(1439, Number(value) || 0));
+            return String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0');
+        }
+
+        function courseTimeToMinutes(value) {
+            const match = String(value || '').match(/^(\d{2}):(\d{2})$/);
+            if (!match) return null;
+            const hour = Number(match[1]);
+            const minute = Number(match[2]);
+            if (hour > 23 || minute > 59) return null;
+            return hour * 60 + minute;
+        }
+
+        function courseInputTime(value, minutes) {
+            const text = String(value || '');
+            return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(text) ? text : courseMinutesToTime(minutes);
+        }
+
+        function makeCourseDraft(timetable) {
+            return ((timetable && timetable.classes) || []).map(function (course, index) {
+                const item = Object.assign({}, course || {});
+                item.id = String(item.id || ('manual-' + Date.now() + '-' + (++manualCourseSequence)));
+                item.day = Math.max(0, Math.min(6, Number(item.day) || 0));
+                item.name = String(item.name || '');
+                item.professor = String(item.professor || '');
+                item.location = String(item.location || '');
+                item.startTime = courseInputTime(item.startTime, item.startMinutes);
+                item.endTime = courseInputTime(item.endTime, item.endMinutes);
+                item.color = Math.max(1, Number(item.color) || ((index % COURSE_COLORS.length) + 1));
+                return item;
+            });
         }
 
         function formatImportedAt(value) {
@@ -13892,6 +14000,79 @@
                         '<button type="submit" class="et-toolbar-button primary flex-[2]" data-et-import-button ' + (importBusy ? 'disabled' : '') + '>' + (importBusy ? '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i>가져오는 중' : (validTimetable(timetable) ? '이 링크로 변경' : '시간표 가져오기')) + '</button>' +
                     '</div>' +
                 '</form>';
+        }
+
+        function courseEditorHtml() {
+            const disabled = courseEditorBusy ? ' disabled' : '';
+            const items = courseDraft.map(function (course, index) {
+                const dayOptions = COURSE_DAY_LABELS.map(function (label, day) {
+                    return '<option value="' + day + '"' + (Number(course.day) === day ? ' selected' : '') + '>' + label + '</option>';
+                }).join('');
+                return '<section class="et-course-editor-item" data-course-index="' + index + '">' +
+                        '<div class="et-course-editor-item-head">' +
+                            '<strong class="et-course-editor-item-title">과목 ' + (index + 1) + '</strong>' +
+                            '<button type="button" class="et-course-editor-remove" onclick="window.removeMemberTimetableCourse(' + index + ')" aria-label="' + (index + 1) + '번째 과목 삭제"' + disabled + '><i class="fa-solid fa-trash-can"></i></button>' +
+                        '</div>' +
+                        '<label class="et-course-field"><span class="et-course-label">과목명</span>' +
+                            '<input class="et-course-control" data-course-field="name" type="text" maxlength="50" autocomplete="off" placeholder="과목명을 입력해주세요" value="' + escapeHtml(course.name) + '"' + disabled + '>' +
+                        '</label>' +
+                        '<div class="et-course-editor-grid">' +
+                            '<label class="et-course-field"><span class="et-course-label">요일</span><select class="et-course-control" data-course-field="day"' + disabled + '>' + dayOptions + '</select></label>' +
+                            '<label class="et-course-field"><span class="et-course-label">시작</span><input class="et-course-control" data-course-field="startTime" type="time" step="300" value="' + escapeHtml(course.startTime) + '"' + disabled + '></label>' +
+                            '<label class="et-course-field"><span class="et-course-label">종료</span><input class="et-course-control" data-course-field="endTime" type="time" step="300" value="' + escapeHtml(course.endTime) + '"' + disabled + '></label>' +
+                        '</div>' +
+                        '<div class="et-course-editor-grid is-details">' +
+                            '<label class="et-course-field"><span class="et-course-label">교수</span><input class="et-course-control" data-course-field="professor" type="text" maxlength="30" autocomplete="off" placeholder="선택 입력" value="' + escapeHtml(course.professor) + '"' + disabled + '></label>' +
+                            '<label class="et-course-field"><span class="et-course-label">강의실</span><input class="et-course-control" data-course-field="location" type="text" maxlength="30" autocomplete="off" placeholder="선택 입력" value="' + escapeHtml(course.location) + '"' + disabled + '></label>' +
+                        '</div>' +
+                    '</section>';
+            }).join('');
+            return '<form id="member-timetable-course-editor" class="et-course-editor" onsubmit="event.preventDefault(); window.saveMemberTimetableCourses()">' +
+                    '<div class="et-course-editor-head"><div><div class="et-course-editor-title">과목 수정</div>' +
+                    '<p class="et-course-editor-help">과목을 수정하거나 새로 추가한 뒤 저장해주세요.</p></div></div>' +
+                    '<div class="et-course-editor-list">' + (items || '<div class="et-course-editor-empty">등록된 과목이 없어요.<br>아래 버튼으로 과목을 추가해주세요.</div>') + '</div>' +
+                    '<button type="button" class="et-course-editor-add" onclick="window.addMemberTimetableCourse()"' + disabled + '><i class="fa-solid fa-plus mr-1.5"></i>과목 추가</button>' +
+                    '<div class="et-course-editor-status"' + (courseEditorBusy ? ' style="color:var(--et-sub)"' : '') + '>' + escapeHtml(courseEditorStatus) + '</div>' +
+                    '<div class="et-toolbar">' +
+                        '<button type="button" class="et-toolbar-button flex-1" onclick="window.closeMemberTimetableCourseEditor()"' + disabled + '>취소</button>' +
+                        '<button type="submit" class="et-toolbar-button primary flex-[2]"' + disabled + '>' + (courseEditorBusy ? '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i>저장 중' : '저장') + '</button>' +
+                    '</div>' +
+                '</form>';
+        }
+
+        function syncCourseDraftFromForm() {
+            const form = document.getElementById('member-timetable-course-editor');
+            if (!form) return courseDraft;
+            courseDraft = Array.from(form.querySelectorAll('.et-course-editor-item')).map(function (item) {
+                const index = Number(item.dataset.courseIndex);
+                const original = courseDraft[index] || {};
+                const value = function (field) {
+                    const control = item.querySelector('[data-course-field="' + field + '"]');
+                    return control ? control.value : '';
+                };
+                return Object.assign({}, original, {
+                    name: value('name'),
+                    day: Number(value('day')),
+                    startTime: value('startTime'),
+                    endTime: value('endTime'),
+                    professor: value('professor'),
+                    location: value('location')
+                });
+            });
+            return courseDraft;
+        }
+
+        function validateCourseDraft(items) {
+            for (let index = 0; index < items.length; index += 1) {
+                const course = items[index];
+                const start = courseTimeToMinutes(course.startTime);
+                const end = courseTimeToMinutes(course.endTime);
+                if (!String(course.name || '').trim()) return (index + 1) + '번째 과목명을 입력해주세요.';
+                if (!Number.isInteger(Number(course.day)) || Number(course.day) < 0 || Number(course.day) > 6) return (index + 1) + '번째 과목의 요일을 확인해주세요.';
+                if (start == null || end == null) return (index + 1) + '번째 과목의 시간을 확인해주세요.';
+                if (end <= start) return (index + 1) + '번째 과목의 종료 시간은 시작 시간보다 뒤여야 해요.';
+            }
+            return '';
         }
 
         function emptyCardHtml(own) {
@@ -14002,17 +14183,26 @@
             const title = document.getElementById('member-timetable-title');
             const subtitle = document.getElementById('member-timetable-subtitle');
             const editButton = document.getElementById('member-timetable-edit-button');
+            const courseEditButton = document.getElementById('member-timetable-course-edit-button');
             if (title) title.textContent = (selectedMember.name || '멤버') + ' 시간표';
             if (subtitle) subtitle.textContent = timetable ? (timetable.semester || '공유 시간표') : '멤버 시간표';
             if (editButton) {
-                editButton.classList.toggle('hidden', !(timetable && own && !editorOpen));
-                editButton.disabled = importBusy;
+                editButton.classList.toggle('hidden', !(timetable && own && !editorOpen && !courseEditorOpen));
+                editButton.disabled = importBusy || courseEditorBusy;
+            }
+            if (courseEditButton) {
+                courseEditButton.classList.toggle('hidden', !(timetable && own && !editorOpen && !courseEditorOpen));
+                courseEditButton.disabled = importBusy || courseEditorBusy;
             }
 
             let html = '';
-            if (own && (editorOpen || !timetable)) html += importCardHtml(timetable);
-            if (timetable) html += timetableGridHtml(timetable);
-            else if (!own) html += emptyCardHtml(false);
+            if (courseEditorOpen && timetable && own) {
+                html += courseEditorHtml();
+            } else {
+                if (own && (editorOpen || !timetable)) html += importCardHtml(timetable);
+                if (timetable) html += timetableGridHtml(timetable);
+                else if (!own) html += emptyCardHtml(false);
+            }
             root.innerHTML = html;
             bindTimetableAxisScroll(root);
         }
@@ -14024,6 +14214,10 @@
             importBusy = false;
             importStatus = '';
             draftUrl = '';
+            courseEditorOpen = false;
+            courseEditorBusy = false;
+            courseEditorStatus = '';
+            courseDraft = [];
             previousFocus = document.activeElement;
             renderMemberTimetable();
             const screen = document.getElementById('member-timetable-screen');
@@ -14050,12 +14244,19 @@
             importBusy = false;
             importStatus = '';
             draftUrl = '';
+            courseEditorOpen = false;
+            courseEditorBusy = false;
+            courseEditorStatus = '';
+            courseDraft = [];
             if (previousFocus && previousFocus.focus) previousFocus.focus({ preventScroll: true });
             previousFocus = null;
         };
 
         window.openMemberTimetableEditor = function () {
             if (!selectedMember || !isOwnMember(selectedMember)) return;
+            courseEditorOpen = false;
+            courseEditorStatus = '';
+            courseDraft = [];
             editorOpen = true;
             importStatus = '';
             draftUrl = (selectedMember.timetable && selectedMember.timetable.sourceUrl) || '';
@@ -14068,6 +14269,125 @@
             importStatus = '';
             draftUrl = '';
             renderMemberTimetable();
+        };
+
+        window.openMemberTimetableCourseEditor = function () {
+            if (!selectedMember || !isOwnMember(selectedMember) || !validTimetable(selectedMember.timetable)) return;
+            editorOpen = false;
+            courseEditorOpen = true;
+            courseEditorBusy = false;
+            courseEditorStatus = '';
+            courseDraft = makeCourseDraft(selectedMember.timetable);
+            renderMemberTimetable();
+            const scroll = document.getElementById('member-timetable-scroll');
+            if (scroll) scroll.scrollTop = 0;
+            setTimeout(function () {
+                const input = document.querySelector('#member-timetable-course-editor [data-course-field="name"]');
+                if (input) input.focus({ preventScroll: true });
+            }, 0);
+        };
+
+        window.closeMemberTimetableCourseEditor = function () {
+            if (courseEditorBusy) return;
+            courseEditorOpen = false;
+            courseEditorStatus = '';
+            courseDraft = [];
+            renderMemberTimetable();
+        };
+
+        window.addMemberTimetableCourse = function () {
+            if (!courseEditorOpen || courseEditorBusy) return;
+            syncCourseDraftFromForm();
+            const now = new Date();
+            courseDraft.push({
+                id: 'manual-' + Date.now() + '-' + (++manualCourseSequence),
+                day: (now.getDay() + 6) % 7,
+                name: '',
+                professor: '',
+                location: '',
+                startTime: '09:00',
+                endTime: '10:00',
+                color: (courseDraft.length % COURSE_COLORS.length) + 1
+            });
+            courseEditorStatus = '';
+            renderMemberTimetable();
+            const scroll = document.getElementById('member-timetable-scroll');
+            if (scroll) scroll.scrollTop = scroll.scrollHeight;
+            setTimeout(function () {
+                const inputs = document.querySelectorAll('#member-timetable-course-editor [data-course-field="name"]');
+                const input = inputs[inputs.length - 1];
+                if (input) input.focus({ preventScroll: true });
+            }, 0);
+        };
+
+        window.removeMemberTimetableCourse = function (index) {
+            if (!courseEditorOpen || courseEditorBusy) return;
+            syncCourseDraftFromForm();
+            if (index < 0 || index >= courseDraft.length) return;
+            courseDraft.splice(index, 1);
+            courseEditorStatus = '';
+            renderMemberTimetable();
+        };
+
+        window.saveMemberTimetableCourses = async function () {
+            if (!selectedMember || !isOwnMember(selectedMember) || !validTimetable(selectedMember.timetable) || courseEditorBusy) return;
+            const items = syncCourseDraftFromForm();
+            const validationMessage = validateCourseDraft(items);
+            if (validationMessage) {
+                courseEditorStatus = validationMessage;
+                renderMemberTimetable();
+                return;
+            }
+            if (!window.fsSetDoc || !window.fsDoc || !window.enjoyUser) {
+                courseEditorStatus = 'Firebase 연결을 확인하고 있어요. 잠시 후 다시 시도해주세요.';
+                renderMemberTimetable();
+                return;
+            }
+
+            const classes = items.map(function (course, index) {
+                const day = Number(course.day);
+                const startMinutes = courseTimeToMinutes(course.startTime);
+                const endMinutes = courseTimeToMinutes(course.endTime);
+                return {
+                    id: String(course.id || ('manual-' + Date.now() + '-' + (++manualCourseSequence))),
+                    day: day,
+                    dayLabel: COURSE_DAY_LABELS[day],
+                    name: String(course.name || '').trim(),
+                    professor: String(course.professor || '').trim(),
+                    location: String(course.location || '').trim(),
+                    startMinutes: startMinutes,
+                    endMinutes: endMinutes,
+                    startTime: courseMinutesToTime(startMinutes),
+                    endTime: courseMinutesToTime(endMinutes),
+                    color: Math.max(1, Number(course.color) || ((index % COURSE_COLORS.length) + 1))
+                };
+            }).sort(function (first, second) {
+                return first.day - second.day || first.startMinutes - second.startMinutes || first.name.localeCompare(second.name, 'ko');
+            });
+            const timetable = Object.assign({}, selectedMember.timetable, {
+                classes: classes,
+                editedAt: Date.now(),
+                editedByUid: window.enjoyUser.uid,
+                editedByName: window.enjoyProfileName || selectedMember.name || ''
+            });
+
+            courseEditorBusy = true;
+            courseEditorStatus = '시간표를 저장하는 중이에요.';
+            renderMemberTimetable();
+            try {
+                await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid), { timetable: timetable }, { merge: true });
+                selectedMember = Object.assign({}, selectedMember, { timetable: timetable });
+                courseEditorOpen = false;
+                courseEditorStatus = '';
+                courseDraft = [];
+                if (window.enjoyAlert) window.enjoyAlert('시간표를 수정했어요!');
+            } catch (error) {
+                console.error('Timetable course edit failed:', error);
+                courseEditorStatus = '시간표를 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
+            } finally {
+                courseEditorBusy = false;
+                renderMemberTimetable();
+            }
         };
 
         window.refreshOwnEverytimeTimetable = function () {
