@@ -5868,7 +5868,7 @@
     <section id="academic-schedule-screen" class="hidden flex-col" aria-hidden="true">
         <header class="academic-topbar">
             <button type="button" class="academic-icon-button" onclick="window.haptic && window.haptic(); window.closeAcademicSchedule()" aria-label="학사일정 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-            <div class="min-w-0 flex-1"><h2 class="text-[20px] font-black truncate">학사일정</h2><p id="academic-school-name" class="text-[11px] font-semibold mt-0.5" style="color:var(--academic-sub)">대학교 학사일정</p></div>
+            <div class="min-w-0 flex-1"><h2 class="text-[20px] font-black truncate">학사일정</h2><p id="academic-school-name" class="text-[11px] font-semibold mt-0.5" style="color:var(--academic-sub)">국립경국대학교 · 2026학년도</p></div>
         </header>
         <div class="academic-scroll flex-1 overflow-y-auto scrollbar-hide">
             <div class="academic-month-nav">
@@ -5879,6 +5879,7 @@
         </div>
     </section>
 
+    <script src="national_gyeongguk_univ_academic_calendar_2026.js"></script>
     <script>
     (function () {
         let sideMenuPreviousFocus = null;
@@ -5890,6 +5891,12 @@
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
             });
+        }
+
+        function academicShortDate(value) {
+            const parts = String(value || '').split('-').map(Number);
+            if (parts.length !== 3 || !parts[1] || !parts[2]) return '';
+            return parts[1] + '.' + parts[2] + '.';
         }
 
         function syncSideMenuFrame() {
@@ -5986,9 +5993,20 @@
         }
 
         function loadAcademicEvents() {
-            const source = window.ENJOY_UNIVERSITY_ACADEMIC_SCHEDULE;
+            const source = window.NATIONAL_GYEONGGUK_UNIV_ACADEMIC_CALENDAR_2026;
             academicEvents = Array.isArray(source)
-                ? source.filter(function (item) { return item && item.date && item.title; })
+                ? source.filter(function (item) { return item && item.startDate && item.title; }).map(function (item) {
+                    const startDate = String(item.startDate || '');
+                    const endDate = String(item.endDate || startDate);
+                    const period = endDate && endDate !== startDate
+                        ? academicShortDate(startDate) + ' ~ ' + academicShortDate(endDate)
+                        : '';
+                    const category = String(item.category || '');
+                    return Object.assign({}, item, {
+                        date: startDate,
+                        note: [period, category].filter(Boolean).join(' · ')
+                    });
+                })
                 : [];
             renderAcademicEvents();
         }
