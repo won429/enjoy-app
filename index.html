@@ -14225,6 +14225,34 @@
     })();
     </script>
 
+    <script>
+        window.syncTimetableToAndroid = function syncTimetableToAndroid(timetable) {
+            try {
+                if (
+                    window.AndroidTimetable &&
+                    typeof window.AndroidTimetable.saveTimetable === 'function'
+                ) {
+                    window.AndroidTimetable.saveTimetable(JSON.stringify(timetable));
+                }
+            } catch (error) {
+                console.warn('Android 시간표 동기화 실패:', error);
+            }
+        };
+
+        window.clearAndroidTimetable = function clearAndroidTimetable() {
+            try {
+                if (
+                    window.AndroidTimetable &&
+                    typeof window.AndroidTimetable.clearTimetable === 'function'
+                ) {
+                    window.AndroidTimetable.clearTimetable();
+                }
+            } catch (error) {
+                console.warn('Android 시간표 삭제 실패:', error);
+            }
+        };
+    </script>
+
     <!-- 멤버별 에브리타임 공유 시간표 -->
     <script>
     (function () {
@@ -14255,6 +14283,20 @@
 
         function validTimetable(value) {
             return !!(value && typeof value === 'object' && Array.isArray(value.classes));
+        }
+
+        async function saveOwnTimetable(timetable) {
+            if (!window.fsSetDoc || !window.fsDoc || !window.enjoyUser) {
+                throw new Error('FIREBASE_NOT_READY');
+            }
+
+            const uid = window.enjoyUser.uid;
+            await window.fsSetDoc(window.fsDoc('members', uid), { timetable: timetable }, { merge: true });
+
+            // 저장 도중 계정이 바뀐 경우 이전 계정의 시간표를 Android에 전달하지 않는다.
+            if (window.enjoyUser && window.enjoyUser.uid === uid) {
+                window.syncTimetableToAndroid(timetable);
+            }
         }
 
         function courseMinutesToTime(value) {
@@ -14706,7 +14748,7 @@
             courseEditorStatus = '시간표를 저장하는 중이에요.';
             renderMemberTimetable();
             try {
-                await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid), { timetable: timetable }, { merge: true });
+                await saveOwnTimetable(timetable);
                 selectedMember = Object.assign({}, selectedMember, { timetable: timetable });
                 courseEditorOpen = false;
                 courseEditorStatus = '';
@@ -14772,7 +14814,7 @@
                     importedByUid: window.enjoyUser.uid,
                     importedByName: window.enjoyProfileName || selectedMember.name || ''
                 });
-                await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid), { timetable: timetable }, { merge: true });
+                await saveOwnTimetable(timetable);
                 selectedMember = Object.assign({}, selectedMember, { timetable: timetable });
                 editorOpen = false;
                 importStatus = '';
@@ -15044,6 +15086,7 @@
 
                     // 구글 계정으로 로그인하지 않았으면 앱을 막고 로그인 화면을 띄운다.
                     if (!user || user.isAnonymous) {
+                        window.clearAndroidTimetable();
                         window.meetingAuthed = false;
                         window.enjoyUser = null;
                         try {
@@ -15064,6 +15107,25 @@
                     window.meetingAuthed = true; // 멤버/모임 데이터 동기화 신호
                     // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
+
+                    // 기존 로그인 세션이 복원된 경우도 현재 사용자의 Firebase 시간표를
+                    // 최초 1회 읽어 Android 알림/Live Update 예약에 전달한다.
+                    try {
+                        const memberSnapshot = await getDoc(doc(window.meetingDb, 'members', user.uid));
+                        if (!meetingAuth.currentUser || meetingAuth.currentUser.uid !== user.uid) return;
+                        const savedTimetable = memberSnapshot.exists()
+                            ? memberSnapshot.data().timetable
+                            : null;
+                        if (savedTimetable && typeof savedTimetable === 'object' && Array.isArray(savedTimetable.classes)) {
+                            window.syncTimetableToAndroid(savedTimetable);
+                        } else {
+                            // 문서 조회는 성공했지만 시간표가 없으면 이전 계정의 예약이 남지 않게 한다.
+                            window.clearAndroidTimetable();
+                        }
+                    } catch (error) {
+                        // 일시적인 조회 실패로 Android의 기존 정상 예약을 지우지는 않는다.
+                        console.warn('Android용 Firebase 시간표 최초 로드 실패:', error);
+                    }
                     try {
                         localStorage.setItem('enjoy_chat_account_v1', user.uid);
                         localStorage.setItem('enjoy_chat_account_label_v1', user.displayName || user.email || '엔조이 계정');
