@@ -355,6 +355,24 @@
             border-radius: 62.4375rem;
             background: #10B981;
         }
+        .member-status-study-badge {
+            position: absolute;
+            z-index: 2;
+            left: -0.375rem;
+            top: 50%;
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(-50%);
+            border: 0.125rem solid #000;
+            border-radius: 62.4375rem;
+            background: #3182F6;
+            color: #FFF;
+            font-size: 0.625rem;
+            box-shadow: 0 0.125rem 0.5rem rgba(49, 130, 246, .35);
+        }
         .member-status-name,
         .member-status-detail {
             display: block !important;
@@ -13483,6 +13501,21 @@
             return year + '.' + month + '.' + day;
         }
 
+        function memberIsInClass(timetable, currentDate) {
+            if (!timetable || !Array.isArray(timetable.classes)) return false;
+            const date = currentDate instanceof Date ? currentDate : new Date();
+            const timetableDay = (date.getDay() + 6) % 7;
+            const currentMinutes = date.getHours() * 60 + date.getMinutes();
+            return timetable.classes.some(function (course) {
+                if (!course) return false;
+                const day = Number(course.day);
+                const start = Number(course.startMinutes);
+                const end = Number(course.endMinutes);
+                return Number.isFinite(day) && Number.isFinite(start) && Number.isFinite(end) &&
+                    day === timetableDay && currentMinutes >= start && currentMinutes < end;
+            });
+        }
+
         function fbReady() { return !!(window.meetingDb && window.fsOnSnapshot && window.fsSetDoc && window.meetingAuthed && window.enjoyUser); }
         function isAdminAccount(user) {
             return String((user && user.email) || '').trim().toLowerCase() === ADMIN_EMAIL;
@@ -13626,6 +13659,7 @@
         function renderMembers() {
             const wrap = $('story-tray'); if (!wrap) return;
             const now = Date.now();
+            const currentDate = new Date(now);
             // 이름 → 멤버 문서(가입자)
             const byName = {}; lastMembers.forEach(m => { if (m.name) byName[m.name] = m; });
 
@@ -13640,6 +13674,7 @@
                 const mem = byName[name];                 // 가입자면 존재
                 const registered = !!mem;
                 const active = registered && (now - (mem.lastActive || 0) < ACTIVE_MS);
+                const studying = registered && memberIsInClass(mem.timetable, currentDate);
                 const activityText = registered ? memberActivityText(mem.lastActive, now) : '';
                 const col = window.enjoyMemberColor(name);
                 const photo = registered ? (mem.photoURL || '') : '';
@@ -13650,12 +13685,13 @@
                 else inner = '<span class="member-status-avatar-color"></span>';
 
                 const circle = '<div class="member-status-avatar-frame"><div class="member-status-avatar-inner">' + inner + '</div></div>';
+                const studyBadge = studying ? '<span class="member-status-study-badge" title="현재 수업 중" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>' : '';
                 const dot = active ? '<span class="member-status-active-dot"></span>' : '';
                 const sub = registered
                     ? '<span class="member-status-detail">' + activityText + '</span>'
                     : '<span class="member-status-detail">미가입자</span>';
-                return '<div class="member-status-item' + (registered ? ' is-registered' : '') + (active ? ' is-active' : '') + '" style="--member-color:' + (col.solidHex || '#6B7280') + '" role="button" tabindex="0" aria-label="' + name + ' 시간표 보기" onclick="window.haptic && window.haptic(); window.openMemberTimetable(\'' + name + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">' +
-                            '<div class="member-status-avatar-wrap">' + circle + dot + '</div>' +
+                return '<div class="member-status-item' + (registered ? ' is-registered' : '') + (active ? ' is-active' : '') + '" style="--member-color:' + (col.solidHex || '#6B7280') + '" role="button" tabindex="0" aria-label="' + name + (studying ? ' 현재 수업 중, ' : ' ') + '시간표 보기" onclick="window.haptic && window.haptic(); window.openMemberTimetable(\'' + name + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">' +
+                            '<div class="member-status-avatar-wrap">' + studyBadge + circle + dot + '</div>' +
                             '<span class="member-status-name">' + name + '</span>' +
                             sub +
                         '</div>';
