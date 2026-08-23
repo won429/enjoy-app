@@ -2222,7 +2222,6 @@
         .home-side-menu-item:active { transform: scale(.97); background: #F2F4F6; }
         .home-side-menu-item-icon { width: 2.625rem; height: 2.625rem; display: grid; place-items: center; flex: none; border-radius: .875rem; font-size: 1rem; }
         .home-side-menu-item-icon.is-calendar { color: #3182F6; background: rgba(49,130,246,.12); }
-        .home-side-menu-item-icon.is-photo { color: #8B5CF6; background: rgba(139,92,246,.12); }
         .home-side-menu-item-copy { min-width: 0; flex: 1; }
         .home-side-menu-item-title { display: block; color: #191F28; font-size: .9375rem; font-weight: 850; }
         .home-side-menu-item-chevron { color: #B0B8C1; font-size: .75rem; }
@@ -5873,15 +5872,9 @@
                     <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">학사일정</span></span>
                     <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.openProfilePhotoPicker()">
-                    <span class="home-side-menu-item-icon is-photo"><i class="fa-solid fa-camera" aria-hidden="true"></i></span>
-                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">프로필 사진 변경</span></span>
-                    <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
-                </button>
             </div>
         </nav>
     </aside>
-    <input id="profile-photo-input" type="file" accept="image/*" class="hidden" onchange="window.handleProfilePhotoChange(event)">
 
     <!-- 개인 학사일정 화면 -->
     <section id="academic-schedule-screen" class="hidden flex-col" aria-hidden="true">
@@ -5994,74 +5987,6 @@
             window.enjoyAlert && window.enjoyAlert('이 기능은 엔조이 멤버 계정으로 이용할 수 있어요.', { title: '더보기' });
             return false;
         }
-
-        window.openProfilePhotoPicker = function () {
-            if (!requireMemberFeature()) return;
-            const input = document.getElementById('profile-photo-input');
-            window.closeHomeSideMenu(false);
-            if (input) input.click();
-        };
-
-        function compressProfilePhoto(file) {
-            return new Promise(function (resolve, reject) {
-                const objectURL = URL.createObjectURL(file);
-                const image = new Image();
-                image.onload = function () {
-                    try {
-                        const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
-                        const sourceX = Math.max(0, (image.naturalWidth - sourceSize) / 2);
-                        const sourceY = Math.max(0, (image.naturalHeight - sourceSize) / 2);
-                        const canvas = document.createElement('canvas');
-                        canvas.width = 160;
-                        canvas.height = 160;
-                        const context = canvas.getContext('2d');
-                        context.fillStyle = '#FFFFFF';
-                        context.fillRect(0, 0, canvas.width, canvas.height);
-                        context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, canvas.width, canvas.height);
-                        let dataURL = canvas.toDataURL('image/jpeg', .78);
-                        if (dataURL.length > 70000) dataURL = canvas.toDataURL('image/jpeg', .58);
-                        resolve(dataURL);
-                    } catch (error) {
-                        reject(error);
-                    } finally {
-                        URL.revokeObjectURL(objectURL);
-                    }
-                };
-                image.onerror = function () {
-                    URL.revokeObjectURL(objectURL);
-                    reject(new Error('IMAGE_DECODE_FAILED'));
-                };
-                image.src = objectURL;
-            });
-        }
-
-        window.handleProfilePhotoChange = async function (event) {
-            const input = event && event.target;
-            const file = input && input.files && input.files[0];
-            if (!file) return;
-            if (!requireMemberFeature()) { input.value = ''; return; }
-            if (!String(file.type || '').startsWith('image/') || file.size > 12 * 1024 * 1024) {
-                window.enjoyAlert && window.enjoyAlert('12MB 이하의 이미지 파일을 선택해주세요.', { title: '프로필 사진' });
-                input.value = '';
-                return;
-            }
-            try {
-                const photoURL = await compressProfilePhoto(file);
-                await window.fsSetDoc(window.fsDoc('members', window.enjoyUser.uid), {
-                    photoURL: photoURL,
-                    customPhotoURL: photoURL,
-                    profilePhotoUpdatedAt: Date.now()
-                }, { merge: true });
-                window.enjoyUser.photoURL = photoURL;
-                if (window.enjoyApplyCustomProfilePhoto) window.enjoyApplyCustomProfilePhoto(photoURL);
-                window.enjoyAlert && window.enjoyAlert('프로필 사진을 변경했어요!', { title: '프로필 사진' });
-            } catch (error) {
-                console.error('Profile photo update failed:', error);
-                window.enjoyAlert && window.enjoyAlert('프로필 사진을 변경하지 못했어요. 다시 시도해주세요.', { title: '프로필 사진' });
-            } finally {
-                input.value = '';
-            }
-        };
 
         function renderAcademicEvents() {
             const title = document.getElementById('academic-month-title');
@@ -14120,7 +14045,7 @@
             const u = window.enjoyUser;
             try {
                 await window.fsSetDoc(window.fsDoc('members', u.uid),
-                    { lastActive: Date.now(), email: u.email || '' },
+                    { lastActive: Date.now(), email: u.email || '', photoURL: u.photoURL || '' },
                     { merge: true });
             } catch (e) {}
         }
@@ -14280,17 +14205,6 @@
             wrap.innerHTML = html;
         }
         window.enjoyRenderMembers = renderMembers;
-        window.enjoyApplyCustomProfilePhoto = function (photoURL) {
-            const user = window.enjoyUser;
-            if (user) user.photoURL = photoURL || '';
-            const member = user && lastMembers.find(function (item) { return item && item.uid === user.uid; });
-            if (member) {
-                member.photoURL = photoURL || '';
-                member.customPhotoURL = photoURL || '';
-            }
-            renderMembers();
-            updateProfileCard();
-        };
         window.openMemberTimetable = function (name) {
             const member = (lastMembers || []).find(function (item) { return item && item.name === name; });
             if (window.enjoyShowMemberTimetable) {
@@ -14307,15 +14221,9 @@
                     const arr = []; snap.forEach(d => {
                         const v = d.data() || {};
                         v.uid = d.id;
-                        if (v.customPhotoURL) v.photoURL = v.customPhotoURL;
                         arr.push(v);
                     });
                     lastMembers = arr; renderMembers(); updateProfileCard();
-                    const currentMember = window.enjoyUser && arr.find(function (member) { return member.uid === window.enjoyUser.uid; });
-                    if (currentMember && currentMember.customPhotoURL) {
-                        window.enjoyUser.photoURL = currentMember.customPhotoURL;
-                        updateProfileCard();
-                    }
                     if (window.enjoyUpdateOpenMemberTimetable) window.enjoyUpdateOpenMemberTimetable(arr);
                     // 스케줄 탭이 열려 있으면 멤버 가능여부 변경을 즉시 반영
                     try { if (window._schedSub === 'availability' && window.renderAvailability) window.renderAvailability(); } catch (e) {}
