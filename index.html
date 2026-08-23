@@ -2166,6 +2166,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
+            overflow: hidden;
             pointer-events: none;
         }
         .home-side-menu.is-open { pointer-events: auto; }
@@ -2233,6 +2234,15 @@
             --academic-border: rgba(255,255,255,.1);
             --academic-text: #F2F4F6;
             --academic-sub: #8B95A1;
+            position: fixed;
+            z-index: 270;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-width: none;
+            overflow: hidden;
+            transform: none;
             background: var(--academic-bg);
             color: var(--academic-text);
         }
@@ -2266,10 +2276,6 @@
         @media (prefers-reduced-motion: reduce) {
             .home-side-menu-backdrop, .home-side-menu-panel { transition: none; }
         }
-        @media (min-width: 768px) {
-            #academic-schedule-screen { width: min(100%, 30rem); max-width: 30rem; }
-        }
-
         /* 홈 다른 서비스 바로가기 */
         .home-service-menu {
             margin: 0.25rem 0 0.75rem;
@@ -5854,7 +5860,7 @@
     </main>
 
     <!-- 홈 상단 더보기 서랍 -->
-    <aside id="home-side-menu" class="home-side-menu" aria-hidden="true" inert>
+    <aside id="home-side-menu" class="home-side-menu hidden" aria-hidden="true" inert>
         <button type="button" class="home-side-menu-backdrop" onclick="window.closeHomeSideMenu()" aria-label="더보기 메뉴 닫기"></button>
         <nav class="home-side-menu-panel" role="dialog" aria-modal="true" aria-labelledby="home-side-menu-title" tabindex="-1">
             <div class="home-side-menu-head">
@@ -5878,7 +5884,7 @@
     <input id="profile-photo-input" type="file" accept="image/*" class="hidden" onchange="window.handleProfilePhotoChange(event)">
 
     <!-- 개인 학사일정 화면 -->
-    <section id="academic-schedule-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-[270] flex-col overflow-hidden" aria-hidden="true">
+    <section id="academic-schedule-screen" class="hidden flex-col" aria-hidden="true">
         <header class="academic-topbar">
             <button type="button" class="academic-icon-button" onclick="window.haptic && window.haptic(); window.closeAcademicSchedule()" aria-label="학사일정 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
             <div class="min-w-0 flex-1"><h2 class="text-[20px] font-black truncate">학사일정</h2><p class="text-[11px] font-semibold mt-0.5" style="color:var(--academic-sub)">내 학사 일정</p></div>
@@ -5904,6 +5910,7 @@
     <script>
     (function () {
         let sideMenuPreviousFocus = null;
+        let sideMenuCloseTimer = 0;
         let academicEvents = [];
         let academicMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         let academicEditingIndex = -1;
@@ -5928,13 +5935,26 @@
             menu.style.width = Math.round(bounds.width) + 'px';
         }
 
+        function syncAcademicFrame() {
+            const screen = document.getElementById('academic-schedule-screen');
+            const home = document.getElementById('home-screen');
+            if (!screen || !home) return;
+            const bounds = home.getBoundingClientRect();
+            screen.style.left = Math.round(bounds.left) + 'px';
+            screen.style.width = Math.round(bounds.width) + 'px';
+        }
+
         window.openHomeSideMenu = function () {
             const menu = document.getElementById('home-side-menu');
             const trigger = document.querySelector('.home-menu-trigger');
             if (!menu) return;
             sideMenuPreviousFocus = document.activeElement;
+            window.clearTimeout(sideMenuCloseTimer);
+            sideMenuCloseTimer = 0;
             syncSideMenuFrame();
+            menu.classList.remove('hidden');
             menu.removeAttribute('inert');
+            void menu.offsetWidth;
             menu.classList.add('is-open');
             menu.setAttribute('aria-hidden', 'false');
             if (trigger) trigger.setAttribute('aria-expanded', 'true');
@@ -5954,11 +5974,19 @@
                 sideMenuPreviousFocus.focus({ preventScroll: true });
             }
             sideMenuPreviousFocus = null;
+            window.clearTimeout(sideMenuCloseTimer);
+            const closeDelay = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 360;
+            sideMenuCloseTimer = window.setTimeout(function () {
+                if (!menu.classList.contains('is-open')) menu.classList.add('hidden');
+                sideMenuCloseTimer = 0;
+            }, closeDelay);
         };
 
         window.addEventListener('resize', function () {
             const menu = document.getElementById('home-side-menu');
             if (menu && menu.classList.contains('is-open')) syncSideMenuFrame();
+            const academicScreen = document.getElementById('academic-schedule-screen');
+            if (academicScreen && !academicScreen.classList.contains('hidden')) syncAcademicFrame();
         });
 
         function requireMemberFeature() {
@@ -6083,6 +6111,7 @@
             window.closeHomeSideMenu(false);
             const screen = document.getElementById('academic-schedule-screen');
             if (!screen) return;
+            syncAcademicFrame();
             academicMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
             academicEditingIndex = -1;
             window.closeAcademicEventEditor();
