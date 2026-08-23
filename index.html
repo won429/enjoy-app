@@ -2164,11 +2164,9 @@
             z-index: 260;
             top: 0;
             bottom: 0;
-            left: 50%;
-            width: min(100%, 28rem);
-            max-width: 100vw;
+            left: 0;
+            width: 100%;
             pointer-events: none;
-            transform: translateX(-50%);
         }
         .home-side-menu.is-open { pointer-events: auto; }
         .home-side-menu-backdrop {
@@ -2182,7 +2180,7 @@
         .home-side-menu-panel {
             position: absolute;
             inset: 0 auto 0 0;
-            width: min(82%, 22rem);
+            width: min(78%, 22rem);
             padding: max(1.5rem, calc(env(safe-area-inset-top) + 1rem)) 1.25rem max(1.5rem, calc(env(safe-area-inset-bottom) + 1rem));
             overflow-y: auto;
             outline: none;
@@ -2206,15 +2204,10 @@
             background: #F2F4F6;
             font-size: .875rem;
         }
-        .home-side-menu-profile { display: flex; align-items: center; gap: .75rem; margin-top: 1.25rem; padding: .875rem; border-radius: 1.125rem; background: #F7F8FA; }
-        .home-side-menu-avatar { width: 2.5rem; height: 2.5rem; flex: none; overflow: hidden; border-radius: 50%; background: #D1D6DB; }
-        .home-side-menu-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .home-side-menu-profile-name { min-width: 0; color: #191F28; font-size: .875rem; font-weight: 850; }
-        .home-side-menu-profile-desc { margin-top: .125rem; color: #8B95A1; font-size: .6875rem; font-weight: 650; }
-        .home-side-menu-list { display: flex; flex-direction: column; gap: .5rem; margin-top: 1.5rem; }
+        .home-side-menu-list { display: flex; flex-direction: column; gap: .5rem; margin-top: 1.25rem; }
         .home-side-menu-item {
             width: 100%;
-            min-height: 4.125rem;
+            min-height: 3.75rem;
             padding: .75rem;
             display: flex;
             align-items: center;
@@ -2231,7 +2224,6 @@
         .home-side-menu-item-icon.is-photo { color: #8B5CF6; background: rgba(139,92,246,.12); }
         .home-side-menu-item-copy { min-width: 0; flex: 1; }
         .home-side-menu-item-title { display: block; color: #191F28; font-size: .9375rem; font-weight: 850; }
-        .home-side-menu-item-desc { display: block; margin-top: .1875rem; color: #8B95A1; font-size: .6875rem; font-weight: 650; }
         .home-side-menu-item-chevron { color: #B0B8C1; font-size: .75rem; }
 
         #academic-schedule-screen {
@@ -2275,7 +2267,7 @@
             .home-side-menu-backdrop, .home-side-menu-panel { transition: none; }
         }
         @media (min-width: 768px) {
-            .home-side-menu, #academic-schedule-screen { width: min(100%, 30rem); max-width: 30rem; }
+            #academic-schedule-screen { width: min(100%, 30rem); max-width: 30rem; }
         }
 
         /* 홈 다른 서비스 바로가기 */
@@ -5869,22 +5861,15 @@
                 <h2 id="home-side-menu-title" class="home-side-menu-brand">더보기</h2>
                 <button type="button" class="home-side-menu-close" onclick="window.closeHomeSideMenu()" aria-label="더보기 메뉴 닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
             </div>
-            <div class="home-side-menu-profile">
-                <div id="home-side-menu-avatar" class="home-side-menu-avatar"></div>
-                <div class="min-w-0">
-                    <div id="home-side-menu-profile-name" class="home-side-menu-profile-name truncate">프로필</div>
-                    <div class="home-side-menu-profile-desc">엔조이 멤버</div>
-                </div>
-            </div>
             <div class="home-side-menu-list">
                 <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.openAcademicSchedule()">
                     <span class="home-side-menu-item-icon is-calendar"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span>
-                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">학사일정</span><span class="home-side-menu-item-desc">내 학사 일정을 한눈에 확인해요</span></span>
+                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">학사일정</span></span>
                     <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.openProfilePhotoPicker()">
                     <span class="home-side-menu-item-icon is-photo"><i class="fa-solid fa-camera" aria-hidden="true"></i></span>
-                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">프로필 사진 변경</span><span class="home-side-menu-item-desc">멤버 현황에 보일 사진을 바꿔요</span></span>
+                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">프로필 사진 변경</span></span>
                     <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
                 </button>
             </div>
@@ -5934,24 +5919,13 @@
             return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
         }
 
-        function updateSideMenuProfile() {
-            const avatar = document.getElementById('home-side-menu-avatar');
-            const nameElement = document.getElementById('home-side-menu-profile-name');
-            const name = String(window.enjoyProfileName || '프로필');
-            const photoURL = window.enjoyUser && window.enjoyUser.photoURL ? window.enjoyUser.photoURL : '';
-            if (nameElement) nameElement.textContent = name;
-            if (!avatar) return;
-            avatar.innerHTML = '';
-            if (photoURL) {
-                const image = document.createElement('img');
-                image.src = photoURL;
-                image.alt = '';
-                image.referrerPolicy = 'no-referrer';
-                avatar.appendChild(image);
-            } else {
-                const color = window.enjoyMemberColor && window.enjoyMemberColor(name);
-                avatar.style.background = color && color.solidHex ? color.solidHex : '#D1D6DB';
-            }
+        function syncSideMenuFrame() {
+            const menu = document.getElementById('home-side-menu');
+            const home = document.getElementById('home-screen');
+            if (!menu || !home) return;
+            const bounds = home.getBoundingClientRect();
+            menu.style.left = Math.round(bounds.left) + 'px';
+            menu.style.width = Math.round(bounds.width) + 'px';
         }
 
         window.openHomeSideMenu = function () {
@@ -5959,7 +5933,7 @@
             const trigger = document.querySelector('.home-menu-trigger');
             if (!menu) return;
             sideMenuPreviousFocus = document.activeElement;
-            updateSideMenuProfile();
+            syncSideMenuFrame();
             menu.removeAttribute('inert');
             menu.classList.add('is-open');
             menu.setAttribute('aria-hidden', 'false');
@@ -5981,6 +5955,11 @@
             }
             sideMenuPreviousFocus = null;
         };
+
+        window.addEventListener('resize', function () {
+            const menu = document.getElementById('home-side-menu');
+            if (menu && menu.classList.contains('is-open')) syncSideMenuFrame();
+        });
 
         function requireMemberFeature() {
             if (window.enjoyUser && window.enjoySync && window.fsDoc && window.fsSetDoc) return true;
@@ -6047,7 +6026,6 @@
                 }, { merge: true });
                 window.enjoyUser.photoURL = photoURL;
                 if (window.enjoyApplyCustomProfilePhoto) window.enjoyApplyCustomProfilePhoto(photoURL);
-                updateSideMenuProfile();
                 window.enjoyAlert && window.enjoyAlert('프로필 사진을 변경했어요!', { title: '프로필 사진' });
             } catch (error) {
                 console.error('Profile photo update failed:', error);
