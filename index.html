@@ -7948,7 +7948,21 @@
         function enjoyBaseballIsCanceled(game) {
             return Boolean(enjoyBaseballCancellationInfo(game));
         }
-        function enjoyBaseballChooseRotation(games, team, today) {
+        function enjoyBaseballGameStartTime(game) {
+            const dateMatch = String(game && game.date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            const timeMatch = String(game && game.time || '').match(/(\d{1,2}):(\d{2})/);
+            if (!dateMatch || !timeMatch) return null;
+            const year = Number(dateMatch[1]);
+            const month = Number(dateMatch[2]);
+            const day = Number(dateMatch[3]);
+            const hour = Number(timeMatch[1]);
+            const minute = Number(timeMatch[2]);
+            if (hour > 23 || minute > 59) return null;
+            const startTime = new Date(year, month - 1, day, hour, minute);
+            return Number.isNaN(startTime.getTime()) ? null : startTime;
+        }
+        function enjoyBaseballChooseRotation(games, team, today, currentTime) {
+            const now = currentTime instanceof Date && !Number.isNaN(currentTime.getTime()) ? currentTime : new Date();
             const teamGames = games.filter(function (game) {
                 return game.team1 === team || game.team2 === team;
             }).sort(function (a, b) {
@@ -7983,9 +7997,20 @@
                 });
                 return nextGame ? [canceledGame, nextGame] : [canceledGame];
             }
-            if (waitingGame) return [waitingGame];
 
             const upcoming = teamGames.find(function (game) { return String(game.date || '') > today; });
+            const nextGame = waitingGame || upcoming;
+            const recentFinishedGame = teamGames.slice().reverse().find(function (game) {
+                return String(game.date || '') < today &&
+                    String(game.gameStatus || '') === '종료' &&
+                    !enjoyBaseballIsCanceled(game);
+            });
+            if (recentFinishedGame && nextGame) {
+                const nextGameStart = enjoyBaseballGameStartTime(nextGame);
+                const resultVisibleUntil = nextGameStart && new Date(nextGameStart.getTime() - 60 * 60 * 1000);
+                if (resultVisibleUntil && now < resultVisibleUntil) return [recentFinishedGame, nextGame];
+            }
+            if (waitingGame) return [waitingGame];
             return upcoming ? [upcoming] : (teamGames.length ? [teamGames[teamGames.length - 1]] : []);
         }
         function enjoyBaseballSameGame(first, second) {
@@ -8295,16 +8320,18 @@
             try {
                 const now = new Date();
                 const today = enjoyBaseballDateKey(now);
+                const yesterday = enjoyBaseballDateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
                 const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
                 const results = await Promise.all([
                     enjoyBaseballGetDocument('live/today'),
                     enjoyBaseballGetDocument('schedule/' + enjoyBaseballMonthKey(now)),
                     enjoyBaseballGetDocument('schedule/' + enjoyBaseballMonthKey(nextMonth)),
                     enjoyBaseballGetDocument('games/' + today),
+                    enjoyBaseballGetDocument('games/' + yesterday),
                     enjoyBaseballEnsureFullHistory()
                 ]);
                 const firebaseGames = [];
-                [results[1], results[2], results[3], results[0]].forEach(function (documentData) {
+                [results[1], results[2], results[4], results[3], results[0]].forEach(function (documentData) {
                     ((documentData && documentData.games) || []).forEach(function (rawGame) {
                         firebaseGames.push(enjoyBaseballNormalizeGame(rawGame));
                     });
@@ -8324,8 +8351,8 @@
                 });
                 const games = Array.from(merged.values());
                 enjoyBaseballScheduleGames = games;
-                enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today));
-                enjoyBaseballSetRotation('kia', enjoyBaseballChooseRotation(games, 'KIA', today));
+                enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today, now));
+                enjoyBaseballSetRotation('kia', enjoyBaseballChooseRotation(games, 'KIA', today, now));
             } catch (error) {
                 console.warn('엔조이 야구 점수판을 불러오지 못했습니다.', error);
             }
