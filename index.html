@@ -6786,7 +6786,7 @@
                 title: '엔조이 셋로그',
                 category: 'GWANGJU ORIGINAL',
                 image: 'enjoy_setlog.jpg',
-                description: '네 명의 엔조이 멤버가 함께한 광주의 순간들을 네 편의 셋로그로 만나보세요.',
+                description: '네 명의 엔조이 멤버가 함께한 광주의 순간들을 엔조이 셋로그 #1과 #2로 만나보세요.',
                 cast: gwangjuVlogCast,
                 // 영상 링크와 유튜브 제목을 회차 순서대로 추가하면 됩니다.
                 episodes: makeVlogEpisodes(
@@ -6804,7 +6804,13 @@
                         '엔조이 셋로그 #1 원본',
                         '엔조이 셋로그 #1 전시기 에디션'
                     ]
-                )
+                ).concat([{
+                    label: '#2',
+                    title: '엔조이 셋로그 #2',
+                    url: '',
+                    image: 'enjoy_setlog.jpg',
+                    action: 'shorts'
+                }])
             },
             business: {
                 title: '출장엔조이',
@@ -8903,7 +8909,8 @@
                         '</div>' +
                         '<div class="pb-5">' +
                             (episodes.length ? episodes.map(function (episode, index) {
-                                const ready = !!String(episode.url || '').trim();
+                                const opensShorts = episode.action === 'shorts';
+                                const ready = opensShorts || !!String(episode.url || '').trim();
                                 const thumb = vlogEpisodeThumbnail(episode, program);
                                 const action = ready ? ' onclick="window.openVlogEpisode(\'' + vlogEsc(programId) + '\',' + index + ')" role="button" tabindex="0"' : '';
                                 const displayTitle = episode.title && episode.title !== episode.label
@@ -8916,7 +8923,7 @@
                                     '</div>' +
                                     '<div class="min-w-0 flex-1">' +
                                         '<h3 class="text-[15px] font-bold text-white break-keep">' + vlogEsc(displayTitle) + '</h3>' +
-                                        '<p class="text-[10px] text-gray-500 mt-1.5">' + (ready ? 'YouTube에서 보기' : '영상 링크 준비 중') + '</p>' +
+                                        '<p class="text-[10px] text-gray-500 mt-1.5">' + (opensShorts ? '엔조이 숏츠에서 보기' : (ready ? 'YouTube에서 보기' : '영상 링크 준비 중')) + '</p>' +
                                     '</div>' +
                                 '</article>';
                             }).join('') : '<div class="vlog-empty-episodes">공개될 회차를 준비 중이에요.</div>') +
@@ -8993,7 +9000,13 @@
         window.openVlogEpisode = function (programId, episodeIndex) {
             const program = window.ENJOY_VLOG_PROGRAMS[programId];
             const episode = program && program.episodes ? program.episodes[episodeIndex] : null;
-            if (!episode || !episode.url) return;
+            if (!episode) return;
+            if (episode.action === 'shorts') {
+                window.closeVlogProgram();
+                window.openEnjoyShorts();
+                return;
+            }
+            if (!episode.url) return;
             window.haptic && window.haptic();
             window.openBrowser(episode.url);
         };
@@ -9080,8 +9093,8 @@
             });
 
             const collections = [
-                { title: '부울경 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['enjoy-vlog', 'music-2'] },
                 { title: '전남광주 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['enjoy-setlog', 'gwangju-2027'] },
+                { title: '부산울산경남 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['enjoy-vlog', 'music-2'] },
                 { title: '대구경북 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['throwback', 'music-1'] },
                 { title: '대전충남 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['first-trip', 'transfer-trip'] },
                 { title: '제주 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['jeju-story', 'business-trip'] },
