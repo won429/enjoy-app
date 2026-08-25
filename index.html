@@ -567,6 +567,58 @@
         .et-link-input:focus { border-color: #3182F6; box-shadow: 0 0 0 .1875rem rgba(49,130,246,.14); }
         .et-link-input::placeholder { color: color-mix(in srgb, var(--et-sub) 78%, transparent); }
         .et-import-status { min-height: 1.125rem; margin-top: .5rem; color: #F04452; font-size: .71875rem; font-weight: 600; }
+        .et-photo-picker {
+            width: 100%;
+            min-height: 3.25rem;
+            margin-top: .875rem;
+            padding: .75rem .875rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            border: .0625rem dashed color-mix(in srgb, #3182F6 58%, var(--et-border));
+            border-radius: 1rem;
+            color: var(--et-text);
+            background: rgba(49,130,246,.08);
+            text-align: left;
+        }
+        .et-photo-picker-icon {
+            width: 2.25rem;
+            height: 2.25rem;
+            display: grid;
+            place-items: center;
+            flex: none;
+            border-radius: .75rem;
+            color: #5BA1FF;
+            background: rgba(49,130,246,.14);
+            font-size: .9375rem;
+        }
+        .et-photo-picker-copy { min-width: 0; flex: 1; }
+        .et-photo-picker-copy strong { display: block; font-size: .75rem; font-weight: 850; }
+        .et-photo-picker-copy span { display: block; margin-top: .125rem; overflow: hidden; color: var(--et-sub); font-size: .65625rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+        .et-photo-preview {
+            position: relative;
+            margin-top: .75rem;
+            overflow: hidden;
+            border: .0625rem solid var(--et-border);
+            border-radius: 1rem;
+            background: var(--et-surface-soft);
+        }
+        .et-photo-preview img { width: 100%; max-height: 15rem; display: block; object-fit: contain; }
+        .et-photo-preview-badge {
+            position: absolute;
+            top: .625rem;
+            left: .625rem;
+            padding: .375rem .5625rem;
+            border-radius: 62.4375rem;
+            color: #fff;
+            background: rgba(15,23,42,.72);
+            font-size: .59375rem;
+            font-weight: 850;
+            -webkit-backdrop-filter: blur(.75rem);
+            backdrop-filter: blur(.75rem);
+        }
+        .et-photo-privacy { margin-top: .625rem; color: var(--et-sub); font-size: .625rem; font-weight: 600; line-height: 1.45; }
+        .et-photo-status { min-height: 1.125rem; margin-top: .5rem; color: #F04452; font-size: .71875rem; font-weight: 650; }
         .et-course-editor {
             margin: .75rem 1.25rem 0;
             padding: 1rem;
@@ -14620,6 +14672,7 @@
     <script>
     (function () {
         const ENJOY_EVERYTIME_WORKER_URL = 'https://enjoy-everytime-timetable.sungwon4867.workers.dev';
+        const ENJOY_TIMETABLE_AI_WORKER_URL = 'https://enjoy-biseo-ai.sungwon4867.workers.dev';
         const COURSE_COLORS = ['#3182F6', '#8B5CF6', '#EC4899', '#F97316', '#14B8A6', '#22C55E', '#EAB308', '#06B6D4', '#6366F1', '#F04452', '#84CC16', '#A855F7'];
         const COURSE_DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
         let selectedMember = null;
@@ -14628,9 +14681,15 @@
         let importBusy = false;
         let importStatus = '';
         let draftUrl = '';
+        let photoImportBusy = false;
+        let photoImportStatus = '';
+        let timetablePhotoFile = null;
+        let timetablePhotoPreviewUrl = '';
         let courseEditorOpen = false;
         let courseEditorBusy = false;
         let courseEditorStatus = '';
+        let courseEditorBaseTimetable = null;
+        let courseEditorMode = '';
         let courseDraft = [];
         let manualCourseSequence = 0;
 
@@ -14738,6 +14797,33 @@
                 '</form>';
         }
 
+        function photoImportCardHtml() {
+            const selected = !!(timetablePhotoFile && timetablePhotoPreviewUrl);
+            const disabled = photoImportBusy ? ' disabled' : '';
+            const preview = selected
+                ? '<div class="et-photo-preview"><img src="' + escapeHtml(timetablePhotoPreviewUrl) + '" alt="선택한 시간표 사진"><span class="et-photo-preview-badge">AI 분석 전</span></div>'
+                : '';
+            return '<section class="et-import-card et-photo-card">' +
+                    '<div class="et-import-title">시간표 사진으로 추가</div>' +
+                    '<p class="et-import-help">시간표 캡처나 사진을 선택하면 AI가 과목·요일·시간을 읽어요. 저장 전에 인식 결과를 직접 수정할 수 있어요.</p>' +
+                    '<input id="member-timetable-photo" class="hidden" type="file" accept="image/*" onchange="window.handleMemberTimetablePhoto(event)"' + disabled + '>' +
+                    '<button type="button" class="et-photo-picker" onclick="window.pickMemberTimetablePhoto()"' + disabled + '>' +
+                        '<span class="et-photo-picker-icon"><i class="fa-solid fa-camera"></i></span>' +
+                        '<span class="et-photo-picker-copy"><strong>' + (selected ? '사진을 다시 선택' : '사진 촬영·앨범에서 선택') + '</strong>' +
+                        '<span>' + (selected ? escapeHtml(timetablePhotoFile.name || '선택한 시간표') : 'JPG, PNG, WEBP 등 이미지 파일') + '</span></span>' +
+                        '<i class="fa-solid fa-chevron-right text-[10px]" style="color:var(--et-sub)"></i>' +
+                    '</button>' +
+                    preview +
+                    '<p class="et-photo-privacy"><i class="fa-solid fa-shield-halved mr-1"></i>사진은 시간표 분석을 위해 Gemini API로 전송되며, 엔조이 Worker에 저장되지 않아요.</p>' +
+                    '<div class="et-photo-status"' + (photoImportBusy ? ' style="color:var(--et-sub)"' : '') + '>' + escapeHtml(photoImportStatus) + '</div>' +
+                    (selected ? '<div class="et-toolbar">' +
+                        '<button type="button" class="et-toolbar-button flex-1" onclick="window.clearMemberTimetablePhoto()"' + disabled + '>취소</button>' +
+                        '<button type="button" class="et-toolbar-button primary flex-[2]" onclick="window.analyzeMemberTimetablePhoto()"' + disabled + '>' +
+                            (photoImportBusy ? '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i>분석 중' : 'AI로 시간표 읽기') +
+                        '</button></div>' : '') +
+                '</section>';
+        }
+
         function courseEditorHtml() {
             const disabled = courseEditorBusy ? ' disabled' : '';
             const items = courseDraft.map(function (course, index) {
@@ -14763,9 +14849,13 @@
                         '</div>' +
                     '</section>';
             }).join('');
+            const editorTitle = courseEditorMode === 'ai' ? 'AI 인식 결과 확인' : '과목 수정';
+            const editorHelp = courseEditorMode === 'ai'
+                ? '인식한 과목과 시간을 확인하고, 틀린 내용은 수정한 뒤 저장해주세요.'
+                : '과목을 수정하거나 새로 추가한 뒤 저장해주세요.';
             return '<form id="member-timetable-course-editor" class="et-course-editor" onsubmit="event.preventDefault(); window.saveMemberTimetableCourses()">' +
-                    '<div class="et-course-editor-head"><div><div class="et-course-editor-title">과목 수정</div>' +
-                    '<p class="et-course-editor-help">과목을 수정하거나 새로 추가한 뒤 저장해주세요.</p></div></div>' +
+                    '<div class="et-course-editor-head"><div><div class="et-course-editor-title">' + editorTitle + '</div>' +
+                    '<p class="et-course-editor-help">' + editorHelp + '</p></div></div>' +
                     '<div class="et-course-editor-list">' + (items || '<div class="et-course-editor-empty">등록된 과목이 없어요.<br>아래 버튼으로 과목을 추가해주세요.</div>') + '</div>' +
                     '<button type="button" class="et-course-editor-add" onclick="window.addMemberTimetableCourse()"' + disabled + '><i class="fa-solid fa-plus mr-1.5"></i>과목 추가</button>' +
                     '<div class="et-course-editor-status"' + (courseEditorBusy ? ' style="color:var(--et-sub)"' : '') + '>' + escapeHtml(courseEditorStatus) + '</div>' +
@@ -14810,6 +14900,156 @@
             }
             return '';
         }
+
+        function clearTimetablePhotoState() {
+            if (timetablePhotoPreviewUrl) URL.revokeObjectURL(timetablePhotoPreviewUrl);
+            timetablePhotoPreviewUrl = '';
+            timetablePhotoFile = null;
+            photoImportBusy = false;
+            photoImportStatus = '';
+        }
+
+        function compressTimetablePhoto(file) {
+            return new Promise(function (resolve, reject) {
+                const sourceUrl = URL.createObjectURL(file);
+                const image = new Image();
+                image.onload = function () {
+                    URL.revokeObjectURL(sourceUrl);
+                    const sourceWidth = image.naturalWidth || image.width;
+                    const sourceHeight = image.naturalHeight || image.height;
+                    if (!sourceWidth || !sourceHeight) {
+                        reject(new Error('IMAGE_DECODE_FAILED'));
+                        return;
+                    }
+                    const maxSide = 1600;
+                    const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+                    canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+                    const context = canvas.getContext('2d', { alpha: false });
+                    if (!context) {
+                        reject(new Error('IMAGE_CANVAS_FAILED'));
+                        return;
+                    }
+                    context.fillStyle = '#FFFFFF';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', .84);
+                    const commaIndex = dataUrl.indexOf(',');
+                    const data = commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : '';
+                    if (!data || data.length > 5.2 * 1024 * 1024) {
+                        reject(new Error('IMAGE_TOO_LARGE'));
+                        return;
+                    }
+                    resolve({ mimeType: 'image/jpeg', data: data });
+                };
+                image.onerror = function () {
+                    URL.revokeObjectURL(sourceUrl);
+                    reject(new Error('IMAGE_DECODE_FAILED'));
+                };
+                image.src = sourceUrl;
+            });
+        }
+
+        window.pickMemberTimetablePhoto = function () {
+            if (photoImportBusy) return;
+            const input = document.getElementById('member-timetable-photo');
+            if (input) input.click();
+        };
+
+        window.handleMemberTimetablePhoto = function (event) {
+            if (photoImportBusy) return;
+            const input = event && event.target;
+            const file = input && input.files && input.files[0];
+            if (input) input.value = '';
+            if (!file) return;
+            if (!String(file.type || '').startsWith('image/')) {
+                photoImportStatus = '이미지 파일만 선택할 수 있어요.';
+                renderMemberTimetable();
+                return;
+            }
+            if (file.size > 15 * 1024 * 1024) {
+                photoImportStatus = '사진 크기는 15MB 이하로 선택해주세요.';
+                renderMemberTimetable();
+                return;
+            }
+            if (timetablePhotoPreviewUrl) URL.revokeObjectURL(timetablePhotoPreviewUrl);
+            timetablePhotoFile = file;
+            timetablePhotoPreviewUrl = URL.createObjectURL(file);
+            photoImportStatus = '';
+            renderMemberTimetable();
+        };
+
+        window.clearMemberTimetablePhoto = function () {
+            if (photoImportBusy) return;
+            clearTimetablePhotoState();
+            renderMemberTimetable();
+        };
+
+        window.analyzeMemberTimetablePhoto = async function () {
+            if (!selectedMember || !isOwnMember(selectedMember) || !timetablePhotoFile || photoImportBusy) return;
+            if (!window.getEnjoyIdToken) {
+                photoImportStatus = '로그인 정보를 확인하고 있어요. 잠시 후 다시 시도해주세요.';
+                renderMemberTimetable();
+                return;
+            }
+
+            const sourceFile = timetablePhotoFile;
+            photoImportBusy = true;
+            photoImportStatus = '사진을 분석할 수 있게 준비하고 있어요.';
+            renderMemberTimetable();
+            try {
+                const image = await compressTimetablePhoto(sourceFile);
+                photoImportStatus = 'Gemini 3.7 Flash가 시간표를 읽고 있어요.';
+                renderMemberTimetable();
+                const idToken = await window.getEnjoyIdToken();
+                if (!idToken) throw new Error('LOGIN_REQUIRED');
+                const response = await fetch(ENJOY_TIMETABLE_AI_WORKER_URL + '/timetable/parse', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer ' + idToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ image: image })
+                });
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok || !validTimetable(data.timetable) || !data.timetable.classes.length) {
+                    const error = new Error(data.error || 'AI_TIMETABLE_FAILED');
+                    error.status = response.status;
+                    throw error;
+                }
+
+                courseEditorBaseTimetable = Object.assign({}, data.timetable, {
+                    sourceType: 'ai-image',
+                    aiModel: data.model || 'gemini-3.7-flash',
+                    importedAt: Date.now(),
+                    importedByUid: window.enjoyUser && window.enjoyUser.uid || '',
+                    importedByName: window.enjoyProfileName || selectedMember.name || ''
+                });
+                courseDraft = makeCourseDraft(courseEditorBaseTimetable);
+                courseEditorOpen = true;
+                courseEditorMode = 'ai';
+                courseEditorStatus = '';
+                editorOpen = false;
+                clearTimetablePhotoState();
+                const scroll = document.getElementById('member-timetable-scroll');
+                renderMemberTimetable();
+                if (scroll) scroll.scrollTop = 0;
+            } catch (error) {
+                console.error('Timetable photo analysis failed:', error);
+                if (error && error.message === 'LOGIN_REQUIRED') photoImportStatus = '로그인 정보를 다시 확인해주세요.';
+                else if (error && error.message === 'IMAGE_DECODE_FAILED') photoImportStatus = '이 사진을 읽지 못했어요. JPG나 PNG 이미지로 다시 선택해주세요.';
+                else if (error && error.message === 'IMAGE_TOO_LARGE') photoImportStatus = '사진이 너무 커요. 크기를 줄이거나 다른 사진을 선택해주세요.';
+                else if (error && error.status === 401) photoImportStatus = '로그인이 만료됐어요. 다시 로그인해주세요.';
+                else if (error && error.status === 413) photoImportStatus = '사진 용량이 너무 커요. 다른 사진을 선택해주세요.';
+                else if (error && error.status === 422) photoImportStatus = '사진에서 수업을 확인하지 못했어요. 시간표 전체가 잘 보이는 사진으로 다시 시도해주세요.';
+                else if (error && error.status === 429) photoImportStatus = '분석 요청이 많아요. 잠시 후 다시 시도해주세요.';
+                else photoImportStatus = '시간표를 분석하지 못했어요. 잠시 후 다시 시도해주세요.';
+            } finally {
+                photoImportBusy = false;
+                renderMemberTimetable();
+            }
+        };
 
         function emptyCardHtml(own) {
             return '<section class="et-empty-card">' +
@@ -14924,18 +15164,21 @@
             if (subtitle) subtitle.textContent = timetable ? (timetable.semester || '공유 시간표') : '멤버 시간표';
             if (editButton) {
                 editButton.classList.toggle('hidden', !(timetable && own && !editorOpen && !courseEditorOpen));
-                editButton.disabled = importBusy || courseEditorBusy;
+                editButton.disabled = importBusy || photoImportBusy || courseEditorBusy;
             }
             if (courseEditButton) {
                 courseEditButton.classList.toggle('hidden', !(timetable && own && !editorOpen && !courseEditorOpen));
-                courseEditButton.disabled = importBusy || courseEditorBusy;
+                courseEditButton.disabled = importBusy || photoImportBusy || courseEditorBusy;
             }
 
             let html = '';
-            if (courseEditorOpen && timetable && own) {
+            if (courseEditorOpen && validTimetable(courseEditorBaseTimetable) && own) {
                 html += courseEditorHtml();
             } else {
-                if (own && (editorOpen || !timetable)) html += importCardHtml(timetable);
+                if (own && (editorOpen || !timetable)) {
+                    html += photoImportCardHtml();
+                    html += importCardHtml(timetable);
+                }
                 if (timetable) html += timetableGridHtml(timetable);
                 else if (!own) html += emptyCardHtml(false);
             }
@@ -14950,9 +15193,12 @@
             importBusy = false;
             importStatus = '';
             draftUrl = '';
+            clearTimetablePhotoState();
             courseEditorOpen = false;
             courseEditorBusy = false;
             courseEditorStatus = '';
+            courseEditorBaseTimetable = null;
+            courseEditorMode = '';
             courseDraft = [];
             previousFocus = document.activeElement;
             renderMemberTimetable();
@@ -14980,9 +15226,12 @@
             importBusy = false;
             importStatus = '';
             draftUrl = '';
+            clearTimetablePhotoState();
             courseEditorOpen = false;
             courseEditorBusy = false;
             courseEditorStatus = '';
+            courseEditorBaseTimetable = null;
+            courseEditorMode = '';
             courseDraft = [];
             if (previousFocus && previousFocus.focus) previousFocus.focus({ preventScroll: true });
             previousFocus = null;
@@ -14990,8 +15239,11 @@
 
         window.openMemberTimetableEditor = function () {
             if (!selectedMember || !isOwnMember(selectedMember)) return;
+            clearTimetablePhotoState();
             courseEditorOpen = false;
             courseEditorStatus = '';
+            courseEditorBaseTimetable = null;
+            courseEditorMode = '';
             courseDraft = [];
             editorOpen = true;
             importStatus = '';
@@ -15004,6 +15256,7 @@
             editorOpen = false;
             importStatus = '';
             draftUrl = '';
+            clearTimetablePhotoState();
             renderMemberTimetable();
         };
 
@@ -15013,6 +15266,8 @@
             courseEditorOpen = true;
             courseEditorBusy = false;
             courseEditorStatus = '';
+            courseEditorBaseTimetable = Object.assign({}, selectedMember.timetable);
+            courseEditorMode = 'manual';
             courseDraft = makeCourseDraft(selectedMember.timetable);
             renderMemberTimetable();
             const scroll = document.getElementById('member-timetable-scroll');
@@ -15027,6 +15282,8 @@
             if (courseEditorBusy) return;
             courseEditorOpen = false;
             courseEditorStatus = '';
+            courseEditorBaseTimetable = null;
+            courseEditorMode = '';
             courseDraft = [];
             renderMemberTimetable();
         };
@@ -15066,7 +15323,7 @@
         };
 
         window.saveMemberTimetableCourses = async function () {
-            if (!selectedMember || !isOwnMember(selectedMember) || !validTimetable(selectedMember.timetable) || courseEditorBusy) return;
+            if (!selectedMember || !isOwnMember(selectedMember) || !validTimetable(courseEditorBaseTimetable) || courseEditorBusy) return;
             const items = syncCourseDraftFromForm();
             const validationMessage = validateCourseDraft(items);
             if (validationMessage) {
@@ -15100,7 +15357,8 @@
             }).sort(function (first, second) {
                 return first.day - second.day || first.startMinutes - second.startMinutes || first.name.localeCompare(second.name, 'ko');
             });
-            const timetable = Object.assign({}, selectedMember.timetable, {
+            const wasNewTimetable = !validTimetable(selectedMember.timetable);
+            const timetable = Object.assign({}, courseEditorBaseTimetable, {
                 classes: classes,
                 editedAt: Date.now(),
                 editedByUid: window.enjoyUser.uid,
@@ -15115,8 +15373,11 @@
                 selectedMember = Object.assign({}, selectedMember, { timetable: timetable });
                 courseEditorOpen = false;
                 courseEditorStatus = '';
+                courseEditorBaseTimetable = null;
+                courseEditorMode = '';
                 courseDraft = [];
-                if (window.enjoyAlert) window.enjoyAlert('시간표를 수정했어요!');
+                clearTimetablePhotoState();
+                if (window.enjoyAlert) window.enjoyAlert(wasNewTimetable ? '시간표를 저장했어요!' : '시간표를 수정했어요!');
             } catch (error) {
                 console.error('Timetable course edit failed:', error);
                 courseEditorStatus = '시간표를 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
@@ -15182,6 +15443,7 @@
                 editorOpen = false;
                 importStatus = '';
                 draftUrl = '';
+                clearTimetablePhotoState();
                 if (window.enjoyAlert) window.enjoyAlert('시간표를 가져왔어요!');
             } catch (error) {
                 console.error('Everytime timetable import failed:', error);
