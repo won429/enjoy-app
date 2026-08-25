@@ -347,29 +347,35 @@
         .member-status-item.is-registered .member-status-avatar-color { opacity: 1; }
         .member-status-active-dot {
             position: absolute;
-            right: 0.125rem;
-            bottom: 0.125rem;
-            width: 0.9375rem;
-            height: 0.9375rem;
+            z-index: 3;
+            right: -0.1875rem;
+            bottom: -0.1875rem;
+            width: 1.375rem;
+            height: 1.375rem;
+            border: 0.1875rem solid #000;
             border-radius: 62.4375rem;
             background: #10B981;
+            box-shadow: 0 0.1875rem 0.625rem rgba(16,185,129,.3);
         }
+        .member-status-active-dot.is-inactive { background: #F59E0B; box-shadow: 0 0.1875rem 0.625rem rgba(245,158,11,.3); }
         .member-status-study-badge {
             position: absolute;
-            z-index: 2;
-            left: 0.125rem;
-            bottom: 0.125rem;
-            width: 0.9375rem;
-            height: 0.9375rem;
+            z-index: 4;
+            right: -0.1875rem;
+            bottom: -0.1875rem;
+            width: 1.625rem;
+            height: 1.625rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 0.1875rem solid #000;
             border-radius: 62.4375rem;
             background: #3182F6;
             color: #FFF;
-            font-size: 0.5rem;
-            box-shadow: 0 0.125rem 0.5rem rgba(49, 130, 246, .35);
+            font-size: 0.6875rem;
+            box-shadow: 0 0.1875rem 0.625rem rgba(49,130,246,.35);
         }
+        .member-status-study-badge ~ .member-status-active-dot { right: 1.0625rem; bottom: -0.125rem; width: 1.125rem; height: 1.125rem; border-width: 0.15625rem; }
         .member-status-name,
         .member-status-detail {
             display: block !important;
@@ -2252,23 +2258,58 @@
             background: var(--academic-bg);
             color: var(--academic-text);
         }
-        .academic-topbar { padding: max(1rem, env(safe-area-inset-top)) 1.25rem .875rem; display: flex; align-items: center; gap: .75rem; flex: none; }
+        .academic-topbar { position: relative; z-index: 2; padding: max(1rem, env(safe-area-inset-top)) 1.25rem .875rem; display: flex; align-items: center; gap: .75rem; flex: none; }
         .academic-icon-button { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: var(--academic-text); background: var(--academic-soft); }
-        .academic-scroll { padding: .25rem 1.25rem max(4rem, calc(2rem + env(safe-area-inset-bottom))); }
+        .academic-title { display: flex; align-items: baseline; gap: .375rem; }
+        .academic-year-label { color: var(--academic-sub); font-size: .6875rem; font-weight: 700; line-height: 1; }
+        .academic-school-picker { position: relative; display: inline-block; max-width: 100%; margin-top: .25rem; }
+        .academic-school-trigger { min-height: 2.25rem; max-width: 15rem; padding: 0 .75rem 0 .625rem; display: flex; align-items: center; justify-content: space-between; gap: .75rem; border: 0; border-radius: 624.9375rem; color: #F2F4F6; background: #3A3A3C; font-size: .6875rem; font-weight: 750; line-height: 1; outline: none; transition: transform .16s ease, background-color .16s ease; }
+        .academic-school-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .academic-school-trigger-main, .academic-school-option-main { min-width: 0; display: flex; align-items: center; gap: .375rem; }
+        .academic-school-logo { width: 1.5rem; height: 1.5rem; flex: none; object-fit: contain; }
+        .academic-school-logo.is-woosong,
+        .academic-school-option[data-academic-school="woosong"] .academic-school-logo { width: 2.75rem; height: 1.375rem; }
+        .academic-school-logo.is-gyeongguk { width: 1.625rem; height: 1.625rem; }
+        .academic-school-logo.is-gyeongsang { width: 1.625rem; height: 1.625rem; }
+        .academic-school-logo.is-gwangju { width: 1.75rem; height: 1.75rem; filter: drop-shadow(0 0 .0625rem rgba(255,255,255,.9)); }
+        .academic-school-option[data-academic-school="gyeongguk"] > span { display: flex; align-items: center; gap: .375rem; }
+        .academic-school-option[data-academic-school="gyeongguk"] > span::before { width: 1.625rem; height: 1.625rem; content: ""; flex: none; background: url("assets/gyeongguk.png") center / contain no-repeat; }
+        .academic-school-trigger:active { transform: scale(.96); }
+        .academic-school-trigger:focus-visible { border-color: #3182F6; box-shadow: 0 0 0 .1875rem rgba(49,130,246,.2); }
+        .academic-school-trigger i { flex: none; color: var(--academic-sub); font-size: .625rem; transition: transform .2s ease; }
+        .academic-school-picker.is-open .academic-school-trigger i { transform: rotate(180deg); }
+        .academic-school-menu { position: absolute; top: calc(100% + .5rem); left: 0; z-index: 40; min-width: 15rem; padding: .375rem; display: none; flex-direction: column; gap: .125rem; border: .0625rem solid rgba(255,255,255,.1); border-radius: 1.125rem; background: rgba(36,36,38,.98); box-shadow: 0 1rem 2.5rem rgba(0,0,0,.34); }
+        .academic-school-picker.is-open .academic-school-menu { display: flex; }
+        .academic-school-option { width: 100%; min-height: 2.625rem; padding: 0 .75rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 0; border-radius: .8125rem; color: #F2F4F6; background: transparent; font-size: .75rem; font-weight: 700; text-align: left; transition: transform .14s ease, background-color .14s ease; }
+        .academic-school-option:active { transform: scale(.97); }
+        .academic-school-option:hover,
+        .academic-school-option:focus-visible { background: rgba(255,255,255,.08); outline: none; }
+        .academic-school-option.is-selected { color: #fff; background: rgba(49,130,246,.22); }
+        .academic-school-option i { color: #3182F6; font-size: .75rem; opacity: 0; }
+        .academic-school-option.is-selected i { opacity: 1; }
+        .academic-watermark { position: absolute; top: 54%; left: 50%; width: min(68vw, 18rem); aspect-ratio: 1; z-index: 0; transform: translate(-50%, -50%); background-position: center; background-repeat: no-repeat; background-size: contain; opacity: .1; pointer-events: none; }
+        .academic-scroll { position: relative; z-index: 1; padding: .25rem 1.25rem max(4rem, calc(2rem + env(safe-area-inset-bottom))); }
         .academic-month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
         .academic-month-title { color: var(--academic-text); font-size: 1.25rem; font-weight: 900; }
         .academic-month-buttons { display: flex; gap: .375rem; }
         .academic-list { display: flex; flex-direction: column; gap: .625rem; }
-        .academic-event { display: flex; align-items: center; gap: .75rem; padding: .875rem; border: .0625rem solid var(--academic-border); border-radius: 1.125rem; background: var(--academic-surface); }
+        .academic-event { display: flex; align-items: center; gap: .75rem; padding: .875rem; overflow: hidden; isolation: isolate; border: .0625rem solid rgba(255,255,255,.15); border-radius: 1.125rem; background: rgba(12,12,14,.38); box-shadow: 0 1.125rem 3.25rem rgba(0,0,0,.35), 0 .375rem 1rem rgba(0,0,0,.22); -webkit-backdrop-filter: blur(1.25rem) saturate(1.6); backdrop-filter: blur(1.25rem) saturate(1.6); }
         .academic-event-date { width: 3rem; flex: none; text-align: center; }
         .academic-event-day { display: block; color: #5BA1FF; font-size: 1.25rem; font-weight: 950; line-height: 1; }
         .academic-event-weekday { display: block; margin-top: .25rem; color: var(--academic-sub); font-size: .625rem; font-weight: 750; }
         .academic-event-copy { min-width: 0; flex: 1; text-align: left; }
-        .academic-event-title { display: block; overflow: hidden; color: var(--academic-text); font-size: .875rem; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
-        .academic-event-note { display: block; overflow: hidden; margin-top: .1875rem; color: var(--academic-sub); font-size: .6875rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+        .academic-event-title { display: block; color: var(--academic-text); font-size: .875rem; font-weight: 850; line-height: 1.4; overflow-wrap: anywhere; white-space: normal; }
+        .academic-event-note { display: block; margin-top: .1875rem; color: var(--academic-sub); font-size: .6875rem; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; white-space: normal; }
         .academic-empty { padding: 3rem 1rem; color: var(--academic-sub); text-align: center; font-size: .8125rem; line-height: 1.6; }
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .academic-event { background: rgba(28,28,30,.9); }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            .academic-event { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(28,28,30,.9); }
+        }
         @media (prefers-reduced-motion: reduce) {
             .home-side-menu-backdrop, .home-side-menu-panel { transition: none; }
+            .academic-school-trigger, .academic-school-trigger i, .academic-school-option { transition: none; }
         }
         /* 홈 다른 서비스 바로가기 */
         .home-service-menu {
@@ -4618,6 +4659,15 @@
                 --academic-text: #191F28;
                 --academic-sub: #8B95A1;
             }
+            .academic-watermark { opacity: .08; }
+            .academic-event { border-color: rgba(0,0,0,.1); background: rgba(255,255,255,.48); box-shadow: 0 .875rem 2.625rem rgba(0,0,0,.16), 0 .25rem .75rem rgba(0,0,0,.1); }
+            .academic-school-logo.is-gwangju { filter: none; }
+            .academic-school-trigger { color: #191F28; background: #FFFFFF; }
+            .academic-school-menu { border-color: rgba(0,0,0,.08); background: rgba(255,255,255,.98); box-shadow: 0 1rem 2.5rem rgba(15,23,42,.16); }
+            .academic-school-option { color: #191F28; }
+            .academic-school-option:hover,
+            .academic-school-option:focus-visible { background: rgba(0,0,0,.05); }
+            .academic-school-option.is-selected { color: #1B64DA; background: rgba(49,130,246,.12); }
             .home-service-item { color: #4E4E52; }
             .home-service-item:active { background: rgba(0,0,0,.045); }
 
@@ -5063,6 +5113,8 @@
             #story-tray .bg-white\/5 { background-color: rgba(0, 0, 0, 0.05) !important; }
             #story-tray .text-white\/85, #story-tray [class*="text-white/"] { color: #141414 !important; }
             #story-tray .member-status-item.is-registered .member-status-name { color: #191F28; }
+            #story-tray .member-status-active-dot,
+            #story-tray .member-status-study-badge { border-color: #F2F2F7; }
             .story-strip-title, .story-person-name { color: #191F28; }
             .story-strip-note { color: #8B95A1; }
             .story-avatar-gap { background: #F2F4F6; }
@@ -5894,8 +5946,23 @@
     <section id="academic-schedule-screen" class="hidden flex-col" aria-hidden="true">
         <header class="academic-topbar">
             <button type="button" class="academic-icon-button" onclick="window.haptic && window.haptic(); window.closeAcademicSchedule()" aria-label="학사일정 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-            <div class="min-w-0 flex-1"><h2 class="text-[20px] font-black truncate">학사일정</h2><p id="academic-school-name" class="text-[11px] font-semibold mt-0.5" style="color:var(--academic-sub)">국립경국대학교 · 2026학년도</p></div>
+            <div class="min-w-0 flex-1">
+                <h2 class="academic-title text-[20px] font-black truncate">학사일정 <span class="academic-year-label">2026학년도</span></h2>
+                <div class="academic-school-picker">
+                    <button id="academic-school-trigger" type="button" class="academic-school-trigger" aria-label="학교 선택: 국립경국대학교" aria-haspopup="listbox" aria-expanded="false" onclick="window.toggleAcademicSchoolMenu(this, event)">
+                        <span class="academic-school-trigger-main"><img id="academic-school-logo" class="academic-school-logo hidden" alt=""><span id="academic-school-label">국립경국대학교</span></span>
+                        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div class="academic-school-menu" role="listbox" aria-label="학교 선택">
+                        <button type="button" class="academic-school-option" style="order:3" data-academic-school="gwangju" role="option" aria-selected="false" onclick="window.selectAcademicSchool('gwangju', event)"><span class="academic-school-option-main"><img class="academic-school-logo is-gwangju" src="assets/gwangju.png" alt="" aria-hidden="true"><span>&#44305;&#51452;&#45824;&#54617;&#44368;</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                        <button type="button" class="academic-school-option" style="order:2" data-academic-school="gyeongsang" role="option" aria-selected="false" onclick="window.selectAcademicSchool('gyeongsang', event)"><span class="academic-school-option-main"><img class="academic-school-logo is-gyeongsang" src="assets/gyeongsang.png" alt="" aria-hidden="true"><span>&#44221;&#49345;&#44397;&#47549;&#45824;&#54617;&#44368;</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                        <button type="button" class="academic-school-option is-selected" data-academic-school="gyeongguk" role="option" aria-selected="true" onclick="window.selectAcademicSchool('gyeongguk', event)"><span>국립경국대학교</span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                        <button type="button" class="academic-school-option" data-academic-school="woosong" role="option" aria-selected="false" onclick="window.selectAcademicSchool('woosong', event)"><span class="academic-school-option-main"><img class="academic-school-logo" src="assets/woosong.png" alt="" aria-hidden="true"><span>우송대학교</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                    </div>
+                </div>
+            </div>
         </header>
+        <div id="academic-watermark" class="academic-watermark" aria-hidden="true"></div>
         <div class="academic-scroll flex-1 overflow-y-auto scrollbar-hide">
             <div class="academic-month-nav">
                 <h3 id="academic-month-title" class="academic-month-title"></h3>
@@ -5906,12 +5973,46 @@
     </section>
 
     <script src="national_gyeongguk_univ_academic_calendar_2026.js"></script>
+    <script src="woosong_univ_academic_calendar_2026.js"></script>
+    <script src="gyeongsang_national_univ_academic_calendar_2026.js"></script>
+    <script src="gwangju_univ_academic_calendar_2026.js"></script>
     <script>
     (function () {
         let sideMenuPreviousFocus = null;
         let sideMenuCloseTimer = 0;
         let academicEvents = [];
         let academicMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        let academicSchoolId = 'gyeongguk';
+        const academicSchools = {
+            gyeongguk: {
+                label: '국립경국대학교',
+                name: '국립경국대학교',
+                logo: 'assets/gyeongguk.png',
+                logoClass: 'is-gyeongguk',
+                source: function () { return window.NATIONAL_GYEONGGUK_UNIV_ACADEMIC_CALENDAR_2026; }
+            },
+            woosong: {
+                label: '우송대학교',
+                name: '우송대학교',
+                logo: 'assets/woosong.png',
+                logoClass: 'is-woosong',
+                source: function () { return (window.WOOSONG_UNIV_ACADEMIC_CALENDAR_2026 || []).filter(function (item) { return item && item.audience !== '\ub300\ud559\uc6d0'; }); }
+            },
+            gyeongsang: {
+                label: '\uacbd\uc0c1\uad6d\ub9bd\ub300\ud559\uad50',
+                name: '\uacbd\uc0c1\uad6d\ub9bd\ub300\ud559\uad50',
+                logo: 'assets/gyeongsang.png',
+                logoClass: 'is-gyeongsang',
+                source: function () { return window.GYEONGSANG_NATIONAL_UNIV_ACADEMIC_CALENDAR_2026; }
+            },
+            gwangju: {
+                label: '\uad11\uc8fc\ub300\ud559\uad50',
+                name: '\uad11\uc8fc\ub300\ud559\uad50',
+                logo: 'assets/gwangju.png',
+                logoClass: 'is-gwangju',
+                source: function () { return window.GWANGJU_UNIV_ACADEMIC_CALENDAR_2026; }
+            }
+        };
 
         function academicEscape(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
@@ -6019,7 +6120,32 @@
         }
 
         function loadAcademicEvents() {
-            const source = window.NATIONAL_GYEONGGUK_UNIV_ACADEMIC_CALENDAR_2026;
+            const school = academicSchools[academicSchoolId] || academicSchools.gyeongguk;
+            const source = school.source();
+            const label = document.getElementById('academic-school-label');
+            const logo = document.getElementById('academic-school-logo');
+            const watermark = document.getElementById('academic-watermark');
+            const trigger = document.getElementById('academic-school-trigger');
+            if (label) label.textContent = school.label;
+            if (watermark) watermark.style.backgroundImage = school.logo ? 'url("' + school.logo + '")' : 'none';
+            if (logo) {
+                logo.classList.remove('is-gyeongguk', 'is-woosong', 'is-gyeongsang', 'is-gwangju');
+                logo.classList.toggle('hidden', !school.logo);
+                if (school.logo) {
+                    if (school.logoClass) logo.classList.add(school.logoClass);
+                    logo.src = school.logo;
+                    logo.alt = school.name + ' 로고';
+                } else {
+                    logo.removeAttribute('src');
+                    logo.alt = '';
+                }
+            }
+            if (trigger) trigger.setAttribute('aria-label', '학교 선택: ' + school.name);
+            document.querySelectorAll('.academic-school-option').forEach(function (option) {
+                const selected = option.dataset.academicSchool === academicSchoolId;
+                option.classList.toggle('is-selected', selected);
+                option.setAttribute('aria-selected', selected ? 'true' : 'false');
+            });
             academicEvents = Array.isArray(source)
                 ? source.filter(function (item) { return item && item.startDate && item.title; }).map(function (item) {
                     const startDate = String(item.startDate || '');
@@ -6027,15 +6153,59 @@
                     const period = endDate && endDate !== startDate
                         ? academicShortDate(startDate) + ' ~ ' + academicShortDate(endDate)
                         : '';
+                    const audience = String(item.audience || '');
                     const category = String(item.category || '');
                     return Object.assign({}, item, {
                         date: startDate,
-                        note: [period, category].filter(Boolean).join(' · ')
+                        note: [period, audience, category].filter(Boolean).join(' · ')
                     });
                 })
                 : [];
             renderAcademicEvents();
         }
+
+        window.changeAcademicSchool = function (schoolId) {
+            if (!academicSchools[schoolId] || schoolId === academicSchoolId) return;
+            academicSchoolId = schoolId;
+            loadAcademicEvents();
+            const scroll = document.querySelector('#academic-schedule-screen .academic-scroll');
+            if (scroll) scroll.scrollTop = 0;
+        };
+
+        function closeAcademicSchoolMenu(restoreFocus) {
+            const picker = document.querySelector('.academic-school-picker.is-open');
+            if (!picker) return false;
+            picker.classList.remove('is-open');
+            const trigger = picker.querySelector('.academic-school-trigger');
+            if (trigger) {
+                trigger.setAttribute('aria-expanded', 'false');
+                if (restoreFocus) trigger.focus();
+            }
+            return true;
+        }
+
+        window.toggleAcademicSchoolMenu = function (trigger, event) {
+            if (event) event.stopPropagation();
+            const picker = trigger && trigger.closest('.academic-school-picker');
+            if (!picker) return;
+            const shouldOpen = !picker.classList.contains('is-open');
+            closeAcademicSchoolMenu(false);
+            if (shouldOpen) {
+                picker.classList.add('is-open');
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+            window.haptic && window.haptic();
+        };
+
+        window.selectAcademicSchool = function (schoolId, event) {
+            if (event) event.stopPropagation();
+            closeAcademicSchoolMenu(false);
+            window.changeAcademicSchool(schoolId);
+        };
+
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.academic-school-picker')) closeAcademicSchoolMenu(false);
+        });
 
         window.openAcademicSchedule = function () {
             window.closeHomeSideMenu(false);
@@ -6052,6 +6222,7 @@
         window.closeAcademicSchedule = function () {
             const screen = document.getElementById('academic-schedule-screen');
             if (!screen) return;
+            closeAcademicSchoolMenu(false);
             screen.classList.add('hidden');
             screen.classList.remove('flex');
             screen.setAttribute('aria-hidden', 'true');
@@ -6064,6 +6235,10 @@
 
         document.addEventListener('keydown', function (event) {
             if (event.key !== 'Escape') return;
+            if (closeAcademicSchoolMenu(true)) {
+                event.preventDefault();
+                return;
+            }
             const academicScreen = document.getElementById('academic-schedule-screen');
             const menu = document.getElementById('home-side-menu');
             if (academicScreen && !academicScreen.classList.contains('hidden')) window.closeAcademicSchedule();
@@ -14119,7 +14294,7 @@
 
                 const circle = '<div class="member-status-avatar-frame"><div class="member-status-avatar-inner">' + inner + '</div></div>';
                 const studyBadge = studying ? '<span class="member-status-study-badge" title="현재 수업 중" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>' : '';
-                const dot = active ? '<span class="member-status-active-dot"></span>' : '';
+                const dot = registered ? '<span class="member-status-active-dot' + (active ? '' : ' is-inactive') + '"></span>' : '';
                 const sub = registered
                     ? '<span class="member-status-detail">' + activityText + '</span>'
                     : '<span class="member-status-detail">미가입자</span>';
