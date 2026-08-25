@@ -3312,6 +3312,30 @@
             pointer-events: none;
             background: linear-gradient(180deg, rgba(0,0,0,.44), transparent 20%, transparent 56%, rgba(0,0,0,.84));
         }
+        .shorts-pause-indicator {
+            position: absolute;
+            z-index: 3;
+            top: 50%;
+            left: 50%;
+            width: 4rem;
+            height: 4rem;
+            display: grid;
+            place-items: center;
+            border: 0.0625rem solid rgba(255,255,255,.18);
+            border-radius: 62.4375rem;
+            color: #fff;
+            background: rgba(12,12,14,.46);
+            box-shadow: 0 0.75rem 2rem rgba(0,0,0,.3);
+            -webkit-backdrop-filter: blur(1rem) saturate(1.2);
+            backdrop-filter: blur(1rem) saturate(1.2);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        .shorts-pause-indicator.hidden { display: none; }
+        .shorts-pause-indicator i {
+            font-size: 1.375rem;
+            filter: drop-shadow(0 0.125rem 0.25rem rgba(0,0,0,.55));
+        }
         .shorts-topbar {
             pointer-events: none;
             isolation: isolate;
@@ -3446,23 +3470,25 @@
         }
         .shorts-action-core {
             border: 0;
-            border-radius: 0.9375rem;
-            background: linear-gradient(145deg, rgba(40,40,44,.72), rgba(15,15,18,.58));
-            box-shadow: inset 0 0.0625rem 0.0625rem rgba(255,255,255,.13), 0 0.4375rem 1.25rem rgba(0,0,0,.25);
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
             pointer-events: none;
             transition: transform .16s ease, color .16s ease, background-color .16s ease;
         }
-        .shorts-action-core i { font-size: 1.125rem; }
-        .shorts-comment-button .shorts-action-core i { font-size: 1.0625rem; }
+        .shorts-action-core i { font-size: 1.5rem; }
+        .shorts-comment-button .shorts-action-core i { font-size: 1.4375rem; }
         .shorts-sound-button {
             border: 0.0625rem solid rgba(255,255,255,.11);
             border-radius: 62.4375rem;
         }
         .shorts-action:active .shorts-action-core { transform: scale(.86); }
         .shorts-action.is-liked .shorts-action-core {
-            color: #fff;
-            background: linear-gradient(145deg, #FF6374, #F04452);
-            box-shadow: inset 0 0.0625rem 0.0625rem rgba(255,255,255,.28), 0 0.5rem 1.375rem rgba(240,68,82,.36);
+            color: #FF5267;
+            background: transparent;
+            box-shadow: none;
         }
         .shorts-action-count {
             min-height: 0.75rem;
@@ -10830,6 +10856,7 @@
         function setEnjoyShortsItemStatus(article, state, message) {
             const status = article && article.querySelector('.shorts-item-status');
             if (!status) return;
+            const video = article.querySelector('.shorts-video');
             const icon = status.querySelector('i');
             const text = status.querySelector('span');
             const button = status.querySelector('button');
@@ -10837,6 +10864,7 @@
                 status.classList.add('hidden');
                 return;
             }
+            setEnjoyShortsPauseIndicator(video, false);
             status.classList.remove('hidden');
             if (icon) {
                 icon.className = state === 'loading'
@@ -10845,6 +10873,13 @@
             }
             if (text) text.textContent = message || '';
             if (button) button.classList.toggle('hidden', state !== 'error');
+        }
+
+        function setEnjoyShortsPauseIndicator(video, visible) {
+            const article = video && video.closest('.shorts-item');
+            const indicator = article && article.querySelector('.shorts-pause-indicator');
+            if (!indicator) return;
+            indicator.classList.toggle('hidden', !visible);
         }
 
         window.renderEnjoyShorts = function (items) {
@@ -10860,6 +10895,7 @@
                 return '<article class="shorts-item" data-shorts-index="' + index + '">' +
                     '<video class="shorts-video"' + mutedAttribute + ' width="720" height="1280" playsinline loop preload="metadata" onclick="window.toggleEnjoyShortsVideo(this)" aria-label="' + enjoyShortsEsc(title) + '"></video>' +
                     '<div class="shorts-video-shade"></div>' +
+                    '<div class="shorts-pause-indicator hidden" aria-hidden="true"><i class="fa-solid fa-pause"></i></div>' +
                     '<div class="shorts-item-status" role="status">' +
                         '<i class="fa-solid fa-spinner fa-spin text-[18px]"></i>' +
                         '<span>화면에 들어오면 영상을 연결해요.</span>' +
@@ -10899,7 +10935,21 @@
                     window.handleEnjoyShortsPlaybackError(video);
                 });
                 video.addEventListener('play', function () {
+                    setEnjoyShortsPauseIndicator(video, false);
                     window.recordEnjoyShortsView(Number(article.dataset.shortsIndex));
+                });
+                video.addEventListener('pause', function () {
+                    const screen = document.getElementById('shorts-screen');
+                    const commentsLayer = document.getElementById('shorts-comments-layer');
+                    const status = article.querySelector('.shorts-item-status');
+                    const isActive = Number(article.dataset.shortsIndex) === window._shortsActiveIndex;
+                    const canShow = !!(
+                        screen && !screen.classList.contains('hidden') &&
+                        isActive &&
+                        (!commentsLayer || commentsLayer.classList.contains('hidden')) &&
+                        (!status || status.classList.contains('hidden'))
+                    );
+                    setEnjoyShortsPauseIndicator(video, canShow);
                 });
             });
             updateAllEnjoyShortsEngagementUI();
