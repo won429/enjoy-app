@@ -686,6 +686,73 @@
         .et-course-editor button:disabled,
         .et-course-editor input:disabled,
         .et-course-editor select:disabled { opacity: .5; }
+        .et-edit-mode-bar {
+            margin: .75rem 1.25rem;
+            padding: .875rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            border: .0625rem solid var(--et-border);
+            border-radius: 1.125rem;
+            background: var(--et-surface);
+        }
+        .et-edit-mode-copy { min-width: 0; }
+        .et-edit-mode-title { color: var(--et-text); font-size: .8125rem; font-weight: 850; }
+        .et-edit-mode-help { margin-top: .1875rem; color: var(--et-sub); font-size: .65625rem; line-height: 1.45; }
+        .et-edit-mode-actions { display: flex; flex: none; gap: .375rem; }
+        .et-edit-mode-button {
+            min-height: 2.25rem;
+            padding: 0 .6875rem;
+            border-radius: .75rem;
+            color: #5BA1FF;
+            background: rgba(49,130,246,.12);
+            font-size: .6875rem;
+            font-weight: 850;
+        }
+        .et-edit-mode-button.is-done { color: var(--et-text); background: var(--et-surface-soft); }
+        .et-course.is-editable {
+            text-align: left;
+            cursor: pointer;
+            transition: filter .15s ease, transform .15s ease, box-shadow .15s ease;
+        }
+        .et-course.is-editable:active { transform: scale(.96); filter: brightness(1.12); }
+        .et-course.is-editable:focus-visible {
+            outline: .125rem solid #FFF;
+            outline-offset: -.1875rem;
+            box-shadow: 0 0 0 .1875rem #3182F6;
+        }
+        .et-course-edit-overlay {
+            position: absolute;
+            z-index: 20;
+            inset: 0;
+            display: flex;
+            align-items: flex-end;
+            background: rgba(0,0,0,.48);
+            -webkit-backdrop-filter: blur(.25rem);
+            backdrop-filter: blur(.25rem);
+        }
+        .et-course-edit-sheet {
+            width: 100%;
+            max-height: min(76dvh, 39rem);
+            padding: 1rem 1.25rem max(1rem, calc(.75rem + env(safe-area-inset-bottom)));
+            overflow-y: auto;
+            border: .0625rem solid var(--et-border);
+            border-bottom: 0;
+            border-radius: 1.5rem 1.5rem 0 0;
+            background: var(--et-surface);
+            box-shadow: 0 -1rem 3rem rgba(0,0,0,.32);
+        }
+        .et-course-edit-sheet-handle { width: 2.25rem; height: .25rem; margin: 0 auto .875rem; border-radius: 62.4375rem; background: var(--et-border); }
+        .et-course-edit-sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+        .et-course-edit-sheet-title { color: var(--et-text); font-size: 1rem; font-weight: 900; }
+        .et-course-edit-sheet-help { margin-top: .25rem; color: var(--et-sub); font-size: .6875rem; line-height: 1.45; }
+        .et-course-edit-sheet-close { width: 2rem; height: 2rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: var(--et-sub); background: var(--et-surface-soft); font-size: .75rem; }
+        .et-course-edit-sheet-fields { margin-top: .875rem; }
+        .et-course-edit-sheet-delete { color: #F04452; background: rgba(240,68,82,.12); }
+        .et-course-edit-sheet button:disabled,
+        .et-course-edit-sheet input:disabled,
+        .et-course-edit-sheet select:disabled { opacity: .5; }
         .et-empty-card { margin: .75rem 1.25rem 0; padding: 2.5rem 1.25rem; text-align: center; }
         .et-empty-icon {
             width: 3.25rem;
@@ -749,7 +816,7 @@
                 --et-sub: #8B95A1;
                 --et-grid: rgba(15,23,42,.075);
             }
-            .et-member-card, .et-import-card, .et-course-editor { box-shadow: 0 .375rem 1.25rem rgba(15,23,42,.06); }
+            .et-member-card, .et-import-card, .et-course-editor, .et-edit-mode-bar { box-shadow: 0 .375rem 1.25rem rgba(15,23,42,.06); }
         }
 
         /* 홈 콘텐츠: 인스타그램 피드형 */
@@ -14690,6 +14757,8 @@
         let courseEditorStatus = '';
         let courseEditorBaseTimetable = null;
         let courseEditorMode = '';
+        let selectedCourseDraftIndex = -1;
+        let selectedCourseIsNew = false;
         let courseDraft = [];
         let manualCourseSequence = 0;
 
@@ -14787,7 +14856,7 @@
             const currentUrl = draftUrl || (timetable && timetable.sourceUrl) || '';
             return '<form class="et-import-card" onsubmit="event.preventDefault(); window.importOwnEverytimeTimetable()">' +
                     '<div class="et-import-title">에브리타임 공유 링크</div>' +
-                    '<p class="et-import-help">에브리타임 시간표의 공유 메뉴에서 링크를 복사해 붙여 넣어주세요. 가져온 뒤에는 Firebase에 저장되어 앱을 열 때마다 다시 연결하지 않아요.</p>' +
+                    '<p class="et-import-help">에브리타임 시간표의 공유 메뉴에서 링크를 복사해 붙여 넣어주세요.</p>' +
                     '<input id="member-timetable-url" class="et-link-input" type="url" inputmode="url" autocomplete="url" maxlength="200" placeholder="https://everytime.kr/@..." value="' + escapeHtml(currentUrl) + '" ' + (importBusy ? 'disabled' : '') + '>' +
                     '<div class="et-import-status"' + (importStatus && importStatus.indexOf('중') >= 0 ? ' style="color:var(--et-sub)"' : '') + '>' + escapeHtml(importStatus) + '</div>' +
                     '<div class="et-toolbar">' +
@@ -14801,11 +14870,11 @@
             const selected = !!(timetablePhotoFile && timetablePhotoPreviewUrl);
             const disabled = photoImportBusy ? ' disabled' : '';
             const preview = selected
-                ? '<div class="et-photo-preview"><img src="' + escapeHtml(timetablePhotoPreviewUrl) + '" alt="선택한 시간표 사진"><span class="et-photo-preview-badge">AI 분석 전</span></div>'
+                ? '<div class="et-photo-preview"><img src="' + escapeHtml(timetablePhotoPreviewUrl) + '" alt="선택한 시간표 사진"><span class="et-photo-preview-badge">분석 전</span></div>'
                 : '';
             return '<section class="et-import-card et-photo-card">' +
                     '<div class="et-import-title">시간표 사진으로 추가</div>' +
-                    '<p class="et-import-help">시간표 캡처나 사진을 선택하면 AI가 과목·요일·시간을 읽어요. 저장 전에 인식 결과를 직접 수정할 수 있어요.</p>' +
+                    '<p class="et-import-help">시간표 캡처나 사진을 선택하면 엔조이 비서실장이 과목·요일·시간을 읽어드려요. 저장 전에 인식 결과를 직접 수정할 수 있어요.</p>' +
                     '<input id="member-timetable-photo" class="hidden" type="file" accept="image/*" onchange="window.handleMemberTimetablePhoto(event)"' + disabled + '>' +
                     '<button type="button" class="et-photo-picker" onclick="window.pickMemberTimetablePhoto()"' + disabled + '>' +
                         '<span class="et-photo-picker-icon"><i class="fa-solid fa-camera"></i></span>' +
@@ -14814,12 +14883,12 @@
                         '<i class="fa-solid fa-chevron-right text-[10px]" style="color:var(--et-sub)"></i>' +
                     '</button>' +
                     preview +
-                    '<p class="et-photo-privacy"><i class="fa-solid fa-shield-halved mr-1"></i>사진은 시간표 분석을 위해 Gemini API로 전송되며, 엔조이 Worker에 저장되지 않아요.</p>' +
+                    '<p class="et-photo-privacy"><i class="fa-solid fa-shield-halved mr-1"></i>선택한 사진은 시간표 분석을 위해 외부 AI 처리 서비스로 전송되며, 엔조이에 저장되지 않아요.</p>' +
                     '<div class="et-photo-status"' + (photoImportBusy ? ' style="color:var(--et-sub)"' : '') + '>' + escapeHtml(photoImportStatus) + '</div>' +
                     (selected ? '<div class="et-toolbar">' +
                         '<button type="button" class="et-toolbar-button flex-1" onclick="window.clearMemberTimetablePhoto()"' + disabled + '>취소</button>' +
                         '<button type="button" class="et-toolbar-button primary flex-[2]" onclick="window.analyzeMemberTimetablePhoto()"' + disabled + '>' +
-                            (photoImportBusy ? '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i>분석 중' : 'AI로 시간표 읽기') +
+                            (photoImportBusy ? '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i>분석 중' : '비서실장에게 맡기기') +
                         '</button></div>' : '') +
                 '</section>';
         }
@@ -14849,7 +14918,7 @@
                         '</div>' +
                     '</section>';
             }).join('');
-            const editorTitle = courseEditorMode === 'ai' ? 'AI 인식 결과 확인' : '과목 수정';
+            const editorTitle = courseEditorMode === 'ai' ? '인식 결과 확인' : '과목 수정';
             const editorHelp = courseEditorMode === 'ai'
                 ? '인식한 과목과 시간을 확인하고, 틀린 내용은 수정한 뒤 저장해주세요.'
                 : '과목을 수정하거나 새로 추가한 뒤 저장해주세요.';
@@ -14864,6 +14933,89 @@
                         '<button type="submit" class="et-toolbar-button primary flex-[2]"' + disabled + '>' + (courseEditorBusy ? '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i>저장 중' : '저장') + '</button>' +
                     '</div>' +
                 '</form>';
+        }
+
+        function timetablePreviewFromCourseDraft() {
+            return Object.assign({}, courseEditorBaseTimetable || {}, {
+                classes: courseDraft.map(function (course) {
+                    return Object.assign({}, course, {
+                        startMinutes: courseTimeToMinutes(course.startTime),
+                        endMinutes: courseTimeToMinutes(course.endTime)
+                    });
+                })
+            });
+        }
+
+        function selectedCourseEditorHtml() {
+            const index = Number(selectedCourseDraftIndex);
+            const course = courseDraft[index];
+            if (!course) return '';
+            const disabled = courseEditorBusy ? ' disabled' : '';
+            const dayOptions = COURSE_DAY_LABELS.map(function (label, day) {
+                return '<option value="' + day + '"' + (Number(course.day) === day ? ' selected' : '') + '>' + label + '</option>';
+            }).join('');
+            return '<div class="et-course-edit-overlay" onclick="if(event.target===this) window.closeSelectedMemberTimetableCourse()">' +
+                    '<form id="member-timetable-selected-course-editor" class="et-course-edit-sheet" onsubmit="event.preventDefault(); window.saveSelectedMemberTimetableCourse()">' +
+                        '<div class="et-course-edit-sheet-handle"></div>' +
+                        '<div class="et-course-edit-sheet-head"><div><div class="et-course-edit-sheet-title">과목 수정</div>' +
+                        '<p class="et-course-edit-sheet-help">과목명, 교수명과 수업 시간을 수정할 수 있어요.</p></div>' +
+                        '<button type="button" class="et-course-edit-sheet-close" onclick="window.closeSelectedMemberTimetableCourse()" aria-label="수정창 닫기"' + disabled + '><i class="fa-solid fa-xmark"></i></button></div>' +
+                        '<div class="et-course-edit-sheet-fields">' +
+                            '<label class="et-course-field"><span class="et-course-label">과목명</span>' +
+                                '<input class="et-course-control" data-selected-course-field="name" type="text" maxlength="50" autocomplete="off" placeholder="과목명을 입력해주세요" value="' + escapeHtml(course.name) + '"' + disabled + '>' +
+                            '</label>' +
+                            '<div class="et-course-editor-grid is-details">' +
+                                '<label class="et-course-field"><span class="et-course-label">교수명</span><input class="et-course-control" data-selected-course-field="professor" type="text" maxlength="30" autocomplete="off" placeholder="선택 입력" value="' + escapeHtml(course.professor) + '"' + disabled + '></label>' +
+                                '<label class="et-course-field"><span class="et-course-label">강의실</span><input class="et-course-control" data-selected-course-field="location" type="text" maxlength="30" autocomplete="off" placeholder="선택 입력" value="' + escapeHtml(course.location) + '"' + disabled + '></label>' +
+                            '</div>' +
+                            '<div class="et-course-editor-grid">' +
+                                '<label class="et-course-field"><span class="et-course-label">요일</span><select class="et-course-control" data-selected-course-field="day"' + disabled + '>' + dayOptions + '</select></label>' +
+                                '<label class="et-course-field"><span class="et-course-label">시작</span><input class="et-course-control" data-selected-course-field="startTime" type="time" step="300" value="' + escapeHtml(course.startTime) + '"' + disabled + '></label>' +
+                                '<label class="et-course-field"><span class="et-course-label">종료</span><input class="et-course-control" data-selected-course-field="endTime" type="time" step="300" value="' + escapeHtml(course.endTime) + '"' + disabled + '></label>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="et-course-editor-status"' + (courseEditorBusy ? ' style="color:var(--et-sub)"' : '') + '>' + escapeHtml(courseEditorStatus) + '</div>' +
+                        '<div class="et-toolbar">' +
+                            '<button type="button" class="et-toolbar-button et-course-edit-sheet-delete" onclick="window.deleteSelectedMemberTimetableCourse()"' + disabled + '><i class="fa-solid fa-trash-can"></i><span class="sr-only">과목 삭제</span></button>' +
+                            '<button type="button" class="et-toolbar-button flex-1" onclick="window.closeSelectedMemberTimetableCourse()"' + disabled + '>취소</button>' +
+                            '<button type="submit" class="et-toolbar-button primary flex-[2]"' + disabled + '>' + (courseEditorBusy ? '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i>저장 중' : '수정 저장') + '</button>' +
+                        '</div>' +
+                    '</form>' +
+                '</div>';
+        }
+
+        function timetableCourseEditModeHtml() {
+            const previewTimetable = timetablePreviewFromCourseDraft();
+            return '<section class="et-edit-mode-bar">' +
+                    '<div class="et-edit-mode-copy"><div class="et-edit-mode-title">수정할 과목을 선택해주세요</div>' +
+                    '<p class="et-edit-mode-help">시간표의 과목을 누르면 수정창이 열려요.</p></div>' +
+                    '<div class="et-edit-mode-actions">' +
+                        '<button type="button" class="et-edit-mode-button" onclick="window.addMemberTimetableCourse()"><i class="fa-solid fa-plus mr-1"></i>추가</button>' +
+                        '<button type="button" class="et-edit-mode-button is-done" onclick="window.closeMemberTimetableCourseEditor()">완료</button>' +
+                    '</div>' +
+                '</section>' +
+                timetableGridHtml(previewTimetable, { editable: true, selectedIndex: selectedCourseDraftIndex }) +
+                selectedCourseEditorHtml();
+        }
+
+        function syncSelectedCourseFromForm() {
+            const index = Number(selectedCourseDraftIndex);
+            const course = courseDraft[index];
+            const form = document.getElementById('member-timetable-selected-course-editor');
+            if (!course || !form) return course;
+            const value = function (field) {
+                const control = form.querySelector('[data-selected-course-field="' + field + '"]');
+                return control ? control.value : '';
+            };
+            courseDraft[index] = Object.assign({}, course, {
+                name: value('name'),
+                day: Number(value('day')),
+                startTime: value('startTime'),
+                endTime: value('endTime'),
+                professor: value('professor'),
+                location: value('location')
+            });
+            return courseDraft[index];
         }
 
         function syncCourseDraftFromForm() {
@@ -14899,6 +15051,71 @@
                 if (end <= start) return (index + 1) + '번째 과목의 종료 시간은 시작 시간보다 뒤여야 해요.';
             }
             return '';
+        }
+
+        function timetableFromCourseDraft() {
+            const classes = courseDraft.map(function (course, index) {
+                const day = Number(course.day);
+                const startMinutes = courseTimeToMinutes(course.startTime);
+                const endMinutes = courseTimeToMinutes(course.endTime);
+                return {
+                    id: String(course.id || ('manual-' + Date.now() + '-' + (++manualCourseSequence))),
+                    day: day,
+                    dayLabel: COURSE_DAY_LABELS[day],
+                    name: String(course.name || '').trim(),
+                    professor: String(course.professor || '').trim(),
+                    location: String(course.location || '').trim(),
+                    startMinutes: startMinutes,
+                    endMinutes: endMinutes,
+                    startTime: courseMinutesToTime(startMinutes),
+                    endTime: courseMinutesToTime(endMinutes),
+                    color: Math.max(1, Number(course.color) || ((index % COURSE_COLORS.length) + 1))
+                };
+            }).sort(function (first, second) {
+                return first.day - second.day || first.startMinutes - second.startMinutes || first.name.localeCompare(second.name, 'ko');
+            });
+            return Object.assign({}, courseEditorBaseTimetable, {
+                classes: classes,
+                editedAt: Date.now(),
+                editedByUid: window.enjoyUser && window.enjoyUser.uid || '',
+                editedByName: window.enjoyProfileName || selectedMember && selectedMember.name || ''
+            });
+        }
+
+        async function persistManualCourseDraft(successMessage) {
+            const validationMessage = validateCourseDraft(courseDraft);
+            if (validationMessage) {
+                courseEditorStatus = validationMessage.replace(/^1번째 과목의?\s*/, '').replace(/^\d+번째 과목의?\s*/, '');
+                renderMemberTimetable();
+                return false;
+            }
+            if (!window.fsSetDoc || !window.fsDoc || !window.enjoyUser) {
+                courseEditorStatus = 'Firebase 연결을 확인하고 있어요. 잠시 후 다시 시도해주세요.';
+                renderMemberTimetable();
+                return false;
+            }
+            const timetable = timetableFromCourseDraft();
+            courseEditorBusy = true;
+            courseEditorStatus = '시간표를 저장하는 중이에요.';
+            renderMemberTimetable();
+            try {
+                await saveOwnTimetable(timetable);
+                selectedMember = Object.assign({}, selectedMember, { timetable: timetable });
+                courseEditorBaseTimetable = Object.assign({}, timetable);
+                courseDraft = makeCourseDraft(timetable);
+                selectedCourseDraftIndex = -1;
+                selectedCourseIsNew = false;
+                courseEditorStatus = '';
+                if (window.enjoyAlert) window.enjoyAlert(successMessage);
+                return true;
+            } catch (error) {
+                console.error('Timetable selected course edit failed:', error);
+                courseEditorStatus = '시간표를 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
+                return false;
+            } finally {
+                courseEditorBusy = false;
+                renderMemberTimetable();
+            }
         }
 
         function clearTimetablePhotoState() {
@@ -15000,7 +15217,7 @@
             renderMemberTimetable();
             try {
                 const image = await compressTimetablePhoto(sourceFile);
-                photoImportStatus = 'Gemini 3.7 Flash가 시간표를 읽고 있어요.';
+                photoImportStatus = '엔조이 비서실장이 시간표를 정리하고 있어요.';
                 renderMemberTimetable();
                 const idToken = await window.getEnjoyIdToken();
                 if (!idToken) throw new Error('LOGIN_REQUIRED');
@@ -15029,6 +15246,8 @@
                 courseDraft = makeCourseDraft(courseEditorBaseTimetable);
                 courseEditorOpen = true;
                 courseEditorMode = 'ai';
+                selectedCourseDraftIndex = -1;
+                selectedCourseIsNew = false;
                 courseEditorStatus = '';
                 editorOpen = false;
                 clearTimetablePhotoState();
@@ -15059,8 +15278,12 @@
                 '</section>';
         }
 
-        function timetableGridHtml(timetable) {
-            const classes = timetable.classes.filter(function (course) {
+        function timetableGridHtml(timetable, options) {
+            const editable = !!(options && options.editable);
+            const selectedIndex = Number(options && options.selectedIndex);
+            const classes = timetable.classes.map(function (course, index) {
+                return Object.assign({}, course, { __draftIndex: index });
+            }).filter(function (course) {
                 return course && Number.isFinite(Number(course.day)) && Number.isFinite(Number(course.startMinutes)) && Number.isFinite(Number(course.endMinutes));
             });
             const maxDay = classes.reduce(function (max, course) { return Math.max(max, Number(course.day)); }, 4);
@@ -15094,11 +15317,16 @@
                 const color = COURSE_COLORS[(Math.max(1, Number(course.color) || 1) - 1) % COURSE_COLORS.length];
                 const detail = [course.professor, course.location].filter(Boolean).join(' · ');
                 const fullLabel = course.name + ' ' + (course.startTime || '') + '-' + (course.endTime || '') + (detail ? ' ' + detail : '');
-                courses += '<div class="et-course" title="' + escapeHtml(fullLabel) + '" style="--course-color:' + color + ';left:calc(' + left + '% + .1rem);width:calc(' + width + '% - .2rem);top:' + top + 'px;height:' + height + 'px">' +
+                const courseIndex = Number(course.__draftIndex);
+                const courseTag = editable ? 'button' : 'div';
+                const courseAttributes = editable
+                    ? ' type="button" class="et-course is-editable' + (courseIndex === selectedIndex ? ' is-selected' : '') + '" onclick="window.selectMemberTimetableCourse(' + courseIndex + ')" aria-label="' + escapeHtml(fullLabel + ' 수정') + '"'
+                    : ' class="et-course" title="' + escapeHtml(fullLabel) + '"';
+                courses += '<' + courseTag + courseAttributes + ' style="--course-color:' + color + ';left:calc(' + left + '% + .1rem);width:calc(' + width + '% - .2rem);top:' + top + 'px;height:' + height + 'px">' +
                         '<span class="et-course-name">' + escapeHtml(course.name) + '</span>' +
                         (detail ? '<span class="et-course-detail">' + escapeHtml(detail) + '</span>' : '') +
                         '<span class="et-course-time">' + escapeHtml(course.startTime || '') + '-' + escapeHtml(course.endTime || '') + '</span>' +
-                    '</div>';
+                    '</' + courseTag + '>';
             });
 
             return '<div class="et-grid-scroll"><div class="et-grid-inner" style="min-width:' + (dayCount > 5 ? '28rem' : '21.5rem') + '">' +
@@ -15173,7 +15401,7 @@
 
             let html = '';
             if (courseEditorOpen && validTimetable(courseEditorBaseTimetable) && own) {
-                html += courseEditorHtml();
+                html += courseEditorMode === 'manual' ? timetableCourseEditModeHtml() : courseEditorHtml();
             } else {
                 if (own && (editorOpen || !timetable)) {
                     html += photoImportCardHtml();
@@ -15199,6 +15427,8 @@
             courseEditorStatus = '';
             courseEditorBaseTimetable = null;
             courseEditorMode = '';
+            selectedCourseDraftIndex = -1;
+            selectedCourseIsNew = false;
             courseDraft = [];
             previousFocus = document.activeElement;
             renderMemberTimetable();
@@ -15232,6 +15462,8 @@
             courseEditorStatus = '';
             courseEditorBaseTimetable = null;
             courseEditorMode = '';
+            selectedCourseDraftIndex = -1;
+            selectedCourseIsNew = false;
             courseDraft = [];
             if (previousFocus && previousFocus.focus) previousFocus.focus({ preventScroll: true });
             previousFocus = null;
@@ -15244,6 +15476,8 @@
             courseEditorStatus = '';
             courseEditorBaseTimetable = null;
             courseEditorMode = '';
+            selectedCourseDraftIndex = -1;
+            selectedCourseIsNew = false;
             courseDraft = [];
             editorOpen = true;
             importStatus = '';
@@ -15268,14 +15502,12 @@
             courseEditorStatus = '';
             courseEditorBaseTimetable = Object.assign({}, selectedMember.timetable);
             courseEditorMode = 'manual';
+            selectedCourseDraftIndex = -1;
+            selectedCourseIsNew = false;
             courseDraft = makeCourseDraft(selectedMember.timetable);
             renderMemberTimetable();
             const scroll = document.getElementById('member-timetable-scroll');
             if (scroll) scroll.scrollTop = 0;
-            setTimeout(function () {
-                const input = document.querySelector('#member-timetable-course-editor [data-course-field="name"]');
-                if (input) input.focus({ preventScroll: true });
-            }, 0);
         };
 
         window.closeMemberTimetableCourseEditor = function () {
@@ -15284,13 +15516,74 @@
             courseEditorStatus = '';
             courseEditorBaseTimetable = null;
             courseEditorMode = '';
+            selectedCourseDraftIndex = -1;
+            selectedCourseIsNew = false;
             courseDraft = [];
             renderMemberTimetable();
         };
 
+        window.selectMemberTimetableCourse = function (index) {
+            if (!courseEditorOpen || courseEditorMode !== 'manual' || courseEditorBusy) return;
+            const nextIndex = Number(index);
+            if (!Number.isInteger(nextIndex) || nextIndex < 0 || nextIndex >= courseDraft.length) return;
+            selectedCourseDraftIndex = nextIndex;
+            selectedCourseIsNew = false;
+            courseEditorStatus = '';
+            renderMemberTimetable();
+            setTimeout(function () {
+                const input = document.querySelector('#member-timetable-selected-course-editor [data-selected-course-field="name"]');
+                if (input) input.focus({ preventScroll: true });
+            }, 0);
+        };
+
+        window.closeSelectedMemberTimetableCourse = function () {
+            if (courseEditorBusy) return;
+            if (selectedCourseIsNew && selectedCourseDraftIndex >= 0 && selectedCourseDraftIndex < courseDraft.length) {
+                courseDraft.splice(selectedCourseDraftIndex, 1);
+            }
+            selectedCourseDraftIndex = -1;
+            selectedCourseIsNew = false;
+            courseEditorStatus = '';
+            renderMemberTimetable();
+        };
+
+        window.saveSelectedMemberTimetableCourse = async function () {
+            if (!courseEditorOpen || courseEditorMode !== 'manual' || courseEditorBusy) return;
+            const course = syncSelectedCourseFromForm();
+            if (!course) return;
+            const validationMessage = validateCourseDraft([course]);
+            if (validationMessage) {
+                courseEditorStatus = validationMessage
+                    .replace('1번째 과목명을', '과목명을')
+                    .replace('1번째 과목의', '과목의');
+                renderMemberTimetable();
+                return;
+            }
+            await persistManualCourseDraft('과목을 수정했어요!');
+        };
+
+        window.deleteSelectedMemberTimetableCourse = async function () {
+            if (!courseEditorOpen || courseEditorMode !== 'manual' || courseEditorBusy) return;
+            const index = Number(selectedCourseDraftIndex);
+            if (!Number.isInteger(index) || index < 0 || index >= courseDraft.length) return;
+            if (window.enjoyConfirm && !await window.enjoyConfirm('이 과목을 시간표에서 삭제할까요?', { title: '과목 삭제', confirmText: '삭제', danger: true })) return;
+            const previousDraft = courseDraft.map(function (course) { return Object.assign({}, course); });
+            const wasNewCourse = selectedCourseIsNew;
+            courseDraft.splice(index, 1);
+            selectedCourseDraftIndex = -1;
+            selectedCourseIsNew = false;
+            const saved = await persistManualCourseDraft('과목을 삭제했어요!');
+            if (!saved) {
+                courseDraft = previousDraft;
+                selectedCourseDraftIndex = index;
+                selectedCourseIsNew = wasNewCourse;
+                renderMemberTimetable();
+            }
+        };
+
         window.addMemberTimetableCourse = function () {
             if (!courseEditorOpen || courseEditorBusy) return;
-            syncCourseDraftFromForm();
+            if (courseEditorMode !== 'manual') syncCourseDraftFromForm();
             const now = new Date();
             courseDraft.push({
                 id: 'manual-' + Date.now() + '-' + (++manualCourseSequence),
@@ -15303,11 +15596,15 @@
                 color: (courseDraft.length % COURSE_COLORS.length) + 1
             });
             courseEditorStatus = '';
+            if (courseEditorMode === 'manual') {
+                selectedCourseDraftIndex = courseDraft.length - 1;
+                selectedCourseIsNew = true;
+            }
             renderMemberTimetable();
-            const scroll = document.getElementById('member-timetable-scroll');
-            if (scroll) scroll.scrollTop = scroll.scrollHeight;
             setTimeout(function () {
-                const inputs = document.querySelectorAll('#member-timetable-course-editor [data-course-field="name"]');
+                const inputs = courseEditorMode === 'manual'
+                    ? document.querySelectorAll('#member-timetable-selected-course-editor [data-selected-course-field="name"]')
+                    : document.querySelectorAll('#member-timetable-course-editor [data-course-field="name"]');
                 const input = inputs[inputs.length - 1];
                 if (input) input.focus({ preventScroll: true });
             }, 0);
@@ -15375,6 +15672,8 @@
                 courseEditorStatus = '';
                 courseEditorBaseTimetable = null;
                 courseEditorMode = '';
+                selectedCourseDraftIndex = -1;
+                selectedCourseIsNew = false;
                 courseDraft = [];
                 clearTimetablePhotoState();
                 if (window.enjoyAlert) window.enjoyAlert(wasNewTimetable ? '시간표를 저장했어요!' : '시간표를 수정했어요!');
