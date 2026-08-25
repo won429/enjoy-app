@@ -2296,15 +2296,24 @@
             z-index: 270;
             top: 0;
             bottom: 0;
-            left: 0;
-            width: 100%;
-            max-width: none;
+            left: 50%;
+            width: min(100%, 28rem);
+            max-width: 28rem;
             overflow: hidden;
-            transform: none;
+            isolation: isolate;
+            transform: translateX(-50%);
             background: var(--academic-bg);
             color: var(--academic-text);
         }
-        .academic-topbar { position: relative; z-index: 2; padding: max(1rem, env(safe-area-inset-top)) 1.25rem .875rem; display: flex; align-items: center; gap: .75rem; flex: none; }
+        body.academic-schedule-active {
+            overflow: hidden;
+        }
+        body.academic-schedule-active #home-screen,
+        body.academic-schedule-active #bottom-nav,
+        body.academic-schedule-active #home-side-menu {
+            display: none !important;
+        }
+        .academic-topbar { position: relative; z-index: 2; padding: max(1rem, env(safe-area-inset-top)) 1.25rem .875rem; display: flex; align-items: center; gap: .75rem; flex: none; background: var(--academic-bg); }
         .academic-icon-button { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: var(--academic-text); background: var(--academic-soft); }
         .academic-title { display: flex; align-items: baseline; gap: .375rem; }
         .academic-year-label { color: var(--academic-sub); font-size: .6875rem; font-weight: 700; line-height: 1; }
@@ -2359,6 +2368,12 @@
         @media (prefers-reduced-motion: reduce) {
             .home-side-menu-backdrop, .home-side-menu-panel { transition: none; }
             .academic-school-trigger, .academic-school-trigger i, .academic-school-option { transition: none; }
+        }
+        @media (min-width: 768px) {
+            #academic-schedule-screen {
+                width: min(100%, 30rem);
+                max-width: 30rem;
+            }
         }
         /* 홈 다른 서비스 바로가기 */
         .home-service-menu {
@@ -6138,11 +6153,9 @@
 
         function syncAcademicFrame() {
             const screen = document.getElementById('academic-schedule-screen');
-            const home = document.getElementById('home-screen');
-            if (!screen || !home) return;
-            const bounds = home.getBoundingClientRect();
-            screen.style.left = Math.round(bounds.left) + 'px';
-            screen.style.width = Math.round(bounds.width) + 'px';
+            if (!screen) return;
+            screen.style.removeProperty('left');
+            screen.style.removeProperty('width');
         }
 
         window.openHomeSideMenu = function () {
@@ -6314,9 +6327,17 @@
         window.openAcademicSchedule = function () {
             window.closeHomeSideMenu(false);
             const screen = document.getElementById('academic-schedule-screen');
+            const home = document.getElementById('home-screen');
+            const bottomNav = document.getElementById('bottom-nav');
             if (!screen) return;
             syncAcademicFrame();
             academicMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+            document.body.classList.add('academic-schedule-active');
+            if (home) {
+                home.setAttribute('aria-hidden', 'true');
+                home.setAttribute('inert', '');
+            }
+            if (bottomNav) bottomNav.setAttribute('aria-hidden', 'true');
             screen.classList.remove('hidden');
             screen.classList.add('flex');
             screen.setAttribute('aria-hidden', 'false');
@@ -6325,11 +6346,19 @@
 
         window.closeAcademicSchedule = function () {
             const screen = document.getElementById('academic-schedule-screen');
+            const home = document.getElementById('home-screen');
+            const bottomNav = document.getElementById('bottom-nav');
             if (!screen) return;
             closeAcademicSchoolMenu(false);
             screen.classList.add('hidden');
             screen.classList.remove('flex');
             screen.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('academic-schedule-active');
+            if (home) {
+                home.removeAttribute('aria-hidden');
+                home.removeAttribute('inert');
+            }
+            if (bottomNav) bottomNav.removeAttribute('aria-hidden');
         };
 
         window.changeAcademicMonth = function (delta) {
