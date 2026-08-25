@@ -5954,9 +5954,9 @@
                     <div class="academic-school-menu" role="listbox" aria-label="학교 선택">
                         <button type="button" class="academic-school-option" style="order:4" data-academic-school="silla" role="option" aria-selected="false" onclick="window.selectAcademicSchool('silla', event)"><span class="academic-school-option-main"><img class="academic-school-logo is-silla" src="assets/silla.png" alt="" aria-hidden="true"><span>&#49888;&#46972;&#45824;&#54617;&#44368;</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
                         <button type="button" class="academic-school-option" style="order:3" data-academic-school="gwangju" role="option" aria-selected="false" onclick="window.selectAcademicSchool('gwangju', event)"><span class="academic-school-option-main"><img class="academic-school-logo is-gwangju" src="assets/gwangju.png" alt="" aria-hidden="true"><span>&#44305;&#51452;&#45824;&#54617;&#44368;</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
-                        <button type="button" class="academic-school-option" style="order:2" data-academic-school="gyeongsang" role="option" aria-selected="false" onclick="window.selectAcademicSchool('gyeongsang', event)"><span class="academic-school-option-main"><img class="academic-school-logo is-gyeongsang" src="assets/gyeongsang.png" alt="" aria-hidden="true"><span>&#44221;&#49345;&#44397;&#47549;&#45824;&#54617;&#44368;</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
-                        <button type="button" class="academic-school-option is-selected" data-academic-school="gyeongguk" role="option" aria-selected="true" onclick="window.selectAcademicSchool('gyeongguk', event)"><span>국립경국대학교 안동캠퍼스(구.안동대)</span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
-                        <button type="button" class="academic-school-option" data-academic-school="woosong" role="option" aria-selected="false" onclick="window.selectAcademicSchool('woosong', event)"><span class="academic-school-option-main"><img class="academic-school-logo" src="assets/woosong.png" alt="" aria-hidden="true"><span>우송대학교</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                        <button type="button" class="academic-school-option" style="order:0" data-academic-school="gyeongsang" role="option" aria-selected="false" onclick="window.selectAcademicSchool('gyeongsang', event)"><span class="academic-school-option-main"><img class="academic-school-logo is-gyeongsang" src="assets/gyeongsang.png" alt="" aria-hidden="true"><span>&#44221;&#49345;&#44397;&#47549;&#45824;&#54617;&#44368;</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                        <button type="button" class="academic-school-option is-selected" style="order:1" data-academic-school="gyeongguk" role="option" aria-selected="true" onclick="window.selectAcademicSchool('gyeongguk', event)"><span>국립경국대학교 안동캠퍼스(구.안동대)</span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                        <button type="button" class="academic-school-option" style="order:2" data-academic-school="woosong" role="option" aria-selected="false" onclick="window.selectAcademicSchool('woosong', event)"><span class="academic-school-option-main"><img class="academic-school-logo" src="assets/woosong.png" alt="" aria-hidden="true"><span>우송대학교</span></span><i class="fa-solid fa-check" aria-hidden="true"></i></button>
                     </div>
                 </div>
             </div>
@@ -5983,6 +5983,7 @@
         let academicEvents = [];
         let academicMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         let academicSchoolId = 'gyeongguk';
+        const academicSchoolStorageKey = 'enjoy-academic-school';
         const academicSchools = {
             gyeongguk: {
                 label: '국립경국대학교 안동캠퍼스(구.안동대)',
@@ -6020,6 +6021,10 @@
                 source: function () { return window.SILLA_UNIV_ACADEMIC_CALENDAR_2026; }
             }
         };
+        try {
+            const savedAcademicSchoolId = window.localStorage.getItem(academicSchoolStorageKey);
+            if (academicSchools[savedAcademicSchoolId]) academicSchoolId = savedAcademicSchoolId;
+        } catch (error) {}
 
         function academicEscape(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
@@ -6174,6 +6179,7 @@
         window.changeAcademicSchool = function (schoolId) {
             if (!academicSchools[schoolId] || schoolId === academicSchoolId) return;
             academicSchoolId = schoolId;
+            try { window.localStorage.setItem(academicSchoolStorageKey, academicSchoolId); } catch (error) {}
             loadAcademicEvents();
             const scroll = document.querySelector('#academic-schedule-screen .academic-scroll');
             if (scroll) scroll.scrollTop = 0;
