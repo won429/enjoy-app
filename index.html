@@ -4649,6 +4649,165 @@
         }
         .kbo-original-team-panel img.is-kia { transform: translate(-50%,calc(-50% + 0.25rem)) scale(1.15); }
         .kbo-original-team-panel img.is-kt { transform: translate(-50%,calc(-50% - 0.125rem)) scale(1.15); }
+        .kbo-ranking-trend {
+            margin-top: 1.25rem;
+            padding: 1.125rem 1.25rem 0;
+            border-top: 0.0625rem solid rgba(255,255,255,.085);
+        }
+        .kbo-ranking-trend-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+        .kbo-ranking-trend-title strong {
+            display: block;
+            color: #f8fafc;
+            font-size: 0.9375rem;
+            font-weight: 900;
+        }
+        .kbo-ranking-trend-title small {
+            display: block;
+            margin-top: 0.1875rem;
+            color: #7f8a9b;
+            font-size: 0.5625rem;
+            font-weight: 750;
+        }
+        .kbo-ranking-trend-quote {
+            flex: none;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .kbo-ranking-trend-quote strong {
+            display: block;
+            color: #f8fafc;
+            font-size: 0.875rem;
+            font-weight: 900;
+        }
+        .kbo-ranking-trend-change {
+            display: block;
+            margin-top: 0.125rem;
+            color: #9ca3af;
+            font-size: 0.625rem;
+            font-weight: 900;
+        }
+        .kbo-ranking-trend-change.is-up { color: #ff4d67; }
+        .kbo-ranking-trend-change.is-down { color: #4d8dff; }
+        .kbo-ranking-trend-teams {
+            margin: 0.875rem -1.25rem 0;
+            padding: 0 1.25rem 0.125rem;
+            display: flex;
+            gap: 0.375rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .kbo-ranking-trend-teams::-webkit-scrollbar { display: none; }
+        .kbo-ranking-team-chip {
+            height: 1.875rem;
+            padding: 0 0.6875rem;
+            display: inline-flex;
+            align-items: center;
+            flex: none;
+            border: 0;
+            border-radius: 62.4375rem;
+            color: #d1d5db;
+            background: #29292f;
+            font-size: 0.625rem;
+            font-weight: 850;
+            transition: transform .14s ease, color .14s ease, background .14s ease;
+        }
+        .kbo-ranking-team-chip:active { transform: scale(.94); }
+        .kbo-ranking-team-chip.is-active {
+            color: #fff;
+            background: var(--trend-color);
+        }
+        .kbo-ranking-trend-chart {
+            position: relative;
+            height: 18rem;
+            margin-top: 0.75rem;
+            overflow: hidden;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            touch-action: pan-y;
+        }
+        .kbo-ranking-trend-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .kbo-ranking-current-pulse {
+            position: absolute;
+            z-index: 2;
+            width: 3.25rem;
+            height: 3.25rem;
+            border-radius: 50%;
+            background: color-mix(in srgb, var(--pulse-color, #ff3658) 22%, transparent);
+            box-shadow: 0 0 0 0.0625rem color-mix(in srgb, var(--pulse-color, #ff3658) 18%, transparent);
+            pointer-events: none;
+            transform: translate(-50%,-50%) scale(.56);
+            animation: kboRankingCurrentPulse 1.8s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+        @keyframes kboRankingCurrentPulse {
+            0%, 100% { opacity: .42; transform: translate(-50%,-50%) scale(.56); }
+            50% { opacity: .10; transform: translate(-50%,-50%) scale(1.16); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .kbo-ranking-current-pulse { animation: none; opacity: .22; }
+        }
+        .kbo-ranking-trend-tooltip {
+            position: absolute;
+            top: 0.625rem;
+            z-index: 3;
+            min-width: 5.625rem;
+            padding: 0.4375rem 0.5625rem;
+            border: 0.0625rem solid rgba(255,255,255,.12);
+            border-radius: 0.625rem;
+            color: #f8fafc;
+            background: rgba(12,14,18,.9);
+            box-shadow: 0 0.375rem 1rem rgba(0,0,0,.3);
+            backdrop-filter: blur(0.625rem);
+            -webkit-backdrop-filter: blur(0.625rem);
+            pointer-events: none;
+            transform: translateX(-50%);
+        }
+        .kbo-ranking-trend-tooltip[hidden] { display: none; }
+        .kbo-ranking-trend-tooltip time {
+            display: block;
+            color: #9ca3af;
+            font-size: 0.5625rem;
+            font-weight: 750;
+        }
+        .kbo-ranking-trend-tooltip strong {
+            display: block;
+            margin-top: 0.125rem;
+            font-size: 0.75rem;
+            font-weight: 900;
+        }
+        .kbo-ranking-trend-ranges {
+            margin-top: 0.625rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.25rem;
+        }
+        .kbo-ranking-range-button {
+            height: 1.75rem;
+            padding: 0 0.5625rem;
+            border: 0;
+            border-radius: 62.4375rem;
+            color: #7f8a9b;
+            background: transparent;
+            font-size: 0.5625rem;
+            font-weight: 850;
+        }
+        .kbo-ranking-range-button.is-active {
+            color: #fff;
+            background: rgba(255,255,255,.11);
+        }
         .kbo-more-loading {
             padding: 7.5rem 1.25rem;
             display: flex;
@@ -5273,6 +5432,40 @@
             }
             .kbo-original-team-panel {
                 filter: drop-shadow(-0.3125rem 0 0.5rem rgba(15,23,42,.16));
+            }
+            .kbo-ranking-trend {
+                border-top-color: rgba(0,0,0,.09);
+            }
+            .kbo-ranking-trend-title strong,
+            .kbo-ranking-trend-quote strong {
+                color: #191F28;
+            }
+            .kbo-ranking-trend-title small {
+                color: #8B95A1;
+            }
+            .kbo-ranking-team-chip {
+                color: #4E5968;
+                border: 0;
+                background: #FFFFFF;
+            }
+            .kbo-ranking-team-chip.is-active {
+                color: #FFFFFF;
+                background: var(--trend-color);
+            }
+            .kbo-ranking-trend-chart {
+                background: transparent;
+                box-shadow: none;
+            }
+            .kbo-ranking-trend-tooltip {
+                color: #191F28;
+                border-color: rgba(0,0,0,.08);
+                background: rgba(255,255,255,.94);
+                box-shadow: 0 0.375rem 1rem rgba(15,23,42,.12);
+            }
+            .kbo-ranking-range-button { color: #8B95A1; }
+            .kbo-ranking-range-button.is-active {
+                color: #191F28;
+                background: rgba(0,0,0,.065);
             }
             .kbo-more-loading {
                 color: #8B95A1;
@@ -7287,6 +7480,15 @@
         let enjoyBaseballMoreHistoryPromise = null;
         let enjoyBaseballMoreHistoryLoadedSource = '';
         let enjoyBaseballMoreHistoryGames = null;
+        let enjoyBaseballRankingTimelineCache = null;
+        let enjoyBaseballRankingTrendTeam = enjoyBaseballMoreTeam;
+        let enjoyBaseballRankingTrendRange = 'season';
+        let enjoyBaseballRankingTrendResizeObserver = null;
+        let enjoyBaseballRankingTrendHoverIndex = -1;
+        const enjoyBaseballRankingTrendColors = {
+            'LG': '#e8346f', '두산': '#5f7cff', 'KIA': '#ff3658', '삼성': '#3f91ff', 'SSG': '#ff6245',
+            '롯데': '#4ba7ff', '한화': '#ff8a34', 'KT': '#9a6cff', 'NC': '#4bb9e9', '키움': '#d85a91'
+        };
 
         function enjoyBaseballHistorySourceForDate(date) {
             const target = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
@@ -7348,6 +7550,7 @@
                 enjoyBaseballInstallHistoryData(mergedHistory || {});
                 enjoyBaseballMoreHistoryLoadedSource = finalSource;
                 enjoyBaseballMoreHistoryGames = null;
+                enjoyBaseballRankingTimelineCache = null;
             }).finally(function () {
                 enjoyBaseballMoreHistoryPromise = null;
             });
@@ -7677,6 +7880,279 @@
                 '</div>';
             }).join('');
         }
+        function enjoyBaseballRankingTimeline() {
+            if (enjoyBaseballRankingTimelineCache) return enjoyBaseballRankingTimelineCache;
+            const records = {};
+            const gamesByDate = {};
+            enjoyBaseballMoreTeams.forEach(function (team) {
+                records[team] = { w: 0, d: 0, l: 0 };
+            });
+            enjoyBaseballMoreHistory().filter(function (game) {
+                return String(game.gameStatus || '') === '종료' && !enjoyBaseballIsCanceled(game) &&
+                    records[game.team1] && records[game.team2] && /^\d{4}-\d{2}-\d{2}$/.test(String(game.date || ''));
+            }).forEach(function (game) {
+                (gamesByDate[game.date] || (gamesByDate[game.date] = [])).push(game);
+            });
+            enjoyBaseballRankingTimelineCache = Object.keys(gamesByDate).sort().map(function (date) {
+                gamesByDate[date].forEach(function (game) {
+                    const away = Number(game.awayScore || 0);
+                    const home = Number(game.homeScore || 0);
+                    if (away > home) {
+                        records[game.team1].w += 1;
+                        records[game.team2].l += 1;
+                    } else if (home > away) {
+                        records[game.team2].w += 1;
+                        records[game.team1].l += 1;
+                    } else {
+                        records[game.team1].d += 1;
+                        records[game.team2].d += 1;
+                    }
+                });
+                const ordered = enjoyBaseballMoreTeams.map(function (team) {
+                    const record = records[team];
+                    return {
+                        team: team,
+                        w: record.w,
+                        d: record.d,
+                        l: record.l,
+                        rate: record.w + record.l ? record.w / (record.w + record.l) : 0
+                    };
+                }).sort(function (first, second) {
+                    return second.rate - first.rate || second.w - first.w || first.l - second.l ||
+                        enjoyBaseballMoreTeams.indexOf(first.team) - enjoyBaseballMoreTeams.indexOf(second.team);
+                });
+                const ranks = {};
+                ordered.forEach(function (row, index) { ranks[row.team] = index + 1; });
+                return { date: date, time: new Date(date + 'T00:00:00').getTime(), ranks: ranks };
+            });
+            return enjoyBaseballRankingTimelineCache;
+        }
+        function enjoyBaseballRankingTrendPoints() {
+            const timeline = enjoyBaseballRankingTimeline();
+            if (!timeline.length || enjoyBaseballRankingTrendRange === 'season') return timeline;
+            const rangeDays = enjoyBaseballRankingTrendRange === '30d' ? 30 : 90;
+            const threshold = new Date(timeline[timeline.length - 1].date + 'T00:00:00');
+            threshold.setDate(threshold.getDate() - rangeDays);
+            const filtered = timeline.filter(function (point) { return point.time >= threshold.getTime(); });
+            return filtered.length ? filtered : timeline.slice(-1);
+        }
+        function enjoyBaseballRankingTrendDateLabel(date, longLabel) {
+            const parts = String(date || '').split('-');
+            if (parts.length !== 3) return date || '';
+            return longLabel
+                ? Number(parts[1]) + '월 ' + Number(parts[2]) + '일'
+                : Number(parts[1]) + '.' + String(Number(parts[2])).padStart(2, '0');
+        }
+        function renderEnjoyBaseballRankingTrendMeta(points) {
+            const quote = document.getElementById('kbo-ranking-trend-quote');
+            if (!quote || !points.length) return;
+            const firstRank = points[0].ranks[enjoyBaseballRankingTrendTeam];
+            const latestRank = points[points.length - 1].ranks[enjoyBaseballRankingTrendTeam];
+            const climb = firstRank - latestRank;
+            let changeText = '— 변동 없음';
+            let changeClass = '';
+            if (climb > 0) { changeText = '▲ ' + climb + '계단 상승'; changeClass = ' is-up'; }
+            if (climb < 0) { changeText = '▼ ' + Math.abs(climb) + '계단 하락'; changeClass = ' is-down'; }
+            quote.innerHTML = '<strong>' + enjoyBaseballEscape(enjoyBaseballRankingTrendTeam) + ' ' + latestRank + '위</strong>' +
+                '<span class="kbo-ranking-trend-change' + changeClass + '">' + changeText + '</span>';
+        }
+        function drawEnjoyBaseballRankingTrend() {
+            const canvas = document.getElementById('kbo-ranking-trend-canvas');
+            if (!canvas) return;
+            const points = enjoyBaseballRankingTrendPoints();
+            const width = Math.round(canvas.clientWidth);
+            const height = Math.round(canvas.clientHeight);
+            if (!points.length || width < 40 || height < 40) return;
+            const ratio = Math.min(window.devicePixelRatio || 1, 2);
+            if (canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)) {
+                canvas.width = Math.round(width * ratio);
+                canvas.height = Math.round(height * ratio);
+            }
+            const context = canvas.getContext('2d');
+            context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            context.clearRect(0, 0, width, height);
+            const isLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            const plot = { left: 18, right: width - 18, top: 44, bottom: height - 52 };
+            const minTime = points[0].time;
+            const maxTime = points[points.length - 1].time;
+            const ranks = points.map(function (point) { return Number(point.ranks[enjoyBaseballRankingTrendTeam]); });
+            const bestRank = Math.min.apply(null, ranks);
+            const worstRank = Math.max.apply(null, ranks);
+            const xFor = function (point, index) {
+                if (maxTime === minTime) return (plot.left + plot.right) / 2;
+                return plot.left + ((point.time - minTime) / (maxTime - minTime)) * (plot.right - plot.left);
+            };
+            const yFor = function (rank) {
+                const numericRank = Math.max(1, Math.min(10, Number(rank)));
+                const middle = (plot.top + plot.bottom) / 2;
+                if (numericRank <= 5) {
+                    return plot.top + ((numericRank - 1) / 4) * (middle - plot.top);
+                }
+                return middle + ((numericRank - 5) / 5) * (plot.bottom - middle);
+            };
+            const selectedColor = enjoyBaseballRankingTrendColors[enjoyBaseballRankingTrendTeam] || '#4d8dff';
+
+            const fifthPlaceY = yFor(5);
+            context.setLineDash([7, 7]);
+            context.strokeStyle = isLight ? 'rgba(78,89,104,.27)' : 'rgba(169,175,188,.35)';
+            context.lineWidth = 1.5;
+            context.beginPath();
+            context.moveTo(plot.left, fifthPlaceY);
+            context.lineTo(plot.right, fifthPlaceY);
+            context.stroke();
+            context.setLineDash([]);
+
+            context.beginPath();
+            points.forEach(function (point, index) {
+                const x = xFor(point, index);
+                const y = yFor(point.ranks[enjoyBaseballRankingTrendTeam]);
+                if (!index) context.moveTo(x, y); else context.lineTo(x, y);
+            });
+            context.strokeStyle = selectedColor;
+            context.lineWidth = 2.75;
+            context.lineJoin = 'round';
+            context.lineCap = 'round';
+            context.stroke();
+
+            const lastPoint = points[points.length - 1];
+            const lastX = xFor(lastPoint, points.length - 1);
+            const lastY = yFor(lastPoint.ranks[enjoyBaseballRankingTrendTeam]);
+            const currentPulse = document.getElementById('kbo-ranking-current-pulse');
+            if (currentPulse) {
+                currentPulse.style.left = lastX + 'px';
+                currentPulse.style.top = lastY + 'px';
+                currentPulse.style.setProperty('--pulse-color', selectedColor);
+            }
+
+            const middleOccurrence = function (rank) {
+                const matches = [];
+                ranks.forEach(function (value, index) { if (value === rank) matches.push(index); });
+                return matches[Math.floor((matches.length - 1) / 2)] || 0;
+            };
+            const drawExtremum = function (index, label, above) {
+                const point = points[index];
+                const x = xFor(point, index);
+                const y = yFor(point.ranks[enjoyBaseballRankingTrendTeam]);
+                context.fillStyle = selectedColor;
+                context.beginPath(); context.arc(x, y, 3, 0, Math.PI * 2); context.fill();
+                context.font = '800 13px Pretendard, sans-serif';
+                context.textBaseline = 'middle';
+                const labelWidth = context.measureText(label).width;
+                const textX = Math.max(12, Math.min(width - labelWidth - 12, x - labelWidth / 2));
+                const textY = above ? y - 23 : y + 27;
+                context.textAlign = 'left';
+                context.fillStyle = selectedColor;
+                context.fillText(label, textX, textY);
+            };
+            if (bestRank === worstRank) {
+                drawExtremum(Math.floor((points.length - 1) / 2), bestRank + '위 유지', true);
+            } else {
+                drawExtremum(middleOccurrence(bestRank), '최고 ' + bestRank + '위', true);
+                drawExtremum(middleOccurrence(worstRank), '최저 ' + worstRank + '위', false);
+            }
+
+            context.fillStyle = selectedColor;
+            context.beginPath(); context.arc(lastX, lastY, 5.5, 0, Math.PI * 2); context.fill();
+
+            if (enjoyBaseballRankingTrendHoverIndex >= 0 && points[enjoyBaseballRankingTrendHoverIndex]) {
+                const hoverPoint = points[enjoyBaseballRankingTrendHoverIndex];
+                const hoverX = xFor(hoverPoint, enjoyBaseballRankingTrendHoverIndex);
+                const hoverY = yFor(hoverPoint.ranks[enjoyBaseballRankingTrendTeam]);
+                context.fillStyle = selectedColor + '2e';
+                context.beginPath(); context.arc(hoverX, hoverY, 13, 0, Math.PI * 2); context.fill();
+                context.fillStyle = selectedColor;
+                context.beginPath(); context.arc(hoverX, hoverY, 5, 0, Math.PI * 2); context.fill();
+            }
+            canvas.setAttribute('aria-label', enjoyBaseballRankingTrendTeam + ' 순위 변동 차트. ' +
+                enjoyBaseballRankingTrendDateLabel(points[0].date, true) + '부터 ' +
+                enjoyBaseballRankingTrendDateLabel(lastPoint.date, true) + '까지, 현재 ' +
+                lastPoint.ranks[enjoyBaseballRankingTrendTeam] + '위');
+        }
+        function bindEnjoyBaseballRankingTrendPointer() {
+            const canvas = document.getElementById('kbo-ranking-trend-canvas');
+            const tooltip = document.getElementById('kbo-ranking-trend-tooltip');
+            if (!canvas || !tooltip || canvas.dataset.trendPointerBound === 'true') return;
+            canvas.dataset.trendPointerBound = 'true';
+            const inspect = function (event) {
+                const points = enjoyBaseballRankingTrendPoints();
+                if (!points.length) return;
+                const rect = canvas.getBoundingClientRect();
+                const plotLeft = 18;
+                const plotRight = rect.width - 18;
+                const relativeX = Math.max(plotLeft, Math.min(plotRight, event.clientX - rect.left));
+                const minTime = points[0].time;
+                const maxTime = points[points.length - 1].time;
+                const targetTime = maxTime === minTime ? minTime : minTime +
+                    ((relativeX - plotLeft) / Math.max(1, plotRight - plotLeft)) * (maxTime - minTime);
+                let nearest = 0;
+                points.forEach(function (point, index) {
+                    if (Math.abs(point.time - targetTime) < Math.abs(points[nearest].time - targetTime)) nearest = index;
+                });
+                enjoyBaseballRankingTrendHoverIndex = nearest;
+                const point = points[nearest];
+                const previousRank = nearest ? points[nearest - 1].ranks[enjoyBaseballRankingTrendTeam] : point.ranks[enjoyBaseballRankingTrendTeam];
+                const rank = point.ranks[enjoyBaseballRankingTrendTeam];
+                const movement = previousRank === rank ? '' : (previousRank > rank ? ' · ▲' + (previousRank - rank) : ' · ▼' + (rank - previousRank));
+                tooltip.innerHTML = '<time>' + enjoyBaseballRankingTrendDateLabel(point.date, true) + '</time><strong style="color:' +
+                    (enjoyBaseballRankingTrendColors[enjoyBaseballRankingTrendTeam] || '#4d8dff') + ';">' +
+                    enjoyBaseballEscape(enjoyBaseballRankingTrendTeam) + ' ' + rank + '위' + movement + '</strong>';
+                const pointX = maxTime === minTime ? rect.width / 2 : plotLeft + ((point.time - minTime) / (maxTime - minTime)) * (plotRight - plotLeft);
+                tooltip.style.left = Math.max(58, Math.min(rect.width - 58, pointX)) + 'px';
+                tooltip.hidden = false;
+                drawEnjoyBaseballRankingTrend();
+            };
+            canvas.addEventListener('pointerdown', inspect);
+            canvas.addEventListener('pointermove', function (event) {
+                if (event.pointerType === 'touch' && event.buttons === 0) return;
+                inspect(event);
+            });
+            canvas.addEventListener('pointerleave', function () {
+                enjoyBaseballRankingTrendHoverIndex = -1;
+                tooltip.hidden = true;
+                drawEnjoyBaseballRankingTrend();
+            });
+        }
+        function renderEnjoyBaseballRankingTrend() {
+            const teams = document.getElementById('kbo-ranking-trend-teams');
+            const points = enjoyBaseballRankingTrendPoints();
+            if (!teams || !points.length) return;
+            teams.innerHTML = enjoyBaseballMoreTeams.map(function (team) {
+                const active = team === enjoyBaseballRankingTrendTeam;
+                return '<button type="button" class="kbo-ranking-team-chip' + (active ? ' is-active' : '') +
+                    '" style="--trend-color:' + (enjoyBaseballRankingTrendColors[team] || '#94a3b8') +
+                    ';" aria-pressed="' + (active ? 'true' : 'false') + '" onclick="window.selectKboRankingTrendTeam(\'' +
+                    enjoyBaseballEscape(team) + '\')">' + enjoyBaseballEscape(team) + '</button>';
+            }).join('');
+            document.querySelectorAll('[data-kbo-ranking-range]').forEach(function (button) {
+                const active = button.dataset.kboRankingRange === enjoyBaseballRankingTrendRange;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+            enjoyBaseballRankingTrendHoverIndex = -1;
+            const tooltip = document.getElementById('kbo-ranking-trend-tooltip');
+            if (tooltip) tooltip.hidden = true;
+            renderEnjoyBaseballRankingTrendMeta(points);
+            bindEnjoyBaseballRankingTrendPointer();
+            if (enjoyBaseballRankingTrendResizeObserver) enjoyBaseballRankingTrendResizeObserver.disconnect();
+            const chart = document.getElementById('kbo-ranking-trend-chart');
+            if (chart && window.ResizeObserver) {
+                enjoyBaseballRankingTrendResizeObserver = new ResizeObserver(function () { drawEnjoyBaseballRankingTrend(); });
+                enjoyBaseballRankingTrendResizeObserver.observe(chart);
+            }
+            window.requestAnimationFrame(drawEnjoyBaseballRankingTrend);
+        }
+        window.selectKboRankingTrendTeam = function (team) {
+            if (!enjoyBaseballMoreTeams.includes(team)) return;
+            window.haptic && window.haptic();
+            enjoyBaseballRankingTrendTeam = team;
+            renderEnjoyBaseballRankingTrend();
+        };
+        window.changeKboRankingTrendRange = function (range) {
+            if (!['30d', '90d', 'season'].includes(range)) return;
+            window.haptic && window.haptic();
+            enjoyBaseballRankingTrendRange = range;
+            renderEnjoyBaseballRankingTrend();
+        };
         function renderKboScoreboard() {
             const wrap = document.getElementById('baseball-detail-content');
             if (!wrap) return;
@@ -7728,11 +8204,29 @@
                             '<span class="kbo-original-stat-cols"><span>경기</span><span>승</span><span>무</span><span>패</span><span>승률</span><span>게임차</span><span>연속</span></span>' +
                         '</div>' +
                         '<div id="kbo-more-ranking-body" class="kbo-original-ranking-list"></div>' +
+                        '<div class="kbo-ranking-trend" aria-labelledby="kbo-ranking-trend-title">' +
+                            '<div class="kbo-ranking-trend-head">' +
+                                '<div class="kbo-ranking-trend-title"><strong id="kbo-ranking-trend-title">순위 변동</strong><small>두 야구 데이터 파일의 경기 종료일 기준</small></div>' +
+                                '<div id="kbo-ranking-trend-quote" class="kbo-ranking-trend-quote" aria-live="polite"></div>' +
+                            '</div>' +
+                            '<div id="kbo-ranking-trend-teams" class="kbo-ranking-trend-teams" aria-label="순위 변동을 볼 팀 선택"></div>' +
+                            '<div id="kbo-ranking-trend-chart" class="kbo-ranking-trend-chart">' +
+                                '<canvas id="kbo-ranking-trend-canvas" class="kbo-ranking-trend-canvas" role="img">KBO 팀 순위 변동 차트</canvas>' +
+                                '<span id="kbo-ranking-current-pulse" class="kbo-ranking-current-pulse" aria-hidden="true"></span>' +
+                                '<div id="kbo-ranking-trend-tooltip" class="kbo-ranking-trend-tooltip" hidden></div>' +
+                            '</div>' +
+                            '<div class="kbo-ranking-trend-ranges" aria-label="차트 기간 선택">' +
+                                '<button type="button" class="kbo-ranking-range-button" data-kbo-ranking-range="30d" onclick="window.changeKboRankingTrendRange(\'30d\')">1개월</button>' +
+                                '<button type="button" class="kbo-ranking-range-button" data-kbo-ranking-range="90d" onclick="window.changeKboRankingTrendRange(\'90d\')">3개월</button>' +
+                                '<button type="button" class="kbo-ranking-range-button" data-kbo-ranking-range="season" onclick="window.changeKboRankingTrendRange(\'season\')">시즌</button>' +
+                            '</div>' +
+                        '</div>' +
                     '</section>' +
                 '</div>';
             renderEnjoyBaseballMoreDaily();
             renderEnjoyBaseballMoreCalendar();
             renderEnjoyBaseballMoreRanking();
+            renderEnjoyBaseballRankingTrend();
         }
         window.switchKboMoreTeam = function (team) {
             if (team !== 'KIA' && team !== '삼성') return;
