@@ -1,5 +1,18 @@
 # Enjoy School Notion Worker
 
+## 시간표 사진 AI 인식
+
+`index.html`의 내 시간표 등록 화면에서 사진을 선택했을 때만 `enjoy-biseo-ai` Worker의 `POST /timetable/parse`를 호출합니다. 비서실장 채팅은 기존 Gemma 4 모델을 그대로 사용하고, 시간표 사진 분석에만 `gemini-3.7-flash`를 사용합니다.
+
+```bash
+cd cloudflare-worker
+npm install
+npm run check:biseo
+npm run deploy:biseo
+```
+
+Worker에는 기존 `GEMINI_API_KEY` secret이 필요합니다. 사진은 분석 요청에만 사용하고 Worker와 앱에 저장하지 않습니다. AI가 반환한 과목은 앱의 수정 화면에서 사용자가 확인한 뒤 Firebase에 저장됩니다.
+
 ## 에브리타임 공유 시간표 Worker
 
 `index.html`의 멤버 프로필 시간표 화면에서 에브리타임 공유 링크를 처음 등록하거나 수동 갱신할 때 사용합니다. 로그인한 엔조이 사용자만 호출할 수 있고, 가져온 결과는 앱이 해당 사용자의 `members/{uid}` 문서에 저장합니다. 평소 앱 로딩에서는 Worker를 호출하지 않습니다.
