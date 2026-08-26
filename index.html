@@ -2387,7 +2387,7 @@
             isolation: isolate;
             transform: translateX(-50%);
             color: #F2F4F6;
-            background: #000;
+            background: #191919;
         }
         body.notion-info-active { overflow: hidden; }
         body.notion-info-active #home-screen,
@@ -2400,8 +2400,7 @@
             align-items: center;
             gap: .75rem;
             flex: none;
-            border-bottom: .0625rem solid rgba(255,255,255,.08);
-            background: #000;
+            background: #191919;
         }
         .notion-info-back {
             width: 2.5rem;
@@ -2411,15 +2410,23 @@
             flex: none;
             border-radius: 50%;
             color: #F2F4F6;
-            background: rgba(255,255,255,.08);
+            background: #252525;
             transition: transform .15s ease, background-color .15s ease;
         }
         .notion-info-back:active { transform: scale(.94); background: rgba(255,255,255,.14); }
-        .notion-info-title { color: #FFF; font-size: 1.125rem; font-weight: 900; line-height: 1.25; }
-        .notion-info-subtitle { margin-top: .1875rem; color: #8B95A1; font-size: .6875rem; font-weight: 650; }
-        .notion-info-content { position: relative; min-height: 0; flex: 1; overflow: hidden; background: #FFF; }
-        .notion-info-loader { position: absolute; inset: 0; z-index: 0; display: grid; place-items: center; color: #3182F6; background: #FFF; }
-        .notion-info-frame { position: relative; z-index: 1; width: 100%; height: 100%; display: block; border: 0; background: #FFF; }
+        .notion-info-content { --notion-toolbar-crop: 3.5rem; position: relative; min-height: 0; flex: 1; overflow: hidden; background: #191919; }
+        .notion-info-loader { position: absolute; inset: 0; z-index: 0; display: grid; place-items: center; color: #3182F6; background: #191919; }
+        .notion-info-frame { position: relative; z-index: 1; width: 100%; height: calc(100% + var(--notion-toolbar-crop)); display: block; border: 0; background: #191919; transform: translateY(calc(-1 * var(--notion-toolbar-crop))); }
+        @media (prefers-color-scheme: light) {
+            #notion-info-screen,
+            .notion-info-topbar,
+            .notion-info-content,
+            .notion-info-loader,
+            .notion-info-frame { background: #FFF; }
+            #notion-info-screen { color: #37352F; }
+            .notion-info-back { color: #37352F; background: #F1F1EF; }
+            .notion-info-back:active { background: #E9E9E7; }
+        }
 
         #academic-schedule-screen {
             --academic-bg: #000;
@@ -6366,10 +6373,6 @@
     <section id="notion-info-screen" class="hidden flex-col" aria-hidden="true">
         <header class="notion-info-topbar">
             <button type="button" class="notion-info-back" onclick="window.haptic && window.haptic(); window.closeNotionInfo()" aria-label="정보 화면 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-            <div class="min-w-0 flex-1">
-                <h2 id="notion-info-title" class="notion-info-title truncate">장학금 정보</h2>
-                <p class="notion-info-subtitle">엔조이 생활정보</p>
-            </div>
         </header>
         <div class="notion-info-content">
             <div id="notion-info-loader" class="notion-info-loader" aria-hidden="true"><i class="fa-solid fa-circle-notch fa-spin text-2xl"></i></div>
@@ -6549,12 +6552,10 @@
             const screen = document.getElementById('notion-info-screen');
             const frame = document.getElementById('notion-info-frame');
             const loader = document.getElementById('notion-info-loader');
-            const heading = document.getElementById('notion-info-title');
             const home = document.getElementById('home-screen');
             const bottomNav = document.getElementById('bottom-nav');
             if (!screen || !frame || !url) return;
 
-            if (heading) heading.textContent = title || '생활정보';
             frame.title = title || '생활정보';
             if (frame.getAttribute('src') !== url) {
                 if (loader) loader.style.display = 'grid';
