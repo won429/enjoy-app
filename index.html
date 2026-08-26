@@ -425,6 +425,187 @@
             box-shadow: 0 0 0 .125rem rgba(49,130,246,.5);
         }
 
+        /* 멤버 프로필 선택 팝오버 */
+        .profile-action-backdrop { position: fixed; inset: 0; z-index: 84; background: rgba(0,0,0,.18); }
+        .profile-action-popover {
+            position: fixed;
+            z-index: 85;
+            width: min(15.5rem, calc(100vw - 2rem));
+            padding: .625rem;
+            overflow: hidden;
+            border: .0625rem solid rgba(255,255,255,.14);
+            border-radius: 1.375rem;
+            color: #F2F4F6;
+            background: rgba(24,24,27,.82);
+            box-shadow: 0 1.125rem 3rem rgba(0,0,0,.36);
+            -webkit-backdrop-filter: blur(1.5rem) saturate(1.7);
+            backdrop-filter: blur(1.5rem) saturate(1.7);
+            transform-origin: top center;
+            animation: profileActionIn .24s cubic-bezier(.2,1.25,.35,1) both;
+        }
+        @keyframes profileActionIn { from { opacity: 0; transform: translateY(-.375rem) scale(.92); } to { opacity: 1; transform: none; } }
+        .profile-action-title { padding: .375rem .625rem .5rem; color: #8B95A1; font-size: .6875rem; font-weight: 800; }
+        .profile-action-item { width: 100%; min-height: 3.375rem; padding: .5rem; display: flex; align-items: center; gap: .625rem; border-radius: 1rem; color: inherit; text-align: left; transition: transform .14s ease, background-color .14s ease; }
+        .profile-action-item:active { transform: scale(.97); background: rgba(255,255,255,.08); }
+        .profile-action-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; font-size: .875rem; }
+        .profile-action-icon.is-timetable { color: #5BA1FF; background: rgba(49,130,246,.16); }
+        .profile-action-icon.is-pet { color: #FB7185; background: rgba(251,113,133,.16); }
+        .profile-action-copy { min-width: 0; flex: 1; }
+        .profile-action-copy strong { display: block; font-size: .8125rem; font-weight: 850; }
+        .profile-action-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
+        .profile-action-chevron { color: #6B7684; font-size: .6875rem; }
+
+        /* 내 프로필 전용 픽셀 다마고치 */
+        #tamagotchi-screen {
+            --pixel-ink: #46394B;
+            --pixel-paper: #FFF8DF;
+            --pixel-shadow: #A56E61;
+            z-index: 95;
+            color: var(--pixel-ink);
+            background: #EBC47F url('./assets/tamagotchi/room-v2.png') center top / cover no-repeat;
+            image-rendering: pixelated;
+            font-family: ui-monospace, 'SFMono-Regular', 'Apple SD Gothic Neo', monospace;
+        }
+        #tamagotchi-screen::before { position: absolute; inset: 0; content: ''; background: linear-gradient(180deg,rgba(255,248,223,.12),rgba(96,57,46,.08)); pointer-events: none; }
+        .pet-topbar { position: relative; z-index: 12; padding: max(.75rem, env(safe-area-inset-top)) .875rem .5rem; display: flex; align-items: center; gap: .625rem; flex: none; }
+        .pet-back { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; flex: none; border: .1875rem solid var(--pixel-ink); border-radius: .25rem; color: var(--pixel-ink); background: var(--pixel-paper); box-shadow: .1875rem .1875rem 0 var(--pixel-shadow); }
+        .pet-back:active { transform: translate(.125rem,.125rem); box-shadow: .0625rem .0625rem 0 var(--pixel-shadow); }
+        .pet-heading { min-width: 0; padding: .375rem .625rem; border: .1875rem solid var(--pixel-ink); background: rgba(255,248,223,.94); box-shadow: .1875rem .1875rem 0 var(--pixel-shadow); }
+        .pet-heading h2 { font-size: 1rem; font-weight: 950; line-height: 1.1; }
+        .pet-heading p { margin-top: .125rem; color: #806B70; font-size: .5625rem; font-weight: 800; }
+        .pet-scroll { position: relative; z-index: 2; min-height: 0; padding: 0 .75rem max(.75rem,env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: .5rem; overflow: hidden; }
+        .pet-hero { position: relative; min-height: 15rem; flex: 1 1 auto; overflow: hidden; border: .1875rem solid rgba(70,57,75,.86); background: rgba(255,248,223,.08); box-shadow: inset 0 -.25rem 0 rgba(111,68,52,.14); isolation: isolate; }
+        .pet-hero.is-night::after { position: absolute; inset: 0; z-index: 1; content: ''; background: rgba(43,51,99,.38); pointer-events: none; animation: petNightIn .5s steps(3,end) both; }
+        .pet-hero-head { position: absolute; z-index: 8; top: .5rem; left: .5rem; right: .5rem; display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; pointer-events: none; }
+        .pet-hero-head > div { padding: .3rem .5rem; border: .125rem solid var(--pixel-ink); background: rgba(255,248,223,.92); box-shadow: .125rem .125rem 0 var(--pixel-shadow); }
+        .pet-stage-label { display: block; color: #876E74; font-size: .5rem; font-weight: 850; }
+        .pet-name { display: block; margin-top: .0625rem; font-size: .875rem; font-weight: 950; line-height: 1.1; }
+        .pet-level { padding: .35rem .5rem; border: .125rem solid var(--pixel-ink); color: var(--pixel-ink); background: #FFF1A8; box-shadow: .125rem .125rem 0 var(--pixel-shadow); font-size: .5625rem; font-weight: 950; }
+        .pet-world { position: absolute; inset: 2.75rem 0 1.75rem; z-index: 3; overflow: hidden; }
+        .pet-shadow { position: absolute; z-index: 1; width: 6.5rem; height: .75rem; left: 50%; bottom: 6%; border-radius: 50%; background: rgba(82,48,45,.24); transform: translateX(-50%); }
+        .pet-mover { position: absolute; z-index: 4; width: 8.5rem; height: 8.5rem; left: 50%; bottom: 4%; transform: translateX(-50%); transition-property: left,bottom; transition-duration: 1.45s,.55s; transition-timing-function: steps(10,end),steps(4,end); will-change: left,bottom,transform; }
+        .pet-mover.is-facing-left { transform: translateX(-50%) scaleX(-1); }
+        .pet-mover.is-jumping { animation: petJump .7s steps(4,end) 3; }
+        .pet-mover.is-shivering { animation: petShiver .18s steps(2,end) infinite; }
+        .pet-mover.is-refusing { animation: petRefuse .18s steps(2,end) 6; }
+        .pet-mover.is-feeding { animation: petFeedBow .58s steps(3,end) infinite; }
+        .pet-mover.play-ball { animation: petChaseBall 2.25s steps(12,end) both; }
+        .pet-mover.play-yarn { animation: petPounceYarn 2.25s steps(12,end) both; }
+        .pet-mover.play-mouse { animation: petStalkMouse 2.25s steps(12,end) both; }
+        .pet-mover.is-sleeping { z-index: 3; width: 6.6rem; height: 6.6rem; bottom: 22%; }
+        .pet-mover.is-bathing { z-index: 4; width: 7rem; height: 7rem; bottom: 5%; }
+        .pet-mover.is-entering-bath { animation: petEnterBath .48s steps(5,end) both; }
+        .pet-dirt { position: absolute; z-index: 7; inset: 0; display: none; pointer-events: none; }
+        .pet-mover.is-dirty .pet-dirt { display: block; }
+        .pet-dirt::before,.pet-dirt::after { position: absolute; z-index: 7; content: ''; width: .42rem; height: .42rem; background: #745442; box-shadow: .55rem .3rem 0 #9A7151,-.35rem .75rem 0 #745442; opacity: .78; }
+        .pet-dirt::before { left: 39%; top: 37%; }
+        .pet-dirt::after { right: 34%; top: 55%; transform: scale(.8); }
+        .pet-mover.is-very-dirty .pet-dirt::after { box-shadow: .55rem .3rem 0 #9A7151,-.35rem .75rem 0 #745442,.85rem -.65rem 0 #745442,-1.15rem -.3rem 0 #9A7151; }
+        .pet-mover.is-very-dirty::after { position: absolute; z-index: 8; top: .8rem; right: .8rem; content: '~'; color: #7B6650; font-size: 1.15rem; font-weight: 950; animation: petStink 1.2s steps(4,end) infinite; }
+        .pet-sprite-button { width: 100%; height: 100%; display: grid; place-items: center; border: 0; background: transparent; -webkit-tap-highlight-color: transparent; }
+        .pet-sprite-button:not(:disabled) { cursor: pointer; }
+        .pet-sprite-button:focus-visible { outline: .1875rem dashed var(--pixel-ink); outline-offset: .125rem; }
+        .pet-sprite { width: 100%; height: 100%; display: block; background-repeat: no-repeat; background-size: 400% 300%; background-position: var(--pet-sprite-x,0%) var(--pet-sprite-y,0%); image-rendering: pixelated; image-rendering: crisp-edges; }
+        .pet-sprite.is-egg { width: 7.25rem; height: 7.25rem; background-image: url('./assets/tamagotchi/egg-hatch-v2.png'); background-size: 300% 200%; }
+        .pet-sprite.is-dead { filter: grayscale(1) brightness(.72); opacity: .72; }
+        .pet-sprite-button.is-tapped .pet-sprite { animation: petEggTap .32s steps(3,end); }
+        .pet-sprite-button.is-hatching .pet-sprite { animation: petHatch .48s steps(3,end) infinite; }
+        .pet-tap-hint { position: absolute; left: 50%; bottom: -.5rem; padding: .25rem .4rem; border: .125rem solid var(--pixel-ink); color: var(--pixel-ink); background: #FFF1A8; box-shadow: .125rem .125rem 0 var(--pixel-shadow); font-size: .5rem; font-weight: 950; white-space: nowrap; transform: translateX(-50%); }
+        .pet-message { position: absolute; z-index: 9; left: 50%; bottom: .35rem; width: max-content; max-width: calc(100% - 1rem); padding: .3rem .5rem; border: .125rem solid var(--pixel-ink); color: var(--pixel-ink); background: rgba(255,248,223,.95); box-shadow: .125rem .125rem 0 var(--pixel-shadow); font-size: .5625rem; font-weight: 900; text-align: center; transform: translateX(-50%); }
+        .pet-prop { position: absolute; z-index: 5; pointer-events: none; image-rendering: pixelated; }
+        .pet-food-prop { left: 47%; bottom: 5%; width: 4.6rem; height: 2.2rem; transform: translateX(-50%); }
+        .pet-bowl { position: absolute; left: .25rem; right: .25rem; bottom: 0; height: .85rem; border: .18rem solid var(--pixel-ink); background: #8FD5D3; box-shadow: inset 0 -.24rem 0 #4F9D9F,.16rem .16rem 0 rgba(70,57,75,.22); }
+        .pet-bowl::before { position: absolute; left: -.32rem; right: -.32rem; top: -.34rem; height: .38rem; content: ''; border: .18rem solid var(--pixel-ink); background: #D2F5EE; box-shadow: inset 0 -.12rem 0 #75BFC0; }
+        .pet-bowl::after { position: absolute; left: 50%; bottom: .08rem; width: .7rem; height: .24rem; content: ''; background: #FFF1A8; transform: translateX(-50%); }
+        .pet-bowl-food { position: absolute; z-index: 2; left: .58rem; right: .58rem; bottom: .88rem; height: .78rem; display: grid; grid-template-columns: repeat(5,.42rem); align-content: end; justify-content: center; gap: .08rem .12rem; opacity: 0; }
+        .pet-bowl-food i { width: .42rem; height: .3rem; display: block; background: #B96E43; box-shadow: inset -.1rem -.08rem 0 #7E4936,.06rem -.06rem 0 #E6A05D; }
+        .pet-bowl-food i:nth-child(3n) { background: #C9824C; transform: translateY(-.08rem); }
+        .pet-food-prop.is-filling .pet-bowl-food { animation: petFoodFill .65s steps(4,end) forwards; }
+        .pet-food-prop.is-eating .pet-bowl-food { opacity: 1; }
+        .pet-food-prop.is-eating .pet-bowl-food i { animation: petKibbleEat .12s steps(1,end) forwards; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(1) { animation-delay: .15s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(2) { animation-delay: .3s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(3) { animation-delay: .45s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(4) { animation-delay: .6s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(5) { animation-delay: .75s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(6) { animation-delay: .9s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(7) { animation-delay: 1.05s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(8) { animation-delay: 1.2s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(9) { animation-delay: 1.35s; }
+        .pet-food-prop.is-eating .pet-bowl-food i:nth-child(10) { animation-delay: 1.5s; }
+        .pet-play-prop { left: 8%; bottom: 12%; width: 2rem; height: 2rem; border: .1875rem solid var(--pixel-ink); }
+        .pet-play-prop[data-toy="ball"] { border-radius: 50%; background: conic-gradient(#F47C85 0 25%,#FFF1A8 0 50%,#62C5D0 0 75%,#A98BD2 0); animation: petBallPlay 2.2s steps(8,end) both; }
+        .pet-play-prop[data-toy="yarn"] { border-radius: 50%; background: repeating-linear-gradient(45deg,#F28BB0 0 .25rem,#FFD0DF .25rem .45rem); animation: petYarnPlay 2.2s steps(8,end) both; }
+        .pet-play-prop[data-toy="mouse"] { width: 2.5rem; height: 1.5rem; border-radius: 50% 45% 45% 50%; background: #A98BD2; animation: petMousePlay 2.2s steps(8,end) both; }
+        .pet-play-prop[data-toy="mouse"]::after { position: absolute; right: -1.15rem; top: .25rem; width: 1.2rem; height: .65rem; content: ''; border-top: .1875rem solid var(--pixel-ink); transform: rotate(20deg); }
+        .pet-clean-prop { left: 50%; bottom: 1%; width: 9.5rem; height: 4.15rem; transform: translateX(-50%); border: .22rem solid var(--pixel-ink); border-top-width: .3rem; border-radius: .35rem .35rem .7rem .7rem; background: #8FD7DB; box-shadow: inset .3rem 0 0 #C8F3EE,inset -.35rem -.42rem 0 #4D9EA8,.22rem .22rem 0 rgba(70,57,75,.25); }
+        .pet-clean-prop::before { position: absolute; z-index: 2; left: .35rem; right: .35rem; top: -.48rem; height: 1rem; content: ''; border: .18rem solid var(--pixel-ink); border-radius: 50%; background: #9DE7EC; box-shadow: inset 0 .22rem 0 #E2FFFF,inset 0 -.22rem 0 #5EBAC5; opacity: 0; transform: scaleY(.2); transform-origin: bottom; }
+        .pet-clean-prop.is-filled::before { opacity: 1; transform: scaleY(1); animation: petBathWater 1s steps(4,end) infinite; }
+        .pet-clean-prop::after { position: absolute; z-index: 5; left: 1.05rem; top: -.85rem; width: .6rem; height: .6rem; content: ''; border: .12rem solid #5EAFC0; border-radius: 50%; background: #EDFFFF; box-shadow: 1.2rem -.5rem 0 -.08rem #EDFFFF,2.4rem .2rem 0 -.04rem #D8FAFF,4.4rem -.35rem 0 -.08rem #EDFFFF,5.8rem .15rem 0 -.04rem #D8FAFF; opacity: 0; }
+        .pet-clean-prop.is-filled::after { opacity: 1; animation: petBubble 1.25s steps(4,end) infinite; }
+        .pet-bath-water { position: absolute; z-index: 6; left: 1rem; right: 1rem; top: .12rem; height: .45rem; overflow: hidden; opacity: 0; }
+        .pet-clean-prop.is-filled .pet-bath-water { opacity: 1; }
+        .pet-bath-water::before { position: absolute; inset: .12rem 0 0; content: ''; background: repeating-linear-gradient(90deg,#E5FFFF 0 .55rem,#65C7D2 .55rem 1rem); animation: petBathWave .7s steps(3,end) infinite; }
+        .pet-bath-soap { position: absolute; z-index: 7; right: .65rem; top: -.65rem; width: 1.1rem; height: .72rem; border: .14rem solid var(--pixel-ink); background: #FFD0DF; box-shadow: inset -.18rem -.16rem 0 #E98BAD; opacity: 0; transform: rotate(-8deg); }
+        .pet-clean-prop.is-filled .pet-bath-soap { opacity: 1; }
+        .pet-bath-soap::after { position: absolute; left: .16rem; top: .12rem; width: .22rem; height: .16rem; content: ''; background: #FFF0F6; box-shadow: .38rem .18rem 0 #FFF0F6; }
+        .pet-sleep-prop { left: 7%; bottom: 33%; width: 4rem; height: 3rem; }
+        .pet-zzz { position: absolute; left: .5rem; top: 0; color: #6D58A2; font-size: 1rem; font-weight: 950; text-shadow: .1rem .1rem 0 #FFF8DF; animation: petZzz 1.4s steps(4,end) infinite; }
+        .pet-view-badge { margin-left: auto; padding: .25rem .38rem; border: .125rem solid var(--pixel-ink); color: var(--pixel-ink); background: #CFF3F1; box-shadow: .125rem .125rem 0 var(--pixel-shadow); font-size: .5rem; font-weight: 950; white-space: nowrap; }
+        .pet-death-prop { left: 50%; bottom: 2%; width: 5rem; height: 5rem; transform: translateX(-50%); }
+        .pet-death-prop::before { position: absolute; inset: .75rem .5rem 0; content: ''; border: .25rem solid var(--pixel-ink); border-radius: 2rem 2rem 0 0; background: #9B9A9F; box-shadow: inset -.35rem -.35rem 0 #727176; }
+        .pet-death-prop::after { position: absolute; left: 50%; top: 1.65rem; content: 'RIP'; color: #4B4650; font-size: .7rem; font-weight: 950; transform: translateX(-50%); }
+        .pet-status-card { flex: none; padding: .5rem .625rem; border: .1875rem solid var(--pixel-ink); background: rgba(255,248,223,.95); box-shadow: .1875rem .1875rem 0 var(--pixel-shadow); }
+        .pet-section-title { margin-bottom: .35rem; font-size: .625rem; font-weight: 950; }
+        .pet-meter-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .35rem .6rem; }
+        .pet-meter-head { display: flex; justify-content: space-between; gap: .25rem; color: #6F5961; font-size: .5rem; font-weight: 900; }
+        .pet-meter-head b { color: var(--pixel-ink); font-variant-numeric: tabular-nums; }
+        .pet-meter-track { height: .625rem; margin-top: .15rem; overflow: hidden; border: .125rem solid var(--pixel-ink); background: #D9C8B4; }
+        .pet-meter-fill { display: block; height: 100%; transition: width .35s steps(5,end); background-size: .625rem 100%; }
+        .pet-meter-fill.is-food { background-image: repeating-linear-gradient(90deg,#E8844F 0 .45rem,#B95742 .45rem .56rem); }
+        .pet-meter-fill.is-fun { background-image: repeating-linear-gradient(90deg,#EC82AD 0 .45rem,#B95285 .45rem .56rem); }
+        .pet-meter-fill.is-clean { background-image: repeating-linear-gradient(90deg,#58C2D3 0 .45rem,#328FA4 .45rem .56rem); }
+        .pet-meter-fill.is-energy { background-image: repeating-linear-gradient(90deg,#9B82D1 0 .45rem,#6D58A2 .45rem .56rem); }
+        .pet-actions { flex: none; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .375rem; }
+        .pet-action { min-width: 0; padding: .45rem .15rem .35rem; display: flex; flex-direction: column; align-items: center; gap: .2rem; border: .1875rem solid var(--pixel-ink); border-radius: 0; color: var(--pixel-ink); background: #FFF8DF; box-shadow: .1875rem .1875rem 0 var(--pixel-shadow); }
+        .pet-action:active { transform: translate(.125rem,.125rem); box-shadow: .0625rem .0625rem 0 var(--pixel-shadow); }
+        .pet-action:disabled { opacity: .45; pointer-events: none; filter: grayscale(.6); }
+        .pet-action i { font-size: .875rem; }
+        .pet-action span { font-size: .5rem; font-weight: 950; white-space: nowrap; }
+        .pet-action.is-feed { background: #FFE1B7; }
+        .pet-action.is-play { background: #FFD0DF; }
+        .pet-action.is-clean { background: #CFF3F1; }
+        .pet-action.is-rest { background: #DDD2F5; }
+        .pet-restart { flex: none; padding: .65rem; border: .1875rem solid var(--pixel-ink); color: var(--pixel-ink); background: #FFF1A8; box-shadow: .1875rem .1875rem 0 var(--pixel-shadow); font-size: .625rem; font-weight: 950; }
+        .pet-save-note { flex: none; margin: 0; color: rgba(70,57,75,.8); font-size: .45rem; font-weight: 850; text-align: center; text-shadow: 0 .0625rem 0 #FFF8DF; }
+        @keyframes petEggTap { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+        @keyframes petHatch { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08) translateY(-.3rem); } }
+        @keyframes petJump { 0%,100% { bottom: 4%; } 50% { bottom: 24%; } }
+        @keyframes petShiver { 0%,100% { margin-left: -.18rem; } 50% { margin-left: .18rem; } }
+        @keyframes petNightIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes petFoodFill { from { transform: translateY(-1.2rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes petKibbleEat { to { opacity: 0; transform: translateY(.18rem) scale(.6); } }
+        @keyframes petBallPlay { 0% { left: 8%; bottom: 8%; } 35% { left: 65%; bottom: 45%; } 65% { left: 32%; bottom: 18%; } 100% { left: 72%; bottom: 8%; transform: rotate(540deg); } }
+        @keyframes petYarnPlay { 0% { left: 72%; bottom: 8%; } 45% { left: 18%; bottom: 35%; } 100% { left: 62%; bottom: 8%; transform: rotate(-540deg); } }
+        @keyframes petMousePlay { 0% { left: 5%; } 45% { left: 70%; } 70% { left: 35%; } 100% { left: 75%; } }
+        @keyframes petBubble { 0% { transform: translateY(.5rem); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(-2rem); opacity: 0; } }
+        @keyframes petBathWater { 0%,100% { transform: translateY(0); } 50% { transform: translateY(.1rem); } }
+        @keyframes petBathWave { from { transform: translateX(-.35rem); } to { transform: translateX(.35rem); } }
+        @keyframes petEnterBath { 0% { bottom: 4%; } 45% { bottom: 17%; } 100% { bottom: 5%; } }
+        @keyframes petZzz { 0% { transform: translate(0,.5rem); opacity: 0; } 50% { opacity: 1; } 100% { transform: translate(.75rem,-1rem); opacity: 0; } }
+        @keyframes petRefuse { 0%,100% { margin-left: 0; } 50% { margin-left: -.4rem; } }
+        @keyframes petFeedBow { 0%,100% { transform: translateX(-50%) translateY(1.2rem) scaleY(.84); } 50% { transform: translateX(-50%) translate(.2rem,1.65rem) scaleY(.78); } }
+        @keyframes petStink { 0% { transform: translateY(.5rem); opacity: 0; } 60% { opacity: .8; } 100% { transform: translate(.4rem,-.8rem); opacity: 0; } }
+        @keyframes petChaseBall { 0% { left: 46%; bottom: 4%; } 22% { left: 32%; bottom: 14%; } 48% { left: 63%; bottom: 5%; } 70% { left: 52%; bottom: 18%; } 100% { left: 72%; bottom: 4%; } }
+        @keyframes petPounceYarn { 0%,16% { left: 46%; bottom: 4%; transform: translateX(-50%) scaleY(.88); } 38% { left: 25%; bottom: 20%; transform: translateX(-50%) rotate(-8deg); } 56% { left: 30%; bottom: 4%; transform: translateX(-50%) rotate(7deg); } 78% { left: 62%; bottom: 11%; } 100% { left: 68%; bottom: 4%; } }
+        @keyframes petStalkMouse { 0% { left: 46%; bottom: 4%; } 18%,38% { left: 38%; bottom: 4%; transform: translateX(-50%) scaleY(.82); } 62% { left: 70%; bottom: 7%; } 76% { left: 75%; bottom: 16%; } 100% { left: 72%; bottom: 4%; } }
+        @media (prefers-color-scheme: light) {
+            .profile-action-popover { color: #191F28; background: rgba(255,255,255,.9); border-color: rgba(15,23,42,.08); box-shadow: 0 1.125rem 3rem rgba(15,23,42,.18); }
+            .profile-action-item:active { background: rgba(15,23,42,.05); }
+        }
+        @media (max-height: 42rem) { .pet-hero { min-height: 11.5rem; } .pet-mover { width: 7rem; height: 7rem; } .pet-status-card { padding-block: .35rem; } }
+        @media (prefers-reduced-motion: reduce) { .profile-action-popover, .pet-sprite, .pet-mover, .pet-prop { animation: none !important; transition-duration: .01ms !important; } }
+
         /* 멤버 프로필에서 여는 공유 시간표 */
         #member-timetable-screen {
             --et-bg: #000000;
@@ -6861,6 +7042,75 @@
         <!-- 커뮤니티(여행 일정 공유) 패널 -->
         <div id="sched-panel-community" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
     </div>
+
+    <!-- 멤버 프로필 클릭 시 시간표/다마고치를 고르는 팝오버 -->
+    <button id="profile-action-backdrop" type="button" class="profile-action-backdrop hidden" onclick="window.closeMemberProfileMenu()" aria-label="프로필 메뉴 닫기"></button>
+    <div id="profile-action-popover" class="profile-action-popover hidden" role="dialog" aria-modal="true" aria-labelledby="profile-action-title">
+        <div id="profile-action-title" class="profile-action-title">멤버 프로필</div>
+        <button type="button" class="profile-action-item" onclick="window.haptic && window.haptic(); window.openSelectedMemberTimetable()">
+            <span class="profile-action-icon is-timetable"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span>
+            <span class="profile-action-copy"><strong>시간표 보기</strong><span>수업 시간표 확인하기</span></span>
+            <i class="profile-action-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </button>
+        <button id="profile-pet-action" type="button" class="profile-action-item hidden" onclick="window.haptic && window.haptic(); window.openSelectedMemberTamagotchi()">
+            <span class="profile-action-icon is-pet"><i class="fa-solid fa-paw" aria-hidden="true"></i></span>
+            <span class="profile-action-copy"><strong>다마고치 키우기</strong><span>밥 주고 놀아주며 성장시키기</span></span>
+            <i class="profile-action-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <!-- 로그인한 내 프로필 전용 다마고치 화면 -->
+    <section id="tamagotchi-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" aria-hidden="true">
+        <header class="pet-topbar">
+            <button type="button" class="pet-back" onclick="window.haptic && window.haptic(); window.closeTamagotchi()" aria-label="다마고치 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+            <div class="pet-heading">
+                <h2 id="pet-screen-title">다마고치</h2>
+                <p id="pet-owner-label">멤버의 반려친구</p>
+            </div>
+            <span id="pet-view-badge" class="pet-view-badge hidden">관람 중</span>
+        </header>
+        <div class="pet-scroll flex-1">
+            <section class="pet-hero" aria-label="다마고치 상태">
+                <div class="pet-hero-head">
+                    <div><span id="pet-stage-label" class="pet-stage-label">알에서 막 깨어났어요</span><strong id="pet-name" class="pet-name">몽글이</strong></div>
+                    <span id="pet-level" class="pet-level">Lv. 1</span>
+                </div>
+                <div class="pet-world">
+                    <div id="pet-mover" class="pet-mover">
+                        <span class="pet-shadow"></span>
+                        <button id="pet-sprite-button" type="button" class="pet-sprite-button" onclick="window.tapTamagotchiEgg()" aria-describedby="pet-message">
+                            <span id="pet-sprite" class="pet-sprite is-egg" aria-hidden="true"></span>
+                            <span id="pet-tap-hint" class="pet-tap-hint">알을 톡 눌러주세요</span>
+                        </button>
+                        <span class="pet-dirt" aria-hidden="true"></span>
+                    </div>
+                    <div id="pet-food-prop" class="pet-prop pet-food-prop hidden" aria-hidden="true"><span class="pet-bowl-food"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="pet-bowl"></span></div>
+                    <div id="pet-play-prop" class="pet-prop pet-play-prop hidden" data-toy="ball" aria-hidden="true"></div>
+                    <div id="pet-clean-prop" class="pet-prop pet-clean-prop hidden" aria-hidden="true"><span class="pet-bath-water"></span><span class="pet-bath-soap"></span></div>
+                    <div id="pet-sleep-prop" class="pet-prop pet-sleep-prop hidden" aria-hidden="true"><span class="pet-zzz">Z Z</span></div>
+                    <div id="pet-death-prop" class="pet-prop pet-death-prop hidden" aria-hidden="true"></div>
+                </div>
+                <p id="pet-message" class="pet-message">오늘도 같이 놀자!</p>
+            </section>
+            <section id="pet-status-card" class="pet-status-card hidden">
+                <h3 class="pet-section-title">오늘의 상태</h3>
+                <div class="pet-meter-list">
+                    <div><div class="pet-meter-head"><span>포만감</span><b id="pet-food-value">75</b></div><div class="pet-meter-track"><span id="pet-food-bar" class="pet-meter-fill is-food"></span></div></div>
+                    <div><div class="pet-meter-head"><span>즐거움</span><b id="pet-fun-value">75</b></div><div class="pet-meter-track"><span id="pet-fun-bar" class="pet-meter-fill is-fun"></span></div></div>
+                    <div><div class="pet-meter-head"><span>깨끗함</span><b id="pet-clean-value">75</b></div><div class="pet-meter-track"><span id="pet-clean-bar" class="pet-meter-fill is-clean"></span></div></div>
+                    <div><div class="pet-meter-head"><span>에너지</span><b id="pet-energy-value">75</b></div><div class="pet-meter-track"><span id="pet-energy-bar" class="pet-meter-fill is-energy"></span></div></div>
+                </div>
+            </section>
+            <div id="pet-actions" class="pet-actions hidden" aria-label="다마고치 돌보기">
+                <button type="button" class="pet-action is-feed" data-pet-action onclick="window.careForTamagotchi('feed')"><i class="fa-solid fa-bowl-food" aria-hidden="true"></i><span>밥 주기</span></button>
+                <button type="button" class="pet-action is-play" data-pet-action onclick="window.careForTamagotchi('play')"><i class="fa-solid fa-baseball" aria-hidden="true"></i><span>놀아주기</span></button>
+                <button type="button" class="pet-action is-clean" data-pet-action onclick="window.careForTamagotchi('clean')"><i class="fa-solid fa-soap" aria-hidden="true"></i><span>씻겨주기</span></button>
+                <button type="button" class="pet-action is-rest" data-pet-action onclick="window.careForTamagotchi('rest')"><i class="fa-solid fa-moon" aria-hidden="true"></i><span>재우기</span></button>
+            </div>
+            <button id="pet-restart" type="button" class="pet-restart hidden" onclick="window.restartTamagotchi()">새로운 알 다시 키우기</button>
+            <p id="pet-save-note" class="pet-save-note">내 다마고치 상태는 계정에 자동 저장돼요.</p>
+        </div>
+    </section>
 
     <!-- 멤버 프로필에서 여는 에브리타임 공유 시간표 -->
     <section id="member-timetable-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-[90] flex-col overflow-hidden" aria-hidden="true">
@@ -14982,7 +15232,7 @@
                 const sub = registered
                     ? '<span class="member-status-detail">' + activityText + '</span>'
                     : '<span class="member-status-detail">미가입자</span>';
-                return '<div class="member-status-item' + (registered ? ' is-registered' : '') + (active ? ' is-active' : '') + '" style="--member-color:' + (col.solidHex || '#6B7280') + '" role="button" tabindex="0" aria-label="' + name + (studying ? ' 현재 수업 중, ' : ' ') + '시간표 보기" onclick="window.haptic && window.haptic(); window.openMemberTimetable(\'' + name + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">' +
+                return '<div class="member-status-item' + (registered ? ' is-registered' : '') + (active ? ' is-active' : '') + '" style="--member-color:' + (col.solidHex || '#6B7280') + '" role="button" tabindex="0" aria-label="' + name + (studying ? ' 현재 수업 중, ' : ' ') + '프로필 메뉴 열기" onclick="window.haptic && window.haptic(); window.openMemberProfileMenu(\'' + name + '\', this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">' +
                             '<div class="member-status-avatar-wrap">' + studyBadge + circle + dot + '</div>' +
                             '<span class="member-status-name">' + name + '</span>' +
                             sub +
@@ -14998,6 +15248,707 @@
                 window.enjoyShowMemberTimetable(member || { uid: '', name: name, photoURL: '', timetable: null });
             }
         };
+
+        let profileMenuMemberName = '';
+        let profileMenuPreviousFocus = null;
+        let activePetOwner = '';
+        let activePetOwnerId = '';
+        let activePetState = null;
+        let activePetCanEdit = false;
+        let activePetIsAdminTest = false;
+        let petCloudSaveTimer = 0;
+        let petDecayTimer = 0;
+        let petHatchTimer = 0;
+        let petFrameTimer = 0;
+        let petRoamTimer = 0;
+        let petMoveTimer = 0;
+        let petActionTimers = [];
+        let petIsBusy = false;
+        let petCurrentAnimation = 'idle';
+        const petStoragePrefix = 'enjoy_tamagotchi_v3_';
+        const petSpecies = [
+            { name: '루루', type: '보랏빛 냥이', asset: './assets/tamagotchi/cat-actions-v2.png' },
+            { name: '토토', type: '달토끼', asset: './assets/tamagotchi/bunny-actions-v2.png' },
+            { name: '모모', type: '꿀곰', asset: './assets/tamagotchi/bear-actions-v2.png' },
+            { name: '피코', type: '민트새', asset: './assets/tamagotchi/bird-actions-v2.png' },
+            { name: '아리', type: '분홍 아홀로틀', asset: './assets/tamagotchi/axolotl-actions-v2.png' },
+            { name: '호두', type: '복숭아 여우', asset: './assets/tamagotchi/fox-actions-v2.png' }
+        ];
+        const petFrames = {
+            idle: [[0,0],[1,0]],
+            walk: [[2,0],[3,0]],
+            feed: [[0,1],[1,1]],
+            play: [[2,1],[3,1]],
+            clean: [[0,2],[1,2]],
+            rest: [[2,2],[3,2]]
+        };
+
+        function petProfileName(value) {
+            return String(value || '').trim();
+        }
+
+        function isOwnPetProfile(name) {
+            return !!(window.enjoyUser && window.enjoyUser.uid) && petProfileName(name) === petProfileName(window.enjoyProfileName);
+        }
+
+        function canOpenPetProfile(name) {
+            return !!petProfileName(name);
+        }
+
+        function petClamp(value) {
+            return Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+        }
+
+        function petStorageKey(ownerId) {
+            return petStoragePrefix + encodeURIComponent(String(ownerId || 'guest'));
+        }
+
+        function defaultPetState() {
+            const now = Date.now();
+            return { version: 3, phase: 'egg', eggTaps: 0, species: null, name: '', food: 82, fun: 82, clean: 86, energy: 82, careCount: 0, roomX: 50, lastCareAt: now, lastUpdated: now, diedAt: 0, message: '알을 여러 번 톡톡 눌러주세요.' };
+        }
+
+        function randomPetSpeciesIndex() {
+            try {
+                const value = new Uint32Array(1);
+                crypto.getRandomValues(value);
+                return value[0] % petSpecies.length;
+            } catch (error) {
+                return Math.floor(Math.random() * petSpecies.length);
+            }
+        }
+
+        function applyPetDecay(state) {
+            const now = Date.now();
+            if (state.phase !== 'hatched') {
+                state.lastUpdated = now;
+                return state;
+            }
+            const elapsedHours = Math.min(240, Math.max(0, now - Number(state.lastUpdated || now)) / 3600000);
+            const decaySpeed = activePetIsAdminTest ? 10 : 1;
+            const decayValue = function (value, rate) {
+                return Math.max(0, Math.min(100, (Number(value) || 0) - elapsedHours * rate * decaySpeed));
+            };
+            state.food = decayValue(state.food, 1.15);
+            state.fun = decayValue(state.fun, .72);
+            state.clean = decayValue(state.clean, .6);
+            state.energy = decayValue(state.energy, .82);
+            state.lastUpdated = now;
+            const neglectedHours = Math.max(0, now - Number(state.lastCareAt || now)) / 3600000;
+            const zeroCount = [state.food,state.fun,state.clean,state.energy].filter(function (value) { return petClamp(value) === 0; }).length;
+            if (neglectedHours >= 96 && zeroCount >= 2) {
+                state.phase = 'dead';
+                state.diedAt = now;
+                state.message = '오랫동안 돌보지 못해 별이 되었어요.';
+            }
+            return state;
+        }
+
+        function applyAdminPetTestStep(state) {
+            if (!state || state.phase !== 'hatched') return state;
+            ['food','fun','clean','energy'].forEach(function (key) {
+                state[key] = Math.max(0, Math.floor(Number(state[key]) || 0) - 1);
+            });
+            state.lastUpdated = Date.now();
+            return state;
+        }
+
+        function writePetStateToCloud(immediate) {
+            if (!activePetCanEdit || activePetIsAdminTest || !activePetOwnerId || !activePetState || !fbReady()) return;
+            clearTimeout(petCloudSaveTimer);
+            const ownerId = activePetOwnerId;
+            const payload = JSON.parse(JSON.stringify(activePetState));
+            const write = function () {
+                petCloudSaveTimer = 0;
+                window.fsSetDoc(window.fsDoc('members', ownerId), { tamagotchi: payload }, { merge: true }).catch(function () {});
+            };
+            if (immediate) write();
+            else petCloudSaveTimer = setTimeout(write, 350);
+        }
+
+        function savePetState(syncCloud, immediate) {
+            if (!activePetOwnerId || !activePetState || !activePetCanEdit) return;
+            try { localStorage.setItem(petStorageKey(activePetOwnerId), JSON.stringify(activePetState)); } catch (error) {}
+            if (syncCloud !== false) writePetStateToCloud(!!immediate);
+        }
+
+        async function loadPetState(ownerId, memberState) {
+            let state = defaultPetState();
+            let hasSavedState = false;
+            let newestSavedAt = -1;
+            const useNewestState = function (candidate) {
+                if (!candidate || candidate.version !== 3) return;
+                const savedAt = Number(candidate.lastUpdated || 0);
+                if (!hasSavedState || savedAt >= newestSavedAt) {
+                    state = Object.assign(defaultPetState(), candidate);
+                    newestSavedAt = savedAt;
+                    hasSavedState = true;
+                }
+            };
+            useNewestState(memberState);
+            if (activePetCanEdit) {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(petStorageKey(ownerId)) || 'null');
+                    useNewestState(saved);
+                } catch (error) {}
+            }
+            if (!activePetIsAdminTest && ownerId && fbReady() && window.getDoc) {
+                try {
+                    const snapshot = await window.getDoc(window.fsDoc('members', ownerId));
+                    const cloudState = snapshot.exists() && snapshot.data() ? snapshot.data().tamagotchi : null;
+                    useNewestState(cloudState);
+                } catch (error) {}
+            }
+            if (state.phase === 'hatching') {
+                if (!Number.isInteger(state.species)) state.species = randomPetSpeciesIndex();
+                state.phase = 'hatched';
+                state.name = petSpecies[state.species].name;
+                state.message = petSpecies[state.species].type + '가 태어났어요!';
+                state.lastCareAt = Date.now();
+            }
+            activePetState = applyPetDecay(state);
+            if (!activePetCanEdit && !hasSavedState) activePetState.message = activePetOwner + '님은 아직 다마고치를 시작하지 않았어요.';
+            savePetState();
+            return activePetState;
+        }
+
+        function petPercent(index, count) {
+            return count <= 1 ? '0%' : (index / (count - 1) * 100) + '%';
+        }
+
+        function setPetSpriteFrame(column, row) {
+            const sprite = document.getElementById('pet-sprite');
+            if (!sprite) return;
+            sprite.style.setProperty('--pet-sprite-x', petPercent(column, 4));
+            sprite.style.setProperty('--pet-sprite-y', petPercent(row, 3));
+        }
+
+        function setPetEggFrame(frame) {
+            const sprite = document.getElementById('pet-sprite');
+            if (!sprite) return;
+            const safeFrame = Math.max(0, Math.min(5, Number(frame) || 0));
+            sprite.style.setProperty('--pet-sprite-x', petPercent(safeFrame % 3, 3));
+            sprite.style.setProperty('--pet-sprite-y', petPercent(Math.floor(safeFrame / 3), 2));
+        }
+
+        function startPetAnimation(name) {
+            clearInterval(petFrameTimer);
+            petFrameTimer = 0;
+            petCurrentAnimation = petFrames[name] ? name : 'idle';
+            if (!activePetState || activePetState.phase !== 'hatched') return;
+            const frames = petFrames[petCurrentAnimation];
+            let index = 0;
+            setPetSpriteFrame(frames[0][0], frames[0][1]);
+            petFrameTimer = setInterval(function () {
+                if (!activePetState || activePetState.phase !== 'hatched') return;
+                index = (index + 1) % frames.length;
+                setPetSpriteFrame(frames[index][0], frames[index][1]);
+            }, petCurrentAnimation === 'walk' ? 180 : 320);
+        }
+
+        function setPetMessage(text) {
+            const message = document.getElementById('pet-message');
+            if (message) message.textContent = text || '';
+        }
+
+        function setPetActionButtonsDisabled(disabled) {
+            document.querySelectorAll('[data-pet-action]').forEach(function (button) { button.disabled = !!disabled; });
+        }
+
+        function clearPetActionTimers() {
+            petActionTimers.forEach(function (timer) { clearTimeout(timer); });
+            petActionTimers = [];
+        }
+
+        function petLater(callback, delay) {
+            const timer = setTimeout(callback, delay);
+            petActionTimers.push(timer);
+            return timer;
+        }
+
+        function clearPetProps() {
+            ['pet-food-prop','pet-play-prop','pet-clean-prop','pet-sleep-prop'].forEach(function (id) {
+                const prop = document.getElementById(id);
+                if (prop) {
+                    prop.classList.add('hidden');
+                    prop.classList.remove('is-filling','is-eating','is-preparing','is-filled');
+                }
+            });
+            const hero = document.querySelector('#tamagotchi-screen .pet-hero');
+            if (hero) hero.classList.remove('is-night');
+            const mover = document.getElementById('pet-mover');
+            if (mover) {
+                mover.classList.remove('is-jumping','is-shivering','is-refusing','is-feeding','play-ball','play-yarn','play-mouse','is-sleeping','is-bathing','is-entering-bath');
+                mover.style.transitionDuration = '';
+                mover.style.transitionTimingFunction = '';
+                mover.style.bottom = '4%';
+            }
+        }
+
+        function movePetForAction(percent, bottom, duration) {
+            const mover = document.getElementById('pet-mover');
+            if (!mover) return null;
+            const moveDuration = Math.max(450, Number(duration) || 650);
+            mover.style.transitionDuration = moveDuration + 'ms,.45s';
+            mover.style.transitionTimingFunction = 'steps(7,end),steps(3,end)';
+            startPetAnimation('walk');
+            mover.style.left = percent + '%';
+            mover.style.bottom = (Number(bottom) || 4) + '%';
+            petLater(function () { if (mover) { mover.style.transitionDuration = ''; mover.style.transitionTimingFunction = ''; } }, moveDuration + 60);
+            return mover;
+        }
+
+        function stopPetRoaming() {
+            clearTimeout(petRoamTimer);
+            clearTimeout(petMoveTimer);
+            petRoamTimer = 0;
+            petMoveTimer = 0;
+        }
+
+        function schedulePetRoaming(delay) {
+            stopPetRoaming();
+            if (!activePetState || activePetState.phase !== 'hatched' || petIsBusy) return;
+            petRoamTimer = setTimeout(roamPetAcrossRoom, Math.max(800, Number(delay) || 2800));
+        }
+
+        function roamPetAcrossRoom() {
+            if (!activePetState || activePetState.phase !== 'hatched' || petIsBusy) return;
+            const mover = document.getElementById('pet-mover');
+            if (!mover) return;
+            const current = Math.max(15, Math.min(85, Number(activePetState.roomX) || 50));
+            const direction = Math.random() < .5 ? -1 : 1;
+            let target = Math.max(15, Math.min(85, current + direction * (12 + Math.random() * 30)));
+            if (Math.abs(target - current) < 8) target = current < 50 ? Math.min(85, current + 18) : Math.max(15, current - 18);
+            const distance = Math.abs(target - current);
+            const duration = Math.round(720 + distance * 35);
+            mover.classList.toggle('is-facing-left', target < current);
+            mover.style.transitionDuration = duration + 'ms,.45s';
+            mover.style.transitionTimingFunction = 'steps(' + Math.max(6,Math.round(distance / 2)) + ',end),steps(3,end)';
+            mover.style.bottom = (4 + Math.round(Math.random() * 4)) + '%';
+            startPetAnimation('walk');
+            activePetState.roomX = Math.round(target);
+            mover.style.left = activePetState.roomX + '%';
+            savePetState(false);
+            petMoveTimer = setTimeout(function () {
+                if (!activePetState || petIsBusy || activePetState.phase !== 'hatched') return;
+                mover.style.transitionDuration = '';
+                mover.style.transitionTimingFunction = '';
+                startPetAnimation('idle');
+                schedulePetRoaming(1200 + Math.random() * 3200);
+            }, duration + 80);
+        }
+
+        function renderTamagotchi() {
+            if (!activePetState) return;
+            const state = activePetState;
+            const rawValues = {
+                food: Math.max(0,Math.min(100,Number(state.food) || 0)),
+                fun: Math.max(0,Math.min(100,Number(state.fun) || 0)),
+                clean: Math.max(0,Math.min(100,Number(state.clean) || 0)),
+                energy: Math.max(0,Math.min(100,Number(state.energy) || 0))
+            };
+            const values = { food: petClamp(state.food), fun: petClamp(state.fun), clean: petClamp(state.clean), energy: petClamp(state.energy) };
+            Object.keys(values).forEach(function (key) {
+                const value = values[key];
+                const number = document.getElementById('pet-' + key + '-value');
+                const bar = document.getElementById('pet-' + key + '-bar');
+                if (number) number.textContent = activePetIsAdminTest ? Math.round(rawValues[key]) : value;
+                if (bar) bar.style.width = rawValues[key] + '%';
+            });
+            const careCount = Math.max(0, Number(state.careCount || 0));
+            const level = Math.floor(careCount / 8) + 1;
+            const average = (values.food + values.fun + values.clean + values.energy) / 4;
+            const isHatched = state.phase === 'hatched';
+            const isHatching = state.phase === 'hatching';
+            const isDead = state.phase === 'dead';
+            const species = isHatched || isDead ? petSpecies[Math.max(0, Math.min(petSpecies.length - 1, Number(state.species) || 0))] : null;
+            const stage = isDead ? '추억 속 친구' : !isHatched ? (isHatching ? '껍질이 무너지는 중' : '신비한 알') : level < 3 ? species.type + ' · 아기' : level < 6 ? species.type + ' · 꼬마' : species.type + ' · 단짝';
+            const sprite = document.getElementById('pet-sprite');
+            const spriteButton = document.getElementById('pet-sprite-button');
+            const tapHint = document.getElementById('pet-tap-hint');
+            const mover = document.getElementById('pet-mover');
+            const levelLabel = document.getElementById('pet-level');
+            const stageLabel = document.getElementById('pet-stage-label');
+            const nameLabel = document.getElementById('pet-name');
+            const message = document.getElementById('pet-message');
+            const screenTitle = document.getElementById('pet-screen-title');
+            const statusCard = document.getElementById('pet-status-card');
+            const actions = document.getElementById('pet-actions');
+            const restart = document.getElementById('pet-restart');
+            const deathProp = document.getElementById('pet-death-prop');
+            const viewBadge = document.getElementById('pet-view-badge');
+            const saveNote = document.getElementById('pet-save-note');
+            if (sprite) {
+                sprite.classList.toggle('is-egg', !species);
+                sprite.classList.toggle('is-dead', isDead);
+                sprite.style.backgroundImage = species ? 'url("' + species.asset + '")' : "url('./assets/tamagotchi/egg-hatch-v2.png')";
+                if (!species) setPetEggFrame(isHatching ? 5 : Math.min(4, Number(state.eggTaps) || 0));
+                else if (isDead) setPetSpriteFrame(2,2);
+                else if (!petIsBusy) startPetAnimation('idle');
+            }
+            if (spriteButton) {
+                spriteButton.disabled = !activePetCanEdit || isHatched || isHatching || isDead;
+                spriteButton.classList.toggle('is-hatching', isHatching);
+                spriteButton.setAttribute('aria-label', isDead ? state.name + ' 추모하기' : isHatched ? species.type + ' ' + state.name : isHatching ? '알이 완전히 깨지고 있어요' : Number(state.eggTaps || 0) > 0 ? '금이 간 알 계속 깨기' : '알 깨우기');
+            }
+            if (tapHint) {
+                tapHint.classList.toggle('hidden', !activePetCanEdit || isHatched || isDead);
+                const left = Math.max(0, 5 - Number(state.eggTaps || 0));
+                tapHint.textContent = isHatching ? '부화 중…' : left === 5 ? '알을 톡톡 눌러주세요' : left > 0 ? left + '번 더 톡톡!' : '곧 태어나요';
+            }
+            if (mover) {
+                if (!petIsBusy) mover.style.left = (isDead ? 50 : Math.max(15,Math.min(85,Number(state.roomX) || 50))) + '%';
+                if (!isHatched) mover.classList.remove('is-facing-left');
+                mover.classList.toggle('is-dirty', isHatched && values.clean < 60);
+                mover.classList.toggle('is-very-dirty', isHatched && values.clean < 25);
+            }
+            if (statusCard) statusCard.classList.toggle('hidden', !(isHatched || isDead));
+            if (actions) actions.classList.toggle('hidden', !isHatched || !activePetCanEdit);
+            if (restart) restart.classList.toggle('hidden', !isDead || !activePetCanEdit);
+            if (deathProp) deathProp.classList.toggle('hidden', !isDead);
+            if (viewBadge) viewBadge.classList.toggle('hidden', activePetCanEdit);
+            if (saveNote) saveNote.textContent = activePetCanEdit ? (activePetIsAdminTest ? '관리자 테스트 상태는 이 기기에 자동 저장돼요.' : '내 다마고치 상태는 Firebase 계정에 자동 저장돼요.') : activePetOwner + '님의 다마고치를 구경하고 있어요.';
+            if (levelLabel) levelLabel.textContent = isDead ? '별이 됨' : isHatched ? 'Lv. ' + level : '부화 ' + Math.min(100,Math.round((Number(state.eggTaps || 0) / 5) * 100)) + '%';
+            if (stageLabel) stageLabel.textContent = stage;
+            if (nameLabel) nameLabel.textContent = species ? (state.name || species.name) : '???';
+            if (screenTitle) screenTitle.textContent = isDead ? state.name + '의 추억' : species ? (state.name || species.name) : '신비한 알';
+            if (message && !petIsBusy) message.textContent = isHatched && values.food < 28 ? '꼬르륵… 배가 많이 고파요.' : isHatched && average < 18 ? '위험해요! 지금 바로 돌봐주세요.' : isHatched && average < 35 ? '기운이 없어요… 조금 돌봐주세요.' : (state.message || '알을 여러 번 톡톡 눌러주세요.');
+            setPetActionButtonsDisabled(!activePetCanEdit || petIsBusy || !isHatched);
+            if (isDead) {
+                petIsBusy = false;
+                stopPetRoaming();
+                clearInterval(petFrameTimer);
+                clearPetActionTimers();
+                clearPetProps();
+            }
+        }
+
+        window.tapTamagotchiEgg = function () {
+            if (!activePetCanEdit || !activePetState || activePetState.phase !== 'egg') return;
+            window.haptic && window.haptic();
+            activePetState.eggTaps = Math.min(5, Math.max(0, Number(activePetState.eggTaps || 0)) + 1);
+            const button = document.getElementById('pet-sprite-button');
+            if (button) {
+                button.classList.remove('is-tapped');
+                void button.offsetWidth;
+                button.classList.add('is-tapped');
+                setTimeout(function () { button.classList.remove('is-tapped'); }, 380);
+            }
+            if (activePetState.eggTaps < 5) {
+                const crackMessages = ['알 속에서 작은 소리가 나요.','길게 금이 갔어요!','균열이 사방으로 번졌어요!','껍질이 크게 벌어졌어요!'];
+                activePetState.message = crackMessages[Math.max(0,activePetState.eggTaps - 1)] || '알이 흔들리고 있어요!';
+                activePetState.lastUpdated = Date.now();
+                savePetState();
+                renderTamagotchi();
+                return;
+            }
+            activePetState.phase = 'hatching';
+            activePetState.message = '껍질이 완전히 무너지고 있어요…';
+            activePetState.lastUpdated = Date.now();
+            savePetState();
+            renderTamagotchi();
+            clearTimeout(petHatchTimer);
+            petHatchTimer = setTimeout(function () {
+                if (!activePetState || activePetState.phase !== 'hatching') return;
+                activePetState.species = randomPetSpeciesIndex();
+                activePetState.phase = 'hatched';
+                activePetState.name = petSpecies[activePetState.species].name;
+                activePetState.message = petSpecies[activePetState.species].type + '가 태어났어요!';
+                activePetState.lastCareAt = Date.now();
+                activePetState.roomX = 50;
+                activePetState.lastUpdated = Date.now();
+                savePetState();
+                renderTamagotchi();
+                const mover = document.getElementById('pet-mover');
+                if (mover) {
+                    mover.classList.add('is-jumping');
+                    setTimeout(function () { mover.classList.remove('is-jumping'); }, 1500);
+                }
+                schedulePetRoaming(2200);
+            }, 1100);
+        };
+
+        window.openMemberProfileMenu = function (name, trigger) {
+            const popover = document.getElementById('profile-action-popover');
+            const backdrop = document.getElementById('profile-action-backdrop');
+            const title = document.getElementById('profile-action-title');
+            const petAction = document.getElementById('profile-pet-action');
+            if (!popover || !backdrop || !trigger) return;
+            profileMenuMemberName = name || '';
+            profileMenuPreviousFocus = trigger;
+            if (title) title.textContent = profileMenuMemberName + ' 프로필';
+            if (petAction) petAction.classList.toggle('hidden', !canOpenPetProfile(profileMenuMemberName));
+            backdrop.classList.remove('hidden');
+            popover.classList.remove('hidden');
+            void popover.offsetWidth;
+            const triggerRect = trigger.getBoundingClientRect();
+            const width = popover.offsetWidth;
+            const height = popover.offsetHeight;
+            const left = Math.max(.75 * 16, Math.min(window.innerWidth - width - .75 * 16, triggerRect.left + triggerRect.width / 2 - width / 2));
+            let top = triggerRect.bottom + .5 * 16;
+            if (top + height > window.innerHeight - .75 * 16) top = Math.max(.75 * 16, triggerRect.top - height - .5 * 16);
+            popover.style.left = Math.round(left) + 'px';
+            popover.style.top = Math.round(top) + 'px';
+            const first = popover.querySelector('button');
+            if (first) setTimeout(function () { first.focus({ preventScroll: true }); }, 0);
+        };
+
+        window.closeMemberProfileMenu = function (restoreFocus) {
+            const popover = document.getElementById('profile-action-popover');
+            const backdrop = document.getElementById('profile-action-backdrop');
+            if (popover) popover.classList.add('hidden');
+            if (backdrop) backdrop.classList.add('hidden');
+            if (restoreFocus !== false && profileMenuPreviousFocus && profileMenuPreviousFocus.focus) profileMenuPreviousFocus.focus({ preventScroll: true });
+            profileMenuPreviousFocus = null;
+        };
+
+        window.openSelectedMemberTimetable = function () {
+            const name = profileMenuMemberName;
+            window.closeMemberProfileMenu(false);
+            if (name) window.openMemberTimetable(name);
+        };
+
+        window.openSelectedMemberTamagotchi = function () {
+            const name = profileMenuMemberName;
+            window.closeMemberProfileMenu(false);
+            if (name && canOpenPetProfile(name)) window.openTamagotchi(name);
+        };
+
+        window.openTamagotchi = async function (requestedOwner) {
+            const screen = document.getElementById('tamagotchi-screen');
+            const ownerLabel = document.getElementById('pet-owner-label');
+            if (!screen) return;
+            const requestedName = petProfileName(requestedOwner);
+            const ownName = petProfileName(window.enjoyProfileName);
+            const ownId = window.enjoyUser && window.enjoyUser.uid ? String(window.enjoyUser.uid) : '';
+            const isAdminTest = requestedName === ADMIN_PROFILE_NAME;
+            const ownerMember = (lastMembers || []).find(function (item) { return item && petProfileName(item.name) === requestedName; });
+            activePetOwner = requestedName || ownName;
+            activePetIsAdminTest = isAdminTest;
+            activePetCanEdit = isAdminTest || (!!ownId && requestedName === ownName);
+            activePetOwnerId = isAdminTest ? 'admin-test-' + (ownId || 'guest') : ownerMember && ownerMember.uid ? String(ownerMember.uid) : activePetCanEdit ? ownId : '';
+            await loadPetState(activePetOwnerId, ownerMember && ownerMember.tamagotchi);
+            if (ownerLabel) ownerLabel.textContent = isAdminTest ? '테스트용 반려친구 · 관리자' : activePetCanEdit ? '내 반려친구 · ' + activePetOwner : activePetOwner + '님의 반려친구';
+            renderTamagotchi();
+            screen.classList.remove('hidden');
+            screen.classList.add('flex');
+            screen.setAttribute('aria-hidden', 'false');
+            clearInterval(petDecayTimer);
+            if (activePetIsAdminTest) {
+                applyAdminPetTestStep(activePetState);
+                savePetState(false);
+                renderTamagotchi();
+            }
+            petDecayTimer = setInterval(function () {
+                if (!activePetState || screen.classList.contains('hidden')) return;
+                if (activePetIsAdminTest) applyAdminPetTestStep(activePetState);
+                else applyPetDecay(activePetState);
+                savePetState();
+                renderTamagotchi();
+            }, activePetIsAdminTest ? 1000 : 60000);
+            if (activePetState.phase === 'hatched') schedulePetRoaming(1200);
+        };
+
+        window.closeTamagotchi = function () {
+            const screen = document.getElementById('tamagotchi-screen');
+            if (screen) {
+                screen.classList.add('hidden');
+                screen.classList.remove('flex');
+                screen.setAttribute('aria-hidden', 'true');
+            }
+            clearInterval(petDecayTimer);
+            petDecayTimer = 0;
+            clearTimeout(petHatchTimer);
+            petHatchTimer = 0;
+            clearInterval(petFrameTimer);
+            petFrameTimer = 0;
+            stopPetRoaming();
+            clearPetActionTimers();
+            clearPetProps();
+            petIsBusy = false;
+            savePetState(true, true);
+            clearTimeout(petCloudSaveTimer);
+            petCloudSaveTimer = 0;
+            activePetOwner = '';
+            activePetOwnerId = '';
+            activePetState = null;
+            activePetCanEdit = false;
+            activePetIsAdminTest = false;
+            if (profileMenuPreviousFocus && profileMenuPreviousFocus.focus) profileMenuPreviousFocus.focus({ preventScroll: true });
+        };
+
+        window.careForTamagotchi = function (action) {
+            if (!activePetCanEdit || !activePetState || activePetState.phase !== 'hatched' || petIsBusy) return;
+            window.haptic && window.haptic();
+            applyPetDecay(activePetState);
+            if (activePetState.phase === 'dead') {
+                savePetState();
+                renderTamagotchi();
+                return;
+            }
+            const mover = document.getElementById('pet-mover');
+            const hero = document.querySelector('#tamagotchi-screen .pet-hero');
+            const statByAction = { feed: 'food', play: 'fun', clean: 'clean', rest: 'energy' };
+            const refusalMessages = {
+                feed: '배가 너무 불러요! 고개를 도리도리 저어요.',
+                play: '지금은 더 놀고 싶지 않대요.',
+                clean: '이미 반짝반짝 깨끗해서 씻기 싫대요.',
+                rest: '아직 하나도 안 졸려서 잠들기 싫대요.'
+            };
+            if (statByAction[action] && petClamp(activePetState[statByAction[action]]) >= 96) {
+                petIsBusy = true;
+                stopPetRoaming();
+                setPetActionButtonsDisabled(true);
+                if (mover) {
+                    mover.classList.remove('is-facing-left');
+                    mover.classList.add('is-refusing');
+                }
+                startPetAnimation('idle');
+                setPetMessage(refusalMessages[action]);
+                petLater(function () {
+                    if (mover) mover.classList.remove('is-refusing');
+                    petIsBusy = false;
+                    renderTamagotchi();
+                    schedulePetRoaming(1200);
+                }, 1250);
+                return;
+            }
+            petIsBusy = true;
+            stopPetRoaming();
+            clearPetActionTimers();
+            clearPetProps();
+            setPetActionButtonsDisabled(true);
+            if (mover) mover.classList.remove('is-facing-left');
+            if (action === 'feed') {
+                movePetForAction(46, 4, 680);
+                const bowl = document.getElementById('pet-food-prop');
+                if (bowl) bowl.classList.remove('hidden');
+                setPetMessage('밥그릇 앞으로 걸어가요.');
+                petLater(function () {
+                    if (bowl) bowl.classList.add('is-filling');
+                    setPetMessage('한 끼 분량 사료를 접시에 가득 담았어요.');
+                }, 520);
+                petLater(function () {
+                    if (bowl) { bowl.classList.remove('is-filling'); bowl.classList.add('is-eating'); }
+                    if (mover) mover.classList.add('is-feeding');
+                    startPetAnimation('feed');
+                    setPetMessage('고개를 숙여 오도독오도독 먹어요.');
+                }, 1180);
+            } else if (action === 'play') {
+                const toys = ['ball','yarn','mouse'];
+                const toy = toys[Math.floor(Math.random() * toys.length)];
+                const prop = document.getElementById('pet-play-prop');
+                if (prop) {
+                    prop.dataset.toy = toy;
+                    prop.style.animation = 'none';
+                    prop.classList.remove('hidden');
+                    void prop.offsetWidth;
+                    prop.style.animation = '';
+                }
+                movePetForAction(46, 4, 580);
+                petLater(function () {
+                    if (mover) mover.classList.add('play-' + toy);
+                    startPetAnimation('play');
+                }, 620);
+                setPetMessage(toy === 'ball' ? '공을 따라 달리고 높이 뛰어요!' : toy === 'yarn' ? '몸을 낮췄다가 실뭉치에 폴짝 덮쳐요!' : '살금살금 다가가 장난감 쥐를 잡아요!');
+            } else if (action === 'clean') {
+                const bath = document.getElementById('pet-clean-prop');
+                if (bath) { bath.classList.remove('hidden'); bath.classList.add('is-preparing'); }
+                movePetForAction(39, 4, 680);
+                setPetMessage('대야 옆으로 걸어가 물을 받는 중이에요.');
+                petLater(function () {
+                    if (bath) { bath.classList.remove('is-preparing'); bath.classList.add('is-filled'); }
+                    if (mover) {
+                        mover.style.transitionDuration = '.45s,.45s';
+                        mover.style.left = '50%';
+                        mover.style.bottom = '5%';
+                        mover.classList.add('is-entering-bath');
+                    }
+                    setPetMessage('물이 차자 대야 안으로 폴짝 들어가요.');
+                }, 760);
+                petLater(function () {
+                    if (mover) mover.classList.remove('is-entering-bath');
+                    if (mover) mover.classList.add('is-bathing');
+                    startPetAnimation('clean');
+                    setPetMessage('따뜻한 물속에서 첨벙첨벙 씻어요.');
+                }, 1280);
+            } else if (action === 'rest') {
+                const bed = document.getElementById('pet-sleep-prop');
+                if (hero) hero.classList.add('is-night');
+                movePetForAction(16, 4, 760);
+                setPetMessage('침대 옆까지 걸어가요.');
+                petLater(function () {
+                    if (mover) {
+                        mover.style.transitionDuration = '.5s,.5s';
+                        mover.style.transitionTimingFunction = 'steps(5,end),steps(5,end)';
+                        mover.style.bottom = '22%';
+                    }
+                    startPetAnimation('walk');
+                    setPetMessage('침대 위로 조심조심 올라가요.');
+                }, 850);
+                petLater(function () {
+                    if (bed) bed.classList.remove('hidden');
+                    if (mover) mover.classList.add('is-sleeping');
+                    startPetAnimation('rest');
+                    setPetMessage('베개 옆에 누워 새근새근 잠들었어요.');
+                }, 1420);
+            } else {
+                petIsBusy = false;
+                setPetActionButtonsDisabled(false);
+                return;
+            }
+            const duration = action === 'rest' ? 4400 : action === 'clean' ? 3900 : action === 'feed' ? 3400 : 2800;
+            petLater(function () {
+                if (!activePetState || activePetState.phase !== 'hatched') return;
+                if (action === 'feed') {
+                    activePetState.food = petClamp(activePetState.food + 32);
+                    activePetState.energy = petClamp(activePetState.energy + 4);
+                    activePetState.clean = petClamp(activePetState.clean - 2);
+                    activePetState.message = activePetState.food >= 90 ? '트름! 배가 아주 든든해졌어요.' : '배부르게 잘 먹었어요!';
+                } else if (action === 'play') {
+                    activePetState.fun = petClamp(activePetState.fun + 34);
+                    activePetState.energy = petClamp(activePetState.energy - 7);
+                    activePetState.food = petClamp(activePetState.food - 4);
+                    activePetState.message = '실컷 놀아서 신이 났어요!';
+                } else if (action === 'clean') {
+                    activePetState.clean = petClamp(activePetState.clean + 40);
+                    activePetState.fun = petClamp(activePetState.fun - 2);
+                    activePetState.message = '뽀송뽀송 깨끗해졌어요!';
+                } else if (action === 'rest') {
+                    activePetState.energy = petClamp(activePetState.energy + 44);
+                    activePetState.food = petClamp(activePetState.food - 3);
+                    activePetState.message = '푹 자고 기운을 되찾았어요!';
+                }
+                activePetState.roomX = action === 'feed' ? 46 : action === 'clean' ? 50 : action === 'rest' ? 16 : Number(activePetState.roomX) || 50;
+                activePetState.careCount = Math.max(0, Number(activePetState.careCount || 0)) + 1;
+                activePetState.lastCareAt = Date.now();
+                activePetState.lastUpdated = Date.now();
+                petIsBusy = false;
+                clearPetProps();
+                savePetState();
+                renderTamagotchi();
+                schedulePetRoaming(1600);
+            }, duration);
+        };
+
+        window.restartTamagotchi = function () {
+            if (!activePetCanEdit || !activePetState || activePetState.phase !== 'dead') return;
+            window.haptic && window.haptic();
+            stopPetRoaming();
+            clearPetActionTimers();
+            clearPetProps();
+            activePetState = defaultPetState();
+            savePetState();
+            renderTamagotchi();
+        };
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+            const petScreen = document.getElementById('tamagotchi-screen');
+            const profileMenu = document.getElementById('profile-action-popover');
+            if (petScreen && !petScreen.classList.contains('hidden')) window.closeTamagotchi();
+            else if (profileMenu && !profileMenu.classList.contains('hidden')) window.closeMemberProfileMenu();
+        });
         // 로그인/Firebase 초기화 전에도 빈 영역으로 남지 않도록 기본 멤버 목록을 먼저 표시한다.
         renderMembers();
 
@@ -15011,6 +15962,14 @@
                         arr.push(v);
                     });
                     lastMembers = arr; renderMembers(); updateProfileCard();
+                    if (!activePetCanEdit && !activePetIsAdminTest && activePetOwnerId && activePetState) {
+                        const viewedMember = arr.find(function (item) { return item && String(item.uid || '') === String(activePetOwnerId); });
+                        const viewedState = viewedMember && viewedMember.tamagotchi;
+                        if (viewedState && viewedState.version === 3 && Number(viewedState.lastUpdated || 0) >= Number(activePetState.lastUpdated || 0)) {
+                            activePetState = applyPetDecay(Object.assign(defaultPetState(), viewedState));
+                            renderTamagotchi();
+                        }
+                    }
                     if (window.enjoyUpdateOpenMemberTimetable) window.enjoyUpdateOpenMemberTimetable(arr);
                     // 스케줄 탭이 열려 있으면 멤버 가능여부 변경을 즉시 반영
                     try { if (window._schedSub === 'availability' && window.renderAvailability) window.renderAvailability(); } catch (e) {}
