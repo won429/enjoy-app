@@ -283,23 +283,6 @@
             box-shadow: inset 0 0.0625rem 0.0625rem rgba(255, 255, 255, 0.45) !important;
             border-color: rgba(0, 0, 0, 0.06) !important;
         }
-        /* 더보기 팝오버: 기기 테마에 맞춰 유리 표면과 글자를 함께 전환 */
-        #more-popover-panel {
-            background: rgba(12, 12, 14, .52);
-            border-color: rgba(255, 255, 255, .15);
-            transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
-        }
-        #more-popover-panel .text-white { color: #FFFFFF !important; }
-        #more-popover-panel .text-\[\#8B95A1\] { color: rgba(255, 255, 255, .62) !important; }
-        #more-popover-panel.popover-on-light {
-            background: rgba(255, 255, 255, .58);
-            border-color: rgba(0, 0, 0, .10);
-            box-shadow: 0 1.125rem 3.25rem rgba(15, 23, 42, .20), 0 0.375rem 1rem rgba(15, 23, 42, .12);
-        }
-        #more-popover-panel.popover-on-light .text-white { color: #141414 !important; }
-        #more-popover-panel.popover-on-light .text-\[\#8B95A1\] { color: rgba(20, 20, 20, .62) !important; }
-        #more-popover-panel.popover-on-light .bg-white\/10 { background-color: rgba(0, 0, 0, .10) !important; }
-
         /* === Liquid Glass (색 없는 완전 투명 유리 / 뒷배경 그대로 비침) === */
         .liquid-glass {
             position: relative;
@@ -326,21 +309,6 @@
             }
         }
 
-        /* === 더보기 팝오버 모션 (더보기 버튼 지점에서 빨려 나오고/들어감) === */
-        @keyframes more-pop-in {
-            0%   { opacity: 0; transform: scale(0.12); }
-            55%  { opacity: 1; transform: scale(1.05); }
-            72%  { transform: scale(0.985); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes more-pop-out {
-            0%   { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(0.12); }
-        }
-        @keyframes more-item-in {
-            0%   { opacity: 0; transform: translateY(0.625rem) scale(0.92); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -2401,9 +2369,57 @@
         .home-side-menu-item-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; font-size: .875rem; }
         .home-side-menu-item-icon.is-calendar { color: #3182F6; background: rgba(49,130,246,.12); }
         .home-side-menu-item-icon.is-train { color: #818CF8; background: rgba(129,140,248,.12); }
+        .home-side-menu-item-icon.is-scholarship { color: #F59E0B; background: rgba(245,158,11,.12); }
+        .home-side-menu-item-icon.is-youth { color: #10B981; background: rgba(16,185,129,.12); }
         .home-side-menu-item-copy { min-width: 0; flex: 1; }
         .home-side-menu-item-title { display: block; color: #F2F4F6; font-size: .8125rem; font-weight: 850; }
         .home-side-menu-item-chevron { color: #6B7684; font-size: .6875rem; }
+
+        #notion-info-screen {
+            position: fixed;
+            z-index: 275;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: min(100%, 28rem);
+            max-width: 28rem;
+            overflow: hidden;
+            isolation: isolate;
+            transform: translateX(-50%);
+            color: #F2F4F6;
+            background: #000;
+        }
+        body.notion-info-active { overflow: hidden; }
+        body.notion-info-active #home-screen,
+        body.notion-info-active #bottom-nav,
+        body.notion-info-active #home-side-menu { display: none !important; }
+        .notion-info-topbar {
+            min-height: 4.25rem;
+            padding: max(.75rem, env(safe-area-inset-top)) 1rem .75rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            flex: none;
+            border-bottom: .0625rem solid rgba(255,255,255,.08);
+            background: #000;
+        }
+        .notion-info-back {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: grid;
+            place-items: center;
+            flex: none;
+            border-radius: 50%;
+            color: #F2F4F6;
+            background: rgba(255,255,255,.08);
+            transition: transform .15s ease, background-color .15s ease;
+        }
+        .notion-info-back:active { transform: scale(.94); background: rgba(255,255,255,.14); }
+        .notion-info-title { color: #FFF; font-size: 1.125rem; font-weight: 900; line-height: 1.25; }
+        .notion-info-subtitle { margin-top: .1875rem; color: #8B95A1; font-size: .6875rem; font-weight: 650; }
+        .notion-info-content { position: relative; min-height: 0; flex: 1; overflow: hidden; background: #FFF; }
+        .notion-info-loader { position: absolute; inset: 0; z-index: 0; display: grid; place-items: center; color: #3182F6; background: #FFF; }
+        .notion-info-frame { position: relative; z-index: 1; width: 100%; height: 100%; display: block; border: 0; background: #FFF; }
 
         #academic-schedule-screen {
             --academic-bg: #000;
@@ -2490,6 +2506,7 @@
             .academic-school-trigger, .academic-school-trigger i, .academic-school-option { transition: none; }
         }
         @media (min-width: 768px) {
+            #notion-info-screen,
             #academic-schedule-screen {
                 width: min(100%, 30rem);
                 max-width: 30rem;
@@ -5491,16 +5508,6 @@
                 border-color: rgba(0, 0, 0, 0.06) !important;
             }
 
-            /* 보호 ③ 더보기 팝오버 (기기 라이트 모드) */
-            #more-popover-panel {
-                background: rgba(255, 255, 255, .58);
-                border-color: rgba(0, 0, 0, .10);
-                box-shadow: 0 1.125rem 3.25rem rgba(15, 23, 42, .20), 0 0.375rem 1rem rgba(15, 23, 42, .12);
-            }
-            #more-popover-panel .text-white { color: #141414 !important; }
-            #more-popover-panel .text-\[\#8B95A1\] { color: rgba(20, 20, 20, .62) !important; }
-            #more-popover-panel .bg-white\/10 { background-color: rgba(0, 0, 0, .10) !important; }
-
             /* 홈 상단 비서 대화 */
             .assistant-date, .assistant-news-label, .assistant-spoken-intro { color: #8B95A1; }
             .assistant-speaker { color: #3182F6; }
@@ -6341,9 +6348,34 @@
                     <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">기차 정보</span></span>
                     <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
                 </button>
+                <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.openScholarshipInfo()">
+                    <span class="home-side-menu-item-icon is-scholarship"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span>
+                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">장학금 정보</span></span>
+                    <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.openYouthBenefits()">
+                    <span class="home-side-menu-item-icon is-youth"><i class="fa-solid fa-gift" aria-hidden="true"></i></span>
+                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">청년 혜택</span></span>
+                    <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </button>
             </div>
         </nav>
     </aside>
+
+    <!-- 노션 정보 페이지를 앱 화면처럼 표시하는 공용 화면 -->
+    <section id="notion-info-screen" class="hidden flex-col" aria-hidden="true">
+        <header class="notion-info-topbar">
+            <button type="button" class="notion-info-back" onclick="window.haptic && window.haptic(); window.closeNotionInfo()" aria-label="정보 화면 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+            <div class="min-w-0 flex-1">
+                <h2 id="notion-info-title" class="notion-info-title truncate">장학금 정보</h2>
+                <p class="notion-info-subtitle">엔조이 생활정보</p>
+            </div>
+        </header>
+        <div class="notion-info-content">
+            <div id="notion-info-loader" class="notion-info-loader" aria-hidden="true"><i class="fa-solid fa-circle-notch fa-spin text-2xl"></i></div>
+            <iframe id="notion-info-frame" class="notion-info-frame" title="장학금 정보" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+    </section>
 
     <!-- 대학교 학사일정 화면 -->
     <section id="academic-schedule-screen" class="hidden flex-col" aria-hidden="true">
@@ -6507,6 +6539,66 @@
                 if (!menu.classList.contains('is-open')) menu.classList.add('hidden');
                 sideMenuCloseTimer = 0;
             }, closeDelay);
+        };
+
+        const scholarshipNotionUrl = 'https://acidic-shrine-eca.notion.site/ebd/387e076714e4807e8877d2161202afd1';
+        const youthBenefitsNotionUrl = 'https://acidic-shrine-eca.notion.site/ebd/387e076714e480e9b882e9174bff2a71';
+
+        window.openNotionInfo = function (title, url) {
+            window.closeHomeSideMenu(false);
+            const screen = document.getElementById('notion-info-screen');
+            const frame = document.getElementById('notion-info-frame');
+            const loader = document.getElementById('notion-info-loader');
+            const heading = document.getElementById('notion-info-title');
+            const home = document.getElementById('home-screen');
+            const bottomNav = document.getElementById('bottom-nav');
+            if (!screen || !frame || !url) return;
+
+            if (heading) heading.textContent = title || '생활정보';
+            frame.title = title || '생활정보';
+            if (frame.getAttribute('src') !== url) {
+                if (loader) loader.style.display = 'grid';
+                frame.onload = function () {
+                    if (loader) loader.style.display = 'none';
+                };
+                frame.src = url;
+            } else if (loader) {
+                loader.style.display = 'none';
+            }
+
+            document.body.classList.add('notion-info-active');
+            if (home) {
+                home.setAttribute('aria-hidden', 'true');
+                home.setAttribute('inert', '');
+            }
+            if (bottomNav) bottomNav.setAttribute('aria-hidden', 'true');
+            screen.classList.remove('hidden');
+            screen.classList.add('flex');
+            screen.setAttribute('aria-hidden', 'false');
+        };
+
+        window.openScholarshipInfo = function () {
+            window.openNotionInfo('장학금 정보', scholarshipNotionUrl);
+        };
+
+        window.openYouthBenefits = function () {
+            window.openNotionInfo('청년 혜택', youthBenefitsNotionUrl);
+        };
+
+        window.closeNotionInfo = function () {
+            const screen = document.getElementById('notion-info-screen');
+            const home = document.getElementById('home-screen');
+            const bottomNav = document.getElementById('bottom-nav');
+            if (!screen) return;
+            screen.classList.add('hidden');
+            screen.classList.remove('flex');
+            screen.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('notion-info-active');
+            if (home) {
+                home.removeAttribute('aria-hidden');
+                home.removeAttribute('inert');
+            }
+            if (bottomNav) bottomNav.removeAttribute('aria-hidden');
         };
 
         window.addEventListener('resize', function () {
@@ -6685,9 +6777,11 @@
                 event.preventDefault();
                 return;
             }
+            const notionInfoScreen = document.getElementById('notion-info-screen');
             const academicScreen = document.getElementById('academic-schedule-screen');
             const menu = document.getElementById('home-side-menu');
-            if (academicScreen && !academicScreen.classList.contains('hidden')) window.closeAcademicSchedule();
+            if (notionInfoScreen && !notionInfoScreen.classList.contains('hidden')) window.closeNotionInfo();
+            else if (academicScreen && !academicScreen.classList.contains('hidden')) window.closeAcademicSchedule();
             else if (menu && menu.classList.contains('is-open')) window.closeHomeSideMenu();
         });
     })();
@@ -7105,93 +7199,6 @@
             </button>
         </div>
     </nav>
-
-    <!-- 더보기 팝오버 (하단 메뉴 더보기 버튼에서 통 튀어나오는 작은 메뉴) -->
-    <div id="more-popover-backdrop" class="hidden fixed inset-0 z-40" onclick="window.closeMorePopover()"></div>
-    <div id="more-popover" class="hidden fixed left-1/2 -translate-x-1/2 w-full max-w-md z-50 px-4 pointer-events-none" style="bottom: 5.375rem;">
-        <div id="more-popover-panel" class="liquid-glass ml-auto w-[252px] origin-bottom-right rounded-[26px] p-2.5 pointer-events-auto">
-            <div class="relative z-10 flex flex-col gap-0.5">
-                <!-- 엔조이 숏츠 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openEnjoyShorts();" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] flex items-center justify-center text-[15px] shrink-0" style="background:rgba(139,92,246,.15);color:#a78bfa;"><i class="fa-solid fa-play"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[14px] font-bold text-white leading-tight">엔조이 숏츠</span>
-                            <span class="bg-[#3182F6]/15 text-[#3182F6] text-[9px] font-bold px-1 py-0.5 rounded leading-none">NEW</span>
-                        </div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">짧은 영상 연속으로 보기</div>
-                    </div>
-                </button>
-                <!-- 엔조이 비서실장 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('biseo.html');" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-blue-500/15 text-blue-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-user-tie"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-[14px] font-bold text-white leading-tight">엔조이 비서 실장과 대화하기</div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">필요한 일 바로 정리하기</div>
-                    </div>
-                </button>
-                <!-- 지하철 도착 정보 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('jiha.html')" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-sky-500/15 text-sky-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-train-subway"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[14px] font-bold text-white leading-tight">지하철 도착 정보</span>
-                            <span class="bg-[#3182F6]/15 text-[#3182F6] text-[9px] font-bold px-1 py-0.5 rounded leading-none">NEW</span>
-                        </div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">실시간 도착 시간 확인</div>
-                    </div>
-                </button>
-                <!-- 기차 정보 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('gicha.html');" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-train"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[14px] font-bold text-white leading-tight">기차 정보</span>
-                            <span class="bg-[#3182F6]/15 text-[#3182F6] text-[9px] font-bold px-1 py-0.5 rounded leading-none">NEW</span>
-                        </div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">경부선 일반열차 시간표 확인</div>
-                    </div>
-                </button>
-                <!-- 헬스 : 몸 만들자 제대로 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.openBrowser('health.html');" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-lime-500/15 text-lime-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-dumbbell"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[14px] font-bold text-white leading-tight">헬스 : 몸 만들자 제대로</span>
-                            <span class="bg-[#3182F6]/15 text-[#3182F6] text-[9px] font-bold px-1 py-0.5 rounded leading-none">NEW</span>
-                        </div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">운동 기록하고 몸 만들기</div>
-                    </div>
-                </button>
-                <div class="h-px bg-white/10 my-1 mx-2"></div>
-                <!-- 로그아웃 -->
-                <button data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.enjoyConfirm('로그아웃 하시겠어요?', { title: '로그아웃', confirmText: '로그아웃' }).then(function (confirmed) { if (confirmed) window.enjoyLogout && window.enjoyLogout(); });" class="w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-gray-500/15 text-gray-300 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-[14px] font-bold text-white leading-tight">로그아웃</div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">계정에서 나가기</div>
-                    </div>
-                </button>
-                <!-- 탈퇴 -->
-                <button id="more-withdraw" data-pop-item onclick="window.haptic(); window.closeMorePopover(); window.enjoyConfirm('정말 탈퇴하시겠어요?\n계정과 프로필 연결이 해제되고, 다시 로그인하면 프로필을 새로 입력해야 해요.', { title: '회원 탈퇴', confirmText: '탈퇴', danger: true }).then(function (confirmed) { if (confirmed) window.enjoyWithdraw && window.enjoyWithdraw(); });" class="hidden w-full flex items-center gap-3 p-2.5 rounded-[16px] hover:bg-white/10 active:scale-[0.96] transition-all text-left">
-                    <div class="w-9 h-9 rounded-[12px] bg-red-500/15 text-red-400 flex items-center justify-center text-[15px] shrink-0"><i class="fa-solid fa-user-xmark"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-[14px] font-bold text-white leading-tight">탈퇴</div>
-                        <div class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5">계정·프로필 연결 해제</div>
-                    </div>
-                </button>
-                <!-- 내 프로필 정보 -->
-                <div class="h-px bg-white/10 my-1 mx-2"></div>
-                <div id="more-profile" data-pop-item class="flex items-center gap-3 p-2.5">
-                    <div id="more-profile-avatar" class="w-9 h-9 rounded-full bg-gray-500/30 overflow-hidden shrink-0"></div>
-                    <div class="flex-1 min-w-0">
-                        <div id="more-profile-name" class="text-[14px] font-bold text-white leading-tight truncate">미가입</div>
-                        <div id="more-profile-email" class="text-[11px] font-medium text-[#8B95A1] leading-tight mt-0.5 truncate">-</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Modals -->
     <div id="schedule-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4" lang="ko">
@@ -12106,7 +12113,6 @@
         };
 
         window.openEnjoyShorts = function () {
-            window.closeMorePopover();
             const screen = document.getElementById('shorts-screen');
             const feed = document.getElementById('shorts-feed');
             if (!screen) return;
@@ -12162,10 +12168,10 @@
             window.goHome();
         };
 
-        window.goHome = () => { window.closeMorePopover(); window.activeTabIndex = 2; window.updateTabUI(2); }
-        window.goCommunity = () => { window.closeMorePopover(); window._schedSub = 'community'; window.activeTabIndex = 1; window.updateTabUI(1); }
-        window.goSchedule = () => { window.closeMorePopover(); if (window._schedSub === 'community') window._schedSub = 'calendar'; window.activeTabIndex = 3; window.updateTabUI(3); }
-        window.goMeeting = () => { window.closeMorePopover(); window.activeTabIndex = 4; window.updateTabUI(4); }
+        window.goHome = () => { window.activeTabIndex = 2; window.updateTabUI(2); }
+        window.goCommunity = () => { window._schedSub = 'community'; window.activeTabIndex = 1; window.updateTabUI(1); }
+        window.goSchedule = () => { if (window._schedSub === 'community') window._schedSub = 'calendar'; window.activeTabIndex = 3; window.updateTabUI(3); }
+        window.goMeeting = () => { window.activeTabIndex = 4; window.updateTabUI(4); }
 
         // 카카오 애드핏 광고 표시 (홈/모임통장/커뮤니티 — 로그인 화면 광고와 별개 광고단위)
         // 컨테이너가 보이게 된 시점에 ins+SDK를 새로 넣어 안정적으로 렌더한다. 이미 렌더됐으면(iframe 존재) 스킵.
@@ -13262,74 +13268,6 @@
             });
         };
 
-        // 더보기 팝오버 (하단 메뉴 더보기 자리에서 통 튀어나오는 메뉴)
-        window.morePopoverOpen = false;
-        // 팝오버가 더보기 버튼 지점에서 빨려 나오/들어가도록 transform-origin을 버튼 위치에 맞춤
-        // (메뉴 축소 상태에 따라 버튼 위치/크기가 바뀌어도 자동으로 따라감)
-        window.setMorePopoverOrigin = function() {
-            const btn = document.getElementById('nav-more');
-            const panel = document.getElementById('more-popover-panel');
-            if (!btn || !panel) return;
-            const b = btn.getBoundingClientRect();
-            const p = panel.getBoundingClientRect();
-            const originX = (b.left + b.width / 2) - p.left; // 패널 기준 버튼 중심 X
-            const originY = p.height;                        // 패널 아래쪽(버튼에 가장 가까운 변)
-            panel.style.transformOrigin = `${originX}px ${originY}px`;
-        };
-        window.openMorePopover = function() {
-            const pop = document.getElementById('more-popover');
-            const panel = document.getElementById('more-popover-panel');
-            const backdrop = document.getElementById('more-popover-backdrop');
-            if (!pop || !panel) return;
-            pop.classList.remove('hidden');
-            if (backdrop) backdrop.classList.remove('hidden');
-            // 레이아웃 반영 후 더보기 버튼 위치 기준으로 origin 설정
-            void panel.offsetWidth;
-            window.setMorePopoverOrigin();
-            window.morePopoverOpen = true;
-
-            // 다른 화면과 같게 기기의 라이트/다크 설정을 따른다.
-            window.updateMorePopoverContrast();
-            requestAnimationFrame(window.updateMorePopoverContrast);
-
-            // 패널 스프링 등장 (버튼 지점에서 빨려 나옴)
-            panel.style.animation = 'none';
-            void panel.offsetWidth;
-            panel.style.animation = 'more-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
-            // 항목 스태거 등장
-            panel.querySelectorAll('[data-pop-item]').forEach((el, i) => {
-                el.style.animation = 'none';
-                void el.offsetWidth;
-                el.style.animation = `more-item-in 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.09 + i * 0.045}s both`;
-            });
-        };
-        window.closeMorePopover = function() {
-            const pop = document.getElementById('more-popover');
-            const panel = document.getElementById('more-popover-panel');
-            const backdrop = document.getElementById('more-popover-backdrop');
-            if (!pop || pop.classList.contains('hidden')) return;
-            if (backdrop) backdrop.classList.add('hidden');
-            // 닫힐 때도 현재 더보기 버튼 위치 기준으로 빨려 들어가게 origin 재설정
-            window.setMorePopoverOrigin();
-            if (panel) panel.style.animation = 'more-pop-out 0.24s cubic-bezier(0.4, 0, 1, 1) forwards';
-            setTimeout(() => {
-                pop.classList.add('hidden');
-                if (panel) panel.style.animation = '';
-            }, 230);
-            window.morePopoverOpen = false;
-        };
-        window.toggleMorePopover = function() {
-            if (window.morePopoverOpen) window.closeMorePopover();
-            else window.openMorePopover();
-        };
-        window.updateMorePopoverContrast = function() {
-            const panel = document.getElementById('more-popover-panel');
-            if (!panel || !window.morePopoverOpen) return;
-            try {
-                panel.classList.toggle('popover-on-light', window.matchMedia('(prefers-color-scheme: light)').matches);
-            } catch (e) {}
-        };
-        
         window.changeMonth = (delta) => { 
             window.viewMonth += delta; 
             if (window.viewMonth < 0) { window.viewYear--; window.viewMonth = 11; } 
@@ -14588,12 +14526,12 @@
                 const value = brightness(body && body.a > .01 ? body : root);
                 return value === null ? (matchMedia('(prefers-color-scheme: light)').matches ? 242 : 0) : value;
             }
-            function brightnessAt(cx, cy, pop) {
+            function brightnessAt(cx, cy) {
                 const els = document.elementsFromPoint(cx, cy) || [];
                 const layers = [];
                 let base = fallbackBrightness();
                 for (const el of els) {
-                    if (nav.contains(el) || (pop && pop.contains(el)) || el.id === 'app-loader' || el.id === 'more-popover' || el.id === 'more-popover-backdrop') continue;
+                    if (nav.contains(el) || el.id === 'app-loader') continue;
                     const style = getComputedStyle(el);
                     if (style.visibility === 'hidden' || style.display === 'none') continue;
                     const opacity = Number.isNaN(parseFloat(style.opacity)) ? 1 : parseFloat(style.opacity);
@@ -14625,11 +14563,8 @@
                 target = target || nav;
                 const r = target.getBoundingClientRect();
                 if (!r.width || !r.height) return fallbackBrightness();
-                const pop = document.getElementById('more-popover');
                 const prevN = nav.style.pointerEvents;
-                const prevP = pop ? pop.style.pointerEvents : null;
                 nav.style.pointerEvents = 'none';
-                if (pop) pop.style.pointerEvents = 'none';
                 try {
                     const points = [
                         [.10,.50], [.30,.50], [.50,.50], [.70,.50], [.90,.50],
@@ -14638,15 +14573,13 @@
                     ];
                     const values = points.map(point => brightnessAt(
                         r.left + r.width * point[0],
-                        r.top + r.height * point[1],
-                        pop
+                        r.top + r.height * point[1]
                     )).filter(value => value !== null && !Number.isNaN(value)).sort((a, b) => a - b);
                     if (!values.length) return fallbackBrightness();
                     const trim = values.length > 6 ? values.slice(1, -1) : values;
                     return trim.reduce((sum, value) => sum + value, 0) / trim.length;
                 } finally {
                     nav.style.pointerEvents = prevN;
-                    if (pop) pop.style.pointerEvents = prevP;
                 }
             }
             function detectLight(target) {
@@ -14656,8 +14589,7 @@
                         ? nav.classList.contains('nav-on-light')
                         : !!(target.classList && (
                             target.classList.contains('btn-on-light') ||
-                            target.classList.contains('item-on-light') ||
-                            target.classList.contains('popover-on-light')
+                            target.classList.contains('item-on-light')
                         ));
                     return value > (wasLight ? 142 : 158);
                 } catch (e) {
@@ -14674,7 +14606,6 @@
                 const btns = nav.querySelectorAll('button');
                 btns.forEach(button => button.classList.toggle('btn-on-light', onLight));
                 nav.classList.toggle('nav-on-light', onLight);
-                if (window.updateMorePopoverContrast) window.updateMorePopoverContrast();
             }
             function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
 
@@ -15008,20 +14939,9 @@
             try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
         };
 
-        /* ----- 더보기: 내 프로필 카드 (원형 사진/단색, 글자 없음) ----- */
+        /* ----- 로그인 사용자: 홈 회원 탈퇴 버튼 표시 ----- */
         function updateProfileCard() {
-            const u = window.enjoyUser; if (!u) return;
-            const av = $('more-profile-avatar'), nm = $('more-profile-name'), em = $('more-profile-email');
-            const name = window.enjoyProfileName;
-            const col = window.enjoyMemberColor(name);
-            if (av) {
-                if (u.photoURL) { av.className = 'w-9 h-9 rounded-full overflow-hidden shrink-0'; av.innerHTML = '<img src="' + u.photoURL + '" class="w-full h-full object-cover" referrerpolicy="no-referrer">'; }
-                else { av.className = 'w-9 h-9 rounded-full shrink-0 ' + col.solid; av.innerHTML = ''; }
-            }
-            if (nm) nm.textContent = name || '미가입';
-            if (em) em.textContent = u.email || '';
-            const wd = $('more-withdraw');
-            if (wd) wd.classList.toggle('hidden', false);              // 로그인 사용자는 탈퇴 가능
+            if (!window.enjoyUser) return;
             const homeWd = $('home-withdraw');
             if (homeWd) homeWd.classList.toggle('hidden', false);
         }
@@ -16520,8 +16440,6 @@
                     window.isGuest = false;
                     window.__enjoyTodayDataReady = false;
                     showLoginChecking();
-                    const emailEl = document.getElementById('more-account-email');
-                    if (emailEl && user.email) emailEl.textContent = user.email;
                     window.meetingAuthed = true; // 멤버/모임 데이터 동기화 신호
                     // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
