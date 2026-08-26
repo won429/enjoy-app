@@ -566,6 +566,8 @@
         .pet-meter-fill.is-fun { background-image: repeating-linear-gradient(90deg,#EC82AD 0 .45rem,#B95285 .45rem .56rem); }
         .pet-meter-fill.is-clean { background-image: repeating-linear-gradient(90deg,#58C2D3 0 .45rem,#328FA4 .45rem .56rem); }
         .pet-meter-fill.is-energy { background-image: repeating-linear-gradient(90deg,#9B82D1 0 .45rem,#6D58A2 .45rem .56rem); }
+        .pet-level-progress { margin-top: .45rem; padding-top: .4rem; border-top: .125rem dashed rgba(70,57,75,.42); }
+        .pet-meter-fill.is-level { background-image: repeating-linear-gradient(90deg,#F3C64E 0 .45rem,#D48A38 .45rem .56rem); }
         .pet-actions { flex: none; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .375rem; }
         .pet-action { min-width: 0; padding: .45rem .15rem .35rem; display: flex; flex-direction: column; align-items: center; gap: .2rem; border: .1875rem solid var(--pixel-ink); border-radius: 0; color: var(--pixel-ink); background: #FFF8DF; box-shadow: .1875rem .1875rem 0 var(--pixel-shadow); }
         .pet-action:active { transform: translate(.125rem,.125rem); box-shadow: .0625rem .0625rem 0 var(--pixel-shadow); }
@@ -7054,7 +7056,7 @@
         </button>
         <button id="profile-pet-action" type="button" class="profile-action-item hidden" onclick="window.haptic && window.haptic(); window.openSelectedMemberTamagotchi()">
             <span class="profile-action-icon is-pet"><i class="fa-solid fa-paw" aria-hidden="true"></i></span>
-            <span class="profile-action-copy"><strong>다마고치 키우기</strong><span>밥 주고 놀아주며 성장시키기</span></span>
+            <span class="profile-action-copy"><strong>다마고치</strong><span>밥 주고 놀아주며 성장시키기</span></span>
             <i class="profile-action-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
         </button>
     </div>
@@ -7099,6 +7101,10 @@
                     <div><div class="pet-meter-head"><span>즐거움</span><b id="pet-fun-value">75</b></div><div class="pet-meter-track"><span id="pet-fun-bar" class="pet-meter-fill is-fun"></span></div></div>
                     <div><div class="pet-meter-head"><span>깨끗함</span><b id="pet-clean-value">75</b></div><div class="pet-meter-track"><span id="pet-clean-bar" class="pet-meter-fill is-clean"></span></div></div>
                     <div><div class="pet-meter-head"><span>에너지</span><b id="pet-energy-value">75</b></div><div class="pet-meter-track"><span id="pet-energy-bar" class="pet-meter-fill is-energy"></span></div></div>
+                </div>
+                <div class="pet-level-progress">
+                    <div class="pet-meter-head"><span>레벨 경험치</span><b id="pet-level-progress-value">0 / 8</b></div>
+                    <div class="pet-meter-track"><span id="pet-level-progress-bar" class="pet-meter-fill is-level"></span></div>
                 </div>
             </section>
             <div id="pet-actions" class="pet-actions hidden" aria-label="다마고치 돌보기">
@@ -15557,6 +15563,11 @@
             });
             const careCount = Math.max(0, Number(state.careCount || 0));
             const level = Math.floor(careCount / 8) + 1;
+            const levelProgress = Math.floor(careCount % 8);
+            const levelProgressValue = document.getElementById('pet-level-progress-value');
+            const levelProgressBar = document.getElementById('pet-level-progress-bar');
+            if (levelProgressValue) levelProgressValue.textContent = levelProgress + ' / 8';
+            if (levelProgressBar) levelProgressBar.style.width = (levelProgress / 8 * 100) + '%';
             const average = (values.food + values.fun + values.clean + values.energy) / 4;
             const isHatched = state.phase === 'hatched';
             const isHatching = state.phase === 'hatching';
