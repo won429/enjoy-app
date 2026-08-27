@@ -481,6 +481,9 @@
         .pet-stage-label { display: block; color: #876E74; font-size: .5rem; font-weight: 850; }
         .pet-name { display: block; margin-top: .0625rem; font-size: .875rem; font-weight: 950; line-height: 1.1; }
         .pet-level { padding: .35rem .5rem; border: .125rem solid var(--pixel-ink); color: var(--pixel-ink); background: #FFF1A8; box-shadow: .125rem .125rem 0 var(--pixel-shadow); font-size: .5625rem; font-weight: 950; }
+        .pet-sleep-timer { position: absolute; z-index: 10; top: .55rem; left: 50%; min-width: 4.5rem; padding: .25rem .4rem; border: .125rem solid var(--pixel-ink); color: var(--pixel-ink); background: #DDD2F5; box-shadow: .125rem .125rem 0 var(--pixel-shadow); text-align: center; transform: translateX(-50%); }
+        .pet-sleep-timer span { display: block; color: #6D58A2; font-size: .42rem; font-weight: 950; }
+        .pet-sleep-timer b { display: block; margin-top: .05rem; font-size: .65rem; font-weight: 950; font-variant-numeric: tabular-nums; }
         .pet-world { position: absolute; inset: 2.75rem 0 1.75rem; z-index: 3; overflow: hidden; }
         .pet-shadow { position: absolute; z-index: 1; width: 6.5rem; height: .75rem; left: 50%; bottom: 6%; border-radius: 50%; background: rgba(82,48,45,.24); transform: translateX(-50%); }
         .pet-mover { position: absolute; z-index: 4; width: 8.5rem; height: 8.5rem; left: 50%; bottom: 4%; transform: translateX(-50%); transition-property: left,bottom; transition-duration: 1.45s,.55s; transition-timing-function: steps(10,end),steps(4,end); will-change: left,bottom,transform; }
@@ -7077,6 +7080,7 @@
                     <div><span id="pet-stage-label" class="pet-stage-label">알에서 막 깨어났어요</span><strong id="pet-name" class="pet-name">몽글이</strong></div>
                     <span id="pet-level" class="pet-level">Lv. 1</span>
                 </div>
+                <div id="pet-sleep-timer" class="pet-sleep-timer hidden" aria-live="polite"><span>수면 중</span><b id="pet-sleep-time">30:00</b></div>
                 <div class="pet-world">
                     <div id="pet-mover" class="pet-mover">
                         <span class="pet-shadow"></span>
@@ -15264,6 +15268,7 @@
         let activePetIsAdminTest = false;
         let petCloudSaveTimer = 0;
         let petDecayTimer = 0;
+        let petSleepCountdownTimer = 0;
         let petHatchTimer = 0;
         let petFrameTimer = 0;
         let petRoamTimer = 0;
@@ -15278,7 +15283,9 @@
             { name: '모모', type: '꿀곰', asset: './assets/tamagotchi/bear-actions-v2.png' },
             { name: '피코', type: '민트새', asset: './assets/tamagotchi/bird-actions-v2.png' },
             { name: '아리', type: '분홍 아홀로틀', asset: './assets/tamagotchi/axolotl-actions-v2.png' },
-            { name: '호두', type: '복숭아 여우', asset: './assets/tamagotchi/fox-actions-v2.png' }
+            { name: '호두', type: '복숭아 여우', asset: './assets/tamagotchi/fox-actions-v2.png' },
+            { name: '호야', type: '황금빛 호랑이', asset: './assets/tamagotchi/tiger-actions-v2.png' },
+            { name: '동동', type: '포근한 당나귀', asset: './assets/tamagotchi/donkey-actions-v2.png' }
         ];
         const petFrames = {
             idle: [[0,0],[1,0]],
@@ -15311,7 +15318,7 @@
 
         function defaultPetState() {
             const now = Date.now();
-            return { version: 3, phase: 'egg', eggTaps: 0, species: null, name: '', food: 82, fun: 82, clean: 86, energy: 82, careCount: 0, roomX: 50, lastCareAt: now, lastUpdated: now, diedAt: 0, message: '알을 여러 번 톡톡 눌러주세요.' };
+            return { version: 3, phase: 'egg', eggTaps: 0, species: null, name: '', food: 82, fun: 82, clean: 86, energy: 82, careCount: 0, birthCount: 0, roomX: 50, sleepingUntil: 0, lastCareAt: now, lastUpdated: now, diedAt: 0, message: '알을 여러 번 톡톡 눌러주세요.' };
         }
 
         function randomPetSpeciesIndex() {
@@ -15322,6 +15329,37 @@
             } catch (error) {
                 return Math.floor(Math.random() * petSpecies.length);
             }
+        }
+
+        function petSpeciesIndexByName(name) {
+            return petSpecies.findIndex(function (species) { return species && species.name === name; });
+        }
+
+        function choosePetSpeciesForBirth(state) {
+            if (Math.max(0, Number(state && state.birthCount || 0)) === 0) {
+                const owner = petProfileName(activePetOwner);
+                const firstPetName = owner === '오스틴' ? '동동' : owner === '전시기' ? '호야' : '';
+                const fixedIndex = firstPetName ? petSpeciesIndexByName(firstPetName) : -1;
+                if (fixedIndex >= 0) return fixedIndex;
+            }
+            return randomPetSpeciesIndex();
+        }
+
+        function finishPetHatching(state) {
+            if (!state) return state;
+            if (!Number.isInteger(state.species) || state.species < 0 || state.species >= petSpecies.length) state.species = choosePetSpeciesForBirth(state);
+            state.phase = 'hatched';
+            state.name = petSpecies[state.species].name;
+            state.food = 46;
+            state.fun = 44;
+            state.clean = 48;
+            state.energy = 45;
+            state.birthCount = Math.max(0, Math.floor(Number(state.birthCount) || 0)) + 1;
+            state.message = petSpecies[state.species].type + '가 태어났어요!';
+            state.lastCareAt = Date.now();
+            state.roomX = 50;
+            state.lastUpdated = Date.now();
+            return state;
         }
 
         function applyPetDecay(state) {
@@ -15387,6 +15425,10 @@
                 const savedAt = Number(candidate.lastUpdated || 0);
                 if (!hasSavedState || savedAt >= newestSavedAt) {
                     state = Object.assign(defaultPetState(), candidate);
+                    if (!Number.isFinite(Number(candidate.birthCount))) {
+                        const hasNotHatched = (candidate.phase === 'egg' || candidate.phase === 'hatching') && !Number.isInteger(candidate.species);
+                        state.birthCount = hasNotHatched ? 0 : 1;
+                    }
                     newestSavedAt = savedAt;
                     hasSavedState = true;
                 }
@@ -15406,11 +15448,7 @@
                 } catch (error) {}
             }
             if (state.phase === 'hatching') {
-                if (!Number.isInteger(state.species)) state.species = randomPetSpeciesIndex();
-                state.phase = 'hatched';
-                state.name = petSpecies[state.species].name;
-                state.message = petSpecies[state.species].type + '가 태어났어요!';
-                state.lastCareAt = Date.now();
+                finishPetHatching(state);
             }
             activePetState = applyPetDecay(state);
             if (!activePetCanEdit && !hasSavedState) activePetState.message = activePetOwner + '님은 아직 다마고치를 시작하지 않았어요.';
@@ -15459,6 +15497,68 @@
 
         function setPetActionButtonsDisabled(disabled) {
             document.querySelectorAll('[data-pet-action]').forEach(function (button) { button.disabled = !!disabled; });
+        }
+
+        function isPetSleeping(state) {
+            return !!state && state.phase === 'hatched' && Number(state.sleepingUntil || 0) > Date.now();
+        }
+
+        function formatPetSleepTime(milliseconds) {
+            const totalSeconds = Math.max(0, Math.ceil(Number(milliseconds || 0) / 1000));
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        }
+
+        function updatePetSleepTimerDisplay() {
+            const timer = document.getElementById('pet-sleep-timer');
+            const time = document.getElementById('pet-sleep-time');
+            const sleeping = isPetSleeping(activePetState);
+            if (timer) timer.classList.toggle('hidden', !sleeping);
+            if (time) time.textContent = formatPetSleepTime(sleeping ? Number(activePetState.sleepingUntil) - Date.now() : 0);
+        }
+
+        function finishPetSleep() {
+            if (!activePetState || activePetState.phase !== 'hatched' || !Number(activePetState.sleepingUntil || 0) || Number(activePetState.sleepingUntil) > Date.now()) return false;
+            clearInterval(petSleepCountdownTimer);
+            petSleepCountdownTimer = 0;
+            activePetState.sleepingUntil = 0;
+            if (activePetCanEdit) {
+                activePetState.energy = petClamp(activePetState.energy + 44);
+                activePetState.food = petClamp(activePetState.food - 3);
+                activePetState.careCount = Math.max(0, Number(activePetState.careCount || 0)) + 1;
+                activePetState.lastCareAt = Date.now();
+                activePetState.lastUpdated = Date.now();
+                activePetState.message = '30분 동안 푹 자고 기운을 되찾았어요!';
+            } else {
+                activePetState.message = '잠에서 깨어났어요.';
+            }
+            petIsBusy = false;
+            clearPetProps();
+            savePetState();
+            renderTamagotchi();
+            if (activePetCanEdit) schedulePetRoaming(1200);
+            return true;
+        }
+
+        function startPetSleepCountdown() {
+            clearInterval(petSleepCountdownTimer);
+            petSleepCountdownTimer = 0;
+            if (!activePetState || activePetState.phase !== 'hatched' || !Number(activePetState.sleepingUntil || 0)) {
+                updatePetSleepTimerDisplay();
+                return;
+            }
+            if (finishPetSleep()) return;
+            updatePetSleepTimerDisplay();
+            petSleepCountdownTimer = setInterval(function () {
+                if (!activePetState || activePetState.phase !== 'hatched' || !Number(activePetState.sleepingUntil || 0)) {
+                    clearInterval(petSleepCountdownTimer);
+                    petSleepCountdownTimer = 0;
+                    updatePetSleepTimerDisplay();
+                    return;
+                }
+                if (!finishPetSleep()) updatePetSleepTimerDisplay();
+            }, 1000);
         }
 
         function clearPetActionTimers() {
@@ -15513,12 +15613,12 @@
 
         function schedulePetRoaming(delay) {
             stopPetRoaming();
-            if (!activePetState || activePetState.phase !== 'hatched' || petIsBusy) return;
+            if (!activePetState || activePetState.phase !== 'hatched' || petIsBusy || isPetSleeping(activePetState)) return;
             petRoamTimer = setTimeout(roamPetAcrossRoom, Math.max(800, Number(delay) || 2800));
         }
 
         function roamPetAcrossRoom() {
-            if (!activePetState || activePetState.phase !== 'hatched' || petIsBusy) return;
+            if (!activePetState || activePetState.phase !== 'hatched' || petIsBusy || isPetSleeping(activePetState)) return;
             const mover = document.getElementById('pet-mover');
             if (!mover) return;
             const current = Math.max(15, Math.min(85, Number(activePetState.roomX) || 50));
@@ -15572,6 +15672,7 @@
             const isHatched = state.phase === 'hatched';
             const isHatching = state.phase === 'hatching';
             const isDead = state.phase === 'dead';
+            const isSleeping = isPetSleeping(state);
             const species = isHatched || isDead ? petSpecies[Math.max(0, Math.min(petSpecies.length - 1, Number(state.species) || 0))] : null;
             const stage = isDead ? '추억 속 친구' : !isHatched ? (isHatching ? '껍질이 무너지는 중' : '신비한 알') : level < 3 ? species.type + ' · 아기' : level < 6 ? species.type + ' · 꼬마' : species.type + ' · 단짝';
             const sprite = document.getElementById('pet-sprite');
@@ -15589,13 +15690,17 @@
             const deathProp = document.getElementById('pet-death-prop');
             const viewBadge = document.getElementById('pet-view-badge');
             const saveNote = document.getElementById('pet-save-note');
+            const hero = document.querySelector('#tamagotchi-screen .pet-hero');
+            const sleepProp = document.getElementById('pet-sleep-prop');
             if (sprite) {
                 sprite.classList.toggle('is-egg', !species);
                 sprite.classList.toggle('is-dead', isDead);
                 sprite.style.backgroundImage = species ? 'url("' + species.asset + '")' : "url('./assets/tamagotchi/egg-hatch-v2.png')";
                 if (!species) setPetEggFrame(isHatching ? 5 : Math.min(4, Number(state.eggTaps) || 0));
                 else if (isDead) setPetSpriteFrame(2,2);
-                else if (!petIsBusy) startPetAnimation('idle');
+                else if (isSleeping) {
+                    if (petCurrentAnimation !== 'rest') startPetAnimation('rest');
+                } else if (!petIsBusy && petCurrentAnimation !== 'idle') startPetAnimation('idle');
             }
             if (spriteButton) {
                 spriteButton.disabled = !activePetCanEdit || isHatched || isHatching || isDead;
@@ -15608,11 +15713,22 @@
                 tapHint.textContent = isHatching ? '부화 중…' : left === 5 ? '알을 톡톡 눌러주세요' : left > 0 ? left + '번 더 톡톡!' : '곧 태어나요';
             }
             if (mover) {
-                if (!petIsBusy) mover.style.left = (isDead ? 50 : Math.max(15,Math.min(85,Number(state.roomX) || 50))) + '%';
+                if (isSleeping) {
+                    mover.style.left = '16%';
+                    mover.style.bottom = '22%';
+                    mover.classList.add('is-sleeping');
+                    mover.classList.remove('is-facing-left');
+                } else if (!petIsBusy) {
+                    mover.style.left = (isDead ? 50 : Math.max(15,Math.min(85,Number(state.roomX) || 50))) + '%';
+                    mover.classList.remove('is-sleeping');
+                }
                 if (!isHatched) mover.classList.remove('is-facing-left');
                 mover.classList.toggle('is-dirty', isHatched && values.clean < 60);
                 mover.classList.toggle('is-very-dirty', isHatched && values.clean < 25);
             }
+            if (hero && !petIsBusy) hero.classList.toggle('is-night', isSleeping);
+            if (sleepProp && !petIsBusy) sleepProp.classList.toggle('hidden', !isSleeping);
+            updatePetSleepTimerDisplay();
             if (statusCard) statusCard.classList.toggle('hidden', !(isHatched || isDead));
             if (actions) actions.classList.toggle('hidden', !isHatched || !activePetCanEdit);
             if (restart) restart.classList.toggle('hidden', !isDead || !activePetCanEdit);
@@ -15623,8 +15739,8 @@
             if (stageLabel) stageLabel.textContent = stage;
             if (nameLabel) nameLabel.textContent = species ? (state.name || species.name) : '???';
             if (screenTitle) screenTitle.textContent = isDead ? state.name + '의 추억' : species ? (state.name || species.name) : '신비한 알';
-            if (message && !petIsBusy) message.textContent = isHatched && values.food < 28 ? '꼬르륵… 배가 많이 고파요.' : isHatched && average < 18 ? '위험해요! 지금 바로 돌봐주세요.' : isHatched && average < 35 ? '기운이 없어요… 조금 돌봐주세요.' : (state.message || '알을 여러 번 톡톡 눌러주세요.');
-            setPetActionButtonsDisabled(!activePetCanEdit || petIsBusy || !isHatched);
+            if (message && !petIsBusy) message.textContent = isSleeping ? '새근새근… 30분 동안 자고 있어요.' : isHatched && values.food < 28 ? '꼬르륵… 배가 많이 고파요.' : isHatched && average < 18 ? '위험해요! 지금 바로 돌봐주세요.' : isHatched && average < 35 ? '기운이 없어요… 조금 돌봐주세요.' : (state.message || '알을 여러 번 톡톡 눌러주세요.');
+            setPetActionButtonsDisabled(!activePetCanEdit || petIsBusy || !isHatched || isSleeping);
             if (isDead) {
                 petIsBusy = false;
                 stopPetRoaming();
@@ -15661,13 +15777,7 @@
             clearTimeout(petHatchTimer);
             petHatchTimer = setTimeout(function () {
                 if (!activePetState || activePetState.phase !== 'hatching') return;
-                activePetState.species = randomPetSpeciesIndex();
-                activePetState.phase = 'hatched';
-                activePetState.name = petSpecies[activePetState.species].name;
-                activePetState.message = petSpecies[activePetState.species].type + '가 태어났어요!';
-                activePetState.lastCareAt = Date.now();
-                activePetState.roomX = 50;
-                activePetState.lastUpdated = Date.now();
+                finishPetHatching(activePetState);
                 savePetState();
                 renderTamagotchi();
                 const mover = document.getElementById('pet-mover');
@@ -15739,6 +15849,7 @@
             activePetCanEdit = isAdminTest || (!!ownId && requestedName === ownName);
             activePetOwnerId = isAdminTest ? 'admin-test-' + (ownId || 'guest') : ownerMember && ownerMember.uid ? String(ownerMember.uid) : activePetCanEdit ? ownId : '';
             await loadPetState(activePetOwnerId, ownerMember && ownerMember.tamagotchi);
+            finishPetSleep();
             if (ownerLabel) ownerLabel.textContent = isAdminTest ? '테스트용 반려친구 · 관리자' : activePetCanEdit ? '내 반려친구 · ' + activePetOwner : activePetOwner + '님의 반려친구';
             renderTamagotchi();
             screen.classList.remove('hidden');
@@ -15757,7 +15868,8 @@
                 savePetState();
                 renderTamagotchi();
             }, activePetIsAdminTest ? 1000 : 60000);
-            if (activePetState.phase === 'hatched') schedulePetRoaming(1200);
+            startPetSleepCountdown();
+            if (activePetState.phase === 'hatched' && !isPetSleeping(activePetState)) schedulePetRoaming(1200);
         };
 
         window.closeTamagotchi = function () {
@@ -15769,6 +15881,8 @@
             }
             clearInterval(petDecayTimer);
             petDecayTimer = 0;
+            clearInterval(petSleepCountdownTimer);
+            petSleepCountdownTimer = 0;
             clearTimeout(petHatchTimer);
             petHatchTimer = 0;
             clearInterval(petFrameTimer);
@@ -15789,7 +15903,7 @@
         };
 
         window.careForTamagotchi = function (action) {
-            if (!activePetCanEdit || !activePetState || activePetState.phase !== 'hatched' || petIsBusy) return;
+            if (!activePetCanEdit || !activePetState || activePetState.phase !== 'hatched' || petIsBusy || isPetSleeping(activePetState)) return;
             window.haptic && window.haptic();
             applyPetDecay(activePetState);
             if (activePetState.phase === 'dead') {
@@ -15901,7 +16015,13 @@
                     if (bed) bed.classList.remove('hidden');
                     if (mover) mover.classList.add('is-sleeping');
                     startPetAnimation('rest');
-                    setPetMessage('베개 옆에 누워 새근새근 잠들었어요.');
+                    activePetState.sleepingUntil = Date.now() + 30 * 60 * 1000;
+                    activePetState.roomX = 16;
+                    activePetState.lastUpdated = Date.now();
+                    activePetState.message = '새근새근… 30분 동안 자고 있어요.';
+                    savePetState();
+                    startPetSleepCountdown();
+                    setPetMessage(activePetState.message);
                 }, 1420);
             } else {
                 petIsBusy = false;
@@ -15911,6 +16031,13 @@
             const duration = action === 'rest' ? 4400 : action === 'clean' ? 3900 : action === 'feed' ? 3400 : 2800;
             petLater(function () {
                 if (!activePetState || activePetState.phase !== 'hatched') return;
+                if (action === 'rest') {
+                    petIsBusy = false;
+                    savePetState();
+                    renderTamagotchi();
+                    startPetSleepCountdown();
+                    return;
+                }
                 if (action === 'feed') {
                     activePetState.food = petClamp(activePetState.food + 32);
                     activePetState.energy = petClamp(activePetState.energy + 4);
@@ -15925,12 +16052,8 @@
                     activePetState.clean = petClamp(activePetState.clean + 40);
                     activePetState.fun = petClamp(activePetState.fun - 2);
                     activePetState.message = '뽀송뽀송 깨끗해졌어요!';
-                } else if (action === 'rest') {
-                    activePetState.energy = petClamp(activePetState.energy + 44);
-                    activePetState.food = petClamp(activePetState.food - 3);
-                    activePetState.message = '푹 자고 기운을 되찾았어요!';
                 }
-                activePetState.roomX = action === 'feed' ? 46 : action === 'clean' ? 50 : action === 'rest' ? 16 : Number(activePetState.roomX) || 50;
+                activePetState.roomX = action === 'feed' ? 46 : action === 'clean' ? 50 : Number(activePetState.roomX) || 50;
                 activePetState.careCount = Math.max(0, Number(activePetState.careCount || 0)) + 1;
                 activePetState.lastCareAt = Date.now();
                 activePetState.lastUpdated = Date.now();
@@ -15948,7 +16071,9 @@
             stopPetRoaming();
             clearPetActionTimers();
             clearPetProps();
+            const previousBirthCount = Math.max(1, Math.floor(Number(activePetState.birthCount) || 0));
             activePetState = defaultPetState();
+            activePetState.birthCount = previousBirthCount;
             savePetState();
             renderTamagotchi();
         };
@@ -15979,6 +16104,7 @@
                         if (viewedState && viewedState.version === 3 && Number(viewedState.lastUpdated || 0) >= Number(activePetState.lastUpdated || 0)) {
                             activePetState = applyPetDecay(Object.assign(defaultPetState(), viewedState));
                             renderTamagotchi();
+                            startPetSleepCountdown();
                         }
                     }
                     if (window.enjoyUpdateOpenMemberTimetable) window.enjoyUpdateOpenMemberTimetable(arr);
