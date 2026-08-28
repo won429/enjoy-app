@@ -454,6 +454,12 @@
         .profile-action-copy strong { display: block; font-size: .8125rem; font-weight: 850; }
         .profile-action-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
         .profile-action-chevron { color: #6B7684; font-size: .6875rem; }
+        .profile-point-status { margin-top: .25rem; padding: .75rem .625rem .375rem; display: flex; align-items: center; gap: .625rem; border-top: .0625rem solid rgba(255,255,255,.08); }
+        .profile-point-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; color: #FBBF24; background: rgba(251,191,36,.14); font-size: .875rem; }
+        .profile-point-copy { min-width: 0; flex: 1; }
+        .profile-point-copy strong { display: block; color: #F2F4F6; font-size: .75rem; font-weight: 850; }
+        .profile-point-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
+        .profile-point-balance { flex: none; color: #FBBF24; font-size: .9375rem; font-weight: 900; letter-spacing: -.02em; }
 
         /* 내 프로필 전용 픽셀 다마고치 */
         #tamagotchi-screen {
@@ -7077,6 +7083,11 @@
             <span class="profile-action-copy"><strong>다마고치</strong><span>밥 주고 놀아주며 성장시키기</span></span>
             <i class="profile-action-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
         </button>
+        <div id="profile-point-status" class="profile-point-status" aria-label="멤버 포인트 현황">
+            <span class="profile-point-icon"><i class="fa-solid fa-coins" aria-hidden="true"></i></span>
+            <span class="profile-point-copy"><strong>포인트 현황</strong><span>현재 보유 포인트</span></span>
+            <strong id="profile-point-balance" class="profile-point-balance">0 P</strong>
+        </div>
     </div>
 
     <!-- 로그인한 내 프로필 전용 다마고치 화면 -->
@@ -15884,6 +15895,14 @@
             }, 1100);
         };
 
+        function updateProfilePointBalance(name) {
+            const pointBalance = document.getElementById('profile-point-balance');
+            if (!pointBalance) return;
+            const profileMember = (lastMembers || []).find(function (item) { return item && item.name === name; });
+            const points = Math.max(0, Math.floor(Number(profileMember && profileMember.points) || 0));
+            pointBalance.textContent = points.toLocaleString('ko-KR') + ' P';
+        }
+
         window.openMemberProfileMenu = function (name, trigger) {
             const popover = document.getElementById('profile-action-popover');
             const backdrop = document.getElementById('profile-action-backdrop');
@@ -15894,6 +15913,7 @@
             profileMenuPreviousFocus = trigger;
             if (title) title.textContent = profileMenuMemberName + ' 프로필';
             if (petAction) petAction.classList.toggle('hidden', !canOpenPetProfile(profileMenuMemberName));
+            updateProfilePointBalance(profileMenuMemberName);
             backdrop.classList.remove('hidden');
             popover.classList.remove('hidden');
             void popover.offsetWidth;
@@ -16193,6 +16213,10 @@
                         arr.push(v);
                     });
                     lastMembers = arr; renderMembers(); updateProfileCard();
+                    const profileMenu = document.getElementById('profile-action-popover');
+                    if (profileMenuMemberName && profileMenu && !profileMenu.classList.contains('hidden')) {
+                        updateProfilePointBalance(profileMenuMemberName);
+                    }
                     if (!activePetCanEdit && !activePetIsAdminTest && activePetOwnerId && activePetState) {
                         const viewedMember = arr.find(function (item) { return item && String(item.uid || '') === String(activePetOwnerId); });
                         const viewedState = viewedMember && viewedMember.tamagotchi;
