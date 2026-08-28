@@ -12479,7 +12479,7 @@
         /* ===== 카카오 애드핏 멤버별 클릭 추정 =====
          * 애드핏은 교차 출처 iframe 안에서 동작하므로 실제 click 이벤트를 직접 읽을 수 없다.
          * 대신 광고 iframe이 포커스를 얻은 직후 창이 비활성화되는 경우만 클릭으로 간주한다.
-         * Firebase members/{uid} 문서에 합계와 광고 위치별 횟수를 누적한다.
+         * Firebase members/{uid} 문서에 누적 합계, 당일 합계와 광고 위치별 횟수를 저장한다.
          */
         (function installAdClickEstimator() {
             const AD_PLACEMENTS = {
@@ -12491,6 +12491,16 @@
             let lastRecordedAt = 0;
             let lastRecordedPlacement = '';
             let checkTimer = null;
+
+            function koreaDateKey(time) {
+                const parts = new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit'
+                }).formatToParts(new Date(time)).reduce(function (result, part) {
+                    if (part.type !== 'literal') result[part.type] = part.value;
+                    return result;
+                }, {});
+                return parts.year + '-' + parts.month + '-' + parts.day;
+            }
 
             function focusedAdPlacement() {
                 const active = document.activeElement;
@@ -12520,6 +12530,7 @@
                         adClickLastPlacement: placement
                     };
                     changes['adClicksByPlacement.' + placement] = window.fsIncrement(1);
+                    changes['adClicksByDate.' + koreaDateKey(now)] = window.fsIncrement(1);
                     await window.fsUpdateDoc(window.fsDoc('members', user.uid), changes);
                     window.dispatchEvent(new CustomEvent('enjoy-ad-click-recorded', {
                         detail: { uid: user.uid, name: memberName, placement: placement, at: now }
