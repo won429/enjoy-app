@@ -450,6 +450,7 @@
         .profile-action-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; font-size: .875rem; }
         .profile-action-icon.is-timetable { color: #5BA1FF; background: rgba(49,130,246,.16); }
         .profile-action-icon.is-pet { color: #FB7185; background: rgba(251,113,133,.16); }
+        .profile-action-icon.is-delivery { color: #34D399; background: rgba(52,211,153,.16); }
         .profile-action-copy { min-width: 0; flex: 1; }
         .profile-action-copy strong { display: block; font-size: .8125rem; font-weight: 850; }
         .profile-action-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
@@ -460,6 +461,143 @@
         .profile-point-copy strong { display: block; color: inherit; font-size: .8125rem; font-weight: 850; }
         .profile-point-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
         .profile-point-balance { flex: none; color: #FBBF24; font-size: .9375rem; font-weight: 900; letter-spacing: -.02em; }
+
+        /* 전시기·류짱 스크래치 당첨 상품 배달 현황 */
+        #member-delivery-screen {
+            --delivery-bg: #0F1012;
+            --delivery-surface: #1C1D20;
+            --delivery-soft: rgba(255,255,255,.06);
+            --delivery-border: rgba(255,255,255,.1);
+            --delivery-text: #F2F4F6;
+            --delivery-sub: #8B95A1;
+            z-index: 92;
+            color: var(--delivery-text);
+            background: var(--delivery-bg);
+        }
+        .delivery-topbar { min-height: 4.5rem; padding: max(.875rem,env(safe-area-inset-top)) 1rem .75rem; display: flex; align-items: center; gap: .75rem; flex: none; background: color-mix(in srgb,var(--delivery-bg) 88%,transparent); -webkit-backdrop-filter: blur(1.25rem); backdrop-filter: blur(1.25rem); }
+        .delivery-back { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: var(--delivery-text); background: var(--delivery-soft); }
+        .delivery-heading { min-width: 0; }
+        .delivery-heading h2 { font-size: 1.0625rem; font-weight: 900; letter-spacing: -.02em; }
+        .delivery-heading p { margin-top: .125rem; color: var(--delivery-sub); font-size: .6875rem; font-weight: 650; }
+        .delivery-scroll { min-height: 0; padding: .25rem 1rem max(2rem,env(safe-area-inset-bottom)); overflow-y: auto; }
+        .delivery-hero { position: relative; overflow: hidden; padding: 1.25rem; border: .0625rem solid color-mix(in srgb,var(--delivery-accent,#34D399) 28%,transparent); border-radius: 1.5rem; background: linear-gradient(135deg,color-mix(in srgb,var(--delivery-accent,#34D399) 24%,var(--delivery-surface)),var(--delivery-surface) 65%); }
+        .delivery-hero::after { position: absolute; width: 8rem; height: 8rem; right: -2.75rem; bottom: -4rem; content: ''; border-radius: 50%; background: color-mix(in srgb,var(--delivery-accent,#34D399) 22%,transparent); filter: blur(.125rem); }
+        .delivery-owner { position: relative; z-index: 1; display: flex; align-items: center; gap: .75rem; }
+        .delivery-owner-avatar { width: 2.75rem; height: 2.75rem; display: grid; place-items: center; flex: none; overflow: hidden; border-radius: 50%; color: #FFF; background: var(--delivery-accent,#34D399); font-size: .9375rem; font-weight: 900; }
+        .delivery-owner-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .delivery-owner-copy { min-width: 0; }
+        .delivery-owner-copy span { display: block; color: color-mix(in srgb,var(--delivery-text) 72%,transparent); font-size: .6875rem; font-weight: 700; }
+        .delivery-owner-copy strong { display: block; margin-top: .125rem; font-size: 1.125rem; font-weight: 900; }
+        .delivery-hero-summary { position: relative; z-index: 1; margin-top: 1.25rem; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+        .delivery-hero-summary span { display: block; color: var(--delivery-sub); font-size: .6875rem; font-weight: 700; }
+        .delivery-hero-summary strong { display: block; margin-top: .2rem; color: var(--delivery-text); font-size: 1.625rem; font-weight: 950; line-height: 1; }
+        .delivery-hero-badge { padding: .375rem .625rem; border-radius: 62.4375rem; color: var(--delivery-accent,#34D399); background: color-mix(in srgb,var(--delivery-accent,#34D399) 15%,transparent); font-size: .6875rem; font-weight: 850; }
+        .delivery-section-title { margin: 1.25rem .25rem .625rem; color: var(--delivery-sub); font-size: .6875rem; font-weight: 850; }
+        .delivery-list { display: flex; flex-direction: column; gap: .75rem; }
+        .delivery-card { padding: 1rem; border: .0625rem solid var(--delivery-border); border-radius: 1.375rem; background: var(--delivery-surface); box-shadow: 0 .625rem 1.75rem rgba(0,0,0,.16); }
+        .delivery-card-head { display: flex; align-items: center; gap: .75rem; }
+        .delivery-prize-icon { width: 2.75rem; height: 2.75rem; display: grid; place-items: center; flex: none; border-radius: .875rem; color: var(--delivery-accent,#34D399); background: color-mix(in srgb,var(--delivery-accent,#34D399) 14%,transparent); }
+        .delivery-prize-copy { min-width: 0; flex: 1; }
+        .delivery-prize-copy strong { display: block; overflow: hidden; font-size: .875rem; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+        .delivery-prize-copy span { display: block; margin-top: .1875rem; color: var(--delivery-sub); font-size: .625rem; font-weight: 650; }
+        .delivery-status-badge { flex: none; padding: .3125rem .5rem; border-radius: 62.4375rem; color: var(--delivery-accent,#34D399); background: color-mix(in srgb,var(--delivery-accent,#34D399) 14%,transparent); font-size: .625rem; font-weight: 850; }
+        .delivery-progress { margin-top: 1rem; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
+        .delivery-step { position: relative; padding-top: 1.25rem; color: #6B7684; font-size: .5625rem; font-weight: 750; text-align: center; }
+        .delivery-step::before { position: absolute; z-index: 2; top: .1875rem; left: 50%; width: .625rem; height: .625rem; content: ''; border: .125rem solid var(--delivery-surface); border-radius: 50%; background: #4E5968; transform: translateX(-50%); }
+        .delivery-step::after { position: absolute; z-index: 1; top: .4375rem; right: 50%; width: 100%; height: .125rem; content: ''; background: #33363B; }
+        .delivery-step:first-child::after { display: none; }
+        .delivery-step.is-done { color: var(--delivery-text); }
+        .delivery-step.is-done::before,.delivery-step.is-done::after { background: var(--delivery-accent,#34D399); }
+        .delivery-card-note { margin-top: .875rem; padding: .75rem; border-radius: .875rem; color: var(--delivery-sub); background: var(--delivery-soft); font-size: .6875rem; font-weight: 650; line-height: 1.5; }
+        .delivery-card-note i { margin-right: .375rem; color: var(--delivery-accent,#34D399); }
+        .delivery-empty { padding: 2.75rem 1.25rem; border: .0625rem dashed var(--delivery-border); border-radius: 1.375rem; color: var(--delivery-sub); background: var(--delivery-surface); text-align: center; }
+        .delivery-empty i { color: var(--delivery-accent,#34D399); font-size: 1.75rem; }
+        .delivery-empty strong { display: block; margin-top: .875rem; color: var(--delivery-text); font-size: .875rem; font-weight: 900; }
+        .delivery-empty span { display: block; margin-top: .375rem; font-size: .6875rem; line-height: 1.5; }
+        .delivery-footnote { margin: 1rem .25rem 0; color: #6B7684; font-size: .625rem; line-height: 1.5; }
+
+        /* 배달앱형 실시간 추적 화면 */
+        .delivery-tracking-topbar { min-height: 3.25rem; padding: max(.625rem,env(safe-area-inset-top)) .875rem .375rem; display: flex; align-items: center; justify-content: space-between; flex: none; background: var(--delivery-surface); }
+        .delivery-tracking-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: 50%; color: var(--delivery-text); background: transparent; font-size: 1rem; transition: transform .15s ease,background-color .15s ease; }
+        .delivery-tracking-icon:active { transform: scale(.9); background: var(--delivery-soft); }
+        .delivery-tracking-summary { position: relative; z-index: 3; flex: none; padding: .125rem 1rem .75rem; background: var(--delivery-surface); box-shadow: 0 .375rem 1.125rem rgba(15,23,42,.08); }
+        .delivery-tracking-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+        .delivery-tracking-heading h2 { color: var(--delivery-text); font-size: 1.25rem; font-weight: 950; letter-spacing: -.03em; }
+        .delivery-tracking-heading p { margin-top: .3rem; color: var(--delivery-sub); font-size: .75rem; font-weight: 650; }
+        .delivery-eta { min-width: 6.5rem; padding: .5rem .4rem; flex: none; border-radius: .75rem; color: #1B64DA; background: #E8F3FF; text-align: center; }
+        .delivery-eta span { display: block; font-size: .5625rem; font-weight: 750; }
+        .delivery-eta strong { display: block; margin-top: .125rem; font-size: .875rem; font-weight: 950; }
+        .delivery-rider-row { min-height: 3.5rem; margin-top: .625rem; display: flex; align-items: center; justify-content: flex-end; gap: .625rem; }
+        .delivery-rider-avatar { position: relative; width: 4.25rem; height: 3.25rem; display: grid; place-items: center; flex: none; color: #FFF; background: transparent; }
+        .delivery-rider-avatar img { width: 100%; height: 100%; object-fit: contain; }
+        .delivery-rider-copy { min-width: 0; text-align: right; }
+        .delivery-rider-copy span { display: block; color: var(--delivery-sub); font-size: .625rem; font-weight: 650; }
+        .delivery-rider-copy strong { display: block; margin-top: .125rem; color: var(--delivery-text); font-size: .6875rem; font-weight: 850; }
+        .delivery-tracking-progress { position: relative; margin-top: .25rem; display: grid; grid-template-columns: repeat(3,1fr); }
+        .delivery-tracking-progress::before,.delivery-tracking-progress-fill { position: absolute; top: .3125rem; left: 0; height: .25rem; border-radius: 62.4375rem; content: ''; }
+        .delivery-tracking-progress::before { right: 0; background: #DDE2E7; }
+        .delivery-tracking-progress-fill { z-index: 1; width: var(--delivery-progress,0%); background: #3182F6; transition: width .4s ease; }
+        .delivery-tracking-step { position: relative; z-index: 2; padding-top: 1.125rem; color: #8B95A1; font-size: .625rem; font-weight: 750; }
+        .delivery-tracking-step:nth-of-type(3) { text-align: center; }
+        .delivery-tracking-step:nth-of-type(4) { text-align: right; }
+        .delivery-tracking-step::before { position: absolute; top: .125rem; left: 0; width: .625rem; height: .625rem; content: ''; border: .125rem solid var(--delivery-surface); border-radius: 50%; background: #DDE2E7; }
+        .delivery-tracking-step:nth-of-type(3)::before { left: 50%; transform: translateX(-50%); }
+        .delivery-tracking-step:nth-of-type(4)::before { right: 0; left: auto; }
+        .delivery-tracking-step.is-done { color: #1B64DA; }
+        .delivery-tracking-step.is-done::before { background: #3182F6; }
+        .delivery-order-toggle { width: 100%; min-height: 2.5rem; margin-top: .375rem; display: flex; align-items: center; justify-content: center; gap: .375rem; color: #4E5968; font-size: .75rem; font-weight: 800; }
+        .delivery-order-toggle i { font-size: .625rem; transition: transform .2s ease; }
+        .delivery-order-toggle[aria-expanded="true"] i { transform: rotate(180deg); }
+        .delivery-order-detail { margin-top: .125rem; padding: .75rem; border-radius: .875rem; background: var(--delivery-soft); }
+        .delivery-order-detail-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; color: var(--delivery-sub); font-size: .6875rem; line-height: 1.5; }
+        .delivery-order-detail-row + .delivery-order-detail-row { margin-top: .375rem; }
+        .delivery-order-detail-row strong { color: var(--delivery-text); font-weight: 800; text-align: right; }
+        .delivery-map-shell { position: relative; min-height: 16rem; flex: 1; overflow: hidden; background: #E8EDF0; }
+        #member-delivery-map { position: absolute; inset: 0; z-index: 2; }
+        .delivery-map-route-layer { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+        .delivery-map-route-layer path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .delivery-map-marker-layer { position: absolute; inset: 0; z-index: 4; overflow: hidden; pointer-events: none; }
+        .delivery-map-fallback { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .625rem; padding: 2rem; color: #6B7684; background: linear-gradient(145deg,#EDF1F3,#DCE5E8); text-align: center; }
+        .delivery-map-fallback i { color: #31C5BD; font-size: 2rem; }
+        .delivery-map-fallback strong { color: #333D4B; font-size: .8125rem; }
+        .delivery-map-fallback span { font-size: .6875rem; line-height: 1.5; }
+        .delivery-map-label { padding: .35rem .55rem; border-radius: .625rem; color: #FFF; background: #333D4B; box-shadow: 0 .25rem .75rem rgba(15,23,42,.2); font: 800 .6875rem/1 Pretendard,sans-serif; white-space: nowrap; }
+        .delivery-map-rider { width: 5.5rem; height: 5.5rem; display: grid; place-items: center; background: transparent; filter: drop-shadow(0 .25rem .35rem rgba(15,23,42,.28)); }
+        .delivery-map-marker-layer .delivery-map-rider { position: absolute; z-index: 2; transform: translate(-50%,-50%); }
+        .delivery-map-rider img { width: 100%; height: 100%; object-fit: contain; }
+        .delivery-map-rider.is-heading-left img { transform: scaleX(-1); }
+        .delivery-map-location-pin { width: 1.875rem; height: 2.375rem; overflow: visible; filter: drop-shadow(0 .125rem .1875rem rgba(15,23,42,.24)); }
+        .delivery-map-marker-layer .delivery-map-location-pin { position: absolute; transform: translate(-50%,-100%); }
+        .delivery-map-location-pin path { stroke-width: 1.25; }
+        .delivery-map-location-pin text { font: 800 8.5px Pretendard,sans-serif; letter-spacing: -.15px; text-anchor: middle; dominant-baseline: middle; }
+        .delivery-map-destination-pin path { fill: #D94B56; stroke: #941E2B; }
+        .delivery-map-destination-pin text { fill: #FFF; }
+        .delivery-map-departure-pin path { fill: #A7E57A; stroke: #337A37; }
+        .delivery-map-departure-pin text { fill: #245A2B; }
+        .delivery-map-marker-layer .delivery-map-departure-pin { z-index: 1; }
+        .delivery-map-marker-layer .delivery-map-destination-pin { z-index: 3; }
+        .delivery-map-zoom { position: absolute; z-index: 5; right: .75rem; bottom: max(.75rem,env(safe-area-inset-bottom)); display: flex; flex-direction: column; overflow: hidden; border: .0625rem solid rgba(15,23,42,.1); border-radius: .75rem; background: rgba(255,255,255,.94); box-shadow: 0 .25rem .875rem rgba(15,23,42,.18); }
+        .delivery-map-zoom button { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; color: #333D4B; font-size: .875rem; }
+        .delivery-map-zoom button + button { border-top: .0625rem solid rgba(15,23,42,.1); }
+        .delivery-route-attribution { position: absolute; z-index: 5; top: .5rem; left: .5rem; padding: .2rem .35rem; border-radius: .3rem; color: #4E5968; background: rgba(255,255,255,.8); font-size: .5rem; font-weight: 650; }
+        .delivery-nowbar { position: fixed; z-index: 49; bottom: 5.375rem; left: 50%; width: min(calc(100vw - 1.5rem),26rem); min-height: 4.25rem; padding: .55rem .75rem .5rem .55rem; display: grid; grid-template-columns: 3rem minmax(0,1fr) auto; grid-template-rows: auto auto; align-items: center; column-gap: .625rem; overflow: hidden; border: .0625rem solid rgba(255,255,255,.12); border-radius: 1.375rem; color: #FFF; background: rgba(12,18,30,.94); box-shadow: 0 .625rem 1.75rem rgba(2,6,23,.32),inset 0 .0625rem 0 rgba(255,255,255,.1); backdrop-filter: blur(1.25rem) saturate(150%); -webkit-backdrop-filter: blur(1.25rem) saturate(150%); transform: translateX(-50%); }
+        .delivery-nowbar.hidden { display: none; }
+        .delivery-nowbar-rider { grid-row: 1 / 3; width: 3rem; height: 3rem; display: grid; place-items: center; }
+        .delivery-nowbar-rider img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 .15rem .2rem rgba(0,0,0,.28)); }
+        .delivery-nowbar-copy { min-width: 0; align-self: end; text-align: left; }
+        .delivery-nowbar-copy strong { display: block; overflow: hidden; font-size: .75rem; font-weight: 850; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+        .delivery-nowbar-copy span { display: block; margin-top: .1rem; overflow: hidden; color: #A8B3C4; font-size: .625rem; font-weight: 650; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+        .delivery-nowbar-time { grid-row: 1 / 3; min-width: 4.75rem; color: #8BC0FF; text-align: right; }
+        .delivery-nowbar-time span { display: block; font-size: .5rem; font-weight: 700; }
+        .delivery-nowbar-time strong { display: block; margin-top: .15rem; font-size: .75rem; font-weight: 900; white-space: nowrap; }
+        .delivery-nowbar-progress { position: relative; height: .2rem; align-self: start; overflow: hidden; border-radius: 62.5rem; background: rgba(255,255,255,.16); }
+        .delivery-nowbar-progress span { position: absolute; inset: 0 auto 0 0; width: var(--delivery-nowbar-progress,0%); border-radius: inherit; background: #3182F6; transition: width .4s ease; }
+        body.has-delivery-nowbar #home-screen { padding-bottom: 11rem !important; }
+        @media (prefers-color-scheme: dark) {
+            .delivery-tracking-progress::before,.delivery-tracking-step::before { background: #41464D; }
+            .delivery-eta { color: #8BC0FF; background: rgba(49,130,246,.2); }
+            .delivery-order-toggle { color: #B0B8C1; }
+        }
 
         /* 내 프로필 전용 픽셀 다마고치 */
         #tamagotchi-screen {
@@ -614,6 +752,10 @@
             .profile-action-popover { color: #191F28; background: rgba(255,255,255,.9); border-color: rgba(15,23,42,.08); box-shadow: 0 1.125rem 3rem rgba(15,23,42,.18); }
             .profile-action-item:active { background: rgba(15,23,42,.05); }
             .profile-point-balance { color: #D99000; }
+            #member-delivery-screen { --delivery-bg: #F2F2F7; --delivery-surface: #FFF; --delivery-soft: rgba(15,23,42,.045); --delivery-border: rgba(15,23,42,.08); --delivery-text: #191F28; --delivery-sub: #8B95A1; }
+            .delivery-card { box-shadow: 0 .375rem 1.25rem rgba(15,23,42,.06); }
+            .delivery-step::before { border-color: #FFF; }
+            .delivery-step::after { background: #D1D6DB; }
         }
         @media (max-height: 42rem) { .pet-hero { min-height: 11.5rem; } .pet-mover { width: 7rem; height: 7rem; } .pet-status-card { padding-block: .35rem; } }
         @media (prefers-reduced-motion: reduce) { .profile-action-popover, .pet-sprite, .pet-mover, .pet-prop { animation: none !important; transition-duration: .01ms !important; } }
@@ -2565,6 +2707,14 @@
         .home-side-menu-item-icon.is-scholarship { color: #F59E0B; background: rgba(245,158,11,.12); }
         .home-side-menu-item-icon.is-youth { color: #10B981; background: rgba(16,185,129,.12); }
         .home-side-menu-item-icon.is-tutorial { color: #EC4899; background: rgba(236,72,153,.12); }
+        .home-side-menu-account {
+            margin-top: .375rem;
+            padding-top: .375rem;
+            border-top: .0625rem solid rgba(255,255,255,.08);
+        }
+        .home-side-menu-item-icon.is-logout { color: #B0B8C1; background: rgba(176,184,193,.12); }
+        .home-side-menu-item-icon.is-withdraw { color: #F87171; background: rgba(248,113,113,.12); }
+        .home-side-menu-item.is-danger .home-side-menu-item-title { color: #F87171; }
         .home-side-menu-item-copy { min-width: 0; flex: 1; }
         .home-side-menu-item-title { display: block; color: #F2F4F6; font-size: .8125rem; font-weight: 850; }
         .home-side-menu-item-chevron { color: #6B7684; font-size: .6875rem; }
@@ -2610,6 +2760,9 @@
         .notion-info-back:active { transform: scale(.94); background: rgba(255,255,255,.14); }
         .notion-info-content { --notion-toolbar-crop: 3.5rem; position: relative; min-height: 0; flex: 1; overflow: hidden; background: #191919; }
         .notion-info-loader { position: absolute; inset: 0; z-index: 0; display: grid; place-items: center; color: #3182F6; background: #191919; }
+        .notion-info-empty { position: absolute; inset: 0; z-index: 1; display: none; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; padding: 2rem; color: #8B95A1; text-align: center; }
+        .notion-info-empty i { color: #F87171; font-size: 2rem; }
+        .notion-info-empty strong { color: #F2F4F6; font-size: 1rem; }
         .notion-info-frame { position: relative; z-index: 1; width: 100%; height: calc(100% + var(--notion-toolbar-crop)); display: block; border: 0; background: #191919; transform: translateY(calc(-1 * var(--notion-toolbar-crop))); }
         @media (prefers-color-scheme: light) {
             #notion-info-screen,
@@ -2618,6 +2771,7 @@
             .notion-info-loader,
             .notion-info-frame { background: #FFF; }
             #notion-info-screen { color: #37352F; }
+            .notion-info-empty strong { color: #191F28; }
             .notion-info-back { color: #37352F; background: #F1F1EF; }
             .notion-info-back:active { background: #E9E9E7; }
         }
@@ -5976,9 +6130,8 @@
             <span class="home-wordmark" aria-hidden="true">
                 <img src="assets/enjoy-wordmark.png" alt="">
             </span>
-            <div class="home-account-actions" aria-label="계정 메뉴">
-                <button type="button" class="home-account-action" aria-label="로그아웃" title="로그아웃" onclick="window.haptic(); window.enjoyConfirm('로그아웃 하시겠어요?', { title: '로그아웃', confirmText: '로그아웃' }).then(function (confirmed) { if (confirmed) window.enjoyLogout && window.enjoyLogout(); });"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></button>
-                <button id="home-withdraw" type="button" class="home-account-action home-account-action--danger hidden" aria-label="회원 탈퇴" title="회원 탈퇴" onclick="window.haptic(); window.enjoyConfirm('정말 탈퇴하시겠어요?\n계정과 프로필 연결이 해제되고, 다시 로그인하면 프로필을 새로 입력해야 해요.', { title: '회원 탈퇴', confirmText: '탈퇴', danger: true }).then(function (confirmed) { if (confirmed) window.enjoyWithdraw && window.enjoyWithdraw(); });"><i class="fa-solid fa-user-xmark" aria-hidden="true"></i></button>
+            <div class="home-account-actions">
+                <button type="button" class="home-account-action" aria-label="공지사항" title="공지사항" onclick="window.haptic && window.haptic(); window.openNoticeInfo && window.openNoticeInfo();"><i class="fa-solid fa-heart" aria-hidden="true"></i></button>
             </div>
         </header>
         
@@ -6532,6 +6685,13 @@
         </div>
 
 
+        <button id="delivery-nowbar" type="button" class="delivery-nowbar hidden" onclick="window.haptic && window.haptic(); window.openHomeDeliveryNowBar()" aria-label="내 배달 현황 열기">
+            <span class="delivery-nowbar-rider"><img src="delivery-rider-secretary-blue-transparent.png" alt=""></span>
+            <span class="delivery-nowbar-copy"><strong id="delivery-nowbar-title">배달 중이에요</strong><span id="delivery-nowbar-subtitle">엔조이 비서실장이 이동 중입니다</span></span>
+            <span class="delivery-nowbar-time"><span>남은 시간</span><strong id="delivery-nowbar-time">0시간00분</strong></span>
+            <span id="delivery-nowbar-progress" class="delivery-nowbar-progress"><span></span></span>
+        </button>
+
         <div class="app-copyright-slot pt-8 pb-4"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
     </main>
 
@@ -6564,6 +6724,16 @@
                     <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">튜토리얼</span></span>
                     <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
                 </button>
+                <div class="home-side-menu-account" aria-label="계정 메뉴">
+                    <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.enjoyConfirm('로그아웃 하시겠어요?', { title: '로그아웃', confirmText: '로그아웃' }).then(function (confirmed) { if (confirmed) { window.closeHomeSideMenu(false); window.enjoyLogout && window.enjoyLogout(); } });">
+                        <span class="home-side-menu-item-icon is-logout"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></span>
+                        <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">로그아웃</span></span>
+                    </button>
+                    <button id="home-withdraw" type="button" class="home-side-menu-item is-danger hidden" onclick="window.haptic && window.haptic(); window.enjoyConfirm('정말 탈퇴하시겠어요?\n계정과 프로필 연결이 해제되고, 다시 로그인하면 프로필을 새로 입력해야 해요.', { title: '회원 탈퇴', confirmText: '탈퇴', danger: true }).then(function (confirmed) { if (confirmed) { window.closeHomeSideMenu(false); window.enjoyWithdraw && window.enjoyWithdraw(); } });">
+                        <span class="home-side-menu-item-icon is-withdraw"><i class="fa-solid fa-user-xmark" aria-hidden="true"></i></span>
+                        <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">회원 탈퇴</span></span>
+                    </button>
+                </div>
             </div>
         </nav>
     </aside>
@@ -6575,6 +6745,7 @@
         </header>
         <div class="notion-info-content">
             <div id="notion-info-loader" class="notion-info-loader" aria-hidden="true"><i class="fa-solid fa-circle-notch fa-spin text-2xl"></i></div>
+            <div id="notion-info-empty" class="notion-info-empty" role="status"><i class="fa-solid fa-heart" aria-hidden="true"></i><strong>공지사항을 준비 중이에요.</strong></div>
             <iframe id="notion-info-frame" class="notion-info-frame" title="장학금 정보" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
     </section>
@@ -6746,25 +6917,41 @@
         const scholarshipNotionUrl = 'https://acidic-shrine-eca.notion.site/ebd/387e076714e4807e8877d2161202afd1';
         const youthBenefitsNotionUrl = 'https://acidic-shrine-eca.notion.site/ebd/387e076714e480e9b882e9174bff2a71';
         const tutorialNotionUrl = 'https://acidic-shrine-eca.notion.site/ebd/286e076714e48073bbc2dd67b11c10c8';
+        const noticeNotionUrl = 'https://acidic-shrine-eca.notion.site/ebd/11fe076714e4808380afe732caa380da';
 
-        window.openNotionInfo = function (title, url) {
+        window.openNotionInfo = function (title, url, emptyMessage) {
             window.closeHomeSideMenu(false);
             const screen = document.getElementById('notion-info-screen');
             const frame = document.getElementById('notion-info-frame');
             const loader = document.getElementById('notion-info-loader');
+            const empty = document.getElementById('notion-info-empty');
             const home = document.getElementById('home-screen');
             const bottomNav = document.getElementById('bottom-nav');
-            if (!screen || !frame || !url) return;
+            if (!screen || !frame) return;
 
             frame.title = title || '생활정보';
-            if (frame.getAttribute('src') !== url) {
+            if (!url) {
+                frame.onload = null;
+                frame.removeAttribute('src');
+                frame.style.display = 'none';
+                if (loader) loader.style.display = 'none';
+                if (empty) {
+                    const message = empty.querySelector('strong');
+                    if (message) message.textContent = emptyMessage || '페이지를 준비 중이에요.';
+                    empty.style.display = 'flex';
+                }
+            } else if (frame.getAttribute('src') !== url) {
+                frame.style.display = 'block';
+                if (empty) empty.style.display = 'none';
                 if (loader) loader.style.display = 'grid';
                 frame.onload = function () {
                     if (loader) loader.style.display = 'none';
                 };
                 frame.src = url;
-            } else if (loader) {
-                loader.style.display = 'none';
+            } else {
+                frame.style.display = 'block';
+                if (empty) empty.style.display = 'none';
+                if (loader) loader.style.display = 'none';
             }
 
             document.body.classList.add('notion-info-active');
@@ -6792,6 +6979,10 @@
                 return;
             }
             window.openNotionInfo('튜토리얼', tutorialNotionUrl);
+        };
+
+        window.openNoticeInfo = function () {
+            window.openNotionInfo('공지사항', noticeNotionUrl, '공지사항을 준비 중이에요.');
         };
 
         window.closeNotionInfo = function () {
@@ -7084,12 +7275,62 @@
             <span class="profile-action-copy"><strong>다마고치</strong><span>밥 주고 놀아주며 성장시키기</span></span>
             <i class="profile-action-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
         </button>
+        <button id="profile-delivery-action" type="button" class="profile-action-item hidden" onclick="window.haptic && window.haptic(); window.openSelectedMemberDelivery()">
+            <span class="profile-action-icon is-delivery"><i class="fa-solid fa-truck-fast" aria-hidden="true"></i></span>
+            <span class="profile-action-copy"><strong>엔조이 배달 현황</strong><span>스크래치 당첨 상품 확인하기</span></span>
+            <i class="profile-action-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </button>
         <div id="profile-point-status" class="profile-point-status" aria-label="멤버 포인트 현황">
             <span class="profile-point-icon"><i class="fa-solid fa-coins" aria-hidden="true"></i></span>
             <span class="profile-point-copy"><strong>포인트 현황</strong><span>현재 보유 포인트</span></span>
             <strong id="profile-point-balance" class="profile-point-balance">0 P</strong>
         </div>
     </div>
+
+    <!-- 전시기·류짱 스크래치 당첨 상품 배달 현황 -->
+    <section id="member-delivery-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" aria-hidden="true">
+        <header class="delivery-tracking-topbar">
+            <button type="button" class="delivery-tracking-icon" onclick="window.haptic && window.haptic(); window.closeMemberDelivery()" aria-label="배달 현황 닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            <button type="button" class="delivery-tracking-icon" onclick="window.haptic && window.haptic(); window.refreshMemberDelivery()" aria-label="배달 현황 새로고침"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
+        </header>
+        <section class="delivery-tracking-summary">
+            <div class="delivery-tracking-heading">
+                <div><h2 id="delivery-tracking-title">배달 중이에요</h2><p id="delivery-tracking-subtitle">엔조이 비서실장이 안전하게 배달 중입니다</p></div>
+                <div class="delivery-eta"><span>도착까지 남은시간</span><strong id="delivery-eta-time">0시간00분</strong></div>
+            </div>
+            <div class="delivery-rider-row">
+                <span class="delivery-rider-copy"><span id="delivery-updated-time">오후 2:38</span><strong id="delivery-rider-name">엔조이 비서실장</strong></span>
+                <span class="delivery-rider-avatar" aria-hidden="true"><img src="delivery-rider-secretary-blue-transparent.png" alt=""></span>
+            </div>
+            <div id="delivery-tracking-progress" class="delivery-tracking-progress" style="--delivery-progress:50%" aria-label="배달 진행 단계">
+                <span class="delivery-tracking-progress-fill" aria-hidden="true"></span>
+                <span class="delivery-tracking-step is-done">당첨 확인</span>
+                <span class="delivery-tracking-step is-done">배달시작</span>
+                <span class="delivery-tracking-step">배달완료</span>
+            </div>
+            <button id="delivery-order-toggle" type="button" class="delivery-order-toggle" aria-expanded="false" aria-controls="delivery-order-detail" onclick="window.toggleDeliveryOrderInfo()">주문정보 열기 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+            <div id="delivery-order-detail" class="delivery-order-detail hidden">
+                <div class="delivery-order-detail-row"><span>받는 멤버</span><strong id="delivery-order-member">전시기</strong></div>
+                <div class="delivery-order-detail-row"><span>당첨 상품</span><strong id="delivery-order-prize">스크래치 당첨 상품</strong></div>
+                <div class="delivery-order-detail-row"><span>현재 상태</span><strong id="delivery-order-status">배달 중</strong></div>
+            </div>
+        </section>
+        <div class="delivery-map-shell">
+            <div id="member-delivery-map-fallback" class="delivery-map-fallback"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i><strong>카카오 지도를 불러오는 중이에요.</strong><span>여행기록과 같은 지도 설정을 사용합니다.</span></div>
+            <div id="member-delivery-map" aria-label="당첨 상품 배달 위치 지도"></div>
+            <svg class="delivery-map-route-layer" aria-hidden="true"><path id="delivery-route-outline" stroke="#00358F" stroke-width="12.8"></path><path id="delivery-route-line" stroke="#1670FF" stroke-width="8"></path></svg>
+            <div class="delivery-map-marker-layer" aria-hidden="true">
+                <div id="delivery-map-rider-marker" class="delivery-map-rider"><img src="delivery-rider-secretary-blue-transparent.png" alt=""></div>
+                <svg id="delivery-map-departure-marker" class="delivery-map-location-pin delivery-map-departure-pin" viewBox="0 0 30 38"><path d="M15 37C12.8 31.8 3 24 3 15A12 12 0 0 1 27 15C27 24 17.2 31.8 15 37Z"></path><text x="15" y="15.5">출발</text></svg>
+                <svg id="delivery-map-destination-marker" class="delivery-map-location-pin delivery-map-destination-pin" viewBox="0 0 30 38"><path d="M15 37C12.8 31.8 3 24 3 15A12 12 0 0 1 27 15C27 24 17.2 31.8 15 37Z"></path><text x="15" y="15.5">도착</text></svg>
+            </div>
+            <span class="delivery-route-attribution">경로 © OpenStreetMap contributors</span>
+            <div class="delivery-map-zoom" aria-label="지도 확대 및 축소">
+                <button type="button" onclick="window.zoomMemberDeliveryMap('in')" aria-label="지도 확대"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+                <button type="button" onclick="window.zoomMemberDeliveryMap('out')" aria-label="지도 축소"><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
+            </div>
+        </div>
+    </section>
 
     <!-- 로그인한 내 프로필 전용 다마고치 화면 -->
     <section id="tamagotchi-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" aria-hidden="true">
@@ -9050,6 +9291,8 @@
                     won: !!record.won,
                     matchCount: Number(record.matchCount) || 0,
                     prizeAmount: Number(record.prizeAmount) || 0,
+                    deliveryStatus: record.won ? 'preparing' : '',
+                    deliveryUpdatedAt: record.won ? record.createdAt : 0,
                     createdAt: record.createdAt
                 };
                 payload['scratchUsageByCard.' + card.resultKey] = normalizeScratchUsage(memberScratchUsage[card.id]);
@@ -15320,9 +15563,9 @@
 
         /* ----- 로그인 사용자: 홈 회원 탈퇴 버튼 표시 ----- */
         function updateProfileCard() {
-            if (!window.enjoyUser) return;
             const homeWd = $('home-withdraw');
-            if (homeWd) homeWd.classList.toggle('hidden', false);
+            if (homeWd) homeWd.classList.toggle('hidden', !window.enjoyUser);
+            if (window.renderHomeDeliveryNowBar) window.renderHomeDeliveryNowBar();
         }
 
         /* ----- 멤버 트레이: 7명 멤버 항상 표시 + 활동 상태 ----- */
@@ -15379,6 +15622,222 @@
 
         let profileMenuMemberName = '';
         let profileMenuPreviousFocus = null;
+        const deliveryMemberNames = new Set(['전시기', '류짱']);
+        const deliveryPrizeMeta = {
+            penaltyWaiver: { title: '부과금 면제권', icon: 'fa-ticket-simple' },
+            'penalty-waiver': { title: '부과금 면제권', icon: 'fa-ticket-simple' },
+            baeminGift: { title: '배달의민족 5천원 상품권', icon: 'fa-utensils' },
+            'baemin-gift': { title: '배달의민족 5천원 상품권', icon: 'fa-utensils' },
+            cashPrize: { title: '엔조이 현금 당첨금', icon: 'fa-sack-dollar' },
+            'cash-prize': { title: '엔조이 현금 당첨금', icon: 'fa-sack-dollar' }
+        };
+        // 상품 출발지는 왜관역, 배달지는 멤버별 교통 거점을 사용한다.
+        const deliveryTrackingProfiles = {
+            '전시기': {
+                riderName: '엔조이 비서실장',
+                departureAt: '2026-08-28T18:20:00+09:00',
+                arrivalAt: '2026-08-30T21:00:00+09:00',
+                arrivalLabel: '일요일 21:00',
+                sourceName: '왜관역',
+                destinationName: '대전역',
+                source: { lat: 35.9922599, lng: 128.399975 },
+                destination: { lat: 36.3313, lng: 127.4330 },
+                route: [
+                    [35.9922599,128.399975],[35.992261,128.399482],[36.006513,128.387876],[36.017072,128.387584],[36.040879,128.358786],[36.065473,128.274005],
+                    [36.092982,128.236566],[36.097468,128.201948],[36.128794,128.120993],[36.131235,128.108014],[36.127942,128.095066],[36.135101,128.093706],
+                    [36.143582,128.043771],[36.164714,128.017602],[36.209366,127.997927],[36.21133,127.943293],[36.222536,127.919661],[36.216827,127.892919],
+                    [36.219936,127.880559],[36.236619,127.856168],[36.257124,127.851434],[36.271799,127.828743],[36.281762,127.792373],[36.267751,127.758448],
+                    [36.281033,127.688151],[36.282433,127.649454],[36.292702,127.633265],[36.295218,127.602075],[36.312578,127.566559],[36.35042,127.511841],
+                    [36.351354,127.499125],[36.344811,127.482362],[36.317278,127.471821],[36.321709,127.437849],[36.33126,127.433019],[36.3313,127.433]
+                ]
+            },
+            '류짱': {
+                riderName: '엔조이 비서실장',
+                departureAt: '2026-08-28T18:20:00+09:00',
+                arrivalAt: '2026-08-30T21:00:00+09:00',
+                arrivalLabel: '일요일 21:00',
+                sourceName: '왜관역',
+                destinationName: '유·스퀘어',
+                source: { lat: 35.9922599, lng: 128.399975 },
+                destination: { lat: 35.1609874, lng: 126.877718 },
+                route: [
+                    [35.9922599,128.399975],[35.992261,128.399482],[35.979781,128.398697],[35.982785,128.384508],[35.954107,128.322666],[35.914908,128.292805],
+                    [35.913812,128.251413],[35.892105,128.192983],[35.879198,128.18112],[35.829423,128.190037],[35.7955,128.13928],[35.778832,128.144263],
+                    [35.73109,128.121438],[35.725735,128.098535],[35.69913,128.07459],[35.707335,128.066452],[35.70275,128.04012],[35.710334,128.015735],
+                    [35.703878,128.026418],[35.701559,128.004873],[35.711013,127.979708],[35.700318,127.946709],[35.646026,127.923556],[35.615846,127.884682],
+                    [35.548994,127.829253],[35.550691,127.799139],[35.532345,127.762296],[35.543324,127.699132],[35.537424,127.650643],[35.521707,127.616707],
+                    [35.483955,127.588748],[35.474203,127.548457],[35.490724,127.502298],[35.46899,127.455254],[35.444068,127.435757],[35.42799,127.366595],
+                    [35.387255,127.277943],[35.384483,127.230815],[35.366572,127.191451],[35.363326,127.097308],[35.336683,127.065025],[35.317501,127.00803],
+                    [35.293178,126.983604],[35.225051,126.959616],[35.202621,126.930587],[35.183609,126.927003],[35.184649,126.898704],[35.17182,126.89668],
+                    [35.173265,126.884466],[35.160676,126.877707],[35.1609874,126.877718]
+                ]
+            }
+        };
+        // OSRM 도로 주행 경로(2026-08-28 조회)를 약 15m 이내 오차로 단순화한 좌표다.
+        deliveryTrackingProfiles['전시기'].route = [
+            [35.992261,128.399482],[35.992171,128.399139],[35.992446,128.399094],[35.99682,128.398985],[35.99823,128.39779],
+            [35.999102,128.397606],[35.999723,128.397103],[36.002655,128.391046],[36.006513,128.387876],[36.007572,128.387534],
+            [36.009004,128.387529],[36.012621,128.388896],[36.01378,128.389069],[36.015329,128.388713],[36.017072,128.387584],
+            [36.019935,128.384756],[36.023851,128.381546],[36.024587,128.380457],[36.025405,128.378059],[36.027299,128.375991],
+            [36.02895,128.373031],[36.034195,128.368447],[36.037065,128.363665],[36.03978,128.36058],[36.040879,128.358786],
+            [36.042196,128.355753],[36.04309,128.35116],[36.045601,128.345559],[36.05458,128.316846],[36.055284,128.313222],
+            [36.055998,128.304782],[36.059951,128.296141],[36.064021,128.285179],[36.064423,128.282812],[36.064782,128.276469],
+            [36.065473,128.274005],[36.066727,128.271838],[36.072373,128.264231],[36.076555,128.259956],[36.082913,128.249252],
+            [36.084599,128.247526],[36.088296,128.245377],[36.089823,128.243557],[36.092982,128.236566],[36.093511,128.234331],
+            [36.094058,128.229961],[36.097196,128.221551],[36.097608,128.219858],[36.096848,128.205835],[36.097468,128.201948],
+            [36.104052,128.18239],[36.109836,128.171185],[36.114037,128.158288],[36.118642,128.148931],[36.118954,128.146499],
+            [36.118507,128.144317],[36.118626,128.143832],[36.123161,128.140755],[36.123584,128.140117],[36.123733,128.139308],
+            [36.123575,128.135517],[36.124777,128.130759],[36.125687,128.127855],[36.128794,128.120993],[36.12882,128.119659],
+            [36.128437,128.118156],[36.128865,128.115245],[36.130806,128.111369],[36.131156,128.109861],[36.131235,128.108014],
+            [36.130306,128.103351],[36.127942,128.095066],[36.128916,128.094712],[36.133342,128.094833],[36.134695,128.094255],
+            [36.135101,128.093706],[36.135115,128.092897],[36.134333,128.091118],[36.134212,128.089596],[36.135012,128.07986],
+            [36.142651,128.046442],[36.143582,128.043771],[36.152384,128.030795],[36.162684,128.019446],[36.164714,128.017602],
+            [36.167102,128.016453],[36.176943,128.014456],[36.179517,128.013564],[36.182621,128.011395],[36.188299,128.005052],
+            [36.191233,128.003345],[36.193402,128.00267],[36.205245,128.001016],[36.207662,127.999898],[36.209366,127.997927],
+            [36.210093,127.996424],[36.210642,127.994124],[36.211114,127.983962],[36.213012,127.971398],[36.212835,127.968726],
+            [36.210773,127.959927],[36.210364,127.957174],[36.210809,127.947324],[36.21133,127.943293],[36.212126,127.939953],
+            [36.213771,127.936039],[36.22156,127.923234],[36.222196,127.92155],[36.222536,127.919661],[36.222516,127.909726],
+            [36.222195,127.906618],[36.220827,127.90214],[36.217515,127.896048],[36.216827,127.892919],[36.21718,127.889432],
+            [36.219936,127.880559],[36.220913,127.87837],[36.221892,127.877055],[36.2282,127.872404],[36.230312,127.870116],
+            [36.231747,127.867081],[36.233683,127.860109],[36.235129,127.857631],[36.236619,127.856168],[36.238617,127.854975],
+            [36.240703,127.854418],[36.253284,127.853438],[36.254932,127.852903],[36.257124,127.851434],[36.259232,127.848758],
+            [36.264248,127.839772],[36.269516,127.833262],[36.271799,127.828743],[36.272937,127.824826],[36.274836,127.815098],
+            [36.280958,127.799787],[36.281713,127.795724],[36.281762,127.792373],[36.281129,127.788887],[36.279946,127.785759],
+            [36.278991,127.784096],[36.272823,127.775536],[36.269599,127.769745],[36.268641,127.767194],[36.268076,127.764564],
+            [36.267735,127.761511],[36.267751,127.758448],[36.268175,127.755672],[36.269774,127.750142],[36.270829,127.743358],
+            [36.273581,127.733901],[36.274281,127.728655],[36.275686,127.711376],[36.276648,127.704826],[36.278257,127.697785],
+            [36.280656,127.690089],[36.281033,127.688151],[36.281036,127.683748],[36.27958,127.671163],[36.279395,127.666966],
+            [36.279722,127.663699],[36.282433,127.649454],[36.283251,127.646873],[36.284317,127.644892],[36.290944,127.637],
+            [36.291755,127.635703],[36.292702,127.633265],[36.293249,127.629344],[36.292257,127.620676],[36.292237,127.616707],
+            [36.29407,127.606764],[36.295218,127.602075],[36.298966,127.594124],[36.306289,127.579941],[36.312578,127.566559],
+            [36.318059,127.556027],[36.325513,127.545102],[36.33613,127.528536],[36.337135,127.527183],[36.338788,127.52567],
+            [36.344794,127.52201],[36.346339,127.520549],[36.349474,127.515304],[36.35042,127.511841],[36.351578,127.502447],
+            [36.351354,127.499125],[36.350501,127.496421],[36.346141,127.488706],[36.345481,127.48377],[36.344811,127.482362],
+            [36.343454,127.481562],[36.338689,127.481517],[36.332018,127.480352],[36.330085,127.479352],[36.325489,127.475859],
+            [36.319213,127.473386],[36.317738,127.472539],[36.317278,127.471821],[36.317804,127.469205],[36.317964,127.466932],
+            [36.318737,127.465715],[36.318558,127.462581],[36.317455,127.460088],[36.317096,127.458613],[36.317256,127.454639],
+            [36.317474,127.453738],[36.322691,127.442112],[36.321709,127.437849],[36.330839,127.432887],[36.33126,127.433019]
+        ];
+        deliveryTrackingProfiles['류짱'].route = [
+            [35.992261,128.399482],[35.992171,128.399139],[35.989578,128.399539],[35.982845,128.398577],[35.979781,128.398697],
+            [35.979767,128.394521],[35.981538,128.385039],[35.982066,128.384116],[35.982564,128.384163],[35.982801,128.384553],
+            [35.982737,128.38498],[35.98241,128.385156],[35.979711,128.383902],[35.978863,128.383263],[35.977844,128.381806],
+            [35.973,128.37355],[35.97029,128.365363],[35.969331,128.363183],[35.96432,128.355902],[35.959491,128.348065],
+            [35.958357,128.344454],[35.955963,128.326874],[35.955004,128.324194],[35.953963,128.322467],[35.945402,128.311566],
+            [35.943038,128.309293],[35.940903,128.307985],[35.938351,128.307092],[35.928236,128.306056],[35.927085,128.305645],
+            [35.920459,128.301376],[35.919677,128.300093],[35.9189,128.297578],[35.916338,128.295031],[35.914908,128.292805],
+            [35.911739,128.284906],[35.911431,128.283165],[35.91162,128.281801],[35.912119,128.280756],[35.915407,128.277161],
+            [35.916276,128.274356],[35.916094,128.27177],[35.914289,128.26494],[35.914179,128.263061],[35.914609,128.259648],
+            [35.914261,128.253949],[35.913812,128.251413],[35.909663,128.23533],[35.907222,128.230306],[35.9023,128.223666],
+            [35.901638,128.222308],[35.900819,128.21946],[35.900486,128.212226],[35.899602,128.20892],[35.8985,128.206673],
+            [35.896477,128.203594],[35.895206,128.198829],[35.89359,128.195338],[35.892105,128.192983],[35.882385,128.182802],
+            [35.880571,128.181447],[35.879198,128.18112],[35.871606,128.182532],[35.865676,128.184649],[35.861488,128.184087],
+            [35.860274,128.184222],[35.859482,128.184593],[35.858105,128.185923],[35.855163,128.190701],[35.853357,128.191652],
+            [35.852372,128.191703],[35.850882,128.191294],[35.848864,128.189858],[35.847315,128.189328],[35.843474,128.189399],
+            [35.840263,128.189082],[35.83569,128.188128],[35.833981,128.188233],[35.829423,128.190037],[35.829397,128.185707],
+            [35.829054,128.185218],[35.82845,128.185],[35.8278,128.18352],[35.82704,128.18095],[35.82683,128.17839],
+            [35.82404,128.1768],[35.82273,128.17646],[35.822263,128.175129],[35.82122,128.17483],[35.82088,128.17431],
+            [35.81972,128.17129],[35.81782,128.17017],[35.81686,128.16919],[35.81638,128.16754],[35.81514,128.16683],
+            [35.81441,128.16585],[35.8131,128.16526],[35.81242,128.16366],[35.80916,128.16017],[35.80881,128.1585],
+            [35.80575,128.15641],[35.80539,128.15499],[35.80478,128.15406],[35.80504,128.15191],[35.80459,128.15069],
+            [35.80358,128.14908],[35.80416,128.14749],[35.80271,128.14461],[35.80232,128.1443],[35.800976,128.144869],
+            [35.800642,128.143986],[35.7987,128.14289],[35.79786,128.14102],[35.79661,128.14042],[35.7955,128.13928],
+            [35.79429,128.13851],[35.79331,128.13865],[35.79244,128.13813],[35.79142,128.13824],[35.78973,128.1403],
+            [35.78973,128.1414],[35.78954,128.14164],[35.78859,128.14153],[35.78699,128.14349],[35.785972,128.143105],
+            [35.78542,128.1443],[35.785515,128.145288],[35.785161,128.145696],[35.78298,128.145148],[35.7818,128.143678],
+            [35.7811,128.141388],[35.780169,128.14039],[35.779069,128.139768],[35.778181,128.140051],[35.777618,128.140792],
+            [35.778492,128.140764],[35.778895,128.141245],[35.779321,128.142895],[35.77917,128.143963],[35.778832,128.144263],
+            [35.777233,128.14262],[35.774583,128.141469],[35.77315,128.141424],[35.771928,128.140686],[35.770813,128.140499],
+            [35.77014,128.140004],[35.76966,128.139082],[35.768343,128.138895],[35.767313,128.137879],[35.765228,128.136722],
+            [35.764503,128.13884],[35.763734,128.139298],[35.758885,128.138547],[35.758092,128.13639],[35.756019,128.136227],
+            [35.754933,128.135738],[35.754068,128.133463],[35.752775,128.132101],[35.752265,128.13098],[35.751226,128.129625],
+            [35.750882,128.128285],[35.74995,128.12629],[35.74844,128.12496],[35.745449,128.124172],[35.743856,128.124892],
+            [35.74258,128.124996],[35.741801,128.124665],[35.740811,128.125053],[35.73779,128.12339],[35.735658,128.123614],
+            [35.734482,128.123406],[35.73109,128.121438],[35.73019,128.118634],[35.731712,128.112323],[35.73099,128.11052],
+            [35.731423,128.108787],[35.728902,128.108212],[35.727912,128.109054],[35.727295,128.109097],[35.72593,128.10799],
+            [35.72536,128.10717],[35.72402,128.10642],[35.723747,128.105937],[35.72356,128.10433],[35.72154,128.10267],
+            [35.721719,128.101966],[35.722267,128.101488],[35.723929,128.100394],[35.725384,128.099915],[35.725821,128.099314],
+            [35.725735,128.098535],[35.724108,128.097536],[35.72316,128.097313],[35.721096,128.098061],[35.71983,128.0978],
+            [35.718979,128.09654],[35.716105,128.095468],[35.715912,128.093994],[35.714376,128.092076],[35.713821,128.090653],
+            [35.711885,128.090447],[35.709426,128.088746],[35.708873,128.087733],[35.708533,128.085984],[35.705857,128.084039],
+            [35.704706,128.082496],[35.704674,128.081993],[35.705177,128.081329],[35.705087,128.080921],[35.70338,128.078811],
+            [35.702299,128.078757],[35.701017,128.077515],[35.70014,128.07709],[35.699585,128.076172],[35.69961,128.075244],
+            [35.69913,128.07459],[35.69925,128.07395],[35.69899,128.07304],[35.69985,128.07223],[35.700077,128.071319],
+            [35.702435,128.070191],[35.70377,128.07056],[35.704142,128.070425],[35.704625,128.069134],[35.70504,128.068782],
+            [35.706103,128.069106],[35.706686,128.068995],[35.706926,128.068442],[35.70661,128.067234],[35.707335,128.066452],
+            [35.707262,128.063944],[35.706349,128.063126],[35.70544,128.05698],[35.703918,128.055528],[35.70463,128.05128],
+            [35.704359,128.049215],[35.703331,128.045564],[35.70275,128.04012],[35.703552,128.036544],[35.70513,128.03312],
+            [35.705611,128.030594],[35.705446,128.029158],[35.705613,128.028169],[35.710309,128.019036],[35.710334,128.015735],
+            [35.707593,128.016063],[35.706972,128.01632],[35.705608,128.017775],[35.703127,128.018353],[35.703791,128.022546],
+            [35.704686,128.025676],[35.704458,128.026466],[35.703878,128.026418],[35.703203,128.025056],[35.702596,128.021246],
+            [35.701586,128.004234],[35.701941,128.001686],[35.70272,127.999318],[35.707561,127.988835],[35.710077,127.984076],
+            [35.7108,127.98177],[35.711013,127.979708],[35.710581,127.975359],[35.707127,127.961519],[35.703637,127.952933],
+            [35.700318,127.946709],[35.698445,127.94455],[35.695729,127.943029],[35.693576,127.942735],[35.687849,127.94309],
+            [35.685826,127.942411],[35.684439,127.941331],[35.67663,127.932219],[35.67418,127.93024],[35.671795,127.929045],
+            [35.669993,127.928479],[35.648333,127.924463],[35.646026,127.923556],[35.644351,127.922017],[35.643465,127.920646],
+            [35.640325,127.911683],[35.63967,127.910214],[35.638415,127.908349],[35.615846,127.884682],[35.614183,127.883298],
+            [35.611397,127.882056],[35.606384,127.881778],[35.604119,127.881149],[35.595821,127.875656],[35.594194,127.874108],
+            [35.592675,127.872028],[35.588372,127.862196],[35.586146,127.858835],[35.584026,127.856372],[35.576093,127.849232],
+            [35.567995,127.844187],[35.562861,127.839727],[35.551386,127.831823],[35.548994,127.829253],[35.547756,127.826074],
+            [35.547471,127.823483],[35.548237,127.816829],[35.550497,127.810292],[35.551202,127.807175],[35.551332,127.802769],
+            [35.550691,127.799139],[35.549912,127.796949],[35.546298,127.7894],[35.542871,127.784403],[35.534488,127.769531],
+            [35.533109,127.766209],[35.532345,127.762296],[35.532292,127.759244],[35.532696,127.751702],[35.534352,127.735946],
+            [35.535327,127.732165],[35.540384,127.720309],[35.541613,127.716309],[35.542099,127.713574],[35.542659,127.704938],
+            [35.543324,127.699132],[35.543213,127.69437],[35.539359,127.666603],[35.538381,127.655727],[35.537424,127.650643],
+            [35.534961,127.643889],[35.531062,127.635251],[35.523903,127.619876],[35.521707,127.616707],[35.514221,127.608449],
+            [35.510379,127.605358],[35.508156,127.604168],[35.506203,127.6035],[35.498302,127.601865],[35.496747,127.601425],
+            [35.494624,127.600276],[35.486587,127.592744],[35.484826,127.590563],[35.483955,127.588748],[35.48319,127.585031],
+            [35.483095,127.571947],[35.482764,127.568893],[35.481579,127.565698],[35.477237,127.559048],[35.475333,127.555396],
+            [35.474315,127.55162],[35.474203,127.548457],[35.474832,127.544718],[35.476438,127.540852],[35.479313,127.536776],
+            [35.485551,127.530083],[35.48699,127.52794],[35.488103,127.525537],[35.489227,127.521558],[35.491079,127.508957],
+            [35.491139,127.505418],[35.490724,127.502298],[35.488423,127.495697],[35.484762,127.488136],[35.482137,127.484485],
+            [35.476772,127.478992],[35.474901,127.476338],[35.473563,127.473855],[35.472415,127.470951],[35.471487,127.467522],
+            [35.470255,127.458217],[35.46899,127.455254],[35.4676,127.453707],[35.466323,127.452919],[35.464893,127.452505],
+            [35.46107,127.452441],[35.458676,127.451215],[35.457467,127.449872],[35.454678,127.44541],[35.453242,127.443623],
+            [35.451535,127.442136],[35.446079,127.438589],[35.445048,127.43745],[35.444068,127.435757],[35.442244,127.428865],
+            [35.439638,127.422908],[35.43788,127.415658],[35.435813,127.409013],[35.434558,127.405617],[35.430783,127.397624],
+            [35.429874,127.395151],[35.429385,127.392228],[35.429372,127.389763],[35.429687,127.387557],[35.431052,127.382943],
+            [35.431179,127.380557],[35.42799,127.366595],[35.42715,127.365013],[35.425993,127.363702],[35.422017,127.360818],
+            [35.420713,127.358597],[35.416063,127.34259],[35.413708,127.329503],[35.412948,127.326359],[35.41189,127.323551],
+            [35.406597,127.31245],[35.404142,127.301896],[35.403014,127.298709],[35.402194,127.297172],[35.40014,127.294545],
+            [35.393562,127.289216],[35.39189,127.287452],[35.389209,127.283241],[35.387255,127.277943],[35.385796,127.271769],
+            [35.385321,127.264816],[35.385706,127.259748],[35.386875,127.254023],[35.387066,127.250784],[35.386651,127.248162],
+            [35.384927,127.243593],[35.384511,127.241735],[35.384398,127.239698],[35.38495,127.234479],[35.384483,127.230815],
+            [35.382839,127.22573],[35.381712,127.223261],[35.374575,127.212989],[35.373776,127.2108],[35.373076,127.206663],
+            [35.372509,127.204749],[35.367588,127.19502],[35.366572,127.191451],[35.365212,127.17439],[35.365717,127.171358],
+            [35.367735,127.165914],[35.368121,127.163423],[35.368121,127.160832],[35.367254,127.156967],[35.362964,127.146387],
+            [35.362261,127.14264],[35.362428,127.139814],[35.365627,127.125822],[35.366476,127.120958],[35.36639,127.11867],
+            [35.365194,127.11163],[35.364773,127.103418],[35.364017,127.099422],[35.363326,127.097308],[35.361281,127.093209],
+            [35.359671,127.090868],[35.351964,127.083646],[35.34636,127.073778],[35.345348,127.072441],[35.343857,127.071127],
+            [35.340146,127.068956],[35.338805,127.06787],[35.336683,127.065025],[35.335579,127.061786],[35.334224,127.05192],
+            [35.333104,127.046073],[35.331136,127.041439],[35.327986,127.035473],[35.324689,127.026226],[35.322963,127.018288],
+            [35.322058,127.015582],[35.318691,127.009644],[35.317501,127.00803],[35.303405,126.995884],[35.30057,126.992594],
+            [35.296263,126.986276],[35.294802,126.98477],[35.293178,126.983604],[35.29099,126.982693],[35.281906,126.980111],
+            [35.278497,126.978481],[35.273439,126.974943],[35.271466,126.973966],[35.264278,126.972665],[35.260042,126.970596],
+            [35.258003,126.969893],[35.249705,126.969689],[35.247671,126.969265],[35.246075,126.968303],[35.242544,126.96399],
+            [35.241303,126.962904],[35.235339,126.960676],[35.231848,126.959038],[35.229822,126.958749],[35.226324,126.95966],
+            [35.225051,126.959616],[35.224342,126.958905],[35.22365,126.956254],[35.222866,126.954373],[35.221215,126.951981],
+            [35.217954,126.949413],[35.212052,126.945555],[35.209749,126.943301],[35.205239,126.933773],[35.20433,126.932307],
+            [35.202621,126.930587],[35.201017,126.929648],[35.199221,126.929134],[35.190829,126.929149],[35.184971,126.927792],
+            [35.183609,126.927003],[35.182067,126.924666],[35.181672,126.922003],[35.183545,126.911484],[35.184649,126.898704],
+            [35.18049,126.89824],[35.176114,126.896812],[35.17424,126.895708],[35.173426,126.895678],[35.172334,126.896749],
+            [35.17182,126.89668],[35.171018,126.895785],[35.172637,126.889574],[35.173007,126.885297],[35.173265,126.884466],
+            [35.171697,126.884552],[35.158328,126.882862],[35.158357,126.881026],[35.159534,126.881072],[35.159605,126.879691],
+            [35.159871,126.879637],[35.159959,126.878775],[35.160668,126.878037],[35.160676,126.877707]
+        ];
+        let deliveryMap = null;
+        let deliveryMapMemberName = '';
+        let deliveryRouteLatLngPath = [];
+        let deliveryRiderLatLng = null;
+        let deliveryDestinationLatLng = null;
+        let deliveryRiderHeadingLeft = null;
+        let deliveryOverlayFrame = 0;
+        let deliveryMapEventsBound = false;
+        let deliveryKakaoPromise = null;
+        let deliveryTrackingTimer = 0;
+        let deliveryNowbarTimer = 0;
+        let deliveryNowbarPreviewMember = '';
+        let deliveryMapUserZoomed = false;
         let activePetOwner = '';
         let activePetOwnerId = '';
         let activePetState = null;
@@ -15915,16 +16374,372 @@
             pointBalance.textContent = points.toLocaleString('ko-KR') + ' P';
         }
 
+        function normalizeDeliveryStatus(value) {
+            const status = String(value || '').trim().toLowerCase().replace(/[\s_-]/g, '');
+            if (['delivered', 'complete', 'completed', '전달완료', '배달완료'].includes(status)) return 'delivered';
+            if (['shipping', 'shipped', 'intransit', 'delivery', '배달중', '배송중', '발송완료'].includes(status)) return 'shipping';
+            if (['confirmed', 'winnerconfirmed', '당첨확인'].includes(status)) return 'confirmed';
+            return 'preparing';
+        }
+
+        function deliveryStatusInfo(status, hasPrize) {
+            if (!hasPrize) return { index: 0, progress: '0%', label: '당첨 대기', title: '배달 준비 전이에요', subtitle: '당첨 상품이 확인되면 배달 현황이 시작됩니다', eta: '준비 전' };
+            if (status === 'delivered') return { index: 2, progress: '100%', label: '배달 완료', title: '배달이 완료됐어요', subtitle: '당첨 상품이 안전하게 전달되었습니다', eta: '완료' };
+            if (status === 'shipping') return { index: 1, progress: '50%', label: '배달 중', title: '배달 중이에요', subtitle: '엔조이 비서실장이 안전하게 배달 중입니다', eta: '' };
+            return { index: 0, progress: '8%', label: '상품 준비 중', title: '상품을 준비하고 있어요', subtitle: '당첨 상품을 확인하고 포장하고 있습니다', eta: '준비 중' };
+        }
+
+        function memberDeliveryItems(name) {
+            const member = (lastMembers || []).find(function (item) { return item && item.name === name; });
+            const results = member && member.scratchResults && typeof member.scratchResults === 'object' ? member.scratchResults : {};
+            return Object.keys(results).map(function (key) {
+                const result = results[key] || {};
+                if (!result.won) return null;
+                const meta = deliveryPrizeMeta[result.cardId] || deliveryPrizeMeta[key] || { title: result.prize || '스크래치 당첨 상품', icon: 'fa-gift' };
+                const status = normalizeDeliveryStatus(result.deliveryStatus);
+                return {
+                    key: key,
+                    title: result.prize || meta.title,
+                    icon: meta.icon,
+                    status: status,
+                    createdAt: Number(result.deliveryUpdatedAt || result.createdAt) || 0
+                };
+            }).filter(Boolean).sort(function (first, second) { return second.createdAt - first.createdAt; });
+        }
+
+        function deliveryClockLabel() {
+            const now = new Date();
+            const hour = now.getHours();
+            return (hour < 12 ? '오전 ' : '오후 ') + String(hour % 12 || 12) + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+
+        function deliveryRemainingTimeLabel(tracking, now) {
+            const arrival = Date.parse(tracking.arrivalAt);
+            if (!Number.isFinite(arrival)) return '0시간00분';
+            const remainingMinutes = Math.max(0, Math.ceil((arrival - (now == null ? Date.now() : now)) / 60000));
+            const hours = Math.floor(remainingMinutes / 60);
+            const minutes = remainingMinutes % 60;
+            return hours + '시간' + String(minutes).padStart(2, '0') + '분';
+        }
+
+        function homeDeliveryMemberName() {
+            return String(window.enjoyProfileName || (window.enjoyUser && window.enjoyUser.displayName) || '').trim();
+        }
+
+        function homeDeliveryTrackingMemberName() {
+            const signedInName = homeDeliveryMemberName();
+            if (deliveryMemberNames.has(signedInName)) {
+                deliveryNowbarPreviewMember = '';
+                return signedInName;
+            }
+            if (signedInName === '성원제') {
+                if (!deliveryMemberNames.has(deliveryNowbarPreviewMember)) {
+                    const previewMembers = Array.from(deliveryMemberNames);
+                    deliveryNowbarPreviewMember = previewMembers[Math.floor(Math.random() * previewMembers.length)];
+                }
+                return deliveryNowbarPreviewMember;
+            }
+            deliveryNowbarPreviewMember = '';
+            return '';
+        }
+
+        window.renderHomeDeliveryNowBar = function () {
+            const nowbar = document.getElementById('delivery-nowbar');
+            if (!nowbar) return;
+            const signedInName = homeDeliveryMemberName();
+            const name = homeDeliveryTrackingMemberName();
+            const visible = !!window.enjoyUser && deliveryMemberNames.has(name);
+            nowbar.classList.toggle('hidden', !visible);
+            document.body.classList.toggle('has-delivery-nowbar', visible);
+            if (!visible) return;
+
+            const tracking = deliveryTrackingProfiles[name];
+            const progress = deliveryRouteProgress(tracking);
+            const delivered = progress >= 1;
+            const title = document.getElementById('delivery-nowbar-title');
+            const subtitle = document.getElementById('delivery-nowbar-subtitle');
+            const time = document.getElementById('delivery-nowbar-time');
+            const progressBar = document.getElementById('delivery-nowbar-progress');
+            if (title) title.textContent = (signedInName === '성원제' ? name + ' · ' : '') + (delivered ? '배달이 완료됐어요' : '배달 중이에요');
+            if (subtitle) subtitle.textContent = delivered ? '당첨 상품이 안전하게 도착했습니다' : '엔조이 비서실장이 배달 중입니다';
+            if (time) time.textContent = deliveryRemainingTimeLabel(tracking);
+            if (progressBar) progressBar.style.setProperty('--delivery-nowbar-progress', Math.round(progress * 100) + '%');
+            if (!deliveryNowbarTimer) {
+                deliveryNowbarTimer = window.setInterval(function () {
+                    if (window.renderHomeDeliveryNowBar) window.renderHomeDeliveryNowBar();
+                }, 60000);
+            }
+        };
+
+        window.openHomeDeliveryNowBar = function () {
+            const name = homeDeliveryTrackingMemberName();
+            if (!(window.enjoyUser && deliveryMemberNames.has(name))) return;
+            profileMenuMemberName = name;
+            window.openSelectedMemberDelivery();
+        };
+
+        function deliveryRouteProgress(tracking, now) {
+            const departure = Date.parse(tracking.departureAt);
+            const arrival = Date.parse(tracking.arrivalAt);
+            if (!(Number.isFinite(departure) && Number.isFinite(arrival) && arrival > departure)) return 0;
+            return Math.max(0, Math.min(1, ((now == null ? Date.now() : now) - departure) / (arrival - departure)));
+        }
+
+        function deliveryRoutePoints(tracking) {
+            if (Array.isArray(tracking.route) && tracking.route.length > 1) {
+                return tracking.route.map(function (point) { return { lat: Number(point[0]), lng: Number(point[1]) }; });
+            }
+            return [tracking.source, tracking.destination];
+        }
+
+        function deliveryRouteDistance(first, second) {
+            const radians = Math.PI / 180;
+            const lat1 = first.lat * radians;
+            const lat2 = second.lat * radians;
+            const deltaLat = (second.lat - first.lat) * radians;
+            const deltaLng = (second.lng - first.lng) * radians;
+            const value = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+            return 6371000 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+        }
+
+        function deliveryCurrentRiderState(tracking, now) {
+            const progress = deliveryRouteProgress(tracking, now);
+            const points = deliveryRoutePoints(tracking);
+            const segments = [];
+            let totalDistance = 0;
+            for (let index = 1; index < points.length; index += 1) {
+                const distance = deliveryRouteDistance(points[index - 1], points[index]);
+                segments.push(distance);
+                totalDistance += distance;
+            }
+            let remaining = totalDistance * progress;
+            for (let index = 0; index < segments.length; index += 1) {
+                const segmentDistance = segments[index];
+                if (remaining <= segmentDistance || index === segments.length - 1) {
+                    const ratio = segmentDistance > 0 ? Math.max(0, Math.min(1, remaining / segmentDistance)) : 0;
+                    const first = points[index];
+                    const second = points[index + 1];
+                    return {
+                        lat: first.lat + (second.lat - first.lat) * ratio,
+                        lng: first.lng + (second.lng - first.lng) * ratio,
+                        headingLeft: second.lng <= first.lng
+                    };
+                }
+                remaining -= segmentDistance;
+            }
+            const last = points[points.length - 1];
+            const previous = points[points.length - 2] || last;
+            return { lat: last.lat, lng: last.lng, headingLeft: last.lng <= previous.lng };
+        }
+
+        function deliveryCurrentRiderPoint(tracking, now) {
+            const state = deliveryCurrentRiderState(tracking, now);
+            return { lat: state.lat, lng: state.lng };
+        }
+
+        function renderMemberDelivery(name) {
+            const screen = document.getElementById('member-delivery-screen');
+            if (!screen) return;
+            const items = memberDeliveryItems(name);
+            const latest = items[0] || { title: '스크래치 당첨 상품', status: 'shipping', createdAt: Date.now(), isPreview: true };
+            const tracking = deliveryTrackingProfiles[name] || deliveryTrackingProfiles['전시기'];
+            const routeProgress = deliveryRouteProgress(tracking);
+            const scheduledStatus = routeProgress >= 1 ? 'delivered' : routeProgress > 0 ? 'shipping' : latest.status;
+            const status = deliveryStatusInfo(scheduledStatus, true);
+            screen.dataset.member = name;
+            const title = document.getElementById('delivery-tracking-title');
+            const subtitle = document.getElementById('delivery-tracking-subtitle');
+            const eta = document.getElementById('delivery-eta-time');
+            const updated = document.getElementById('delivery-updated-time');
+            const rider = document.getElementById('delivery-rider-name');
+            const progress = document.getElementById('delivery-tracking-progress');
+            const orderMember = document.getElementById('delivery-order-member');
+            const orderPrize = document.getElementById('delivery-order-prize');
+            const orderStatus = document.getElementById('delivery-order-status');
+            if (title) title.textContent = status.title;
+            if (subtitle) subtitle.textContent = status.subtitle;
+            if (eta) eta.textContent = deliveryRemainingTimeLabel(tracking);
+            if (updated) updated.textContent = deliveryClockLabel();
+            if (rider) rider.textContent = tracking.riderName;
+            if (orderMember) orderMember.textContent = name;
+            if (orderPrize) orderPrize.textContent = latest ? latest.title : '확인된 당첨 상품 없음';
+            if (orderStatus) orderStatus.textContent = status.label;
+            if (progress) {
+                progress.style.setProperty('--delivery-progress', scheduledStatus === 'shipping' ? Math.round(50 + routeProgress * 50) + '%' : status.progress);
+                progress.setAttribute('aria-label', '현재 단계: ' + status.label);
+                progress.querySelectorAll('.delivery-tracking-step').forEach(function (step, index) {
+                    step.classList.toggle('is-done', index <= status.index);
+                });
+            }
+        }
+
+        function ensureDeliveryKakaoMap() {
+            if (window.kakao && window.kakao.maps && window.kakao.maps.Map) return Promise.resolve(window.kakao);
+            if (deliveryKakaoPromise) return deliveryKakaoPromise;
+            deliveryKakaoPromise = new Promise(function (resolve, reject) {
+                const existing = document.getElementById('delivery-kakao-map-sdk');
+                const finish = function () {
+                    if (!(window.kakao && window.kakao.maps && typeof window.kakao.maps.load === 'function')) {
+                        reject(new Error('Kakao Maps unavailable'));
+                        return;
+                    }
+                    window.kakao.maps.load(function () {
+                        if (window.kakao.maps.Map) resolve(window.kakao);
+                        else reject(new Error('Kakao Maps unavailable'));
+                    });
+                };
+                if (existing) {
+                    if (window.kakao && window.kakao.maps) {
+                        finish();
+                        return;
+                    }
+                    existing.addEventListener('load', finish, { once: true });
+                    existing.addEventListener('error', reject, { once: true });
+                    return;
+                }
+                const script = document.createElement('script');
+                script.id = 'delivery-kakao-map-sdk';
+                script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=0be88f46eb39dabeacc3414f5af0bb5f&autoload=false&libraries=services';
+                script.onload = finish;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+            return deliveryKakaoPromise;
+        }
+
+        function deliveryMapScreenPoint(latLng) {
+            if (!(deliveryMap && latLng)) return null;
+            const projection = deliveryMap.getProjection && deliveryMap.getProjection();
+            const point = projection && projection.containerPointFromCoords(latLng);
+            if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
+            return point;
+        }
+
+        function renderDeliveryMapOverlayLayer() {
+            deliveryOverlayFrame = 0;
+            if (!deliveryMap) return;
+            const outline = document.getElementById('delivery-route-outline');
+            const line = document.getElementById('delivery-route-line');
+            const riderMarker = document.getElementById('delivery-map-rider-marker');
+            const departureMarker = document.getElementById('delivery-map-departure-marker');
+            const destinationMarker = document.getElementById('delivery-map-destination-marker');
+            const routePath = deliveryRouteLatLngPath.map(deliveryMapScreenPoint).filter(Boolean);
+            const pathData = routePath.map(function (point, index) {
+                return (index ? 'L' : 'M') + point.x.toFixed(1) + ' ' + point.y.toFixed(1);
+            }).join(' ');
+            if (outline) outline.setAttribute('d', pathData);
+            if (line) line.setAttribute('d', pathData);
+
+            const riderPoint = deliveryMapScreenPoint(deliveryRiderLatLng);
+            if (riderMarker && riderPoint) {
+                riderMarker.style.left = riderPoint.x + 'px';
+                riderMarker.style.top = riderPoint.y + 'px';
+                riderMarker.classList.toggle('is-heading-left', !!deliveryRiderHeadingLeft);
+                riderMarker.style.display = '';
+            } else if (riderMarker) riderMarker.style.display = 'none';
+
+            const departurePoint = deliveryMapScreenPoint(deliveryRouteLatLngPath[0]);
+            if (departureMarker && departurePoint) {
+                departureMarker.style.left = departurePoint.x + 'px';
+                departureMarker.style.top = departurePoint.y + 'px';
+                departureMarker.style.display = '';
+            } else if (departureMarker) departureMarker.style.display = 'none';
+
+            const destinationPoint = deliveryMapScreenPoint(deliveryDestinationLatLng);
+            if (destinationMarker && destinationPoint) {
+                destinationMarker.style.left = destinationPoint.x + 'px';
+                destinationMarker.style.top = destinationPoint.y + 'px';
+                destinationMarker.style.display = '';
+            } else if (destinationMarker) destinationMarker.style.display = 'none';
+        }
+
+        function scheduleDeliveryMapOverlayRender() {
+            if (deliveryOverlayFrame) return;
+            deliveryOverlayFrame = window.requestAnimationFrame(renderDeliveryMapOverlayLayer);
+        }
+
+        function updateDeliveryRoute(path) {
+            deliveryRouteLatLngPath = path.slice();
+            scheduleDeliveryMapOverlayRender();
+        }
+
+        function updateDeliveryMapMarkers(rider, destination, headingLeft) {
+            deliveryRiderLatLng = rider;
+            deliveryDestinationLatLng = destination;
+            deliveryRiderHeadingLeft = headingLeft;
+            scheduleDeliveryMapOverlayRender();
+        }
+
+        function updateMemberDeliveryMapPosition(name) {
+            const tracking = deliveryTrackingProfiles[name] || deliveryTrackingProfiles['전시기'];
+            if (!(deliveryMap && window.kakao && window.kakao.maps)) return;
+            const riderState = deliveryCurrentRiderState(tracking);
+            const routePoints = deliveryRoutePoints(tracking);
+            const destinationPoint = routePoints[routePoints.length - 1] || tracking.destination;
+            const rider = new window.kakao.maps.LatLng(riderState.lat, riderState.lng);
+            const destination = new window.kakao.maps.LatLng(destinationPoint.lat, destinationPoint.lng);
+            updateDeliveryMapMarkers(rider, destination, riderState.headingLeft);
+            if (deliveryMapUserZoomed) deliveryMap.setCenter(rider);
+        }
+
+        function drawMemberDeliveryMap(name) {
+            const container = document.getElementById('member-delivery-map');
+            const fallback = document.getElementById('member-delivery-map-fallback');
+            const tracking = deliveryTrackingProfiles[name] || deliveryTrackingProfiles['전시기'];
+            if (!container || !(window.kakao && window.kakao.maps)) return;
+            const riderState = deliveryCurrentRiderState(tracking);
+            const routePoints = deliveryRoutePoints(tracking);
+            const destinationPoint = routePoints[routePoints.length - 1] || tracking.destination;
+            const source = new window.kakao.maps.LatLng(tracking.source.lat, tracking.source.lng);
+            const rider = new window.kakao.maps.LatLng(riderState.lat, riderState.lng);
+            const destination = new window.kakao.maps.LatLng(destinationPoint.lat, destinationPoint.lng);
+            if (!deliveryMap) {
+                deliveryMap = new window.kakao.maps.Map(container, { center: rider, level: 5 });
+                deliveryMap.setZoomable(true);
+                if (!deliveryMapEventsBound && window.kakao.maps.event) {
+                    window.kakao.maps.event.addListener(deliveryMap, 'bounds_changed', scheduleDeliveryMapOverlayRender);
+                    window.kakao.maps.event.addListener(deliveryMap, 'idle', scheduleDeliveryMapOverlayRender);
+                    deliveryMapEventsBound = true;
+                }
+            }
+            deliveryMapMemberName = name;
+            const path = routePoints.map(function (point) { return new window.kakao.maps.LatLng(point.lat, point.lng); });
+            const bounds = new window.kakao.maps.LatLngBounds();
+            path.forEach(function (point) { bounds.extend(point); });
+            bounds.extend(source); bounds.extend(rider); bounds.extend(destination);
+            deliveryMap.relayout();
+            if (deliveryMapUserZoomed) deliveryMap.setCenter(rider);
+            else deliveryMap.setBounds(bounds, 48, 48, 48, 48);
+            updateDeliveryMapMarkers(rider, destination, riderState.headingLeft);
+            updateDeliveryRoute(path);
+            window.requestAnimationFrame(function () {
+                if (deliveryMapMemberName === name) renderDeliveryMapOverlayLayer();
+            });
+            if (fallback) fallback.style.display = 'none';
+        }
+
+        function initMemberDeliveryMap(name) {
+            const fallback = document.getElementById('member-delivery-map-fallback');
+            if (fallback) fallback.style.display = 'flex';
+            ensureDeliveryKakaoMap().then(function () {
+                window.setTimeout(function () { drawMemberDeliveryMap(name); }, 0);
+            }).catch(function () {
+                if (fallback) fallback.innerHTML = '<i class="fa-solid fa-map-location-dot" aria-hidden="true"></i><strong>지도를 불러오지 못했어요.</strong><span>카카오 지도 도메인 설정을 확인해 주세요.</span>';
+            });
+        }
+
         window.openMemberProfileMenu = function (name, trigger) {
             const popover = document.getElementById('profile-action-popover');
             const backdrop = document.getElementById('profile-action-backdrop');
             const title = document.getElementById('profile-action-title');
             const petAction = document.getElementById('profile-pet-action');
+            const deliveryAction = document.getElementById('profile-delivery-action');
             if (!popover || !backdrop || !trigger) return;
             profileMenuMemberName = name || '';
             profileMenuPreviousFocus = trigger;
             if (title) title.textContent = profileMenuMemberName + ' 프로필';
             if (petAction) petAction.classList.toggle('hidden', !canOpenPetProfile(profileMenuMemberName));
+            if (deliveryAction) deliveryAction.classList.toggle('hidden', !deliveryMemberNames.has(profileMenuMemberName));
             updateProfilePointBalance(profileMenuMemberName);
             backdrop.classList.remove('hidden');
             popover.classList.remove('hidden');
@@ -15960,6 +16775,81 @@
             const name = profileMenuMemberName;
             window.closeMemberProfileMenu(false);
             if (name && canOpenPetProfile(name)) window.openTamagotchi(name);
+        };
+
+        window.openSelectedMemberDelivery = function () {
+            const name = profileMenuMemberName;
+            window.closeMemberProfileMenu(false);
+            if (!(name && deliveryMemberNames.has(name))) return;
+            const screen = document.getElementById('member-delivery-screen');
+            if (!screen) return;
+            renderMemberDelivery(name);
+            screen.classList.remove('hidden');
+            screen.classList.add('flex');
+            screen.setAttribute('aria-hidden', 'false');
+            const orderDetail = document.getElementById('delivery-order-detail');
+            const orderToggle = document.getElementById('delivery-order-toggle');
+            if (orderDetail) orderDetail.classList.add('hidden');
+            if (orderToggle) {
+                orderToggle.setAttribute('aria-expanded', 'false');
+                orderToggle.firstChild.nodeValue = '주문정보 열기 ';
+            }
+            deliveryMapUserZoomed = false;
+            initMemberDeliveryMap(name);
+            if (deliveryTrackingTimer) window.clearInterval(deliveryTrackingTimer);
+            deliveryTrackingTimer = window.setInterval(function () {
+                if (screen.classList.contains('hidden')) return;
+                renderMemberDelivery(name);
+                updateMemberDeliveryMapPosition(name);
+            }, 60000);
+        };
+
+        window.toggleDeliveryOrderInfo = function () {
+            const detail = document.getElementById('delivery-order-detail');
+            const toggle = document.getElementById('delivery-order-toggle');
+            if (!detail || !toggle) return;
+            const expanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            toggle.firstChild.nodeValue = expanded ? '주문정보 열기 ' : '주문정보 닫기 ';
+            detail.classList.toggle('hidden', expanded);
+            if (deliveryMap) window.setTimeout(function () {
+                deliveryMap.relayout();
+                updateMemberDeliveryMapPosition(deliveryMapMemberName);
+            }, 220);
+        };
+
+        window.refreshMemberDelivery = function () {
+            const screen = document.getElementById('member-delivery-screen');
+            const name = screen && screen.dataset.member;
+            if (!name) return;
+            renderMemberDelivery(name);
+            initMemberDeliveryMap(name);
+        };
+
+        window.zoomMemberDeliveryMap = function (direction) {
+            const screen = document.getElementById('member-delivery-screen');
+            const name = screen && screen.dataset.member;
+            if (!(name && deliveryMap && window.kakao && window.kakao.maps)) return;
+            const tracking = deliveryTrackingProfiles[name] || deliveryTrackingProfiles['전시기'];
+            const riderPoint = deliveryCurrentRiderPoint(tracking);
+            const riderCenter = new window.kakao.maps.LatLng(riderPoint.lat, riderPoint.lng);
+            const levelDelta = direction === 'in' ? -1 : 1;
+            const nextLevel = Math.max(1, Math.min(14, deliveryMap.getLevel() + levelDelta));
+            deliveryMapUserZoomed = true;
+            deliveryMap.setLevel(nextLevel, { anchor: riderCenter, animate: true });
+            deliveryMap.setCenter(riderCenter);
+        };
+
+        window.closeMemberDelivery = function () {
+            const screen = document.getElementById('member-delivery-screen');
+            if (!screen) return;
+            screen.classList.add('hidden');
+            screen.classList.remove('flex');
+            screen.setAttribute('aria-hidden', 'true');
+            if (deliveryTrackingTimer) {
+                window.clearInterval(deliveryTrackingTimer);
+                deliveryTrackingTimer = 0;
+            }
         };
 
         window.openTamagotchi = async function (requestedOwner) {
@@ -16207,9 +17097,11 @@
 
         document.addEventListener('keydown', function (event) {
             if (event.key !== 'Escape') return;
+            const deliveryScreen = document.getElementById('member-delivery-screen');
             const petScreen = document.getElementById('tamagotchi-screen');
             const profileMenu = document.getElementById('profile-action-popover');
-            if (petScreen && !petScreen.classList.contains('hidden')) window.closeTamagotchi();
+            if (deliveryScreen && !deliveryScreen.classList.contains('hidden')) window.closeMemberDelivery();
+            else if (petScreen && !petScreen.classList.contains('hidden')) window.closeTamagotchi();
             else if (profileMenu && !profileMenu.classList.contains('hidden')) window.closeMemberProfileMenu();
         });
         // 로그인/Firebase 초기화 전에도 빈 영역으로 남지 않도록 기본 멤버 목록을 먼저 표시한다.
@@ -16228,6 +17120,10 @@
                     const profileMenu = document.getElementById('profile-action-popover');
                     if (profileMenuMemberName && profileMenu && !profileMenu.classList.contains('hidden')) {
                         updateProfilePointBalance(profileMenuMemberName);
+                    }
+                    const deliveryScreen = document.getElementById('member-delivery-screen');
+                    if (deliveryScreen && !deliveryScreen.classList.contains('hidden') && deliveryScreen.dataset.member) {
+                        renderMemberDelivery(deliveryScreen.dataset.member);
                     }
                     if (!activePetCanEdit && !activePetIsAdminTest && activePetOwnerId && activePetState) {
                         const viewedMember = arr.find(function (item) { return item && String(item.uid || '') === String(activePetOwnerId); });
