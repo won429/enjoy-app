@@ -580,18 +580,27 @@
         .delivery-map-zoom button { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; color: #333D4B; font-size: .875rem; }
         .delivery-map-zoom button + button { border-top: .0625rem solid rgba(15,23,42,.1); }
         .delivery-route-attribution { position: absolute; z-index: 5; top: .5rem; left: .5rem; padding: .2rem .35rem; border-radius: .3rem; color: #4E5968; background: rgba(255,255,255,.8); font-size: .5rem; font-weight: 650; }
-        .delivery-nowbar { position: fixed; z-index: 49; bottom: 6.25rem; left: 50%; width: min(calc(100vw - 2.5rem),22rem); min-height: 3.5rem; padding: .4rem .7rem .4rem .45rem; display: grid; grid-template-columns: 2.5rem minmax(0,1fr) auto; grid-template-rows: auto auto; align-items: center; column-gap: .5rem; overflow: hidden; border: 0; border-radius: 62.5rem; color: #FFF; background: rgba(12,18,30,.94); box-shadow: 0 .5rem 1.375rem rgba(2,6,23,.3),inset 0 .0625rem 0 rgba(255,255,255,.08); backdrop-filter: blur(1.25rem) saturate(150%); -webkit-backdrop-filter: blur(1.25rem) saturate(150%); transform: translateX(-50%); }
+        .delivery-nowbar { position: fixed; z-index: 49; bottom: 6.25rem; left: 50%; width: min(calc(100vw - 2.5rem),22rem); min-height: 3.5rem; padding: .4rem .7rem .4rem .45rem; display: grid; grid-template-columns: 2.5rem minmax(0,1fr) auto; grid-template-rows: auto auto; align-items: center; column-gap: .5rem; overflow: hidden; border: 0; border-radius: 62.5rem; color: #FFF; background: rgba(12,18,30,.94); box-shadow: 0 .5rem 1.375rem rgba(2,6,23,.3),inset 0 .0625rem 0 rgba(255,255,255,.08); backdrop-filter: blur(1.25rem) saturate(150%); -webkit-backdrop-filter: blur(1.25rem) saturate(150%); transform: translateX(-50%); transition: width .45s cubic-bezier(.2,.85,.25,1),min-height .45s cubic-bezier(.2,.85,.25,1),padding .45s cubic-bezier(.2,.85,.25,1),bottom .45s cubic-bezier(.2,.85,.25,1); }
         .delivery-nowbar.hidden { display: none; }
         .delivery-nowbar-rider { grid-column: 1; grid-row: 1 / 3; width: 2.5rem; height: 2.5rem; display: grid; place-items: center; }
         .delivery-nowbar-rider img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 .15rem .2rem rgba(0,0,0,.28)); }
         .delivery-nowbar-copy { grid-column: 2; grid-row: 1; min-width: 0; align-self: end; text-align: left; }
         .delivery-nowbar-copy strong { display: block; overflow: hidden; font-size: .6875rem; font-weight: 850; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
         .delivery-nowbar-copy span { display: block; margin-top: .075rem; overflow: hidden; color: #A8B3C4; font-size: .5625rem; font-weight: 650; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
-        .delivery-nowbar-time { grid-column: 3; grid-row: 1 / 3; min-width: 4.25rem; color: #8BC0FF; text-align: right; }
+        .delivery-nowbar-time { grid-column: 3; grid-row: 1 / 3; min-width: 5.5rem; padding-right: 1.1rem; color: #8BC0FF; text-align: right; }
         .delivery-nowbar-time span { display: block; font-size: .5rem; font-weight: 700; }
         .delivery-nowbar-time strong { display: block; margin-top: .1rem; font-size: .6875rem; font-weight: 900; white-space: nowrap; }
         .delivery-nowbar-progress { position: relative; grid-column: 2; grid-row: 2; height: .1875rem; align-self: start; overflow: hidden; border-radius: 62.5rem; background: rgba(255,255,255,.16); }
         .delivery-nowbar-progress span { position: absolute; inset: 0 auto 0 0; width: var(--delivery-nowbar-progress,0%); border-radius: inherit; background: #3182F6; transition: width .4s ease; }
+        .delivery-nowbar-close { position: absolute; top: .35rem; right: .45rem; width: 1.1rem; height: 1.1rem; display: grid; place-items: center; border: 0; border-radius: 50%; color: rgba(255,255,255,.62); background: transparent; font-size: .5rem; }
+        .delivery-nowbar-close:active { color: #FFF; background: rgba(255,255,255,.12); }
+        .delivery-nowbar.is-compact { bottom: 5.75rem; width: min(calc(100vw - 5rem),15.5rem); min-height: 3rem; padding: .35rem .65rem .35rem .4rem; grid-template-columns: 2.25rem minmax(0,1fr) auto; }
+        .delivery-nowbar.is-compact .delivery-nowbar-rider { width: 2.25rem; height: 2.25rem; }
+        .delivery-nowbar.is-compact .delivery-nowbar-copy { grid-row: 1 / 3; align-self: center; }
+        .delivery-nowbar.is-compact .delivery-nowbar-copy span,
+        .delivery-nowbar.is-compact .delivery-nowbar-progress,
+        .delivery-nowbar.is-compact .delivery-nowbar-time span { display: none; }
+        .delivery-nowbar.is-compact .delivery-nowbar-time { min-width: 5.1rem; }
         body.has-delivery-nowbar #home-screen { padding-bottom: 11rem !important; }
         @media (prefers-color-scheme: dark) {
             .delivery-tracking-progress::before,.delivery-tracking-step::before { background: #41464D; }
@@ -2614,6 +2623,8 @@
             transform: scale(.88);
             background: rgba(255,255,255,.1);
         }
+        #home-notice-button { width: 2rem; height: 2rem; font-size: 15pt; }
+        #home-notice-button.has-notice { color: #FF3B4F; }
         .home-account-action--danger { color: #F87171; }
         .home-menu-trigger {
             position: absolute;
@@ -6131,7 +6142,7 @@
                 <img src="assets/enjoy-wordmark.png" alt="">
             </span>
             <div class="home-account-actions">
-                <button type="button" class="home-account-action" aria-label="공지사항" title="공지사항" onclick="window.haptic && window.haptic(); window.openNoticeInfo && window.openNoticeInfo();"><i class="fa-solid fa-heart" aria-hidden="true"></i></button>
+                <button id="home-notice-button" type="button" class="home-account-action" aria-label="공지사항" title="공지사항" onclick="window.haptic && window.haptic(); window.openNoticeInfo && window.openNoticeInfo();"><i class="fa-regular fa-heart" aria-hidden="true"></i></button>
             </div>
         </header>
         
@@ -6685,12 +6696,13 @@
         </div>
 
 
-        <button id="delivery-nowbar" type="button" class="delivery-nowbar hidden" onclick="window.haptic && window.haptic(); window.openHomeDeliveryNowBar()" aria-label="내 배달 현황 열기">
+        <div id="delivery-nowbar" class="delivery-nowbar hidden" role="button" tabindex="0" onclick="window.haptic && window.haptic(); window.openHomeDeliveryNowBar()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeDeliveryNowBar()}" aria-label="내 배달 현황 열기">
             <span class="delivery-nowbar-rider"><img src="delivery-rider-secretary-blue-transparent.png" alt=""></span>
             <span class="delivery-nowbar-copy"><strong id="delivery-nowbar-title">배달 중이에요</strong><span id="delivery-nowbar-subtitle">엔조이 비서실장이 이동 중입니다</span></span>
             <span class="delivery-nowbar-time"><span>남은 시간</span><strong id="delivery-nowbar-time">0시간00분</strong></span>
             <span id="delivery-nowbar-progress" class="delivery-nowbar-progress"><span></span></span>
-        </button>
+            <button type="button" class="delivery-nowbar-close" aria-label="배달 현황 잠시 닫기" onclick="event.stopPropagation(); window.closeHomeDeliveryNowBar()"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
 
         <div class="app-copyright-slot pt-8 pb-4"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.</p></div>
     </main>
@@ -6983,6 +6995,17 @@
 
         window.openNoticeInfo = function () {
             window.openNotionInfo('공지사항', noticeNotionUrl, '공지사항을 준비 중이에요.');
+        };
+
+        window.setHomeNoticeAlert = function (enabled) {
+            const button = document.getElementById('home-notice-button');
+            if (!button) return;
+            const hasNotice = enabled === true;
+            const icon = button.querySelector('i');
+            button.classList.toggle('has-notice', hasNotice);
+            button.setAttribute('aria-label', hasNotice ? '새 공지사항 있음' : '공지사항');
+            button.title = hasNotice ? '새 공지사항 있음' : '공지사항';
+            if (icon) icon.className = (hasNotice ? 'fa-solid' : 'fa-regular') + ' fa-heart';
         };
 
         window.closeNotionInfo = function () {
@@ -14997,6 +15020,8 @@
             const nav = document.getElementById('bottom-nav');
             if (!nav) return;
             nav.classList.toggle('nav-compact', compact);
+            const nowbar = document.getElementById('delivery-nowbar');
+            if (nowbar) nowbar.classList.toggle('is-compact', compact);
             window.animateNavIndicator();
         };
 
@@ -15839,6 +15864,8 @@
         let deliveryTrackingTimer = 0;
         let deliveryNowbarTimer = 0;
         let deliveryNowbarPreviewMember = '';
+        let deliveryNowbarDismissedUntil = 0;
+        let deliveryNowbarReturnTimer = 0;
         let deliveryMapUserZoomed = false;
         let activePetOwner = '';
         let activePetOwnerId = '';
@@ -16450,8 +16477,10 @@
             if (!nowbar) return;
             const signedInName = homeDeliveryMemberName();
             const name = homeDeliveryTrackingMemberName();
-            const visible = !!window.enjoyUser && deliveryMemberNames.has(name);
+            const eligible = !!window.enjoyUser && deliveryMemberNames.has(name);
+            const visible = eligible && Date.now() >= deliveryNowbarDismissedUntil;
             nowbar.classList.toggle('hidden', !visible);
+            nowbar.classList.toggle('is-compact', !!window.navCompact);
             document.body.classList.toggle('has-delivery-nowbar', visible);
             if (!visible) return;
 
@@ -16478,6 +16507,17 @@
             if (!(window.enjoyUser && deliveryMemberNames.has(name))) return;
             profileMenuMemberName = name;
             window.openSelectedMemberDelivery();
+        };
+
+        window.closeHomeDeliveryNowBar = function () {
+            deliveryNowbarDismissedUntil = Date.now() + 30000;
+            if (deliveryNowbarReturnTimer) window.clearTimeout(deliveryNowbarReturnTimer);
+            deliveryNowbarReturnTimer = window.setTimeout(function () {
+                deliveryNowbarDismissedUntil = 0;
+                deliveryNowbarReturnTimer = 0;
+                if (window.renderHomeDeliveryNowBar) window.renderHomeDeliveryNowBar();
+            }, 30000);
+            window.renderHomeDeliveryNowBar();
         };
 
         function deliveryRouteProgress(tracking, now) {
@@ -18377,6 +18417,7 @@
         window.MEETING_PATH = ['meeting_account', 'dues_status'];
         window.SCHEDULE_PATH = ['meeting_account', 'schedules'];
         window.BACKUP_PATH = ['meeting_account', 'backups', 'history']; 
+        window.NOTICE_ALERT_PATH = ['app_settings', 'notice_alert'];
 
         const meetingConfig = { apiKey: "AIzaSyAVQ_WdMXKuU2CgTgvSHqLKuAVGPeeDuOQ", authDomain: "enjoy-meeting-account.firebaseapp.com", projectId: "enjoy-meeting-account", storageBucket: "enjoy-meeting-account.firebasestorage.app", messagingSenderId: "956113498506", appId: "1:956113498506:web:b520f2b77fdb3295cb9873" };
 
@@ -18563,10 +18604,13 @@
                 // 기존 스트림 구독을 정리(unsubscribe)한 후 새로 구독하도록 수정했습니다.
                 let unsubMeeting = null;
                 let unsubSchedule = null;
+                let unsubNoticeAlert = null;
 
                 onAuthStateChanged(meetingAuth, async (user) => {
                     if (unsubMeeting) { unsubMeeting(); unsubMeeting = null; }
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
+                    if (unsubNoticeAlert) { unsubNoticeAlert(); unsubNoticeAlert = null; }
+                    if (window.setHomeNoticeAlert) window.setHomeNoticeAlert(false);
                     window.enjoySync = false;        // 멤버 확정 전까지는 로컬 모드 기본
                     window.__enjoySyncOn = false;
 
@@ -18591,6 +18635,13 @@
                     window.meetingAuthed = true; // 멤버/모임 데이터 동기화 신호
                     // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
+                    unsubNoticeAlert = onSnapshot(doc(window.meetingDb, ...window.NOTICE_ALERT_PATH), (noticeSnapshot) => {
+                        const noticeData = noticeSnapshot.exists() ? noticeSnapshot.data() : {};
+                        if (window.setHomeNoticeAlert) window.setHomeNoticeAlert(noticeData.enabled === true);
+                    }, (error) => {
+                        console.warn('Notice alert snapshot error:', error);
+                        if (window.setHomeNoticeAlert) window.setHomeNoticeAlert(false);
+                    });
 
                     // 기존 로그인 세션이 복원된 경우도 현재 사용자의 Firebase 시간표를
                     // 최초 1회 읽어 Android 알림/Live Update 예약에 전달한다.
