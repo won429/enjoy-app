@@ -12464,6 +12464,86 @@
             } catch (e) {}
         };
 
+        /* ===== 카카오 애드핏 멤버별 클릭 추정 =====
+         * 애드핏은 교차 출처 iframe 안에서 동작하므로 실제 click 이벤트를 직접 읽을 수 없다.
+         * 대신 광고 iframe이 포커스를 얻은 직후 창이 비활성화되는 경우만 클릭으로 간주한다.
+         * Firebase members/{uid} 문서에 합계와 광고 위치별 횟수를 누적한다.
+         */
+        (function installAdClickEstimator() {
+            const AD_PLACEMENTS = {
+                'home-ad': 'home',
+                'community-ad': 'community',
+                'meeting-ad': 'meeting'
+            };
+            const DUPLICATE_GUARD_MS = 3500;
+            let lastRecordedAt = 0;
+            let lastRecordedPlacement = '';
+            let checkTimer = null;
+
+            function focusedAdPlacement() {
+                const active = document.activeElement;
+                if (!active || String(active.tagName || '').toLowerCase() !== 'iframe') return '';
+                const holder = active.closest && active.closest('#home-ad, #community-ad, #meeting-ad, .lg-ad');
+                if (!holder || !holder.id) return ''; // 로그인 광고는 멤버를 식별할 수 없어 제외
+                return AD_PLACEMENTS[holder.id] || '';
+            }
+
+            async function recordEstimatedAdClick(placement) {
+                const now = Date.now();
+                if (!placement) return;
+                if (placement === lastRecordedPlacement && now - lastRecordedAt < DUPLICATE_GUARD_MS) return;
+
+                const user = window.enjoyUser;
+                const memberName = String(window.enjoyProfileName || '').trim();
+                if (!user || !user.uid || !memberName ||
+                    !(window.enjoyIsMemberName && window.enjoyIsMemberName(memberName))) return;
+                if (!window.fsDoc || !window.fsUpdateDoc || !window.fsIncrement || !window.meetingDb) return;
+
+                lastRecordedAt = now;
+                lastRecordedPlacement = placement;
+                try {
+                    const changes = {
+                        adClickCount: window.fsIncrement(1),
+                        adClickLastAt: now,
+                        adClickLastPlacement: placement
+                    };
+                    changes['adClicksByPlacement.' + placement] = window.fsIncrement(1);
+                    await window.fsUpdateDoc(window.fsDoc('members', user.uid), changes);
+                    window.dispatchEvent(new CustomEvent('enjoy-ad-click-recorded', {
+                        detail: { uid: user.uid, name: memberName, placement: placement, at: now }
+                    }));
+                } catch (error) {
+                    // 광고 이동은 방해하지 않고, 개발 중에만 저장 실패 원인을 확인할 수 있게 남긴다.
+                    console.warn('광고 클릭 횟수 저장 실패:', error);
+                    lastRecordedAt = 0;
+                    lastRecordedPlacement = '';
+                }
+            }
+
+            function inspectFocusedAd() {
+                if (checkTimer) clearTimeout(checkTimer);
+                // blur 직후에는 activeElement 갱신이 한 틱 늦는 브라우저가 있어 다음 틱에 확인한다.
+                checkTimer = setTimeout(function () {
+                    checkTimer = null;
+                    const placement = focusedAdPlacement();
+                    if (placement) recordEstimatedAdClick(placement);
+                }, 0);
+            }
+
+            window.addEventListener('blur', inspectFocusedAd, true);
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden') inspectFocusedAd();
+            }, true);
+            window.addEventListener('pagehide', inspectFocusedAd, true);
+            window.addEventListener('focus', function () {
+                // 광고 페이지에서 돌아온 뒤 iframe 포커스가 남아 다른 화면 이탈을 클릭으로 오인하지 않게 한다.
+                setTimeout(function () {
+                    const active = document.activeElement;
+                    if (active && String(active.tagName || '').toLowerCase() === 'iframe' && active.blur) active.blur();
+                }, 0);
+            }, true);
+        })();
+
         /* ===== 일정 화면 서브 탭 (일정 / 스케줄 / 커뮤니티) ===== */
         window._schedSub = 'calendar';
         window.switchScheduleSub = function (tab) {
