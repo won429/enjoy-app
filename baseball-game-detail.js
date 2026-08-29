@@ -320,6 +320,63 @@
             </div>`;
         }
 
+        // 경기결과 JS 파일에 기록된 완료 경기만 사용해 시즌 상대 전적을 표시한다.
+        function matchupRecordHtml(m) {
+            if (!m || !KBO_TEAMS.includes(m.team1) || !KBO_TEAMS.includes(m.team2)) return '';
+            const gamesByDate = window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate;
+            if (!gamesByDate) return '';
+
+            const records = {
+                [m.team1]: { w: 0, d: 0, l: 0 },
+                [m.team2]: { w: 0, d: 0, l: 0 }
+            };
+            Object.entries(gamesByDate).forEach(([date, games]) => {
+                if (m.date && date > m.date) return;
+                (Array.isArray(games) ? games : []).forEach(game => {
+                    if (!game || game.gameStatus !== '종료') return;
+                    const away = game.awayTeam || game.team1;
+                    const home = game.homeTeam || game.team2;
+                    if (!isMatchup({ team1: away, team2: home }, m.team1, m.team2)) return;
+                    const awayScore = Number(game.awayScore ?? game.score1);
+                    const homeScore = Number(game.homeScore ?? game.score2);
+                    if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return;
+
+                    if (awayScore === homeScore) {
+                        records[m.team1].d++;
+                        records[m.team2].d++;
+                        return;
+                    }
+                    const winner = awayScore > homeScore ? away : home;
+                    const loser = winner === away ? home : away;
+                    records[winner].w++;
+                    records[loser].l++;
+                });
+            });
+
+            const awayRecord = records[m.team1];
+            const homeRecord = records[m.team2];
+            const total = awayRecord.w + awayRecord.d + awayRecord.l;
+            const recordText = record => `${record.w}승 ${record.d}무 ${record.l}패`;
+            const awayLogo = uiTeamLogo(m.team1, 'w-7 h-7', 'w-7 h-7');
+            const homeLogo = uiTeamLogo(m.team2, 'w-7 h-7', 'w-7 h-7');
+            const centerText = total ? `${total}경기` : '첫 맞대결';
+
+            return `<section class="matchup-record" aria-label="2026 정규시즌 상대 전적">
+                <div class="matchup-record-heading"><span>상대 전적</span><span>2026 정규시즌 · 경기결과 기준</span></div>
+                <div class="matchup-record-body">
+                    <div class="matchup-record-team matchup-record-away">
+                        <div class="matchup-record-name"><span class="matchup-record-logo">${awayLogo}</span><span>${m.team1}</span></div>
+                        <strong style="color:${teamWinHex[m.team1] || '#9AA0A6'}">${recordText(awayRecord)}</strong>
+                    </div>
+                    <div class="matchup-record-total"><span>VS</span><strong>${centerText}</strong></div>
+                    <div class="matchup-record-team matchup-record-home">
+                        <div class="matchup-record-name"><span>${m.team2}</span><span class="matchup-record-logo">${homeLogo}</span></div>
+                        <strong style="color:${teamWinHex[m.team2] || '#9AA0A6'}">${recordText(homeRecord)}</strong>
+                    </div>
+                </div>
+            </section>`;
+        }
+
         // 홈화면 배너용 슬림 승리 확률 막대
         function winProbBarMini(m, l) {
             let st = (l && l.gameStatus) || '경기전';
@@ -1376,14 +1433,15 @@
 
             // [추가] 스코어보드 밑 승리 확률 막대 (클래식 테마는 레트로 디자인 유지 위해 제외)
             let wpb = isClassic ? '' : winProbBarHtml(m, l);
+            const matchupRecord = matchupRecordHtml(m);
             const infoTabs = gameInfoTabsHtml();
 
             if (currentGameInfoTab === 'broadcast') {
-                c.innerHTML = sbh + wpb + infoTabs + gameBroadcastHtml(m, l);
+                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + gameBroadcastHtml(m, l);
                 return;
             }
             if (currentGameInfoTab === 'record') {
-                c.innerHTML = sbh + wpb + infoTabs + gameRecordHtml(m, l);
+                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + gameRecordHtml(m, l);
                 requestAnimationFrame(() => {
                     const activeInning = c.querySelector('.game-record-inning-tab.active');
                     const inningTabs = activeInning && activeInning.parentElement;
@@ -1401,7 +1459,7 @@
 
             if (aLineupSrc.length === 0 && hLineupSrc.length === 0) {
                 const starterPreview = expectedStarterPreviewHtml(m, awayStarterInfo, homeStarterInfo);
-                c.innerHTML = sbh + wpb + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
+                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
                 return;
             }
             
@@ -1466,7 +1524,7 @@
             let abh = lineupRows(aLineupSrc, h1);
             let hbh = lineupRows(hLineupSrc, h2);
             
-            c.innerHTML = sbh + wpb + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
+            c.innerHTML = sbh + wpb + matchupRecord + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
         }
 
     window.switchGameInfoTab = switchGameInfoTab;
