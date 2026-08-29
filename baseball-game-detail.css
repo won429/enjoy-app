@@ -263,31 +263,46 @@
         html:not(.light-mode) .wp-byline { color: #9ca8b8; }
         html.light-mode .wp-name { color: #334155 !important; }
 
-        /* 경기결과 JS 기반 시즌 상대 전적 */
-        .matchup-record { width: 100%; margin: -0.25rem 0 1rem; padding: 0.75rem 0.875rem 0.8125rem; border: 0.0625rem solid rgba(255,255,255,0.08); border-radius: 0.875rem; background: rgba(255,255,255,0.055); }
-        .matchup-record-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.6875rem; color: #e2e8f0; font-size: 0.6875rem; font-weight: 900; }
-        .matchup-record-heading span:last-child { color: #7f8998; font-size: 0.5625rem; font-weight: 700; }
-        .matchup-record-body { display: grid; grid-template-columns: minmax(0, 1fr) 3.375rem minmax(0, 1fr); align-items: center; gap: 0.375rem; }
-        .matchup-record-team { min-width: 0; }
-        .matchup-record-name { display: flex; align-items: center; gap: 0.4375rem; color: #cbd5e1; font-size: 0.6875rem; font-weight: 800; }
-        .matchup-record-home, .matchup-record-home .matchup-record-name { text-align: right; justify-content: flex-end; }
-        .matchup-record-logo { width: 1.75rem; height: 1.75rem; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
-        .matchup-record-team strong { display: block; margin-top: 0.3125rem; font-size: 0.8125rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .matchup-record-total { display: flex; flex-direction: column; align-items: center; gap: 0.1875rem; color: #687385; }
-        .matchup-record-total span { font-size: 0.5625rem; font-weight: 900; }
-        .matchup-record-total strong { color: #a8b1bf; font-size: 0.625rem; font-weight: 800; white-space: nowrap; }
-        html.light-mode .matchup-record { border-color: rgba(15,23,42,0.08); background: rgba(15,23,42,0.045); }
-        html.light-mode .matchup-record-heading { color: #334155; }
-        html.light-mode .matchup-record-heading span:last-child { color: #8b95a1; }
-        html.light-mode .matchup-record-name { color: #475569; }
-        html.light-mode .matchup-record-total { color: #94a3b8; }
-        html.light-mode .matchup-record-total strong { color: #64748b; }
-        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record { border-color: rgba(0,0,0,0.10); background: rgba(255,255,255,0.38); }
-        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-heading,
-        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-name { color: #2a2a2a; }
-        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-heading span:last-child,
-        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-total,
-        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-total strong { color: #666; }
+        /* 경기결과 JS 기반 양 팀 비교 — 참고 이미지처럼 틀 없이 배치 */
+        .matchup-record { width: 100%; margin: -0.25rem 0 1.125rem; color: #e5e7eb; }
+        .matchup-record-teams { display: grid; grid-template-columns: minmax(0, 1fr) 2.5rem minmax(0, 1fr); align-items: center; gap: 0.25rem; padding: 0 0.1875rem; }
+        .matchup-record-team { min-width: 0; display: flex; flex-direction: column; gap: 0.1875rem; }
+        .matchup-record-team > strong { overflow: hidden; color: #f8fafc; font-size: 1.125rem; font-weight: 900; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+        .matchup-record-team > span { color: #9ca3af; font-size: 0.6875rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .matchup-record-team > span b { color: #ef3d2f; font-weight: 900; }
+        .matchup-record-home { align-items: flex-end; text-align: right; }
+        .matchup-record-vs { color: #63666d; font-size: 1.125rem; font-weight: 900; text-align: center; }
+        .matchup-record-divider { height: 0.0625rem; margin: 0.75rem calc(-1.5rem) 0.75rem; background: rgba(255,255,255,0.09); }
+        .matchup-record-recent { display: grid; grid-template-columns: minmax(0, 1fr) 3.75rem minmax(0, 1fr); align-items: center; gap: 0.375rem; }
+        .matchup-record-recent > strong { color: #d1d5db; font-size: 0.75rem; font-weight: 900; text-align: center; white-space: nowrap; }
+        .matchup-recent-results { display: flex; align-items: center; gap: 0.1875rem; min-width: 0; }
+        .matchup-recent-away { justify-content: flex-end; }
+        .matchup-recent-home { justify-content: flex-start; }
+        .matchup-result { position: relative; width: 1.375rem; height: 1.375rem; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; border: 0.09375rem solid currentColor; border-radius: 0.3125rem; font-size: 0.6875rem; font-weight: 900; line-height: 1; }
+        .matchup-result.result-W { color: #17b96b; }
+        .matchup-result.result-L { color: #4285f4; }
+        .matchup-result.result-D { color: #92979e; }
+        .matchup-result.latest::after { content: ''; position: absolute; top: -0.3125rem; right: -0.25rem; width: 0.375rem; height: 0.375rem; border-radius: 50%; background: #ef3d2f; }
+        .matchup-recent-home .matchup-result.latest::after { right: auto; left: -0.25rem; }
+        .matchup-recent-empty { width: 100%; color: #6b7280; font-size: 0.625rem; font-weight: 700; text-align: center; white-space: nowrap; }
+        .matchup-record-head-to-head { display: grid; grid-template-columns: minmax(0, 1fr) 3.75rem minmax(0, 1fr); align-items: baseline; gap: 0.375rem; margin-top: 0.75rem; font-variant-numeric: tabular-nums; }
+        .matchup-record-head-to-head > span { color: #8b929c; font-size: 0.75rem; font-weight: 900; text-align: center; white-space: nowrap; }
+        .matchup-record-head-to-head > strong { color: #f3f4f6; font-size: 0.875rem; font-weight: 900; white-space: nowrap; }
+        .matchup-record-head-to-head > strong:last-child { text-align: right; }
+        html.light-mode .matchup-record { color: #2b2d31; }
+        html.light-mode .matchup-record-team > strong,
+        html.light-mode .matchup-record-head-to-head > strong { color: #2b2d31; }
+        html.light-mode .matchup-record-team > span { color: #74787e; }
+        html.light-mode .matchup-record-vs { color: #c4c6ca; }
+        html.light-mode .matchup-record-divider { background: rgba(15,23,42,0.09); }
+        html.light-mode .matchup-record-recent > strong { color: #34373c; }
+        html.light-mode .matchup-record-head-to-head > span { color: #a0a3a8; }
+        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-team > strong,
+        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-recent > strong,
+        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-head-to-head > strong { color: #2a2a2a; }
+        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-team > span,
+        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-head-to-head > span { color: #666; }
+        html:has(#lineup-popup:not(.render-hidden) .classic-marker) .matchup-record-divider { background: rgba(0,0,0,0.10); }
 
         /* 승리 확률 게이지 — 라이브(경기중) 개표방송식 모션 */
         .wp-bar { transition: width 0.9s cubic-bezier(0.34, 1.1, 0.64, 1); }

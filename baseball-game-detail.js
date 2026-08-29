@@ -326,53 +326,83 @@
             const gamesByDate = window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate;
             if (!gamesByDate) return '';
 
-            const records = {
+            const season = {};
+            KBO_TEAMS.forEach(team => season[team] = { w: 0, d: 0, l: 0, recent: [] });
+            const h2h = {
                 [m.team1]: { w: 0, d: 0, l: 0 },
                 [m.team2]: { w: 0, d: 0, l: 0 }
             };
+            const finishedGames = [];
             Object.entries(gamesByDate).forEach(([date, games]) => {
                 if (m.date && date > m.date) return;
                 (Array.isArray(games) ? games : []).forEach(game => {
                     if (!game || game.gameStatus !== '종료') return;
                     const away = game.awayTeam || game.team1;
                     const home = game.homeTeam || game.team2;
-                    if (!isMatchup({ team1: away, team2: home }, m.team1, m.team2)) return;
+                    if (!season[away] || !season[home]) return;
                     const awayScore = Number(game.awayScore ?? game.score1);
                     const homeScore = Number(game.homeScore ?? game.score2);
                     if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return;
-
-                    if (awayScore === homeScore) {
-                        records[m.team1].d++;
-                        records[m.team2].d++;
-                        return;
-                    }
-                    const winner = awayScore > homeScore ? away : home;
-                    const loser = winner === away ? home : away;
-                    records[winner].w++;
-                    records[loser].l++;
+                    finishedGames.push({ date, time: game.gameTime || game.time || '00:00', away, home, awayScore, homeScore });
                 });
             });
+            finishedGames.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
-            const awayRecord = records[m.team1];
-            const homeRecord = records[m.team2];
-            const total = awayRecord.w + awayRecord.d + awayRecord.l;
+            finishedGames.forEach(game => {
+                const { away, home, awayScore, homeScore } = game;
+                if (awayScore === homeScore) {
+                    season[away].d++; season[home].d++;
+                    season[away].recent.push('D'); season[home].recent.push('D');
+                } else {
+                    const winner = awayScore > homeScore ? away : home;
+                    const loser = winner === away ? home : away;
+                    season[winner].w++; season[loser].l++;
+                    season[winner].recent.push('W'); season[loser].recent.push('L');
+                }
+
+                if (!isMatchup({ team1: away, team2: home }, m.team1, m.team2)) return;
+                if (awayScore === homeScore) {
+                    h2h[m.team1].d++; h2h[m.team2].d++;
+                } else {
+                    const winner = awayScore > homeScore ? away : home;
+                    const loser = winner === away ? home : away;
+                    h2h[winner].w++; h2h[loser].l++;
+                }
+            });
+
+            const standings = KBO_TEAMS.map(team => {
+                const record = season[team];
+                const decisions = record.w + record.l;
+                return { team, record, rate: decisions ? record.w / decisions : 0 };
+            }).sort((a, b) => (b.rate - a.rate) || (b.record.w - a.record.w) || (a.record.l - b.record.l));
+            const rankOf = team => standings.findIndex(row => row.team === team) + 1;
             const recordText = record => `${record.w}승 ${record.d}무 ${record.l}패`;
-            const awayLogo = uiTeamLogo(m.team1, 'w-7 h-7', 'w-7 h-7');
-            const homeLogo = uiTeamLogo(m.team2, 'w-7 h-7', 'w-7 h-7');
-            const centerText = total ? `${total}경기` : '첫 맞대결';
+            const resultLabel = result => result === 'W' ? '승' : result === 'L' ? '패' : '무';
+            const recentHtml = (team, side) => {
+                let results = season[team].recent.slice(-5);
+                if (side === 'home') results = results.reverse();
+                return results.map((result, index) => {
+                    const isLatest = side === 'away' ? index === results.length - 1 : index === 0;
+                    return `<span class="matchup-result result-${result}${isLatest ? ' latest' : ''}">${resultLabel(result)}</span>`;
+                }).join('') || '<span class="matchup-recent-empty">경기 없음</span>';
+            };
 
-            return `<section class="matchup-record" aria-label="2026 정규시즌 상대 전적">
-                <div class="matchup-record-heading"><span>상대 전적</span><span>2026 정규시즌 · 경기결과 기준</span></div>
-                <div class="matchup-record-body">
-                    <div class="matchup-record-team matchup-record-away">
-                        <div class="matchup-record-name"><span class="matchup-record-logo">${awayLogo}</span><span>${m.team1}</span></div>
-                        <strong style="color:${teamWinHex[m.team1] || '#9AA0A6'}">${recordText(awayRecord)}</strong>
-                    </div>
-                    <div class="matchup-record-total"><span>VS</span><strong>${centerText}</strong></div>
-                    <div class="matchup-record-team matchup-record-home">
-                        <div class="matchup-record-name"><span>${m.team2}</span><span class="matchup-record-logo">${homeLogo}</span></div>
-                        <strong style="color:${teamWinHex[m.team2] || '#9AA0A6'}">${recordText(homeRecord)}</strong>
-                    </div>
+            return `<section class="matchup-record" aria-label="2026 정규시즌 양 팀 비교">
+                <div class="matchup-record-teams">
+                    <div class="matchup-record-team matchup-record-away"><strong>${m.team1}</strong><span><b>${rankOf(m.team1)}위</b> · ${recordText(season[m.team1])}</span></div>
+                    <span class="matchup-record-vs">VS</span>
+                    <div class="matchup-record-team matchup-record-home"><strong>${m.team2}</strong><span><b>${rankOf(m.team2)}위</b> · ${recordText(season[m.team2])}</span></div>
+                </div>
+                <div class="matchup-record-divider"></div>
+                <div class="matchup-record-recent">
+                    <div class="matchup-recent-results matchup-recent-away">${recentHtml(m.team1, 'away')}</div>
+                    <strong>최근경기</strong>
+                    <div class="matchup-recent-results matchup-recent-home">${recentHtml(m.team2, 'home')}</div>
+                </div>
+                <div class="matchup-record-head-to-head">
+                    <strong>${recordText(h2h[m.team1])}</strong>
+                    <span>상대전적</span>
+                    <strong>${recordText(h2h[m.team2])}</strong>
                 </div>
             </section>`;
         }
