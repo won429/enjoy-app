@@ -16464,7 +16464,9 @@
         function deliveryRemainingTimeLabel(tracking, now) {
             const arrival = Date.parse(tracking.arrivalAt);
             if (!Number.isFinite(arrival)) return '0시간00분';
-            const remainingMinutes = Math.max(0, Math.ceil((arrival - (now == null ? Date.now() : now)) / 60000));
+            const currentTime = now == null ? Date.now() : now;
+            if (currentTime >= arrival) return '배달 완료';
+            const remainingMinutes = Math.ceil((arrival - currentTime) / 60000);
             const hours = Math.floor(remainingMinutes / 60);
             const minutes = remainingMinutes % 60;
             return hours + '시간' + String(minutes).padStart(2, '0') + '분';
