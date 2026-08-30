@@ -15881,6 +15881,8 @@
         let deliveryMapEventsBound = false;
         let deliveryKakaoPromise = null;
         let deliveryTrackingTimer = 0;
+        // 홈 배달바는 나중에 다시 사용할 수 있도록 코드를 보존하고 현재는 비활성화한다.
+        const deliveryHomeNowbarEnabled = false;
         let deliveryNowbarTimer = 0;
         let deliveryNowbarPreviewMember = '';
         let deliveryNowbarDismissedUntil = 0;
@@ -16496,6 +16498,15 @@
         window.renderHomeDeliveryNowBar = function () {
             const nowbar = document.getElementById('delivery-nowbar');
             if (!nowbar) return;
+            if (!deliveryHomeNowbarEnabled) {
+                nowbar.classList.add('hidden');
+                document.body.classList.remove('has-delivery-nowbar');
+                if (deliveryNowbarTimer) {
+                    window.clearInterval(deliveryNowbarTimer);
+                    deliveryNowbarTimer = 0;
+                }
+                return;
+            }
             const signedInName = homeDeliveryMemberName();
             const name = homeDeliveryTrackingMemberName();
             const eligible = !!window.enjoyUser && deliveryMemberNames.has(name);
