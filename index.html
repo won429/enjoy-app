@@ -390,8 +390,7 @@
             color: #FFF;
             font-size: 0.5rem;
         }
-        .member-status-name,
-        .member-status-detail {
+        .member-status-name {
             display: block !important;
             width: 100%;
             overflow: hidden;
@@ -400,19 +399,11 @@
             text-align: center;
             text-overflow: ellipsis;
             white-space: nowrap;
-        }
-        .member-status-name {
             color: #6B7280;
             font-size: 0.6875rem;
             font-weight: 600;
         }
-        .member-status-detail {
-            margin-top: -0.25rem;
-            color: #6B7280;
-            font-size: 0.625rem;
-        }
         .member-status-item.is-registered .member-status-name { color: #FFF; }
-        .member-status-item.is-active .member-status-detail { color: #34D399; }
         #story-tray > .member-status-item {
             cursor: pointer;
             border-radius: 1rem;
@@ -455,7 +446,17 @@
         .profile-action-copy strong { display: block; font-size: .8125rem; font-weight: 850; }
         .profile-action-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
         .profile-action-chevron { color: #6B7684; font-size: .6875rem; }
-        .profile-point-status { margin-top: .25rem; padding: .75rem .625rem .375rem; display: flex; align-items: center; gap: .625rem; border-top: .0625rem solid rgba(139,149,161,.18); }
+        .profile-activity-status { margin-top: .25rem; padding: .75rem .625rem .5rem; display: flex; align-items: center; gap: .625rem; border-top: .0625rem solid rgba(139,149,161,.18); }
+        .profile-activity-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; color: #F59E0B; background: rgba(245,158,11,.14); font-size: .875rem; }
+        .profile-activity-status.is-active .profile-activity-icon { color: #34D399; background: rgba(52,211,153,.14); }
+        .profile-activity-status.is-unregistered .profile-activity-icon { color: #8B95A1; background: rgba(139,149,161,.14); }
+        .profile-activity-copy { min-width: 0; flex: 1; }
+        .profile-activity-copy strong { display: block; color: inherit; font-size: .8125rem; font-weight: 850; }
+        .profile-activity-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
+        .profile-activity-time { flex: none; color: #F59E0B; font-size: .75rem; font-weight: 850; }
+        .profile-activity-status.is-active .profile-activity-time { color: #34D399; }
+        .profile-activity-status.is-unregistered .profile-activity-time { color: #8B95A1; }
+        .profile-point-status { padding: .5rem .625rem .375rem; display: flex; align-items: center; gap: .625rem; }
         .profile-point-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; color: #FBBF24; background: rgba(251,191,36,.14); font-size: .875rem; }
         .profile-point-copy { min-width: 0; flex: 1; }
         .profile-point-copy strong { display: block; color: inherit; font-size: .8125rem; font-weight: 850; }
@@ -7297,6 +7298,11 @@
             <span class="profile-action-copy"><strong>엔조이 배달 현황</strong><span>스크래치 당첨 상품 확인하기</span></span>
             <i class="profile-action-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
         </button>
+        <div id="profile-activity-status" class="profile-activity-status" aria-label="멤버 활동 상태">
+            <span class="profile-activity-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span>
+            <span class="profile-activity-copy"><strong>활동 상태</strong><span>마지막 활동 시간</span></span>
+            <strong id="profile-activity-time" class="profile-activity-time">활동 기록 없음</strong>
+        </div>
         <div id="profile-point-status" class="profile-point-status" aria-label="멤버 포인트 현황">
             <span class="profile-point-icon"><i class="fa-solid fa-coins" aria-hidden="true"></i></span>
             <span class="profile-point-copy"><strong>포인트 현황</strong><span>현재 보유 포인트</span></span>
@@ -15632,7 +15638,6 @@
                 const registered = !!mem;
                 const active = registered && (now - (mem.lastActive || 0) < ACTIVE_MS);
                 const studying = registered && memberIsInClass(mem.timetable, currentDate);
-                const activityText = registered ? memberActivityText(mem.lastActive, now) : '';
                 const col = window.enjoyMemberColor(name);
                 const photo = registered ? (mem.photoURL || '') : '';
 
@@ -15644,17 +15649,17 @@
                 const circle = '<div class="member-status-avatar-frame"><div class="member-status-avatar-inner">' + inner + '</div></div>';
                 const studyBadge = studying ? '<span class="member-status-study-badge" title="현재 수업 중" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>' : '';
                 const dot = registered ? '<span class="member-status-active-dot' + (active ? '' : ' is-inactive') + '"></span>' : '';
-                const sub = registered
-                    ? '<span class="member-status-detail">' + activityText + '</span>'
-                    : '<span class="member-status-detail">미가입자</span>';
                 return '<div class="member-status-item' + (registered ? ' is-registered' : '') + (active ? ' is-active' : '') + '" style="--member-color:' + (col.solidHex || '#6B7280') + '" role="button" tabindex="0" aria-label="' + name + (studying ? ' 현재 수업 중, ' : ' ') + '프로필 메뉴 열기" onclick="window.haptic && window.haptic(); window.openMemberProfileMenu(\'' + name + '\', this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">' +
                             '<div class="member-status-avatar-wrap">' + studyBadge + circle + dot + '</div>' +
                             '<span class="member-status-name">' + name + '</span>' +
-                            sub +
                         '</div>';
             }).join('');
 
             wrap.innerHTML = html;
+            const openProfileMenu = document.getElementById('profile-action-popover');
+            if (profileMenuMemberName && openProfileMenu && !openProfileMenu.classList.contains('hidden')) {
+                updateProfileActivityStatus(profileMenuMemberName);
+            }
         }
         window.enjoyRenderMembers = renderMembers;
         window.openMemberTimetable = function (name) {
@@ -16424,6 +16429,19 @@
             pointBalance.textContent = points.toLocaleString('ko-KR') + ' P';
         }
 
+        function updateProfileActivityStatus(name) {
+            const status = document.getElementById('profile-activity-status');
+            const activityTime = document.getElementById('profile-activity-time');
+            if (!(status && activityTime)) return;
+            const profileMember = (lastMembers || []).find(function (item) { return item && item.name === name; });
+            const active = !!profileMember && Date.now() - Number(profileMember.lastActive || 0) < ACTIVE_MS;
+            const label = profileMember ? memberActivityText(profileMember.lastActive, Date.now()) : '미가입자';
+            status.classList.toggle('is-active', active);
+            status.classList.toggle('is-unregistered', !profileMember);
+            status.setAttribute('aria-label', name + ' 활동 상태: ' + label);
+            activityTime.textContent = label;
+        }
+
         function normalizeDeliveryStatus(value) {
             const status = String(value || '').trim().toLowerCase().replace(/[\s_-]/g, '');
             if (['delivered', 'complete', 'completed', '전달완료', '배달완료'].includes(status)) return 'delivered';
@@ -16836,6 +16854,7 @@
             if (title) title.textContent = profileMenuMemberName + ' 프로필';
             if (petAction) petAction.classList.toggle('hidden', !canOpenPetProfile(profileMenuMemberName));
             if (deliveryAction) deliveryAction.classList.toggle('hidden', !deliveryMemberNames.has(profileMenuMemberName));
+            updateProfileActivityStatus(profileMenuMemberName);
             updateProfilePointBalance(profileMenuMemberName);
             backdrop.classList.remove('hidden');
             popover.classList.remove('hidden');
