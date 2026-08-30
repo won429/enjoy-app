@@ -446,22 +446,21 @@
         .profile-action-copy strong { display: block; font-size: .8125rem; font-weight: 850; }
         .profile-action-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
         .profile-action-chevron { color: #6B7684; font-size: .6875rem; }
-        .profile-activity-status { margin-top: .25rem; padding: .75rem .625rem .5rem; display: flex; align-items: center; gap: .625rem; border-top: .0625rem solid rgba(139,149,161,.18); }
-        .profile-activity-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; color: #F59E0B; background: rgba(245,158,11,.14); font-size: .875rem; }
-        .profile-activity-status.is-active .profile-activity-icon { color: #34D399; background: rgba(52,211,153,.14); }
-        .profile-activity-status.is-unregistered .profile-activity-icon { color: #8B95A1; background: rgba(139,149,161,.14); }
-        .profile-activity-copy { min-width: 0; flex: 1; }
-        .profile-activity-copy strong { display: block; color: inherit; font-size: .8125rem; font-weight: 850; }
-        .profile-activity-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
-        .profile-activity-time { flex: none; color: #F59E0B; font-size: .75rem; font-weight: 850; }
-        .profile-activity-status.is-active .profile-activity-time { color: #34D399; }
-        .profile-activity-status.is-unregistered .profile-activity-time { color: #8B95A1; }
-        .profile-point-status { padding: .5rem .625rem .375rem; display: flex; align-items: center; gap: .625rem; }
+        .profile-point-status { margin-top: .25rem; padding: .75rem .625rem .375rem; display: flex; align-items: center; gap: .625rem; border-top: .0625rem solid rgba(139,149,161,.18); }
         .profile-point-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; color: #FBBF24; background: rgba(251,191,36,.14); font-size: .875rem; }
         .profile-point-copy { min-width: 0; flex: 1; }
         .profile-point-copy strong { display: block; color: inherit; font-size: .8125rem; font-weight: 850; }
         .profile-point-copy span { display: block; margin-top: .125rem; color: #8B95A1; font-size: .625rem; font-weight: 650; }
         .profile-point-balance { flex: none; color: #FBBF24; font-size: .9375rem; font-weight: 900; letter-spacing: -.02em; }
+        .profile-activity-status { min-height: 1.5rem; padding: .25rem .75rem .125rem; display: flex; align-items: center; justify-content: flex-end; gap: .3rem; color: #8B95A1; font-size: .5625rem; font-weight: 700; }
+        .profile-activity-dot { width: .375rem; height: .375rem; flex: none; border-radius: 50%; background: #F59E0B; }
+        .profile-activity-time { color: #F59E0B; font-size: inherit; font-weight: 800; }
+        .profile-activity-status.is-active .profile-activity-dot { background: #34D399; }
+        .profile-activity-status.is-active .profile-activity-time { color: #34D399; }
+        .profile-activity-status.is-studying .profile-activity-dot { background: #5BA1FF; }
+        .profile-activity-status.is-studying .profile-activity-time { color: #5BA1FF; }
+        .profile-activity-status.is-unregistered .profile-activity-dot { background: #8B95A1; }
+        .profile-activity-status.is-unregistered .profile-activity-time { color: #8B95A1; }
 
         /* 전시기·류짱 스크래치 당첨 상품 배달 현황 */
         #member-delivery-screen {
@@ -7298,15 +7297,15 @@
             <span class="profile-action-copy"><strong>엔조이 배달 현황</strong><span>스크래치 당첨 상품 확인하기</span></span>
             <i class="profile-action-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
         </button>
-        <div id="profile-activity-status" class="profile-activity-status" aria-label="멤버 활동 상태">
-            <span class="profile-activity-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span>
-            <span class="profile-activity-copy"><strong>활동 상태</strong><span>마지막 활동 시간</span></span>
-            <strong id="profile-activity-time" class="profile-activity-time">활동 기록 없음</strong>
-        </div>
         <div id="profile-point-status" class="profile-point-status" aria-label="멤버 포인트 현황">
             <span class="profile-point-icon"><i class="fa-solid fa-coins" aria-hidden="true"></i></span>
             <span class="profile-point-copy"><strong>포인트 현황</strong><span>현재 보유 포인트</span></span>
             <strong id="profile-point-balance" class="profile-point-balance">0 P</strong>
+        </div>
+        <div id="profile-activity-status" class="profile-activity-status" aria-label="멤버 활동 상태">
+            <span class="profile-activity-dot" aria-hidden="true"></span>
+            <span>활동 상태 ·</span>
+            <strong id="profile-activity-time" class="profile-activity-time">활동 기록 없음</strong>
         </div>
     </div>
 
@@ -16434,9 +16433,12 @@
             const activityTime = document.getElementById('profile-activity-time');
             if (!(status && activityTime)) return;
             const profileMember = (lastMembers || []).find(function (item) { return item && item.name === name; });
-            const active = !!profileMember && Date.now() - Number(profileMember.lastActive || 0) < ACTIVE_MS;
-            const label = profileMember ? memberActivityText(profileMember.lastActive, Date.now()) : '미가입자';
+            const now = Date.now();
+            const studying = !!profileMember && memberIsInClass(profileMember.timetable, new Date(now));
+            const active = !!profileMember && now - Number(profileMember.lastActive || 0) < ACTIVE_MS;
+            const label = !profileMember ? '미가입자' : studying ? '수업 중' : memberActivityText(profileMember.lastActive, now);
             status.classList.toggle('is-active', active);
+            status.classList.toggle('is-studying', studying);
             status.classList.toggle('is-unregistered', !profileMember);
             status.setAttribute('aria-label', name + ' 활동 상태: ' + label);
             activityTime.textContent = label;
