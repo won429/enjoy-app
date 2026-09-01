@@ -8082,6 +8082,23 @@
             });
         }
         const enjoyBaseballMoreTeams = ['LG', '두산', 'KIA', '삼성', 'SSG', '롯데', '한화', 'KT', 'NC', '키움'];
+        // KBO 공식 2026-08-30 순위. 로컬 히스토리가 8월 27일에서 끝나므로
+        // 이 스냅샷을 기준으로 이후 Firebase 종료 경기만 더해 누락/중복 집계를 막는다.
+        const enjoyBaseballRankingBaseline = Object.freeze({
+            date: '2026-08-30',
+            teams: Object.freeze({
+                '삼성': { w: 68, d: 3, l: 44, streak: '5승' },
+                'KT': { w: 66, d: 3, l: 43, streak: '1패' },
+                'KIA': { w: 63, d: 2, l: 50, streak: '3승' },
+                'LG': { w: 64, d: 1, l: 51, streak: '1승' },
+                '두산': { w: 61, d: 4, l: 52, streak: '2승' },
+                'NC': { w: 51, d: 2, l: 58, streak: '3승' },
+                '롯데': { w: 50, d: 2, l: 61, streak: '4패' },
+                '한화': { w: 49, d: 3, l: 62, streak: '6패' },
+                'SSG': { w: 48, d: 5, l: 65, streak: '1패' },
+                '키움': { w: 42, d: 3, l: 76, streak: '4패' }
+            })
+        });
         const enjoyBaseballMoreMonthCache = new Map();
         const enjoyBaseballMoreTeamStorageKey = 'enjoy_kbo_more_team';
         let enjoyBaseballMoreTeam = (function () {
@@ -8426,9 +8443,17 @@
         }
         function enjoyBaseballMoreRankings() {
             const stats = {};
-            enjoyBaseballMoreTeams.forEach(function (team) { stats[team] = { w: 0, d: 0, l: 0, results: [] }; });
+            enjoyBaseballMoreTeams.forEach(function (team) {
+                const baseline = enjoyBaseballRankingBaseline.teams[team] || { w: 0, d: 0, l: 0, streak: '' };
+                const streakMatch = String(baseline.streak || '').match(/^(\d+)(승|패)$/);
+                const results = streakMatch
+                    ? Array(Number(streakMatch[1])).fill(streakMatch[2] === '승' ? 'W' : 'L')
+                    : [];
+                stats[team] = { w: baseline.w, d: baseline.d, l: baseline.l, results: results };
+            });
             enjoyBaseballMoreAllGames().filter(function (game) {
-                return String(game.gameStatus || '') === '종료' && !enjoyBaseballIsCanceled(game);
+                return String(game.date || '') > enjoyBaseballRankingBaseline.date &&
+                    String(game.gameStatus || '') === '종료' && !enjoyBaseballIsCanceled(game);
             }).forEach(function (game) {
                 if (!stats[game.team1] || !stats[game.team2]) return;
                 const away = Number(game.awayScore || 0);
@@ -8521,6 +8546,10 @@
             }).forEach(function (game) {
                 (gamesByDate[game.date] || (gamesByDate[game.date] = [])).push(game);
             });
+            // 누락된 8월 28~30일 경기 대신 공식 기준점에서 기록을 다시 맞춘다.
+            if (!gamesByDate[enjoyBaseballRankingBaseline.date]) {
+                gamesByDate[enjoyBaseballRankingBaseline.date] = [];
+            }
             enjoyBaseballRankingTimelineCache = Object.keys(gamesByDate).sort().map(function (date) {
                 gamesByDate[date].forEach(function (game) {
                     const away = Number(game.awayScore || 0);
@@ -8536,6 +8565,12 @@
                         records[game.team2].d += 1;
                     }
                 });
+                if (date === enjoyBaseballRankingBaseline.date) {
+                    enjoyBaseballMoreTeams.forEach(function (team) {
+                        const baseline = enjoyBaseballRankingBaseline.teams[team];
+                        records[team] = { w: baseline.w, d: baseline.d, l: baseline.l };
+                    });
+                }
                 const ordered = enjoyBaseballMoreTeams.map(function (team) {
                     const record = records[team];
                     return {
