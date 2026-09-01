@@ -645,8 +645,8 @@
         .pet-shadow { position: absolute; z-index: 1; width: 6.5rem; height: .75rem; left: 50%; bottom: 6%; border-radius: 50%; background: rgba(82,48,45,.24); transform: translateX(-50%); }
         .pet-mover { position: absolute; z-index: 4; width: 8.5rem; height: 8.5rem; left: 50%; bottom: 4%; transform: translateX(-50%); transition-property: left,bottom; transition-duration: 1.45s,.55s; transition-timing-function: linear,steps(4,end); will-change: left,bottom,transform; }
         .pet-mover.is-facing-left { transform: translateX(-50%) scaleX(-1); }
-        .pet-mover.is-walking .pet-sprite { animation: petWalkBob .36s steps(2,end) infinite; transform-origin: center bottom; }
-        .pet-mover.is-walking .pet-shadow { animation: petWalkShadow .36s steps(2,end) infinite; }
+        .pet-mover.is-walking .pet-sprite { animation: petWalkBob .34s steps(2,end) infinite; transform-origin: center bottom; }
+        .pet-mover.is-walking .pet-shadow { animation: petWalkShadow .34s steps(2,end) infinite; }
         .pet-mover.is-jumping { animation: petJump .7s steps(4,end) 3; }
         .pet-mover.is-shivering { animation: petShiver .18s steps(2,end) infinite; }
         .pet-mover.is-refusing { animation: petRefuse .18s steps(2,end) 6; }
@@ -777,7 +777,7 @@
         .pet-save-note { flex: none; margin: 0; color: rgba(70,57,75,.8); font-size: .45rem; font-weight: 850; text-align: center; text-shadow: 0 .0625rem 0 #FFF8DF; }
         @keyframes petEggTap { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
         @keyframes petHatch { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08) translateY(-.3rem); } }
-        @keyframes petWalkBob { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-.18rem) scale(1.02,.98); } }
+        @keyframes petWalkBob { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-.07rem) scale(1.01,.99); } }
         @keyframes petWalkShadow { 0%,100% { transform: translateX(-50%) scaleX(1); opacity: .24; } 50% { transform: translateX(-50%) scaleX(.82); opacity: .17; } }
         @keyframes petJump { 0%,100% { bottom: 4%; } 50% { bottom: 24%; } }
         @keyframes petShiver { 0%,100% { margin-left: -.18rem; } 50% { margin-left: .18rem; } }
@@ -16009,16 +16009,19 @@
         let petIsBusy = false;
         let petCurrentAnimation = 'idle';
         let petWalkFrameColumn = 3;
+        let petWalkingLeft = false;
+        let petAnimationToken = 0;
+        const petWalkAssetCache = new Map();
         const petStoragePrefix = 'enjoy_tamagotchi_v3_';
         const petSpecies = [
-            { name: '루루', type: '보랏빛 냥이', asset: './assets/tamagotchi/cat-actions-v2.png' },
-            { name: '토토', type: '달토끼', asset: './assets/tamagotchi/bunny-actions-v2.png' },
-            { name: '모모', type: '꿀곰', asset: './assets/tamagotchi/bear-actions-v2.png' },
-            { name: '피코', type: '민트새', asset: './assets/tamagotchi/bird-actions-v2.png' },
-            { name: '아리', type: '분홍 아홀로틀', asset: './assets/tamagotchi/axolotl-actions-v2.png' },
-            { name: '호두', type: '복숭아 여우', asset: './assets/tamagotchi/fox-actions-v2.png' },
-            { name: '호야', type: '황금빛 호랑이', asset: './assets/tamagotchi/tiger-actions-v2.png' },
-            { name: '동동', type: '포근한 당나귀', asset: './assets/tamagotchi/donkey-actions-v2.png' }
+            { name: '루루', type: '보랏빛 냥이', asset: './assets/tamagotchi/cat-actions-v2.png', walkAsset: './assets/tamagotchi/cat-walk-v1.png', walkFacesLeft: true },
+            { name: '토토', type: '달토끼', asset: './assets/tamagotchi/bunny-actions-v2.png', walkAsset: './assets/tamagotchi/bunny-walk-v1.png', walkFacesLeft: false },
+            { name: '모모', type: '꿀곰', asset: './assets/tamagotchi/bear-actions-v2.png', walkAsset: './assets/tamagotchi/bear-walk-v1.png', walkFacesLeft: false },
+            { name: '피코', type: '민트새', asset: './assets/tamagotchi/bird-actions-v2.png', walkAsset: './assets/tamagotchi/bird-walk-v1.png', walkFacesLeft: false },
+            { name: '아리', type: '분홍 아홀로틀', asset: './assets/tamagotchi/axolotl-actions-v2.png', walkAsset: './assets/tamagotchi/axolotl-walk-v1.png', walkFacesLeft: false },
+            { name: '호두', type: '복숭아 여우', asset: './assets/tamagotchi/fox-actions-v2.png', walkAsset: './assets/tamagotchi/fox-walk-v1.png', walkFacesLeft: true },
+            { name: '호야', type: '황금빛 호랑이', asset: './assets/tamagotchi/tiger-actions-v2.png', walkAsset: './assets/tamagotchi/tiger-walk-v1.png', walkFacesLeft: false },
+            { name: '동동', type: '포근한 당나귀', asset: './assets/tamagotchi/donkey-actions-v2.png', walkAsset: './assets/tamagotchi/donkey-walk-v1.png', walkFacesLeft: true }
         ];
         const petFrames = {
             idle: [[0,0],[1,0]],
@@ -16203,19 +16206,72 @@
             return count <= 1 ? '0%' : (index / (count - 1) * 100) + '%';
         }
 
-        function setPetSpriteFrame(column, row) {
+        function setPetSpriteGridFrame(column, row, columns, rows) {
             const sprite = document.getElementById('pet-sprite');
             if (!sprite) return;
-            sprite.style.setProperty('--pet-sprite-x', petPercent(column, 4));
-            sprite.style.setProperty('--pet-sprite-y', petPercent(row, 3));
+            sprite.style.backgroundSize = (columns * 100) + '% ' + (rows * 100) + '%';
+            sprite.style.setProperty('--pet-sprite-x', petPercent(column, columns));
+            sprite.style.setProperty('--pet-sprite-y', petPercent(row, rows));
+        }
+
+        function setPetSpriteFrame(column, row) {
+            setPetSpriteGridFrame(column, row, 4, 3);
         }
 
         function setPetEggFrame(frame) {
             const sprite = document.getElementById('pet-sprite');
             if (!sprite) return;
             const safeFrame = Math.max(0, Math.min(5, Number(frame) || 0));
+            sprite.style.backgroundSize = '300% 200%';
             sprite.style.setProperty('--pet-sprite-x', petPercent(safeFrame % 3, 3));
             sprite.style.setProperty('--pet-sprite-y', petPercent(Math.floor(safeFrame / 3), 2));
+        }
+
+        function usePetActionSprite(sprite, species) {
+            if (!sprite || !species) return;
+            sprite.style.backgroundImage = 'url("' + species.asset + '")';
+            sprite.style.backgroundSize = '400% 300%';
+        }
+
+        function setPetWalkingDirection(mover, species, movingLeft) {
+            if (!mover || !species) return;
+            // 걷기 원본이 바라보는 방향과 실제 이동 방향이 다를 때만 좌우 반전한다.
+            mover.classList.toggle('is-facing-left', Boolean(species.walkFacesLeft) !== Boolean(movingLeft));
+        }
+
+        function loadPetWalkAsset(species) {
+            if (!species || !species.walkAsset) return Promise.reject(new Error('걷기 스프라이트 없음'));
+            if (petWalkAssetCache.has(species.walkAsset)) return petWalkAssetCache.get(species.walkAsset);
+            const promise = new Promise(function (resolve, reject) {
+                const image = new Image();
+                image.onload = function () {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = image.naturalWidth;
+                        canvas.height = image.naturalHeight;
+                        const context = canvas.getContext('2d', { willReadFrequently: true });
+                        context.drawImage(image, 0, 0);
+                        const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+                        for (let index = 0; index < pixels.data.length; index += 4) {
+                            const red = pixels.data[index];
+                            const green = pixels.data[index + 1];
+                            const blue = pixels.data[index + 2];
+                            // 생성 원본의 선명한 마젠타 배경만 제거하고 캐릭터의 분홍색은 보존한다.
+                            if (red > 205 && blue > 145 && green < 105 && red - green > 105 && blue - green > 70) {
+                                pixels.data[index + 3] = 0;
+                            }
+                        }
+                        context.putImageData(pixels, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                image.onerror = reject;
+                image.src = species.walkAsset;
+            });
+            petWalkAssetCache.set(species.walkAsset, promise);
+            return promise;
         }
 
         function setPetIllnessFrame(conditionKey) {
@@ -16237,14 +16293,14 @@
             const sprite = document.getElementById('pet-sprite');
             if (!sprite) return;
             if (petIllnessAnimationKey === animationKey && petIllnessTimer) {
-                sprite.style.backgroundImage = 'url("' + species.asset + '")';
+                usePetActionSprite(sprite, species);
                 setPetIllnessFrame(conditionKey);
                 return;
             }
             stopPetIllnessAnimation();
             petIllnessAnimationKey = animationKey;
             petIllnessFrameIndex = 0;
-            sprite.style.backgroundImage = 'url("' + species.asset + '")';
+            usePetActionSprite(sprite, species);
             setPetIllnessFrame(conditionKey);
             if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
             const speed = conditionKey === 'cold' ? 460 : conditionKey === 'hospital' ? 920 : 1250;
@@ -16265,7 +16321,7 @@
                     return;
                 }
                 petIllnessFrameIndex = petIllnessFrameIndex ? 0 : 1;
-                currentSprite.style.backgroundImage = 'url("' + species.asset + '")';
+                usePetActionSprite(currentSprite, species);
                 setPetIllnessFrame(conditionKey);
             }, speed);
         }
@@ -16277,12 +16333,13 @@
             const sprite = document.getElementById('pet-sprite');
             const mover = document.getElementById('pet-mover');
             if (sprite && species) {
-                sprite.style.backgroundImage = 'url("' + species.asset + '")';
+                usePetActionSprite(sprite, species);
             }
             if (mover) mover.classList.remove('is-sick','is-very-sick','is-critical');
         }
 
         function startPetAnimation(name) {
+            const animationToken = ++petAnimationToken;
             clearInterval(petFrameTimer);
             petFrameTimer = 0;
             petCurrentAnimation = petFrames[name] ? name : 'idle';
@@ -16290,11 +16347,28 @@
             const species = petSpecies[Math.max(0, Math.min(petSpecies.length - 1, Number(activePetState.species) || 0))];
             const sprite = document.getElementById('pet-sprite');
             const mover = document.getElementById('pet-mover');
-            const frames = petCurrentAnimation === 'walk' ? [[petWalkFrameColumn,0]] : petFrames[petCurrentAnimation];
-            if (sprite && species) {
-                sprite.style.backgroundImage = 'url("' + species.asset + '")';
-            }
+            const frames = petFrames[petCurrentAnimation];
+            if (sprite && species) usePetActionSprite(sprite, species);
             if (mover) mover.classList.toggle('is-walking', petCurrentAnimation === 'walk');
+            if (petCurrentAnimation === 'walk') {
+                setPetWalkingDirection(mover, species, petWalkingLeft);
+                setPetSpriteFrame(petWalkFrameColumn, 0);
+                loadPetWalkAsset(species).then(function (walkAsset) {
+                    if (animationToken !== petAnimationToken || petCurrentAnimation !== 'walk' || !sprite) return;
+                    const walkFrames = [[0,0],[1,0],[0,1],[1,1]];
+                    let walkIndex = 0;
+                    sprite.style.backgroundImage = 'url("' + walkAsset + '")';
+                    setPetSpriteGridFrame(0, 0, 2, 2);
+                    petFrameTimer = setInterval(function () {
+                        if (animationToken !== petAnimationToken || petCurrentAnimation !== 'walk') return;
+                        walkIndex = (walkIndex + 1) % walkFrames.length;
+                        setPetSpriteGridFrame(walkFrames[walkIndex][0], walkFrames[walkIndex][1], 2, 2);
+                    }, 170);
+                }).catch(function () {
+                    // 크로마키 처리가 제한된 환경에서는 기존 방향 프레임을 안전하게 유지한다.
+                });
+                return;
+            }
             let index = 0;
             setPetSpriteFrame(frames[0][0], frames[0][1]);
             if (frames.length < 2) return;
@@ -16490,8 +16564,8 @@
             if (!mover) return null;
             const moveDuration = Math.max(450, Number(duration) || 650);
             const current = Math.max(15, Math.min(85, Number(activePetState && activePetState.roomX) || 50));
-            petWalkFrameColumn = Number(percent) < current ? 2 : 3;
-            mover.classList.remove('is-facing-left');
+            petWalkingLeft = Number(percent) < current;
+            petWalkFrameColumn = petWalkingLeft ? 2 : 3;
             mover.style.transitionDuration = moveDuration + 'ms,.45s';
             mover.style.transitionTimingFunction = 'linear,steps(3,end)';
             startPetAnimation('walk');
@@ -16525,8 +16599,8 @@
             const distance = Math.abs(target - current);
             const duration = Math.round(680 + distance * 30);
             const movingLeft = target < current;
+            petWalkingLeft = movingLeft;
             petWalkFrameColumn = movingLeft ? 2 : 3;
-            mover.classList.remove('is-facing-left');
             mover.style.transitionDuration = duration + 'ms,.45s';
             mover.style.transitionTimingFunction = 'linear,steps(3,end)';
             mover.style.bottom = (4 + Math.round(Math.random() * 4)) + '%';
@@ -16608,7 +16682,11 @@
             if (sprite) {
                 sprite.classList.toggle('is-egg', !species);
                 sprite.classList.toggle('is-dead', isDead);
-                sprite.style.backgroundImage = species ? 'url("' + species.asset + '")' : "url('./assets/tamagotchi/egg-hatch-v2.png')";
+                if (species) usePetActionSprite(sprite, species);
+                else {
+                    sprite.style.backgroundImage = "url('./assets/tamagotchi/egg-hatch-v2.png')";
+                    sprite.style.backgroundSize = '300% 200%';
+                }
                 if (!species) setPetEggFrame(isHatching ? 5 : Math.min(4, Number(state.eggTaps) || 0));
                 else if (isDead) setPetSpriteFrame(2,2);
                 else if (usesHealthAnimation) {
