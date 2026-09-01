@@ -645,6 +645,8 @@
         .pet-shadow { position: absolute; z-index: 1; width: 6.5rem; height: .75rem; left: 50%; bottom: 6%; border-radius: 50%; background: rgba(82,48,45,.24); transform: translateX(-50%); }
         .pet-mover { position: absolute; z-index: 4; width: 8.5rem; height: 8.5rem; left: 50%; bottom: 4%; transform: translateX(-50%); transition-property: left,bottom; transition-duration: 1.45s,.55s; transition-timing-function: linear,steps(4,end); will-change: left,bottom,transform; }
         .pet-mover.is-facing-left { transform: translateX(-50%) scaleX(-1); }
+        .pet-mover.is-walking .pet-sprite { animation: petWalkBob .36s steps(2,end) infinite; transform-origin: center bottom; }
+        .pet-mover.is-walking .pet-shadow { animation: petWalkShadow .36s steps(2,end) infinite; }
         .pet-mover.is-jumping { animation: petJump .7s steps(4,end) 3; }
         .pet-mover.is-shivering { animation: petShiver .18s steps(2,end) infinite; }
         .pet-mover.is-refusing { animation: petRefuse .18s steps(2,end) 6; }
@@ -655,10 +657,10 @@
         .pet-mover.is-sleeping { z-index: 3; width: 6.6rem; height: 6.6rem; bottom: 22%; }
         .pet-mover.is-bathing { z-index: 4; width: 7rem; height: 7rem; bottom: 5%; }
         .pet-mover.is-entering-bath { animation: petEnterBath .48s steps(5,end) both; }
+        .pet-mover.is-taking-medicine { animation: petMedicineSwallow 1.7s steps(6,end) both; }
         .pet-mover.is-sick { animation: petSickShiver .5s steps(3,end) infinite; filter: saturate(.78); }
         .pet-mover.is-very-sick { width: 7.2rem; height: 7.2rem; bottom: 2% !important; animation: petWeakBreath 1.2s steps(4,end) infinite; filter: saturate(.55) brightness(.9); }
         .pet-mover.is-critical { width: 6.6rem; height: 6.6rem; bottom: 1% !important; animation: petCriticalBreath 1.6s steps(4,end) infinite; filter: grayscale(.45) saturate(.45) brightness(.76); }
-        .pet-mover.has-health-portrait { width: 9.5rem; height: 9.5rem; }
         .pet-symptom { position: absolute; z-index: 11; top: .2rem; right: -.45rem; padding: .22rem .32rem; border: .12rem solid var(--pixel-ink); color: var(--pixel-ink); background: #FFF8DF; box-shadow: .12rem .12rem 0 var(--pixel-shadow); font-size: .48rem; font-weight: 950; white-space: nowrap; }
         .pet-dirt { position: absolute; z-index: 7; inset: 0; display: none; pointer-events: none; }
         .pet-mover.is-dirty .pet-dirt { display: block; }
@@ -671,8 +673,6 @@
         .pet-sprite-button:not(:disabled) { cursor: pointer; }
         .pet-sprite-button:focus-visible { outline: .1875rem dashed var(--pixel-ink); outline-offset: .125rem; }
         .pet-sprite { width: 100%; height: 100%; display: block; background-repeat: no-repeat; background-size: 400% 300%; background-position: var(--pet-sprite-x,0%) var(--pet-sprite-y,0%); image-rendering: pixelated; image-rendering: crisp-edges; }
-        .pet-sprite.is-generated-walk { background-size: 200% 200%; filter: url('#pet-walk-chroma-key'); }
-        .pet-sprite.is-health-portrait { border: .15rem solid var(--pixel-ink); border-radius: .4rem; background-color: #FFF8DF; background-size: 200% 200%; box-shadow: .18rem .18rem 0 rgba(165,110,97,.8); }
         .pet-sprite.is-egg { width: 7.25rem; height: 7.25rem; background-image: url('./assets/tamagotchi/egg-hatch-v2.png'); background-size: 300% 200%; }
         .pet-sprite.is-dead { filter: grayscale(1) brightness(.72); opacity: .72; }
         .pet-sprite-button.is-tapped .pet-sprite { animation: petEggTap .32s steps(3,end); }
@@ -700,6 +700,15 @@
         .pet-food-prop.is-eating .pet-bowl-food i:nth-child(8) { animation-delay: 1.2s; }
         .pet-food-prop.is-eating .pet-bowl-food i:nth-child(9) { animation-delay: 1.35s; }
         .pet-food-prop.is-eating .pet-bowl-food i:nth-child(10) { animation-delay: 1.5s; }
+        .pet-medicine-prop { inset: 0; z-index: 12; }
+        .pet-pill { position: absolute; z-index: 2; left: 84%; bottom: 17%; width: 1.05rem; height: .52rem; overflow: hidden; border: .14rem solid var(--pixel-ink); border-radius: 62.5rem; background: linear-gradient(90deg,#F26C79 0 50%,#FFF8DF 50%); opacity: 0; transform: rotate(-18deg); }
+        .pet-pill::after { position: absolute; top: -.1rem; bottom: -.1rem; left: 50%; width: .1rem; content: ''; background: var(--pixel-ink); transform: translateX(-50%); }
+        .pet-water-cup { position: absolute; z-index: 3; left: 80%; bottom: 3%; width: 1.2rem; height: 1.45rem; border: .15rem solid var(--pixel-ink); border-top-width: .1rem; background: linear-gradient(to top,#82D7E3 0 62%,rgba(225,253,255,.92) 62%); box-shadow: inset .15rem 0 0 rgba(255,255,255,.65); opacity: 0; transform-origin: 20% 85%; }
+        .pet-water-cup::after { position: absolute; right: -.55rem; top: .28rem; width: .55rem; height: .65rem; content: ''; border: .13rem solid var(--pixel-ink); border-left: 0; }
+        .pet-heal-spark { position: absolute; z-index: 4; left: 64%; top: 13%; color: #65B94B; font-size: 1.15rem; font-weight: 950; text-shadow: .1rem .1rem 0 #FFF8DF; opacity: 0; }
+        .pet-medicine-prop.is-taking .pet-pill { animation: petPillToMouth .72s steps(5,end) .12s forwards; }
+        .pet-medicine-prop.is-taking .pet-water-cup { animation: petWaterToMouth 1.05s steps(6,end) .72s forwards; }
+        .pet-medicine-prop.is-taking .pet-heal-spark { animation: petHealSpark .62s steps(4,end) 1.52s forwards; }
         .pet-play-prop { left: 8%; bottom: 12%; width: 2rem; height: 2rem; border: .1875rem solid var(--pixel-ink); }
         .pet-play-prop[data-toy="ball"] { border-radius: 50%; background: conic-gradient(#F47C85 0 25%,#FFF1A8 0 50%,#62C5D0 0 75%,#A98BD2 0); animation: petBallPlay 2.2s steps(8,end) both; }
         .pet-play-prop[data-toy="yarn"] { border-radius: 50%; background: repeating-linear-gradient(45deg,#F28BB0 0 .25rem,#FFD0DF .25rem .45rem); animation: petYarnPlay 2.2s steps(8,end) both; }
@@ -768,6 +777,8 @@
         .pet-save-note { flex: none; margin: 0; color: rgba(70,57,75,.8); font-size: .45rem; font-weight: 850; text-align: center; text-shadow: 0 .0625rem 0 #FFF8DF; }
         @keyframes petEggTap { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
         @keyframes petHatch { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08) translateY(-.3rem); } }
+        @keyframes petWalkBob { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-.18rem) scale(1.02,.98); } }
+        @keyframes petWalkShadow { 0%,100% { transform: translateX(-50%) scaleX(1); opacity: .24; } 50% { transform: translateX(-50%) scaleX(.82); opacity: .17; } }
         @keyframes petJump { 0%,100% { bottom: 4%; } 50% { bottom: 24%; } }
         @keyframes petShiver { 0%,100% { margin-left: -.18rem; } 50% { margin-left: .18rem; } }
         @keyframes petNightIn { from { opacity: 0; } to { opacity: 1; } }
@@ -787,6 +798,10 @@
         @keyframes petSickShiver { 0%,100% { margin-left: -.12rem; transform: translateX(-50%) rotate(-1deg); } 50% { margin-left: .12rem; transform: translateX(-50%) rotate(1deg); } }
         @keyframes petWeakBreath { 0%,100% { transform: translateX(-50%) scale(1,.9); } 50% { transform: translateX(-50%) scale(.97,.84); } }
         @keyframes petCriticalBreath { 0%,100% { transform: translateX(-50%) scale(.96,.82); opacity: .72; } 50% { transform: translateX(-50%) scale(.92,.76); opacity: .48; } }
+        @keyframes petPillToMouth { 0% { left: 84%; bottom: 17%; opacity: 0; } 18% { opacity: 1; } 76% { left: 53%; bottom: 48%; opacity: 1; transform: rotate(8deg); } 100% { left: 49%; bottom: 47%; opacity: 0; transform: scale(.35); } }
+        @keyframes petWaterToMouth { 0% { left: 80%; bottom: 3%; opacity: 0; transform: rotate(0); } 18% { opacity: 1; } 52%,72% { left: 58%; bottom: 34%; opacity: 1; transform: rotate(-28deg); } 100% { left: 78%; bottom: 3%; opacity: 0; transform: rotate(0); } }
+        @keyframes petMedicineSwallow { 0%,18% { transform: translateX(-50%) translateY(0); } 38% { transform: translateX(-50%) translateY(-.08rem) rotate(-2deg); } 58% { transform: translateX(-50%) translateY(.1rem) rotate(2deg); } 74% { transform: translateX(-50%) scaleY(.93); } 100% { transform: translateX(-50%) scale(1); } }
+        @keyframes petHealSpark { 0% { opacity: 0; transform: scale(.4) rotate(0); } 45% { opacity: 1; transform: scale(1.25) rotate(45deg); } 100% { opacity: 0; transform: translateY(-.7rem) scale(.7) rotate(90deg); } }
         @keyframes petHospitalPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
         @keyframes petHealthAlarm { 0%,100% { opacity: 1; } 50% { opacity: .52; } }
         @keyframes petChaseBall { 0% { left: 46%; bottom: 4%; } 22% { left: 32%; bottom: 14%; } 48% { left: 63%; bottom: 5%; } 70% { left: 52%; bottom: 18%; } 100% { left: 72%; bottom: 4%; } }
@@ -7391,12 +7406,6 @@
 
     <!-- 로그인한 내 프로필 전용 다마고치 화면 -->
     <section id="tamagotchi-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" aria-hidden="true">
-        <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden">
-            <filter id="pet-walk-chroma-key" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
-                <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -.5 1 -.5 0 1"></feColorMatrix>
-                <feComponentTransfer><feFuncA type="linear" slope="4"></feFuncA></feComponentTransfer>
-            </filter>
-        </svg>
         <header class="pet-topbar">
             <button type="button" class="pet-back" onclick="window.haptic && window.haptic(); window.closeTamagotchi()" aria-label="다마고치 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
             <div class="pet-heading">
@@ -7422,6 +7431,7 @@
                         </button>
                         <span class="pet-dirt" aria-hidden="true"></span>
                         <span id="pet-symptom" class="pet-symptom hidden" aria-hidden="true"></span>
+                        <span id="pet-medicine-prop" class="pet-prop pet-medicine-prop hidden" aria-hidden="true"><i class="pet-pill"></i><i class="pet-water-cup"></i><b class="pet-heal-spark">✦</b></span>
                     </div>
                     <div id="pet-food-prop" class="pet-prop pet-food-prop hidden" aria-hidden="true"><span class="pet-bowl-food"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="pet-bowl"></span></div>
                     <div id="pet-play-prop" class="pet-prop pet-play-prop hidden" data-toy="ball" aria-hidden="true"></div>
@@ -15960,16 +15970,17 @@
         let petActionTimers = [];
         let petIsBusy = false;
         let petCurrentAnimation = 'idle';
+        let petWalkFrameColumn = 3;
         const petStoragePrefix = 'enjoy_tamagotchi_v3_';
         const petSpecies = [
-            { name: '루루', type: '보랏빛 냥이', asset: './assets/tamagotchi/cat-actions-v2.png', walkAsset: './assets/tamagotchi/cat-walk-v1.png', walkFacesLeft: true, illnessAsset: './assets/tamagotchi/cat-illness-v1.png', illnessAsset2: './assets/tamagotchi/cat-illness-v2.png' },
-            { name: '토토', type: '달토끼', asset: './assets/tamagotchi/bunny-actions-v2.png', walkAsset: './assets/tamagotchi/bunny-walk-v1.png', illnessAsset: './assets/tamagotchi/bunny-illness-v1.png', illnessAsset2: './assets/tamagotchi/bunny-illness-v2.png' },
-            { name: '모모', type: '꿀곰', asset: './assets/tamagotchi/bear-actions-v2.png', walkAsset: './assets/tamagotchi/bear-walk-v1.png', illnessAsset: './assets/tamagotchi/bear-illness-v1.png', illnessAsset2: './assets/tamagotchi/bear-illness-v2.png' },
-            { name: '피코', type: '민트새', asset: './assets/tamagotchi/bird-actions-v2.png', walkAsset: './assets/tamagotchi/bird-walk-v1.png', illnessAsset: './assets/tamagotchi/bird-illness-v1.png', illnessAsset2: './assets/tamagotchi/bird-illness-v2.png' },
-            { name: '아리', type: '분홍 아홀로틀', asset: './assets/tamagotchi/axolotl-actions-v2.png', walkAsset: './assets/tamagotchi/axolotl-walk-v1.png', illnessAsset: './assets/tamagotchi/axolotl-illness-v1.png', illnessAsset2: './assets/tamagotchi/axolotl-illness-v2.png' },
-            { name: '호두', type: '복숭아 여우', asset: './assets/tamagotchi/fox-actions-v2.png', walkAsset: './assets/tamagotchi/fox-walk-v1.png', walkFacesLeft: true, illnessAsset: './assets/tamagotchi/fox-illness-v1.png', illnessAsset2: './assets/tamagotchi/fox-illness-v2.png' },
-            { name: '호야', type: '황금빛 호랑이', asset: './assets/tamagotchi/tiger-actions-v2.png', walkAsset: './assets/tamagotchi/tiger-walk-v1.png', illnessAsset: './assets/tamagotchi/tiger-illness-v1.png', illnessAsset2: './assets/tamagotchi/tiger-illness-v2.png' },
-            { name: '동동', type: '포근한 당나귀', asset: './assets/tamagotchi/donkey-actions-v2.png', walkAsset: './assets/tamagotchi/donkey-walk-v1.png', walkFacesLeft: true, illnessAsset: './assets/tamagotchi/donkey-illness-v1.png', illnessAsset2: './assets/tamagotchi/donkey-illness-v2.png' }
+            { name: '루루', type: '보랏빛 냥이', asset: './assets/tamagotchi/cat-actions-v2.png' },
+            { name: '토토', type: '달토끼', asset: './assets/tamagotchi/bunny-actions-v2.png' },
+            { name: '모모', type: '꿀곰', asset: './assets/tamagotchi/bear-actions-v2.png' },
+            { name: '피코', type: '민트새', asset: './assets/tamagotchi/bird-actions-v2.png' },
+            { name: '아리', type: '분홍 아홀로틀', asset: './assets/tamagotchi/axolotl-actions-v2.png' },
+            { name: '호두', type: '복숭아 여우', asset: './assets/tamagotchi/fox-actions-v2.png' },
+            { name: '호야', type: '황금빛 호랑이', asset: './assets/tamagotchi/tiger-actions-v2.png' },
+            { name: '동동', type: '포근한 당나귀', asset: './assets/tamagotchi/donkey-actions-v2.png' }
         ];
         const petFrames = {
             idle: [[0,0],[1,0]],
@@ -15979,7 +15990,6 @@
             clean: [[0,2],[1,2]],
             rest: [[2,2],[3,2]]
         };
-        const petWalkFrames = [[0,0],[1,0],[0,1],[1,1]];
 
         function petProfileName(value) {
             return String(value || '').trim();
@@ -16162,13 +16172,6 @@
             sprite.style.setProperty('--pet-sprite-y', petPercent(row, 3));
         }
 
-        function setPetWalkFrame(column, row) {
-            const sprite = document.getElementById('pet-sprite');
-            if (!sprite) return;
-            sprite.style.setProperty('--pet-sprite-x', petPercent(column, 2));
-            sprite.style.setProperty('--pet-sprite-y', petPercent(row, 2));
-        }
-
         function setPetEggFrame(frame) {
             const sprite = document.getElementById('pet-sprite');
             if (!sprite) return;
@@ -16178,11 +16181,9 @@
         }
 
         function setPetIllnessFrame(conditionKey) {
-            const sprite = document.getElementById('pet-sprite');
-            if (!sprite) return;
-            const frame = conditionKey === 'critical' ? [0,1] : conditionKey === 'hospital' ? [1,0] : [0,0];
-            sprite.style.setProperty('--pet-sprite-x', petPercent(frame[0], 2));
-            sprite.style.setProperty('--pet-sprite-y', petPercent(frame[1], 2));
+            const frames = conditionKey === 'cold' ? [[0,0],[1,0]] : [[2,2],[3,2]];
+            const frame = frames[petIllnessFrameIndex % frames.length];
+            setPetSpriteFrame(frame[0], frame[1]);
         }
 
         function stopPetIllnessAnimation() {
@@ -16193,22 +16194,22 @@
         }
 
         function startPetIllnessAnimation(species, conditionKey) {
-            if (!(species && species.illnessAsset && species.illnessAsset2)) return;
+            if (!species) return;
             const animationKey = species.name + ':' + conditionKey;
             const sprite = document.getElementById('pet-sprite');
             if (!sprite) return;
             if (petIllnessAnimationKey === animationKey && petIllnessTimer) {
-                sprite.style.backgroundImage = 'url("' + (petIllnessFrameIndex ? species.illnessAsset2 : species.illnessAsset) + '")';
+                sprite.style.backgroundImage = 'url("' + species.asset + '")';
+                setPetIllnessFrame(conditionKey);
                 return;
             }
             stopPetIllnessAnimation();
             petIllnessAnimationKey = animationKey;
             petIllnessFrameIndex = 0;
-            sprite.style.backgroundImage = 'url("' + species.illnessAsset + '")';
-            const alternateFrame = new Image();
-            alternateFrame.src = species.illnessAsset2;
+            sprite.style.backgroundImage = 'url("' + species.asset + '")';
+            setPetIllnessFrame(conditionKey);
             if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-            const speed = conditionKey === 'cold' ? 520 : conditionKey === 'hospital' ? 1050 : 1450;
+            const speed = conditionKey === 'cold' ? 460 : conditionKey === 'hospital' ? 920 : 1250;
             petIllnessTimer = setInterval(function () {
                 if (!activePetState || activePetState.phase !== 'hatched' || isPetHospitalized(activePetState)) {
                     stopPetIllnessAnimation();
@@ -16226,7 +16227,7 @@
                     return;
                 }
                 petIllnessFrameIndex = petIllnessFrameIndex ? 0 : 1;
-                currentSprite.style.backgroundImage = 'url("' + (petIllnessFrameIndex ? species.illnessAsset2 : species.illnessAsset) + '")';
+                currentSprite.style.backgroundImage = 'url("' + species.asset + '")';
                 setPetIllnessFrame(conditionKey);
             }, speed);
         }
@@ -16238,10 +16239,9 @@
             const sprite = document.getElementById('pet-sprite');
             const mover = document.getElementById('pet-mover');
             if (sprite && species) {
-                sprite.classList.remove('is-health-portrait','is-generated-walk');
                 sprite.style.backgroundImage = 'url("' + species.asset + '")';
             }
-            if (mover) mover.classList.remove('has-health-portrait','is-sick','is-very-sick','is-critical');
+            if (mover) mover.classList.remove('is-sick','is-very-sick','is-critical');
         }
 
         function startPetAnimation(name) {
@@ -16251,21 +16251,20 @@
             if (!activePetState || activePetState.phase !== 'hatched') return;
             const species = petSpecies[Math.max(0, Math.min(petSpecies.length - 1, Number(activePetState.species) || 0))];
             const sprite = document.getElementById('pet-sprite');
-            const usesGeneratedWalk = petCurrentAnimation === 'walk' && !!(species && species.walkAsset);
-            const frames = usesGeneratedWalk ? petWalkFrames : petFrames[petCurrentAnimation];
+            const mover = document.getElementById('pet-mover');
+            const frames = petCurrentAnimation === 'walk' ? [[petWalkFrameColumn,0]] : petFrames[petCurrentAnimation];
             if (sprite && species) {
-                sprite.classList.remove('is-health-portrait');
-                sprite.classList.toggle('is-generated-walk', usesGeneratedWalk);
-                sprite.style.backgroundImage = 'url("' + (usesGeneratedWalk ? species.walkAsset : species.asset) + '")';
+                sprite.style.backgroundImage = 'url("' + species.asset + '")';
             }
+            if (mover) mover.classList.toggle('is-walking', petCurrentAnimation === 'walk');
             let index = 0;
-            const showFrame = usesGeneratedWalk ? setPetWalkFrame : setPetSpriteFrame;
-            showFrame(frames[0][0], frames[0][1]);
+            setPetSpriteFrame(frames[0][0], frames[0][1]);
+            if (frames.length < 2) return;
             petFrameTimer = setInterval(function () {
                 if (!activePetState || activePetState.phase !== 'hatched') return;
                 index = (index + 1) % frames.length;
-                showFrame(frames[index][0], frames[index][1]);
-            }, petCurrentAnimation === 'walk' ? 155 : 320);
+                setPetSpriteFrame(frames[index][0], frames[index][1]);
+            }, 320);
         }
 
         function setPetMessage(text) {
@@ -16430,18 +16429,18 @@
         }
 
         function clearPetProps() {
-            ['pet-food-prop','pet-play-prop','pet-clean-prop','pet-sleep-prop'].forEach(function (id) {
+            ['pet-food-prop','pet-play-prop','pet-clean-prop','pet-sleep-prop','pet-medicine-prop'].forEach(function (id) {
                 const prop = document.getElementById(id);
                 if (prop) {
                     prop.classList.add('hidden');
-                    prop.classList.remove('is-filling','is-eating','is-preparing','is-filled');
+                    prop.classList.remove('is-filling','is-eating','is-preparing','is-filled','is-taking');
                 }
             });
             const hero = document.querySelector('#tamagotchi-screen .pet-hero');
             if (hero) hero.classList.remove('is-night');
             const mover = document.getElementById('pet-mover');
             if (mover) {
-                mover.classList.remove('is-jumping','is-shivering','is-refusing','is-feeding','play-ball','play-yarn','play-mouse','is-sleeping','is-bathing','is-entering-bath');
+                mover.classList.remove('is-walking','is-jumping','is-shivering','is-refusing','is-feeding','is-taking-medicine','play-ball','play-yarn','play-mouse','is-sleeping','is-bathing','is-entering-bath');
                 mover.style.transitionDuration = '';
                 mover.style.transitionTimingFunction = '';
                 mover.style.bottom = '4%';
@@ -16452,6 +16451,9 @@
             const mover = document.getElementById('pet-mover');
             if (!mover) return null;
             const moveDuration = Math.max(450, Number(duration) || 650);
+            const current = Math.max(15, Math.min(85, Number(activePetState && activePetState.roomX) || 50));
+            petWalkFrameColumn = Number(percent) < current ? 2 : 3;
+            mover.classList.remove('is-facing-left');
             mover.style.transitionDuration = moveDuration + 'ms,.45s';
             mover.style.transitionTimingFunction = 'linear,steps(3,end)';
             startPetAnimation('walk');
@@ -16484,9 +16486,9 @@
             if (Math.abs(target - current) < 8) target = current < 50 ? Math.min(85, current + 18) : Math.max(15, current - 18);
             const distance = Math.abs(target - current);
             const duration = Math.round(680 + distance * 30);
-            const walkingSpecies = petSpecies[Math.max(0, Math.min(petSpecies.length - 1, Number(activePetState.species) || 0))];
             const movingLeft = target < current;
-            mover.classList.toggle('is-facing-left', walkingSpecies && walkingSpecies.walkFacesLeft ? !movingLeft : movingLeft);
+            petWalkFrameColumn = movingLeft ? 2 : 3;
+            mover.classList.remove('is-facing-left');
             mover.style.transitionDuration = duration + 'ms,.45s';
             mover.style.transitionTimingFunction = 'linear,steps(3,end)';
             mover.style.bottom = (4 + Math.round(Math.random() * 4)) + '%';
@@ -16538,7 +16540,7 @@
             const needsMedicine = isHatched && !isHospitalized && values.health <= 80;
             const needsHospital = isHatched && !isHospitalized && values.health <= 50;
             const species = isHatched || isDead ? petSpecies[Math.max(0, Math.min(petSpecies.length - 1, Number(state.species) || 0))] : null;
-            const usesHealthPortrait = !!species && isHatched && !isHospitalized && ['cold','hospital','critical'].includes(healthCondition.key);
+            const usesHealthAnimation = !!species && isHatched && !isHospitalized && ['cold','hospital','critical'].includes(healthCondition.key);
             const lifeStage = !isHatched ? (isHatching ? '껍질이 무너지는 중' : '신비한 알') : level < 3 ? species.type + ' · 아기' : level < 6 ? species.type + ' · 꼬마' : species.type + ' · 단짝';
             const stage = isDead ? '추억 속 친구' : isHatched && healthCondition.key !== 'healthy' ? lifeStage + ' · ' + healthCondition.label : lifeStage;
             const sprite = document.getElementById('pet-sprite');
@@ -16568,16 +16570,14 @@
             if (sprite) {
                 sprite.classList.toggle('is-egg', !species);
                 sprite.classList.toggle('is-dead', isDead);
-                sprite.classList.toggle('is-health-portrait', usesHealthPortrait);
-                if (isDead || usesHealthPortrait || !species || petCurrentAnimation !== 'walk') sprite.classList.remove('is-generated-walk');
-                const usesWalkAsset = !!species && petCurrentAnimation === 'walk' && sprite.classList.contains('is-generated-walk');
-                sprite.style.backgroundImage = species ? 'url("' + (usesHealthPortrait ? (petIllnessFrameIndex ? species.illnessAsset2 : species.illnessAsset) : usesWalkAsset ? species.walkAsset : species.asset) + '")' : "url('./assets/tamagotchi/egg-hatch-v2.png')";
+                sprite.style.backgroundImage = species ? 'url("' + species.asset + '")' : "url('./assets/tamagotchi/egg-hatch-v2.png')";
                 if (!species) setPetEggFrame(isHatching ? 5 : Math.min(4, Number(state.eggTaps) || 0));
                 else if (isDead) setPetSpriteFrame(2,2);
-                else if (usesHealthPortrait) {
+                else if (usesHealthAnimation) {
                     clearInterval(petFrameTimer);
                     petFrameTimer = 0;
                     petCurrentAnimation = 'illness';
+                    if (mover) mover.classList.remove('is-walking');
                     setPetIllnessFrame(healthCondition.key);
                     startPetIllnessAnimation(species, healthCondition.key);
                 }
@@ -16587,7 +16587,7 @@
                     if (petCurrentAnimation !== 'rest') startPetAnimation('rest');
                 } else if (!petIsBusy && petCurrentAnimation !== 'idle') startPetAnimation('idle');
             }
-            if (!usesHealthPortrait) stopPetIllnessAnimation();
+            if (!usesHealthAnimation) stopPetIllnessAnimation();
             else stopPetRoaming();
             if (spriteButton) {
                 spriteButton.disabled = !activePetCanEdit || isHatched || isHatching || isDead;
@@ -16601,7 +16601,6 @@
             }
             if (mover) {
                 mover.classList.toggle('hidden', isHospitalized);
-                mover.classList.toggle('has-health-portrait', usesHealthPortrait);
                 if (isSleeping && !isHospitalized) {
                     mover.style.left = '16%';
                     mover.style.bottom = '22%';
@@ -17515,19 +17514,33 @@
                 petIsBusy = true;
                 stopPetRoaming();
                 clearPetActionTimers();
+                clearPetProps();
                 setPetActionButtonsDisabled(true);
                 const mover = document.getElementById('pet-mover');
-                if (mover) {
-                    mover.classList.remove('is-facing-left','is-sick','is-very-sick','is-critical');
-                    mover.classList.add('is-feeding');
-                }
+                const medicineProp = document.getElementById('pet-medicine-prop');
                 preparePetActionSprite();
-                startPetAnimation('feed');
-                setPetMessage('감기약을 꿀꺽 먹고 따뜻한 물도 마셔요.');
+                movePetForAction(50, 4, 480);
+                setPetMessage('약과 물을 준비하러 가운데로 걸어와요.');
+                petLater(function () {
+                    if (mover) {
+                        mover.classList.remove('is-facing-left','is-sick','is-very-sick','is-critical','is-walking');
+                        mover.classList.add('is-taking-medicine');
+                    }
+                    if (medicineProp) {
+                        medicineProp.classList.remove('hidden');
+                        medicineProp.classList.add('is-taking');
+                    }
+                    startPetAnimation('idle');
+                    setPetMessage('알약을 입에 넣고 물컵을 들어 올려요.');
+                }, 520);
+                petLater(function () {
+                    setPetMessage('물을 꿀꺽 마시고 약을 삼켜요.');
+                }, 1280);
                 petLater(function () {
                     if (!activePetState || activePetState.phase !== 'hatched') return;
                     activePetState.health = Math.max(86, petClamp(health + 24));
                     activePetState.energy = petClamp(activePetState.energy + 5);
+                    activePetState.roomX = 50;
                     activePetState.careCount = Math.max(0, Number(activePetState.careCount || 0)) + 1;
                     activePetState.lastCareAt = Date.now();
                     activePetState.lastUpdated = Date.now();
@@ -17537,7 +17550,7 @@
                     savePetState();
                     renderTamagotchi();
                     schedulePetRoaming(1800);
-                }, 1800);
+                }, 2380);
                 return;
             }
             if (treatment !== 'hospital' || health > 50) return;
