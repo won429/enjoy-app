@@ -15765,6 +15765,9 @@
         let profileMenuMemberName = '';
         let profileMenuPreviousFocus = null;
         const deliveryMemberNames = new Set(['전시기', '류짱']);
+        // 배달 기능과 데이터는 유지하되, 아래 멤버의 프로필 메뉴에서는 진입 버튼만 숨긴다.
+        // 다시 사용할 때 이름을 이 목록에서 제거하면 된다.
+        const hiddenDeliveryProfileActionMembers = new Set(['전시기']);
         const deliveryPrizeMeta = {
             penaltyWaiver: { title: '부과금 면제권', icon: 'fa-ticket-simple' },
             'penalty-waiver': { title: '부과금 면제권', icon: 'fa-ticket-simple' },
@@ -17174,7 +17177,11 @@
             profileMenuPreviousFocus = trigger;
             if (title) title.textContent = profileMenuMemberName + ' 프로필';
             if (petAction) petAction.classList.toggle('hidden', !canOpenPetProfile(profileMenuMemberName));
-            if (deliveryAction) deliveryAction.classList.toggle('hidden', !deliveryMemberNames.has(profileMenuMemberName));
+            if (deliveryAction) {
+                const showDeliveryAction = deliveryMemberNames.has(profileMenuMemberName) &&
+                    !hiddenDeliveryProfileActionMembers.has(profileMenuMemberName);
+                deliveryAction.classList.toggle('hidden', !showDeliveryAction);
+            }
             updateProfileActivityStatus(profileMenuMemberName);
             updateProfilePointBalance(profileMenuMemberName);
             backdrop.classList.remove('hidden');
