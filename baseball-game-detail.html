@@ -28,7 +28,8 @@
             const now = new Date();
             const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const matchDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : today;
-            window.__ENJOY_KBO_BASE_HISTORY = window.KBO_HISTORY_2026 || {};
+            window.__ENJOY_KBO_MATCH_DATE = matchDate;
+            window.__ENJOY_KBO_HISTORY_PARTS = [window.KBO_HISTORY_2026 || {}];
             if (matchDate >= '2026-08-01') {
                 document.write('<script src="kbo_history_2026_08.js"><\/script>');
             }
@@ -36,13 +37,27 @@
     </script>
     <script>
         (function () {
-            const base = window.__ENJOY_KBO_BASE_HISTORY || {};
-            const next = window.KBO_HISTORY_2026 || {};
-            const merged = Object.assign({}, base, next);
-            merged.from = base.from || next.from;
-            merged.to = next.to || base.to;
-            merged.gamesByDate = Object.assign({}, base.gamesByDate || {}, next.gamesByDate || {});
-            merged.rankings = Array.isArray(next.rankings) && next.rankings.length ? next.rankings : (base.rankings || []);
+            if (window.__ENJOY_KBO_MATCH_DATE >= '2026-08-01') {
+                window.__ENJOY_KBO_HISTORY_PARTS.push(window.KBO_HISTORY_2026 || {});
+            }
+            if (window.__ENJOY_KBO_MATCH_DATE >= '2026-09-01') {
+                document.write('<script src="kbo_history_2026_09.js"><\/script>');
+            }
+        })();
+    </script>
+    <script>
+        (function () {
+            if (window.__ENJOY_KBO_MATCH_DATE >= '2026-09-01') {
+                window.__ENJOY_KBO_HISTORY_PARTS.push(window.KBO_HISTORY_2026 || {});
+            }
+            const merged = (window.__ENJOY_KBO_HISTORY_PARTS || []).reduce(function (history, next) {
+                const combined = Object.assign({}, history, next);
+                combined.from = history.from || next.from;
+                combined.to = next.to || history.to;
+                combined.gamesByDate = Object.assign({}, history.gamesByDate || {}, next.gamesByDate || {});
+                combined.rankings = Array.isArray(next.rankings) && next.rankings.length ? next.rankings : (history.rankings || []);
+                return combined;
+            }, {});
             window.KBO_HISTORY_2026 = merged;
             window.getKboHistoryGames = function (dateStr) {
                 return (merged.gamesByDate && merged.gamesByDate[dateStr]) || [];
@@ -51,7 +66,8 @@
             window.getKboHistoryRankings = function () {
                 return merged.rankings || [];
             };
-            delete window.__ENJOY_KBO_BASE_HISTORY;
+            delete window.__ENJOY_KBO_MATCH_DATE;
+            delete window.__ENJOY_KBO_HISTORY_PARTS;
         })();
     </script>
     <script src="baseball-game-detail.js"></script>
