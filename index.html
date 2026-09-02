@@ -642,11 +642,9 @@
         .pet-hospital-timer span { display: block; color: #3477A8; font-size: .42rem; font-weight: 950; }
         .pet-hospital-timer b { display: block; margin-top: .05rem; font-size: .65rem; font-weight: 950; font-variant-numeric: tabular-nums; }
         .pet-world { position: absolute; inset: 2.75rem 0 1.75rem; z-index: 3; overflow: hidden; }
-        .pet-shadow { position: absolute; z-index: 1; width: 6.5rem; height: .75rem; left: 50%; bottom: 6%; border-radius: 50%; background: rgba(82,48,45,.24); transform: translateX(-50%); }
+        .pet-shadow { display: none; }
         .pet-mover { position: absolute; z-index: 4; width: 8.5rem; height: 8.5rem; left: 50%; bottom: 4%; transform: translateX(-50%); transition-property: left,bottom; transition-duration: 1.45s,.55s; transition-timing-function: linear,steps(4,end); will-change: left,bottom,transform; }
         .pet-mover.is-facing-left { transform: translateX(-50%) scaleX(-1); }
-        .pet-mover.is-walking .pet-sprite { animation: petWalkBob .29s steps(2,end) infinite; transform-origin: center bottom; }
-        .pet-mover.is-walking .pet-shadow { animation: petWalkShadow .29s steps(2,end) infinite; }
         .pet-mover.is-jumping { animation: petJump .7s steps(4,end) 3; }
         .pet-mover.is-shivering { animation: petShiver .18s steps(2,end) infinite; }
         .pet-mover.is-refusing { animation: petRefuse .18s steps(2,end) 6; }
@@ -777,8 +775,6 @@
         .pet-save-note { flex: none; margin: 0; color: rgba(70,57,75,.8); font-size: .45rem; font-weight: 850; text-align: center; text-shadow: 0 .0625rem 0 #FFF8DF; }
         @keyframes petEggTap { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
         @keyframes petHatch { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08) translateY(-.3rem); } }
-        @keyframes petWalkBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-.04rem); } }
-        @keyframes petWalkShadow { 0%,100% { transform: translateX(-50%) scaleX(1); opacity: .24; } 50% { transform: translateX(-50%) scaleX(.82); opacity: .17; } }
         @keyframes petJump { 0%,100% { bottom: 4%; } 50% { bottom: 24%; } }
         @keyframes petShiver { 0%,100% { margin-left: -.18rem; } 50% { margin-left: .18rem; } }
         @keyframes petNightIn { from { opacity: 0; } to { opacity: 1; } }
@@ -16339,7 +16335,7 @@
             let index = 0;
             setPetSpriteFrame(frames[0][0], frames[0][1]);
             if (frames.length < 2) return;
-            const speeds = { idle: 430, walk: 145, feed: 240, play: 185, clean: 220, rest: 480, medicine: 340 };
+            const speeds = { idle: 430, walk: 220, feed: 240, play: 185, clean: 220, rest: 480, medicine: 340 };
             petFrameTimer = setInterval(function () {
                 if (!activePetState || activePetState.phase !== 'hatched') return;
                 index = (index + 1) % frames.length;
@@ -17371,7 +17367,8 @@
                 if (activePetIsAdminTest) applyAdminPetTestStep(activePetState);
                 else applyPetDecay(activePetState);
                 savePetState();
-                if (!petIsBusy) renderTamagotchi();
+                const mover = document.getElementById('pet-mover');
+                if (!petIsBusy && !(mover && mover.classList.contains('is-walking'))) renderTamagotchi();
             }, activePetIsAdminTest ? 1000 : 60000);
             startPetSleepCountdown();
             startPetHospitalCountdown();
