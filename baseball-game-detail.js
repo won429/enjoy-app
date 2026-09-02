@@ -70,6 +70,23 @@
         : `<div class="${divCls} rounded-full ${teamColors[team] || 'bg-gray-500'} flex items-center justify-center text-white text-[0.625rem] font-bold ${extraCls}">${team.substring(0,1)}</div>`;
     const teamWinHex = {'LG':'#E4376E', '두산':'#3D5AFE', 'KIA':'#FF2D55', '삼성':'#2F7BE0', 'SSG':'#E63950', '롯데':'#3B6FD4', '한화':'#FF7A1A', 'KT':'#9AA0A6', 'NC':'#4A78C0', '키움':'#C23A6B', '나눔':'#002038', '드림':'#90C0E0', '북부 올스타':'#123B8D', '남부 올스타':'#13B9D1'};
     const KBO_TEAMS = ['LG','두산','KIA','삼성','SSG','롯데','한화','KT','NC','키움'];
+    // 로컬 히스토리에 빠진 8월 28~30일 경기를 보정하는 KBO 공식 기준 전적.
+    // 메인 순위표(index.html)와 같은 기준을 사용한다.
+    const KBO_RANKING_BASELINE = Object.freeze({
+        date: '2026-08-30',
+        teams: Object.freeze({
+            '삼성': { w: 68, d: 3, l: 44 },
+            'KT': { w: 66, d: 3, l: 43 },
+            'KIA': { w: 63, d: 2, l: 50 },
+            'LG': { w: 64, d: 1, l: 51 },
+            '두산': { w: 61, d: 4, l: 52 },
+            'NC': { w: 51, d: 2, l: 58 },
+            '롯데': { w: 50, d: 2, l: 61 },
+            '한화': { w: 49, d: 3, l: 62 },
+            'SSG': { w: 48, d: 5, l: 65 },
+            '키움': { w: 42, d: 3, l: 76 }
+        })
+    });
     const CLASSIC_SERIES_DATES = new Set(['2026-05-22', '2026-05-23', '2026-05-24', '2026-07-16', '2026-07-17', '2026-07-18', '2026-07-19']);
     let teamStats = {};
     const currentDate = new Date();
@@ -372,8 +389,30 @@
                 }
             });
 
+            // 8월 30일 이후의 순위와 시즌 전적은 누락 경기가 보정된 공식 기준점에서 이어서 계산한다.
+            // 최근 경기와 상대 전적은 위에서 개별 경기 기록으로 계속 집계한다.
+            let rankingSeason = season;
+            if (m.date && m.date >= KBO_RANKING_BASELINE.date) {
+                rankingSeason = {};
+                KBO_TEAMS.forEach(team => {
+                    const baseline = KBO_RANKING_BASELINE.teams[team];
+                    rankingSeason[team] = { w: baseline.w, d: baseline.d, l: baseline.l };
+                });
+                finishedGames.filter(game => game.date > KBO_RANKING_BASELINE.date).forEach(game => {
+                    const awayRecord = rankingSeason[game.away];
+                    const homeRecord = rankingSeason[game.home];
+                    if (game.awayScore === game.homeScore) {
+                        awayRecord.d++; homeRecord.d++;
+                    } else if (game.awayScore > game.homeScore) {
+                        awayRecord.w++; homeRecord.l++;
+                    } else {
+                        homeRecord.w++; awayRecord.l++;
+                    }
+                });
+            }
+
             const standings = KBO_TEAMS.map(team => {
-                const record = season[team];
+                const record = rankingSeason[team];
                 const decisions = record.w + record.l;
                 return { team, record, rate: decisions ? record.w / decisions : 0 };
             }).sort((a, b) => (b.rate - a.rate) || (b.record.w - a.record.w) || (a.record.l - b.record.l));
@@ -391,9 +430,9 @@
 
             return `<section class="matchup-record" aria-label="2026 정규시즌 양 팀 비교">
                 <div class="matchup-record-teams">
-                    <div class="matchup-record-team matchup-record-away"><strong>${m.team1}</strong><span><b>${rankOf(m.team1)}위</b> · ${recordText(season[m.team1])}</span></div>
+                    <div class="matchup-record-team matchup-record-away"><strong>${m.team1}</strong><span><b>${rankOf(m.team1)}위</b> · ${recordText(rankingSeason[m.team1])}</span></div>
                     <span class="matchup-record-vs">VS</span>
-                    <div class="matchup-record-team matchup-record-home"><strong>${m.team2}</strong><span><b>${rankOf(m.team2)}위</b> · ${recordText(season[m.team2])}</span></div>
+                    <div class="matchup-record-team matchup-record-home"><strong>${m.team2}</strong><span><b>${rankOf(m.team2)}위</b> · ${recordText(rankingSeason[m.team2])}</span></div>
                 </div>
                 <div class="matchup-record-divider"></div>
                 <div class="matchup-record-recent">
