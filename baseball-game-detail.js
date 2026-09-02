@@ -320,11 +320,11 @@
             </div>`;
         }
 
-        // 경기결과 JS 파일에 기록된 완료 경기만 사용해 시즌 상대 전적을 표시한다.
+        // 과거 기록과 실시간으로 갱신된 완료 경기를 함께 사용해
+        // 순위·최근 흐름·상대 전적을 동일한 기준으로 표시한다.
         function matchupRecordHtml(m) {
             if (!m || !KBO_TEAMS.includes(m.team1) || !KBO_TEAMS.includes(m.team2)) return '';
-            const gamesByDate = window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate;
-            if (!gamesByDate) return '';
+            if (!scheduleData.length) return '';
 
             const season = {};
             KBO_TEAMS.forEach(team => season[team] = { w: 0, d: 0, l: 0, recent: [] });
@@ -333,18 +333,20 @@
                 [m.team2]: { w: 0, d: 0, l: 0 }
             };
             const finishedGames = [];
-            Object.entries(gamesByDate).forEach(([date, games]) => {
+            scheduleData.forEach(scheduledGame => {
+                if (!scheduledGame) return;
+                const gameId = scheduledGame.id == null ? '' : String(scheduledGame.id);
+                const game = Object.assign({}, scheduledGame, liveDataStore[gameId] || {});
+                const date = game.date || scheduledGame.date || '';
                 if (m.date && date > m.date) return;
-                (Array.isArray(games) ? games : []).forEach(game => {
-                    if (!game || game.gameStatus !== '종료') return;
-                    const away = game.awayTeam || game.team1;
-                    const home = game.homeTeam || game.team2;
-                    if (!season[away] || !season[home]) return;
-                    const awayScore = Number(game.awayScore ?? game.score1);
-                    const homeScore = Number(game.homeScore ?? game.score2);
-                    if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return;
-                    finishedGames.push({ date, time: game.gameTime || game.time || '00:00', away, home, awayScore, homeScore });
-                });
+                if ((game.gameStatus || game.status) !== '종료') return;
+                const away = game.awayTeam || game.team1;
+                const home = game.homeTeam || game.team2;
+                if (!season[away] || !season[home]) return;
+                const awayScore = Number(game.awayScore ?? game.score1);
+                const homeScore = Number(game.homeScore ?? game.score2);
+                if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return;
+                finishedGames.push({ date, time: game.gameTime || game.time || '00:00', away, home, awayScore, homeScore });
             });
             finishedGames.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
