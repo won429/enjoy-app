@@ -248,6 +248,26 @@
         /* 하단 메뉴 컨테이너 애니메이션 */
         #bottom-nav { transition: transform 0.58s cubic-bezier(0.18, 1.45, 0.32, 1); }
 
+        /* 납부 상세는 홈 카드·야구 화면·하단 메뉴보다 항상 위에 표시 */
+        #dues-detail-modal {
+            z-index: 390;
+            isolation: isolate;
+        }
+        #dues-detail-modal > section {
+            position: relative;
+            z-index: 1;
+            max-height: min(82dvh, 46rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: none;
+        }
+        #dues-detail-modal > section::-webkit-scrollbar { display: none; }
+        body.dues-detail-open #bottom-nav,
+        body.dues-detail-open #schedule-subnav {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         /* 하단 메뉴 버튼 애니메이션: 다이나믹 아일랜드 */
         #bottom-nav button, #schedule-subnav button { transition: all 0.56s cubic-bezier(0.18, 1.5, 0.32, 1); transform-origin: center; }
         #bottom-nav button:active, #schedule-subnav button:active {
@@ -7719,7 +7739,7 @@
     </div>
 
     <!-- 납부 상세 내역 -->
-    <div id="dues-detail-modal" class="fixed inset-0 z-[90] hidden items-end justify-center bg-black/65 backdrop-blur-sm" aria-hidden="true" onclick="window.closeDuesDetail()">
+    <div id="dues-detail-modal" class="fixed inset-0 hidden items-end justify-center bg-black/65 backdrop-blur-sm" aria-hidden="true" onclick="window.closeDuesDetail()">
         <section class="w-full max-w-md rounded-t-[28px] border-t border-white/10 bg-[#1C1C1E] px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="dues-detail-title" onclick="event.stopPropagation()">
             <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" aria-hidden="true"></div>
             <div class="mb-5 flex items-start justify-between gap-4">
@@ -14397,6 +14417,7 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('dues-detail-open');
         };
 
         document.addEventListener('keydown', function(event) {
@@ -14405,6 +14426,7 @@
         });
 
         window.openDuesDetail = function(memberName, month, year) {
+            if (window.activeTabIndex !== 4) return;
             if (!window.meetingData) window.meetingData = getInitialMeetingData();
             const histories = window.calculateMemberHistory();
             const history = histories[memberName] && histories[memberName][`${year}-${month}`];
@@ -14475,6 +14497,7 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('dues-detail-open');
         };
 
         window.renderDues = function(month, year = window.currentDuesYear) {
@@ -15165,6 +15188,7 @@
 
         window.updateTabUI = function(index) {
             window.activeTabIndex = index;
+            if (index !== 4 && window.closeDuesDetail) window.closeDuesDetail();
             const home = document.getElementById('home-screen');
             const more = document.getElementById('more-screen');
             const sched = document.getElementById('schedule-screen');
