@@ -14409,6 +14409,7 @@
                 let statusColorClass = 'text-[#F04452]';
                 let penaltyColorClass = 'text-[#F04452]/90';
                 let penaltyText = '';
+                let paymentTotalHtml = '';
 
                 let carryOverTexts = [];
                 if (h.carriedDebt > 0) carryOverTexts.push(`이전 미납/유예 합산 ${h.carriedDebt.toLocaleString()}원`);
@@ -14420,6 +14421,11 @@
                 let isPaymentStopped = h.isPaymentStopped;
                 let isPastDue = (year < currentYear || (year === currentYear && month < currentRealMonth));
                 let isWarningPeriod = (year === currentYear && month === currentRealMonth && now.getDate() >= lastDay - 5);
+                // 해당 월이 지나 실제로 확정된 미납 부과금은 다음 달 이월 계산 전에도
+                // 해당 월의 '총 납부금액'에 포함해 보여준다.
+                const overduePenaltyAmount = isPastDue && !isDeferred && !isPaymentStopped &&
+                    !h.currentDuesPaid && !h.exemptionAppliesToNextPenalty ? 10000 : 0;
+                const payableTotal = totalOwed + overduePenaltyAmount;
 
                 if (isPaymentStopped) {
                     amtClass = 'text-gray-400';
@@ -14455,7 +14461,7 @@
                         }
                     } else {
                         // 일부 납부: 마감일이 지났거나 임박했으면 빨강(미납 경고), 아직 여유가 있으면 하늘색(긍정)
-                        let remain = totalOwed - h.amount;
+                        let remain = payableTotal - h.amount;
                         let overdue = isPastDue || isWarningPeriod;
                         if (overdue) {
                             amtClass = 'text-[#F04452]';
@@ -14472,7 +14478,7 @@
                         }
 
                         let reasonsStr = carryOverTexts.length > 0 ? `${carryOverTexts.join(', ')} 포함, ` : '';
-                        penaltyText = `${reasonsStr}총 ${totalOwed.toLocaleString()}원 중 ${h.amount.toLocaleString()}원 납부`;
+                        penaltyText = `${reasonsStr}총 ${payableTotal.toLocaleString()}원 중 ${h.amount.toLocaleString()}원 납부`;
                     }
                 } else if (isDeferred) {
                     amtClass = 'text-yellow-400';
@@ -14489,7 +14495,7 @@
                     }
                 } else {
                     if (isPastDue || isWarningPeriod || h.carriedDebt > 0 || h.penaltyAmount > 0) {
-                        amtText = `총 ${totalOwed.toLocaleString()}원 미납`;
+                        amtText = `총 ${payableTotal.toLocaleString()}원 미납`;
                         statusText = '미납 상태';
                         
                         if (h.prevStatus === 'deferred') {
@@ -14525,6 +14531,31 @@
                     }
                 }
 
+                // 부과금이나 이월 미납이 있을 때는 현재 납부액/잔여액만으로는
+                // 총액을 알기 어려우므로, 실제 총 납부금액과 구성을 항상 따로 표시한다.
+                const hasExtraPayment = !isPaymentStopped && (h.carriedDebt > 0 || h.penaltyAmount > 0 || h.penaltyWaived || overduePenaltyAmount > 0);
+                if (hasExtraPayment) {
+                    const paidAmount = Math.max(0, Number(h.amount) || 0);
+                    const remainingAmount = Math.max(0, payableTotal - paidAmount);
+                    const paymentParts = [];
+                    if (h.baseDues > 0) paymentParts.push(`이번 달 회비 ${h.baseDues.toLocaleString()}원`);
+                    if (h.carriedDebt > 0) paymentParts.push(`이전 미납 ${h.carriedDebt.toLocaleString()}원`);
+                    if (h.penaltyAmount > 0) paymentParts.push(`부과금 ${h.penaltyAmount.toLocaleString()}원`);
+                    if (overduePenaltyAmount > 0) paymentParts.push(`해당 월 미납 부과금 ${overduePenaltyAmount.toLocaleString()}원`);
+                    if (h.penaltyWaived) paymentParts.push('부과금 10,000원 면제');
+                    const remainingText = paidAmount > 0 && remainingAmount > 0
+                        ? `<span class="text-[#F04452] ml-1.5">· 남은 금액 ${remainingAmount.toLocaleString()}원</span>`
+                        : '';
+                    paymentTotalHtml = `
+                    <div class="ml-[56px] mt-2 rounded-xl bg-white/[0.04] px-3 py-2">
+                        <div class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                            <span class="text-[11px] font-semibold text-gray-400">총 납부금액</span>
+                            <strong class="text-[14px] font-bold text-white">${payableTotal.toLocaleString()}원${remainingText}</strong>
+                        </div>
+                        <div class="mt-0.5 text-[10.5px] font-medium text-gray-500 leading-snug">${paymentParts.join(' + ')}</div>
+                    </div>`;
+                }
+
                 const badge = m.isLeader ? `<span class="bg-[#2C2C2E] text-gray-400 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1.5 inline-flex items-center justify-center leading-none">회장</span>` : '';
 
                 list.innerHTML += `
@@ -14547,6 +14578,7 @@
                         </div>
                     </div>
                     ${penaltyText ? `<div class="ml-[56px] mt-1 text-[12px] ${penaltyColorClass} font-medium leading-snug">· ${penaltyText}</div>` : ''}
+                    ${paymentTotalHtml}
                 </div>`;
             });
         };
