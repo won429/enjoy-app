@@ -252,20 +252,81 @@
         #dues-detail-modal {
             z-index: 390;
             isolation: isolate;
+            padding-top: max(0.75rem, env(safe-area-inset-top));
         }
-        #dues-detail-modal > section {
+        #dues-detail-modal > .dues-detail-sheet {
             position: relative;
             z-index: 1;
-            max-height: min(82dvh, 46rem);
+            display: flex;
+            width: min(100%, 28rem);
+            max-height: min(88dvh, 46rem);
+            flex-direction: column;
+            overflow: hidden;
+            border: 0.0625rem solid rgba(255,255,255,.1);
+            border-bottom: 0;
+            border-radius: 1.75rem 1.75rem 0 0;
+            color: #F2F4F6;
+            background: #1C1C1E;
+            box-shadow: 0 -1.25rem 3.75rem rgba(0,0,0,.38);
+        }
+        .dues-detail-handle {
+            width: 2.5rem;
+            height: 0.25rem;
+            margin: 0.75rem auto 0;
+            flex: none;
+            border-radius: 62.4375rem;
+            background: rgba(255,255,255,.16);
+        }
+        .dues-detail-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.25rem 1.125rem;
+            flex: none;
+        }
+        .dues-detail-content {
+            min-height: 0;
+            padding: 0 1.25rem 0.75rem;
             overflow-y: auto;
             overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
             scrollbar-width: none;
         }
-        #dues-detail-modal > section::-webkit-scrollbar { display: none; }
+        .dues-detail-content::-webkit-scrollbar { display: none; }
+        .dues-detail-footer {
+            padding: 0.75rem 1.25rem max(1rem, env(safe-area-inset-bottom));
+            flex: none;
+            border-top: 0.0625rem solid rgba(255,255,255,.08);
+            background: #1C1C1E;
+        }
+        .dues-detail-confirm {
+            width: 100%;
+            min-height: 3.25rem;
+            border-radius: 1rem;
+            color: #FFF;
+            background: #3182F6;
+            font-size: 0.875rem;
+            font-weight: 800;
+            transition: transform .12s ease, opacity .12s ease;
+        }
+        .dues-detail-confirm:active { transform: scale(.98); opacity: .9; }
         body.dues-detail-open #bottom-nav,
         body.dues-detail-open #schedule-subnav {
             opacity: 0;
             pointer-events: none;
+        }
+        @media (prefers-color-scheme: light) {
+            #dues-detail-modal > .dues-detail-sheet,
+            .dues-detail-footer {
+                color: #191F28;
+                background: #FFF;
+            }
+            #dues-detail-modal > .dues-detail-sheet { border-color: rgba(15,23,42,.08); }
+            .dues-detail-handle { background: rgba(15,23,42,.15); }
+            .dues-detail-footer { border-top-color: rgba(15,23,42,.08); }
+            .dues-detail-confirm { color: #FFF !important; }
         }
 
         /* 하단 메뉴 버튼 애니메이션: 다이나믹 아일랜드 */
@@ -7740,16 +7801,19 @@
 
     <!-- 납부 상세 내역 -->
     <div id="dues-detail-modal" class="fixed inset-0 hidden items-end justify-center bg-black/65 backdrop-blur-sm" aria-hidden="true" onclick="window.closeDuesDetail()">
-        <section class="w-full max-w-md rounded-t-[28px] border-t border-white/10 bg-[#1C1C1E] px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="dues-detail-title" onclick="event.stopPropagation()">
-            <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" aria-hidden="true"></div>
-            <div class="mb-5 flex items-start justify-between gap-4">
+        <section class="dues-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="dues-detail-title" onclick="event.stopPropagation()">
+            <div class="dues-detail-handle" aria-hidden="true"></div>
+            <div class="dues-detail-header">
                 <div>
                     <h3 id="dues-detail-title" class="text-[20px] font-bold tracking-tight text-white">납부 상세</h3>
                     <p id="dues-detail-subtitle" class="mt-1 text-[12px] font-medium text-gray-500"></p>
                 </div>
-                <button type="button" onclick="window.haptic(); window.closeDuesDetail()" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-gray-400 active:scale-90" aria-label="납부 상세 닫기"><i class="fa-solid fa-xmark"></i></button>
+                    <button type="button" onclick="window.haptic(); window.closeDuesDetail()" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-gray-400 active:scale-90" aria-label="납부 상세 닫기"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            <div id="dues-detail-body" class="dues-detail-content"></div>
+            <div class="dues-detail-footer">
+                <button type="button" onclick="window.haptic(); window.closeDuesDetail()" class="dues-detail-confirm">확인</button>
             </div>
-            <div id="dues-detail-body"></div>
         </section>
     </div>
 
@@ -14411,6 +14475,53 @@
             };
         }
 
+        function duesArrearsEntries(histories, memberName, targetYear, targetMonth) {
+            const memberHistory = histories[memberName] || {};
+            const months = [];
+            for (let year = 2025; year <= targetYear; year++) {
+                const firstMonth = year === 2025 ? 10 : 1;
+                const lastMonth = year === targetYear ? targetMonth : 12;
+                for (let month = firstMonth; month <= lastMonth; month++) {
+                    const history = memberHistory[`${year}-${month}`];
+                    if (history) months.push({ year: year, month: month, history: history });
+                }
+            }
+
+            // 나중에 완납한 기록은 제외하고, 현재 이월된 빚이 시작된 달부터만 보여준다.
+            let lastSettledIndex = -1;
+            months.forEach(function(item, index) {
+                if (item.history.status === 'paid' && Number(item.history.balanceAfter) >= 0) lastSettledIndex = index;
+            });
+
+            return months.slice(lastSettledIndex + 1).map(function(item) {
+                const history = item.history;
+                const isTarget = item.year === targetYear && item.month === targetMonth;
+                const display = duesDisplayAmounts(history, item.year, item.month);
+                const regularDues = history.isPaymentStopped ? 0 : Math.max(0, Number(history.regularDues) || 0);
+                const paidAmount = Math.max(0, Number(history.amount) || 0);
+                const newlyUnpaid = history.status === 'deferred'
+                    ? regularDues
+                    : Math.max(0, regularDues - Math.min(paidAmount, regularDues));
+                const penaltyAmount = Math.max(0, Number(history.penaltyAmount) || 0) +
+                    (isTarget ? display.overduePenaltyAmount : 0);
+                const cumulativeDebt = Math.max(0, Math.abs(Math.min(0, Number(history.balanceAfter) || 0)) +
+                    (isTarget ? display.overduePenaltyAmount : 0));
+                const relevant = !history.isPaymentStopped && (newlyUnpaid > 0 || penaltyAmount > 0 || history.penaltyWaived || history.exemptionAppliesToNextPenalty);
+                if (!relevant) return null;
+                return {
+                    year: item.year,
+                    month: item.month,
+                    status: history.status === 'deferred' ? '유예' : (newlyUnpaid > 0 ? (paidAmount > 0 ? '일부 미납' : '미납') : '부과금 반영'),
+                    regularDues: regularDues,
+                    paidAmount: paidAmount,
+                    newlyUnpaid: newlyUnpaid,
+                    penaltyAmount: penaltyAmount,
+                    cumulativeDebt: cumulativeDebt,
+                    waived: history.penaltyWaived || history.exemptionAppliesToNextPenalty
+                };
+            }).filter(Boolean);
+        }
+
         window.closeDuesDetail = function() {
             const modal = document.getElementById('dues-detail-modal');
             if (!modal) return;
@@ -14478,6 +14589,32 @@
 
             title.textContent = `${memberName} 납부 상세`;
             subtitle.textContent = `${year}년 ${month}월 납부 내역`;
+            const arrearsEntries = duesArrearsEntries(histories, memberName, year, month);
+            const arrearsHtml = arrearsEntries.length ? `
+                <section class="mt-5" aria-label="미납 및 이월 상세">
+                    <div class="mb-2.5 flex items-center justify-between px-1">
+                        <h4 class="text-[13px] font-bold text-gray-300">미납·이월 내역</h4>
+                        <span class="text-[10.5px] font-semibold text-gray-500">미납 연결 ${arrearsEntries.length}개월</span>
+                    </div>
+                    <div class="overflow-hidden rounded-2xl border border-white/10">
+                        ${arrearsEntries.map(function(entry, entryIndex) {
+                            const statusClass = entry.status === '유예'
+                                ? 'bg-yellow-400/10 text-yellow-400'
+                                : (entry.status === '부과금 반영' ? 'bg-orange-400/10 text-orange-400' : 'bg-[#F04452]/10 text-[#F04452]');
+                            const details = [`월 회비 ${entry.regularDues.toLocaleString('ko-KR')}원`, `납부 ${entry.paidAmount.toLocaleString('ko-KR')}원`];
+                            if (entry.newlyUnpaid > 0) details.push(`새 미납 ${entry.newlyUnpaid.toLocaleString('ko-KR')}원`);
+                            if (entry.penaltyAmount > 0) details.push(`부과금 ${entry.penaltyAmount.toLocaleString('ko-KR')}원`);
+                            if (entry.waived) details.push('부과금 면제');
+                            return `<div class="px-4 py-3.5 ${entryIndex ? 'border-t border-white/10' : ''}">
+                                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                                    <div class="flex min-w-0 items-center gap-2"><strong class="whitespace-nowrap text-[13px] font-bold text-white">${entry.year}년 ${entry.month}월</strong><span class="whitespace-nowrap rounded-full px-2 py-0.5 text-[9.5px] font-bold ${statusClass}">${entry.status}</span></div>
+                                    <strong class="text-right text-[12px] font-bold text-[#F04452]">누적 미납 ${entry.cumulativeDebt.toLocaleString('ko-KR')}원</strong>
+                                </div>
+                                <p class="mt-1.5 text-[10.5px] font-medium leading-relaxed text-gray-500">${details.join(' · ')}</p>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </section>` : '';
             body.innerHTML = `
                 <div class="mb-3 flex items-center justify-between">
                     <span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClass}">${statusText}</span>
@@ -14491,8 +14628,9 @@
                         <div class="rounded-xl bg-white/[0.04] px-3 py-2.5"><span class="block text-[10px] font-semibold text-gray-500">남은 금액</span><strong class="mt-0.5 block text-[14px] font-bold ${amounts.remainingAmount > 0 ? 'text-[#F04452]' : 'text-emerald-400'}">${amounts.remainingAmount.toLocaleString('ko-KR')}원</strong></div>
                     </div>
                 </div>
+                ${arrearsHtml}
                 ${notes.length ? `<div class="mt-3 space-y-1 px-1">${notes.map(note => `<p class="text-[11px] font-medium leading-relaxed text-gray-500">· ${note}</p>`).join('')}</div>` : ''}
-                <button type="button" onclick="window.haptic(); window.closeDuesDetail()" class="mt-5 w-full rounded-2xl bg-[#3182F6] py-3.5 text-[14px] font-bold text-white active:scale-[0.98]">확인</button>`;
+                `;
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
