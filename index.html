@@ -7718,6 +7718,21 @@
         </div>
     </div>
 
+    <!-- 납부 상세 내역 -->
+    <div id="dues-detail-modal" class="fixed inset-0 z-[90] hidden items-end justify-center bg-black/65 backdrop-blur-sm" aria-hidden="true" onclick="window.closeDuesDetail()">
+        <section class="w-full max-w-md rounded-t-[28px] border-t border-white/10 bg-[#1C1C1E] px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="dues-detail-title" onclick="event.stopPropagation()">
+            <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" aria-hidden="true"></div>
+            <div class="mb-5 flex items-start justify-between gap-4">
+                <div>
+                    <h3 id="dues-detail-title" class="text-[20px] font-bold tracking-tight text-white">납부 상세</h3>
+                    <p id="dues-detail-subtitle" class="mt-1 text-[12px] font-medium text-gray-500"></p>
+                </div>
+                <button type="button" onclick="window.haptic(); window.closeDuesDetail()" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-gray-400 active:scale-90" aria-label="납부 상세 닫기"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="dues-detail-body"></div>
+        </section>
+    </div>
+
     <!-- 🌐 내부 브라우저 -->
     <div id="browser-screen" class="hidden fixed inset-0 z-[100] flex-col bg-black">
         <div class="flex-1 relative w-full h-full bg-black">
@@ -14352,6 +14367,116 @@
             ticketListMini.innerHTML = htmlTicket;
         }
 
+        function duesEscape(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+            });
+        }
+
+        function duesDisplayAmounts(history, year, month, now = new Date()) {
+            const isPastDue = year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1);
+            const isDeferred = history.status === 'deferred';
+            const isPaymentStopped = history.isPaymentStopped;
+            const overduePenaltyAmount = isPastDue && !isDeferred && !isPaymentStopped &&
+                !history.currentDuesPaid && !history.exemptionAppliesToNextPenalty ? 10000 : 0;
+            const calculatedTotal = Math.max(0, Number(history.totalOwed) || 0);
+            const payableTotal = calculatedTotal + overduePenaltyAmount;
+            const paidAmount = Math.max(0, Number(history.amount) || 0);
+            return {
+                isPastDue: isPastDue,
+                overduePenaltyAmount: overduePenaltyAmount,
+                payableTotal: payableTotal,
+                paidAmount: paidAmount,
+                remainingAmount: Math.max(0, payableTotal - paidAmount)
+            };
+        }
+
+        window.closeDuesDetail = function() {
+            const modal = document.getElementById('dues-detail-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.setAttribute('aria-hidden', 'true');
+        };
+
+        document.addEventListener('keydown', function(event) {
+            const modal = document.getElementById('dues-detail-modal');
+            if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) window.closeDuesDetail();
+        });
+
+        window.openDuesDetail = function(memberName, month, year) {
+            if (!window.meetingData) window.meetingData = getInitialMeetingData();
+            const histories = window.calculateMemberHistory();
+            const history = histories[memberName] && histories[memberName][`${year}-${month}`];
+            const modal = document.getElementById('dues-detail-modal');
+            const title = document.getElementById('dues-detail-title');
+            const subtitle = document.getElementById('dues-detail-subtitle');
+            const body = document.getElementById('dues-detail-body');
+            if (!history || !modal || !title || !subtitle || !body) return;
+
+            const amounts = duesDisplayAmounts(history, year, month);
+            const records = window.meetingData.records || {};
+            const monthKey = `${year}-${month}`;
+            const isLegacy = (year === 2025 && month >= 10) || (year === 2026 && month <= 9);
+            const monthRecords = records[monthKey] || (isLegacy ? records[month] : null) || [];
+            const memberRecord = monthRecords.find(record => record.name === memberName) || {};
+            const previousDate = new Date(year, month - 2, 1);
+            const previousMonthLabel = `${previousDate.getFullYear()}년 ${previousDate.getMonth() + 1}월`;
+            const rows = [];
+            const addAmountRow = function(label, amount, className = 'text-white') {
+                rows.push(`<div class="flex items-center justify-between gap-4 py-2.5"><span class="text-[13px] font-medium text-gray-400">${duesEscape(label)}</span><strong class="text-[14px] font-bold ${className}">${Number(amount).toLocaleString('ko-KR')}원</strong></div>`);
+            };
+
+            if (history.baseDues > 0) addAmountRow('이번 달 회비', history.baseDues);
+            if (history.carriedDebt > 0) addAmountRow(`이전 미납·유예 (${previousMonthLabel} 이월)`, history.carriedDebt, 'text-yellow-400');
+            if (history.penaltyAmount > 0) addAmountRow('이전 미납 부과금', history.penaltyAmount, 'text-[#F04452]');
+            if (amounts.overduePenaltyAmount > 0) addAmountRow(`${month}월 미납 부과금`, amounts.overduePenaltyAmount, 'text-[#F04452]');
+            if (history.penaltyWaived || history.exemptionAppliesToNextPenalty) {
+                addAmountRow('면제 대상 부과금', 10000, 'text-gray-400');
+                addAmountRow('부과금 면제권 적용', -10000, 'text-[#3182F6]');
+            }
+            if (!rows.length) addAmountRow('이번 달 회비', history.regularDues || 0);
+
+            let statusText = '미납';
+            let statusClass = 'text-[#F04452] bg-[#F04452]/10';
+            if (history.isPaymentStopped) {
+                statusText = '납부중단'; statusClass = 'text-gray-400 bg-white/5';
+            } else if (history.status === 'deferred') {
+                statusText = '납부 유예'; statusClass = 'text-yellow-400 bg-yellow-400/10';
+            } else if (amounts.remainingAmount === 0) {
+                statusText = '납부완료'; statusClass = 'text-emerald-400 bg-emerald-400/10';
+            } else if (amounts.paidAmount > 0) {
+                statusText = '일부 납부'; statusClass = 'text-[#3182F6] bg-[#3182F6]/10';
+            }
+
+            const notes = [];
+            if (amounts.overduePenaltyAmount > 0) notes.push(`${month}월 마감 후 확정된 미납 부과금 10,000원을 포함했어요.`);
+            if (history.penaltyWaived || history.exemptionAppliesToNextPenalty) notes.push('부과금 면제권 1개가 적용됐어요.');
+            if (memberRecord.paidDate) notes.push(`납부일: ${duesEscape(memberRecord.paidDate)}`);
+
+            title.textContent = `${memberName} 납부 상세`;
+            subtitle.textContent = `${year}년 ${month}월 납부 내역`;
+            body.innerHTML = `
+                <div class="mb-3 flex items-center justify-between">
+                    <span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClass}">${statusText}</span>
+                    <span class="text-[11px] font-medium text-gray-500">회비·이월·부과금 합산</span>
+                </div>
+                <div class="rounded-2xl bg-[#242426] px-4 py-1">${rows.join('<div class="h-px bg-white/5"></div>')}</div>
+                <div class="mt-3 rounded-2xl border border-white/10 bg-black/30 p-4">
+                    <div class="flex items-baseline justify-between gap-3"><span class="text-[13px] font-bold text-gray-300">총 납부금액</span><strong class="text-[22px] font-black text-white">${amounts.payableTotal.toLocaleString('ko-KR')}원</strong></div>
+                    <div class="mt-3 grid grid-cols-2 gap-2">
+                        <div class="rounded-xl bg-white/[0.04] px-3 py-2.5"><span class="block text-[10px] font-semibold text-gray-500">납부한 금액</span><strong class="mt-0.5 block text-[14px] font-bold text-[#3182F6]">${amounts.paidAmount.toLocaleString('ko-KR')}원</strong></div>
+                        <div class="rounded-xl bg-white/[0.04] px-3 py-2.5"><span class="block text-[10px] font-semibold text-gray-500">남은 금액</span><strong class="mt-0.5 block text-[14px] font-bold ${amounts.remainingAmount > 0 ? 'text-[#F04452]' : 'text-emerald-400'}">${amounts.remainingAmount.toLocaleString('ko-KR')}원</strong></div>
+                    </div>
+                </div>
+                ${notes.length ? `<div class="mt-3 space-y-1 px-1">${notes.map(note => `<p class="text-[11px] font-medium leading-relaxed text-gray-500">· ${note}</p>`).join('')}</div>` : ''}
+                <button type="button" onclick="window.haptic(); window.closeDuesDetail()" class="mt-5 w-full rounded-2xl bg-[#3182F6] py-3.5 text-[14px] font-bold text-white active:scale-[0.98]">확인</button>`;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.setAttribute('aria-hidden', 'false');
+        };
+
         window.renderDues = function(month, year = window.currentDuesYear) {
             const list = document.getElementById('dues-list'); 
             const title = document.getElementById('dues-month-title'); 
@@ -14419,13 +14544,13 @@
                 let isPaid = h.status === 'paid';
                 let isDeferred = h.status === 'deferred';
                 let isPaymentStopped = h.isPaymentStopped;
-                let isPastDue = (year < currentYear || (year === currentYear && month < currentRealMonth));
+                const displayAmounts = duesDisplayAmounts(h, year, month, now);
+                let isPastDue = displayAmounts.isPastDue;
                 let isWarningPeriod = (year === currentYear && month === currentRealMonth && now.getDate() >= lastDay - 5);
                 // 해당 월이 지나 실제로 확정된 미납 부과금은 다음 달 이월 계산 전에도
                 // 해당 월의 '총 납부금액'에 포함해 보여준다.
-                const overduePenaltyAmount = isPastDue && !isDeferred && !isPaymentStopped &&
-                    !h.currentDuesPaid && !h.exemptionAppliesToNextPenalty ? 10000 : 0;
-                const payableTotal = totalOwed + overduePenaltyAmount;
+                const overduePenaltyAmount = displayAmounts.overduePenaltyAmount;
+                const payableTotal = displayAmounts.payableTotal;
 
                 if (isPaymentStopped) {
                     amtClass = 'text-gray-400';
@@ -14557,9 +14682,10 @@
                 }
 
                 const badge = m.isLeader ? `<span class="bg-[#2C2C2E] text-gray-400 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1.5 inline-flex items-center justify-center leading-none">회장</span>` : '';
+                const memberNameArg = encodeURIComponent(m.name);
 
                 list.innerHTML += `
-                <div class="flex flex-col py-3.5 px-2 -mx-2 rounded-2xl">
+                <button type="button" class="flex w-full cursor-pointer flex-col py-3.5 px-2 -mx-2 rounded-2xl text-left transition-colors active:bg-white/[0.04]" onclick="window.haptic(); window.openDuesDetail(decodeURIComponent('${memberNameArg}'), ${month}, ${year})" aria-label="${duesEscape(m.name)} ${year}년 ${month}월 납부 상세 보기">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3.5">
                             <div class="w-[42px] h-[42px] rounded-full ${c.bg} flex items-center justify-center text-[16px] ${c.text} shrink-0">
@@ -14573,13 +14699,14 @@
                                 <span class="text-[13px] font-medium ${statusColorClass}">${statusText}</span>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <span class="text-[17px] font-bold ${amtClass} tracking-tight">${amtText}</span>
+                        <div class="flex items-center gap-2 pl-2">
+                            <span class="text-right text-[17px] font-bold ${amtClass} tracking-tight">${amtText}</span>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-gray-700" aria-hidden="true"></i>
                         </div>
                     </div>
                     ${penaltyText ? `<div class="ml-[56px] mt-1 text-[12px] ${penaltyColorClass} font-medium leading-snug">· ${penaltyText}</div>` : ''}
                     ${paymentTotalHtml}
-                </div>`;
+                </button>`;
             });
         };
         
