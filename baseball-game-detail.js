@@ -61,6 +61,7 @@
     const teamColors = {'LG':'bg-[#C30452]', '두산':'bg-[#131230]', 'KIA':'bg-[#EA0029]', '삼성':'bg-[#074CA1]', 'SSG':'bg-[#CE0E2D]', '롯데':'bg-[#041E42]', '한화':'bg-[#FF6600]', 'KT':'bg-[#000000]', 'NC':'bg-[#315288]', '키움':'bg-[#820024]', '나눔':'bg-[#002038]', '드림':'bg-[#90C0E0]', '북부 올스타':'bg-[#123B8D]', '남부 올스타':'bg-[#13B9D1]'};
     const teamHex = {'LG':'#C30452', '두산':'#131230', 'KIA':'#EA0029', '삼성':'#074CA1', 'SSG':'#CE0E2D', '롯데':'#041E42', '한화':'#FF6600', 'KT':'#000000', 'NC':'#315288', '키움':'#820024', '나눔':'#002038', '드림':'#90C0E0', '북부 올스타':'#123B8D', '남부 올스타':'#13B9D1'};
     const teamLogos = {'삼성':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png', 'KIA':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kia_logoo.png', '롯데':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/lotteegi.png', 'NC':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ncdin.png', 'LG':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/lgtwins.png', '두산':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/doosa.png', 'SSG':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ssglan.png', 'KT':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kt_logo.png', '한화':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/hanwha_logo.png', '키움':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kiwoom.png'};
+    Object.assign(teamLogos, window.enjoyBaseballCompetition.flags);
     const ALLSTAR_DATES = new Set(['2026-07-10', '2026-07-11']);
     const ALLSTAR_LOGO_URL = 'https://qlotfqlu5749.edge.naverncp.com/KBO_IMAGE/KBOAllstar/Client/resources/images/common/img_logo.png';
     const FUTURES_ALLSTAR_LOGO_URL = ALLSTAR_LOGO_URL;
@@ -1130,6 +1131,34 @@
             </section>`;
         }
 
+    let scoreboardNameObserver;
+    let scoreboardFitFrame;
+    function fitScoreboardNames() {
+        const content = document.getElementById('lineup-content');
+        if (!content) return;
+        if (!scoreboardNameObserver && typeof ResizeObserver !== 'undefined') {
+            scoreboardNameObserver = new ResizeObserver(queueScoreboardNameFit);
+            scoreboardNameObserver.observe(content);
+        }
+        content.querySelectorAll('.scoreboard-team-name').forEach(name => {
+            if (!name.clientWidth) return;
+            if (name.dataset.originalFontSize === undefined) name.dataset.originalFontSize = name.style.fontSize;
+            name.style.fontSize = name.dataset.originalFontSize;
+            let size = parseFloat(getComputedStyle(name).fontSize);
+            // Measure actual glyph widths, including web fonts and the available score/flag space.
+            while (name.scrollWidth > name.clientWidth && size > 1) {
+                size = Math.max(1, Math.min(size - 0.5, size * name.clientWidth / name.scrollWidth));
+                name.style.fontSize = size + 'px';
+            }
+        });
+    }
+    function queueScoreboardNameFit() {
+        cancelAnimationFrame(scoreboardFitFrame);
+        scoreboardFitFrame = requestAnimationFrame(fitScoreboardNames);
+    }
+    if (document.fonts) document.fonts.ready.then(queueScoreboardNameFit);
+    window.addEventListener('resize', queueScoreboardNameFit);
+
         function renderPopupContent(id) {
             const c = document.getElementById('lineup-content'), m = scheduleData.find(x => x.id === parseInt(id) || x.id === id); if (!m) return;
             const l = liveDataStore[id] || {}; if (!l.gameStatus) l.gameStatus = '경기전';
@@ -1264,13 +1293,13 @@
                     
                     <div class="flex justify-between items-center px-5 py-2 relative z-10 h-[3.875rem]">
                         <div class="flex items-center gap-3 w-[36%]">
-                            <span class="text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md">${m.team1}</span>
-                            <span class="text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md ml-auto leading-none">${aScoreBanner}</span>
+                            <span class="scoreboard-team-name text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md">${m.team1}</span>
+                            <span class="scoreboard-team-score text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md ml-auto leading-none">${aScoreBanner}</span>
                         </div>
                         <div class="flex flex-col items-center justify-center w-[28%] mt-0.5">${inningArea}</div>
                         <div class="flex items-center gap-3 w-[36%]">
-                            <span class="text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md mr-auto leading-none">${hScoreBanner}</span>
-                            <span class="text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md">${m.team2}</span>
+                            <span class="scoreboard-team-score text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md mr-auto leading-none">${hScoreBanner}</span>
+                            <span class="scoreboard-team-name text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md">${m.team2}</span>
                         </div>
                     </div>
                     
@@ -1357,9 +1386,9 @@
                     </div>
 
                     <div class="flex justify-between items-center relative z-10 mt-4">
-                        <div class="flex flex-col items-center w-[30%]">${l1Lg.replace('drop-shadow-lg', 'drop-shadow-md')}<span class="text-[1rem] font-black text-gray-900 tracking-wider mt-1" style="color: #111 !important;">${m.team1}</span><span class="text-[0.75rem] font-black text-gray-600 tracking-widest mt-0.5" style="color: #444 !important;">AWAY</span></div>
+                        <div class="flex flex-col items-center w-[30%]">${l1Lg.replace('drop-shadow-lg', 'drop-shadow-md')}<span class="scoreboard-team-name text-[1rem] font-black text-gray-900 tracking-wider mt-1" style="color: #111 !important;">${m.team1}</span><span class="text-[0.75rem] font-black text-gray-600 tracking-widest mt-0.5" style="color: #444 !important;">AWAY</span></div>
                         <div class="flex flex-col items-center justify-center w-[40%]">${classicSch}</div>
-                        <div class="flex flex-col items-center w-[30%]">${l2Lg.replace('drop-shadow-lg', 'drop-shadow-md')}<span class="text-[1rem] font-black text-gray-900 tracking-wider mt-1" style="color: #111 !important;">${m.team2}</span><span class="text-[0.75rem] font-black text-gray-600 tracking-widest mt-0.5" style="color: #444 !important;">HOME</span></div>
+                        <div class="flex flex-col items-center w-[30%]">${l2Lg.replace('drop-shadow-lg', 'drop-shadow-md')}<span class="scoreboard-team-name text-[1rem] font-black text-gray-900 tracking-wider mt-1" style="color: #111 !important;">${m.team2}</span><span class="text-[0.75rem] font-black text-gray-600 tracking-widest mt-0.5" style="color: #444 !important;">HOME</span></div>
                     </div>
                 </div>`;
             } else {
@@ -1443,11 +1472,11 @@
                     centerArea = `<div class="flex gap-[0.1875rem] mr-1.5">${outDotsHtml}</div><span class="text-[0.75rem] font-black text-[#FFFFFF] tracking-widest mt-px">${bCount}-${sCount}</span>`;
                 }
 
-                const allstarLogo1 = isAllstarGame ? `${teamLogos[m.team1] ? `<img src="${teamLogos[m.team1]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : ''}` : '';
-                const allstarLogo2 = isAllstarGame ? `${teamLogos[m.team2] ? `<img src="${teamLogos[m.team2]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : ''}` : '';
+                const allstarLogo1 = isAllstarGame || window.enjoyBaseballCompetition.flags[m.team1] ? `${teamLogos[m.team1] ? `<img src="${teamLogos[m.team1]}" class="${isAllstarGame ? 'w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)]' : 'scoreboard-country-flag'} object-contain shrink-0">` : ''}` : '';
+                const allstarLogo2 = isAllstarGame || window.enjoyBaseballCompetition.flags[m.team2] ? `${teamLogos[m.team2] ? `<img src="${teamLogos[m.team2]}" class="${isAllstarGame ? 'w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)]' : 'scoreboard-country-flag'} object-contain shrink-0">` : ''}` : '';
                 const sideWidthClass = isAllstarGame ? 'w-[40%]' : 'w-[36%]';
                 const centerWidthClass = isAllstarGame ? 'w-[20%]' : 'w-[28%]';
-                const sideGapClass = isAllstarGame ? 'gap-1' : 'gap-3';
+                const sideGapClass = isAllstarGame || window.enjoyBaseballCompetition.isAsianGames(m) ? 'gap-1' : 'gap-3';
                 const allstarNameStyle = isAllstarGame ? 'font-size:clamp(0.8125rem,4.2vw,1.375rem);white-space:nowrap;line-height:1;' : '';
 
                 sbh = `<div class="sb-dark scoreboard-surface w-[calc(100%+3rem)] -mx-6 rounded-none border-x-0 relative overflow-hidden mb-5 shadow-xl flex flex-col border-y border-white/15" style="background: linear-gradient(to right, ${h1}E6 0%, #18181b 45%, #18181b 55%, ${h2}E6 100%); --score-away-soft:${h1}24; --score-home-soft:${h2}24;">
@@ -1456,13 +1485,13 @@
                     
                     <div class="flex justify-between items-center px-5 py-2 relative z-10 h-[3.875rem]">
                         <div class="flex items-center ${sideGapClass} ${sideWidthClass} min-w-0">
-                            ${allstarLogo1}<span class="text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md" style="${allstarNameStyle}">${m.team1}</span>
-                            <span class="text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md ml-auto leading-none">${aScoreBanner}</span>
+                            ${allstarLogo1}<span class="scoreboard-team-name text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md" style="${allstarNameStyle}">${m.team1}</span>
+                            <span class="scoreboard-team-score text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md ml-auto leading-none">${aScoreBanner}</span>
                         </div>
                         <div class="flex flex-col items-center justify-center ${centerWidthClass} mt-0.5">${inningArea}</div>
                         <div class="flex items-center ${sideGapClass} ${sideWidthClass} min-w-0">
-                            <span class="text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md mr-auto leading-none">${hScoreBanner}</span>
-                            <span class="text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md" style="${allstarNameStyle}">${m.team2}</span>${allstarLogo2}
+                            <span class="scoreboard-team-score text-[2.125rem] font-black text-[#FFFFFF] drop-shadow-md mr-auto leading-none">${hScoreBanner}</span>
+                            <span class="scoreboard-team-name text-[1.625rem] font-black text-[#FFFFFF] tracking-tighter drop-shadow-md" style="${allstarNameStyle}">${m.team2}</span>${allstarLogo2}
                         </div>
                     </div>
                     
@@ -1511,10 +1540,12 @@
 
             if (currentGameInfoTab === 'broadcast') {
                 c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + gameBroadcastHtml(m, l);
+            queueScoreboardNameFit();
                 return;
             }
             if (currentGameInfoTab === 'record') {
                 c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + gameRecordHtml(m, l);
+            queueScoreboardNameFit();
                 requestAnimationFrame(() => {
                     const activeInning = c.querySelector('.game-record-inning-tab.active');
                     const inningTabs = activeInning && activeInning.parentElement;
@@ -1533,6 +1564,7 @@
             if (aLineupSrc.length === 0 && hLineupSrc.length === 0) {
                 const starterPreview = expectedStarterPreviewHtml(m, awayStarterInfo, homeStarterInfo);
                 c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
+            queueScoreboardNameFit();
                 return;
             }
             
@@ -1598,6 +1630,7 @@
             let hbh = lineupRows(hLineupSrc, h2);
             
             c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
+            queueScoreboardNameFit();
         }
 
     window.switchGameInfoTab = switchGameInfoTab;

@@ -2369,6 +2369,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        .baseball-country-flag { display: inline-block; width: 1.5rem; height: 1.5rem; object-fit: contain; vertical-align: middle; margin-right: .125rem; }
         .home-baseball-club.is-home { text-align: right; }
         .home-baseball-score {
             color: #fff;
@@ -8386,11 +8387,15 @@
                     enjoyBaseballWatermark(game.team1, 'away') +
                     enjoyBaseballWatermark(game.team2, 'home') +
                     '<span class="home-baseball-score-main">' +
-                        '<span class="home-baseball-club is-away">' + enjoyBaseballEscape(game.team1) + '</span>' +
+                        '<span class="home-baseball-club is-away">' +
+                            (window.enjoyBaseballCompetition.flags[game.team1] ? enjoyBaseballMoreLogo(game.team1, 'baseball-country-flag') : '') +
+                            enjoyBaseballEscape(game.team1) + '</span>' +
                         '<strong class="home-baseball-score">' + enjoyBaseballEscape(awayScore) + '</strong>' +
                         '<span class="home-baseball-center">' + centerMain + '</span>' +
                         '<strong class="home-baseball-score">' + enjoyBaseballEscape(homeScore) + '</strong>' +
-                        '<span class="home-baseball-club is-home">' + enjoyBaseballEscape(game.team2) + '</span>' +
+                        '<span class="home-baseball-club is-home">' +
+                            (window.enjoyBaseballCompetition.flags[game.team2] ? enjoyBaseballMoreLogo(game.team2, 'baseball-country-flag') : '') +
+                            enjoyBaseballEscape(game.team2) + '</span>' +
                     '</span>' +
                     '<span class="home-baseball-score-sub">' +
                         enjoyBaseballPersonnel(awaySub, 'away') +
@@ -10013,6 +10018,7 @@
             'NC': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ncdin.png',
             '키움': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kiwoom.png'
         };
+        Object.assign(enjoyBaseballTeamLogos, window.enjoyBaseballCompetition.flags);
         const enjoyBaseballTeamColors = {
             '삼성': '#074CA1', 'KIA': '#EA0029', 'LG': '#C30452', '두산': '#131230', 'SSG': '#CE0E2D',
             '롯데': '#041E42', '한화': '#F37321', 'KT': '#181818', 'NC': '#315288', '키움': '#570514', '한국': '#005BAC'
