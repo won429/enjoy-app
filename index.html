@@ -9140,6 +9140,7 @@
         window.openEnjoyAsianGames = function () {
             window.haptic && window.haptic();
             const frame = document.getElementById('asian-games-frame');
+            if (!history.state?.enjoyAsianGames) history.pushState({ ...history.state, enjoyAsianGames: true }, '', window.location.href);
             if (!frame.getAttribute('src')) frame.src = 'asian-games.html';
             document.getElementById('asian-games-screen').hidden = false;
             frame.focus();
@@ -9150,6 +9151,7 @@
             const frame = document.getElementById('asian-games-frame');
             frame.contentWindow.postMessage({ type: 'enjoy-asian-games-visibility', visible: false }, window.location.origin);
             document.getElementById('asian-games-community-banner')?.focus({ preventScroll: true });
+            if (history.state?.enjoyAsianGames) history.back();
         };
         window.addEventListener('message', function (event) {
             const frame = document.getElementById('asian-games-frame');
@@ -11049,6 +11051,15 @@
         });
 
         window.onpopstate = function(event) {
+            if (event.state?.enjoyAsianGames) {
+                window.openEnjoyAsianGames();
+                return;
+            }
+            const asianGames = document.getElementById('asian-games-screen');
+            if (asianGames && !asianGames.hidden) {
+                window.closeEnjoyAsianGames();
+                return;
+            }
             const screen = document.getElementById('browser-screen');
             if (screen && !screen.classList.contains('hidden')) {
                 window.closeBrowser();
