@@ -777,6 +777,7 @@
         function _starterForLineup(m, l, side) {
             const official = _officialStarterForSide(m, l, side);
             if (official) return { raw: official, name: _pitcherName(official), predicted: false };
+            if (window.enjoyBaseballCompetition.isAsianGames(m)) return { raw: null, name: '', predicted: false };
             const dayDistance = _dayDistanceFromToday(m.date);
             if (dayDistance < 0 || dayDistance > 14 || String(l.gameStatus || '경기전') !== '경기전') return { raw: null, name: '', predicted: false };
             const team = side === 'away' ? m.team1 : m.team2;
@@ -1109,8 +1110,8 @@
             const waitingList = activeOffenseLineup.length > 1 ? Array.from({ length: Math.min(3, activeOffenseLineup.length - 1) }, (_, index) => activeOffenseLineup[(Math.max(0, batterIndex) + index + 1) % activeOffenseLineup.length]) : [];
             const waitingPlayers = waitingList.map((player, index) => `<span>${index + 1}. ${_recordSafeText(_lineupPlayerName(player) || '-')}</span>`).join('') || '<span>라인업 발표 전</span>';
             const scoreboardHtml = `<div class="broadcast-scoreboard">
-                <div class="broadcast-score-team ${offenseSide === 'away' ? 'at-bat' : ''}" style="background:${awayColor}"><img src="${teamLogos[m.team1]}" alt="${_recordSafeText(m.team1)}"><strong>${_recordSafeText(awayScore)}</strong></div>
-                <div class="broadcast-score-team ${offenseSide === 'home' ? 'at-bat' : ''}" style="background:${homeColor}"><img src="${teamLogos[m.team2]}" alt="${_recordSafeText(m.team2)}"><strong>${_recordSafeText(homeScore)}</strong></div>
+                <div class="broadcast-score-team ${offenseSide === 'away' ? 'at-bat' : ''}" style="background:${awayColor}">${teamLogos[m.team1] ? `<img src="${teamLogos[m.team1]}" alt="${_recordSafeText(m.team1)}">` : ''}<strong>${_recordSafeText(awayScore)}</strong></div>
+                <div class="broadcast-score-team ${offenseSide === 'home' ? 'at-bat' : ''}" style="background:${homeColor}">${teamLogos[m.team2] ? `<img src="${teamLogos[m.team2]}" alt="${_recordSafeText(m.team2)}">` : ''}<strong>${_recordSafeText(homeScore)}</strong></div>
                 <div class="broadcast-score-state"><div class="broadcast-score-state-top">
                     <span>${_recordSafeText(inningText)}</span>
                     <span class="broadcast-mini-bases" aria-label="주자 현황"><i class="broadcast-mini-base second ${baseClass('base2')}"></i><i class="broadcast-mini-base third ${baseClass('base3')}"></i><i class="broadcast-mini-base first ${baseClass('base1')}"></i></span>
@@ -1258,8 +1259,8 @@
 
                 sbh = `<div class="sb-dark scoreboard-surface w-[calc(100%+3rem)] -mx-6 rounded-none border-x-0 relative overflow-hidden mb-5 shadow-xl flex flex-col border-y border-white/15" style="${bgStyle} --score-away-soft:${h1}24; --score-home-soft:${h2}24;">
                     ${dalBadge}${centerDalLogo1}
-                    <img src="${teamLogos[m.team1]}" class="scoreboard-team-watermark absolute -left-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">
-                    <img src="${teamLogos[m.team2]}" class="scoreboard-team-watermark absolute -right-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">
+                    ${teamLogos[m.team1] ? `<img src="${teamLogos[m.team1]}" class="scoreboard-team-watermark absolute -left-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">` : ''}
+                    ${teamLogos[m.team2] ? `<img src="${teamLogos[m.team2]}" class="scoreboard-team-watermark absolute -right-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">` : ''}
                     
                     <div class="flex justify-between items-center px-5 py-2 relative z-10 h-[3.875rem]">
                         <div class="flex items-center gap-3 w-[36%]">
@@ -1442,16 +1443,16 @@
                     centerArea = `<div class="flex gap-[0.1875rem] mr-1.5">${outDotsHtml}</div><span class="text-[0.75rem] font-black text-[#FFFFFF] tracking-widest mt-px">${bCount}-${sCount}</span>`;
                 }
 
-                const allstarLogo1 = isAllstarGame ? `<img src="${teamLogos[m.team1]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : '';
-                const allstarLogo2 = isAllstarGame ? `<img src="${teamLogos[m.team2]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : '';
+                const allstarLogo1 = isAllstarGame ? `${teamLogos[m.team1] ? `<img src="${teamLogos[m.team1]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : ''}` : '';
+                const allstarLogo2 = isAllstarGame ? `${teamLogos[m.team2] ? `<img src="${teamLogos[m.team2]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : ''}` : '';
                 const sideWidthClass = isAllstarGame ? 'w-[40%]' : 'w-[36%]';
                 const centerWidthClass = isAllstarGame ? 'w-[20%]' : 'w-[28%]';
                 const sideGapClass = isAllstarGame ? 'gap-1' : 'gap-3';
                 const allstarNameStyle = isAllstarGame ? 'font-size:clamp(0.8125rem,4.2vw,1.375rem);white-space:nowrap;line-height:1;' : '';
 
                 sbh = `<div class="sb-dark scoreboard-surface w-[calc(100%+3rem)] -mx-6 rounded-none border-x-0 relative overflow-hidden mb-5 shadow-xl flex flex-col border-y border-white/15" style="background: linear-gradient(to right, ${h1}E6 0%, #18181b 45%, #18181b 55%, ${h2}E6 100%); --score-away-soft:${h1}24; --score-home-soft:${h2}24;">
-                    <img src="${teamLogos[m.team1]}" class="scoreboard-team-watermark absolute -left-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">
-                    <img src="${teamLogos[m.team2]}" class="scoreboard-team-watermark absolute -right-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">
+                    ${teamLogos[m.team1] ? `<img src="${teamLogos[m.team1]}" class="scoreboard-team-watermark absolute -left-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">` : ''}
+                    ${teamLogos[m.team2] ? `<img src="${teamLogos[m.team2]}" class="scoreboard-team-watermark absolute -right-6 top-[35%] -translate-y-1/2 w-32 h-32 opacity-15 grayscale mix-blend-overlay pointer-events-none scale-110">` : ''}
                     
                     <div class="flex justify-between items-center px-5 py-2 relative z-10 h-[3.875rem]">
                         <div class="flex items-center ${sideGapClass} ${sideWidthClass} min-w-0">
@@ -1506,13 +1507,14 @@
             let wpb = isClassic ? '' : winProbBarHtml(m, l);
             const matchupRecord = matchupRecordHtml(m);
             const infoTabs = gameInfoTabsHtml();
+            const competitionLabel = (window.enjoyBaseballCompetition.isAsianGames(m) ? '<div class="text-center text-xs text-gray-400 mb-3">아시안게임</div>' : '');
 
             if (currentGameInfoTab === 'broadcast') {
-                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + gameBroadcastHtml(m, l);
+                c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + gameBroadcastHtml(m, l);
                 return;
             }
             if (currentGameInfoTab === 'record') {
-                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + gameRecordHtml(m, l);
+                c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + gameRecordHtml(m, l);
                 requestAnimationFrame(() => {
                     const activeInning = c.querySelector('.game-record-inning-tab.active');
                     const inningTabs = activeInning && activeInning.parentElement;
@@ -1530,7 +1532,7 @@
 
             if (aLineupSrc.length === 0 && hLineupSrc.length === 0) {
                 const starterPreview = expectedStarterPreviewHtml(m, awayStarterInfo, homeStarterInfo);
-                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
+                c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
                 return;
             }
             
@@ -1595,7 +1597,7 @@
             let abh = lineupRows(aLineupSrc, h1);
             let hbh = lineupRows(hLineupSrc, h2);
             
-            c.innerHTML = sbh + wpb + matchupRecord + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
+            c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
         }
 
     window.switchGameInfoTab = switchGameInfoTab;
@@ -1604,8 +1606,8 @@
     function normalizeGame(raw) {
         const game = Object.assign({}, raw || {});
         game.id = game.id == null ? '' : String(game.id);
-        game.team1 = game.awayTeam || game.team1;
-        game.team2 = game.homeTeam || game.team2;
+        game.team1 = window.enjoyBaseballCompetition.teamName(game.awayTeam || game.team1);
+        game.team2 = window.enjoyBaseballCompetition.teamName(game.homeTeam || game.team2);
         game.time = game.gameTime || game.time;
         game.bannerLink = '';
         return game;
