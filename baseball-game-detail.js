@@ -62,6 +62,7 @@
     const teamHex = {'LG':'#C30452', '두산':'#131230', 'KIA':'#EA0029', '삼성':'#074CA1', 'SSG':'#CE0E2D', '롯데':'#041E42', '한화':'#FF6600', 'KT':'#000000', 'NC':'#315288', '키움':'#820024', '나눔':'#002038', '드림':'#90C0E0', '북부 올스타':'#123B8D', '남부 올스타':'#13B9D1'};
     const teamLogos = {'삼성':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png', 'KIA':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kia_logoo.png', '롯데':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/lotteegi.png', 'NC':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ncdin.png', 'LG':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/lgtwins.png', '두산':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/doosa.png', 'SSG':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ssglan.png', 'KT':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kt_logo.png', '한화':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/hanwha_logo.png', '키움':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kiwoom.png'};
     Object.assign(teamLogos, window.enjoyBaseballCompetition.flags);
+    Object.assign(teamHex, window.enjoyBaseballCompetition.colors);
     const ALLSTAR_DATES = new Set(['2026-07-10', '2026-07-11']);
     const ALLSTAR_LOGO_URL = 'https://qlotfqlu5749.edge.naverncp.com/KBO_IMAGE/KBOAllstar/Client/resources/images/common/img_logo.png';
     const FUTURES_ALLSTAR_LOGO_URL = ALLSTAR_LOGO_URL;
@@ -70,6 +71,7 @@
         ? `<img src="${teamLogos[team]}" class="${imgCls} object-contain ${extraCls}">`
         : `<div class="${divCls} rounded-full ${teamColors[team] || 'bg-gray-500'} flex items-center justify-center text-white text-[0.625rem] font-bold ${extraCls}">${team.substring(0,1)}</div>`;
     const teamWinHex = {'LG':'#E4376E', '두산':'#3D5AFE', 'KIA':'#FF2D55', '삼성':'#2F7BE0', 'SSG':'#E63950', '롯데':'#3B6FD4', '한화':'#FF7A1A', 'KT':'#9AA0A6', 'NC':'#4A78C0', '키움':'#C23A6B', '나눔':'#002038', '드림':'#90C0E0', '북부 올스타':'#123B8D', '남부 올스타':'#13B9D1'};
+    Object.assign(teamWinHex, window.enjoyBaseballCompetition.colors);
     const KBO_TEAMS = ['LG','두산','KIA','삼성','SSG','롯데','한화','KT','NC','키움'];
     // 로컬 히스토리에 빠진 8월 28~30일 경기를 보정하는 KBO 공식 기준 전적.
     // 메인 순위표(index.html)와 같은 기준을 사용한다.

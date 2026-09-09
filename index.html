@@ -8200,8 +8200,8 @@
         const enjoyBaseballMoreTeamStorageKey = 'enjoy_kbo_more_team';
         let enjoyBaseballMoreTeam = (function () {
             try {
-                const savedTeam = localStorage.getItem(enjoyBaseballMoreTeamStorageKey);
-                return ['KIA', '삼성', '한국'].includes(savedTeam) ? savedTeam : 'KIA';
+                const savedTeam = window.enjoyBaseballCompetition.teamName(localStorage.getItem(enjoyBaseballMoreTeamStorageKey));
+                return ['KIA', '삼성', '대한민국'].includes(savedTeam) ? savedTeam : 'KIA';
             } catch (error) {
                 return 'KIA';
             }
@@ -8213,7 +8213,7 @@
         let enjoyBaseballMoreHistoryGames = null;
         let enjoyBaseballTodayFirebaseGames = [];
         let enjoyBaseballRankingTimelineCache = null;
-        let enjoyBaseballRankingTrendTeam = enjoyBaseballMoreTeam === '한국' ? 'KIA' : enjoyBaseballMoreTeam;
+        let enjoyBaseballRankingTrendTeam = enjoyBaseballMoreTeam === '대한민국' ? 'KIA' : enjoyBaseballMoreTeam;
         let enjoyBaseballRankingTrendRange = 'season';
         let enjoyBaseballRankingTrendResizeObserver = null;
         let enjoyBaseballRankingTrendHoverIndex = -1;
@@ -8507,7 +8507,7 @@
             const requestedMonth = new Date(enjoyBaseballMoreMonth);
             const team = enjoyBaseballMoreTeam;
             const competitionBadge = document.getElementById('kbo-more-competition');
-            if (competitionBadge) competitionBadge.textContent = requestedMonth.getFullYear() + (team === '한국' ? ' 아시안게임' : ' KBO');
+            if (competitionBadge) competitionBadge.textContent = requestedMonth.getFullYear() + (team === '대한민국' ? ' 아시안게임' : ' KBO');
             title.textContent = requestedMonth.getFullYear() + '년 ' + (requestedMonth.getMonth() + 1) + '월';
             grid.innerHTML = '<div class="kbo-more-loading" style="grid-column:1/-1;padding:2.125rem 0.625rem;"><i class="fa-solid fa-baseball fa-spin"></i><span>일정을 불러오는 중...</span></div>';
             tabs.forEach(function (tab) {
@@ -8530,7 +8530,7 @@
                 const date = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
                 const dayGames = games.filter(function (game) {
                     return game.date === date && (game.team1 === team || game.team2 === team) &&
-                        (team !== '한국' || window.enjoyBaseballCompetition.isAsianGames(game));
+                        (team !== '대한민국' || window.enjoyBaseballCompetition.isAsianGames(game));
                 });
                 if (!dayGames.length) {
                     html += '<span class="kbo-original-calendar-day' + (date === today ? ' is-today' : '') +
@@ -8959,7 +8959,7 @@
                             '<div class="kbo-original-tabs" role="tablist" aria-label="구단 일정 선택">' +
                                 '<button type="button" class="kbo-original-tab" data-kbo-more-team="KIA" style="--tab-color:#EA0029;" onclick="window.switchKboMoreTeam(\'KIA\')" role="tab">KIA</button>' +
                                 '<button type="button" class="kbo-original-tab" data-kbo-more-team="삼성" style="--tab-color:#074CA1;" onclick="window.switchKboMoreTeam(\'삼성\')" role="tab">삼성</button>' +
-                                '<button type="button" class="kbo-original-tab" data-kbo-more-team="한국" style="--tab-color:#005BAC;" onclick="window.switchKboMoreTeam(\'한국\')" role="tab">한국</button>' +
+                                '<button type="button" class="kbo-original-tab" data-kbo-more-team="대한민국" style="--tab-color:#C7354C;" onclick="window.switchKboMoreTeam(\'대한민국\')" role="tab">대한민국</button>' +
                             '</div>' +
                         '</div>' +
                         '<div class="kbo-original-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>' +
@@ -9005,7 +9005,8 @@
             renderEnjoyBaseballRankingTrend();
         }
         window.switchKboMoreTeam = function (team) {
-            if (!['KIA', '삼성', '한국'].includes(team)) return;
+            team = window.enjoyBaseballCompetition.teamName(team);
+            if (!['KIA', '삼성', '대한민국'].includes(team)) return;
             window.haptic && window.haptic();
             enjoyBaseballMoreTeam = team;
             try {
@@ -10021,8 +10022,9 @@
         Object.assign(enjoyBaseballTeamLogos, window.enjoyBaseballCompetition.flags);
         const enjoyBaseballTeamColors = {
             '삼성': '#074CA1', 'KIA': '#EA0029', 'LG': '#C30452', '두산': '#131230', 'SSG': '#CE0E2D',
-            '롯데': '#041E42', '한화': '#F37321', 'KT': '#181818', 'NC': '#315288', '키움': '#570514', '한국': '#005BAC'
+            '롯데': '#041E42', '한화': '#F37321', 'KT': '#181818', 'NC': '#315288', '키움': '#570514', '대한민국': '#C7354C'
         };
+        Object.assign(enjoyBaseballTeamColors, window.enjoyBaseballCompetition.colors);
         function enjoyBaseballDecode(value) {
             if (!value) return null;
             if (value.stringValue !== undefined) return value.stringValue;
