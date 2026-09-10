@@ -1,0 +1,14 @@
+import {readFile,writeFile,cp,mkdir} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const site=fileURLToPath(new URL('../',import.meta.url));
+const built=resolve(process.argv[2]||site+'out');
+const target=resolve(process.argv[3]||site+'..');
+const html=await readFile(built+'/asian-games.html','utf8');
+if(!html.includes('아시안게임')||!html.includes('./_next/static/'))throw new Error('Invalid Next.js static export');
+await cp(built+'/_next',target+'/_next',{recursive:true});
+await mkdir(target+'/baseball-assets/flags',{recursive:true});
+await cp(built+'/baseball-assets/flags',target+'/baseball-assets/flags',{recursive:true});
+for(const asset of ['asian-stadium-v2.png','asian-baseball-v2.png','players','action','clubs','korea-wordmark.png','gold-medal-v3.png','baseball-leather-v4.png','baseball-core-v4.png','taegeukgi-silk-v1.png'])await cp(built+'/baseball-assets/'+asset,target+'/baseball-assets/'+asset,{recursive:true});
+await writeFile(target+'/asian-games.html',html);
+console.log('Exported asian-games.html, _next/ flag assets and the baseball still. No image sequence or MP4 is required by the 3D scene.');
