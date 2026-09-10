@@ -137,5 +137,5 @@ export function createStadium(canvas:HTMLCanvasElement){
   renderer.render(scene,camera);
  }
  resize();render(0);
- return {render,renderPortrait,renderGlobe,resize,dispose(){[pitchArt,batArt,catchArt,runArt,...fieldArt].forEach(a=>a.dispose());renderer.dispose();scene.traverse(o=>{if(o instanceof T.InstancedMesh)o.dispose();});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());},stats:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles})};
+ return {render,renderPortrait,renderGlobe,resize,dispose(){[pitchArt,batArt,catchArt,runArt,...fieldArt].forEach(a=>a.dispose());renderer.dispose();scene.traverse(o=>{if(o instanceof T.InstancedMesh)o.dispose();});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.forceContextLoss();canvas.width=canvas.height=1;},stats:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles})};
 }

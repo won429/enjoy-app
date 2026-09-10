@@ -33,13 +33,13 @@ for(const t of [.38,.52,.76])near(actionBall(t-1e-8),actionBall(t+1e-8),.001);
 assert.ok(sampleScene(1).camera[1]<80);
 console.log('PASS: calibrated sprite hand release, bat contact, crowd landing, closer infield camera');
 
-assert.equal((html.match(/data-medal="/g)||[]).length,24);
-assert.equal((html.match(/logo-fragment/g)||[]).length,120);
+// The initial export contains only the first two clubs. Later artwork is
+// checked in the browser at its own timeline position, including reverse entry.
+assert.equal((html.match(/data-medal="/g)||[]).length,0);
+assert.equal((html.match(/logo-fragment/g)||[]).length,24);
 assert.ok(html.includes('medals'));
-console.log('PASS: 120 sequential logo fragments and 24 medals in exported page');
-
-assert.equal((html.match(/class="medal-edge"/g)||[]).length,24*64);
-assert.equal((html.match(/class="medal-back"/g)||[]).length,24);
-assert.ok(html.includes('medal-shockwave'));
+assert.equal((html.match(/class="medal-edge"/g)||[]).length,0);
+assert.ok(!html.includes('baseball-assets/players/kor-'));
+assert.ok(!html.includes('baseball-assets/gold-medal-v3.png'));
 assert.ok(html.includes('opening-smoke'));
-console.log('PASS: 24 solid medals with backs and 64 edge facets, evolution shockwave and opening smoke');
+console.log('PASS: initial export defers medals, player images and later scenes; first two clubs retain 12 fragments each');

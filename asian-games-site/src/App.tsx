@@ -4,6 +4,7 @@ import {motion,useMotionValue,useMotionValueEvent,useTransform,MotionConfig} fro
 import {ArrowLeft,ArrowRight,ArrowUpRight,RefreshCw,Play} from 'lucide-react';
 import Stage from './scene/Stage';
 import Opening from './Opening';
+import {SceneWindow,useNearby} from './sceneWindow';
 import FinalBall from './FinalBall';
 import FlagBackdrop from './FlagBackdrop';
 import MedalTransition,{FlyingLetter} from './MedalTransition';
@@ -16,6 +17,7 @@ function openGame(game:Game){if(parent!==window&&game.id)parent.postMessage({typ
 function Flag({name}:{name:string}){const c=country(name);return c?<img src={'./baseball-assets/flags/'+c.code+'.png'} alt="" width="56" height="40"/>:null;}
 export default function App(){
  const hero=useRef<HTMLElement>(null),players=useRef<HTMLElement>(null),finale=useRef<HTMLElement>(null);
+ const playersNearby=useNearby(players),finaleNearby=useNearby(finale);
  const hp=useMotionValue(0),pp=useMotionValue(0),fp=useMotionValue(0);
  const [index,setIndex]=useState(0),[locked,setLocked]=useState(false),[gameIndex,setGameIndex]=useState(0),[today,setToday]=useState('2026-09-09');
  const [autoplay,setAutoplay]=useState(false),[replayKey,setReplayKey]=useState(0);
@@ -41,7 +43,7 @@ export default function App(){
  },[autoplay,replayKey]);
  const replay=()=>{window.scrollTo({top:0,behavior:'instant'});setReplayKey(value=>value+1);setAutoplay(true);};
  const lockTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
- useEffect(()=>{setToday(koreaToday());roster.forEach(p=>{if(p.image){const img=new Image();img.src=p.image;}});return()=>{if(lockTimer.current)clearTimeout(lockTimer.current);};},[]);
+ useEffect(()=>{setToday(koreaToday());return()=>{if(lockTimer.current)clearTimeout(lockTimer.current);};},[]);
  const {games,loading,error,refresh}=useAsianGames(today.slice(0,7),today);
  const showGames=useMemo(()=>{const upcoming=games.filter(g=>g.date>=today);return upcoming.length?upcoming:games;},[games,today]);
  const game=showGames[Math.min(gameIndex,Math.max(0,showGames.length-1))];
@@ -60,21 +62,24 @@ export default function App(){
  return <MotionConfig reducedMotion="user"><div className="experience"><Stage hero={hero} players={players} finale={finale} progress={hp} playerProgress={pp} finalProgress={fp}/>
  <button className="back-button" onClick={()=>{setAutoplay(false);back();}} aria-label="야구 커뮤니티로 돌아가기"><ArrowLeft/></button>
  <main>
- <section ref={hero} className="hero-track" id="home"><span id="pitch" className="story-marker" style={{top:"calc(1500vh * .4567)"}}/><span id="contact" className="story-marker" style={{top:"calc(1500vh * .5568)"}}/><span id="medals" className="story-marker" style={{top:"calc(1500vh * .805)"}}/><div className="hero-sticky"><Opening progress={hp}/>
+ <section ref={hero} className="hero-track" id="home"><span id="pitch" className="story-marker" style={{top:"calc(1500vh * .4567)"}}/><span id="contact" className="story-marker" style={{top:"calc(1500vh * .5568)"}}/><span id="medals" className="story-marker" style={{top:"calc(1500vh * .805)"}}/><div className="hero-sticky"><SceneWindow progress={hp} start={0} end={.25}><Opening progress={hp}/></SceneWindow>
 
  <motion.div className="hero-titles" style={{opacity:introOpacity}}><p>2026 아시안게임 야구,</p><h1>다시 하나 되다.</h1></motion.div>
- <MedalTransition progress={hp}/><motion.div className="white-transition" style={{opacity:whiteOpacity}}><h2 aria-label={phrase.replace('\n',' ')}>{typed.split('\n').map((line,row)=><span className="typing-line" key={row}>{Array.from(line).map((letter,i)=><FlyingLetter key={i} {...{letter,index:i+row*12,progress:hp}}/>)}</span>)}</h2></motion.div></div></section>
+ <SceneWindow progress={hp} start={.60} end={.99}><MedalTransition progress={hp}/></SceneWindow><motion.div className="white-transition" style={{opacity:whiteOpacity}}><h2 aria-label={phrase.replace('\n',' ')}>{typed.split('\n').map((line,row)=><span className="typing-line" key={row}>{Array.from(line).map((letter,i)=><FlyingLetter key={i} {...{letter,index:i+row*12,progress:hp}}/>)}</span>)}</h2></motion.div></div></section>
  <section ref={players} id="players" className="players-track" aria-label="대한민국 선수 소개" onKeyDown={e=>{if(e.key==='ArrowLeft')next(-1);if(e.key==='ArrowRight')next(1);}}>
  <div className="players-section" style={{backgroundColor:colors[index%4]}}><motion.h2 className="player-big-name" style={{x:nameX}} aria-hidden="true">{active.name}</motion.h2>
- <motion.div className="carousel-art" style={{scale:playerScale,y:playerY,rotate:playerRotate}} aria-hidden="true">{roster.map((p,i)=>{
+ <motion.div className="carousel-art" style={{scale:playerScale,y:playerY,rotate:playerRotate}} aria-hidden="true">{playersNearby&&roster.map((p,i)=>{
  const relative=(i-index+roster.length)%roster.length;
+ // Four visible figures plus one hidden neighbor on each side preserve the
+ // existing 650ms entrance/exit transitions in either carousel direction.
+ if(relative>3&&relative<roster.length-2)return null;
  const role=relative===0?'center':relative===1?'right':relative===roster.length-1?'left':relative===2?'back':'hidden';
  return <div key={p.id} className={'figurine '+role} style={{'--accent':colors[i%4]} as CSSProperties}><img src={p.image||'./baseball-assets/players/placeholder.svg'} alt="" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src='./baseball-assets/players/placeholder.svg';}}/>{!p.image&&<span className="placeholder-number">{String(i+1).padStart(2,'0')}</span>}</div>;
  })}</motion.div>
  <div className="player-specs" aria-live="polite"><h3>{active.name}</h3><p>{active.position} · {active.bats}</p><p>{active.height} cm · {active.weight} kg</p><small>{active.image?'임시 스펙':'임시 스펙 · 캐릭터 교체 예정'}</small><div className="player-arrows"><button disabled={locked} onClick={()=>next(-1)} aria-label="이전 선수"><ArrowLeft/></button><button disabled={locked} onClick={()=>next(1)} aria-label="다음 선수"><ArrowRight/></button></div></div>
  <div className="player-count"><strong>{String(index+1).padStart(2,'0')}</strong><span> / 24</span></div></div>
  </section>
- <div className="final-sequence"><motion.div className="flag-backdrop" style={{opacity:flagOpacity}}><FlagBackdrop/><div className="flag-shade"/></motion.div><section ref={finale} className="ball-track" id="finale"><span id="unravel" className="story-marker" style={{top:"calc(320vh * .76)"}}/><motion.div className="ball-sticky"><motion.div className="finale-base" style={{background:finaleBackground,opacity:backdropOpacity}}/><motion.div className="finale-color-veil" style={{backgroundColor:colors[index%4],opacity:finaleVeil}}/><FinalBall progress={fp}/><motion.h2 style={{opacity:finalCopyOpacity,scale:finalCopyScale}}>대한민국의<br/>다음 경기.</motion.h2></motion.div></section>
+ <div className="final-sequence"><motion.div className="flag-backdrop" style={{opacity:flagOpacity}}><SceneWindow progress={fp} start={.30}><FlagBackdrop/></SceneWindow><div className="flag-shade"/></motion.div><section ref={finale} className="ball-track" id="finale"><span id="unravel" className="story-marker" style={{top:"calc(320vh * .76)"}}/><motion.div className="ball-sticky"><motion.div className="finale-base" style={{background:finaleBackground,opacity:backdropOpacity}}/><motion.div className="finale-color-veil" style={{backgroundColor:colors[index%4],opacity:finaleVeil}}/>{finaleNearby&&<SceneWindow progress={fp} start={.12}><FinalBall progress={fp}/></SceneWindow>}<motion.h2 style={{opacity:finalCopyOpacity,scale:finalCopyScale}}>대한민국의<br/>다음 경기.</motion.h2></motion.div></section>
  <section className="schedule" id="schedule" aria-label="아시안게임 경기 일정">
  {loading&&!game?<p role="status">경기 일정을 불러오는 중</p>:!game?<div className="schedule-empty"><h3>{error?'일정을 불러오지 못했습니다.':'경기 일정 준비 중'}</h3><button onClick={refresh}><RefreshCw size={18}/> 다시 확인</button></div>:<article className="match" key={game.id+game.date}><p className="match-date">{labelDate(game.date)} · {game.time||'시간 미정'}</p><div className="match-teams"><div><Flag name={game.team1}/><h3>{game.team1}</h3></div><span>VS</span><div><Flag name={game.team2}/><h3>{game.team2}</h3></div></div><p className="match-venue">{game.stadium||game.ballpark||'구장 미정'}</p><button className="match-detail" onClick={()=>openGame(game)}>경기정보 보기 <ArrowUpRight size={22}/></button><div className="match-controls"><button onClick={()=>setGameIndex(i=>Math.max(0,i-1))} disabled={gameIndex===0} aria-label="이전 경기"><ArrowLeft/></button><span>{Math.min(gameIndex+1,showGames.length)} / {showGames.length}</span><button onClick={()=>setGameIndex(i=>Math.min(showGames.length-1,i+1))} disabled={gameIndex>=showGames.length-1} aria-label="다음 경기"><ArrowRight/></button></div>{error&&<p role="status">{error}</p>}</article>}
  <button className="autoplay-button" onClick={replay}><Play size={13}/><span>자동재생으로 한번 더 보기</span></button>

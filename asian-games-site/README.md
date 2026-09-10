@@ -83,3 +83,16 @@ Generated using the built-in image_gen tool. Assets are stored in public/basebal
 - taegeukgi-silk-v1.png: frontal cinematic South Korean flag textile photograph, white silk folds, correct taegeuk and four trigrams, no text or pole.
 
 The tool baked checkerboard pixels into the ball backgrounds. Both DOM and Three.js apply an explicit circular mask so these pixels are not displayed. This is a generated billboard for the moving ball; it is not a textured rotating 3D leather mesh. The final threads use a red-channel alpha filter on the same generated photo, so the separated stitches originate from their actual positions. The core crossfades in while both seam strips lift off, separate and leave the viewport. A lightweight shader animates the generated silk flag continuously behind the final transition and schedule. Reduced-motion disables the fabric animation; hidden/off-screen rendering is paused. Firebase schedule queries and navigation are unchanged.
+
+## 2026-09-10 — 장면 구간별 준비 및 해제
+
+연출의 타임라인, 로고별 12조각, 금메달 24개와 각 64개 옆면, 3D 화질은 유지합니다. `sceneWindow.tsx`가 기존 MotionValue 진행률과 화면 주변 여유 구간을 사용해 보이지 않는 장면의 DOM/렌더러 수명을 관리합니다. 스크롤 높이를 정하는 section은 항상 유지됩니다.
+
+- 오프닝은 현재/직전/다음 구단만 생성합니다. 재진입 시 현재 진행률로 구단을 결정합니다.
+- 금메달은 hero 진행률 .60부터 미리 준비하고 .99를 지나면 제거합니다. 원래 표시 구간 .724–.918과 모든 입체 요소는 그대로입니다.
+- 선수는 해당 섹션의 두 화면 높이 이내에서 현재 네 자리와 전환에 필요한 숨은 이웃 두 명을 생성합니다. 24명 전체 선로딩은 제거했습니다.
+- 경기장은 hero 진행률 .065부터 준비하고, hero가 두 화면 높이 이상 멀어지면 해제합니다. 스크롤 갱신은 renderer와 독립적으로 계속됩니다.
+- 마지막 공은 finale 진행률 .12부터, 태극기 renderer는 .30부터 준비합니다. 태극기는 일정의 배경으로 계속 유지됩니다.
+- 경기장/태극기 renderer를 해제할 때 WebGL context도 반환합니다. 역스크롤 시 현재 진행률에서 재생성합니다.
+
+검증: Next production build와 TypeScript 통과, `node scripts/test.mjs` 통과. 데스크톱 브라우저의 390×844 화면에서 초기 진입, 금메달 직접 진입/새로고침, 선수 양방향 순환, 일정 이동 후 투구 장면 재진입을 확인했습니다. 초기 정적 HTML 요소 2,597→149개, HTML img의 고유 파일 합계 23.912→0.361MiB(별도 JS/CSS, 이후 로딩, 캐시 제외). 금메달 구간의 24개/옆면 1,536개는 유지됩니다. 이 수치는 실제 최대 메모리 사용량 측정이나 iPhone 종료 해결을 보장하는 수치가 아닙니다. iPhone/Android 실기기 검증과 원격 배포는 별도입니다.
