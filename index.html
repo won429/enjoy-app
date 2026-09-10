@@ -9157,11 +9157,45 @@
             const frame = document.getElementById('asian-games-frame');
             if (event.origin !== window.location.origin || event.source !== frame?.contentWindow) return;
             if (event.data?.type === 'enjoy-asian-games-close') window.closeEnjoyAsianGames();
+            if (event.data?.type === 'enjoy-asian-games-destination') window.openEnjoyAsianGamesDestination(event.data.view);
             if (event.data?.type === 'enjoy-asian-games-open-match' &&
                 typeof event.data.id === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(event.data.date || '')) {
                 window.openEnjoyBaseballGame(event.data.id, event.data.date);
             }
         });
+        window.openEnjoyAsianGamesDestination = async function (view) {
+            if (!['schedule', 'results', 'community'].includes(view)) return;
+            const asianScreen = document.getElementById('asian-games-screen');
+            if (asianScreen && !asianScreen.hidden) window.closeEnjoyAsianGames();
+            if (document.getElementById('baseball-detail-screen')?.classList.contains('hidden')) await window.openKboScoreboard();
+            if (view === 'schedule') {
+                const games = enjoyBaseballMoreAllGames().filter(function (game) {
+                    return window.enjoyBaseballCompetition.isAsianGames(game) && (game.team1 === '대한민국' || game.team2 === '대한민국');
+                });
+                const today = enjoyBaseballDateKey(new Date());
+                const next = games.find(function (game) { return game.date >= today; }) || games[games.length - 1];
+                if (next) enjoyBaseballMoreMonth = new Date(next.date.slice(0, 7) + '-01T12:00:00');
+                window.focusKboMoreCalendar('대한민국');
+            } else if (view === 'results') {
+                const games = enjoyBaseballMoreAllGames().filter(function (game) {
+                    return window.enjoyBaseballCompetition.isAsianGames(game) && game.gameStatus === '종료';
+                });
+                const last = games[games.length - 1];
+                if (last) {
+                    enjoyBaseballMoreDailyDate = new Date(last.date + 'T12:00:00');
+                    await enjoyBaseballMoreFetchMonth(enjoyBaseballMoreDailyDate);
+                    renderEnjoyBaseballMoreDaily();
+                }
+                window.focusKboMoreDaily();
+            } else {
+                const scroll = document.getElementById('baseball-detail-scroll');
+                if (scroll) scroll.scrollTop = 0;
+            }
+        };
+        const enjoyAsianGamesLandingView = new URLSearchParams(window.location.search).get('asianGamesView');
+        if (['schedule', 'results', 'community'].includes(enjoyAsianGamesLandingView)) {
+            window.addEventListener('load', function () { window.openEnjoyAsianGamesDestination(enjoyAsianGamesLandingView); }, { once: true });
+        }
         window.closeKboScoreboard = function () {
             window.haptic && window.haptic();
             const screen = document.getElementById('baseball-detail-screen');
