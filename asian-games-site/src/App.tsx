@@ -12,8 +12,8 @@ import {roster} from './roster';
 import {useAsianGames} from './useAsianGames';
 import {country,koreaToday,labelDate,type Game} from './baseball';
 const colors=['#E882B4','#6EB5FF','#6BBF7A','#F4845F'];
-function back(){if(parent!==window)parent.postMessage({type:'enjoy-asian-games-close'},location.origin);else location.href='./index.html?asianGamesView=community';}
-function openGame(game:Game){if(parent!==window&&game.id)parent.postMessage({type:'enjoy-asian-games-open-match',id:game.id,date:game.date},location.origin);else location.href='./baseball-game-detail.html?matchId='+encodeURIComponent(game.id)+'&matchDate='+encodeURIComponent(game.date);}
+function back(){if(parent!==window)parent.postMessage({type:'enjoy-asian-games-close'},location.origin);else location.replace('./index.html?asianGamesView=community');}
+function openGame(game:Game){if(parent!==window&&game.id)parent.postMessage({type:'enjoy-asian-games-open-match',id:game.id,date:game.date},location.origin);else location.href='./baseball-game-detail.html?matchId='+encodeURIComponent(game.id)+'&matchDate='+encodeURIComponent(game.date)+'&from=asian-games';}
 function Flag({name}:{name:string}){const c=country(name);return c?<img src={'./baseball-assets/flags/'+c.code+'.png'} alt="" width="56" height="40"/>:null;}
 export default function App(){
  const hero=useRef<HTMLElement>(null),players=useRef<HTMLElement>(null),finale=useRef<HTMLElement>(null);

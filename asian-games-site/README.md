@@ -96,3 +96,11 @@ The tool baked checkerboard pixels into the ball backgrounds. Both DOM and Three
 - 경기장/태극기 renderer를 해제할 때 WebGL context도 반환합니다. 역스크롤 시 현재 진행률에서 재생성합니다.
 
 검증: Next production build와 TypeScript 통과, `node scripts/test.mjs` 통과. 데스크톱 브라우저의 390×844 화면에서 초기 진입, 금메달 직접 진입/새로고침, 선수 양방향 순환, 일정 이동 후 투구 장면 재진입을 확인했습니다. 초기 정적 HTML 요소 2,597→149개, HTML img의 고유 파일 합계 23.912→0.361MiB(별도 JS/CSS, 이후 로딩, 캐시 제외). 금메달 구간의 24개/옆면 1,536개는 유지됩니다. 이 수치는 실제 최대 메모리 사용량 측정이나 iPhone 종료 해결을 보장하는 수치가 아닙니다. iPhone/Android 실기기 검증과 원격 배포는 별도입니다.
+
+## 2026-09-11 — 독립 페이지 이동
+
+야구 배너는 `asian-games.html`로 같은 탭에서 이동합니다. 메인 HTML의 아시안게임 iframe과 전용 메시지/뒤로가기 처리는 제거했습니다. 메인과 특별페이지를 함께 활성화하는 구조를 없애며 연출은 유지합니다. 브라우저가 이전 문서를 뒤로가기 캐시에 보관할지는 브라우저가 결정합니다.
+
+브라우저 뒤로가기와 특별페이지의 돌아가기 버튼은 `asianGamesView=community` 주소로 야구 화면을 복원합니다. 둘러보기로 진입했다면 같은 탭의 복귀 시 한 번 복원합니다. 경기정보는 독립 페이지로 열며 아시안게임에서 진입한 경우에만 돌아가기 버튼을 표시합니다.
+
+검증: Next production build/TypeScript, `node scripts/test.mjs`, `node scripts/test-navigation.mjs`. 실제 iPhone Safari 및 Android 앱의 네이티브 WebView 이동 정책은 별도 실기기 확인이 필요합니다.

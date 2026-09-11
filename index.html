@@ -2372,9 +2372,6 @@
         .asian-games-community-banner { display: block; width: 100%; padding: 0; margin: .25rem 0 1.25rem; border: 0; border-radius: .875rem; overflow: hidden; background: #e9f2ff; cursor: pointer; }
         .asian-games-community-banner img { display: block; width: 100%; height: auto; }
         .asian-games-community-banner:focus-visible { outline: 3px solid #3182f6; outline-offset: 4px; }
-        #asian-games-screen { position: fixed; inset: 0; width: 100%; max-width: 28rem; margin: auto; z-index: 65; background: #f6f9ff; }
-        #asian-games-screen[hidden] { display: none; }
-        #asian-games-frame { width: 100%; height: 100%; border: 0; display: block; }
         .baseball-country-flag { display: inline-block; width: 1.5rem; height: 1.5rem; object-fit: contain; vertical-align: middle; margin-right: .125rem; }
         .home-baseball-club.is-home { text-align: right; }
         .home-baseball-score {
@@ -7708,10 +7705,6 @@
         </div>
     </section>
 
-    <section id="asian-games-screen" hidden aria-label="아시안게임 야구">
-        <iframe id="asian-games-frame" title="아시안게임 야구 일정"></iframe>
-    </section>
-
     <!-- 엔조이 야구 Firebase 기반 경기 정보 화면 -->
     <section id="baseball-game-screen" class="vlog-detail-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-[70] w-full max-w-md flex-col overflow-hidden">
         <button type="button" onclick="window.closeEnjoyBaseballGame()" class="community-back-fab" aria-label="홈으로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
@@ -9139,34 +9132,16 @@
         };
         window.openEnjoyAsianGames = function () {
             window.haptic && window.haptic();
-            const frame = document.getElementById('asian-games-frame');
-            if (!history.state?.enjoyAsianGames) history.pushState({ ...history.state, enjoyAsianGames: true }, '', window.location.href);
-            if (!frame.getAttribute('src')) frame.src = 'asian-games.html';
-            document.getElementById('asian-games-screen').hidden = false;
-            frame.focus();
-            frame.contentWindow.postMessage({ type: 'enjoy-asian-games-visibility', visible: true }, window.location.origin);
+            try { sessionStorage.setItem('enjoyAsianGamesGuestReturn', window.isGuest ? '1' : '0'); } catch (e) {}
+            // The return URL also restores baseball after a full reload when
+            // Safari/WebView does not retain this document in its back cache.
+            const returnUrl = new URL(window.location.href);
+            returnUrl.searchParams.set('asianGamesView', 'community');
+            history.replaceState(history.state, '', returnUrl.href);
+            window.location.assign('asian-games.html');
         };
-        window.closeEnjoyAsianGames = function () {
-            document.getElementById('asian-games-screen').hidden = true;
-            const frame = document.getElementById('asian-games-frame');
-            frame.contentWindow.postMessage({ type: 'enjoy-asian-games-visibility', visible: false }, window.location.origin);
-            document.getElementById('asian-games-community-banner')?.focus({ preventScroll: true });
-            if (history.state?.enjoyAsianGames) history.back();
-        };
-        window.addEventListener('message', function (event) {
-            const frame = document.getElementById('asian-games-frame');
-            if (event.origin !== window.location.origin || event.source !== frame?.contentWindow) return;
-            if (event.data?.type === 'enjoy-asian-games-close') window.closeEnjoyAsianGames();
-            if (event.data?.type === 'enjoy-asian-games-destination') window.openEnjoyAsianGamesDestination(event.data.view);
-            if (event.data?.type === 'enjoy-asian-games-open-match' &&
-                typeof event.data.id === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(event.data.date || '')) {
-                window.openEnjoyBaseballGame(event.data.id, event.data.date);
-            }
-        });
         window.openEnjoyAsianGamesDestination = async function (view) {
             if (!['schedule', 'results', 'community'].includes(view)) return;
-            const asianScreen = document.getElementById('asian-games-screen');
-            if (asianScreen && !asianScreen.hidden) window.closeEnjoyAsianGames();
             if (document.getElementById('baseball-detail-screen')?.classList.contains('hidden')) await window.openKboScoreboard();
             if (view === 'schedule') {
                 const games = enjoyBaseballMoreAllGames().filter(function (game) {
@@ -11085,15 +11060,6 @@
         });
 
         window.onpopstate = function(event) {
-            if (event.state?.enjoyAsianGames) {
-                window.openEnjoyAsianGames();
-                return;
-            }
-            const asianGames = document.getElementById('asian-games-screen');
-            if (asianGames && !asianGames.hidden) {
-                window.closeEnjoyAsianGames();
-                return;
-            }
             const screen = document.getElementById('browser-screen');
             if (screen && !screen.classList.contains('hidden')) {
                 window.closeBrowser();
@@ -19547,6 +19513,15 @@
                         if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(null);
                         window.enjoyAuthResolved = true;
                         window.dispatchEvent(new CustomEvent('enjoy-auth-ready', { detail: { authenticated: false } }));
+                        let restoreAsianGamesGuest = false;
+                        try {
+                            restoreAsianGamesGuest = ['community', 'schedule', 'results'].includes(new URLSearchParams(location.search).get('asianGamesView')) && sessionStorage.getItem('enjoyAsianGamesGuestReturn') === '1';
+                            if (restoreAsianGamesGuest) sessionStorage.removeItem('enjoyAsianGamesGuestReturn');
+                        } catch (e) {}
+                        if (restoreAsianGamesGuest) {
+                            window.enjoyGuest();
+                            return;
+                        }
                         showLoginForm();
                         return;
                     }

@@ -11,6 +11,18 @@
     <link rel="stylesheet" href="baseball-game-detail.css">
 </head>
 <body class="app-bg" data-theme="all">
+    <button id="standalone-back" type="button" aria-label="아시안게임으로 돌아가기" hidden
+        style="position:fixed;top:max(14px,env(safe-area-inset-top));left:14px;z-index:1000;width:40px;height:40px;border:0;border-radius:50%;background:#15202ae6;color:white;font-size:22px;cursor:pointer">←</button>
+    <script>
+        if (window.parent === window && new URLSearchParams(location.search).get('from') === 'asian-games') {
+            const backButton = document.getElementById('standalone-back');
+            backButton.hidden = false;
+            backButton.addEventListener('click', function () {
+                if (history.length > 1) history.back();
+                else location.replace('./asian-games.html#schedule');
+            });
+        }
+    </script>
     <div id="detail-wrapper" class="app-bg">
         <section id="lineup-popup" class="app-bg">
             <div id="lineup-content" class="scrollbar-hide px-6 pt-main relative pb-4"></div>
