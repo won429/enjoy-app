@@ -42,6 +42,88 @@
             overscroll-behavior-y: none;
             touch-action: pan-y;
         }
+        body.renovation-locked > :not(#renovation-screen):not(script) {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        .renovation-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483647;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
+            padding: max(1.5rem, env(safe-area-inset-top)) 1.5rem max(1.5rem, env(safe-area-inset-bottom));
+            overflow-y: auto;
+            background: #000;
+            color: #fff;
+        }
+        .renovation-screen[hidden] { display: none !important; }
+        .renovation-screen[data-state="checking"] .renovation-content { visibility: hidden; }
+        .renovation-content {
+            width: min(100%, 28rem);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transform: translateY(-5vh);
+        }
+        .renovation-wordmark {
+            position: relative;
+            width: 10rem;
+            max-width: 75vw;
+            height: 4rem;
+            overflow: hidden;
+            background: #000;
+        }
+        .renovation-wordmark img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 18.33rem;
+            max-width: none;
+            transform: translate(-50%, -50%);
+            filter: invert(1);
+            mix-blend-mode: screen;
+        }
+        .renovation-title {
+            margin: 1.65rem 0 0;
+            font-size: clamp(1.875rem, 7vw, 2.25rem);
+            font-weight: 900;
+            line-height: 1.15;
+        }
+        .renovation-subtitle {
+            margin: 0.45rem 0 0;
+            font-size: 0.9375rem;
+            font-weight: 650;
+            line-height: 1.5;
+        }
+        .renovation-progress {
+            width: min(12rem, 60vw);
+            height: 0.25rem;
+            margin-top: 2.5rem;
+            overflow: hidden;
+            border-radius: 62.4375rem;
+            background: #E5E5EA;
+        }
+        .renovation-progress-fill {
+            display: block;
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: #111;
+            transition: width 0.5s cubic-bezier(.22, 1, .36, 1);
+        }
+        @media (prefers-color-scheme: light) {
+            .renovation-screen { background: #F2F2F7; color: #141414; }
+            .renovation-wordmark { background: #F2F2F7; }
+            .renovation-wordmark img { filter: none; mix-blend-mode: multiply; }
+            .renovation-progress { background: #D1D1D6; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .renovation-progress-fill { transition: none; }
+        }
         html {
             width: 100%;
             min-height: 100%;
@@ -1472,6 +1554,370 @@
             background: rgba(0,0,0,.55);
             font-size: 0.5625rem;
             font-weight: 750;
+        }
+
+        /* 홈 상단 스포트라이트: 영상처럼 겹쳐 이동하는 커버플로 캐러셀 */
+        .home-spotlight {
+            --spotlight-card-width: min(70.18vw, 17.38rem);
+            --spotlight-card-height: min(87.725vw, 21.73rem);
+            --spotlight-backdrop: #0B1B38;
+            position: relative;
+            height: calc(var(--spotlight-card-height) + 1.5rem);
+            margin: 0 -1.25rem 1rem;
+            overflow: hidden;
+            transition: background .5s ease;
+            isolation: isolate;
+        }
+        .home-spotlight::before {
+            content: "";
+            position: absolute;
+            z-index: -2;
+            top: 1.375rem;
+            right: 0;
+            bottom: 1.375rem;
+            left: 0;
+            border-top: 0.0625rem solid rgba(255,255,255,.08);
+            border-bottom: 0.0625rem solid rgba(255,255,255,.08);
+            background: var(--spotlight-backdrop);
+            transition: background .5s cubic-bezier(.22, 1, .36, 1);
+        }
+        .home-spotlight-track {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: pan-y;
+            cursor: grab;
+            user-select: none;
+        }
+        .home-spotlight-track.is-dragging { cursor: grabbing; }
+        .home-spotlight-track img { -webkit-user-drag: none; user-select: none; }
+        .home-spotlight-card {
+            position: absolute;
+            top: 0.75rem;
+            left: 50%;
+            width: var(--spotlight-card-width);
+            height: var(--spotlight-card-height);
+            overflow: hidden;
+            border: 0.0625rem solid rgba(255,255,255,.18);
+            border-radius: 1.5rem;
+            color: #fff;
+            background: #111827;
+            box-shadow: none;
+            opacity: 0;
+            isolation: isolate;
+            will-change: transform, opacity, filter;
+            transition:
+                transform .56s cubic-bezier(.22, 1, .36, 1),
+                opacity .38s ease,
+                filter .38s ease;
+        }
+        .home-spotlight-vlog {
+            display: flex;
+            align-items: flex-end;
+            padding: 1rem;
+            text-align: center;
+        }
+        .home-spotlight-vlog-image,
+        .home-spotlight-vlog-shade {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .home-spotlight-vlog-image { z-index: -3; object-fit: cover; }
+        .home-spotlight-vlog-shade {
+            z-index: -2;
+            background: linear-gradient(180deg, rgba(2,7,18,.04) 34%, rgba(4,10,24,.22) 55%, rgba(4,10,24,.92) 100%);
+        }
+        .home-spotlight-vlog-copy {
+            width: 100%;
+            opacity: 0;
+            transform: translateY(0.75rem);
+            transition: opacity .34s ease, transform .42s cubic-bezier(.22, 1, .36, 1);
+        }
+        .home-spotlight-vlog[aria-current="true"] .home-spotlight-vlog-copy {
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: .24s;
+        }
+        .home-spotlight-eyebrow {
+            display: block;
+            color: rgba(255,255,255,.7);
+            font-size: 0.5rem;
+            font-weight: 850;
+        }
+        .home-spotlight-vlog-title {
+            display: block;
+            margin-top: 0.3125rem;
+            font-size: 1.1875rem;
+            font-weight: 950;
+            line-height: 1.12;
+            word-break: keep-all;
+        }
+        .home-spotlight-vlog-desc {
+            display: block;
+            margin-top: 0.375rem;
+            color: rgba(255,255,255,.7);
+            font-size: 0.59375rem;
+            font-weight: 650;
+            line-height: 1.42;
+        }
+        .home-spotlight-vlog[data-spotlight-id="setlog"] .home-spotlight-vlog-shade { background: none; }
+        .home-spotlight-vlog[data-spotlight-id="setlog"] .home-spotlight-vlog-copy { color: #211B32; }
+        .home-spotlight-vlog[data-spotlight-id="setlog"] .home-spotlight-eyebrow,
+        .home-spotlight-vlog[data-spotlight-id="setlog"] .home-spotlight-vlog-desc { color: rgba(33,27,50,.82); }
+        .home-spotlight-baseball {
+            background:
+                linear-gradient(rgba(2,5,10,.12), rgba(2,5,10,.12)),
+                url('assets/kbo-scoreboard-bg-v3.png') center / cover no-repeat,
+                #07101B;
+            border-color: rgba(218,231,246,.28);
+        }
+        .home-spotlight-card.home-spotlight-baseball,
+        .home-spotlight-card.home-spotlight-baseball[aria-current="true"] { box-shadow: none; }
+        .home-spotlight-baseball::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at 10% 22%, color-mix(in srgb, var(--away-color) 23%, transparent), transparent 48%),
+                radial-gradient(ellipse at 90% 70%, color-mix(in srgb, var(--home-color) 23%, transparent), transparent 50%);
+            pointer-events: none;
+        }
+        .home-spotlight-scoreboard.home-baseball-match {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            padding: 0;
+            overflow: hidden;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            cursor: inherit;
+        }
+        .home-spotlight-poster {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: grid;
+            grid-template-rows: minmax(0, 1fr) 5.6rem 3.25rem;
+            overflow: hidden;
+            transition: opacity .34s ease, transform .44s cubic-bezier(.22,1,.36,1);
+        }
+        .home-spotlight-scoreboard.is-fading .home-spotlight-poster {
+            opacity: 0;
+            transform: scale(.985);
+        }
+        .home-spotlight-player-stage {
+            position: relative;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .home-spotlight-league-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: min(68%, 11rem);
+            max-height: 84%;
+            object-fit: contain;
+            transform: translate(-50%, -50%);
+        }
+        .home-spotlight-player-team {
+            --team-color: #64748B;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 59%;
+            overflow: hidden;
+        }
+        .home-spotlight-player-team.is-away { left: -3%; }
+        .home-spotlight-player-team.is-home { right: -3%; }
+        .home-spotlight-player-team::before {
+            content: "";
+            position: absolute;
+            inset: 8% 0 0;
+            background: radial-gradient(ellipse at 50% 66%, color-mix(in srgb, var(--team-color) 42%, transparent), transparent 67%);
+            filter: blur(0.35rem);
+            pointer-events: none;
+        }
+        .home-spotlight-player {
+            position: absolute;
+            bottom: -0.375rem;
+            width: 58%;
+            height: 94%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            transform-origin: 50% 100%;
+        }
+        .home-spotlight-player img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: 50% 100%;
+            filter: drop-shadow(0 0.35rem 0.4rem rgba(0,0,0,.48));
+        }
+        .home-spotlight-player-fallback {
+            width: 3rem;
+            height: 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2rem 2rem 0 0;
+            color: rgba(255,255,255,.54);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--team-color) 55%, #202838), #080C14);
+            font-size: 0.5625rem;
+            font-weight: 900;
+        }
+        .home-spotlight-player[data-player-slot="starter"] { z-index: 4; left: 9%; width: 80%; height: 102%; }
+        .home-spotlight-player[data-player-slot="one"] { z-index: 3; bottom: 0.25rem; left: -7%; height: 72%; transform: rotate(-3deg); }
+        .home-spotlight-player[data-player-slot="two"] { z-index: 2; right: -4%; height: 82%; transform: rotate(3deg); }
+        .home-spotlight-player-team.is-home .home-spotlight-player[data-player-slot="starter"] { right: 9%; left: auto; }
+        .home-spotlight-player-team.is-home .home-spotlight-player[data-player-slot="one"] { right: -7%; left: auto; transform: rotate(3deg); }
+        .home-spotlight-player-team.is-home .home-spotlight-player[data-player-slot="two"] { right: auto; left: -4%; transform: rotate(-3deg); }
+        .home-spotlight-matchup {
+            position: relative;
+            z-index: 9;
+            display: grid;
+            grid-template-columns: 4.75rem 3.75rem 4.75rem;
+            justify-content: center;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.125rem 0.5rem;
+            background: transparent;
+        }
+        .home-spotlight-matchup::before,
+        .home-spotlight-matchup::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 1.05rem;
+            z-index: 0;
+            bottom: 1.05rem;
+            pointer-events: none;
+        }
+        .home-spotlight-matchup::before {
+            right: 0;
+            background: var(--home-color);
+        }
+        .home-spotlight-matchup::after {
+            width: 50%;
+            border-radius: 0 0.875rem 0.875rem 0;
+            background: var(--away-color);
+        }
+        .home-spotlight-scoreboard:not(.is-pregame) .home-spotlight-matchup {
+            grid-template-columns: minmax(0,1fr) 4rem minmax(0,1fr);
+            gap: 0.125rem;
+            padding-inline: 0.375rem;
+        }
+        .home-spotlight-matchup-team {
+            position: relative;
+            z-index: 2;
+            min-width: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: justify-content .4s cubic-bezier(.22,1,.36,1), transform .4s cubic-bezier(.22,1,.36,1);
+        }
+        .home-spotlight-scoreboard:not(.is-pregame) .home-spotlight-matchup-team.is-away { justify-content: flex-start; }
+        .home-spotlight-scoreboard:not(.is-pregame) .home-spotlight-matchup-team.is-home { justify-content: flex-end; }
+        .home-spotlight-matchup-team .home-spotlight-club-logo {
+            width: 6.1rem;
+            height: 6.1rem;
+            max-width: none;
+            flex: 0 0 auto;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 0.34rem 0.34rem rgba(0,0,0,.62));
+            transition: width .4s cubic-bezier(.22,1,.36,1), height .4s cubic-bezier(.22,1,.36,1), transform .4s cubic-bezier(.22,1,.36,1);
+        }
+        .home-spotlight-scoreboard:not(.is-pregame) .home-spotlight-matchup-team .home-spotlight-club-logo {
+            width: 5.35rem;
+            height: 5.35rem;
+        }
+        .home-spotlight-score-pair {
+            position: relative;
+            z-index: 3;
+            min-width: 0;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: baseline;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+        .home-spotlight-score-pair strong {
+            font-size: 1.75rem;
+            font-weight: 950;
+            line-height: 1;
+            text-align: center;
+            text-shadow: 0 0.15rem 0.5rem rgba(0,0,0,.5);
+        }
+        .home-spotlight-score-pair i {
+            color: rgba(255,255,255,.45);
+            font-size: 0.625rem;
+            font-style: normal;
+            font-weight: 900;
+        }
+        .home-spotlight-score-pair.is-pregame-empty { visibility: hidden; }
+        .home-spotlight-poster-foot {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: minmax(0,1fr) 4.75rem minmax(0,1fr);
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0 0.625rem 0.625rem;
+            color: rgba(255,255,255,.72);
+            background: transparent;
+            font-size: 0.5625rem;
+            font-weight: 800;
+        }
+        .home-spotlight-poster-foot > span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .home-spotlight-poster-foot > span:last-child { text-align: right; }
+        .home-spotlight-game-center {
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.1875rem;
+            text-align: center;
+        }
+        .home-spotlight-poster-foot .home-spotlight-game-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 950;
+        }
+        .home-spotlight-game-venue {
+            display: block;
+            max-width: 4.75rem;
+            overflow: hidden;
+            color: rgba(255,255,255,.6);
+            font-size: 0.5rem;
+            font-weight: 800;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .home-spotlight-game-state .home-baseball-pregame-time,
+        .home-spotlight-game-state .home-baseball-final-state { font-size: inherit; }
+        .home-spotlight-game-state .home-baseball-live-center { transform: scale(.82); }
+        @media (max-width: 380px) {
+            .home-spotlight { margin-left: -1rem; margin-right: -1rem; }
         }
 
         /* 홈 콘텐츠 탐색: 대표작 + 넷플릭스형 가로 작품 줄 */
@@ -5148,14 +5594,14 @@
             position: absolute;
             top: 50%;
             left: calc(50% + 0.375rem);
-            width: 3rem;
-            height: 3rem;
+            width: 4.625rem;
+            height: 2.125rem;
             object-fit: contain;
             opacity: .9;
             filter: drop-shadow(0 0.25rem 0.3125rem rgba(0,0,0,.5));
-            transform: translate(-50%,-50%) scale(1.15);
+            transform: translate(-50%,-50%);
         }
-        .kbo-original-team-panel img.is-kia { transform: translate(-50%,calc(-50% + 0.25rem)) scale(1.15); }
+        .kbo-original-team-panel img.is-kia { transform: translate(-50%,-50%); }
         .kbo-original-team-panel img.is-kt { transform: translate(-50%,calc(-50% - 0.125rem)) scale(1.15); }
         .kbo-ranking-trend {
             margin-top: 1.25rem;
@@ -6041,6 +6487,56 @@
 </head>
 <body class="w-full h-[100dvh] flex flex-col overflow-hidden bg-black" ontouchstart="">
 
+    <main id="renovation-screen" class="renovation-screen" data-state="checking" aria-labelledby="renovation-title" aria-busy="true">
+        <div class="renovation-content">
+            <span class="renovation-wordmark"><img src="assets/enjoy-wordmark.png" alt="엔조이"></span>
+            <h1 id="renovation-title" class="renovation-title">이것 저것.</h1>
+            <p class="renovation-subtitle">리뉴얼 중 입니다.</p>
+            <div id="renovation-progress" class="renovation-progress" role="progressbar" aria-label="리뉴얼 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <span id="renovation-progress-fill" class="renovation-progress-fill"></span>
+            </div>
+        </div>
+    </main>
+    <script>
+        (function () {
+            const screen = document.getElementById('renovation-screen');
+            const progress = document.getElementById('renovation-progress');
+            const fill = document.getElementById('renovation-progress-fill');
+            const storageKey = 'enjoy_renovation_status_v1';
+            const normalTitle = document.title;
+            let cached = { enabled: false, progress: 0 };
+            try {
+                const stored = JSON.parse(localStorage.getItem(storageKey) || 'null');
+                if (stored && typeof stored === 'object') cached = stored;
+            } catch (error) {}
+
+            function showStatus(data, save) {
+                const enabled = data && data.enabled === true;
+                const value = Number(data && data.progress);
+                const percentage = Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 0;
+                progress.setAttribute('aria-valuenow', String(percentage));
+                fill.style.width = percentage + '%';
+                screen.hidden = !enabled;
+                screen.dataset.state = enabled ? 'active' : 'off';
+                screen.setAttribute('aria-busy', 'false');
+                document.body.classList.toggle('renovation-locked', enabled);
+                document.title = enabled ? '엔조이 - 리뉴얼 중' : normalTitle;
+                if (save) {
+                    cached = { enabled: enabled, progress: percentage };
+                    try { localStorage.setItem(storageKey, JSON.stringify(cached)); } catch (error) {}
+                }
+            }
+
+            window.enjoyApplyRenovationStatus = function (data) { showStatus(data, true); };
+            window.enjoyRenovationReadFailed = function () { showStatus(cached, false); };
+            if (cached.enabled === true) showStatus(cached, false);
+            else document.body.classList.add('renovation-locked');
+            window.setTimeout(function () {
+                if (screen.dataset.state === 'checking') showStatus(cached, false);
+            }, 8000);
+        })();
+    </script>
+
     <!-- [New] 앱 전체 로딩 인디케이터 -->
     <div id="app-loader" class="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center transition-opacity duration-500">
         <i class="fa-solid fa-circle-notch fa-spin text-4xl text-[#3182F6] mb-4"></i>
@@ -6344,6 +6840,69 @@
             <!-- 상단: 한 명의 엔조이 비서가 오늘의 소식을 요약 -->
             <div id="enjoy-assistant" class="mb-3 mt-0 fade-in-up delay-100">
                 <div class="assistant-stage">
+                    <!-- 브이로그·야구 스포트라이트 캐러셀 -->
+                    <section id="home-spotlight" class="home-spotlight" aria-label="추천 콘텐츠">
+                        <div id="home-spotlight-track" class="home-spotlight-track" tabindex="0" aria-roledescription="캐러셀" aria-label="브이로그와 KBO 경기 카드">
+                            <article class="home-spotlight-card home-spotlight-vlog" data-home-spotlight-card data-spotlight-backdrop="#3A241B" data-spotlight-kind="vlog" data-spotlight-id="enjjok" role="button" tabindex="0" aria-label="엔쪽이 브이로그 보기" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                                <img class="home-spotlight-vlog-image" src="banner_1.jpg" alt="">
+                                <span class="home-spotlight-vlog-shade" aria-hidden="true"></span>
+                                <span class="home-spotlight-vlog-copy">
+                                    <span class="home-spotlight-eyebrow">TRAVEL SERIES</span>
+                                    <strong class="home-spotlight-vlog-title">엔쪽이</strong>
+                                    <span class="home-spotlight-vlog-desc">지난 여행과 웃음 가득한 순간을 다시 만나요.</span>
+                                </span>
+                            </article>
+
+                            <article class="home-spotlight-card home-spotlight-vlog" data-home-spotlight-card data-spotlight-backdrop="#341B25" data-spotlight-kind="vlog" data-spotlight-id="jinju" role="button" tabindex="0" aria-label="환승여행 IN 경남 진주 브이로그 보기" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                                <img class="home-spotlight-vlog-image" src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" alt="" onerror="this.src='banner_3.jpg'">
+                                <span class="home-spotlight-vlog-shade" aria-hidden="true"></span>
+                                <span class="home-spotlight-vlog-copy">
+                                    <span class="home-spotlight-eyebrow">NEW VLOG</span>
+                                    <strong class="home-spotlight-vlog-title">환승여행<br>IN 경남 진주</strong>
+                                    <span class="home-spotlight-vlog-desc">새로운 여행의 첫 번째 이야기를 지금 만나보세요.</span>
+                                </span>
+                            </article>
+
+                            <article class="home-spotlight-card home-spotlight-baseball" data-home-spotlight-card data-spotlight-backdrop="#091A38" data-spotlight-kind="baseball" data-spotlight-id="samsung" style="--away-color:#074CA1;--home-color:#570514;" role="button" tabindex="0" aria-label="삼성 라이온즈 경기 정보 보기" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                                <div class="home-baseball-match home-spotlight-scoreboard" style="--away-color:#074CA1;--home-color:#570514;" data-kbo-featured-team="samsung">
+                                    <span class="home-spotlight-poster">
+                                        <span class="home-spotlight-player-stage"><img class="home-spotlight-league-logo" src="assets/kbo-league-2026-cutout.png" alt="2026 신한 SOL Bank KBO리그"></span>
+                                        <span class="home-spotlight-matchup">
+                                            <span class="home-spotlight-matchup-team is-away"><img class="home-spotlight-club-logo" src="assets/kbo-3d-logos/samsung-lions.png" alt="삼성"></span>
+                                            <span class="home-spotlight-score-pair is-pregame-empty" aria-hidden="true"></span>
+                                            <span class="home-spotlight-matchup-team is-home"><img class="home-spotlight-club-logo" src="assets/kbo-3d-logos/kiwoom.png" alt="키움"></span>
+                                        </span>
+                                        <span class="home-spotlight-poster-foot"><span>불러오는 중</span><span class="home-spotlight-game-center"><span class="home-spotlight-game-state">경기 정보</span><small class="home-spotlight-game-venue">KBO</small></span><span>불러오는 중</span></span>
+                                    </span>
+                                </div>
+                            </article>
+
+                            <article class="home-spotlight-card home-spotlight-baseball" data-home-spotlight-card data-spotlight-backdrop="#320A16" data-spotlight-kind="baseball" data-spotlight-id="kia" style="--away-color:#F37321;--home-color:#EA0029;" role="button" tabindex="0" aria-label="KIA 타이거즈 경기 정보 보기" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                                <div class="home-baseball-match home-spotlight-scoreboard" style="--away-color:#F37321;--home-color:#EA0029;" data-kbo-featured-team="kia">
+                                    <span class="home-spotlight-poster">
+                                        <span class="home-spotlight-player-stage"><img class="home-spotlight-league-logo" src="assets/kbo-league-2026-cutout.png" alt="2026 신한 SOL Bank KBO리그"></span>
+                                        <span class="home-spotlight-matchup">
+                                            <span class="home-spotlight-matchup-team is-away"><img class="home-spotlight-club-logo" src="assets/kbo-3d-logos/hanwha-eagles.png" alt="한화"></span>
+                                            <span class="home-spotlight-score-pair is-pregame-empty" aria-hidden="true"></span>
+                                            <span class="home-spotlight-matchup-team is-home"><img class="home-spotlight-club-logo" src="assets/kbo-3d-logos/kia-tigers.png" alt="KIA"></span>
+                                        </span>
+                                        <span class="home-spotlight-poster-foot"><span>불러오는 중</span><span class="home-spotlight-game-center"><span class="home-spotlight-game-state">경기 정보</span><small class="home-spotlight-game-venue">KBO</small></span><span>불러오는 중</span></span>
+                                    </span>
+                                </div>
+                            </article>
+
+                            <article class="home-spotlight-card home-spotlight-vlog" data-home-spotlight-card data-spotlight-backdrop="#20172F" data-spotlight-kind="vlog" data-spotlight-id="setlog" role="button" tabindex="0" aria-label="엔조이 셋로그 브이로그 보기" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                                <img class="home-spotlight-vlog-image" src="enjoy_setlog.jpg" alt="">
+                                <span class="home-spotlight-vlog-shade" aria-hidden="true"></span>
+                                <span class="home-spotlight-vlog-copy">
+                                    <span class="home-spotlight-eyebrow">GWANGJU ORIGINAL</span>
+                                    <strong class="home-spotlight-vlog-title">엔조이 셋로그</strong>
+                                    <span class="home-spotlight-vlog-desc">광주의 순간을 담은 엔조이 오리지널.</span>
+                                </span>
+                            </article>
+                        </div>
+                    </section>
+
                     <!-- 0. 엔조이 멤버 + 현재현황 (가입 여부 + 활동 상태) -->
                     <section>
                         <div id="story-tray" class="flex overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch; gap:0.3125rem;">
@@ -6920,6 +7479,7 @@
     </section>
 
     <script src="baseball-competition.js"></script>
+    <script src="baseball-game-players.js"></script>
     <script src="national_gyeongguk_univ_academic_calendar_2026.js"></script>
     <script src="woosong_univ_academic_calendar_2026.js"></script>
     <script src="gyeongsang_national_univ_academic_calendar_2026.js"></script>
@@ -8027,6 +8587,147 @@
             }
         };
 
+        (function initHomeSpotlightCarousel() {
+            const section = document.getElementById('home-spotlight');
+            const track = document.getElementById('home-spotlight-track');
+            if (!section || !track || track.dataset.carouselReady === 'true') return;
+            const cards = Array.from(track.querySelectorAll('[data-home-spotlight-card]'));
+            if (!cards.length) return;
+            track.dataset.carouselReady = 'true';
+            let activeIndex = Math.min(2, cards.length - 1);
+            let dragStartX = null;
+            let dragStartY = null;
+            let dragLastX = null;
+            let dragLastTime = 0;
+            let dragVelocity = 0;
+            let isDragging = false;
+            let suppressClickUntil = 0;
+
+            const circularDelta = function (index) {
+                let delta = index - activeIndex;
+                const half = cards.length / 2;
+                if (delta > half) delta -= cards.length;
+                if (delta < -half) delta += cards.length;
+                return delta;
+            };
+            const layoutCards = function (dragDistance, immediate) {
+                const cardWidth = cards[0].getBoundingClientRect().width || track.clientWidth * .58;
+                const step = cardWidth * .86;
+                const progress = Number(dragDistance || 0) / Math.max(step, 1);
+                cards.forEach(function (card, index) {
+                    const delta = circularDelta(index) + progress;
+                    const distance = Math.abs(delta);
+                    const scale = Math.max(.76, 1.05 - Math.min(distance, 1) * .16 - Math.max(0, distance - 1) * .065);
+                    const opacity = distance > 1.72 ? 0 : Math.max(.42, 1 - distance * .34);
+                    if (immediate) card.style.transition = 'none';
+                    card.style.transform = 'translateX(calc(-50% + ' + (delta * step) + 'px)) scale(' + scale + ')';
+                    card.style.opacity = String(opacity);
+                    card.style.filter = 'brightness(' + Math.max(.62, 1 - distance * .2) + ')';
+                    card.style.zIndex = String(Math.max(1, Math.round(20 - distance * 5)));
+                    card.style.pointerEvents = distance < 1.72 ? 'auto' : 'none';
+                    card.setAttribute('aria-current', distance < .5 ? 'true' : 'false');
+                    card.setAttribute('aria-hidden', distance > 1.72 ? 'true' : 'false');
+                    card.tabIndex = distance < 1.72 ? 0 : -1;
+                });
+                if (immediate) {
+                    window.requestAnimationFrame(function () {
+                        cards.forEach(function (card) { card.style.transition = ''; });
+                    });
+                }
+            };
+            const updateBackdrop = function () {
+                section.style.setProperty('--spotlight-backdrop', cards[activeIndex].dataset.spotlightBackdrop || '#0B1B38');
+            };
+            const goToCard = function (index) {
+                activeIndex = (Number(index) + cards.length) % cards.length;
+                updateBackdrop();
+                layoutCards(0, false);
+            };
+            window.moveHomeSpotlight = function (direction) { goToCard(activeIndex + Number(direction || 0)); };
+            cards.forEach(function (card) {
+                card.addEventListener('click', function () {
+                    if (performance.now() < suppressClickUntil) return;
+                    const kind = card.dataset.spotlightKind;
+                    const id = card.dataset.spotlightId;
+                    window.haptic && window.haptic();
+                    if (kind === 'baseball' && typeof window.openEnjoyBaseballFeatured === 'function') {
+                        window.openEnjoyBaseballFeatured(id);
+                    } else if (kind === 'vlog' && typeof window.openVlogProgram === 'function') {
+                        window.openVlogProgram(id);
+                    }
+                });
+            });
+
+            track.addEventListener('pointerdown', function (event) {
+                if (event.pointerType === 'mouse' && event.button !== 0) return;
+                dragStartX = event.clientX;
+                dragStartY = event.clientY;
+                dragLastX = event.clientX;
+                dragLastTime = performance.now();
+                dragVelocity = 0;
+                isDragging = false;
+            });
+            track.addEventListener('pointermove', function (event) {
+                if (dragStartX == null || dragStartY == null) return;
+                const distanceX = event.clientX - dragStartX;
+                const distanceY = event.clientY - dragStartY;
+                if (!isDragging && Math.abs(distanceX) > 6 && Math.abs(distanceX) > Math.abs(distanceY)) {
+                    isDragging = true;
+                    track.classList.add('is-dragging');
+                    cards.forEach(function (card) { card.style.transition = 'none'; });
+                    try { track.setPointerCapture(event.pointerId); } catch (error) {}
+                }
+                if (!isDragging) return;
+                if (event.cancelable) event.preventDefault();
+                const now = performance.now();
+                const elapsed = Math.max(1, now - dragLastTime);
+                dragVelocity = (event.clientX - dragLastX) / elapsed;
+                dragLastX = event.clientX;
+                dragLastTime = now;
+                layoutCards(distanceX, false);
+            });
+            const finishDrag = function (event) {
+                if (dragStartX == null) return;
+                const distanceX = event.clientX - dragStartX;
+                try { track.releasePointerCapture(event.pointerId); } catch (error) {}
+                dragStartX = null;
+                dragStartY = null;
+                dragLastX = null;
+                track.classList.remove('is-dragging');
+                cards.forEach(function (card) { card.style.transition = ''; });
+                if (!isDragging) {
+                    layoutCards(0, false);
+                    return;
+                }
+                suppressClickUntil = performance.now() + 400;
+                const threshold = Math.min(42, cards[0].getBoundingClientRect().width * .18);
+                if (Math.abs(distanceX) > threshold || Math.abs(dragVelocity) > .42) {
+                    window.haptic && window.haptic();
+                    goToCard(activeIndex + (distanceX < 0 ? 1 : -1));
+                } else {
+                    layoutCards(0, false);
+                }
+                isDragging = false;
+            };
+            track.addEventListener('pointerup', finishDrag);
+            track.addEventListener('pointercancel', finishDrag);
+            track.addEventListener('click', function (event) {
+                if (performance.now() >= suppressClickUntil) return;
+                event.preventDefault();
+                event.stopPropagation();
+            }, true);
+            track.addEventListener('keydown', function (event) {
+                if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+                event.preventDefault();
+                window.moveHomeSpotlight(event.key === 'ArrowLeft' ? -1 : 1);
+            });
+            window.addEventListener('resize', function () { layoutCards(0, true); }, { passive: true });
+            updateBackdrop();
+            window.requestAnimationFrame(function () {
+                window.requestAnimationFrame(function () { layoutCards(0, true); });
+            });
+        })();
+
         const vlogMemberNames = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
         const gwangjuVlogCast = ['전시기', '성원제', '이진누', '류짱'];
         const jinjuVlogCast = ['전시기', '성원제', '오스틴', '이진누', '홍박사'];
@@ -8622,7 +9323,7 @@
                 const rankColors = ['#4C75F6', '#7BDBE5', '#61C684', '#B2DA67', '#B2DA67'];
                 const rankColor = rankColors[row.rank - 1] || '#9CA3AF';
                 const streakColor = row.streak.includes('승') ? '#EA0029' : (row.streak.includes('패') ? '#074CA1' : '#9CA3AF');
-                const logo = enjoyBaseballTeamLogos[row.team] || '';
+                const logo = enjoyBaseballTeamWordmarks[row.team] || '';
                 return '<div class="kbo-original-ranking-row">' +
                     '<div class="kbo-original-ranking-data">' +
                         '<span class="kbo-original-rank-number" style="color:' + rankColor + ';">' + row.rank + '</span>' +
@@ -10067,6 +10768,30 @@
             '키움': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kiwoom.png'
         };
         Object.assign(enjoyBaseballTeamLogos, window.enjoyBaseballCompetition.flags);
+        const enjoyBaseballTeamWordmarks = Object.freeze({
+            '삼성': 'assets/kbo-wordmarks/samsung-lions.png',
+            'KIA': 'assets/kbo-wordmarks/kia-tigers.png',
+            'LG': 'assets/kbo-wordmarks/lg-twins.png',
+            '두산': 'assets/kbo-wordmarks/doosan-bears.png',
+            'SSG': 'assets/kbo-wordmarks/ssg-landers.png',
+            '롯데': 'assets/kbo-wordmarks/lotte-giants.png',
+            '한화': 'assets/kbo-wordmarks/hanwha-eagles.png',
+            'KT': 'assets/kbo-wordmarks/kt-wiz.png',
+            'NC': 'assets/kbo-wordmarks/nc-dinos.png',
+            '키움': 'assets/kbo-wordmarks/kiwoom.png'
+        });
+        const enjoyBaseballTeam3dLogos = Object.freeze({
+            '삼성': 'assets/kbo-3d-logos/samsung-lions.png',
+            'KIA': 'assets/kbo-3d-logos/kia-tigers.png',
+            'LG': 'assets/kbo-3d-logos/lg-twins.png',
+            '두산': 'assets/kbo-3d-logos/doosan-bears.png',
+            'SSG': 'assets/kbo-3d-logos/ssg-landers.png',
+            '롯데': 'assets/kbo-3d-logos/lotte-giants.png',
+            '한화': 'assets/kbo-3d-logos/hanwha-eagles.png',
+            'KT': 'assets/kbo-3d-logos/kt-wiz.png',
+            'NC': 'assets/kbo-3d-logos/nc-dinos.png',
+            '키움': 'assets/kbo-3d-logos/kiwoom.png'
+        });
         const enjoyBaseballTeamColors = {
             '삼성': '#074CA1', 'KIA': '#EA0029', 'LG': '#C30452', '두산': '#131230', 'SSG': '#CE0E2D',
             '롯데': '#041E42', '한화': '#F37321', 'KT': '#181818', 'NC': '#315288', '키움': '#570514', '대한민국': '#C7354C'
@@ -10221,16 +10946,18 @@
         function rotateEnjoyBaseballFeatured() {
             Object.keys(enjoyBaseballFeaturedRotations).forEach(function (teamKey) {
                 const rotation = enjoyBaseballFeaturedRotations[teamKey];
-                const card = document.querySelector('[data-kbo-featured-team="' + teamKey + '"]');
-                if (!card || rotation.length < 2 || card.classList.contains('is-fading')) return;
-                card.classList.add('is-fading');
+                const cards = Array.from(document.querySelectorAll('[data-kbo-featured-team="' + teamKey + '"]'));
+                if (!cards.length || rotation.length < 2 || cards.some(function (card) { return card.classList.contains('is-fading'); })) return;
+                cards.forEach(function (card) { card.classList.add('is-fading'); });
                 window.setTimeout(function () {
                     const nextIndex = (enjoyBaseballFeaturedRotationIndexes[teamKey] + 1) % rotation.length;
                     enjoyBaseballFeaturedRotationIndexes[teamKey] = nextIndex;
                     enjoyBaseballFeaturedGames[teamKey] = rotation[nextIndex];
                     renderEnjoyBaseballFeatured(teamKey, rotation[nextIndex]);
                     window.requestAnimationFrame(function () {
-                        window.requestAnimationFrame(function () { card.classList.remove('is-fading'); });
+                        window.requestAnimationFrame(function () {
+                            cards.forEach(function (card) { card.classList.remove('is-fading'); });
+                        });
                     });
                 }, 420);
             });
@@ -10279,6 +11006,73 @@
         function enjoyBaseballWatermark(team, side) {
             const logo = enjoyBaseballTeamLogos[team];
             return logo ? '<img class="home-baseball-watermark is-' + side + '" src="' + enjoyBaseballEscape(logo) + '" alt="" aria-hidden="true">' : '';
+        }
+        function enjoyBaseballSpotlightLogo(team) {
+            const logo = enjoyBaseballTeam3dLogos[team] || enjoyBaseballTeamLogos[team];
+            if (logo) {
+                return '<img class="home-spotlight-club-logo" src="' + enjoyBaseballEscape(logo) + '" alt="' + enjoyBaseballEscape(team) + '">';
+            }
+            return enjoyBaseballWatermark(team, 'away');
+        }
+        function enjoyBaseballPlayerPhoto(name) {
+            try {
+                const source = typeof playerImages !== 'undefined' && playerImages[name];
+                return source ? String(source) : '';
+            } catch (error) {
+                return '';
+            }
+        }
+        function enjoyBaseballPlayerHash(value) {
+            let hash = 2166136261;
+            const source = String(value || '');
+            for (let index = 0; index < source.length; index += 1) {
+                hash ^= source.charCodeAt(index);
+                hash = Math.imul(hash, 16777619);
+            }
+            return hash >>> 0;
+        }
+        function enjoyBaseballLineupNames(game, side) {
+            const sources = [
+                game[side + 'LineupDetail'], game[side + 'Lineup'], game[side + 'Players']
+            ];
+            const lineup = sources.find(function (source) { return Array.isArray(source) && source.length; });
+            if (!lineup) return [];
+            return lineup.map(enjoyBaseballPlayerName).map(function (name) { return String(name || '').trim(); }).filter(function (name, index, names) {
+                return name && name !== '-' && names.indexOf(name) === index;
+            });
+        }
+        function enjoyBaseballFeaturedPlayers(game, side) {
+            const lineup = enjoyBaseballLineupNames(game, side);
+            if (!lineup.length) return [];
+            const starter = enjoyBaseballPlayerName(
+                game[side + 'StarterDetail'] || game[side + 'Starter'] ||
+                game[side + 'PitcherDetail'] || game[side + 'Pitcher']
+            );
+            const remaining = lineup.filter(function (name) { return name !== starter; });
+            const seed = [game.id, game.date, game.team1, game.team2, side].join('|');
+            remaining.sort(function (first, second) {
+                return enjoyBaseballPlayerHash(seed + '|' + first) - enjoyBaseballPlayerHash(seed + '|' + second);
+            });
+            const selected = [];
+            if (starter && starter !== '-') selected.push(starter);
+            remaining.forEach(function (name) {
+                if (selected.length < 3 && !selected.includes(name)) selected.push(name);
+            });
+            return selected.slice(0, 3);
+        }
+        function enjoyBaseballSpotlightPlayers(game, side, color) {
+            const slots = ['starter', 'one', 'two'];
+            const players = enjoyBaseballFeaturedPlayers(game, side);
+            if (!players.length) return '';
+            return '<span class="home-spotlight-player-team is-' + side + '" style="--team-color:' + enjoyBaseballEscape(color) + ';">' +
+                players.map(function (name, index) {
+                    const photo = enjoyBaseballPlayerPhoto(name);
+                    const visual = photo
+                        ? '<img src="' + enjoyBaseballEscape(photo) + '" alt="' + enjoyBaseballEscape(name) + '" loading="lazy" referrerpolicy="no-referrer">'
+                        : '<span class="home-spotlight-player-fallback">' + enjoyBaseballEscape(name) + '</span>';
+                    return '<span class="home-spotlight-player" data-player-slot="' + slots[index] + '" title="' + enjoyBaseballEscape(name) + '">' + visual + '</span>';
+                }).join('') +
+            '</span>';
         }
         function enjoyBaseballPersonnel(content, side) {
             return '<span class="home-baseball-personnel is-' + side + '">' + content + '</span>';
@@ -10445,10 +11239,8 @@
             return weekday ? '(' + weekday + ') ' + time : time;
         }
         function renderEnjoyBaseballFeatured(teamKey, game) {
-            const card = document.querySelector('[data-kbo-featured-team="' + teamKey + '"]');
-            if (!card || !game) return;
-            card.style.setProperty('--away-color', enjoyBaseballTeamColors[game.team1] || '#64748B');
-            card.style.setProperty('--home-color', enjoyBaseballTeamColors[game.team2] || '#64748B');
+            const cards = document.querySelectorAll('[data-kbo-featured-team="' + teamKey + '"]');
+            if (!cards.length || !game) return;
             const status = String(game.gameStatus || '경기전');
             const inning = String(game.inning || '');
             const cancellation = enjoyBaseballCancellationInfo(game);
@@ -10488,10 +11280,7 @@
                 centerSub = enjoyBaseballEscape(canceled ? cancellation.label : (game.stadium || game.ballpark || '-'));
             }
 
-            card.classList.toggle('is-live', live);
-            card.classList.toggle('is-pregame', !live && !finished);
-            card.classList.toggle('is-final', finished);
-            card.innerHTML =
+            const markup =
                 enjoyBaseballWatermark(game.team1, 'away') +
                 enjoyBaseballWatermark(game.team2, 'home') +
                 '<span class="home-baseball-score-main">' +
@@ -10506,7 +11295,46 @@
                     '<span class="home-baseball-sub-center">' + centerSub + '</span>' +
                     enjoyBaseballPersonnel(homeSub, 'home') +
                 '</span>';
-            card.setAttribute('aria-label', game.team1 + ' 대 ' + game.team2 + ' ' + detail + ' 경기 정보 보기');
+            const awayColor = enjoyBaseballTeamColors[game.team1] || '#64748B';
+            const homeColor = enjoyBaseballTeamColors[game.team2] || '#64748B';
+            const spotlightScoreMarkup = hasScore
+                ? '<span class="home-spotlight-score-pair"><strong>' + enjoyBaseballEscape(awayScore) + '</strong><i>:</i><strong>' + enjoyBaseballEscape(homeScore) + '</strong></span>'
+                : '<span class="home-spotlight-score-pair is-pregame-empty" aria-hidden="true"></span>';
+            const hasSpotlightLineups = enjoyBaseballLineupNames(game, 'away').length > 0 && enjoyBaseballLineupNames(game, 'home').length > 0;
+            const spotlightStageMarkup = hasSpotlightLineups
+                ? enjoyBaseballSpotlightPlayers(game, 'away', awayColor) + enjoyBaseballSpotlightPlayers(game, 'home', homeColor)
+                : '<img class="home-spotlight-league-logo" src="assets/kbo-league-2026-cutout.png" alt="2026 신한 SOL Bank KBO리그">';
+            const spotlightMarkup =
+                '<span class="home-spotlight-poster">' +
+                    '<span class="home-spotlight-player-stage">' +
+                        spotlightStageMarkup +
+                    '</span>' +
+                    '<span class="home-spotlight-matchup">' +
+                        '<span class="home-spotlight-matchup-team is-away">' + enjoyBaseballSpotlightLogo(game.team1) + '</span>' +
+                        spotlightScoreMarkup +
+                        '<span class="home-spotlight-matchup-team is-home">' + enjoyBaseballSpotlightLogo(game.team2) + '</span>' +
+                    '</span>' +
+                    '<span class="home-spotlight-poster-foot">' +
+                        '<span>' + awaySub + '</span>' +
+                        '<span class="home-spotlight-game-center"><span class="home-spotlight-game-state">' + centerMain + '</span>' +
+                            '<small class="home-spotlight-game-venue">' + enjoyBaseballEscape(game.stadium || game.ballpark || 'KBO') + '</small></span>' +
+                        '<span>' + homeSub + '</span>' +
+                    '</span>' +
+                '</span>';
+            cards.forEach(function (card) {
+                const spotlightCard = card.closest('.home-spotlight-baseball');
+                card.style.setProperty('--away-color', awayColor);
+                card.style.setProperty('--home-color', homeColor);
+                if (spotlightCard) {
+                    spotlightCard.style.setProperty('--away-color', awayColor);
+                    spotlightCard.style.setProperty('--home-color', homeColor);
+                }
+                card.classList.toggle('is-live', live);
+                card.classList.toggle('is-pregame', !live && !finished);
+                card.classList.toggle('is-final', finished);
+                card.innerHTML = spotlightCard ? spotlightMarkup : markup;
+                card.setAttribute('aria-label', game.team1 + ' 대 ' + game.team2 + ' ' + detail + ' 경기 정보 보기');
+            });
         }
         async function refreshEnjoyBaseballFeatured() {
             try {
@@ -19305,6 +20133,8 @@
         window.SCHEDULE_PATH = ['meeting_account', 'schedules'];
         window.BACKUP_PATH = ['meeting_account', 'backups', 'history']; 
         window.NOTICE_ALERT_PATH = ['app_settings', 'notice_alert'];
+        // 로그인 전에도 상태를 확인해야 한다. Firestore 규칙에서 이 문서만 공개 get/listen을 허용하고 쓰기는 관리자만 허용한다.
+        window.RENOVATION_PATH = ['app_settings', 'renovation']; // enabled: boolean, progress: 0~100
 
         const meetingConfig = { apiKey: "AIzaSyAVQ_WdMXKuU2CgTgvSHqLKuAVGPeeDuOQ", authDomain: "enjoy-meeting-account.firebaseapp.com", projectId: "enjoy-meeting-account", storageBucket: "enjoy-meeting-account.firebasestorage.app", messagingSenderId: "956113498506", appId: "1:956113498506:web:b520f2b77fdb3295cb9873" };
 
@@ -19492,11 +20322,26 @@
                 let unsubMeeting = null;
                 let unsubSchedule = null;
                 let unsubNoticeAlert = null;
+                let unsubRenovation = null;
 
                 onAuthStateChanged(meetingAuth, async (user) => {
                     if (unsubMeeting) { unsubMeeting(); unsubMeeting = null; }
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
                     if (unsubNoticeAlert) { unsubNoticeAlert(); unsubNoticeAlert = null; }
+                    if (unsubRenovation) { unsubRenovation(); unsubRenovation = null; }
+                    try {
+                        unsubRenovation = onSnapshot(doc(window.meetingDb, ...window.RENOVATION_PATH), (snapshot) => {
+                            if (window.enjoyApplyRenovationStatus) {
+                                window.enjoyApplyRenovationStatus(snapshot.exists() ? snapshot.data() : null);
+                            }
+                        }, (error) => {
+                            console.warn('Renovation status snapshot error:', error);
+                            if (window.enjoyRenovationReadFailed) window.enjoyRenovationReadFailed();
+                        });
+                    } catch (error) {
+                        console.warn('Renovation status subscription error:', error);
+                        if (window.enjoyRenovationReadFailed) window.enjoyRenovationReadFailed();
+                    }
                     if (window.setHomeNoticeAlert) window.setHomeNoticeAlert(false);
                     window.enjoySync = false;        // 멤버 확정 전까지는 로컬 모드 기본
                     window.__enjoySyncOn = false;
@@ -19619,6 +20464,7 @@
 
             } catch(e) {
                 console.error("Firebase Init Error:", e);
+                if (window.enjoyRenovationReadFailed) window.enjoyRenovationReadFailed();
                 window.enjoyAuthResolved = true;
                 window.enjoyAuthInitFailed = true;
                 const loginChecking = document.getElementById('login-checking');
