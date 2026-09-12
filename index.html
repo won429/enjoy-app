@@ -71,24 +71,20 @@
         }
         .renovation-wordmark {
             position: relative;
-            width: 10rem;
+            width: 14.664rem;
             max-width: 75vw;
-            height: 4rem;
-            overflow: hidden;
+            aspect-ratio: 3 / 1;
             background: #000;
         }
         .renovation-wordmark img {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 18.33rem;
-            max-width: none;
-            transform: translate(-50%, -50%);
-            filter: invert(1);
+            display: block;
+            width: 100%;
+            height: 100%;
+            filter: invert(1) contrast(2);
             mix-blend-mode: screen;
         }
         .renovation-title {
-            margin: 1.65rem 0 0;
+            margin: 1.17rem 0 0;
             font-size: clamp(1.875rem, 7vw, 2.25rem);
             font-weight: 900;
             line-height: 1.15;
@@ -99,27 +95,44 @@
             font-weight: 650;
             line-height: 1.5;
         }
+        .renovation-subtitle span { display: block; }
+        .renovation-progress-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 2.5rem;
+        }
         .renovation-progress {
             width: min(12rem, 60vw);
             height: 0.25rem;
-            margin-top: 2.5rem;
             overflow: hidden;
             border-radius: 62.4375rem;
-            background: #E5E5EA;
+            background: #3A3A3C;
         }
         .renovation-progress-fill {
             display: block;
             width: 0;
             height: 100%;
             border-radius: inherit;
-            background: #111;
+            background: #FFF;
             transition: width 0.5s cubic-bezier(.22, 1, .36, 1);
+        }
+        .renovation-progress-value {
+            min-width: 2.1rem;
+            color: #B8B8BD;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            line-height: 1;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
         }
         @media (prefers-color-scheme: light) {
             .renovation-screen { background: #F2F2F7; color: #141414; }
             .renovation-wordmark { background: #F2F2F7; }
-            .renovation-wordmark img { filter: none; mix-blend-mode: multiply; }
+            .renovation-wordmark img { filter: contrast(2); mix-blend-mode: multiply; }
             .renovation-progress { background: #D1D1D6; }
+            .renovation-progress-fill { background: #111; }
+            .renovation-progress-value { color: #66666B; }
         }
         @media (prefers-reduced-motion: reduce) {
             .renovation-progress-fill { transition: none; }
@@ -6491,9 +6504,12 @@
         <div class="renovation-content">
             <span class="renovation-wordmark"><img src="assets/enjoy-wordmark.png" alt="엔조이"></span>
             <h1 id="renovation-title" class="renovation-title">이것 저것.</h1>
-            <p class="renovation-subtitle">리뉴얼 중 입니다.</p>
-            <div id="renovation-progress" class="renovation-progress" role="progressbar" aria-label="리뉴얼 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <span id="renovation-progress-fill" class="renovation-progress-fill"></span>
+            <p class="renovation-subtitle"><span>리뉴얼 중 입니다.</span><span>새로워진 엔조이 앱으로 곧 돌아오겠습니다.</span></p>
+            <div class="renovation-progress-row">
+                <div id="renovation-progress" class="renovation-progress" role="progressbar" aria-label="리뉴얼 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span id="renovation-progress-fill" class="renovation-progress-fill"></span>
+                </div>
+                <span id="renovation-progress-value" class="renovation-progress-value" aria-hidden="true">0%</span>
             </div>
         </div>
     </main>
@@ -6502,6 +6518,7 @@
             const screen = document.getElementById('renovation-screen');
             const progress = document.getElementById('renovation-progress');
             const fill = document.getElementById('renovation-progress-fill');
+            const progressValue = document.getElementById('renovation-progress-value');
             const storageKey = 'enjoy_renovation_status_v1';
             const normalTitle = document.title;
             let cached = { enabled: false, progress: 0 };
@@ -6516,6 +6533,7 @@
                 const percentage = Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 0;
                 progress.setAttribute('aria-valuenow', String(percentage));
                 fill.style.width = percentage + '%';
+                progressValue.textContent = percentage + '%';
                 screen.hidden = !enabled;
                 screen.dataset.state = enabled ? 'active' : 'off';
                 screen.setAttribute('aria-busy', 'false');
