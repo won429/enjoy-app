@@ -75,6 +75,7 @@
             max-width: 75vw;
             aspect-ratio: 3 / 1;
             background: #000;
+            transform: translateY(15%);
         }
         .renovation-wordmark img {
             display: block;
@@ -82,6 +83,13 @@
             height: 100%;
             filter: invert(1) contrast(2);
             mix-blend-mode: screen;
+        }
+        .renovation-details {
+            display: flex;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            transform: translateY(50%);
         }
         .renovation-title {
             margin: 1.17rem 0 0;
@@ -6503,13 +6511,15 @@
     <main id="renovation-screen" class="renovation-screen" data-state="checking" aria-labelledby="renovation-title" aria-busy="true">
         <div class="renovation-content">
             <span class="renovation-wordmark"><img src="assets/enjoy-wordmark.png" alt="엔조이"></span>
-            <h1 id="renovation-title" class="renovation-title">이것 저것.</h1>
-            <p class="renovation-subtitle"><span>리뉴얼 중 입니다.</span><span>새로워진 엔조이 앱으로 곧 돌아오겠습니다.</span></p>
-            <div class="renovation-progress-row">
-                <div id="renovation-progress" class="renovation-progress" role="progressbar" aria-label="리뉴얼 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                    <span id="renovation-progress-fill" class="renovation-progress-fill"></span>
+            <div class="renovation-details">
+                <h1 id="renovation-title" class="renovation-title">이것 저것.</h1>
+                <p class="renovation-subtitle"><span>리뉴얼 중 입니다.</span><span>새로워진 엔조이 앱으로 곧 돌아오겠습니다.</span></p>
+                <div class="renovation-progress-row">
+                    <div id="renovation-progress" class="renovation-progress" role="progressbar" aria-label="리뉴얼 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <span id="renovation-progress-fill" class="renovation-progress-fill"></span>
+                    </div>
+                    <span id="renovation-progress-value" class="renovation-progress-value" aria-hidden="true">0%</span>
                 </div>
-                <span id="renovation-progress-value" class="renovation-progress-value" aria-hidden="true">0%</span>
             </div>
         </div>
     </main>
@@ -6521,14 +6531,17 @@
             const progressValue = document.getElementById('renovation-progress-value');
             const storageKey = 'enjoy_renovation_status_v1';
             const normalTitle = document.title;
-            let cached = { enabled: false, progress: 0 };
+            let cached = { enabled: false, progress: 0, excludeSeongwonje: false };
+            let verifiedSeongwonje = false;
             try {
                 const stored = JSON.parse(localStorage.getItem(storageKey) || 'null');
                 if (stored && typeof stored === 'object') cached = stored;
             } catch (error) {}
 
             function showStatus(data, save) {
-                const enabled = data && data.enabled === true;
+                const renovationEnabled = data && data.enabled === true;
+                const excludeSeongwonje = data && data.excludeSeongwonje === true;
+                const enabled = renovationEnabled && !(excludeSeongwonje && verifiedSeongwonje);
                 const value = Number(data && data.progress);
                 const percentage = Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 0;
                 progress.setAttribute('aria-valuenow', String(percentage));
@@ -6540,12 +6553,16 @@
                 document.body.classList.toggle('renovation-locked', enabled);
                 document.title = enabled ? '엔조이 - 리뉴얼 중' : normalTitle;
                 if (save) {
-                    cached = { enabled: enabled, progress: percentage };
+                    cached = { enabled: renovationEnabled, progress: percentage, excludeSeongwonje: excludeSeongwonje };
                     try { localStorage.setItem(storageKey, JSON.stringify(cached)); } catch (error) {}
                 }
             }
 
             window.enjoyApplyRenovationStatus = function (data) { showStatus(data, true); };
+            window.enjoySetRenovationMember = function (uid, name) {
+                verifiedSeongwonje = !!(uid && window.enjoyUser && window.enjoyUser.uid === uid && name === '성원제');
+                if (screen.dataset.state !== 'checking') showStatus(cached, false);
+            };
             window.enjoyRenovationReadFailed = function () { showStatus(cached, false); };
             if (cached.enabled === true) showStatus(cached, false);
             else document.body.classList.add('renovation-locked');
@@ -16915,6 +16932,7 @@
                         memberProfile,
                         { merge: true });
                     window.enjoyProfileName = name;
+                    if (window.enjoySetRenovationMember) window.enjoySetRenovationMember(window.enjoyUser.uid, name);
                     notifyAndroidMemberTopic(name);
                     closeProfileModal();
                     startMemberSync();     // 멤버 동기화 시작
@@ -18996,6 +19014,7 @@
 
                         const myName = await loadMyName();
                         if (!window.enjoyUser || window.enjoyUser.uid !== expectedUid) continue;
+                        if (window.enjoySetRenovationMember) window.enjoySetRenovationMember(expectedUid, myName);
 
                         if (myName && window.enjoyIsMemberName(myName)) {
                             // 정식 멤버 → 파이어베이스 동기화
@@ -20347,6 +20366,7 @@
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
                     if (unsubNoticeAlert) { unsubNoticeAlert(); unsubNoticeAlert = null; }
                     if (unsubRenovation) { unsubRenovation(); unsubRenovation = null; }
+                    if (window.enjoySetRenovationMember) window.enjoySetRenovationMember(null, null);
                     try {
                         unsubRenovation = onSnapshot(doc(window.meetingDb, ...window.RENOVATION_PATH), (snapshot) => {
                             if (window.enjoyApplyRenovationStatus) {
@@ -20407,9 +20427,9 @@
                     try {
                         const memberSnapshot = await getDoc(doc(window.meetingDb, 'members', user.uid));
                         if (!meetingAuth.currentUser || meetingAuth.currentUser.uid !== user.uid) return;
-                        const savedTimetable = memberSnapshot.exists()
-                            ? memberSnapshot.data().timetable
-                            : null;
+                        const memberData = memberSnapshot.exists() ? memberSnapshot.data() : null;
+                        if (window.enjoySetRenovationMember) window.enjoySetRenovationMember(user.uid, memberData && memberData.name);
+                        const savedTimetable = memberData && memberData.timetable;
                         if (savedTimetable && typeof savedTimetable === 'object' && Array.isArray(savedTimetable.classes)) {
                             window.syncTimetableToAndroid(savedTimetable);
                         } else {
