@@ -3272,29 +3272,26 @@
             height: 100%;
             object-fit: contain;
             opacity: 0;
-            transform: translate(var(--symbol-enter-x, 0), var(--symbol-enter-y, 0));
-            filter: blur(0.04rem);
+            clip-path: inset(0 0 100% 0);
             pointer-events: none;
-            will-change: opacity, transform, filter;
-            animation: home-symbol-color-cycle 30s linear infinite both;
+            will-change: clip-path;
+            animation: home-symbol-paint-cycle 30s linear infinite both;
             animation-delay: var(--symbol-delay, 0s);
         }
-        .home-brand-symbol-layer.is-bronze { --symbol-delay: 0s; --symbol-enter-x: -0.08rem; --symbol-enter-y: 0; --symbol-exit-x: 0.08rem; --symbol-exit-y: -0.05rem; }
-        .home-brand-symbol-layer.is-navy { --symbol-delay: -24s; --symbol-enter-x: 0.08rem; --symbol-enter-y: 0; --symbol-exit-x: 0; --symbol-exit-y: 0.08rem; }
-        .home-brand-symbol-layer.is-pearl { --symbol-delay: -18s; --symbol-enter-x: 0; --symbol-enter-y: -0.08rem; --symbol-exit-x: -0.08rem; --symbol-exit-y: 0; }
-        .home-brand-symbol-layer.is-violet { --symbol-delay: -12s; --symbol-enter-x: -0.06rem; --symbol-enter-y: -0.06rem; --symbol-exit-x: 0.06rem; --symbol-exit-y: 0.06rem; }
-        .home-brand-symbol-layer.is-rose { --symbol-delay: -6s; --symbol-enter-x: 0.06rem; --symbol-enter-y: -0.06rem; --symbol-exit-x: -0.06rem; --symbol-exit-y: 0.06rem; }
-        @keyframes home-symbol-color-cycle {
-            0%, 16% { opacity: 1; transform: translate(0, 0); filter: blur(0); }
-            18% { opacity: .5; transform: translate(var(--symbol-exit-x, 0), var(--symbol-exit-y, 0)); filter: blur(0.025rem); }
-            20%, 96% { opacity: 0; transform: translate(var(--symbol-exit-x, 0), var(--symbol-exit-y, 0)); filter: blur(0.04rem); }
-            96.01% { opacity: 0; transform: translate(var(--symbol-enter-x, 0), var(--symbol-enter-y, 0)); filter: blur(0.04rem); }
-            98% { opacity: .5; transform: translate(var(--symbol-enter-x, 0), var(--symbol-enter-y, 0)); filter: blur(0.025rem); }
-            100% { opacity: 1; transform: translate(0, 0); filter: blur(0); }
+        .home-brand-symbol-layer.is-bronze { --symbol-delay: 0s; }
+        .home-brand-symbol-layer.is-navy { --symbol-delay: -24s; }
+        .home-brand-symbol-layer.is-pearl { --symbol-delay: -18s; }
+        .home-brand-symbol-layer.is-violet { --symbol-delay: -12s; }
+        .home-brand-symbol-layer.is-rose { --symbol-delay: -6s; }
+        @keyframes home-symbol-paint-cycle {
+            0%, 19.99% { z-index: 2; opacity: 1; clip-path: inset(0); }
+            20%, 93.99% { z-index: 0; opacity: 0; clip-path: inset(0 0 100% 0); }
+            94% { z-index: 3; opacity: 1; clip-path: inset(0 0 100% 0); animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
+            100% { z-index: 3; opacity: 1; clip-path: inset(0); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .home-brand-symbol-layer { animation: none; opacity: 0; transform: none; filter: none; }
-            .home-brand-symbol-layer.is-bronze { opacity: 1; }
+            .home-brand-symbol-layer { animation: none; z-index: 0; opacity: 0; clip-path: inset(0); }
+            .home-brand-symbol-layer.is-bronze { z-index: 1; opacity: 1; }
         }
         .home-wordmark {
             position: relative;
