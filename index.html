@@ -3260,11 +3260,41 @@
             user-select: none;
         }
         .home-brand-symbol {
+            position: relative;
             width: 1.875rem;
             height: 1.875rem;
             flex: none;
+        }
+        .home-brand-symbol-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
+            opacity: 0;
+            transform: translate(var(--symbol-enter-x, 0), var(--symbol-enter-y, 0));
+            filter: blur(0.04rem);
             pointer-events: none;
+            will-change: opacity, transform, filter;
+            animation: home-symbol-color-cycle 30s linear infinite both;
+            animation-delay: var(--symbol-delay, 0s);
+        }
+        .home-brand-symbol-layer.is-bronze { --symbol-delay: 0s; --symbol-enter-x: -0.08rem; --symbol-enter-y: 0; --symbol-exit-x: 0.08rem; --symbol-exit-y: -0.05rem; }
+        .home-brand-symbol-layer.is-navy { --symbol-delay: -24s; --symbol-enter-x: 0.08rem; --symbol-enter-y: 0; --symbol-exit-x: 0; --symbol-exit-y: 0.08rem; }
+        .home-brand-symbol-layer.is-pearl { --symbol-delay: -18s; --symbol-enter-x: 0; --symbol-enter-y: -0.08rem; --symbol-exit-x: -0.08rem; --symbol-exit-y: 0; }
+        .home-brand-symbol-layer.is-violet { --symbol-delay: -12s; --symbol-enter-x: -0.06rem; --symbol-enter-y: -0.06rem; --symbol-exit-x: 0.06rem; --symbol-exit-y: 0.06rem; }
+        .home-brand-symbol-layer.is-rose { --symbol-delay: -6s; --symbol-enter-x: 0.06rem; --symbol-enter-y: -0.06rem; --symbol-exit-x: -0.06rem; --symbol-exit-y: 0.06rem; }
+        @keyframes home-symbol-color-cycle {
+            0%, 16% { opacity: 1; transform: translate(0, 0); filter: blur(0); }
+            18% { opacity: .5; transform: translate(var(--symbol-exit-x, 0), var(--symbol-exit-y, 0)); filter: blur(0.025rem); }
+            20%, 96% { opacity: 0; transform: translate(var(--symbol-exit-x, 0), var(--symbol-exit-y, 0)); filter: blur(0.04rem); }
+            96.01% { opacity: 0; transform: translate(var(--symbol-enter-x, 0), var(--symbol-enter-y, 0)); filter: blur(0.04rem); }
+            98% { opacity: .5; transform: translate(var(--symbol-enter-x, 0), var(--symbol-enter-y, 0)); filter: blur(0.025rem); }
+            100% { opacity: 1; transform: translate(0, 0); filter: blur(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .home-brand-symbol-layer { animation: none; opacity: 0; transform: none; filter: none; }
+            .home-brand-symbol-layer.is-bronze { opacity: 1; }
         }
         .home-wordmark {
             position: relative;
@@ -6949,7 +6979,13 @@
         <header class="home-wordmark-bar" aria-label="enjoy">
             <button type="button" class="home-menu-trigger" onclick="window.haptic && window.haptic(); window.openHomeSideMenu()" aria-label="더보기 메뉴 열기" aria-controls="home-side-menu" aria-expanded="false"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
             <span class="home-brand" aria-hidden="true">
-                <img class="home-brand-symbol" src="assets/enjoy-symbol.png" alt="">
+                <span class="home-brand-symbol">
+                    <img class="home-brand-symbol-layer is-bronze" src="assets/enjoy-symbol.png" alt="">
+                    <img class="home-brand-symbol-layer is-navy" src="assets/enjoy-symbol-navy.png" alt="">
+                    <img class="home-brand-symbol-layer is-pearl" src="assets/enjoy-symbol-pearl.png" alt="">
+                    <img class="home-brand-symbol-layer is-violet" src="assets/enjoy-symbol-violet.png" alt="">
+                    <img class="home-brand-symbol-layer is-rose" src="assets/enjoy-symbol-rose.png" alt="">
+                </span>
                 <span class="home-wordmark">
                     <img src="assets/enjoy-wordmark.png" alt="">
                 </span>
