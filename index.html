@@ -3173,12 +3173,12 @@
             padding: max(0.25rem, env(safe-area-inset-top)) 1.25rem 0.25rem;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             background: rgba(0,0,0,.88);
             -webkit-backdrop-filter: blur(1rem) saturate(1.45);
             backdrop-filter: blur(1rem) saturate(1.45);
         }
-        /* 홈 상단 탭 (홈 / 야구): 굵은 흰 글씨 + 활성 탭 아래 짧은 흰색 바 */
+        /* 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정): 굵은 흰 글씨 + 활성 탭 아래 짧은 흰색 바 */
         .home-tabs {
             position: relative;
             z-index: 23;
@@ -3202,7 +3202,7 @@
             border: 0;
             background: transparent;
             color: rgba(255,255,255,.82);
-            font-size: 1.0625rem;
+            font-size: 0.9375rem;
             font-weight: 600;
             letter-spacing: -.02em;
             line-height: 1.2;
@@ -3234,6 +3234,20 @@
         .home-tab:active { opacity: .7; }
         /* 야구 탭 콘텐츠: 별도 화면이 아니라 홈 스크롤 안에 그대로 들어간다 */
         .home-baseball-panel { margin-top: 0.25rem; }
+        .home-vlog-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.6875rem;
+            margin-top: 0.25rem;
+        }
+        .home-vlog-panel.hidden { display: none; }
+        .home-vlog-panel .home-content-item.home-featured { margin-top: 0 !important; }
+        .home-vlog-panel .home-featured-clean {
+            width: 100%;
+            height: auto !important;
+            aspect-ratio: 16 / 9;
+        }
+        .home-vlog-panel .home-featured-clean img { object-position: center; }
         .home-baseball-panel .kbo-more-shell {
             min-height: 0;
             padding: 0.875rem 0 1.5rem;
@@ -3261,7 +3275,7 @@
         .home-account-actions {
             position: absolute;
             top: 50%;
-            right: 1.25rem;
+            right: 3.625rem;
             display: flex;
             align-items: center;
             gap: 0.125rem;
@@ -3291,7 +3305,7 @@
         .home-menu-trigger {
             position: absolute;
             top: 50%;
-            left: 1.25rem;
+            right: 1.25rem;
             width: 1.75rem;
             height: 1.75rem;
             padding: 0;
@@ -3469,6 +3483,32 @@
             background: var(--academic-bg);
             color: var(--academic-text);
         }
+        #home-screen #academic-schedule-screen.home-academic-panel {
+            position: relative;
+            z-index: auto;
+            inset: auto;
+            left: auto;
+            width: 100%;
+            max-width: none;
+            height: calc(100dvh - 11rem - env(safe-area-inset-top));
+            min-height: 22rem;
+            overflow: hidden;
+            isolation: isolate;
+            transform: none;
+            background: transparent;
+        }
+        #home-screen #academic-schedule-screen.home-academic-panel.hidden { display: none; }
+        #home-screen #academic-schedule-screen.home-academic-panel:not(.hidden) { display: flex; }
+        .home-academic-panel .academic-topbar {
+            padding: .75rem 0 .875rem;
+            background: transparent;
+        }
+        .home-academic-panel .academic-scroll {
+            min-height: 0;
+            flex: 1;
+            overflow-y: auto;
+            padding: .25rem 0 max(4.5rem, calc(2rem + env(safe-area-inset-bottom)));
+        }
         body.academic-schedule-active {
             overflow: hidden;
         }
@@ -3509,13 +3549,13 @@
         .academic-school-option.is-selected { color: #fff; background: rgba(49,130,246,.22); }
         .academic-school-option i { color: #3182F6; font-size: .75rem; opacity: 0; }
         .academic-school-option.is-selected i { opacity: 1; }
-        .academic-watermark { position: absolute; top: 54%; left: 50%; width: min(68vw, 18rem); aspect-ratio: 1; z-index: 0; transform: translate(-50%, -50%); background-position: center; background-repeat: no-repeat; background-size: contain; opacity: .1; pointer-events: none; }
+        .academic-watermark { position: absolute; top: 50%; left: 50%; width: min(68vw, 18rem); aspect-ratio: 1; z-index: 0; transform: translate(-50%, -50%); background-position: center; background-repeat: no-repeat; background-size: contain; opacity: .1; pointer-events: none; }
         .academic-scroll { position: relative; z-index: 1; padding: .25rem 1.25rem max(4rem, calc(2rem + env(safe-area-inset-bottom))); }
         .academic-month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
         .academic-month-title { color: var(--academic-text); font-size: 1.25rem; font-weight: 900; }
         .academic-month-buttons { display: flex; gap: .375rem; }
         .academic-list { display: flex; flex-direction: column; gap: .625rem; }
-        .academic-event { display: flex; align-items: center; gap: .75rem; padding: .875rem; overflow: hidden; isolation: isolate; border: .0625rem solid rgba(255,255,255,.15); border-radius: 1.125rem; background: rgba(12,12,14,.38); box-shadow: 0 1.125rem 3.25rem rgba(0,0,0,.35), 0 .375rem 1rem rgba(0,0,0,.22); -webkit-backdrop-filter: blur(1.25rem) saturate(1.6); backdrop-filter: blur(1.25rem) saturate(1.6); }
+        .academic-event { display: flex; align-items: center; gap: .75rem; padding: .875rem; overflow: hidden; isolation: isolate; border: .0625rem solid rgba(255,255,255,.15); border-radius: 1.125rem; background: rgba(12,12,14,.28); box-shadow: inset 0 .0625rem .0625rem rgba(255,255,255,.12), 0 1.125rem 3.25rem rgba(0,0,0,.28), 0 .375rem 1rem rgba(0,0,0,.18); -webkit-backdrop-filter: blur(1.25rem) saturate(1.6); backdrop-filter: blur(1.25rem) saturate(1.6); }
         .academic-event-date { width: 3rem; flex: none; text-align: center; }
         .academic-event-day { display: block; color: #5BA1FF; font-size: 1.25rem; font-weight: 950; line-height: 1; }
         .academic-event-weekday { display: block; margin-top: .25rem; color: var(--academic-sub); font-size: .625rem; font-weight: 750; }
@@ -4454,6 +4494,41 @@
         .vlog-detail-screen { background-color: #000; }
         .shorts-screen {
             background: #000;
+        }
+        #home-screen.is-shorts-tab {
+            height: 100dvh;
+            min-height: 100dvh;
+            max-height: 100dvh;
+            padding-bottom: 0 !important;
+            overflow: hidden;
+        }
+        #home-screen.is-shorts-tab > .app-copyright-slot { display: none; }
+        #home-screen #shorts-screen.home-shorts-panel {
+            position: relative;
+            z-index: auto !important;
+            inset: auto;
+            left: auto;
+            flex: 1 1 auto;
+            width: calc(100% + 2.5rem);
+            max-width: none;
+            height: auto;
+            min-height: 0;
+            margin: 0 -1.25rem;
+            overflow: hidden;
+            transform: none;
+            border-radius: 0;
+        }
+        #home-screen #shorts-screen.home-shorts-panel.hidden { display: none; }
+        #home-screen #shorts-screen.home-shorts-panel:not(.hidden) { display: flex; }
+        .home-shorts-panel .shorts-video {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            aspect-ratio: auto;
+            object-fit: cover;
+        }
+        .home-shorts-panel .shorts-comments-layer {
+            padding-bottom: 0;
         }
         .shorts-feed {
             height: 100%;
@@ -6072,7 +6147,7 @@
                 --academic-sub: #8B95A1;
             }
             .academic-watermark { opacity: .08; }
-            .academic-event { border-color: rgba(0,0,0,.1); background: rgba(255,255,255,.48); box-shadow: 0 .875rem 2.625rem rgba(0,0,0,.16), 0 .25rem .75rem rgba(0,0,0,.1); }
+            .academic-event { border-color: rgba(255,255,255,.62); background: rgba(255,255,255,.42); box-shadow: inset 0 .0625rem .0625rem rgba(255,255,255,.78), 0 .875rem 2.625rem rgba(15,23,42,.14), 0 .25rem .75rem rgba(15,23,42,.08); }
             .academic-school-logo.is-gwangju { filter: none; }
             .academic-school-trigger { color: #191F28; background: #FFFFFF; }
             .academic-school-menu { border-color: rgba(0,0,0,.08); background: rgba(255,255,255,.98); box-shadow: 0 1rem 2.5rem rgba(15,23,42,.16); }
@@ -6870,10 +6945,13 @@
             </div>
         </header>
 
-        <!-- 홈 상단 탭 (홈 / 야구) -->
-        <nav id="home-tabs" class="home-tabs" role="tablist" aria-label="홈 구분">
-            <button type="button" class="home-tab is-active" data-home-tab="home" role="tab" aria-selected="true" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">홈</button>
+        <!-- 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) -->
+        <nav id="home-tabs" class="home-tabs" role="tablist" aria-label="상단 메뉴">
+            <button type="button" class="home-tab is-active" data-home-tab="home" role="tab" aria-selected="true" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
             <button type="button" class="home-tab" data-home-tab="baseball" role="tab" aria-selected="false" aria-controls="home-baseball-panel" onclick="window.switchHomeTab('baseball')">야구</button>
+            <button type="button" class="home-tab" data-home-tab="vlog" role="tab" aria-selected="false" aria-controls="home-vlog-panel" onclick="window.switchHomeTab('vlog')">브이로그</button>
+            <button type="button" class="home-tab" data-home-tab="shorts" role="tab" aria-selected="false" aria-controls="shorts-screen" onclick="window.switchHomeTab('shorts')">숏츠</button>
+            <button type="button" class="home-tab" data-home-tab="academic" role="tab" aria-selected="false" aria-controls="academic-schedule-screen" onclick="window.switchHomeTab('academic')">학사일정</button>
         </nav>
         
         <!-- 카드 나열 (배너/슬라이더 제거, 각 항목을 사진 카드로 세로 나열) -->
@@ -6960,48 +7038,6 @@
                     <!-- 광고 (카카오 애드핏) — 로그인 화면 광고와 별개 -->
                     <div id="home-ad" class="my-2 flex justify-center min-h-[50px]"></div>
 
-                    <!-- 다른 서비스 -->
-                    <nav class="home-service-menu" aria-label="다른 서비스">
-                        <button type="button" class="home-service-item" onclick="window.haptic(); window.openEnjoyShorts();" aria-label="엔조이 숏츠 열기">
-                            <span class="home-service-icon" aria-hidden="true"><i class="fa-solid fa-clapperboard"></i></span>
-                            <span class="home-service-name">엔조이 숏츠</span>
-                        </button>
-                        <button type="button" class="home-service-item" onclick="window.haptic(); window.openBrowser('biseo.html');" aria-label="엔조이 비서실장 열기">
-                            <span class="home-service-icon" aria-hidden="true"><i class="fa-solid fa-user"></i></span>
-                            <span class="home-service-name">비서실장</span>
-                        </button>
-                        <button type="button" class="home-service-item" onclick="window.haptic(); window.openBrowser('jiha.html');" aria-label="지하철 도착 정보 열기">
-                            <span class="home-service-icon" aria-hidden="true"><i class="fa-solid fa-train-subway"></i></span>
-                            <span class="home-service-name">지하철 도착</span>
-                        </button>
-                        <button type="button" class="home-service-item" onclick="window.haptic(); window.openAcademicSchedule();" aria-label="학사일정 열기">
-                            <span class="home-service-icon" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span>
-                            <span class="home-service-name">학사일정</span>
-                        </button>
-                        <button type="button" class="home-service-item" onclick="window.haptic(); window.openBrowser('health.html');" aria-label="헬스 열기">
-                            <span class="home-service-icon home-service-icon--health" aria-hidden="true"><svg viewBox="0 0 32 24" focusable="false"><path d="M3 8.5h2V6.75A1.75 1.75 0 0 1 6.75 5h1.5A1.75 1.75 0 0 1 10 6.75V10h12V6.75A1.75 1.75 0 0 1 23.75 5h1.5A1.75 1.75 0 0 1 27 6.75V8.5h2A1.5 1.5 0 0 1 30.5 10v4A1.5 1.5 0 0 1 29 15.5h-2v1.75A1.75 1.75 0 0 1 25.25 19h-1.5A1.75 1.75 0 0 1 22 17.25V14H10v3.25A1.75 1.75 0 0 1 8.25 19h-1.5A1.75 1.75 0 0 1 5 17.25V15.5H3A1.5 1.5 0 0 1 1.5 14v-4A1.5 1.5 0 0 1 3 8.5Z"/></svg></span>
-                            <span class="home-service-name">헬스 기록</span>
-                        </button>
-                    </nav>
-
-                    <!-- 최근 브이로그 -->
-                    <section class="home-content-item home-featured" data-home-category="latest" style="margin-top:0.125rem;">
-                        <div class="home-rail-heading">
-                            <h3>최근 브이로그</h3>
-                            <button type="button" class="home-baseball-more" onclick="window.haptic(); window.openBrowser('https://m.youtube.com/playlist?list=PLfVenQYYskJE&ra=m')" aria-label="엔조이 브이로그 전편 몰아보기">
-                                <span>전편 몰아보기</span><i class="fa-solid fa-chevron-right text-[7px]"></i>
-                            </button>
-                        </div>
-                        <div class="home-featured-clean w-full relative overflow-hidden cursor-pointer bg-black group rounded-[28px] h-[420px] shadow-[0_10px_30px_rgba(0,0,0,0.45)]" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg')">
-                            <div class="absolute inset-0">
-                                <img src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" class="w-full h-full object-cover object-[50%_80%]" onerror="this.style.display='none'">
-                            </div>
-                            <div class="absolute bottom-5 left-5 right-5 z-10 flex items-end gap-3">
-                                <div class="flex-1" aria-hidden="true"></div>
-                                <div class="home-featured-play shrink-0 active:scale-95 transition-transform"><i class="fa-solid fa-play text-[10px]"></i><span>재생</span></div>
-                            </div>
-                        </div>
-                    </section>
                 </div>
             </div>
 
@@ -7205,47 +7241,6 @@
                 <!-- 홈 콘텐츠: 대표작 + 넷플릭스형 가로 작품 줄 -->
                 <div id="home-content-catalog" class="home-catalog">
 
-                <!-- KBO 야구 점수판 -->
-                <section class="home-baseball-strip" aria-label="KBO 야구 점수판">
-                    <div class="home-baseball-heading">
-                        <span class="home-baseball-heading-label"><i class="fa-solid fa-baseball"></i> KBO 경기</span>
-                    </div>
-
-                    <div class="home-baseball-match" style="--away-color:#074CA1;--home-color:#570514;" data-kbo-featured-team="samsung" role="button" tabindex="0" aria-label="삼성 경기 정보 보기" onclick="window.openEnjoyBaseballFeatured('samsung')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-                        <img class="home-baseball-watermark is-away" src="https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png" alt="" aria-hidden="true">
-                        <img class="home-baseball-watermark is-home" src="https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kiwoom.png" alt="" aria-hidden="true">
-                        <span class="home-baseball-score-main">
-                            <span class="home-baseball-club is-away">삼성</span>
-                            <strong class="home-baseball-score">-</strong>
-                            <span class="home-baseball-center"><span class="home-baseball-pregame-time">(화) 18:30</span></span>
-                            <strong class="home-baseball-score">-</strong>
-                            <span class="home-baseball-club is-home">키움</span>
-                        </span>
-                        <span class="home-baseball-score-sub">
-                            <span class="home-baseball-personnel is-away">-</span>
-                            <span class="home-baseball-sub-center">-</span>
-                            <span class="home-baseball-personnel is-home">-</span>
-                        </span>
-                    </div>
-
-                    <div class="home-baseball-match" style="--away-color:#F37321;--home-color:#EA0029;" data-kbo-featured-team="kia" role="button" tabindex="0" aria-label="KIA 경기 정보 보기" onclick="window.openEnjoyBaseballFeatured('kia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-                        <img class="home-baseball-watermark is-away" src="https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/hanwha_logo.png" alt="" aria-hidden="true">
-                        <img class="home-baseball-watermark is-home" src="https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kia_logoo.png" alt="" aria-hidden="true">
-                        <span class="home-baseball-score-main">
-                            <span class="home-baseball-club is-away">한화</span>
-                            <strong class="home-baseball-score">-</strong>
-                            <span class="home-baseball-center"><span class="home-baseball-pregame-time">(화) 18:30</span></span>
-                            <strong class="home-baseball-score">-</strong>
-                            <span class="home-baseball-club is-home">KIA</span>
-                        </span>
-                        <span class="home-baseball-score-sub">
-                            <span class="home-baseball-personnel is-away">-</span>
-                            <span class="home-baseball-sub-center">광주</span>
-                            <span class="home-baseball-personnel is-home">-</span>
-                        </span>
-                    </div>
-                </section>
-
                 <div class="home-rail-group">
                     <div class="home-rail-heading">
                         <h3>여행 시리즈</h3>
@@ -7429,6 +7424,28 @@
             <div id="baseball-detail-content"></div>
         </section>
 
+        <!-- 브이로그 탭: 홈에 있던 최근 브이로그와 모든 시리즈 -->
+        <section id="home-vlog-panel" class="home-vlog-panel hidden" aria-label="엔조이 브이로그">
+            <section class="home-content-item home-featured" data-home-category="latest">
+                <div class="home-rail-heading">
+                    <h3>최근 브이로그</h3>
+                    <button type="button" class="home-baseball-more" onclick="window.haptic(); window.openBrowser('https://m.youtube.com/playlist?list=PLfVenQYYskJE&amp;ra=m')" aria-label="엔조이 브이로그 전편 몰아보기">
+                        <span>전편 몰아보기</span><i class="fa-solid fa-chevron-right text-[7px]"></i>
+                    </button>
+                </div>
+                <div class="home-featured-clean w-full relative overflow-hidden cursor-pointer bg-black group rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.45)]" role="button" tabindex="0" aria-label="최신 브이로그 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                    <div class="absolute inset-0">
+                        <img src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" alt="최신 엔조이 브이로그" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                    </div>
+                    <div class="absolute bottom-5 left-5 right-5 z-10 flex items-end gap-3">
+                        <div class="flex-1" aria-hidden="true"></div>
+                        <div class="home-featured-play shrink-0 active:scale-95 transition-transform"><i class="fa-solid fa-play text-[10px]"></i><span>재생</span></div>
+                    </div>
+                </div>
+            </section>
+            <div id="home-vlog-catalog" class="home-catalog"></div>
+        </section>
+
 
         <div id="delivery-nowbar" class="delivery-nowbar hidden" role="button" tabindex="0" onclick="window.haptic && window.haptic(); window.openHomeDeliveryNowBar()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeDeliveryNowBar()}" aria-label="내 배달 현황 열기">
             <span class="delivery-nowbar-rider"><img src="delivery-rider-secretary-blue-transparent.png" alt=""></span>
@@ -7453,6 +7470,21 @@
                 <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.closeHomeSideMenu(false); window.openBrowser('gicha.html')">
                     <span class="home-side-menu-item-icon is-train"><i class="fa-solid fa-train" aria-hidden="true"></i></span>
                     <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">기차 정보</span></span>
+                    <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.closeHomeSideMenu(false); window.openBrowser('biseo.html')">
+                    <span class="home-side-menu-item-icon is-tutorial"><i class="fa-solid fa-user" aria-hidden="true"></i></span>
+                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">비서실장</span></span>
+                    <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.closeHomeSideMenu(false); window.openBrowser('jiha.html')">
+                    <span class="home-side-menu-item-icon is-train"><i class="fa-solid fa-train-subway" aria-hidden="true"></i></span>
+                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">지하철 도착</span></span>
+                    <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.closeHomeSideMenu(false); window.openBrowser('health.html')">
+                    <span class="home-side-menu-item-icon is-youth"><i class="fa-solid fa-dumbbell" aria-hidden="true"></i></span>
+                    <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">헬스 기록</span></span>
                     <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.openScholarshipInfo()">
@@ -7499,7 +7531,6 @@
     <!-- 대학교 학사일정 화면 -->
     <section id="academic-schedule-screen" class="hidden flex-col" aria-hidden="true">
         <header class="academic-topbar">
-            <button type="button" class="academic-icon-button" onclick="window.haptic && window.haptic(); window.closeAcademicSchedule()" aria-label="학사일정 닫기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
             <div class="min-w-0 flex-1">
                 <h2 class="academic-title text-[20px] font-black truncate">학사일정 <span class="academic-year-label">2026학년도</span></h2>
                 <div class="academic-school-picker">
@@ -7538,6 +7569,14 @@
     <script src="yeungnam_univ_academic_calendar_2026.js"></script>
     <script>
     (function () {
+        const academicPanel = document.getElementById('academic-schedule-screen');
+        const homeScreen = document.getElementById('home-screen');
+        const deliveryNowbar = document.getElementById('delivery-nowbar');
+        if (academicPanel && homeScreen) {
+            homeScreen.insertBefore(academicPanel, deliveryNowbar || homeScreen.querySelector('.app-copyright-slot'));
+            academicPanel.classList.add('home-academic-panel');
+        }
+
         let sideMenuPreviousFocus = null;
         let sideMenuCloseTimer = 0;
         let academicEvents = [];
@@ -7888,41 +7927,20 @@
             if (!event.target.closest('.academic-school-picker')) closeAcademicSchoolMenu(false);
         });
 
-        window.openAcademicSchedule = function () {
-            window.closeHomeSideMenu(false);
-            const screen = document.getElementById('academic-schedule-screen');
-            const home = document.getElementById('home-screen');
-            const bottomNav = document.getElementById('bottom-nav');
-            if (!screen) return;
+        window.prepareAcademicSchedule = function () {
             syncAcademicFrame();
             academicMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-            document.body.classList.add('academic-schedule-active');
-            if (home) {
-                home.setAttribute('aria-hidden', 'true');
-                home.setAttribute('inert', '');
-            }
-            if (bottomNav) bottomNav.setAttribute('aria-hidden', 'true');
-            screen.classList.remove('hidden');
-            screen.classList.add('flex');
-            screen.setAttribute('aria-hidden', 'false');
             loadAcademicEvents();
         };
 
+        window.openAcademicSchedule = function () {
+            window.closeHomeSideMenu(false);
+            if (typeof window.switchHomeTab === 'function') window.switchHomeTab('academic');
+        };
+
         window.closeAcademicSchedule = function () {
-            const screen = document.getElementById('academic-schedule-screen');
-            const home = document.getElementById('home-screen');
-            const bottomNav = document.getElementById('bottom-nav');
-            if (!screen) return;
             closeAcademicSchoolMenu(false);
-            screen.classList.add('hidden');
-            screen.classList.remove('flex');
-            screen.setAttribute('aria-hidden', 'true');
-            document.body.classList.remove('academic-schedule-active');
-            if (home) {
-                home.removeAttribute('aria-hidden');
-                home.removeAttribute('inert');
-            }
-            if (bottomNav) bottomNav.removeAttribute('aria-hidden');
+            if (typeof window.switchHomeTab === 'function') window.switchHomeTab('home');
         };
 
         window.changeAcademicMonth = function (delta) {
@@ -8273,11 +8291,6 @@
 
     <!-- 엔조이 숏츠 전체 화면 -->
     <section id="shorts-screen" class="shorts-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-md flex-col overflow-hidden" style="z-index:45;" aria-label="엔조이 숏츠">
-        <header class="shorts-topbar absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5" style="padding-top: max(0.375rem, calc(env(safe-area-inset-top) - 0.625rem));">
-            <span class="w-10 h-10" aria-hidden="true"></span>
-            <h1 class="shorts-header-title">엔조이 숏츠</h1>
-            <span class="w-10 h-10" aria-hidden="true"></span>
-        </header>
         <div id="shorts-feed" class="shorts-feed flex-1"></div>
         <div id="shorts-comments-layer" class="shorts-comments-layer hidden" role="dialog" aria-modal="true" aria-labelledby="shorts-comments-title">
             <button type="button" class="shorts-comments-backdrop" onclick="window.closeEnjoyShortsComments()" aria-label="댓글 닫기"></button>
@@ -9893,10 +9906,10 @@
             if (!game) return;
             window.openEnjoyBaseballGame(game.id, matchDate || game.date, game.team1 === '삼성' || game.team2 === '삼성' ? '삼성' : 'KIA');
         };
-        // 홈 상단 탭 (홈 / 야구) — 야구 커뮤니티는 별도 화면이 아니라 홈 화면 안에서 전환된다.
+        // 홈 상단 탭 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) — 모두 홈 화면 안에서 전환된다.
         window.homeActiveTab = 'home';
         window.selectHomeTab = function (tab) {
-            tab = tab === 'baseball' ? 'baseball' : 'home';
+            tab = ['baseball', 'vlog', 'shorts', 'academic'].includes(tab) ? tab : 'home';
             window.homeActiveTab = tab;
             document.querySelectorAll('#home-tabs .home-tab').forEach(function (button) {
                 const active = button.dataset.homeTab === tab;
@@ -9905,16 +9918,34 @@
             });
             const homePanel = document.getElementById('apple-tv-banner');
             const baseballPanel = document.getElementById('home-baseball-panel');
+            const vlogPanel = document.getElementById('home-vlog-panel');
+            const shortsPanel = document.getElementById('shorts-screen');
+            const academicPanel = document.getElementById('academic-schedule-screen');
             if (homePanel) homePanel.classList.toggle('hidden', tab !== 'home');
             if (baseballPanel) baseballPanel.classList.toggle('hidden', tab !== 'baseball');
+            if (vlogPanel) vlogPanel.classList.toggle('hidden', tab !== 'vlog');
+            if (shortsPanel) {
+                shortsPanel.classList.toggle('hidden', tab !== 'shorts');
+                shortsPanel.setAttribute('aria-hidden', tab === 'shorts' ? 'false' : 'true');
+            }
+            if (academicPanel) {
+                academicPanel.classList.toggle('hidden', tab !== 'academic');
+                academicPanel.setAttribute('aria-hidden', tab === 'academic' ? 'false' : 'true');
+            }
             const home = document.getElementById('home-screen');
-            if (home) home.scrollTop = 0;
+            if (home) {
+                home.classList.toggle('is-shorts-tab', tab === 'shorts');
+                home.scrollTop = 0;
+            }
         };
         window.switchHomeTab = function (tab) {
             if (window.homeActiveTab === tab) return;
+            if (window.homeActiveTab === 'shorts' && typeof window.cleanupEnjoyShorts === 'function') window.cleanupEnjoyShorts();
             window.haptic && window.haptic();
             window.selectHomeTab(tab);
             if (tab === 'baseball') window.loadKboScoreboard();
+            if (tab === 'shorts' && typeof window.prepareEnjoyShorts === 'function') window.prepareEnjoyShorts();
+            if (tab === 'academic' && typeof window.prepareAcademicSchedule === 'function') window.prepareAcademicSchedule();
         };
         let kboScoreboardLoading = null;
         window.loadKboScoreboard = function () {
@@ -11907,8 +11938,31 @@
             });
         }
 
+        function initVlogHomePanel() {
+            const homeCatalog = document.getElementById('home-content-catalog');
+            const vlogCatalog = document.getElementById('home-vlog-catalog');
+            if (!homeCatalog || !vlogCatalog || vlogCatalog.dataset.ready === 'true') return;
+
+            Array.from(homeCatalog.querySelectorAll(':scope > .home-rail-group')).forEach(function (group) {
+                vlogCatalog.appendChild(group);
+            });
+            vlogCatalog.dataset.ready = 'true';
+        }
+
+        function initShortsHomePanel() {
+            const home = document.getElementById('home-screen');
+            const shorts = document.getElementById('shorts-screen');
+            const academic = document.getElementById('academic-schedule-screen');
+            const delivery = document.getElementById('delivery-nowbar');
+            if (!home || !shorts || shorts.classList.contains('home-shorts-panel')) return;
+            home.insertBefore(shorts, academic || delivery || home.querySelector('.app-copyright-slot'));
+            shorts.classList.add('home-shorts-panel');
+        }
+
         function initHomeContent() {
             initRegionalVlogRails();
+            initVlogHomePanel();
+            initShortsHomePanel();
             initVlogRailTapGuards();
             initFeedCarousels();
         }
@@ -13887,20 +13941,17 @@
             if (label) label.textContent = isShorts ? '숏츠' : '홈';
         };
 
-        window.openEnjoyShorts = function () {
+        window.prepareEnjoyShorts = function () {
             const screen = document.getElementById('shorts-screen');
             const feed = document.getElementById('shorts-feed');
             if (!screen) return;
-            screen.classList.remove('hidden');
-            screen.classList.add('flex');
-            window.setHomeNavShortsMode(true);
             if (feed) feed.scrollTop = 0;
             window._shortsSessionPromises.clear();
             window.loadEnjoyShorts();
             if (window.updateNavContrast) requestAnimationFrame(window.updateNavContrast);
         };
 
-        window.closeEnjoyShorts = function () {
+        window.cleanupEnjoyShorts = function () {
             const screen = document.getElementById('shorts-screen');
             if (!screen) return;
             window.closeEnjoyShortsComments();
@@ -13913,10 +13964,23 @@
                 video.removeAttribute('src');
                 video.load();
             });
-            screen.classList.add('hidden');
-            screen.classList.remove('flex');
             window.setHomeNavShortsMode(false);
             if (window.updateNavContrast) requestAnimationFrame(window.updateNavContrast);
+        };
+
+        window.openEnjoyShorts = function () {
+            if (window.activeTabIndex !== 2 && typeof window.goHome === 'function') window.goHome();
+            if (typeof window.switchHomeTab === 'function') window.switchHomeTab('shorts');
+        };
+
+        window.closeEnjoyShorts = function () {
+            window.cleanupEnjoyShorts();
+            if (window.homeActiveTab === 'shorts' && typeof window.selectHomeTab === 'function') {
+                window.selectHomeTab('home');
+            } else {
+                const screen = document.getElementById('shorts-screen');
+                if (screen) screen.classList.add('hidden');
+            }
         };
 
         window.handleHomeNavTap = function () {
