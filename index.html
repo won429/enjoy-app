@@ -965,44 +965,82 @@
             position: fixed;
             inset: 0;
             z-index: 285;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            color: #F2F4F6;
+            background: #08090B;
         }
         .drop-comments-layer.hidden { display: none; }
         .drop-comments-backdrop {
             position: absolute;
             inset: 0;
             border: 0;
-            background: rgba(15,23,42,.26);
-            -webkit-backdrop-filter: blur(.625rem) saturate(.9);
-            backdrop-filter: blur(.625rem) saturate(.9);
+            background: rgba(8,9,11,.94);
             animation: dropCommentsFadeIn .2s ease both;
         }
-        .drop-comments-sheet {
+        .drop-comments-stage {
             position: relative;
             z-index: 1;
-            width: min(calc(100% - 1rem), 29rem);
-            max-height: min(76dvh, 40rem);
-            margin: 0 .5rem max(.5rem, env(safe-area-inset-bottom));
+            width: min(100%, 30rem);
+            height: 100dvh;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border: .0625rem solid rgba(255,255,255,.12);
-            border-radius: 1.75rem;
+            background: #08090B;
+        }
+        .drop-comments-photo-stage {
+            position: relative;
+            min-height: 12.5rem;
+            flex: 0 0 clamp(14rem, 38dvh, 22rem);
+            display: grid;
+            place-items: center;
+            padding: max(3.5rem, calc(env(safe-area-inset-top) + 2.75rem)) 1.5rem .75rem;
+        }
+        .drop-comments-photo-shell {
+            width: min(72vw, 21rem);
+            height: min(30dvh, 17.5rem);
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border-radius: 1.25rem;
+            background: #111317;
+            box-shadow: 0 1rem 2.75rem rgba(0,0,0,.34);
+            animation: dropCommentsPhotoIn .38s cubic-bezier(.2,.9,.25,1) both;
+        }
+        .drop-comments-photo-shell img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            -webkit-user-drag: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+        .drop-comments-sheet {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            min-height: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 0;
+            border-radius: 2rem 2rem 0 0;
             color: #F2F4F6;
-            background: rgba(21,21,23,.9);
-            box-shadow: 0 1.5rem 4rem rgba(0,0,0,.34), inset 0 .0625rem 0 rgba(255,255,255,.1);
-            -webkit-backdrop-filter: blur(2rem) saturate(1.35);
-            backdrop-filter: blur(2rem) saturate(1.35);
+            background: #171B1E;
+            box-shadow: 0 -1rem 2.5rem rgba(0,0,0,.24), inset 0 .0625rem 0 rgba(255,255,255,.045);
             animation: dropCommentsSheetIn .3s cubic-bezier(.2,1,.3,1) both;
         }
         @keyframes dropCommentsFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes dropCommentsSheetIn { from { opacity: 0; transform: translateY(1.25rem) scale(.97); } to { opacity: 1; transform: none; } }
-        .drop-comments-grabber { width: 2.5rem; height: .25rem; margin: .625rem auto .125rem; flex: none; border-radius: 62.4375rem; background: rgba(255,255,255,.22); }
+        @keyframes dropCommentsPhotoIn { from { opacity: .68; transform: translateY(18vh) scale(1.16); } to { opacity: 1; transform: none; } }
+        @keyframes dropCommentsSheetIn { from { opacity: 0; transform: translateY(2rem); } to { opacity: 1; transform: none; } }
+        .drop-comments-grabber { display: none; }
         .drop-comments-header {
-            min-height: 3.75rem;
-            padding: .5rem .75rem .75rem 1.125rem;
+            min-height: 3.5rem;
+            padding: 1rem 1.125rem .5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -1013,28 +1051,27 @@
         .drop-comments-header h2 { font-size: 1rem; font-weight: 900; letter-spacing: -.02em; }
         .drop-comments-header p { min-width: 1.4rem; height: 1.25rem; padding: 0 .375rem; display: inline-grid; place-items: center; border-radius: 62.4375rem; color: #A1AAB4; background: rgba(255,255,255,.08); font-size: .5625rem; font-weight: 800; }
         .drop-comments-header p:empty { display: none; }
-        .drop-comments-close { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: #B0B8C1; background: transparent; font-size: 1.125rem; transition: color .16s ease, transform .16s ease; }
+        .drop-comments-close { position: absolute; top: max(1rem, env(safe-area-inset-top)); right: 1rem; z-index: 5; width: 2.5rem; height: 2.5rem; display: grid; place-items: center; border-radius: 50%; color: #FFF; background: rgba(255,255,255,.1); box-shadow: 0 .25rem .875rem rgba(0,0,0,.22); font-size: 1.25rem; transition: color .16s ease, background-color .16s ease, transform .16s ease; }
         .drop-comments-close:active { color: #FFF; transform: scale(.82); }
         .drop-comments-list {
-            min-height: 13rem;
-            padding: .25rem 1rem 1rem;
+            min-height: 0;
+            flex: 1;
+            padding: .25rem 1.125rem 1rem;
             overflow-y: auto;
             overscroll-behavior: contain;
             scrollbar-width: none;
         }
         .drop-comments-list::-webkit-scrollbar { display: none; }
-        .drop-comment-row { display: flex; align-items: flex-end; gap: .5rem; padding: .375rem 0; border: 0; }
-        .drop-comment-row.is-mine { flex-direction: row-reverse; }
-        .drop-comment-avatar { width: 1.75rem; height: 1.75rem; display: grid; place-items: center; overflow: hidden; flex: none; border-radius: 50%; color: #FFF; background: rgba(255,255,255,.1); font-size: .5625rem; font-weight: 900; }
+        .drop-comment-row { display: flex; align-items: flex-start; gap: .75rem; padding: .75rem 0; border: 0; }
+        .drop-comment-avatar { width: 2.375rem; height: 2.375rem; display: grid; place-items: center; overflow: hidden; flex: none; border-radius: 50%; color: #FFF; background: rgba(255,255,255,.1); font-size: .6875rem; font-weight: 900; }
         .drop-comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .drop-comment-copy { min-width: 0; max-width: min(78%, 20rem); }
-        .drop-comment-row.is-mine .drop-comment-copy { text-align: right; }
-        .drop-comment-meta { padding: 0 .25rem .25rem; display: flex; align-items: center; gap: .375rem; }
-        .drop-comment-row.is-mine .drop-comment-meta { justify-content: flex-end; }
-        .drop-comment-copy strong { color: #F2F4F6; font-size: .625rem; font-weight: 850; }
-        .drop-comment-copy time { color: #6B7684; font-size: .5rem; font-weight: 650; }
-        .drop-comment-copy p { margin: 0; padding: .625rem .75rem; border-radius: 1rem 1rem 1rem .3rem; color: #E5E8EB; background: rgba(255,255,255,.09); font-size: .75rem; line-height: 1.45; overflow-wrap: anywhere; text-align: left; }
-        .drop-comment-row.is-mine .drop-comment-copy p { border-radius: 1rem 1rem .3rem 1rem; color: #FFF; background: #3182F6; }
+        .drop-comment-copy { min-width: 0; flex: 1; }
+        .drop-comment-meta { padding: .0625rem 0 .25rem; display: flex; align-items: center; gap: .375rem; }
+        .drop-comment-copy strong { color: #F2F4F6; font-size: .75rem; font-weight: 850; }
+        .drop-comment-copy time { color: #8B95A1; font-size: .625rem; font-weight: 650; }
+        .drop-comment-copy p { margin: 0; padding: 0; color: #E5E8EB; background: transparent; font-size: .8125rem; line-height: 1.45; overflow-wrap: anywhere; text-align: left; }
+        .drop-comment-delete { width: 2.375rem; height: 2.375rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: #8B95A1; background: transparent; font-size: 1.125rem; transition: color .16s ease, background-color .16s ease, transform .16s ease; }
+        .drop-comment-delete:active { color: #F04452; background: rgba(240,68,82,.12); transform: scale(.84); }
         .drop-comments-empty { min-height: 13rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .375rem; padding: 2rem; color: #6B7684; font-size: .6875rem; text-align: center; }
         .drop-comments-empty i { margin-bottom: .375rem; color: #8B95A1; font-size: 1.75rem; }
         .drop-comments-empty strong { color: #D1D6DB; font-size: .8125rem; font-weight: 850; }
@@ -1042,18 +1079,22 @@
         .drop-comment-form {
             display: flex;
             align-items: center;
-            gap: .5rem;
-            margin: 0 .75rem .75rem;
-            padding: .375rem .375rem .375rem .875rem;
-            border: .0625rem solid rgba(255,255,255,.1);
-            border-radius: 1.25rem;
-            background: rgba(255,255,255,.07);
+            gap: .75rem;
+            margin: 0;
+            padding: .75rem 1rem max(.75rem, env(safe-area-inset-bottom));
+            border: 0;
+            border-top: .0625rem solid rgba(255,255,255,.055);
+            border-radius: 0;
+            background: #171B1E;
         }
-        .drop-comment-form:focus-within { border-color: rgba(49,130,246,.52); box-shadow: 0 0 0 .1875rem rgba(49,130,246,.1); }
-        .drop-comment-form input { min-width: 0; height: 2.25rem; flex: 1; padding: 0; border: 0; outline: none; color: #F2F4F6; background: transparent; font-size: .75rem; }
+        .drop-comment-compose-avatar { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; overflow: hidden; flex: none; border-radius: 50%; color: #FFF; background: rgba(255,255,255,.1); font-size: .6875rem; font-weight: 900; }
+        .drop-comment-compose-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .drop-comment-input-shell { min-width: 0; flex: 1; display: flex; align-items: center; gap: .375rem; padding: .25rem .25rem .25rem .875rem; border: .0625rem solid rgba(255,255,255,.1); border-radius: 1.5rem; background: rgba(255,255,255,.035); }
+        .drop-comment-form:focus-within .drop-comment-input-shell { border-color: rgba(139,149,161,.44); }
+        .drop-comment-form input { min-width: 0; height: 2.25rem; flex: 1; padding: 0; border: 0; outline: none; color: #F2F4F6; background: transparent; font-size: .8125rem; }
         .drop-comment-form input::placeholder { color: #6B7684; }
         .drop-comment-form input:focus { box-shadow: none; }
-        .drop-comment-form button { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .875rem; color: #FFF; background: #3182F6; font-size: .875rem; transition: transform .16s ease, background-color .16s ease; }
+        .drop-comment-form button { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: #FFF; background: #3182F6; font-size: .875rem; transition: transform .16s ease, background-color .16s ease; }
         .drop-comment-form button:active { transform: scale(.88); background: #1B64DA; }
         .drop-feed-state {
             min-height: 10rem;
@@ -4172,6 +4213,7 @@
             .drop-upload-sheet-head,
             .drop-upload-option,
             .drop-comments-backdrop,
+            .drop-comments-photo-shell,
             .drop-comments-sheet,
             .drop-viewer-card { animation: none; }
             .academic-school-trigger, .academic-school-trigger i, .academic-school-option { transition: none; }
@@ -7242,19 +7284,19 @@
             .drop-photo-action { color: #6B7684; }
             .drop-photo-action:active { background: transparent; }
             .drop-photo-action.is-liked { color: #F04452; }
-            .drop-comments-sheet { border-color: rgba(255,255,255,.82); color: #191F28; background: rgba(248,249,250,.9); box-shadow: 0 1.5rem 4rem rgba(15,23,42,.2), inset 0 .0625rem 0 rgba(255,255,255,.9); }
-            .drop-comments-grabber { background: rgba(78,89,104,.24); }
+            .drop-comments-layer, .drop-comments-stage { color: #F2F4F6; background: #08090B; }
+            .drop-comments-sheet { color: #F2F4F6; background: #171B1E; box-shadow: 0 -1rem 2.5rem rgba(0,0,0,.24), inset 0 .0625rem 0 rgba(255,255,255,.045); }
             .drop-comments-heading > i { color: #8B95A1; }
-            .drop-comments-header p { color: #6B7684; background: rgba(78,89,104,.08); }
+            .drop-comments-header p { color: #A1AAB4; background: rgba(255,255,255,.08); }
             .drop-comments-header p, .drop-comments-empty, .drop-comment-copy time { color: #8B95A1; }
-            .drop-comments-close { color: #6B7684; background: transparent; }
-            .drop-comment-avatar { color: #191F28; background: rgba(0,0,0,.08); }
-            .drop-comment-copy strong { color: #191F28; }
-            .drop-comment-copy p { color: #333D4B; background: rgba(78,89,104,.075); }
-            .drop-comment-row.is-mine .drop-comment-copy p { color: #FFF; background: #3182F6; }
-            .drop-comments-empty strong { color: #4E5968; }
-            .drop-comment-form { border-color: rgba(0,0,0,.08); background: rgba(255,255,255,.76); }
-            .drop-comment-form input { color: #191F28; background: transparent; }
+            .drop-comments-close { color: #FFF; background: rgba(255,255,255,.1); }
+            .drop-comment-avatar, .drop-comment-compose-avatar { color: #FFF; background: rgba(255,255,255,.1); }
+            .drop-comment-copy strong { color: #F2F4F6; }
+            .drop-comment-copy p { color: #E5E8EB; background: transparent; }
+            .drop-comments-empty strong { color: #D1D6DB; }
+            .drop-comment-form { border-color: rgba(255,255,255,.055); background: #171B1E; }
+            .drop-comment-input-shell { border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.035); }
+            .drop-comment-form input { color: #F2F4F6; background: transparent; }
             .drop-upload-sheet { border-color: rgba(0,0,0,.1); background: rgba(248,249,250,.94); box-shadow: 0 1.125rem 3rem rgba(15,23,42,.16), 0 .25rem .875rem rgba(15,23,42,.08); }
             .drop-upload-sheet-head strong, .drop-upload-option { color: #191F28; }
             .drop-upload-sheet-close { background: rgba(0,0,0,.055); }
@@ -9256,22 +9298,31 @@
 
     <div id="drop-comments-layer" class="drop-comments-layer hidden" role="dialog" aria-modal="true" aria-labelledby="drop-comments-title" aria-hidden="true">
         <button type="button" class="drop-comments-backdrop" onclick="window.closeDropComments()" aria-label="댓글 닫기"></button>
-        <section class="drop-comments-sheet">
-            <div class="drop-comments-grabber" aria-hidden="true"></div>
-            <header class="drop-comments-header">
-                <div class="drop-comments-heading">
-                    <i class="ph ph-chats-circle" aria-hidden="true"></i>
-                    <h2 id="drop-comments-title">댓글</h2>
-                    <p id="drop-comments-count"></p>
-                </div>
+        <div class="drop-comments-stage">
+            <div class="drop-comments-photo-stage">
                 <button type="button" class="drop-comments-close" onclick="window.closeDropComments()" aria-label="댓글 닫기"><i class="ph ph-x" aria-hidden="true"></i></button>
-            </header>
-            <div id="drop-comments-list" class="drop-comments-list"></div>
-            <form class="drop-comment-form" onsubmit="event.preventDefault(); window.submitDropComment()">
-                <input id="drop-comment-input" type="text" maxlength="300" autocomplete="off" placeholder="댓글 남기기…" aria-label="댓글 내용">
-                <button id="drop-comment-submit" type="submit" aria-label="댓글 등록"><i class="ph ph-arrow-up" aria-hidden="true"></i></button>
-            </form>
-        </section>
+                <div id="drop-comments-photo-shell" class="drop-comments-photo-shell">
+                    <img id="drop-comments-photo-image" src="" alt="" draggable="false">
+                </div>
+            </div>
+            <section class="drop-comments-sheet">
+                <header class="drop-comments-header">
+                    <div class="drop-comments-heading">
+                        <i class="ph ph-chats-circle" aria-hidden="true"></i>
+                        <h2 id="drop-comments-title">댓글</h2>
+                        <p id="drop-comments-count"></p>
+                    </div>
+                </header>
+                <div id="drop-comments-list" class="drop-comments-list"></div>
+                <form class="drop-comment-form" onsubmit="event.preventDefault(); window.submitDropComment()">
+                    <span id="drop-comment-compose-avatar" class="drop-comment-compose-avatar" aria-hidden="true"></span>
+                    <span class="drop-comment-input-shell">
+                        <input id="drop-comment-input" type="text" maxlength="300" autocomplete="off" placeholder="대화에 참여하세요…" aria-label="댓글 내용">
+                        <button id="drop-comment-submit" type="submit" aria-label="댓글 등록"><i class="ph ph-arrow-up" aria-hidden="true"></i></button>
+                    </span>
+                </form>
+            </section>
+        </div>
     </div>
 
     <div id="drop-viewer-layer" class="drop-viewer-layer hidden" role="dialog" aria-modal="true" aria-label="드롭 사진 크게 보기" aria-hidden="true">
@@ -18354,7 +18405,9 @@
                 return '<div class="drop-comment-row' + (mine ? ' is-mine' : '') + '">' + dropCommentAvatar(comment) +
                     '<div class="drop-comment-copy"><div class="drop-comment-meta"><strong>' + dropEsc(comment.authorName || '멤버') + '</strong>' +
                     '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(comment.createdAt)) + '</time></div>' +
-                    '<p>' + dropEsc(comment.text || '') + '</p></div></div>';
+                    '<p>' + dropEsc(comment.text || '') + '</p></div>' +
+                    (mine ? '<button type="button" class="drop-comment-delete" onclick="window.deleteDropComment(\'' + dropEsc(comment._id || '') + '\')" aria-label="댓글 삭제" title="댓글 삭제"><i class="ph ph-trash" aria-hidden="true"></i></button>' : '') +
+                    '</div>';
             }).join('');
             list.scrollTop = list.scrollHeight;
         }
@@ -18365,6 +18418,8 @@
             if (!user || !post || dropExpiryTime(post) <= Date.now()) return;
             const layer = document.getElementById('drop-comments-layer');
             const input = document.getElementById('drop-comment-input');
+            const photo = document.getElementById('drop-comments-photo-image');
+            const composeAvatar = document.getElementById('drop-comment-compose-avatar');
             if (!layer || !window.fsOnSnapshot || !window.fsCol || !window.fsQuery || !window.fsOrderBy || !window.fsLimit) return;
             if (window._dropCommentsUnsub) {
                 try { window._dropCommentsUnsub(); } catch (e) {}
@@ -18372,6 +18427,15 @@
             }
             window._dropCommentsPostId = postId;
             window._dropComments = [];
+            if (photo) {
+                photo.src = String(post.imageUrl || '');
+                photo.alt = String((post.authorName || '멤버') + '님의 드롭 사진');
+            }
+            if (composeAvatar) {
+                composeAvatar.innerHTML = user.photoURL
+                    ? '<img src="' + dropEsc(user.photoURL) + '" alt="" referrerpolicy="no-referrer">'
+                    : dropEsc(dropAuthorName(user).slice(0, 1));
+            }
             layer.classList.remove('hidden');
             layer.setAttribute('aria-hidden', 'false');
             renderDropComments('댓글을 불러오는 중이에요…');
@@ -18412,11 +18476,13 @@
             window._dropComments = [];
             const layer = document.getElementById('drop-comments-layer');
             const input = document.getElementById('drop-comment-input');
+            const photo = document.getElementById('drop-comments-photo-image');
             if (layer) {
                 layer.classList.add('hidden');
                 layer.setAttribute('aria-hidden', 'true');
             }
             if (input) input.value = '';
+            if (photo) { photo.removeAttribute('src'); photo.alt = ''; }
         };
 
         window.submitDropComment = async function () {
@@ -18461,6 +18527,48 @@
             } finally {
                 if (button) { button.disabled = false; button.style.opacity = '1'; }
                 if (input) input.focus({ preventScroll: true });
+            }
+        };
+
+        window.deleteDropComment = async function (commentId) {
+            const user = dropUser();
+            const postId = window._dropCommentsPostId;
+            const post = findDropPost(postId);
+            const comment = window._dropComments.find(function (item) { return item && item._id === commentId; });
+            if (!user || !postId || !post || !comment || comment.authorUid !== user.uid) return;
+            if (!window.meetingDb || !window.runTransaction || !window.fsDoc) return;
+            if (window.enjoyConfirm && !await window.enjoyConfirm('댓글을 삭제할까요?', { title: '댓글 삭제', confirmText: '삭제', danger: true })) return;
+            const remainingPreview = window._dropComments.filter(function (item) {
+                return item && item._id !== commentId;
+            }).slice(-2).map(function (item) {
+                return {
+                    authorUid: item.authorUid || '',
+                    authorName: item.authorName || '멤버',
+                    authorPhoto: item.authorPhoto || '',
+                    text: item.text || '',
+                    createdAt: dropMillis(item.createdAt) || Date.now()
+                };
+            });
+            try {
+                const postRef = window.fsDoc('drop_posts', postId);
+                const commentRef = window.fsDoc('drop_posts', postId, 'comments', commentId);
+                await window.runTransaction(window.meetingDb, async function (transaction) {
+                    const postSnapshot = await transaction.get(postRef);
+                    if (!postSnapshot.exists()) throw new Error('사진을 찾을 수 없어요.');
+                    const current = postSnapshot.data() || {};
+                    transaction.delete(commentRef);
+                    transaction.set(postRef, {
+                        commentCount: Math.max(0, (Number(current.commentCount) || 0) - 1),
+                        commentPreview: remainingPreview,
+                        engagementUpdatedAt: Date.now()
+                    }, { merge: true });
+                });
+                window.haptic && window.haptic();
+            } catch (error) {
+                console.error('drop comment delete', error);
+                window.enjoyAlert && window.enjoyAlert(error && error.code === 'permission-denied'
+                    ? '본인이 작성한 댓글만 삭제할 수 있어요.'
+                    : (error && error.message ? error.message : '댓글을 삭제하지 못했어요.'));
             }
         };
 
