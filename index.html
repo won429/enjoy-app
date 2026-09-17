@@ -727,7 +727,7 @@
             font-weight: 900;
         }
         .drop-photo-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .drop-photo-meta-copy { min-width: 0; text-align: left; }
+        .drop-photo-meta-copy { min-width: 0; flex: 1; text-align: left; }
         .drop-photo-meta-copy strong,
         .drop-photo-meta-copy time {
             display: block;
@@ -737,6 +737,108 @@
         }
         .drop-photo-meta-copy strong { color: #F2F4F6; font-size: .6875rem; font-weight: 800; line-height: 1.25; }
         .drop-photo-meta-copy time { margin-top: .0625rem; color: #6B7684; font-size: .5625rem; font-weight: 650; line-height: 1.25; }
+        .drop-photo-actions {
+            display: flex;
+            align-items: center;
+            gap: .125rem;
+            margin-left: auto;
+            flex: none;
+        }
+        .drop-photo-action {
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 .375rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .25rem;
+            border-radius: 62.4375rem;
+            color: #8B95A1;
+            background: transparent;
+            font-size: .8125rem;
+            transition: color .16s ease, background-color .16s ease, transform .16s ease;
+        }
+        .drop-photo-action:active { transform: scale(.88); background: rgba(255,255,255,.08); }
+        .drop-photo-action.is-liked { color: #FF3B5C; }
+        .drop-photo-action-count { min-width: .5rem; font-size: .5625rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .drop-comments-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 285;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .drop-comments-layer.hidden { display: none; }
+        .drop-comments-backdrop {
+            position: absolute;
+            inset: 0;
+            border: 0;
+            background: rgba(0,0,0,.42);
+            -webkit-backdrop-filter: blur(.375rem);
+            backdrop-filter: blur(.375rem);
+            animation: dropCommentsFadeIn .2s ease both;
+        }
+        .drop-comments-sheet {
+            position: relative;
+            z-index: 1;
+            width: min(100%, 30rem);
+            max-height: min(72dvh, 38rem);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: .0625rem solid rgba(255,255,255,.12);
+            border-bottom: 0;
+            border-radius: 1.75rem 1.75rem 0 0;
+            color: #F2F4F6;
+            background: rgba(21,21,23,.97);
+            box-shadow: 0 -1rem 3rem rgba(0,0,0,.35);
+            -webkit-backdrop-filter: blur(1.5rem) saturate(1.5);
+            backdrop-filter: blur(1.5rem) saturate(1.5);
+            animation: dropCommentsSheetIn .3s cubic-bezier(.2,1,.3,1) both;
+        }
+        @keyframes dropCommentsFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes dropCommentsSheetIn { from { opacity: 0; transform: translateY(1.5rem); } to { opacity: 1; transform: none; } }
+        .drop-comments-header {
+            min-height: 4rem;
+            padding: .875rem 1rem .75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            border-bottom: .0625rem solid rgba(255,255,255,.08);
+        }
+        .drop-comments-header h2 { font-size: 1rem; font-weight: 900; }
+        .drop-comments-header p { margin-top: .125rem; color: #6B7684; font-size: .625rem; font-weight: 700; }
+        .drop-comments-close { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: #B0B8C1; background: rgba(255,255,255,.08); }
+        .drop-comments-list {
+            min-height: 12rem;
+            padding: .25rem 1.25rem;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: none;
+        }
+        .drop-comments-list::-webkit-scrollbar { display: none; }
+        .drop-comment-row { display: flex; align-items: flex-start; gap: .625rem; padding: .875rem 0; border-bottom: .0625rem solid rgba(255,255,255,.06); }
+        .drop-comment-avatar { width: 1.875rem; height: 1.875rem; display: grid; place-items: center; overflow: hidden; flex: none; border-radius: 50%; color: #FFF; background: rgba(255,255,255,.1); font-size: .625rem; font-weight: 900; }
+        .drop-comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .drop-comment-copy { min-width: 0; flex: 1; }
+        .drop-comment-copy strong { color: #F2F4F6; font-size: .6875rem; font-weight: 850; }
+        .drop-comment-copy time { margin-left: .375rem; color: #6B7684; font-size: .5625rem; font-weight: 650; }
+        .drop-comment-copy p { margin-top: .25rem; color: #D1D6DB; font-size: .75rem; line-height: 1.5; overflow-wrap: anywhere; }
+        .drop-comments-empty { min-height: 12rem; display: grid; place-items: center; padding: 2rem; color: #6B7684; font-size: .75rem; text-align: center; }
+        .drop-comment-form {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+            border-top: .0625rem solid rgba(255,255,255,.08);
+            background: rgba(21,21,23,.92);
+        }
+        .drop-comment-form input { min-width: 0; height: 2.75rem; flex: 1; padding: 0 1rem; border: .0625rem solid rgba(255,255,255,.1); border-radius: 62.4375rem; outline: none; color: #F2F4F6; background: rgba(255,255,255,.07); font-size: .75rem; }
+        .drop-comment-form input::placeholder { color: #6B7684; }
+        .drop-comment-form input:focus { border-color: rgba(49,130,246,.6); box-shadow: 0 0 0 .1875rem rgba(49,130,246,.14); }
+        .drop-comment-form button { width: 2.75rem; height: 2.75rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: #FFF; background: #3182F6; }
         .drop-feed-state {
             min-height: 10rem;
             display: flex;
@@ -771,18 +873,33 @@
             -webkit-backdrop-filter: blur(1.5rem) saturate(1.6);
             backdrop-filter: blur(1.5rem) saturate(1.6);
             transform-origin: top left;
-            animation: dropPopoverIn .28s cubic-bezier(.2,1.05,.3,1) both;
+            animation: popoverShellStairLeft .42s cubic-bezier(.2,.9,.25,1) both;
         }
-        .drop-upload-sheet.is-above { transform-origin: bottom left; }
-        @keyframes dropPopoverIn {
-            from { opacity: 0; transform: translateY(-.625rem) scale(.92); filter: blur(.25rem); }
-            to { opacity: 1; transform: none; filter: blur(0); }
+        .drop-upload-sheet.is-above {
+            transform-origin: bottom left;
+            animation-name: popoverShellStairBottomLeft;
+        }
+        @keyframes popoverShellStairLeft {
+            0% { opacity: 0; transform: translateY(-.5rem) scale(.96); clip-path: polygon(0 0,0 0,0 0,0 0,0 0,0 0,0 0,0 0); }
+            22% { opacity: 1; clip-path: polygon(0 0,24% 0,24% 24%,24% 24%,24% 24%,0 24%,0 0,0 0); }
+            44% { clip-path: polygon(0 0,48% 0,48% 24%,26% 24%,26% 48%,0 48%,0 0,0 0); }
+            66% { clip-path: polygon(0 0,72% 0,72% 48%,50% 48%,50% 72%,0 72%,0 0,0 0); }
+            84% { clip-path: polygon(0 0,94% 0,94% 72%,72% 72%,72% 94%,0 94%,0 0,0 0); }
+            100% { opacity: 1; transform: none; clip-path: polygon(0 0,100% 0,100% 100%,100% 100%,100% 100%,0 100%,0 0,0 0); }
+        }
+        @keyframes popoverShellStairBottomLeft {
+            0% { opacity: 0; transform: translateY(.5rem) scale(.96); clip-path: polygon(0 100%,0 100%,0 100%,0 100%,0 100%,0 100%,0 100%,0 100%); }
+            22% { opacity: 1; clip-path: polygon(0 76%,24% 76%,24% 100%,24% 100%,24% 100%,0 100%,0 100%,0 76%); }
+            44% { clip-path: polygon(0 52%,26% 52%,26% 76%,48% 76%,48% 100%,0 100%,0 100%,0 52%); }
+            66% { clip-path: polygon(0 28%,50% 28%,50% 52%,72% 52%,72% 100%,0 100%,0 100%,0 28%); }
+            84% { clip-path: polygon(0 6%,72% 6%,72% 28%,94% 28%,94% 100%,0 100%,0 100%,0 6%); }
+            100% { opacity: 1; transform: none; clip-path: polygon(0 0,100% 0,100% 100%,100% 100%,100% 100%,0 100%,0 100%,0 0); }
         }
         @keyframes popoverStepIn {
             from { opacity: 0; transform: translate(.5rem, -.45rem) scale(.96); filter: blur(.2rem); }
             to { opacity: 1; transform: none; filter: blur(0); }
         }
-        .drop-upload-sheet-head { min-height: 2.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0 .125rem 0 .375rem; margin-bottom: .375rem; animation: popoverStepIn .34s .035s both; }
+        .drop-upload-sheet-head { min-height: 2.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0 .125rem 0 .375rem; margin-bottom: .375rem; animation: popoverStepIn .34s .09s both; }
         .drop-upload-sheet-head strong { color: #F2F4F6; font-size: .875rem; font-weight: 900; }
         .drop-upload-sheet-close { width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 50%; color: #8B95A1; background: rgba(255,255,255,.08); }
         .drop-upload-options { display: flex; flex-direction: column; gap: .375rem; }
@@ -799,8 +916,8 @@
             font-size: .8125rem;
             font-weight: 800;
         }
-        .drop-upload-option:nth-child(1) { animation: popoverStepIn .38s .09s both; }
-        .drop-upload-option:nth-child(2) { animation: popoverStepIn .38s .15s both; }
+        .drop-upload-option:nth-child(1) { animation: popoverStepIn .38s .15s both; }
+        .drop-upload-option:nth-child(2) { animation: popoverStepIn .38s .21s both; }
         .drop-upload-option i { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: .75rem; color: #5BA1FF; background: rgba(49,130,246,.12); font-size: .9375rem; }
         .drop-upload-option:active { transform: scale(.97); background: rgba(255,255,255,.12); }
         .drop-upload-status {
@@ -3624,18 +3741,30 @@
             transition: transform .24s cubic-bezier(.2,.9,.25,1.15), opacity .16s ease;
         }
         .home-side-menu.is-open .home-side-menu-backdrop { opacity: 1; }
-        .home-side-menu.is-open .home-side-menu-panel { opacity: 1; transform: none; }
+        .home-side-menu.is-open .home-side-menu-panel {
+            opacity: 1;
+            transform: none;
+            animation: popoverShellStairRight .46s cubic-bezier(.2,.9,.25,1) both;
+        }
+        @keyframes popoverShellStairRight {
+            0% { opacity: 0; transform: translateY(-.5rem) scale(.96); clip-path: polygon(100% 0,100% 0,100% 0,100% 0,100% 0,100% 0,100% 0,100% 0); }
+            22% { opacity: 1; clip-path: polygon(76% 0,100% 0,100% 24%,100% 24%,100% 24%,76% 24%,76% 0,76% 0); }
+            44% { clip-path: polygon(52% 0,100% 0,100% 48%,74% 48%,74% 24%,52% 24%,52% 0,52% 0); }
+            66% { clip-path: polygon(28% 0,100% 0,100% 72%,50% 72%,50% 48%,28% 48%,28% 0,28% 0); }
+            84% { clip-path: polygon(6% 0,100% 0,100% 94%,28% 94%,28% 72%,6% 72%,6% 0,6% 0); }
+            100% { opacity: 1; transform: none; clip-path: polygon(0 0,100% 0,100% 100%,0 100%,0 100%,0 100%,0 0,0 0); }
+        }
         .home-side-menu.is-open .home-side-menu-head,
         .home-side-menu.is-open .home-side-menu-list > * { animation: popoverStepIn .4s both; }
-        .home-side-menu.is-open .home-side-menu-head { animation-delay: .035s; }
-        .home-side-menu.is-open .home-side-menu-list > :nth-child(1) { animation-delay: .075s; }
-        .home-side-menu.is-open .home-side-menu-list > :nth-child(2) { animation-delay: .11s; }
-        .home-side-menu.is-open .home-side-menu-list > :nth-child(3) { animation-delay: .145s; }
-        .home-side-menu.is-open .home-side-menu-list > :nth-child(4) { animation-delay: .18s; }
-        .home-side-menu.is-open .home-side-menu-list > :nth-child(5) { animation-delay: .215s; }
-        .home-side-menu.is-open .home-side-menu-list > :nth-child(6) { animation-delay: .25s; }
-        .home-side-menu.is-open .home-side-menu-list > :nth-child(7) { animation-delay: .285s; }
-        .home-side-menu.is-open .home-side-menu-list > :nth-child(8) { animation-delay: .32s; }
+        .home-side-menu.is-open .home-side-menu-head { animation-delay: .09s; }
+        .home-side-menu.is-open .home-side-menu-list > :nth-child(1) { animation-delay: .13s; }
+        .home-side-menu.is-open .home-side-menu-list > :nth-child(2) { animation-delay: .17s; }
+        .home-side-menu.is-open .home-side-menu-list > :nth-child(3) { animation-delay: .21s; }
+        .home-side-menu.is-open .home-side-menu-list > :nth-child(4) { animation-delay: .25s; }
+        .home-side-menu.is-open .home-side-menu-list > :nth-child(5) { animation-delay: .29s; }
+        .home-side-menu.is-open .home-side-menu-list > :nth-child(6) { animation-delay: .33s; }
+        .home-side-menu.is-open .home-side-menu-list > :nth-child(7) { animation-delay: .37s; }
+        .home-side-menu.is-open .home-side-menu-list > :nth-child(8) { animation-delay: .41s; }
         .home-side-menu-head { display: flex; align-items: center; justify-content: space-between; min-height: 2.25rem; }
         .home-side-menu-brand { color: #F2F4F6; font-size: 1.125rem; font-weight: 950; }
         .home-side-menu-close {
@@ -3850,7 +3979,9 @@
             .home-side-menu.is-open .home-side-menu-list > *,
             .drop-upload-sheet,
             .drop-upload-sheet-head,
-            .drop-upload-option { animation: none; }
+            .drop-upload-option,
+            .drop-comments-backdrop,
+            .drop-comments-sheet { animation: none; }
             .academic-school-trigger, .academic-school-trigger i, .academic-school-option { transition: none; }
         }
         @media (min-width: 768px) {
@@ -6914,6 +7045,19 @@
             .drop-photo-meta-copy time, .drop-feed-state { color: #8B95A1; }
             .drop-feed-state strong { color: #4E5968; }
             .drop-photo-author-avatar { background: rgba(0,0,0,.08); color: #191F28; }
+            .drop-photo-action { color: #6B7684; }
+            .drop-photo-action:active { background: rgba(0,0,0,.055); }
+            .drop-photo-action.is-liked { color: #F04452; }
+            .drop-comments-sheet { border-color: rgba(0,0,0,.08); color: #191F28; background: rgba(248,249,250,.98); box-shadow: 0 -1rem 3rem rgba(15,23,42,.15); }
+            .drop-comments-header { border-bottom-color: rgba(0,0,0,.07); }
+            .drop-comments-header p, .drop-comments-empty, .drop-comment-copy time { color: #8B95A1; }
+            .drop-comments-close { color: #6B7684; background: rgba(0,0,0,.055); }
+            .drop-comment-row { border-bottom-color: rgba(0,0,0,.06); }
+            .drop-comment-avatar { color: #191F28; background: rgba(0,0,0,.08); }
+            .drop-comment-copy strong { color: #191F28; }
+            .drop-comment-copy p { color: #4E5968; }
+            .drop-comment-form { border-top-color: rgba(0,0,0,.07); background: rgba(248,249,250,.94); }
+            .drop-comment-form input { border-color: rgba(0,0,0,.08); color: #191F28; background: rgba(0,0,0,.045); }
             .drop-upload-sheet { border-color: rgba(0,0,0,.1); background: rgba(248,249,250,.94); box-shadow: 0 1.125rem 3rem rgba(15,23,42,.16), 0 .25rem .875rem rgba(15,23,42,.08); }
             .drop-upload-sheet-head strong, .drop-upload-option { color: #191F28; }
             .drop-upload-sheet-close { background: rgba(0,0,0,.055); }
@@ -8912,6 +9056,24 @@
         </div>
     </section>
     <div id="drop-upload-status" class="drop-upload-status hidden" role="status" aria-live="polite"></div>
+
+    <div id="drop-comments-layer" class="drop-comments-layer hidden" role="dialog" aria-modal="true" aria-labelledby="drop-comments-title" aria-hidden="true">
+        <button type="button" class="drop-comments-backdrop" onclick="window.closeDropComments()" aria-label="댓글 닫기"></button>
+        <section class="drop-comments-sheet">
+            <header class="drop-comments-header">
+                <div>
+                    <h2 id="drop-comments-title">댓글</h2>
+                    <p id="drop-comments-count"></p>
+                </div>
+                <button type="button" class="drop-comments-close" onclick="window.closeDropComments()" aria-label="댓글 닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </header>
+            <div id="drop-comments-list" class="drop-comments-list"></div>
+            <form class="drop-comment-form" onsubmit="event.preventDefault(); window.submitDropComment()">
+                <input id="drop-comment-input" type="text" maxlength="300" autocomplete="off" placeholder="댓글을 입력하세요" aria-label="댓글 내용">
+                <button id="drop-comment-submit" type="submit" aria-label="댓글 등록"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+            </form>
+        </section>
+    </div>
 
     <div id="common-modal" class="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center px-6">
         <div class="bg-[#1C1C1E] rounded-3xl p-6 w-full max-w-xs shadow-2xl scale-in text-center border border-white/5">
@@ -17475,12 +17637,18 @@
             uploadPreset: 'stories_unsigned',
             folder: 'enjoy_drop'
         };
+        const DROP_VISIBLE_MS = 24 * 60 * 60 * 1000;
         window._dropPosts = [];
         window._dropPostsUnsub = null;
         window._dropLoading = false;
         window._dropBusy = false;
         window._dropError = '';
         window._dropStatusTimer = null;
+        window._dropExpiryTimer = null;
+        window._dropLikeBusy = {};
+        window._dropCommentsPostId = '';
+        window._dropComments = [];
+        window._dropCommentsUnsub = null;
 
         function dropEsc(value) {
             if (typeof communityEsc === 'function') return communityEsc(value);
@@ -17498,13 +17666,49 @@
             return String(window.enjoyProfileName || (user && user.displayName) || '멤버').trim() || '멤버';
         }
 
+        function dropMillis(value) {
+            if (!value) return 0;
+            if (typeof value.toMillis === 'function') return Number(value.toMillis()) || 0;
+            if (typeof value.seconds === 'number') return (value.seconds * 1000) + Math.floor(Number(value.nanoseconds || 0) / 1000000);
+            const numeric = Number(value);
+            if (Number.isFinite(numeric) && numeric > 0) return numeric;
+            const parsed = Date.parse(value);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
         function dropDateTime(value) {
-            const time = Number(value || 0);
+            const time = dropMillis(value);
             if (!time) return '방금';
             return new Intl.DateTimeFormat('ko-KR', {
                 year: 'numeric', month: 'numeric', day: 'numeric',
                 hour: '2-digit', minute: '2-digit', hour12: false
             }).format(new Date(time));
+        }
+
+        function dropExpiryTime(post) {
+            return dropMillis(post && post.expiresAt) || (dropMillis(post && post.createdAt) + DROP_VISIBLE_MS);
+        }
+
+        function visibleDropPosts() {
+            const now = Date.now();
+            return window._dropPosts.filter(function (post) {
+                const createdAt = dropMillis(post && post.createdAt);
+                return createdAt > 0 && dropExpiryTime(post) > now;
+            });
+        }
+
+        function scheduleDropExpiry(posts) {
+            if (window._dropExpiryTimer) window.clearTimeout(window._dropExpiryTimer);
+            window._dropExpiryTimer = null;
+            const nextExpiry = (posts || []).reduce(function (soonest, post) {
+                const expiry = dropExpiryTime(post);
+                return expiry > Date.now() && (!soonest || expiry < soonest) ? expiry : soonest;
+            }, 0);
+            if (!nextExpiry) return;
+            window._dropExpiryTimer = window.setTimeout(function () {
+                window._dropExpiryTimer = null;
+                window.renderDropFeed();
+            }, Math.max(100, nextExpiry - Date.now() + 80));
         }
 
         function dropAuthorAvatar(post) {
@@ -17531,34 +17735,217 @@
             const wrap = document.getElementById('drop-feed');
             if (!wrap) return;
             const user = dropUser();
+            const posts = visibleDropPosts();
+            scheduleDropExpiry(posts);
+            if (window._dropCommentsPostId && !posts.some(function (post) { return post._id === window._dropCommentsPostId; })) {
+                window.closeDropComments();
+            }
             if (!user) {
                 wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-regular fa-images" aria-hidden="true"></i><strong>멤버 드롭</strong><span>로그인하면 멤버들이 올린 사진을 함께 볼 수 있어요.</span></div>';
                 return;
             }
-            if (window._dropLoading && !window._dropPosts.length) {
+            if (window._dropLoading && !posts.length) {
                 wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i><strong>사진을 불러오는 중</strong></div>';
                 return;
             }
-            if (window._dropError && !window._dropPosts.length) {
+            if (window._dropError && !posts.length) {
                 wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><strong>사진을 불러오지 못했어요.</strong><span>' + dropEsc(window._dropError) + '</span></div>';
                 return;
             }
-            if (!window._dropPosts.length) {
+            if (!posts.length) {
                 wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-plus" aria-hidden="true"></i><strong>첫 번째 사진을 올려보세요.</strong><span>멤버 현황 왼쪽의 사진 추가 버튼으로 시작할 수 있어요.</span></div>';
                 return;
             }
-            wrap.innerHTML = '<div class="drop-feed-grid">' + window._dropPosts.map(function (post) {
+            wrap.innerHTML = '<div class="drop-feed-grid">' + posts.map(function (post) {
                 const width = Math.max(1, Number(post.width) || 4);
                 const height = Math.max(1, Number(post.height) || 5);
                 const ratio = Math.max(.62, Math.min(1.6, width / height));
+                const createdAt = dropMillis(post.createdAt);
+                const likedBy = Array.isArray(post.likedBy) ? post.likedBy : [];
+                const liked = likedBy.indexOf(user.uid) >= 0;
+                const likeCount = Math.max(0, Number(post.likeCount) || likedBy.length || 0);
+                const commentCount = Math.max(0, Number(post.commentCount) || 0);
+                const postId = dropEsc(post._id || '');
                 return '<article class="drop-photo-card">' +
                     '<div class="drop-photo-frame" style="aspect-ratio:' + ratio.toFixed(4) + '">' +
                     '<img src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy"></div>' +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
                     '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
-                    '<time datetime="' + dropEsc(new Date(Number(post.createdAt || 0)).toISOString()) + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div></div>' +
+                    '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div>' +
+                    '<div class="drop-photo-actions">' +
+                    '<button type="button" class="drop-photo-action' + (liked ? ' is-liked' : '') + '" onclick="window.toggleDropLike(\'' + postId + '\')" aria-label="' + (liked ? '좋아요 취소' : '좋아요') + '" aria-pressed="' + (liked ? 'true' : 'false') + '"><i class="fa-' + (liked ? 'solid' : 'regular') + ' fa-heart" aria-hidden="true"></i><span class="drop-photo-action-count">' + (likeCount || '') + '</span></button>' +
+                    '<button type="button" class="drop-photo-action" onclick="window.openDropComments(\'' + postId + '\')" aria-label="댓글 보기"><i class="fa-regular fa-comment" aria-hidden="true"></i><span class="drop-photo-action-count">' + (commentCount || '') + '</span></button>' +
+                    '</div></div>' +
                     '</article>';
             }).join('') + '</div>';
+        };
+
+        function findDropPost(postId) {
+            return window._dropPosts.find(function (post) { return post && post._id === postId; }) || null;
+        }
+
+        window.toggleDropLike = async function (postId) {
+            const user = dropUser();
+            const post = findDropPost(postId);
+            if (!user || !post || dropExpiryTime(post) <= Date.now()) return;
+            if (!window.meetingDb || !window.runTransaction || !window.fsDoc || window._dropLikeBusy[postId]) return;
+            window._dropLikeBusy[postId] = true;
+            try {
+                const postRef = window.fsDoc('drop_posts', postId);
+                await window.runTransaction(window.meetingDb, async function (transaction) {
+                    const snapshot = await transaction.get(postRef);
+                    if (!snapshot.exists()) throw new Error('사진을 찾을 수 없어요.');
+                    const current = snapshot.data() || {};
+                    const likedBy = Array.isArray(current.likedBy) ? current.likedBy.slice() : [];
+                    const index = likedBy.indexOf(user.uid);
+                    if (index >= 0) likedBy.splice(index, 1);
+                    else likedBy.push(user.uid);
+                    transaction.set(postRef, {
+                        likedBy: likedBy,
+                        likeCount: likedBy.length,
+                        engagementUpdatedAt: Date.now()
+                    }, { merge: true });
+                });
+                window.haptic && window.haptic();
+            } catch (error) {
+                console.error('drop like', error);
+                window.enjoyAlert && window.enjoyAlert(error && error.code === 'permission-denied'
+                    ? '드롭 좋아요 쓰기 권한 설정이 필요해요.'
+                    : (error && error.message ? error.message : '좋아요를 반영하지 못했어요.'));
+            } finally {
+                delete window._dropLikeBusy[postId];
+            }
+        };
+
+        function dropCommentAvatar(comment) {
+            const name = String(comment.authorName || '멤버');
+            const photo = String(comment.authorPhoto || '');
+            if (photo) return '<span class="drop-comment-avatar"><img src="' + dropEsc(photo) + '" alt="" referrerpolicy="no-referrer"></span>';
+            return '<span class="drop-comment-avatar">' + dropEsc(name.slice(0, 1)) + '</span>';
+        }
+
+        function renderDropComments(message) {
+            const list = document.getElementById('drop-comments-list');
+            const count = document.getElementById('drop-comments-count');
+            if (!list) return;
+            if (count) count.textContent = window._dropComments.length ? '댓글 ' + window._dropComments.length + '개' : '';
+            if (message) {
+                list.innerHTML = '<div class="drop-comments-empty">' + dropEsc(message) + '</div>';
+                return;
+            }
+            if (!window._dropComments.length) {
+                list.innerHTML = '<div class="drop-comments-empty">첫 댓글을 남겨보세요.</div>';
+                return;
+            }
+            list.innerHTML = window._dropComments.map(function (comment) {
+                const createdAt = dropMillis(comment.createdAt);
+                return '<div class="drop-comment-row">' + dropCommentAvatar(comment) +
+                    '<div class="drop-comment-copy"><div><strong>' + dropEsc(comment.authorName || '멤버') + '</strong>' +
+                    '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(comment.createdAt)) + '</time></div>' +
+                    '<p>' + dropEsc(comment.text || '') + '</p></div></div>';
+            }).join('');
+            list.scrollTop = list.scrollHeight;
+        }
+
+        window.openDropComments = function (postId) {
+            const user = dropUser();
+            const post = findDropPost(postId);
+            if (!user || !post || dropExpiryTime(post) <= Date.now()) return;
+            const layer = document.getElementById('drop-comments-layer');
+            const input = document.getElementById('drop-comment-input');
+            if (!layer || !window.fsOnSnapshot || !window.fsCol || !window.fsQuery || !window.fsOrderBy || !window.fsLimit) return;
+            if (window._dropCommentsUnsub) {
+                try { window._dropCommentsUnsub(); } catch (e) {}
+                window._dropCommentsUnsub = null;
+            }
+            window._dropCommentsPostId = postId;
+            window._dropComments = [];
+            layer.classList.remove('hidden');
+            layer.setAttribute('aria-hidden', 'false');
+            renderDropComments('댓글을 불러오는 중이에요…');
+            try {
+                const commentsQuery = window.fsQuery(
+                    window.fsCol('drop_posts', postId, 'comments'),
+                    window.fsOrderBy('createdAt', 'asc'),
+                    window.fsLimit(100)
+                );
+                window._dropCommentsUnsub = window.fsOnSnapshot(commentsQuery, function (snapshot) {
+                    const comments = [];
+                    snapshot.forEach(function (entry) {
+                        const value = entry.data() || {};
+                        value._id = entry.id;
+                        comments.push(value);
+                    });
+                    window._dropComments = comments;
+                    renderDropComments();
+                }, function (error) {
+                    console.warn('drop comments snapshot', error);
+                    renderDropComments(error && error.code === 'permission-denied'
+                        ? '드롭 댓글 읽기 권한 설정이 필요해요.'
+                        : '댓글을 불러오지 못했어요.');
+                });
+            } catch (error) {
+                console.warn('drop comments subscribe', error);
+                renderDropComments('댓글을 불러오지 못했어요.');
+            }
+            window.setTimeout(function () { if (input) input.focus({ preventScroll: true }); }, 180);
+        };
+
+        window.closeDropComments = function () {
+            if (window._dropCommentsUnsub) {
+                try { window._dropCommentsUnsub(); } catch (e) {}
+                window._dropCommentsUnsub = null;
+            }
+            window._dropCommentsPostId = '';
+            window._dropComments = [];
+            const layer = document.getElementById('drop-comments-layer');
+            const input = document.getElementById('drop-comment-input');
+            if (layer) {
+                layer.classList.add('hidden');
+                layer.setAttribute('aria-hidden', 'true');
+            }
+            if (input) input.value = '';
+        };
+
+        window.submitDropComment = async function () {
+            const user = dropUser();
+            const postId = window._dropCommentsPostId;
+            const post = findDropPost(postId);
+            const input = document.getElementById('drop-comment-input');
+            const button = document.getElementById('drop-comment-submit');
+            const text = input ? String(input.value || '').trim() : '';
+            if (!user || !postId || !post || !text || dropExpiryTime(post) <= Date.now()) return;
+            if (!window.meetingDb || !window.runTransaction || !window.fsDoc || !window.fsCol || !window.doc) return;
+            if (button) { button.disabled = true; button.style.opacity = '.55'; }
+            try {
+                const postRef = window.fsDoc('drop_posts', postId);
+                const commentRef = window.doc(window.fsCol('drop_posts', postId, 'comments'));
+                await window.runTransaction(window.meetingDb, async function (transaction) {
+                    const postSnapshot = await transaction.get(postRef);
+                    if (!postSnapshot.exists()) throw new Error('사진을 찾을 수 없어요.');
+                    const current = postSnapshot.data() || {};
+                    transaction.set(commentRef, {
+                        authorUid: user.uid,
+                        authorName: dropAuthorName(user),
+                        authorPhoto: user.photoURL || '',
+                        text: text,
+                        createdAt: Date.now()
+                    });
+                    transaction.set(postRef, {
+                        commentCount: Math.max(0, Number(current.commentCount) || 0) + 1,
+                        engagementUpdatedAt: Date.now()
+                    }, { merge: true });
+                });
+                if (input) input.value = '';
+            } catch (error) {
+                console.error('drop comment', error);
+                window.enjoyAlert && window.enjoyAlert(error && error.code === 'permission-denied'
+                    ? '드롭 댓글 쓰기 권한 설정이 필요해요.'
+                    : (error && error.message ? error.message : '댓글을 등록하지 못했어요.'));
+            } finally {
+                if (button) { button.disabled = false; button.style.opacity = '1'; }
+                if (input) input.focus({ preventScroll: true });
+            }
         };
 
         function ensureDropSubscription() {
@@ -17611,6 +17998,11 @@
                 try { window._dropPostsUnsub(); } catch (e) {}
                 window._dropPostsUnsub = null;
             }
+            if (window._dropExpiryTimer) {
+                window.clearTimeout(window._dropExpiryTimer);
+                window._dropExpiryTimer = null;
+            }
+            window.closeDropComments();
             window._dropPosts = [];
             window._dropLoading = false;
             window._dropError = '';
@@ -17765,7 +18157,11 @@
                     authorUid: user.uid,
                     authorName: dropAuthorName(user),
                     authorPhoto: user.photoURL || '',
+                    likedBy: [],
+                    likeCount: 0,
+                    commentCount: 0,
                     createdAt: now,
+                    expiresAt: now + DROP_VISIBLE_MS,
                     updatedAt: now
                 });
                 setDropStatus('드롭에 사진을 올렸어요.');
@@ -17794,6 +18190,12 @@
             }
         });
         document.addEventListener('keydown', function (event) {
+            const comments = document.getElementById('drop-comments-layer');
+            if (event.key === 'Escape' && comments && !comments.classList.contains('hidden')) {
+                event.preventDefault();
+                window.closeDropComments();
+                return;
+            }
             const sheet = document.getElementById('drop-upload-sheet');
             if (event.key === 'Escape' && sheet && !sheet.classList.contains('hidden')) {
                 event.preventDefault();
