@@ -714,14 +714,23 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            -webkit-user-drag: none;
+            -webkit-touch-callout: none;
+            user-select: none;
         }
         .drop-photo-meta {
+            position: absolute;
+            left: .75rem;
+            right: .75rem;
+            bottom: .75rem;
+            z-index: 6;
             display: flex;
             align-items: center;
             gap: .5rem;
             min-width: 0;
-            padding: .625rem .25rem 0;
-            transform: rotate(0deg);
+            padding: 0;
+            color: #FFF;
+            pointer-events: none;
         }
         .drop-photo-author-avatar {
             width: 1.625rem;
@@ -735,6 +744,7 @@
             color: #FFF;
             font-size: .625rem;
             font-weight: 900;
+            box-shadow: 0 .125rem .625rem rgba(0,0,0,.24);
         }
         .drop-photo-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .drop-photo-meta-copy { min-width: 0; flex: 1; text-align: left; }
@@ -745,8 +755,8 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .drop-photo-meta-copy strong { color: #F2F4F6; font-size: .6875rem; font-weight: 800; line-height: 1.25; }
-        .drop-photo-meta-copy time { margin-top: .0625rem; color: #6B7684; font-size: .5625rem; font-weight: 650; line-height: 1.25; }
+        .drop-photo-meta-copy strong { color: #FFF; font-size: .6875rem; font-weight: 850; line-height: 1.25; text-shadow: 0 .0625rem .375rem rgba(0,0,0,.66); }
+        .drop-photo-meta-copy time { margin-top: .0625rem; color: rgba(255,255,255,.78); font-size: .5625rem; font-weight: 700; line-height: 1.25; text-shadow: 0 .0625rem .375rem rgba(0,0,0,.68); }
         .drop-photo-actions {
             display: flex;
             align-items: center;
@@ -754,20 +764,34 @@
             margin-left: auto;
             flex: none;
         }
-        .drop-photo-card.is-actions-side .drop-photo-actions {
+        .drop-photo-card .drop-photo-actions {
             position: absolute;
-            top: 1rem;
             z-index: 8;
             display: flex;
-            flex-direction: column;
             gap: .375rem;
             margin: 0;
         }
-        .drop-photo-card.is-actions-side .drop-photo-meta { transform: none; }
-        .drop-photo-card.is-actions-side.is-actions-right .drop-photo-actions { right: -2.75rem; align-items: flex-start; }
-        .drop-photo-card.is-actions-side.is-actions-left .drop-photo-actions { left: -2.75rem; align-items: flex-end; }
-        .drop-photo-card.is-actions-inline .drop-photo-actions { position: static; flex-direction: row; }
-        .drop-photo-card.is-actions-side .drop-photo-action {
+        .drop-photo-card.is-actions-right .drop-photo-actions,
+        .drop-photo-card.is-actions-left .drop-photo-actions {
+            top: 50%;
+            flex-direction: column;
+            transform: translateY(-50%);
+        }
+        .drop-photo-card.is-actions-right .drop-photo-actions { right: -2.75rem; align-items: flex-start; }
+        .drop-photo-card.is-actions-left .drop-photo-actions { left: -2.75rem; align-items: flex-end; }
+        .drop-photo-card.is-actions-bottom .drop-photo-actions {
+            left: 50%;
+            bottom: -2.5rem;
+            flex-direction: row;
+            transform: translateX(-50%);
+        }
+        .drop-photo-card.is-actions-top .drop-photo-actions {
+            left: 50%;
+            top: -2.5rem;
+            flex-direction: row;
+            transform: translateX(-50%);
+        }
+        .drop-photo-card .drop-photo-action {
             color: #6B7684;
             background: transparent;
             box-shadow: none;
@@ -813,7 +837,8 @@
         }
         .drop-photo-comment-bubbles {
             position: absolute;
-            bottom: .75rem;
+            top: .75rem;
+            bottom: auto;
             z-index: 5;
             width: min(78%, 13.5rem);
             display: flex;
@@ -872,7 +897,7 @@
             z-index: 0;
             overflow: hidden;
         }
-        .drop-viewer-blur img { width: 100%; height: 100%; object-fit: cover; filter: blur(2.25rem) saturate(1.2); opacity: .5; transform: scale(1.12); }
+        .drop-viewer-blur img { width: 100%; height: 100%; object-fit: cover; filter: blur(2.25rem) saturate(1.2); opacity: .5; transform: scale(1.12); -webkit-user-drag: none; -webkit-touch-callout: none; user-select: none; }
         .drop-viewer-blur::after { content: ''; position: absolute; inset: 0; background: rgba(4,5,8,.56); }
         .drop-viewer-card {
             position: relative;
@@ -912,12 +937,23 @@
             background: rgba(0,0,0,.28);
             box-shadow: 0 1.5rem 4rem rgba(0,0,0,.32);
         }
-        .drop-viewer-image-shell img { display: block; width: 100%; max-height: calc(100dvh - 8.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); object-fit: contain; }
+        .drop-viewer-image-shell img { display: block; width: 100%; max-height: calc(100dvh - 12rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); object-fit: contain; -webkit-user-drag: none; -webkit-touch-callout: none; user-select: none; }
         .drop-viewer-meta { min-width: 0; display: flex; align-items: center; gap: .625rem; padding: 0 .25rem; }
         .drop-viewer-meta .drop-photo-author-avatar { width: 2rem; height: 2rem; background: rgba(255,255,255,.16); }
         .drop-viewer-meta .drop-photo-meta-copy strong { color: #FFF; font-size: .75rem; }
         .drop-viewer-meta .drop-photo-meta-copy time { color: rgba(255,255,255,.58); font-size: .625rem; }
         .drop-viewer-meta .drop-photo-action { background: transparent; box-shadow: none; }
+        .drop-viewer-likers { min-width: 0; display: flex; align-items: center; gap: .75rem; padding: 0 .25rem; }
+        .drop-viewer-likers:empty { display: none; }
+        .drop-viewer-likers-label { flex: none; display: inline-flex; align-items: center; gap: .3125rem; color: rgba(255,255,255,.72); font-size: .625rem; font-weight: 800; white-space: nowrap; }
+        .drop-viewer-likers-label i { color: #FF3B5C; font-size: .875rem; }
+        .drop-viewer-likers-list { min-width: 0; display: flex; align-items: flex-start; gap: .4375rem; overflow-x: auto; scrollbar-width: none; }
+        .drop-viewer-likers-list::-webkit-scrollbar { display: none; }
+        .drop-viewer-liker { width: 2.5rem; flex: none; display: inline-flex; flex-direction: column; align-items: center; gap: .25rem; color: rgba(255,255,255,.7); font-size: .5rem; font-weight: 750; text-align: center; }
+        .drop-viewer-liker-avatar { width: 1.75rem; height: 1.75rem; display: grid; place-items: center; overflow: hidden; border-radius: 50%; color: #FFF; background: rgba(255,255,255,.16); box-shadow: 0 0 0 .125rem rgba(0,0,0,.42); font-size: .5625rem; font-weight: 900; }
+        .drop-viewer-liker-avatar img { width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none; }
+        .drop-viewer-liker-name { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .drop-viewer-liker.is-more .drop-viewer-liker-avatar { background: rgba(255,255,255,.12); }
         .drop-comments-layer {
             position: fixed;
             inset: 0;
@@ -7190,10 +7226,12 @@
             #story-tray .drop-add-badge { border-color: #F2F2F7; background: #191F28; color: #FFF; }
             #story-tray .drop-add-label { color: #191F28; }
             .drop-photo-frame { border-color: rgba(0,0,0,.08); background: #E5E8EB; box-shadow: 0 .875rem 2rem rgba(15,23,42,.12); }
-            .drop-photo-meta-copy strong { color: #191F28; }
-            .drop-photo-meta-copy time, .drop-feed-state { color: #8B95A1; }
+            .drop-photo-frame .drop-photo-meta-copy strong { color: #FFF; }
+            .drop-photo-frame .drop-photo-meta-copy time { color: rgba(255,255,255,.78); }
+            .drop-feed-state { color: #8B95A1; }
             .drop-feed-state strong { color: #4E5968; }
             .drop-photo-author-avatar { background: rgba(0,0,0,.08); color: #191F28; }
+            .drop-photo-frame .drop-photo-author-avatar { background: rgba(255,255,255,.76); color: #4E5968; }
             .drop-photo-action { color: #6B7684; }
             .drop-photo-action:active { background: transparent; }
             .drop-photo-action.is-liked { color: #F04452; }
@@ -17892,6 +17930,43 @@
                 '</div>';
         }
 
+        function dropLikeProfile(uid, post) {
+            const savedProfiles = post && post.likedByProfiles && typeof post.likedByProfiles === 'object' ? post.likedByProfiles : {};
+            const saved = savedProfiles[uid] || {};
+            const joined = typeof window.enjoyJoinedMembers === 'function' ? window.enjoyJoinedMembers() : [];
+            const member = joined.find(function (item) { return item && item.uid === uid; }) || {};
+            const current = dropUser();
+            if (current && current.uid === uid) {
+                return {
+                    name: dropAuthorName(current),
+                    photoURL: current.photoURL || saved.photoURL || member.photoURL || ''
+                };
+            }
+            return {
+                name: saved.name || member.name || '멤버',
+                photoURL: saved.photoURL || member.photoURL || ''
+            };
+        }
+
+        function dropLikeProfilesHtml(post) {
+            const likedBy = Array.isArray(post && post.likedBy) ? post.likedBy : [];
+            if (!likedBy.length) return '';
+            const visible = likedBy.slice(0, 5);
+            const people = visible.map(function (uid) {
+                const profile = dropLikeProfile(uid, post);
+                const avatar = profile.photoURL
+                    ? '<span class="drop-viewer-liker-avatar"><img src="' + dropEsc(profile.photoURL) + '" alt="" referrerpolicy="no-referrer" draggable="false"></span>'
+                    : '<span class="drop-viewer-liker-avatar">' + dropEsc(String(profile.name || '멤버').slice(0, 1)) + '</span>';
+                return '<span class="drop-viewer-liker" title="' + dropEsc(profile.name) + '">' + avatar +
+                    '<span class="drop-viewer-liker-name">' + dropEsc(profile.name) + '</span></span>';
+            }).join('');
+            const more = likedBy.length > visible.length
+                ? '<span class="drop-viewer-liker is-more" title="좋아요를 누른 멤버 ' + likedBy.length + '명"><span class="drop-viewer-liker-avatar">+' + (likedBy.length - visible.length) + '</span><span class="drop-viewer-liker-name">더보기</span></span>'
+                : '';
+            return '<span class="drop-viewer-likers-label"><i class="ph-fill ph-heart" aria-hidden="true"></i>' + likedBy.length + '명</span>' +
+                '<div class="drop-viewer-likers-list" aria-label="좋아요를 누른 멤버">' + people + more + '</div>';
+        }
+
         function dropCommentBubblesHtml(post, side) {
             const postId = dropEsc(post._id || '');
             const previews = Array.isArray(post.commentPreview) ? post.commentPreview.slice(-2) : [];
@@ -17952,6 +18027,11 @@
                 if (button.dataset.dropPostId !== String(postId)) return;
                 syncDropActionButton(button, button.dataset.dropAction === 'like' ? likeCount : commentCount, liked, animate);
             });
+            if (window._dropViewerPostId === String(postId)) {
+                const likers = document.getElementById('drop-viewer-likers');
+                if (likers) likers.innerHTML = dropLikeProfilesHtml(post);
+            }
+            window.requestAnimationFrame(positionDropCardControls);
             if (!syncComments) return;
             document.querySelectorAll('.drop-photo-card[data-drop-card-id]').forEach(function (card) {
                 if (card.dataset.dropCardId !== String(postId)) return;
@@ -18011,14 +18091,14 @@
                 const createdAt = dropMillis(post.createdAt);
                 const postId = dropEsc(post._id || '');
                 const bubbleSide = ['left', 'right', 'left', 'left', 'right', 'right'][index % 6];
-                return '<article class="drop-photo-card is-actions-inline" data-drop-card-id="' + postId + '">' +
+                return '<article class="drop-photo-card is-actions-bottom" data-drop-card-id="' + postId + '">' +
                     '<div class="drop-photo-frame" style="aspect-ratio:' + ratio.toFixed(4) + '">' +
-                    '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\')" aria-label="사진 크게 보기"><img src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy"></button>' +
-                    dropCommentBubblesHtml(post, bubbleSide) + '</div>' +
+                    '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\')" aria-label="사진 크게 보기"><img src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false"></button>' +
+                    dropCommentBubblesHtml(post, bubbleSide) +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
                     '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
-                    '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div>' +
-                    dropActionButtonsHtml(post, user) + '</div>' +
+                    '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div></div></div>' +
+                    dropActionButtonsHtml(post, user) +
                     '</article>';
             }).join('') + '</div>';
             window.requestAnimationFrame(positionDropCardControls);
@@ -18031,34 +18111,58 @@
             const feedBounds = feed.getBoundingClientRect();
             const cards = Array.from(feed.querySelectorAll('.drop-photo-card'));
             const frames = cards.map(function (card) { return card.querySelector('.drop-photo-frame'); });
+            const frameBounds = frames.map(function (frame) { return frame ? frame.getBoundingClientRect() : null; });
+            const occupiedRails = [];
+            function overlapArea(a, b) {
+                const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+                const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+                return width * height;
+            }
+            function outsideArea(rect) {
+                const insideWidth = Math.max(0, Math.min(rect.right, feedBounds.right) - Math.max(rect.left, feedBounds.left));
+                const insideHeight = Math.max(0, rect.bottom - rect.top);
+                return Math.max(0, ((rect.right - rect.left) * (rect.bottom - rect.top)) - (insideWidth * insideHeight));
+            }
             cards.forEach(function (card, cardIndex) {
-                card.classList.remove('is-actions-side', 'is-actions-left', 'is-actions-right');
-                card.classList.add('is-actions-inline');
-                const meta = card.querySelector('.drop-photo-meta');
-                if (!meta) return;
-                const metaBounds = meta.getBoundingClientRect();
-                const cardZ = Number(window.getComputedStyle(card).zIndex) || 0;
-                const isMetaCovered = frames.some(function (frame, frameIndex) {
-                    if (!frame || frameIndex === cardIndex) return false;
-                    const otherCard = cards[frameIndex];
-                    const otherZ = Number(window.getComputedStyle(otherCard).zIndex) || 0;
-                    if (otherZ < cardZ || (otherZ === cardZ && frameIndex < cardIndex)) return false;
-                    const other = frame.getBoundingClientRect();
-                    return other.left < metaBounds.right && other.right > metaBounds.left &&
-                        other.top < metaBounds.bottom && other.bottom > metaBounds.top;
+                const frame = frameBounds[cardIndex];
+                const actions = card.querySelector('.drop-photo-actions');
+                if (!frame || !actions) return;
+                const buttons = Array.from(actions.querySelectorAll('.drop-photo-action'));
+                const buttonBounds = buttons.map(function (button) { return button.getBoundingClientRect(); });
+                const gap = 6;
+                const railWidth = Math.max(36, buttonBounds.reduce(function (width, rect) { return Math.max(width, rect.width); }, 0));
+                const railHeight = Math.max(36, buttonBounds.reduce(function (height, rect) { return height + rect.height; }, 0) + Math.max(0, buttonBounds.length - 1) * gap);
+                const bottomWidth = Math.max(36, buttonBounds.reduce(function (width, rect) { return width + rect.width; }, 0) + Math.max(0, buttonBounds.length - 1) * gap);
+                const bottomHeight = Math.max(36, buttonBounds.reduce(function (height, rect) { return Math.max(height, rect.height); }, 0));
+                const candidates = [
+                    { name: 'bottom', priority: 0, rect: { left: frame.left + ((frame.width - bottomWidth) / 2), right: frame.left + ((frame.width + bottomWidth) / 2), top: frame.bottom + gap, bottom: frame.bottom + gap + bottomHeight } },
+                    { name: 'right', priority: 1, rect: { left: frame.right + gap, right: frame.right + gap + railWidth, top: frame.top + ((frame.height - railHeight) / 2), bottom: frame.top + ((frame.height + railHeight) / 2) } },
+                    { name: 'left', priority: 2, rect: { left: frame.left - gap - railWidth, right: frame.left - gap, top: frame.top + ((frame.height - railHeight) / 2), bottom: frame.top + ((frame.height + railHeight) / 2) } },
+                    { name: 'top', priority: 3, rect: { left: frame.left + ((frame.width - bottomWidth) / 2), right: frame.left + ((frame.width + bottomWidth) / 2), top: frame.top - gap - bottomHeight, bottom: frame.top - gap } }
+                ];
+                candidates.forEach(function (candidate) {
+                    const collision = frameBounds.reduce(function (area, other, otherIndex) {
+                        if (!other || otherIndex === cardIndex) return area;
+                        const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
+                        return area + overlapArea(candidate.rect, padded);
+                    }, 0);
+                    const railCollision = occupiedRails.reduce(function (area, other) {
+                        const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
+                        return area + overlapArea(candidate.rect, padded);
+                    }, 0);
+                    candidate.score = (outsideArea(candidate.rect) * 1000) + ((collision + railCollision) * 1000) + candidate.priority;
                 });
-                const bounds = card.getBoundingClientRect();
-                const leftSpace = Math.max(0, bounds.left - feedBounds.left);
-                const rightSpace = Math.max(0, feedBounds.right - bounds.right);
-                const side = rightSpace >= leftSpace ? 'right' : 'left';
+                candidates.sort(function (a, b) { return a.score - b.score; });
+                const placement = candidates[0].name;
+                occupiedRails.push(candidates[0].rect);
+                card.classList.remove('is-actions-bottom', 'is-actions-left', 'is-actions-right', 'is-actions-top');
+                card.classList.add('is-actions-' + placement);
+                card.dataset.actionPlacement = placement;
                 const bubbles = card.querySelector('.drop-photo-comment-bubbles');
-                if (isMetaCovered) {
-                    card.classList.remove('is-actions-inline');
-                    card.classList.add('is-actions-side', 'is-actions-' + side);
-                }
                 if (bubbles) {
-                    bubbles.classList.toggle('is-left', side === 'right');
-                    bubbles.classList.toggle('is-right', side === 'left');
+                    const bubbleSide = placement === 'right' ? 'left' : placement === 'left' ? 'right' : (frame.left + frame.width / 2 < feedBounds.left + feedBounds.width / 2 ? 'right' : 'left');
+                    bubbles.classList.toggle('is-left', bubbleSide === 'left');
+                    bubbles.classList.toggle('is-right', bubbleSide === 'right');
                 }
             });
         }
@@ -18075,13 +18179,14 @@
             if (!post || !user || !card || !blur) return;
             const createdAt = dropMillis(post.createdAt);
             const imageUrl = dropEsc(post.imageUrl || '');
-            blur.innerHTML = '<img src="' + imageUrl + '" alt="">';
+            blur.innerHTML = '<img src="' + imageUrl + '" alt="" draggable="false">';
             card.innerHTML = '<button type="button" class="drop-viewer-close" onclick="window.closeDropViewer()" aria-label="크게 보기 닫기"><i class="ph ph-x" aria-hidden="true"></i></button>' +
-                '<div class="drop-viewer-image-shell"><img src="' + imageUrl + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '"></div>' +
+                '<div class="drop-viewer-image-shell"><img src="' + imageUrl + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" draggable="false"></div>' +
                 '<div class="drop-viewer-meta">' + dropAuthorAvatar(post) +
                 '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
                 '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div>' +
-                dropActionButtonsHtml(post, user) + '</div>';
+                dropActionButtonsHtml(post, user) + '</div>' +
+                '<div id="drop-viewer-likers" class="drop-viewer-likers">' + dropLikeProfilesHtml(post) + '</div>';
         }
 
         window.openDropViewer = function (postId) {
@@ -18116,12 +18221,20 @@
             if (!window.meetingDb || !window.runTransaction || !window.fsDoc || window._dropLikeBusy[postId]) return;
             window._dropLikeBusy[postId] = true;
             const previousLikedBy = Array.isArray(post.likedBy) ? post.likedBy.slice() : [];
+            const previousProfiles = Object.assign({}, post.likedByProfiles || {});
             const previousLikeCount = Math.max(0, Number(post.likeCount) || previousLikedBy.length || 0);
             const optimisticLikedBy = previousLikedBy.slice();
+            const optimisticProfiles = Object.assign({}, previousProfiles);
             const optimisticIndex = optimisticLikedBy.indexOf(user.uid);
-            if (optimisticIndex >= 0) optimisticLikedBy.splice(optimisticIndex, 1);
-            else optimisticLikedBy.push(user.uid);
+            if (optimisticIndex >= 0) {
+                optimisticLikedBy.splice(optimisticIndex, 1);
+                delete optimisticProfiles[user.uid];
+            } else {
+                optimisticLikedBy.push(user.uid);
+                optimisticProfiles[user.uid] = { name: dropAuthorName(user), photoURL: user.photoURL || '' };
+            }
             post.likedBy = optimisticLikedBy;
+            post.likedByProfiles = optimisticProfiles;
             post.likeCount = optimisticLikedBy.length;
             syncDropEngagementUI(postId, true);
             try {
@@ -18131,11 +18244,18 @@
                     if (!snapshot.exists()) throw new Error('사진을 찾을 수 없어요.');
                     const current = snapshot.data() || {};
                     const likedBy = Array.isArray(current.likedBy) ? current.likedBy.slice() : [];
+                    const likedByProfiles = Object.assign({}, current.likedByProfiles || {});
                     const index = likedBy.indexOf(user.uid);
-                    if (index >= 0) likedBy.splice(index, 1);
-                    else likedBy.push(user.uid);
+                    if (index >= 0) {
+                        likedBy.splice(index, 1);
+                        delete likedByProfiles[user.uid];
+                    } else {
+                        likedBy.push(user.uid);
+                        likedByProfiles[user.uid] = { name: dropAuthorName(user), photoURL: user.photoURL || '' };
+                    }
                     transaction.set(postRef, {
                         likedBy: likedBy,
+                        likedByProfiles: likedByProfiles,
                         likeCount: likedBy.length,
                         engagementUpdatedAt: Date.now()
                     }, { merge: true });
@@ -18143,6 +18263,7 @@
                 window.haptic && window.haptic();
             } catch (error) {
                 post.likedBy = previousLikedBy;
+                post.likedByProfiles = previousProfiles;
                 post.likeCount = previousLikeCount;
                 syncDropEngagementUI(postId, true);
                 console.error('drop like', error);
@@ -18508,6 +18629,7 @@
                     authorName: dropAuthorName(user),
                     authorPhoto: user.photoURL || '',
                     likedBy: [],
+                    likedByProfiles: {},
                     likeCount: 0,
                     commentCount: 0,
                     createdAt: now,
@@ -18532,6 +18654,17 @@
                 input.value = '';
                 handleDropPhoto(file);
             });
+        });
+        function isProtectedDropMedia(target) {
+            return !!(target && target.closest && target.closest('#drop-feed .drop-photo-open, #drop-viewer-layer .drop-viewer-image-shell, #drop-viewer-layer .drop-viewer-blur'));
+        }
+        document.addEventListener('contextmenu', function (event) {
+            if (!isProtectedDropMedia(event.target)) return;
+            event.preventDefault();
+        });
+        document.addEventListener('dragstart', function (event) {
+            if (!isProtectedDropMedia(event.target)) return;
+            event.preventDefault();
         });
         window.addEventListener('resize', function () {
             positionDropCardControls();
