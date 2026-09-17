@@ -837,20 +837,20 @@
         }
         .drop-photo-comment-bubbles {
             position: absolute;
-            top: .75rem;
+            top: 1rem;
             bottom: auto;
             z-index: 5;
-            width: min(78%, 13.5rem);
+            width: clamp(5.75rem, 28vw, 8.75rem);
             display: flex;
             flex-direction: column;
-            gap: .375rem;
+            gap: .5rem;
             pointer-events: none;
         }
         .drop-photo-comment-bubbles:empty { display: none; }
-        .drop-photo-comment-bubbles.is-left { left: .75rem; align-items: flex-start; }
-        .drop-photo-comment-bubbles.is-right { right: .75rem; align-items: flex-end; }
+        .drop-photo-comment-bubbles.is-left { right: calc(100% + .5rem); align-items: flex-end; }
+        .drop-photo-comment-bubbles.is-right { left: calc(100% + .5rem); align-items: flex-start; }
         .drop-photo-comment-bubble {
-            max-width: 100%;
+            max-width: calc(100% - 1.125rem);
             padding: 0;
             display: flex;
             align-items: flex-end;
@@ -860,9 +860,16 @@
             background: transparent;
             text-align: left;
             pointer-events: auto;
+            transform-origin: center;
         }
-        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble { flex-direction: row-reverse; text-align: right; }
-        .drop-photo-comment-bubble .drop-comment-avatar { width: 1.5rem; height: 1.5rem; border: .125rem solid rgba(255,255,255,.88); box-shadow: 0 .1875rem .625rem rgba(0,0,0,.18); }
+        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble { flex-direction: row-reverse; text-align: right; }
+        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n + 1) { transform: translateX(.125rem) rotate(-2.2deg); }
+        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n + 2) { transform: translateX(1.125rem) rotate(1.6deg); }
+        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n) { transform: translateX(.5rem) rotate(-1.1deg); }
+        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n + 1) { transform: translateX(-.125rem) rotate(2.2deg); }
+        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n + 2) { transform: translateX(-1.125rem) rotate(-1.6deg); }
+        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n) { transform: translateX(-.5rem) rotate(1.1deg); }
+        .drop-photo-comment-bubble .drop-comment-avatar { width: 1.5rem; height: 1.5rem; border: 0; box-shadow: 0 .1875rem .625rem rgba(0,0,0,.18); }
         .drop-photo-comment-text {
             max-width: calc(100% - 1.875rem);
             padding: .4375rem .625rem;
@@ -875,10 +882,10 @@
             font-size: .625rem;
             font-weight: 750;
             line-height: 1.35;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            overflow-wrap: anywhere;
+            white-space: normal;
         }
-        .drop-photo-comment-bubbles.is-right .drop-photo-comment-text { border-radius: .875rem .875rem .25rem .875rem; }
+        .drop-photo-comment-bubbles.is-left .drop-photo-comment-text { border-radius: .875rem .875rem .25rem .875rem; }
         .drop-viewer-layer {
             position: fixed;
             inset: 0;
@@ -18094,10 +18101,10 @@
                 return '<article class="drop-photo-card is-actions-bottom" data-drop-card-id="' + postId + '">' +
                     '<div class="drop-photo-frame" style="aspect-ratio:' + ratio.toFixed(4) + '">' +
                     '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\')" aria-label="사진 크게 보기"><img src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false"></button>' +
-                    dropCommentBubblesHtml(post, bubbleSide) +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
                     '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
                     '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div></div></div>' +
+                    dropCommentBubblesHtml(post, bubbleSide) +
                     dropActionButtonsHtml(post, user) +
                     '</article>';
             }).join('') + '</div>';
@@ -18158,12 +18165,57 @@
                 card.classList.remove('is-actions-bottom', 'is-actions-left', 'is-actions-right', 'is-actions-top');
                 card.classList.add('is-actions-' + placement);
                 card.dataset.actionPlacement = placement;
+            });
+            const occupiedBubbles = [];
+            cards.forEach(function (card, cardIndex) {
+                const frame = frameBounds[cardIndex];
                 const bubbles = card.querySelector('.drop-photo-comment-bubbles');
-                if (bubbles) {
-                    const bubbleSide = placement === 'right' ? 'left' : placement === 'left' ? 'right' : (frame.left + frame.width / 2 < feedBounds.left + feedBounds.width / 2 ? 'right' : 'left');
-                    bubbles.classList.toggle('is-left', bubbleSide === 'left');
-                    bubbles.classList.toggle('is-right', bubbleSide === 'right');
-                }
+                if (!frame || !bubbles || !bubbles.children.length) return;
+                const measured = bubbles.getBoundingClientRect();
+                const bubbleWidth = measured.width;
+                const bubbleHeight = measured.height;
+                if (!bubbleWidth || !bubbleHeight) return;
+                const gap = 8;
+                const minTop = frame.top + 16;
+                const maxTop = Math.max(minTop, frame.bottom - bubbleHeight - 16);
+                const verticalSlots = [minTop, maxTop, frame.top + ((frame.height - bubbleHeight) / 2)];
+                for (let top = minTop; top <= maxTop; top += 16) verticalSlots.push(top);
+                const uniqueSlots = verticalSlots.filter(function (top, index, list) {
+                    return list.findIndex(function (value) { return Math.abs(value - top) < 1; }) === index;
+                });
+                const outwardSide = frame.left + frame.width / 2 < feedBounds.left + feedBounds.width / 2 ? 'right' : 'left';
+                const candidates = [];
+                ['left', 'right'].forEach(function (side) {
+                    uniqueSlots.forEach(function (top) {
+                        const left = side === 'left' ? frame.left - gap - bubbleWidth : frame.right + gap;
+                        const rect = { left: left, right: left + bubbleWidth, top: top, bottom: top + bubbleHeight };
+                        const frameCollision = frameBounds.reduce(function (area, other, otherIndex) {
+                            if (!other || otherIndex === cardIndex) return area;
+                            const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
+                            return area + overlapArea(rect, padded);
+                        }, 0);
+                        const actionCollision = occupiedRails.reduce(function (area, other) {
+                            const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
+                            return area + overlapArea(rect, padded);
+                        }, 0);
+                        const bubbleCollision = occupiedBubbles.reduce(function (area, other) {
+                            const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
+                            return area + overlapArea(rect, padded);
+                        }, 0);
+                        candidates.push({
+                            side: side,
+                            rect: rect,
+                            score: (outsideArea(rect) * 10000) + ((frameCollision + actionCollision + bubbleCollision) * 1000) + (side === outwardSide ? 0 : 10) + ((top - minTop) * .01)
+                        });
+                    });
+                });
+                candidates.sort(function (a, b) { return a.score - b.score; });
+                const best = candidates[0];
+                if (!best) return;
+                bubbles.classList.toggle('is-left', best.side === 'left');
+                bubbles.classList.toggle('is-right', best.side === 'right');
+                bubbles.style.top = Math.max(0, best.rect.top - frame.top) + 'px';
+                occupiedBubbles.push(best.rect);
             });
         }
 
