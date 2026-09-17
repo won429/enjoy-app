@@ -754,16 +754,24 @@
             margin-left: auto;
             flex: none;
         }
-        .drop-photo-action-rail {
+        .drop-photo-card.is-actions-side .drop-photo-actions {
             position: absolute;
-            top: .75rem;
-            z-index: 6;
+            top: 1rem;
+            z-index: 8;
             display: flex;
             flex-direction: column;
             gap: .375rem;
+            margin: 0;
         }
-        .drop-photo-action-rail.is-right { right: .75rem; }
-        .drop-photo-action-rail.is-left { left: .75rem; }
+        .drop-photo-card.is-actions-side .drop-photo-meta { transform: none; }
+        .drop-photo-card.is-actions-side.is-actions-right .drop-photo-actions { right: -2.75rem; align-items: flex-start; }
+        .drop-photo-card.is-actions-side.is-actions-left .drop-photo-actions { left: -2.75rem; align-items: flex-end; }
+        .drop-photo-card.is-actions-inline .drop-photo-actions { position: static; flex-direction: row; }
+        .drop-photo-card.is-actions-side .drop-photo-action {
+            color: #6B7684;
+            background: rgba(255,255,255,.8);
+            box-shadow: 0 .25rem 1rem rgba(15,23,42,.13);
+        }
         .drop-photo-action {
             min-width: 2.25rem;
             min-height: 2.25rem;
@@ -779,13 +787,30 @@
             -webkit-backdrop-filter: blur(.75rem) saturate(1.35);
             backdrop-filter: blur(.75rem) saturate(1.35);
             font-size: 1.125rem;
-            transition: color .16s ease, background-color .16s ease, transform .16s ease;
+            transition: color .18s ease, background-color .18s ease, transform .18s ease, padding .34s cubic-bezier(.2,.9,.25,1), gap .34s cubic-bezier(.2,.9,.25,1);
         }
         .drop-photo-action:active { transform: scale(.88); background: rgba(255,255,255,.08); }
         .drop-photo-action.is-liked { color: #FF3B5C; }
-        .drop-photo-action-count { min-width: .5rem; font-size: .5625rem; font-weight: 850; line-height: 1; font-variant-numeric: tabular-nums; }
-        .drop-photo-action-count:empty { display: none; }
-        .drop-photo-action-rail .drop-photo-action { flex-direction: column; }
+        .drop-photo-action-count {
+            width: auto;
+            max-width: 0;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateX(-.2rem) scale(.75);
+            font-size: .5625rem;
+            font-weight: 850;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            transition: max-width .34s cubic-bezier(.2,.9,.25,1), opacity .2s ease, transform .34s cubic-bezier(.2,.9,.25,1);
+        }
+        .drop-photo-action.has-count { gap: .3rem; padding-inline: .625rem; }
+        .drop-photo-action.has-count .drop-photo-action-count { max-width: 2.5rem; opacity: 1; transform: translateX(0) scale(1); }
+        .drop-photo-action-count.is-count-pop { animation: dropCountPop .36s cubic-bezier(.2,1.3,.35,1); }
+        @keyframes dropCountPop {
+            0% { transform: translateX(-.2rem) scale(.72); opacity: .35; }
+            62% { transform: translateX(0) scale(1.16); opacity: 1; }
+            100% { transform: translateX(0) scale(1); opacity: 1; }
+        }
         .drop-photo-comment-bubbles {
             position: absolute;
             bottom: .75rem;
@@ -796,6 +821,7 @@
             gap: .375rem;
             pointer-events: none;
         }
+        .drop-photo-comment-bubbles:empty { display: none; }
         .drop-photo-comment-bubbles.is-left { left: .75rem; align-items: flex-start; }
         .drop-photo-comment-bubbles.is-right { right: .75rem; align-items: flex-end; }
         .drop-photo-comment-bubble {
@@ -17833,6 +17859,91 @@
             return '<span class="drop-photo-author-avatar">' + dropEsc(name.slice(0, 1)) + '</span>';
         }
 
+        function dropActionButtonsHtml(post, user) {
+            const likedBy = Array.isArray(post.likedBy) ? post.likedBy : [];
+            const liked = !!(user && likedBy.indexOf(user.uid) >= 0);
+            const likeCount = Math.max(0, Number(post.likeCount) || likedBy.length || 0);
+            const commentCount = Math.max(0, Number(post.commentCount) || 0);
+            const postId = dropEsc(post._id || '');
+            return '<div class="drop-photo-actions">' +
+                '<button type="button" class="drop-photo-action' + (liked ? ' is-liked' : '') + (likeCount ? ' has-count' : '') + '" data-drop-action="like" data-drop-post-id="' + postId + '" onclick="window.toggleDropLike(\'' + postId + '\')" aria-label="' + (liked ? '좋아요 취소' : '좋아요') + '" aria-pressed="' + (liked ? 'true' : 'false') + '"><i class="' + (liked ? 'ph-fill' : 'ph') + ' ph-heart" aria-hidden="true"></i><span class="drop-photo-action-count">' + (likeCount || '') + '</span></button>' +
+                '<button type="button" class="drop-photo-action' + (commentCount ? ' has-count' : '') + '" data-drop-action="comment" data-drop-post-id="' + postId + '" onclick="window.openDropComments(\'' + postId + '\')" aria-label="댓글 보기"><i class="ph ph-chat-circle" aria-hidden="true"></i><span class="drop-photo-action-count">' + (commentCount || '') + '</span></button>' +
+                '</div>';
+        }
+
+        function dropCommentBubblesHtml(post, side) {
+            const postId = dropEsc(post._id || '');
+            const previews = Array.isArray(post.commentPreview) ? post.commentPreview.slice(-2) : [];
+            return '<div class="drop-photo-comment-bubbles is-' + side + '">' + previews.map(function (comment) {
+                return '<button type="button" class="drop-photo-comment-bubble" onclick="window.openDropComments(\'' + postId + '\')" aria-label="' + dropEsc((comment.authorName || '멤버') + '님의 댓글 보기') + '">' +
+                    dropCommentAvatar(comment) + '<span class="drop-photo-comment-text">' + dropEsc(comment.text || '') + '</span></button>';
+            }).join('') + '</div>';
+        }
+
+        function dropStructureSignature(posts) {
+            return (posts || []).map(function (post) {
+                return [
+                    post && post._id,
+                    post && post.imageUrl,
+                    Number(post && post.width) || 0,
+                    Number(post && post.height) || 0,
+                    post && post.authorUid,
+                    post && post.authorName,
+                    post && post.authorPhoto,
+                    dropMillis(post && post.createdAt),
+                    dropExpiryTime(post)
+                ].join('|');
+            }).join('||');
+        }
+
+        function syncDropActionButton(button, count, liked, animate) {
+            if (!button) return;
+            const isLike = button.dataset.dropAction === 'like';
+            const countNode = button.querySelector('.drop-photo-action-count');
+            const nextText = count > 0 ? String(count) : '';
+            const changed = !!countNode && countNode.textContent !== nextText;
+            button.classList.toggle('has-count', count > 0);
+            if (isLike) {
+                button.classList.toggle('is-liked', !!liked);
+                button.setAttribute('aria-pressed', liked ? 'true' : 'false');
+                button.setAttribute('aria-label', liked ? '좋아요 취소' : '좋아요');
+                const icon = button.querySelector('i');
+                if (icon) icon.className = (liked ? 'ph-fill' : 'ph') + ' ph-heart';
+            }
+            if (!countNode) return;
+            countNode.textContent = nextText;
+            if (changed && animate) {
+                countNode.classList.remove('is-count-pop');
+                void countNode.offsetWidth;
+                countNode.classList.add('is-count-pop');
+            }
+        }
+
+        function syncDropEngagementUI(postId, animate, syncComments) {
+            const post = findDropPost(postId);
+            const user = dropUser();
+            if (!post || !user) return;
+            const likedBy = Array.isArray(post.likedBy) ? post.likedBy : [];
+            const liked = likedBy.indexOf(user.uid) >= 0;
+            const likeCount = Math.max(0, Number(post.likeCount) || likedBy.length || 0);
+            const commentCount = Math.max(0, Number(post.commentCount) || 0);
+            document.querySelectorAll('.drop-photo-action[data-drop-post-id]').forEach(function (button) {
+                if (button.dataset.dropPostId !== String(postId)) return;
+                syncDropActionButton(button, button.dataset.dropAction === 'like' ? likeCount : commentCount, liked, animate);
+            });
+            if (!syncComments) return;
+            document.querySelectorAll('.drop-photo-card[data-drop-card-id]').forEach(function (card) {
+                if (card.dataset.dropCardId !== String(postId)) return;
+                const bubbles = card.querySelector('.drop-photo-comment-bubbles');
+                if (!bubbles) return;
+                const side = bubbles.classList.contains('is-right') ? 'right' : 'left';
+                const holder = document.createElement('div');
+                holder.innerHTML = dropCommentBubblesHtml(post, side);
+                const next = holder.firstElementChild;
+                bubbles.innerHTML = next ? next.innerHTML : '';
+            });
+        }
+
         window.enjoyDropAddButtonHtml = function () {
             const uploading = window._dropBusy;
             const user = dropUser();
@@ -17877,28 +17988,16 @@
                 const height = Math.max(1, Number(post.height) || 5);
                 const ratio = Math.max(.62, Math.min(1.6, width / height));
                 const createdAt = dropMillis(post.createdAt);
-                const likedBy = Array.isArray(post.likedBy) ? post.likedBy : [];
-                const liked = likedBy.indexOf(user.uid) >= 0;
-                const likeCount = Math.max(0, Number(post.likeCount) || likedBy.length || 0);
-                const commentCount = Math.max(0, Number(post.commentCount) || 0);
                 const postId = dropEsc(post._id || '');
-                const railSide = ['right', 'left', 'right', 'right', 'left', 'left'][index % 6];
-                const bubbleSide = railSide === 'right' ? 'left' : 'right';
-                const previews = Array.isArray(post.commentPreview) ? post.commentPreview.slice(-2) : [];
-                const bubbles = previews.length ? '<div class="drop-photo-comment-bubbles is-' + bubbleSide + '">' + previews.map(function (comment) {
-                    return '<button type="button" class="drop-photo-comment-bubble" onclick="window.openDropComments(\'' + postId + '\')" aria-label="' + dropEsc((comment.authorName || '멤버') + '님의 댓글 보기') + '">' +
-                        dropCommentAvatar(comment) + '<span class="drop-photo-comment-text">' + dropEsc(comment.text || '') + '</span></button>';
-                }).join('') + '</div>' : '';
-                return '<article class="drop-photo-card">' +
+                const bubbleSide = ['left', 'right', 'left', 'left', 'right', 'right'][index % 6];
+                return '<article class="drop-photo-card is-actions-inline" data-drop-card-id="' + postId + '">' +
                     '<div class="drop-photo-frame" style="aspect-ratio:' + ratio.toFixed(4) + '">' +
                     '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\')" aria-label="사진 크게 보기"><img src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy"></button>' +
-                    '<div class="drop-photo-action-rail is-' + railSide + '">' +
-                    '<button type="button" class="drop-photo-action' + (liked ? ' is-liked' : '') + '" onclick="window.toggleDropLike(\'' + postId + '\')" aria-label="' + (liked ? '좋아요 취소' : '좋아요') + '" aria-pressed="' + (liked ? 'true' : 'false') + '"><i class="' + (liked ? 'ph-fill' : 'ph') + ' ph-heart" aria-hidden="true"></i><span class="drop-photo-action-count">' + (likeCount || '') + '</span></button>' +
-                    '<button type="button" class="drop-photo-action" onclick="window.openDropComments(\'' + postId + '\')" aria-label="댓글 보기"><i class="ph ph-chat-circle" aria-hidden="true"></i><span class="drop-photo-action-count">' + (commentCount || '') + '</span></button>' +
-                    '</div>' + bubbles + '</div>' +
+                    dropCommentBubblesHtml(post, bubbleSide) + '</div>' +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
                     '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
-                    '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div></div>' +
+                    '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div>' +
+                    dropActionButtonsHtml(post, user) + '</div>' +
                     '</article>';
             }).join('') + '</div>';
             window.requestAnimationFrame(positionDropCardControls);
@@ -17909,16 +18008,32 @@
             const feed = document.querySelector('.drop-feed-grid');
             if (!feed) return;
             const feedBounds = feed.getBoundingClientRect();
-            feed.querySelectorAll('.drop-photo-card').forEach(function (card) {
+            const cards = Array.from(feed.querySelectorAll('.drop-photo-card'));
+            const frames = cards.map(function (card) { return card.querySelector('.drop-photo-frame'); });
+            cards.forEach(function (card, cardIndex) {
+                card.classList.remove('is-actions-side', 'is-actions-left', 'is-actions-right');
+                card.classList.add('is-actions-inline');
+                const meta = card.querySelector('.drop-photo-meta');
+                if (!meta) return;
+                const metaBounds = meta.getBoundingClientRect();
+                const cardZ = Number(window.getComputedStyle(card).zIndex) || 0;
+                const isMetaCovered = frames.some(function (frame, frameIndex) {
+                    if (!frame || frameIndex === cardIndex) return false;
+                    const otherCard = cards[frameIndex];
+                    const otherZ = Number(window.getComputedStyle(otherCard).zIndex) || 0;
+                    if (otherZ < cardZ || (otherZ === cardZ && frameIndex < cardIndex)) return false;
+                    const other = frame.getBoundingClientRect();
+                    return other.left < metaBounds.right && other.right > metaBounds.left &&
+                        other.top < metaBounds.bottom && other.bottom > metaBounds.top;
+                });
                 const bounds = card.getBoundingClientRect();
                 const leftSpace = Math.max(0, bounds.left - feedBounds.left);
                 const rightSpace = Math.max(0, feedBounds.right - bounds.right);
                 const side = rightSpace >= leftSpace ? 'right' : 'left';
-                const rail = card.querySelector('.drop-photo-action-rail');
                 const bubbles = card.querySelector('.drop-photo-comment-bubbles');
-                if (rail) {
-                    rail.classList.toggle('is-right', side === 'right');
-                    rail.classList.toggle('is-left', side === 'left');
+                if (isMetaCovered) {
+                    card.classList.remove('is-actions-inline');
+                    card.classList.add('is-actions-side', 'is-actions-' + side);
                 }
                 if (bubbles) {
                     bubbles.classList.toggle('is-left', side === 'right');
@@ -17938,11 +18053,6 @@
             const blur = document.getElementById('drop-viewer-blur');
             if (!post || !user || !card || !blur) return;
             const createdAt = dropMillis(post.createdAt);
-            const likedBy = Array.isArray(post.likedBy) ? post.likedBy : [];
-            const liked = likedBy.indexOf(user.uid) >= 0;
-            const likeCount = Math.max(0, Number(post.likeCount) || likedBy.length || 0);
-            const commentCount = Math.max(0, Number(post.commentCount) || 0);
-            const postId = dropEsc(post._id || '');
             const imageUrl = dropEsc(post.imageUrl || '');
             blur.innerHTML = '<img src="' + imageUrl + '" alt="">';
             card.innerHTML = '<button type="button" class="drop-viewer-close" onclick="window.closeDropViewer()" aria-label="크게 보기 닫기"><i class="ph ph-x" aria-hidden="true"></i></button>' +
@@ -17950,10 +18060,7 @@
                 '<div class="drop-viewer-meta">' + dropAuthorAvatar(post) +
                 '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
                 '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div>' +
-                '<div class="drop-photo-actions">' +
-                '<button type="button" class="drop-photo-action' + (liked ? ' is-liked' : '') + '" onclick="window.toggleDropLike(\'' + postId + '\')" aria-label="' + (liked ? '좋아요 취소' : '좋아요') + '" aria-pressed="' + (liked ? 'true' : 'false') + '"><i class="' + (liked ? 'ph-fill' : 'ph') + ' ph-heart" aria-hidden="true"></i><span class="drop-photo-action-count">' + (likeCount || '') + '</span></button>' +
-                '<button type="button" class="drop-photo-action" onclick="window.openDropComments(\'' + postId + '\')" aria-label="댓글 보기"><i class="ph ph-chat-circle" aria-hidden="true"></i><span class="drop-photo-action-count">' + (commentCount || '') + '</span></button>' +
-                '</div></div>';
+                dropActionButtonsHtml(post, user) + '</div>';
         }
 
         window.openDropViewer = function (postId) {
@@ -17987,6 +18094,15 @@
             if (!user || !post || dropExpiryTime(post) <= Date.now()) return;
             if (!window.meetingDb || !window.runTransaction || !window.fsDoc || window._dropLikeBusy[postId]) return;
             window._dropLikeBusy[postId] = true;
+            const previousLikedBy = Array.isArray(post.likedBy) ? post.likedBy.slice() : [];
+            const previousLikeCount = Math.max(0, Number(post.likeCount) || previousLikedBy.length || 0);
+            const optimisticLikedBy = previousLikedBy.slice();
+            const optimisticIndex = optimisticLikedBy.indexOf(user.uid);
+            if (optimisticIndex >= 0) optimisticLikedBy.splice(optimisticIndex, 1);
+            else optimisticLikedBy.push(user.uid);
+            post.likedBy = optimisticLikedBy;
+            post.likeCount = optimisticLikedBy.length;
+            syncDropEngagementUI(postId, true);
             try {
                 const postRef = window.fsDoc('drop_posts', postId);
                 await window.runTransaction(window.meetingDb, async function (transaction) {
@@ -18005,6 +18121,9 @@
                 });
                 window.haptic && window.haptic();
             } catch (error) {
+                post.likedBy = previousLikedBy;
+                post.likeCount = previousLikeCount;
+                syncDropEngagementUI(postId, true);
                 console.error('drop like', error);
                 window.enjoyAlert && window.enjoyAlert(error && error.code === 'permission-denied'
                     ? '드롭 좋아요 쓰기 권한 설정이 필요해요.'
@@ -18171,10 +18290,16 @@
                         value._id = entry.id;
                         if (value.imageUrl) next.push(value);
                     });
+                    const structureChanged = dropStructureSignature(window._dropPosts) !== dropStructureSignature(next);
                     window._dropPosts = next;
                     window._dropLoading = false;
                     window._dropError = '';
-                    window.renderDropFeed();
+                    if (structureChanged || !document.querySelector('#drop-feed .drop-feed-grid')) {
+                        window.renderDropFeed();
+                    } else {
+                        scheduleDropExpiry(visibleDropPosts());
+                        next.forEach(function (post) { syncDropEngagementUI(post._id, false, true); });
+                    }
                 }, function (error) {
                     console.warn('drop snapshot', error);
                     if (window._dropPostsUnsub) {
