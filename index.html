@@ -727,6 +727,14 @@
             border: 0;
             background: transparent;
             cursor: zoom-in;
+            transform-origin: center;
+        }
+        .drop-photo-open.is-pressing { animation: dropPhotoPress .34s cubic-bezier(.2,.9,.25,1) both; }
+        @keyframes dropPhotoPress {
+            0% { transform: scale(1); }
+            38% { transform: scale(.94); }
+            72% { transform: scale(1.025); }
+            100% { transform: scale(1); }
         }
         .drop-photo-open img {
             display: block;
@@ -834,6 +842,13 @@
         }
         .drop-photo-action:hover { color: #3182F6; }
         .drop-photo-action:active { transform: scale(.82); background: transparent; }
+        .drop-photo-action.is-pressing { animation: dropActionPress .38s cubic-bezier(.2,.9,.25,1) both; }
+        @keyframes dropActionPress {
+            0% { transform: scale(1); }
+            34% { transform: scale(.72); }
+            68% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
         .drop-photo-action:focus-visible { outline: .125rem solid rgba(49,130,246,.5); outline-offset: .125rem; }
         .drop-photo-action.is-liked { color: #FF3B5C; }
         .drop-photo-action-count {
@@ -923,8 +938,10 @@
             padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
             color: #FFF;
             background: #08090B;
+            animation: dropViewerLayerIn .22s ease-out both;
         }
         .drop-viewer-layer.hidden { display: none; }
+        .drop-viewer-layer.is-closing { pointer-events: none; animation: dropViewerLayerOut .26s ease-in both; }
         .drop-viewer-blur {
             position: absolute;
             inset: -2.5rem;
@@ -941,9 +958,21 @@
             display: flex;
             flex-direction: column;
             gap: .875rem;
-            animation: dropViewerIn .28s cubic-bezier(.2,1,.3,1) both;
+            animation: dropViewerIn .38s cubic-bezier(.16,1,.3,1) both;
         }
-        @keyframes dropViewerIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+        .drop-viewer-layer.is-closing .drop-viewer-card { animation: dropViewerOut .24s cubic-bezier(.7,0,.84,0) both; }
+        @keyframes dropViewerLayerIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes dropViewerLayerOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes dropViewerIn {
+            0% { opacity: 0; transform: scale(.9); }
+            68% { opacity: 1; transform: scale(1.025); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes dropViewerOut {
+            0% { opacity: 1; transform: scale(1); }
+            28% { opacity: 1; transform: scale(1.018); }
+            100% { opacity: 0; transform: scale(.9); }
+        }
         .drop-viewer-close {
             position: absolute;
             top: .75rem;
@@ -999,6 +1028,7 @@
             background: #08090B;
         }
         .drop-comments-layer.hidden { display: none; }
+        .drop-comments-layer.is-closing { pointer-events: none; }
         .drop-comments-backdrop {
             position: absolute;
             inset: 0;
@@ -1016,6 +1046,7 @@
             flex-direction: column;
             overflow: hidden;
             background: #08090B;
+            animation: dropCommentsStageIn .46s cubic-bezier(.16,1,.3,1) both;
         }
         .drop-comments-photo-stage {
             position: relative;
@@ -1026,8 +1057,10 @@
             padding: max(3.5rem, calc(env(safe-area-inset-top) + 2.75rem)) 1.5rem .75rem;
         }
         .drop-comments-photo-shell {
-            width: min(72vw, 21rem);
-            height: min(30dvh, 17.5rem);
+            width: fit-content;
+            height: fit-content;
+            max-width: min(72vw, 21rem);
+            max-height: min(30dvh, 17.5rem);
             display: grid;
             place-items: center;
             overflow: hidden;
@@ -1062,9 +1095,22 @@
             animation: dropCommentsSheetIn .3s cubic-bezier(.2,1,.3,1) both;
             font-family: 'NanumPenScript', 'Pretendard', sans-serif;
         }
+        .drop-comments-layer.is-closing .drop-comments-backdrop { animation: dropCommentsFadeOut .32s ease-in both; }
+        .drop-comments-layer.is-closing .drop-comments-stage { animation: dropCommentsStageOut .36s cubic-bezier(.7,0,.84,0) both; }
+        .drop-comments-layer.is-closing .drop-comments-photo-shell { animation: dropCommentsPhotoOut .28s cubic-bezier(.7,0,.84,0) both; }
+        .drop-comments-layer.is-closing .drop-comments-sheet { animation: dropCommentsSheetOut .32s cubic-bezier(.7,0,.84,0) both; }
         @keyframes dropCommentsFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes dropCommentsPhotoIn { from { opacity: .68; transform: translateY(18vh) scale(1.16); } to { opacity: 1; transform: none; } }
-        @keyframes dropCommentsSheetIn { from { opacity: 0; transform: translateY(2rem); } to { opacity: 1; transform: none; } }
+        @keyframes dropCommentsFadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes dropCommentsStageIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes dropCommentsStageOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
+        @keyframes dropCommentsPhotoIn {
+            0% { opacity: 0; transform: translateY(4rem) scale(.94); }
+            72% { opacity: 1; transform: translateY(-.25rem) scale(1.012); }
+            100% { opacity: 1; transform: none; }
+        }
+        @keyframes dropCommentsPhotoOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(4rem) scale(.94); } }
+        @keyframes dropCommentsSheetIn { from { opacity: 0; transform: translateY(30vh); } to { opacity: 1; transform: none; } }
+        @keyframes dropCommentsSheetOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(30vh); } }
         .drop-comments-grabber { display: none; }
         .drop-comments-header {
             min-height: 3.5rem;
@@ -4252,9 +4298,13 @@
             .drop-upload-sheet-head,
             .drop-upload-option,
             .drop-comments-backdrop,
+            .drop-comments-stage,
             .drop-comments-photo-shell,
             .drop-comments-sheet,
-            .drop-viewer-card { animation: none; }
+            .drop-viewer-layer,
+            .drop-viewer-card,
+            .drop-photo-open.is-pressing,
+            .drop-photo-action.is-pressing { animation: none; }
             .academic-school-trigger, .academic-school-trigger i, .academic-school-option { transition: none; }
         }
         @media (min-width: 768px) {
@@ -17938,12 +17988,29 @@
         window._dropComments = [];
         window._dropCommentsUnsub = null;
         window._dropViewerPostId = '';
+        window._dropViewerOpenTimer = null;
+        window._dropViewerCloseTimer = null;
+        window._dropCommentsCloseTimer = null;
 
         function dropEsc(value) {
             if (typeof communityEsc === 'function') return communityEsc(value);
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
             });
+        }
+
+        function dropReducedMotion() {
+            return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        }
+
+        function playDropPress(node, className, duration) {
+            if (!node || !node.classList) return;
+            node.classList.remove(className);
+            void node.offsetWidth;
+            node.classList.add(className);
+            window.setTimeout(function () {
+                if (node && node.classList) node.classList.remove(className);
+            }, dropReducedMotion() ? 0 : duration);
         }
 
         function dropUser() {
@@ -18016,7 +18083,7 @@
             const commentCount = Math.max(0, Number(post.commentCount) || 0);
             const postId = dropEsc(post._id || '');
             return '<div class="drop-photo-actions">' +
-                '<button type="button" class="drop-photo-action' + (liked ? ' is-liked' : '') + (likeCount ? ' has-count' : '') + '" data-drop-action="like" data-drop-post-id="' + postId + '" onclick="window.toggleDropLike(\'' + postId + '\')" aria-label="' + (liked ? '좋아요 취소' : '좋아요') + '" aria-pressed="' + (liked ? 'true' : 'false') + '"><i class="' + (liked ? 'ph-fill' : 'ph') + ' ph-heart" aria-hidden="true"></i><span class="drop-photo-action-count">' + (likeCount || '') + '</span></button>' +
+                '<button type="button" class="drop-photo-action' + (liked ? ' is-liked' : '') + (likeCount ? ' has-count' : '') + '" data-drop-action="like" data-drop-post-id="' + postId + '" onclick="window.toggleDropLike(\'' + postId + '\', this)" aria-label="' + (liked ? '좋아요 취소' : '좋아요') + '" aria-pressed="' + (liked ? 'true' : 'false') + '"><i class="' + (liked ? 'ph-fill' : 'ph') + ' ph-heart" aria-hidden="true"></i><span class="drop-photo-action-count">' + (likeCount || '') + '</span></button>' +
                 '<button type="button" class="drop-photo-action' + (commentCount ? ' has-count' : '') + '" data-drop-action="comment" data-drop-post-id="' + postId + '" onclick="window.openDropComments(\'' + postId + '\')" aria-label="댓글 보기"><i class="ph ph-chat-circle" aria-hidden="true"></i><span class="drop-photo-action-count">' + (commentCount || '') + '</span></button>' +
                 '</div>';
         }
@@ -18184,7 +18251,7 @@
                 const bubbleSide = ['left', 'right', 'left', 'left', 'right', 'right'][index % 6];
                 return '<article class="drop-photo-card is-meta-bottom-left is-actions-top-right" data-drop-card-id="' + postId + '">' +
                     '<div class="drop-photo-frame" style="aspect-ratio:' + ratio.toFixed(4) + '">' +
-                    '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\')" aria-label="사진 크게 보기"><img crossorigin="anonymous" src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false"></button>' +
+                    '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\', this)" aria-label="사진 크게 보기"><img crossorigin="anonymous" src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false"></button>' +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
                     '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
                     '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div></div>' +
@@ -18409,36 +18476,64 @@
                 '<div id="drop-viewer-likers" class="drop-viewer-likers">' + dropLikeProfilesHtml(post) + '</div>';
         }
 
-        window.openDropViewer = function (postId) {
+        window.openDropViewer = function (postId, trigger) {
             const post = findDropPost(postId);
             const layer = document.getElementById('drop-viewer-layer');
             if (!post || !layer || dropExpiryTime(post) <= Date.now()) return;
-            window._dropViewerPostId = postId;
-            renderDropViewer();
-            layer.classList.remove('hidden');
-            layer.setAttribute('aria-hidden', 'false');
-            const close = layer.querySelector('.drop-viewer-close');
-            if (close) close.focus({ preventScroll: true });
+            if (window._dropViewerOpenTimer) window.clearTimeout(window._dropViewerOpenTimer);
+            if (window._dropViewerCloseTimer) window.clearTimeout(window._dropViewerCloseTimer);
+            window._dropViewerCloseTimer = null;
+            playDropPress(trigger, 'is-pressing', 360);
+            const reveal = function () {
+                window._dropViewerOpenTimer = null;
+                const freshPost = findDropPost(postId);
+                if (!freshPost || dropExpiryTime(freshPost) <= Date.now()) return;
+                window._dropViewerPostId = postId;
+                renderDropViewer();
+                layer.classList.remove('hidden', 'is-closing');
+                layer.setAttribute('aria-hidden', 'false');
+                const close = layer.querySelector('.drop-viewer-close');
+                if (close) close.focus({ preventScroll: true });
+            };
+            if (trigger && !dropReducedMotion()) {
+                window._dropViewerOpenTimer = window.setTimeout(reveal, 120);
+            } else {
+                reveal();
+            }
         };
 
         window.closeDropViewer = function () {
+            if (window._dropViewerOpenTimer) window.clearTimeout(window._dropViewerOpenTimer);
+            window._dropViewerOpenTimer = null;
             window._dropViewerPostId = '';
             const layer = document.getElementById('drop-viewer-layer');
             const card = document.getElementById('drop-viewer-card');
             const blur = document.getElementById('drop-viewer-blur');
-            if (layer) {
-                layer.classList.add('hidden');
+            const finish = function () {
+                window._dropViewerCloseTimer = null;
+                if (layer) {
+                    layer.classList.add('hidden');
+                    layer.classList.remove('is-closing');
+                }
+                if (card) card.innerHTML = '';
+                if (blur) blur.innerHTML = '';
+            };
+            if (layer && !layer.classList.contains('hidden')) {
+                if (layer.classList.contains('is-closing')) return;
+                layer.classList.add('is-closing');
                 layer.setAttribute('aria-hidden', 'true');
+                window._dropViewerCloseTimer = window.setTimeout(finish, dropReducedMotion() ? 0 : 260);
+            } else {
+                finish();
             }
-            if (card) card.innerHTML = '';
-            if (blur) blur.innerHTML = '';
         };
 
-        window.toggleDropLike = async function (postId) {
+        window.toggleDropLike = async function (postId, trigger) {
             const user = dropUser();
             const post = findDropPost(postId);
             if (!user || !post || dropExpiryTime(post) <= Date.now()) return;
             if (!window.meetingDb || !window.runTransaction || !window.fsDoc || window._dropLikeBusy[postId]) return;
+            playDropPress(trigger, 'is-pressing', 400);
             window._dropLikeBusy[postId] = true;
             const previousLikedBy = Array.isArray(post.likedBy) ? post.likedBy.slice() : [];
             const previousProfiles = Object.assign({}, post.likedByProfiles || {});
@@ -18529,6 +18624,31 @@
             list.scrollTop = list.scrollHeight;
         }
 
+        function sizeDropCommentsPhoto(post) {
+            const shell = document.getElementById('drop-comments-photo-shell');
+            const photo = document.getElementById('drop-comments-photo-image');
+            if (!shell || !photo) return;
+            const applySize = function (sourceWidth, sourceHeight) {
+                const width = Number(sourceWidth);
+                const height = Number(sourceHeight);
+                if (!(width > 0) || !(height > 0)) return;
+                const rootSize = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
+                const maxWidth = Math.min(window.innerWidth * .72, 21 * rootSize);
+                const maxHeight = Math.min(window.innerHeight * .30, 17.5 * rootSize);
+                const scale = Math.min(maxWidth / width, maxHeight / height);
+                shell.style.width = Math.max(1, Math.round(width * scale)) + 'px';
+                shell.style.height = Math.max(1, Math.round(height * scale)) + 'px';
+                shell.style.aspectRatio = width + ' / ' + height;
+            };
+            applySize(post && post.width, post && post.height);
+            photo.onload = function () {
+                applySize(photo.naturalWidth, photo.naturalHeight);
+            };
+            if (photo.complete && photo.naturalWidth && photo.naturalHeight) {
+                applySize(photo.naturalWidth, photo.naturalHeight);
+            }
+        }
+
         window.openDropComments = function (postId) {
             const user = dropUser();
             const post = findDropPost(postId);
@@ -18538,6 +18658,8 @@
             const photo = document.getElementById('drop-comments-photo-image');
             const composeAvatar = document.getElementById('drop-comment-compose-avatar');
             if (!layer || !window.fsOnSnapshot || !window.fsCol || !window.fsQuery || !window.fsOrderBy || !window.fsLimit) return;
+            if (window._dropCommentsCloseTimer) window.clearTimeout(window._dropCommentsCloseTimer);
+            window._dropCommentsCloseTimer = null;
             if (window._dropCommentsUnsub) {
                 try { window._dropCommentsUnsub(); } catch (e) {}
                 window._dropCommentsUnsub = null;
@@ -18547,13 +18669,14 @@
             if (photo) {
                 photo.src = String(post.imageUrl || '');
                 photo.alt = String((post.authorName || '멤버') + '님의 드롭 사진');
+                sizeDropCommentsPhoto(post);
             }
             if (composeAvatar) {
                 composeAvatar.innerHTML = user.photoURL
                     ? '<img src="' + dropEsc(user.photoURL) + '" alt="" referrerpolicy="no-referrer">'
                     : dropEsc(dropAuthorName(user).slice(0, 1));
             }
-            layer.classList.remove('hidden');
+            layer.classList.remove('hidden', 'is-closing');
             layer.setAttribute('aria-hidden', 'false');
             renderDropComments('댓글을 불러오는 중이에요…');
             try {
@@ -18581,7 +18704,9 @@
                 console.warn('drop comments subscribe', error);
                 renderDropComments('댓글을 불러오지 못했어요.');
             }
-            window.setTimeout(function () { if (input) input.focus({ preventScroll: true }); }, 180);
+            window.setTimeout(function () {
+                if (input && window._dropCommentsPostId === postId) input.focus({ preventScroll: true });
+            }, dropReducedMotion() ? 0 : 480);
         };
 
         window.closeDropComments = function () {
@@ -18594,12 +18719,33 @@
             const layer = document.getElementById('drop-comments-layer');
             const input = document.getElementById('drop-comment-input');
             const photo = document.getElementById('drop-comments-photo-image');
-            if (layer) {
-                layer.classList.add('hidden');
+            const shell = document.getElementById('drop-comments-photo-shell');
+            const finish = function () {
+                window._dropCommentsCloseTimer = null;
+                if (layer) {
+                    layer.classList.add('hidden');
+                    layer.classList.remove('is-closing');
+                }
+                if (input) input.value = '';
+                if (photo) {
+                    photo.onload = null;
+                    photo.removeAttribute('src');
+                    photo.alt = '';
+                }
+                if (shell) {
+                    shell.style.removeProperty('width');
+                    shell.style.removeProperty('height');
+                    shell.style.removeProperty('aspect-ratio');
+                }
+            };
+            if (layer && !layer.classList.contains('hidden')) {
+                if (layer.classList.contains('is-closing')) return;
+                layer.classList.add('is-closing');
                 layer.setAttribute('aria-hidden', 'true');
+                window._dropCommentsCloseTimer = window.setTimeout(finish, dropReducedMotion() ? 0 : 370);
+            } else {
+                finish();
             }
-            if (input) input.value = '';
-            if (photo) { photo.removeAttribute('src'); photo.alt = ''; }
         };
 
         window.submitDropComment = async function () {
@@ -18945,6 +19091,7 @@
         });
         window.addEventListener('resize', function () {
             positionDropCardControls();
+            if (window._dropCommentsPostId) sizeDropCommentsPhoto(findDropPost(window._dropCommentsPostId));
             const sheet = document.getElementById('drop-upload-sheet');
             if (sheet && !sheet.classList.contains('hidden') && window._dropPickerTrigger) {
                 positionDropPicker(window._dropPickerTrigger);
