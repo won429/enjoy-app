@@ -35,6 +35,12 @@
             font-family: 'TossFaceFontMac';
             src: url('https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface-font-mac.css');
         }
+        @font-face {
+            font-family: 'EnjoyEpilogue210';
+            src: local('210 Epilogue'), local('210Epilogue'), local('210 에필로그'), local('210에필로그');
+            font-style: normal;
+            font-display: swap;
+        }
 
         body { 
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
@@ -671,14 +677,24 @@
         .drop-feed-section {
             min-height: 8rem;
             margin-top: .75rem;
+            max-width: 100%;
             padding: 0 .125rem 1.5rem;
+            overflow-x: hidden;
+            overflow-x: clip;
         }
+        #drop-feed { width: 100%; max-width: 100%; overflow-x: hidden; overflow-x: clip; }
         .drop-feed-grid {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
             display: grid;
             grid-template-columns: repeat(12, minmax(0, 1fr));
             align-items: start;
             gap: 1.25rem .5rem;
-            padding: .5rem .125rem 1rem;
+            padding: .75rem .875rem 1.5rem;
+            overflow-x: hidden;
+            overflow-x: clip;
+            isolation: isolate;
         }
         .drop-photo-card {
             position: relative;
@@ -693,13 +709,17 @@
         .drop-photo-card:nth-child(6n + 5) { grid-column: 6 / 13; margin-top: -7rem; transform: rotate(-1.6deg); z-index: 3; }
         .drop-photo-card:nth-child(6n) { grid-column: 2 / 11; margin-top: -2.5rem; transform: rotate(.9deg); }
         .drop-photo-frame {
+            --drop-accent: rgb(139 149 161);
+            --drop-action-ink: #fff;
+            --drop-action-bg: rgba(12, 15, 20, .58);
             position: relative;
             width: 100%;
             overflow: hidden;
-            border: .0625rem solid rgba(255,255,255,.12);
+            border: 0;
             border-radius: clamp(1.25rem, 5vw, 1.75rem);
             background: #151518;
             box-shadow: 0 .875rem 2rem rgba(0,0,0,.25);
+            isolation: isolate;
         }
         .drop-photo-open {
             display: block;
@@ -720,18 +740,29 @@
         }
         .drop-photo-meta {
             position: absolute;
-            left: .75rem;
-            right: .75rem;
-            bottom: .75rem;
-            z-index: 6;
+            left: .625rem;
+            bottom: .625rem;
+            z-index: 7;
+            width: max-content;
+            max-width: calc(100% - 1.25rem);
             display: flex;
             align-items: center;
             gap: .5rem;
             min-width: 0;
-            padding: 0;
+            padding: .3125rem .5625rem .3125rem .3125rem;
             color: #FFF;
+            border-radius: 62.5rem;
+            background: rgba(8,10,14,.46);
+            box-shadow: inset 0 0 0 .0625rem color-mix(in srgb, var(--drop-accent) 62%, rgba(255,255,255,.28)), 0 .25rem .875rem rgba(0,0,0,.2);
+            -webkit-backdrop-filter: blur(.625rem) saturate(1.25);
+            backdrop-filter: blur(.625rem) saturate(1.25);
             pointer-events: none;
+            transition: left .22s ease, right .22s ease, top .22s ease, bottom .22s ease;
         }
+        .drop-photo-card.is-meta-bottom-right .drop-photo-meta { left: auto; right: .625rem; top: auto; bottom: .625rem; }
+        .drop-photo-card.is-meta-top-left .drop-photo-meta { left: .625rem; right: auto; top: .625rem; bottom: auto; }
+        .drop-photo-card.is-meta-top-right .drop-photo-meta { left: auto; right: .625rem; top: .625rem; bottom: auto; }
+        .drop-photo-card.is-meta-bottom-left .drop-photo-meta { left: .625rem; right: auto; top: auto; bottom: .625rem; }
         .drop-photo-author-avatar {
             width: 1.625rem;
             height: 1.625rem;
@@ -747,7 +778,7 @@
             box-shadow: 0 .125rem .625rem rgba(0,0,0,.24);
         }
         .drop-photo-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .drop-photo-meta-copy { min-width: 0; flex: 1; text-align: left; }
+        .drop-photo-meta-copy { min-width: 0; flex: 1; text-align: left; font-family: 'EnjoyEpilogue210', '210 Epilogue', '210에필로그', 'Pretendard', sans-serif; }
         .drop-photo-meta-copy strong,
         .drop-photo-meta-copy time {
             display: block;
@@ -770,31 +801,23 @@
             display: flex;
             gap: .375rem;
             margin: 0;
-        }
-        .drop-photo-card.is-actions-right .drop-photo-actions,
-        .drop-photo-card.is-actions-left .drop-photo-actions {
-            top: 50%;
-            flex-direction: column;
-            transform: translateY(-50%);
-        }
-        .drop-photo-card.is-actions-right .drop-photo-actions { right: -2.75rem; align-items: flex-start; }
-        .drop-photo-card.is-actions-left .drop-photo-actions { left: -2.75rem; align-items: flex-end; }
-        .drop-photo-card.is-actions-bottom .drop-photo-actions {
-            left: 50%;
-            bottom: -2.5rem;
             flex-direction: row;
-            transform: translateX(-50%);
+            top: .625rem;
+            right: .625rem;
+            transition: left .22s ease, right .22s ease, top .22s ease, bottom .22s ease;
         }
-        .drop-photo-card.is-actions-top .drop-photo-actions {
-            left: 50%;
-            top: -2.5rem;
-            flex-direction: row;
-            transform: translateX(-50%);
-        }
+        .drop-photo-card.is-actions-top-left .drop-photo-actions { left: .625rem; right: auto; top: .625rem; bottom: auto; }
+        .drop-photo-card.is-actions-top-right .drop-photo-actions { left: auto; right: .625rem; top: .625rem; bottom: auto; }
+        .drop-photo-card.is-actions-bottom-left .drop-photo-actions { left: .625rem; right: auto; top: auto; bottom: .625rem; }
+        .drop-photo-card.is-actions-bottom-right .drop-photo-actions { left: auto; right: .625rem; top: auto; bottom: .625rem; }
         .drop-photo-card .drop-photo-action {
-            color: #6B7684;
-            background: transparent;
-            box-shadow: none;
+            color: var(--drop-action-ink);
+            border: .0625rem solid rgba(255,255,255,.42);
+            border: .0625rem solid color-mix(in srgb, var(--drop-accent) 72%, rgba(255,255,255,.42));
+            background: var(--drop-action-bg);
+            box-shadow: 0 .25rem .875rem rgba(0,0,0,.22);
+            -webkit-backdrop-filter: blur(.625rem) saturate(1.3);
+            backdrop-filter: blur(.625rem) saturate(1.3);
         }
         .drop-photo-action {
             min-width: 2.25rem;
@@ -812,7 +835,7 @@
             transition: color .18s ease, background-color .18s ease, transform .18s ease, padding .34s cubic-bezier(.2,.9,.25,1), gap .34s cubic-bezier(.2,.9,.25,1);
         }
         .drop-photo-action:hover { color: #3182F6; }
-        .drop-photo-action:active { transform: scale(.82); background: transparent; }
+        .drop-photo-action:active { transform: scale(.82); }
         .drop-photo-action:focus-visible { outline: .125rem solid rgba(49,130,246,.5); outline-offset: .125rem; }
         .drop-photo-action.is-liked { color: #FF3B5C; }
         .drop-photo-action-count {
@@ -840,17 +863,22 @@
             top: 1rem;
             bottom: auto;
             z-index: 5;
-            width: clamp(5.75rem, 28vw, 8.75rem);
+            left: calc(100% + .5rem);
+            right: auto;
+            width: clamp(8.5rem, 42vw, 12rem);
+            max-width: calc(100vw - 2rem);
             display: flex;
             flex-direction: column;
-            gap: .5rem;
+            gap: .6875rem;
             pointer-events: none;
+            font-family: 'EnjoyEpilogue210', '210 Epilogue', '210에필로그', 'Pretendard', sans-serif;
         }
         .drop-photo-comment-bubbles:empty { display: none; }
-        .drop-photo-comment-bubbles.is-left { right: calc(100% + .5rem); align-items: flex-end; }
-        .drop-photo-comment-bubbles.is-right { left: calc(100% + .5rem); align-items: flex-start; }
+        .drop-photo-comment-bubbles.is-left { align-items: flex-end; }
+        .drop-photo-comment-bubbles.is-right { align-items: flex-start; }
         .drop-photo-comment-bubble {
-            max-width: calc(100% - 1.125rem);
+            width: max-content;
+            max-width: 100%;
             padding: 0;
             display: flex;
             align-items: flex-end;
@@ -863,17 +891,17 @@
             transform-origin: center;
         }
         .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble { flex-direction: row-reverse; text-align: right; }
-        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n + 1) { transform: translateX(.125rem) rotate(-2.2deg); }
-        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n + 2) { transform: translateX(1.125rem) rotate(1.6deg); }
-        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n) { transform: translateX(.5rem) rotate(-1.1deg); }
-        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n + 1) { transform: translateX(-.125rem) rotate(2.2deg); }
-        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n + 2) { transform: translateX(-1.125rem) rotate(-1.6deg); }
-        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n) { transform: translateX(-.5rem) rotate(1.1deg); }
+        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n + 1) { transform: translateX(-.25rem) rotate(-5.5deg); }
+        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n + 2) { transform: translateX(1.375rem) rotate(3.6deg); }
+        .drop-photo-comment-bubbles.is-right .drop-photo-comment-bubble:nth-child(3n) { transform: translateX(.375rem) rotate(-2.4deg); }
+        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n + 1) { transform: translateX(.25rem) rotate(5.5deg); }
+        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n + 2) { transform: translateX(-1.375rem) rotate(-3.6deg); }
+        .drop-photo-comment-bubbles.is-left .drop-photo-comment-bubble:nth-child(3n) { transform: translateX(-.375rem) rotate(2.4deg); }
         .drop-photo-comment-bubble .drop-comment-avatar { width: 1.5rem; height: 1.5rem; border: 0; box-shadow: 0 .1875rem .625rem rgba(0,0,0,.18); }
         .drop-photo-comment-text {
-            max-width: calc(100% - 1.875rem);
+            width: fit-content;
+            max-width: min(10.25rem, calc(100vw - 5.25rem));
             padding: .4375rem .625rem;
-            overflow: hidden;
             border-radius: .875rem .875rem .875rem .25rem;
             background: rgba(255,255,255,.94);
             box-shadow: 0 .25rem .875rem rgba(0,0,0,.16);
@@ -882,7 +910,8 @@
             font-size: .625rem;
             font-weight: 750;
             line-height: 1.35;
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
+            word-break: keep-all;
             white-space: normal;
         }
         .drop-photo-comment-bubbles.is-left .drop-photo-comment-text { border-radius: .875rem .875rem .25rem .875rem; }
@@ -939,7 +968,7 @@
             display: grid;
             place-items: center;
             overflow: hidden;
-            border: .0625rem solid rgba(255,255,255,.14);
+            border: 0;
             border-radius: 1.75rem;
             background: rgba(0,0,0,.28);
             box-shadow: 0 1.5rem 4rem rgba(0,0,0,.32);
@@ -1033,6 +1062,7 @@
             background: #171B1E;
             box-shadow: 0 -1rem 2.5rem rgba(0,0,0,.24), inset 0 .0625rem 0 rgba(255,255,255,.045);
             animation: dropCommentsSheetIn .3s cubic-bezier(.2,1,.3,1) both;
+            font-family: 'EnjoyEpilogue210', '210 Epilogue', '210에필로그', 'Pretendard', sans-serif;
         }
         @keyframes dropCommentsFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes dropCommentsPhotoIn { from { opacity: .68; transform: translateY(18vh) scale(1.16); } to { opacity: 1; transform: none; } }
@@ -1065,7 +1095,7 @@
         .drop-comment-row { display: flex; align-items: flex-start; gap: .75rem; padding: .75rem 0; border: 0; }
         .drop-comment-avatar { width: 2.375rem; height: 2.375rem; display: grid; place-items: center; overflow: hidden; flex: none; border-radius: 50%; color: #FFF; background: rgba(255,255,255,.1); font-size: .6875rem; font-weight: 900; }
         .drop-comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .drop-comment-copy { min-width: 0; flex: 1; }
+        .drop-comment-copy { min-width: 0; flex: 1; font-family: 'EnjoyEpilogue210', '210 Epilogue', '210에필로그', 'Pretendard', sans-serif; }
         .drop-comment-meta { padding: .0625rem 0 .25rem; display: flex; align-items: center; gap: .375rem; }
         .drop-comment-copy strong { color: #F2F4F6; font-size: .75rem; font-weight: 850; }
         .drop-comment-copy time { color: #8B95A1; font-size: .625rem; font-weight: 650; }
@@ -1091,7 +1121,7 @@
         .drop-comment-compose-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .drop-comment-input-shell { min-width: 0; flex: 1; display: flex; align-items: center; gap: .375rem; padding: .25rem .25rem .25rem .875rem; border: .0625rem solid rgba(255,255,255,.1); border-radius: 1.5rem; background: rgba(255,255,255,.035); }
         .drop-comment-form:focus-within .drop-comment-input-shell { border-color: rgba(139,149,161,.44); }
-        .drop-comment-form input { min-width: 0; height: 2.25rem; flex: 1; padding: 0; border: 0; outline: none; color: #F2F4F6; background: transparent; font-size: .8125rem; }
+        .drop-comment-form input { min-width: 0; height: 2.25rem; flex: 1; padding: 0; border: 0; outline: none; color: #F2F4F6; background: transparent; font-family: 'EnjoyEpilogue210', '210 Epilogue', '210에필로그', 'Pretendard', sans-serif; font-size: .8125rem; }
         .drop-comment-form input::placeholder { color: #6B7684; }
         .drop-comment-form input:focus { box-shadow: none; }
         .drop-comment-form button { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; flex: none; border-radius: 50%; color: #FFF; background: #3182F6; font-size: .875rem; transition: transform .16s ease, background-color .16s ease; }
@@ -7285,15 +7315,14 @@
             #story-tray .drop-add-avatar { border-color: rgba(0,0,0,.12); background: rgba(0,0,0,.045); color: #8B95A1; }
             #story-tray .drop-add-badge { border-color: #F2F2F7; background: #191F28; color: #FFF; }
             #story-tray .drop-add-label { color: #191F28; }
-            .drop-photo-frame { border-color: rgba(0,0,0,.08); background: #E5E8EB; box-shadow: 0 .875rem 2rem rgba(15,23,42,.12); }
+            .drop-photo-frame { border: 0; background: #E5E8EB; box-shadow: 0 .875rem 2rem rgba(15,23,42,.12); }
             .drop-photo-frame .drop-photo-meta-copy strong { color: #FFF; }
             .drop-photo-frame .drop-photo-meta-copy time { color: rgba(255,255,255,.78); }
             .drop-feed-state { color: #8B95A1; }
             .drop-feed-state strong { color: #4E5968; }
             .drop-photo-author-avatar { background: rgba(0,0,0,.08); color: #191F28; }
             .drop-photo-frame .drop-photo-author-avatar { background: rgba(255,255,255,.76); color: #4E5968; }
-            .drop-photo-action { color: #6B7684; }
-            .drop-photo-action:active { background: transparent; }
+            .drop-photo-action { color: var(--drop-action-ink); }
             .drop-photo-action.is-liked { color: #F04452; }
             .drop-comments-layer, .drop-comments-stage { color: #F2F4F6; background: #08090B; }
             .drop-comments-sheet { color: #F2F4F6; background: #171B1E; box-shadow: 0 -1rem 2.5rem rgba(0,0,0,.24), inset 0 .0625rem 0 rgba(255,255,255,.045); }
@@ -18033,7 +18062,7 @@
 
         function dropCommentBubblesHtml(post, side) {
             const postId = dropEsc(post._id || '');
-            const previews = Array.isArray(post.commentPreview) ? post.commentPreview.slice(-2) : [];
+            const previews = Array.isArray(post.commentPreview) ? post.commentPreview.slice(-3) : [];
             return '<div class="drop-photo-comment-bubbles is-' + side + '">' + previews.map(function (comment) {
                 return '<button type="button" class="drop-photo-comment-bubble" onclick="window.openDropComments(\'' + postId + '\')" aria-label="' + dropEsc((comment.authorName || '멤버') + '님의 댓글 보기') + '">' +
                     dropCommentAvatar(comment) + '<span class="drop-photo-comment-text">' + dropEsc(comment.text || '') + '</span></button>';
@@ -18155,19 +18184,81 @@
                 const createdAt = dropMillis(post.createdAt);
                 const postId = dropEsc(post._id || '');
                 const bubbleSide = ['left', 'right', 'left', 'left', 'right', 'right'][index % 6];
-                return '<article class="drop-photo-card is-actions-bottom" data-drop-card-id="' + postId + '">' +
+                return '<article class="drop-photo-card is-meta-bottom-left is-actions-top-right" data-drop-card-id="' + postId + '">' +
                     '<div class="drop-photo-frame" style="aspect-ratio:' + ratio.toFixed(4) + '">' +
-                    '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\')" aria-label="사진 크게 보기"><img src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false"></button>' +
+                    '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\')" aria-label="사진 크게 보기"><img crossorigin="anonymous" src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false"></button>' +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
                     '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
-                    '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div></div></div>' +
+                    '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div></div>' +
+                    dropActionButtonsHtml(post, user) + '</div>' +
                     dropCommentBubblesHtml(post, bubbleSide) +
-                    dropActionButtonsHtml(post, user) +
                     '</article>';
             }).join('') + '</div>';
+            prepareDropPhotoVisuals(wrap);
             window.requestAnimationFrame(positionDropCardControls);
             if (window._dropViewerPostId) renderDropViewer();
         };
+
+        function prepareDropPhotoVisuals(root) {
+            if (!root) return;
+            root.querySelectorAll('.drop-photo-frame .drop-photo-open img').forEach(function (image) {
+                if (image.dataset.dropVisualReady === '1') return;
+                image.dataset.dropVisualReady = '1';
+                const analyze = function () { analyzeDropPhotoVisual(image); };
+                if (image.complete && image.naturalWidth) analyze();
+                else image.addEventListener('load', analyze, { once: true });
+                image.addEventListener('error', function () { window.requestAnimationFrame(positionDropCardControls); }, { once: true });
+            });
+        }
+
+        function analyzeDropPhotoVisual(image) {
+            const frame = image && image.closest ? image.closest('.drop-photo-frame') : null;
+            if (!frame || !image.naturalWidth || !image.naturalHeight) return;
+            try {
+                const canvas = document.createElement('canvas');
+                const size = 32;
+                canvas.width = size;
+                canvas.height = size;
+                const context = canvas.getContext('2d', { willReadFrequently: true });
+                if (!context) return;
+                context.drawImage(image, 0, 0, size, size);
+                const pixels = context.getImageData(0, 0, size, size).data;
+                let red = 0, green = 0, blue = 0, count = 0;
+                const corners = { tl: [], tr: [], bl: [], br: [] };
+                for (let y = 0; y < size; y += 2) {
+                    for (let x = 0; x < size; x += 2) {
+                        const offset = ((y * size) + x) * 4;
+                        const alpha = pixels[offset + 3] / 255;
+                        if (alpha < .2) continue;
+                        const r = pixels[offset];
+                        const g = pixels[offset + 1];
+                        const b = pixels[offset + 2];
+                        red += r; green += g; blue += b; count += 1;
+                        const luminance = (.2126 * r + .7152 * g + .0722 * b) / 255;
+                        const key = y < size / 2 ? (x < size / 2 ? 'tl' : 'tr') : (x < size / 2 ? 'bl' : 'br');
+                        corners[key].push(luminance);
+                    }
+                }
+                if (!count) return;
+                red = Math.round(red / count);
+                green = Math.round(green / count);
+                blue = Math.round(blue / count);
+                const averageLuminance = (.2126 * red + .7152 * green + .0722 * blue) / 255;
+                frame.style.setProperty('--drop-accent', 'rgb(' + red + ' ' + green + ' ' + blue + ')');
+                frame.style.setProperty('--drop-action-ink', averageLuminance > .68 ? '#101318' : '#FFFFFF');
+                frame.style.setProperty('--drop-action-bg', averageLuminance > .68 ? 'rgba(255,255,255,.62)' : 'rgba(8,10,14,.56)');
+                frame._dropCornerScores = {};
+                Object.keys(corners).forEach(function (key) {
+                    const values = corners[key];
+                    const mean = values.reduce(function (sum, value) { return sum + value; }, 0) / Math.max(1, values.length);
+                    const variance = values.reduce(function (sum, value) { return sum + Math.pow(value - mean, 2); }, 0) / Math.max(1, values.length);
+                    frame._dropCornerScores[key] = variance * 180 + (1 - Math.abs(mean - .5) * 2) * 3;
+                });
+            } catch (error) {
+                frame._dropCornerScores = null;
+            }
+            window.requestAnimationFrame(positionDropCardControls);
+        }
 
         function positionDropCardControls() {
             const feed = document.querySelector('.drop-feed-grid');
@@ -18176,102 +18267,126 @@
             const cards = Array.from(feed.querySelectorAll('.drop-photo-card'));
             const frames = cards.map(function (card) { return card.querySelector('.drop-photo-frame'); });
             const frameBounds = frames.map(function (frame) { return frame ? frame.getBoundingClientRect() : null; });
-            const occupiedRails = [];
+            const occupiedControls = [];
             function overlapArea(a, b) {
                 const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
                 const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
                 return width * height;
             }
+            function padded(rect, amount) {
+                return { left: rect.left - amount, right: rect.right + amount, top: rect.top - amount, bottom: rect.bottom + amount };
+            }
             function outsideArea(rect) {
                 const insideWidth = Math.max(0, Math.min(rect.right, feedBounds.right) - Math.max(rect.left, feedBounds.left));
-                const insideHeight = Math.max(0, rect.bottom - rect.top);
+                const insideHeight = Math.max(0, Math.min(rect.bottom, feedBounds.bottom) - Math.max(rect.top, feedBounds.top));
                 return Math.max(0, ((rect.right - rect.left) * (rect.bottom - rect.top)) - (insideWidth * insideHeight));
+            }
+            function isCardAbove(otherIndex, cardIndex) {
+                const otherZ = Number(window.getComputedStyle(cards[otherIndex]).zIndex) || 0;
+                const cardZ = Number(window.getComputedStyle(cards[cardIndex]).zIndex) || 0;
+                return otherZ > cardZ || (otherZ === cardZ && otherIndex > cardIndex);
+            }
+            function coveredByPhotos(rect, cardIndex) {
+                return frameBounds.reduce(function (area, other, otherIndex) {
+                    if (!other || otherIndex === cardIndex || !isCardAbove(otherIndex, cardIndex)) return area;
+                    return area + overlapArea(rect, other);
+                }, 0);
+            }
+            function cornerCandidates(frame, width, height) {
+                const inset = 10;
+                return [
+                    { name: 'bottom-left', key: 'bl', priority: 0, rect: { left: frame.left + inset, right: frame.left + inset + width, top: frame.bottom - inset - height, bottom: frame.bottom - inset } },
+                    { name: 'bottom-right', key: 'br', priority: 1, rect: { left: frame.right - inset - width, right: frame.right - inset, top: frame.bottom - inset - height, bottom: frame.bottom - inset } },
+                    { name: 'top-left', key: 'tl', priority: 2, rect: { left: frame.left + inset, right: frame.left + inset + width, top: frame.top + inset, bottom: frame.top + inset + height } },
+                    { name: 'top-right', key: 'tr', priority: 3, rect: { left: frame.right - inset - width, right: frame.right - inset, top: frame.top + inset, bottom: frame.top + inset + height } }
+                ];
             }
             cards.forEach(function (card, cardIndex) {
                 const frame = frameBounds[cardIndex];
+                const frameNode = frames[cardIndex];
+                const meta = card.querySelector('.drop-photo-meta');
                 const actions = card.querySelector('.drop-photo-actions');
-                if (!frame || !actions) return;
-                const buttons = Array.from(actions.querySelectorAll('.drop-photo-action'));
-                const buttonBounds = buttons.map(function (button) { return button.getBoundingClientRect(); });
-                const gap = 6;
-                const railWidth = Math.max(36, buttonBounds.reduce(function (width, rect) { return Math.max(width, rect.width); }, 0));
-                const railHeight = Math.max(36, buttonBounds.reduce(function (height, rect) { return height + rect.height; }, 0) + Math.max(0, buttonBounds.length - 1) * gap);
-                const bottomWidth = Math.max(36, buttonBounds.reduce(function (width, rect) { return width + rect.width; }, 0) + Math.max(0, buttonBounds.length - 1) * gap);
-                const bottomHeight = Math.max(36, buttonBounds.reduce(function (height, rect) { return Math.max(height, rect.height); }, 0));
-                const candidates = [
-                    { name: 'bottom', priority: 0, rect: { left: frame.left + ((frame.width - bottomWidth) / 2), right: frame.left + ((frame.width + bottomWidth) / 2), top: frame.bottom + gap, bottom: frame.bottom + gap + bottomHeight } },
-                    { name: 'right', priority: 1, rect: { left: frame.right + gap, right: frame.right + gap + railWidth, top: frame.top + ((frame.height - railHeight) / 2), bottom: frame.top + ((frame.height + railHeight) / 2) } },
-                    { name: 'left', priority: 2, rect: { left: frame.left - gap - railWidth, right: frame.left - gap, top: frame.top + ((frame.height - railHeight) / 2), bottom: frame.top + ((frame.height + railHeight) / 2) } },
-                    { name: 'top', priority: 3, rect: { left: frame.left + ((frame.width - bottomWidth) / 2), right: frame.left + ((frame.width + bottomWidth) / 2), top: frame.top - gap - bottomHeight, bottom: frame.top - gap } }
-                ];
-                candidates.forEach(function (candidate) {
-                    const collision = frameBounds.reduce(function (area, other, otherIndex) {
-                        if (!other || otherIndex === cardIndex) return area;
-                        const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
-                        return area + overlapArea(candidate.rect, padded);
-                    }, 0);
-                    const railCollision = occupiedRails.reduce(function (area, other) {
-                        const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
-                        return area + overlapArea(candidate.rect, padded);
-                    }, 0);
-                    candidate.score = (outsideArea(candidate.rect) * 1000) + ((collision + railCollision) * 1000) + candidate.priority;
+                if (!frame || !frameNode || !meta || !actions) return;
+                const metaSize = meta.getBoundingClientRect();
+                const actionSize = actions.getBoundingClientRect();
+                const cornerScores = frameNode._dropCornerScores || {};
+                const metaCandidates = cornerCandidates(frame, Math.min(metaSize.width, frame.width - 20), metaSize.height);
+                metaCandidates.forEach(function (candidate) {
+                    candidate.score = outsideArea(candidate.rect) * 10000 + coveredByPhotos(candidate.rect, cardIndex) * 1200 + (cornerScores[candidate.key] || 0) + candidate.priority;
                 });
-                candidates.sort(function (a, b) { return a.score - b.score; });
-                const placement = candidates[0].name;
-                occupiedRails.push(candidates[0].rect);
-                card.classList.remove('is-actions-bottom', 'is-actions-left', 'is-actions-right', 'is-actions-top');
-                card.classList.add('is-actions-' + placement);
-                card.dataset.actionPlacement = placement;
+                metaCandidates.sort(function (a, b) { return a.score - b.score; });
+                const metaPlacement = metaCandidates[0];
+                card.classList.remove('is-meta-bottom-left', 'is-meta-bottom-right', 'is-meta-top-left', 'is-meta-top-right');
+                card.classList.add('is-meta-' + metaPlacement.name);
+                occupiedControls.push(metaPlacement.rect);
+
+                const actionCandidates = cornerCandidates(frame, Math.min(actionSize.width, frame.width - 20), actionSize.height);
+                actionCandidates.forEach(function (candidate) {
+                    candidate.score = outsideArea(candidate.rect) * 10000 + coveredByPhotos(candidate.rect, cardIndex) * 1400 + overlapArea(padded(candidate.rect, 5), metaPlacement.rect) * 1600 + (cornerScores[candidate.key] || 0) + candidate.priority;
+                });
+                actionCandidates.sort(function (a, b) { return a.score - b.score; });
+                const actionPlacement = actionCandidates[0];
+                card.classList.remove('is-actions-bottom-left', 'is-actions-bottom-right', 'is-actions-top-left', 'is-actions-top-right');
+                card.classList.add('is-actions-' + actionPlacement.name);
+                card.dataset.actionPlacement = actionPlacement.name;
+                occupiedControls.push(actionPlacement.rect);
             });
+
             const occupiedBubbles = [];
             cards.forEach(function (card, cardIndex) {
                 const frame = frameBounds[cardIndex];
                 const bubbles = card.querySelector('.drop-photo-comment-bubbles');
                 if (!frame || !bubbles || !bubbles.children.length) return;
                 const measured = bubbles.getBoundingClientRect();
-                const bubbleWidth = measured.width;
+                const bubbleWidth = Math.min(measured.width, feedBounds.width - 16);
                 const bubbleHeight = measured.height;
                 if (!bubbleWidth || !bubbleHeight) return;
-                const gap = 8;
-                const minTop = frame.top + 16;
-                const maxTop = Math.max(minTop, frame.bottom - bubbleHeight - 16);
-                const verticalSlots = [minTop, maxTop, frame.top + ((frame.height - bubbleHeight) / 2)];
-                for (let top = minTop; top <= maxTop; top += 16) verticalSlots.push(top);
-                const uniqueSlots = verticalSlots.filter(function (top, index, list) {
-                    return list.findIndex(function (value) { return Math.abs(value - top) < 1; }) === index;
-                });
-                const outwardSide = frame.left + frame.width / 2 < feedBounds.left + feedBounds.width / 2 ? 'right' : 'left';
+                const gap = 9;
+                const horizontalSafeInset = Math.min(28, Math.max(8, feedBounds.width * .07));
+                const minLeft = feedBounds.left + horizontalSafeInset;
+                const maxLeft = Math.max(minLeft, feedBounds.right - bubbleWidth - horizontalSafeInset);
+                const minTop = feedBounds.top + 8;
+                const maxTop = Math.max(minTop, feedBounds.bottom - bubbleHeight - 8);
+                const verticalSlots = [
+                    frame.top + 12,
+                    frame.top + frame.height * .28 - bubbleHeight * .35,
+                    frame.top + (frame.height - bubbleHeight) * .58,
+                    frame.bottom - bubbleHeight - 12
+                ].map(function (top) { return Math.max(minTop, Math.min(maxTop, top)); });
                 const candidates = [];
-                ['left', 'right'].forEach(function (side) {
-                    uniqueSlots.forEach(function (top) {
-                        const left = side === 'left' ? frame.left - gap - bubbleWidth : frame.right + gap;
+                [
+                    { side: 'left', left: frame.left - bubbleWidth - gap },
+                    { side: 'right', left: frame.right + gap },
+                    { side: 'left', left: frame.left - bubbleWidth * .56 },
+                    { side: 'right', left: frame.right - bubbleWidth * .44 }
+                ].forEach(function (horizontal, horizontalIndex) {
+                    verticalSlots.forEach(function (top, verticalIndex) {
+                        const left = Math.max(minLeft, Math.min(maxLeft, horizontal.left));
                         const rect = { left: left, right: left + bubbleWidth, top: top, bottom: top + bubbleHeight };
-                        const frameCollision = frameBounds.reduce(function (area, other, otherIndex) {
+                        const otherPhotoCollision = frameBounds.reduce(function (area, other, otherIndex) {
                             if (!other || otherIndex === cardIndex) return area;
-                            const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
-                            return area + overlapArea(rect, padded);
+                            return area + overlapArea(rect, padded(other, gap));
                         }, 0);
-                        const actionCollision = occupiedRails.reduce(function (area, other) {
-                            const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
-                            return area + overlapArea(rect, padded);
-                        }, 0);
-                        const bubbleCollision = occupiedBubbles.reduce(function (area, other) {
-                            const padded = { left: other.left - gap, right: other.right + gap, top: other.top - gap, bottom: other.bottom + gap };
-                            return area + overlapArea(rect, padded);
-                        }, 0);
+                        const ownPhotoCollision = overlapArea(rect, frame);
+                        const controlCollision = occupiedControls.reduce(function (area, other) { return area + overlapArea(rect, padded(other, 4)); }, 0);
+                        const bubbleCollision = occupiedBubbles.reduce(function (area, other) { return area + overlapArea(rect, padded(other, gap)); }, 0);
+                        const scatter = ((cardIndex * 17 + horizontalIndex * 7 + verticalIndex * 11) % 23) * .45;
                         candidates.push({
-                            side: side,
+                            side: horizontal.side,
                             rect: rect,
-                            score: (outsideArea(rect) * 10000) + ((frameCollision + actionCollision + bubbleCollision) * 1000) + (side === outwardSide ? 0 : 10) + ((top - minTop) * .01)
+                            score: outsideArea(rect) * 10000 + otherPhotoCollision * 900 + controlCollision * 1100 + bubbleCollision * 1300 + ownPhotoCollision * 3 + scatter
                         });
                     });
                 });
                 candidates.sort(function (a, b) { return a.score - b.score; });
                 const best = candidates[0];
                 if (!best) return;
+                const cardBounds = card.getBoundingClientRect();
                 bubbles.classList.toggle('is-left', best.side === 'left');
                 bubbles.classList.toggle('is-right', best.side === 'right');
-                bubbles.style.top = Math.max(0, best.rect.top - frame.top) + 'px';
+                bubbles.style.right = 'auto';
+                bubbles.style.left = (best.rect.left - cardBounds.left) + 'px';
+                bubbles.style.top = (best.rect.top - cardBounds.top) + 'px';
                 occupiedBubbles.push(best.rect);
             });
         }
