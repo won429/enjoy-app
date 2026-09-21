@@ -3510,6 +3510,25 @@
         .asian-games-community-banner { display: block; width: 100%; padding: 0; margin: .25rem 0 1.25rem; border: 0; border-radius: .875rem; overflow: hidden; background: #e9f2ff; cursor: pointer; }
         .asian-games-community-banner img { display: block; width: 100%; height: auto; }
         .asian-games-community-banner:focus-visible { outline: 3px solid #3182f6; outline-offset: 4px; }
+        .asian-games-roster-section { position: relative; margin: 0 0 1.5rem; }
+        .asian-games-roster-head { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; margin-bottom: .875rem; padding: 0 .125rem; }
+        .asian-games-roster-head h3 { margin: 0; color: #f8fafc; font-size: 1rem; font-weight: 900; letter-spacing: -.035em; }
+        .asian-games-roster-head span { color: #94a3b8; font-size: .6875rem; font-weight: 800; white-space: nowrap; }
+        .asian-games-roster-window { position: relative; }
+        .asian-games-roster-list { display: flex; gap: .75rem; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; padding: .125rem .125rem .75rem; }
+        .asian-games-roster-list::-webkit-scrollbar { display: none; }
+        .asian-games-roster-card { flex: 0 0 clamp(8.625rem, 38vw, 11rem); overflow: hidden; scroll-snap-align: start; border: .0625rem solid #e2e4e8; border-radius: 1.25rem; color: #202327; background: #fff; }
+        .asian-games-roster-photo { position: relative; height: clamp(10.75rem, 49vw, 14.25rem); display: grid; place-items: center; overflow: hidden; color: #a5abb3; background: #e9eaed; }
+        .asian-games-roster-photo > i { font-size: 2rem; }
+        .asian-games-roster-photo img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+        .asian-games-roster-name { display: block; min-height: 3.25rem; padding: .8125rem .875rem; color: #202327; font-size: 1rem; font-weight: 850; line-height: 1.5; white-space: nowrap; }
+        .asian-games-roster-arrow { position: absolute; z-index: 1; top: 42%; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border: .0625rem solid #e2e4e8; border-radius: 50%; color: #69717a; background: #fff; box-shadow: 0 .1875rem .625rem rgba(0,0,0,.08); transform: translateY(-50%); }
+        .asian-games-roster-arrow.is-prev { left: -.875rem; }
+        .asian-games-roster-arrow.is-next { right: -.875rem; }
+        .asian-games-roster-arrow:disabled { opacity: 0; pointer-events: none; }
+        .asian-games-roster-arrow:focus-visible { outline: .1875rem solid #3182f6; outline-offset: .125rem; }
+        html.light-mode .asian-games-roster-head h3 { color: #191f28; }
+        html.light-mode .asian-games-roster-head span { color: #8b95a1; }
         .baseball-country-flag { display: inline-block; width: 1.5rem; height: 1.5rem; object-fit: contain; vertical-align: middle; margin-right: .125rem; }
         .home-baseball-club.is-home { text-align: right; }
         .home-baseball-score {
@@ -8419,6 +8438,7 @@
 
     <script src="baseball-competition.js"></script>
     <script src="baseball-game-players.js"></script>
+    <script src="asian-games-2026-player-images.js"></script>
     <script src="national_gyeongguk_univ_academic_calendar_2026.js"></script>
     <script src="woosong_univ_academic_calendar_2026.js"></script>
     <script src="gyeongsang_national_univ_academic_calendar_2026.js"></script>
@@ -10736,6 +10756,47 @@
             enjoyBaseballRankingTrendRange = range;
             renderEnjoyBaseballRankingTrend();
         };
+        function renderAsianGamesRoster() {
+            const roster = Array.isArray(window.enjoyAsianGamesRoster2026) ? window.enjoyAsianGamesRoster2026 : [];
+            if (!roster.length) return '';
+            const featured = ['김영우', '김주원', '김지찬'];
+            const ordered = roster.slice().sort(function (first, second) {
+                const firstIndex = featured.indexOf(first.name);
+                const secondIndex = featured.indexOf(second.name);
+                return (firstIndex < 0 ? featured.length : firstIndex) - (secondIndex < 0 ? featured.length : secondIndex);
+            });
+            return '<section id="asian-games-roster-section" class="asian-games-roster-section" aria-labelledby="asian-games-roster-title">' +
+                '<div class="asian-games-roster-head"><h3 id="asian-games-roster-title">국가대표 선수들</h3><span>2026 아시안게임 · ' + roster.length + '명</span></div>' +
+                '<div class="asian-games-roster-window">' +
+                    '<button type="button" class="asian-games-roster-arrow is-prev" aria-label="이전 선수 보기" onclick="window.scrollAsianGamesRoster(-1)" disabled><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>' +
+                    '<div id="asian-games-roster-list" class="asian-games-roster-list" tabindex="0" aria-label="국가대표 선수 목록" onscroll="window.updateAsianGamesRosterArrows()">' +
+                        ordered.map(function (player) {
+                            const name = enjoyBaseballEscape(player.name);
+                            return '<article class="asian-games-roster-card" aria-label="' + name + ', ' + enjoyBaseballEscape(player.position) + ', ' + enjoyBaseballEscape(player.team) + '">' +
+                                '<div class="asian-games-roster-photo"><i class="fa-solid fa-user" aria-hidden="true"></i><img src="' + enjoyBaseballEscape(player.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'"></div>' +
+                                '<strong class="asian-games-roster-name">' + name + '</strong></article>';
+                        }).join('') +
+                    '</div>' +
+                    '<button type="button" class="asian-games-roster-arrow is-next" aria-label="다음 선수 보기" onclick="window.scrollAsianGamesRoster(1)"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>' +
+                '</div></section>';
+        }
+        window.updateAsianGamesRosterArrows = function () {
+            const list = document.getElementById('asian-games-roster-list');
+            if (!list) return;
+            const windowEl = list.parentElement;
+            const previous = windowEl.querySelector('.asian-games-roster-arrow.is-prev');
+            const next = windowEl.querySelector('.asian-games-roster-arrow.is-next');
+            if (previous) previous.disabled = list.scrollLeft <= 2;
+            if (next) next.disabled = list.scrollLeft + list.clientWidth >= list.scrollWidth - 2;
+        };
+        window.scrollAsianGamesRoster = function (direction) {
+            const list = document.getElementById('asian-games-roster-list');
+            const card = list && list.querySelector('.asian-games-roster-card');
+            if (!list || !card) return;
+            const gap = parseFloat(window.getComputedStyle(list).gap) || 0;
+            const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            list.scrollBy({ left: direction * (card.getBoundingClientRect().width + gap), behavior: reducedMotion ? 'auto' : 'smooth' });
+        };
         function renderKboScoreboard() {
             const wrap = document.getElementById('baseball-detail-content');
             if (!wrap) return;
@@ -10745,6 +10806,7 @@
                         '<button type="button" id="asian-games-community-banner" class="asian-games-community-banner" onclick="window.openEnjoyAsianGames()" aria-label="아시안게임 야구 화면 열기">' +
                             '<img src="baseball-assets/asian-games-banner.png" width="2000" height="360" alt="아시안게임 야구 경기를 응원하세요! 하나의 열정, 더 큰 아시아">' +
                         '</button>' +
+                        renderAsianGamesRoster() +
                         '<div id="kbo-more-daily-dial" class="kbo-daily-dial" role="group" aria-label="경기 날짜 선택"' +
                             ' onpointerdown="window.startKboMoreDailyDial(event)"' +
                             ' onpointermove="window.moveKboMoreDailyDial(event)"' +
@@ -12158,8 +12220,13 @@
             }
             return enjoyBaseballWatermark(team, 'away');
         }
-        function enjoyBaseballPlayerPhoto(name) {
+        function enjoyBaseballPlayerPhoto(name, game, side) {
             try {
+                if (game && window.enjoyBaseballCompetition.isAsianGames(game)) {
+                    const team = window.enjoyBaseballCompetition.teamName(side === 'away' ? game.team1 : game.team2);
+                    return team === '대한민국' && window.enjoyAsianGamesPlayerImages
+                        ? String(window.enjoyAsianGamesPlayerImages[name] || '') : '';
+                }
                 const source = typeof playerImages !== 'undefined' && playerImages[name];
                 return source ? String(source) : '';
             } catch (error) {
@@ -12210,7 +12277,7 @@
             if (!players.length) return '';
             return '<span class="home-spotlight-player-team is-' + side + '" style="--team-color:' + enjoyBaseballEscape(color) + ';">' +
                 players.map(function (name, index) {
-                    const photo = enjoyBaseballPlayerPhoto(name);
+                    const photo = enjoyBaseballPlayerPhoto(name, game, side);
                     const visual = photo
                         ? '<img src="' + enjoyBaseballEscape(photo) + '" alt="' + enjoyBaseballEscape(name) + '" loading="lazy" referrerpolicy="no-referrer">'
                         : '<span class="home-spotlight-player-fallback">' + enjoyBaseballEscape(name) + '</span>';
