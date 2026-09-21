@@ -8441,6 +8441,7 @@
     <script src="baseball-competition.js"></script>
     <script src="baseball-game-players.js"></script>
     <script src="asian-games-2026-player-images.js?v=20260921-agphotos"></script>
+    <script src="asian-games-2026-tpe-player-images.js?v=20260921-tpephotos"></script>
     <script src="national_gyeongguk_univ_academic_calendar_2026.js"></script>
     <script src="woosong_univ_academic_calendar_2026.js"></script>
     <script src="gyeongsang_national_univ_academic_calendar_2026.js"></script>
@@ -12226,8 +12227,13 @@
             try {
                 if (game && window.enjoyBaseballCompetition.isAsianGames(game)) {
                     const team = window.enjoyBaseballCompetition.teamName(side === 'away' ? game.team1 : game.team2);
-                    return team === '대한민국' && window.enjoyAsianGamesPlayerImages
-                        ? String(window.enjoyAsianGamesPlayerImages[name] || '') : '';
+                    if (team === '대한민국') {
+                        return window.enjoyAsianGamesPlayerImages ? String(window.enjoyAsianGamesPlayerImages[name] || '') : '';
+                    }
+                    if (window.enjoyBaseballCompetition.isChineseTaipei(team)) {
+                        return window.enjoyAsianGamesTpePlayerImages ? String(window.enjoyAsianGamesTpePlayerImages[name] || '') : '';
+                    }
+                    return '';
                 }
                 const source = typeof playerImages !== 'undefined' && playerImages[name];
                 return source ? String(source) : '';

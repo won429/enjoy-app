@@ -98,6 +98,21 @@
     let selectedTeam = params.get('theme');
     if (selectedTeam !== 'KIA' && selectedTeam !== '삼성') selectedTeam = 'KIA';
 
+    function playerPhotoForGame(name, game, team) {
+        const playerName = String(name || '').trim();
+        if (!playerName || playerName === '-') return '';
+        if (window.enjoyBaseballCompetition.isAsianGames(game)) {
+            if (window.enjoyBaseballCompetition.teamName(team) === '대한민국') {
+                return (window.enjoyAsianGamesPlayerImages && window.enjoyAsianGamesPlayerImages[playerName]) || '';
+            }
+            if (window.enjoyBaseballCompetition.isChineseTaipei(team)) {
+                return (window.enjoyAsianGamesTpePlayerImages && window.enjoyAsianGamesTpePlayerImages[playerName]) || '';
+            }
+            return '';
+        }
+        return playerImages[playerName] || '';
+    }
+
     function openTicketPopup() {}
         function isMatchup(m, a, b) {
             return m && ((m.team1 === a && m.team2 === b) || (m.team1 === b && m.team2 === a));
@@ -1042,7 +1057,9 @@
                 const average = _recordSafeText(_recordValue(batter, ['average', 'battingAverage', 'avg', '타율']) || '-');
                 const stat = (keys, fallback = 0) => _recordSafeText(_recordValue(batter, keys) ?? fallback);
                 const stats = `타석 ${stat(['plateAppearances','pa','타석'])}　타수 ${stat(['atBats','ab','타수'])}　안타 ${stat(['hits','h','안타'])}　득점 ${stat(['runs','r','득점'])}<br>타점 ${stat(['rbi','타점'])}　홈런 ${stat(['homeRuns','hr','홈런'])}　볼넷 ${stat(['walks','bb','볼넷'])}　피삼진 ${stat(['strikeouts','so','삼진'])}`;
-                const photo = playerImages[rawName];
+                const recordTeam = _recordValue(batter, ['team', 'teamName', 'club']) ||
+                    (batter.side === 'away' ? m.team1 : batter.side === 'home' ? m.team2 : '');
+                const photo = playerPhotoForGame(rawName, m, recordTeam);
                 const photoHtml = photo ? `<img src="${photo}" alt="${name}">` : `<i class="fa-solid fa-user text-gray-500"></i>`;
                 const summaryRaw = _recordValue(batter, ['summary', 'playSummary', 'description', '상황설명']) || '';
                 const summary = Array.isArray(summaryRaw) ? summaryRaw.map(_recordSafeText).join('\n') : _recordSafeText(summaryRaw);
@@ -1074,6 +1091,8 @@
             const homeScore = l.homeScore ?? '-';
             const awayColor = teamHex[m.team1] || '#39424e';
             const homeColor = teamHex[m.team2] || '#39424e';
+            const defenseTeam = defenseSide === 'away' ? m.team1 : m.team2;
+            const offenseTeam = offenseSide === 'away' ? m.team1 : m.team2;
             const fielders = {};
             activeDefenseLineup.forEach(player => {
                 if (!player || typeof player !== 'object' || !player.position) return;
@@ -1087,7 +1106,7 @@
             const playerHtml = positions.map(([position, cls]) => {
                 const rawName = fielders[position] || '-';
                 const name = rawName === '-' ? position : rawName;
-                const photo = playerImages[rawName];
+                const photo = playerPhotoForGame(rawName, m, defenseTeam);
                 const portrait = photo ? `<img src="${photo}" alt="${_recordSafeText(rawName)}">` : `<i class="fa-solid fa-user text-[0.875rem] text-gray-300 mb-1"></i>`;
                 return `<div class="broadcast-player ${cls}"><div class="portrait">${portrait}</div><span class="name" title="${_recordSafeText(position)} ${_recordSafeText(name)}">${_recordSafeText(name)}</span></div>`;
             }).join('');
@@ -1099,13 +1118,13 @@
             const batterData = matchedBatter || (liveBatterName === '-' ? activeOffenseLineup[0] : null) || null;
             const batterName = liveBatterName !== '-' ? liveBatterName : (_lineupPlayerName(batterData) || '타자');
             const batterSide = _batterSideOf(l, offenseSide, batterData);
-            const batterPhoto = playerImages[batterName];
+            const batterPhoto = playerPhotoForGame(batterName, m, offenseTeam);
             const batterPortrait = batterPhoto ? `<img src="${batterPhoto}" alt="${_recordSafeText(batterName)}">` : `<i class="fa-solid fa-user text-[0.9375rem] text-gray-300 mb-1"></i>`;
             const runnerClasses = { 1: 'first', 2: 'second', 3: 'third' };
             const runnerHtml = [1, 2, 3].filter(base => Boolean(l[`base${base}`])).map(base => {
                 const savedName = _baseRunnerName(l, base, offenseSide);
                 const runnerName = savedName !== '-' ? savedName : `${base}루 주자`;
-                const runnerPhoto = playerImages[runnerName];
+                const runnerPhoto = playerPhotoForGame(runnerName, m, offenseTeam);
                 const runnerPortrait = runnerPhoto ? `<img src="${runnerPhoto}" alt="${_recordSafeText(runnerName)}">` : `<i class="fa-solid fa-user text-[0.6875rem] text-gray-500 mb-1"></i>`;
                 return `<div class="broadcast-runner ${runnerClasses[base]}" aria-label="${base}루 주자 ${_recordSafeText(runnerName)}"><div class="portrait">${runnerPortrait}</div><span class="name">${_recordSafeText(runnerName)}</span></div>`;
             }).join('');
@@ -1574,16 +1593,19 @@
             let lg2 = uiTeamLogo(m.team2, 'w-6 h-6', 'w-6 h-6');
             
             // 투수 행 렌더 헬퍼 (선발/불펜 공통)
-            const _pf_img = (nm) => playerImages[nm] ? `<img src="${playerImages[nm]}" class="w-full h-full object-contain object-bottom scale-[1.3] drop-shadow-md origin-bottom">` : `<i class="fa-solid fa-user text-gray-500 text-[1rem] mt-1.5"></i>`;
-            const _pf_box = (nm) => playerImages[nm] ? "w-9 h-9 flex items-end justify-center shrink-0" : "w-9 h-9 bg-[#222224] rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-white/10";
-            const pitcherRow = (raw, hx, label, recHtml, filled) => {
+            const _pf_img = (nm, team) => {
+                const photo = playerPhotoForGame(nm, m, team);
+                return photo ? `<img src="${photo}" class="w-full h-full object-contain object-bottom scale-[1.3] drop-shadow-md origin-bottom" referrerpolicy="no-referrer">` : `<i class="fa-solid fa-user text-gray-500 text-[1rem] mt-1.5"></i>`;
+            };
+            const _pf_box = (nm, team) => playerPhotoForGame(nm, m, team) ? "w-9 h-9 flex items-end justify-center shrink-0" : "w-9 h-9 bg-[#222224] rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-white/10";
+            const pitcherRow = (raw, hx, label, recHtml, filled, team) => {
                 let nm = (typeof raw === 'object' && raw !== null) ? raw.name : raw;
                 if (!nm || nm === '-') return '';
                 let pos = (typeof raw === 'object' && raw !== null && raw.position) ? raw.position : '투수';
                 let thr = _throwsOf(raw);
                 let bat = thr ? `<span class="text-[0.5625rem] font-bold text-gray-500 border border-gray-600/50 rounded-sm px-1 ml-1 leading-none inline-flex items-center justify-center h-[0.875rem] opacity-80 shrink-0">${thr}</span>` : '';
                 let bs = filled ? `background-color:${hx};border:0.0625rem solid ${hx};color:#ffffff !important;` : `background:transparent;border:0.0625rem solid ${hx};color:${hx};`;
-                return `<div class="mb-3.5"><div class="flex items-center gap-2"><div class="w-[1.375rem] flex justify-center shrink-0"><span style="${bs}" class="text-[0.5rem] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-sm">${label}</span></div><div class="${_pf_box(nm)}">${_pf_img(nm)}</div><div class="flex flex-col min-w-0 flex-1"><div class="flex items-center gap-x-1"><span class="text-[clamp(0.6875rem,3vw,0.875rem)] font-bold text-white whitespace-nowrap tracking-tight shrink">${nm}</span>${bat}</div><span class="text-[0.625rem] text-gray-400 whitespace-nowrap mt-0.5">${pos}</span></div></div>${recHtml || ''}</div>`;
+                return `<div class="mb-3.5"><div class="flex items-center gap-2"><div class="w-[1.375rem] flex justify-center shrink-0"><span style="${bs}" class="text-[0.5rem] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-sm">${label}</span></div><div class="${_pf_box(nm, team)}">${_pf_img(nm, team)}</div><div class="flex flex-col min-w-0 flex-1"><div class="flex items-center gap-x-1"><span class="text-[clamp(0.6875rem,3vw,0.875rem)] font-bold text-white whitespace-nowrap tracking-tight shrink">${nm}</span>${bat}</div><span class="text-[0.625rem] text-gray-400 whitespace-nowrap mt-0.5">${pos}</span></div></div>${recHtml || ''}</div>`;
             };
             // 선발 = 상세 객체(awayStarterDetail/awayPitcherDetail, 사진·좌우 포함), 현재(마운드) 투수 = 라이브에서 갱신되는 문자열(awayPitcher)
             let aStarterRaw = awayStarterInfo.raw || '-';
@@ -1609,10 +1631,10 @@
             let apRecHtml = isClassic ? '' : starterRecHtml(aStarterDisp, m.team1, m.team2, h1);
             let hpRecHtml = isClassic ? '' : starterRecHtml(hStarterDisp, m.team2, m.team1, h2);
 
-            let aph = pitcherRow(aStarterRaw, h1, awayStarterInfo.predicted ? '예상' : '선발', apRecHtml, true) + (aBullpenOn ? pitcherRow(aCurName, h1, '불펜', '', false) : '');
-            let hph = pitcherRow(hStarterRaw, h2, homeStarterInfo.predicted ? '예상' : '선발', hpRecHtml, true) + (hBullpenOn ? pitcherRow(hCurName, h2, '불펜', '', false) : '');
+            let aph = pitcherRow(aStarterRaw, h1, awayStarterInfo.predicted ? '예상' : '선발', apRecHtml, true, m.team1) + (aBullpenOn ? pitcherRow(aCurName, h1, '불펜', '', false, m.team1) : '');
+            let hph = pitcherRow(hStarterRaw, h2, homeStarterInfo.predicted ? '예상' : '선발', hpRecHtml, true, m.team2) + (hBullpenOn ? pitcherRow(hCurName, h2, '불펜', '', false, m.team2) : '');
             
-            const lineupRows = (source, hex) => (source && source.length > 0) ? source.map((pObj, i) => {
+            const lineupRows = (source, hex, team) => (source && source.length > 0) ? source.map((pObj, i) => {
                 let p = _lineupPlayerName(pObj) || '-';
                 let isSub = _isSubstitutionPlayer(pObj);
                 let role = _substitutionRoleOf(pObj);
@@ -1621,15 +1643,15 @@
                 if (isSub && position && role && role !== '교체') pos = `${position} · ${role}`;
                 let batRaw = pObj && pObj.batsThrows ? pObj.batsThrows : '';
                 let bat = batRaw ? `<span class="text-[0.5625rem] font-bold text-gray-500 border border-gray-600/50 rounded-sm px-1 ml-1 leading-none inline-flex items-center justify-center h-[0.875rem] opacity-80 shrink-0">${batRaw}</span>` : '';
-                let hi = playerImages[p], pim = hi ? `<img src="${hi}" class="w-full h-full object-contain object-bottom scale-[1.3] drop-shadow-md origin-bottom">` : `<i class="fa-solid fa-user text-gray-500 text-[1rem] mt-1.5"></i>`;
+                let hi = playerPhotoForGame(p, m, team), pim = hi ? `<img src="${hi}" class="w-full h-full object-contain object-bottom scale-[1.3] drop-shadow-md origin-bottom" referrerpolicy="no-referrer">` : `<i class="fa-solid fa-user text-gray-500 text-[1rem] mt-1.5"></i>`;
                 let pf = hi ? 'w-9 h-9 flex items-end justify-center shrink-0' : 'w-9 h-9 bg-[#222224] rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-white/10';
                 let marker = isSub ? '<span class="lineup-sub-arrow">↑</span>' : String(_lineupOrderOf(pObj, i + 1));
                 let markerStyle = isSub ? '' : `color:${hex}`;
                 return `<div class="flex items-center gap-2 mb-3.5"><span class="w-[1.375rem] min-h-[1.25rem] flex items-center justify-center text-center text-[0.9375rem] font-black shrink-0" style="${markerStyle}">${marker}</span><div class="${pf}">${pim}</div><div class="flex flex-col min-w-0 flex-1"><div class="flex items-center gap-x-1"><span class="text-[clamp(0.6875rem,3vw,0.875rem)] font-bold text-white whitespace-nowrap tracking-tight shrink">${p}</span>${bat}</div><span class="text-[0.625rem] text-gray-400 whitespace-nowrap mt-0.5">${pos}</span></div></div>`;
             }).join('') : '<div class="text-center text-xs text-gray-500 py-4">라인업 정보 없음</div>';
 
-            let abh = lineupRows(aLineupSrc, h1);
-            let hbh = lineupRows(hLineupSrc, h2);
+            let abh = lineupRows(aLineupSrc, h1, m.team1);
+            let hbh = lineupRows(hLineupSrc, h2, m.team2);
             
             c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
             queueScoreboardNameFit();
