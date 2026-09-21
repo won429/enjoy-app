@@ -3531,6 +3531,46 @@
             .asian-games-roster-head h3 { color: #191f28; }
             .asian-games-roster-head span { color: #6b7684; }
         }
+        .asian-games-groups { margin: 1.25rem 0 .5rem; padding-top: 1.125rem; border-top: .0625rem solid rgba(255,255,255,.085); }
+        .asian-games-groups-head { min-height: 2.25rem; display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; padding: 0 .125rem; }
+        .asian-games-groups.is-collapsed .asian-games-groups-head { margin-bottom: 0; }
+        .asian-games-groups-toggle { min-width: 0; display: flex; align-items: center; gap: .4375rem; color: inherit; text-align: left; }
+        .asian-games-groups-toggle > i { color: #7f8a9b; font-size: .6875rem; transition: transform .2s ease; }
+        .asian-games-groups.is-collapsed .asian-games-groups-toggle > i { transform: rotate(-90deg); }
+        .asian-games-groups-title strong { display: block; color: #f8fafc; font-size: .9375rem; font-weight: 900; }
+        .asian-games-groups-title small { display: block; margin-top: .125rem; color: #7f8a9b; font-size: .5625rem; font-weight: 750; }
+        .asian-games-group-tabs { display: flex; align-items: center; gap: .125rem; padding: .1875rem; border-radius: 62.4375rem; background: rgba(255,255,255,.07); }
+        .asian-games-group-tab { min-width: 2.625rem; height: 1.75rem; padding: 0 .625rem; border-radius: 62.4375rem; color: #9aa3af; font-size: .625rem; font-weight: 750; }
+        .asian-games-group-tab.is-active { color: #fff; background: #2455a4; box-shadow: 0 .25rem .75rem rgba(36,85,164,.24); font-weight: 900; }
+        .asian-games-group-ranking-head { min-height: 2.125rem; padding: .5rem .75rem .5rem .125rem; display: grid; grid-template-columns: 2.25rem minmax(0,1fr) 2.25rem 1.75rem 1.75rem 2.75rem; align-items: center; color: #9ca3af; border-bottom: .0625rem solid rgba(255,255,255,.10); font-size: .625rem; font-weight: 700; text-align: center; }
+        .asian-games-group-ranking-head span:nth-child(2) { text-align: left; }
+        .asian-games-group-ranking-list { overflow: hidden; border-radius: .75rem; background: rgba(255,255,255,.05); box-shadow: 0 .0625rem .125rem rgba(0,0,0,.16); }
+        .asian-games-group-ranking-row { height: 2.625rem; padding: 0 .75rem 0 .125rem; display: grid; grid-template-columns: 2.25rem minmax(0,1fr) 2.25rem 1.75rem 1.75rem 2.75rem; align-items: center; color: #49398d; font-size: .75rem; font-weight: 750; text-align: center; }
+        .asian-games-group-ranking-row.is-advance { background: #83e990 !important; }
+        .asian-games-group-ranking-row.is-placement { background: #ffb8b8 !important; }
+        .asian-games-group-ranking-row + .asian-games-group-ranking-row { border-top: .0625rem solid rgba(255,255,255,.72); }
+        .asian-games-group-rank { font-size: .9375rem; font-weight: 900; }
+        .asian-games-group-country { min-width: 0; display: flex; align-items: center; gap: .5rem; color: inherit; font-size: .8125rem; font-weight: 900; text-align: left; white-space: nowrap; }
+        .asian-games-group-country img { width: 1.25rem; height: .875rem; flex: none; object-fit: cover; border: .03125rem solid rgba(255,255,255,.16); }
+        .asian-games-group-rate { color: inherit; font-weight: 900; }
+        .asian-games-group-legend { min-height: 2rem; padding: .5rem .625rem; display: flex; align-items: center; justify-content: flex-end; gap: .4375rem; color: #cbd2dc; font-size: .625rem; font-weight: 750; }
+        .asian-games-group-legend span { display: inline-flex; align-items: center; gap: .3125rem; white-space: nowrap; }
+        .asian-games-group-legend i { width: .6875rem; height: .6875rem; display: block; border-radius: .1875rem; }
+        .asian-games-group-legend .is-advance { background: #83e990; }
+        .asian-games-group-legend .is-placement { background: #ffb8b8; }
+        .asian-games-group-legend b { color: #7f8a9b; font-weight: 600; }
+        @media (prefers-color-scheme: light) {
+            .asian-games-groups { border-top-color: rgba(0,0,0,.09); }
+            .asian-games-groups-title strong { color: #191f28; }
+            .asian-games-groups-title small, .asian-games-group-ranking-head { color: #6b7684; }
+            .asian-games-group-tabs { background: rgba(0,0,0,.05); }
+            .asian-games-group-ranking-head { border-bottom-color: rgba(0,0,0,.09); }
+            .asian-games-group-ranking-list { background: #fff; box-shadow: 0 .0625rem .125rem rgba(15,23,42,.06); }
+            .asian-games-group-ranking-row { color: #49398d; }
+            .asian-games-group-ranking-row + .asian-games-group-ranking-row { border-top-color: rgba(255,255,255,.72); }
+            .asian-games-group-country img { border-color: #e5e8ee; }
+            .asian-games-group-legend { color: #333d4b; }
+        }
         .baseball-country-flag { display: inline-block; width: 1.5rem; height: 1.5rem; object-fit: contain; vertical-align: middle; margin-right: .125rem; }
         .home-baseball-club.is-home { text-align: right; }
         .home-baseball-score {
@@ -10313,6 +10353,7 @@
             list.innerHTML = games.length
                 ? games.map(function (game) { return enjoyBaseballMoreDailyGameCard(game, date); }).join('')
                 : '<div class="kbo-original-empty">해당 일자에는<br>예정된 경기가 없습니다.</div>';
+            refreshAsianGamesGroupStandings();
         }
         function enjoyBaseballMoreCalendarResult(game, team) {
             if (!game) return '';
@@ -10800,6 +10841,116 @@
             const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             list.scrollBy({ left: direction * (card.getBoundingClientRect().width + gap), behavior: reducedMotion ? 'auto' : 'smooth' });
         };
+        let asianGamesActiveGroup = 'A조';
+        let asianGamesGroupExpanded = true;
+        const asianGamesGroups = [
+            { name: 'A조', countries: [
+                { name: '일본', flag: 'JPN' }, { name: '중국', flag: 'CHN' },
+                { name: '필리핀', flag: 'PHI' }, { name: '팔레스타인', flag: 'PLE' }
+            ] },
+            { name: 'B조', countries: [
+                { name: '대만', flag: 'TPE' }, { name: '대한민국', flag: 'KOR' },
+                { name: '태국', flag: 'THA' }, { name: '홍콩', flag: 'HKG' }
+            ] }
+        ];
+        function asianGamesGroupCountryName(rawName) {
+            const name = String(rawName || '').trim();
+            if (window.enjoyBaseballCompetition.isChineseTaipei(name)) return '대만';
+            const flag = window.enjoyBaseballCompetition.flags[name];
+            const code = flag && flag.match(/\/([A-Z]{3})\.png$/);
+            const byCode = { JPN: '일본', CHN: '중국', PHI: '필리핀', PLE: '팔레스타인', KOR: '대한민국', THA: '태국', HKG: '홍콩' };
+            return code && byCode[code[1]] ? byCode[code[1]] : name;
+        }
+        function asianGamesGroupStandingsData() {
+            return asianGamesGroups.map(function (group) {
+                const rows = group.countries.map(function (country, index) {
+                    return { name: country.name, flag: country.flag, seed: index, played: 0, wins: 0, draws: 0, losses: 0, runDifference: 0 };
+                });
+                const byName = Object.fromEntries(rows.map(function (row) { return [row.name, row]; }));
+                let completed = 0;
+                const countedMatchups = new Set();
+                enjoyBaseballMoreAllGames().forEach(function (game) {
+                    if (!window.enjoyBaseballCompetition.isAsianGames(game) ||
+                        String(game.gameStatus || '') !== '종료' || enjoyBaseballIsCanceled(game)) return;
+                    const away = byName[asianGamesGroupCountryName(game.team1)];
+                    const home = byName[asianGamesGroupCountryName(game.team2)];
+                    if (!away || !home || away === home || game.awayScore == null || game.homeScore == null) return;
+                    const matchup = [away.name, home.name].sort().join('|');
+                    if (countedMatchups.has(matchup)) return;
+                    const awayScore = Number(game.awayScore);
+                    const homeScore = Number(game.homeScore);
+                    if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return;
+                    countedMatchups.add(matchup);
+                    completed += 1;
+                    away.played += 1;
+                    home.played += 1;
+                    away.runDifference += awayScore - homeScore;
+                    home.runDifference += homeScore - awayScore;
+                    if (awayScore > homeScore) { away.wins += 1; home.losses += 1; }
+                    else if (homeScore > awayScore) { home.wins += 1; away.losses += 1; }
+                    else { away.draws += 1; home.draws += 1; }
+                });
+                if (completed) rows.sort(function (first, second) {
+                    const firstRate = first.played ? first.wins / first.played : -1;
+                    const secondRate = second.played ? second.wins / second.played : -1;
+                    return secondRate - firstRate || second.wins - first.wins ||
+                        second.runDifference - first.runDifference || first.seed - second.seed;
+                });
+                return { name: group.name, rows: rows, completed: completed };
+            });
+        }
+        function asianGamesGroupStandingsMarkup() {
+            const groups = asianGamesGroupStandingsData();
+            const group = groups.find(function (item) { return item.name === asianGamesActiveGroup; }) || groups[0];
+            const status = group.completed ? group.completed + '경기 종료 기준' : '경기 전 · 대진표 순서';
+            const head = '<div class="asian-games-groups-head">' +
+                    '<button type="button" class="asian-games-groups-toggle" aria-expanded="' + asianGamesGroupExpanded + '" aria-controls="asian-games-groups-content" onclick="window.toggleAsianGamesGroupStandings()">' +
+                        '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span class="asian-games-groups-title"><strong id="asian-games-groups-title">조별리그 순위</strong>' +
+                        (asianGamesGroupExpanded ? '<small>' + status + '</small>' : '') + '</span></button>' +
+                    (asianGamesGroupExpanded ? '<div class="asian-games-group-tabs" role="tablist" aria-label="조 선택">' +
+                        groups.map(function (item) {
+                            const active = item.name === group.name;
+                            return '<button type="button" class="asian-games-group-tab' + (active ? ' is-active' : '') + '" role="tab" aria-selected="' + active + '" onclick="window.switchAsianGamesGroup(\'' + item.name + '\')">' + item.name + '</button>';
+                        }).join('') +
+                    '</div>' : '') +
+                '</div>';
+            if (!asianGamesGroupExpanded) return head;
+            return head + '<div id="asian-games-groups-content">' +
+                '<div class="asian-games-group-ranking-head" aria-hidden="true"><span>순위</span><span>국가</span><span>경기</span><span>승</span><span>패</span><span>승률</span></div>' +
+                '<div class="asian-games-group-ranking-list" role="tabpanel" aria-label="' + group.name + ' 조별리그 순위">' +
+                    group.rows.map(function (row, index) {
+                        const rate = row.played ? (row.wins / Math.max(1, row.wins + row.losses)).toFixed(3) : '-';
+                        return '<div class="asian-games-group-ranking-row ' + (index < 2 ? 'is-advance' : 'is-placement') + '">' +
+                            '<span class="asian-games-group-rank">' + (index + 1) + '</span>' +
+                            '<span class="asian-games-group-country"><img src="baseball-assets/flags/' + row.flag + '.png" alt="" loading="lazy"><b>' + enjoyBaseballEscape(row.name) + '</b></span>' +
+                            '<span>' + (group.completed ? row.played : '-') + '</span><span>' + (group.completed ? row.wins : '-') + '</span>' +
+                            '<span>' + (group.completed ? row.losses : '-') + '</span><span class="asian-games-group-rate">' + rate + '</span></div>';
+                    }).join('') +
+                '</div>' +
+                '<div class="asian-games-group-legend" aria-label="순위 구분"><span><i class="is-advance" aria-hidden="true"></i>슈퍼라운드 진출</span><b aria-hidden="true">|</b><span><i class="is-placement" aria-hidden="true"></i>순위 결정전</span></div>' +
+                '</div>';
+        }
+        function renderAsianGamesGroupStandings() {
+            return '<section id="asian-games-groups" class="asian-games-groups' + (asianGamesGroupExpanded ? '' : ' is-collapsed') + '" aria-labelledby="asian-games-groups-title">' +
+                asianGamesGroupStandingsMarkup() + '</section>';
+        }
+        function refreshAsianGamesGroupStandings() {
+            const section = document.getElementById('asian-games-groups');
+            if (!section) return;
+            section.classList.toggle('is-collapsed', !asianGamesGroupExpanded);
+            section.innerHTML = asianGamesGroupStandingsMarkup();
+        }
+        window.toggleAsianGamesGroupStandings = function () {
+            asianGamesGroupExpanded = !asianGamesGroupExpanded;
+            window.haptic && window.haptic();
+            refreshAsianGamesGroupStandings();
+        };
+        window.switchAsianGamesGroup = function (groupName) {
+            if (!asianGamesGroups.some(function (group) { return group.name === groupName; })) return;
+            asianGamesActiveGroup = groupName;
+            window.haptic && window.haptic();
+            refreshAsianGamesGroupStandings();
+        };
         function renderKboScoreboard() {
             const wrap = document.getElementById('baseball-detail-content');
             if (!wrap) return;
@@ -10817,6 +10968,7 @@
                             ' onpointercancel="window.cancelKboMoreDailyDial(event)"></div>' +
                         '<div id="kbo-more-daily-meta" class="kbo-original-day-meta"></div>' +
                         '<div id="kbo-more-daily-list" class="kbo-original-game-list"></div>' +
+                        renderAsianGamesGroupStandings() +
                     '</section>' +
                     '<section id="kbo-more-calendar-section" class="kbo-original-section" style="--kbo-point:' + (enjoyBaseballTeamColors[enjoyBaseballMoreTeam] || '#EA0029') + ';">' +
                         '<div class="kbo-original-section-head">' +
