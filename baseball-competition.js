@@ -19,7 +19,9 @@
     Object.freeze(colors);
     function teamName(value) {
         const name = String(value || '').trim();
-        return name === '한국' || name === '대한민국' || name.toUpperCase() === 'KOR' ? '대한민국' : name;
+        if (name === '한국' || name === '대한민국' || name.toUpperCase() === 'KOR') return '대한민국';
+        if (isChineseTaipei(name)) return '대만';
+        return name;
     }
     function isChineseTaipei(value) {
         const name = String(value || '').trim().replace(/\s+/g, ' ');
@@ -27,7 +29,7 @@
     }
     function isAsianGames(game) {
         const competition = String(game.competition || game.league || game.categoryId || '').trim();
-        if (competition) return /^(asian[-_ ]?games|아시안\s*게임|agbaseball)$/i.test(competition);
+        if (competition) return /^(asian[-_ ]?games(?:2026)?|asiangames2026|아시안\s*게임|agbaseball)$/i.test(competition);
         return [game.awayTeam || game.team1, game.homeTeam || game.team2].some(function (team) {
             return teamName(team) === '대한민국';
         });

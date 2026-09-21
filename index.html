@@ -3551,7 +3551,7 @@
         .asian-games-group-ranking-row + .asian-games-group-ranking-row { border-top: .0625rem solid rgba(255,255,255,.72); }
         .asian-games-group-rank { font-size: .9375rem; font-weight: 900; }
         .asian-games-group-country { min-width: 0; display: flex; align-items: center; gap: .5rem; color: inherit; font-size: .8125rem; font-weight: 900; text-align: left; white-space: nowrap; }
-        .asian-games-group-country img { width: 1.25rem; height: .875rem; flex: none; object-fit: cover; border: .03125rem solid rgba(255,255,255,.16); }
+        .asian-games-group-country img { width: 1.25rem; height: .875rem; flex: none; object-fit: cover; border: 0; box-shadow: none; }
         .asian-games-group-rate { color: inherit; font-weight: 900; }
         .asian-games-group-legend { min-height: 2rem; padding: .5rem .625rem; display: flex; align-items: center; justify-content: flex-end; gap: .4375rem; color: #cbd2dc; font-size: .625rem; font-weight: 750; }
         .asian-games-group-legend span { display: inline-flex; align-items: center; gap: .3125rem; white-space: nowrap; }
@@ -3568,7 +3568,6 @@
             .asian-games-group-ranking-list { background: #fff; box-shadow: 0 .0625rem .125rem rgba(15,23,42,.06); }
             .asian-games-group-ranking-row { color: #49398d; }
             .asian-games-group-ranking-row + .asian-games-group-ranking-row { border-top-color: rgba(255,255,255,.72); }
-            .asian-games-group-country img { border-color: #e5e8ee; }
             .asian-games-group-legend { color: #333d4b; }
         }
         .baseball-country-flag { display: inline-block; width: 1.5rem; height: 1.5rem; object-fit: contain; vertical-align: middle; margin-right: .125rem; }
@@ -8482,6 +8481,7 @@
     <script src="baseball-game-players.js"></script>
     <script src="asian-games-2026-player-images.js?v=20260921-agphotos"></script>
     <script src="asian-games-2026-tpe-player-images.js?v=20260921-tpephotos"></script>
+    <script src="asian-games-baseball-played.js?v=20260921-results"></script>
     <script src="national_gyeongguk_univ_academic_calendar_2026.js"></script>
     <script src="woosong_univ_academic_calendar_2026.js"></script>
     <script src="gyeongsang_national_univ_academic_calendar_2026.js"></script>
@@ -10189,12 +10189,15 @@
             const merged = new Map();
             const add = function (rawGame) {
                 const game = enjoyBaseballNormalizeGame(rawGame);
-                const key = String(game.id == null ? [game.date, game.team1, game.team2, game.time].join('_') : game.id);
+                const key = window.enjoyBaseballCompetition.isAsianGames(game)
+                    ? ['asian-games', game.date, [game.team1, game.team2].sort().join('|')].join('_')
+                    : String(game.id == null ? [game.date, game.team1, game.team2, game.time].join('_') : game.id);
                 merged.set(key, Object.assign({}, merged.get(key) || {}, game));
             };
             enjoyBaseballMoreHistory().forEach(add);
             enjoyBaseballMoreMonthCache.forEach(function (games) { games.forEach(add); });
             enjoyBaseballScheduleGames.forEach(add);
+            if (window.getAsianGamesBaseballPlayedGames) window.getAsianGamesBaseballPlayedGames().forEach(add);
             return Array.from(merged.values()).sort(function (first, second) {
                 return String(first.date || '').localeCompare(String(second.date || '')) ||
                     String(first.time || '').localeCompare(String(second.time || ''));
@@ -10891,8 +10894,8 @@
                     else { away.draws += 1; home.draws += 1; }
                 });
                 if (completed) rows.sort(function (first, second) {
-                    const firstRate = first.played ? first.wins / first.played : -1;
-                    const secondRate = second.played ? second.wins / second.played : -1;
+                    const firstRate = first.played ? first.wins / first.played : 0;
+                    const secondRate = second.played ? second.wins / second.played : 0;
                     return secondRate - firstRate || second.wins - first.wins ||
                         second.runDifference - first.runDifference || first.seed - second.seed;
                 });

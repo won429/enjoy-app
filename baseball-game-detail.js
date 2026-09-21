@@ -73,6 +73,11 @@
     const teamWinHex = {'LG':'#E4376E', '두산':'#3D5AFE', 'KIA':'#FF2D55', '삼성':'#2F7BE0', 'SSG':'#E63950', '롯데':'#3B6FD4', '한화':'#FF7A1A', 'KT':'#9AA0A6', 'NC':'#4A78C0', '키움':'#C23A6B', '나눔':'#002038', '드림':'#90C0E0', '북부 올스타':'#123B8D', '남부 올스타':'#13B9D1'};
     Object.assign(teamWinHex, window.enjoyBaseballCompetition.colors);
     const KBO_TEAMS = ['LG','두산','KIA','삼성','SSG','롯데','한화','KT','NC','키움'];
+    const ASIAN_GAMES_GROUPS = [
+        ['일본', '중국', '필리핀', '팔레스타인'],
+        ['대만', '대한민국', '태국', '홍콩']
+    ];
+    const ASIAN_GAMES_TEAMS = ASIAN_GAMES_GROUPS.flat();
     // 로컬 히스토리에 빠진 8월 28~30일 경기를 보정하는 KBO 공식 기준 전적.
     // 메인 순위표(index.html)와 같은 기준을 사용한다.
     const KBO_RANKING_BASELINE = Object.freeze({
@@ -144,7 +149,7 @@
         // 완료된 경기들로부터 팀별 전적/최근 흐름/상대전적을 집계한다. (과거 데이터 파일 기반)
         function buildTeamStats() {
             const s = {};
-            KBO_TEAMS.forEach(t => s[t] = { w: 0, l: 0, d: 0, results: [], dates: [], h2h: {} });
+            KBO_TEAMS.concat(ASIAN_GAMES_TEAMS).forEach(t => s[t] = { w: 0, l: 0, d: 0, results: [], dates: [], h2h: {} });
             let finished = scheduleData.filter(m => {
                 let l = liveDataStore[m.id];
                 if (!l || l.gameStatus !== '종료') return false;
@@ -357,7 +362,50 @@
 
         // 과거 기록과 실시간으로 갱신된 완료 경기를 함께 사용해
         // 순위·최근 흐름·상대 전적을 동일한 기준으로 표시한다.
+        function asianGamesMatchupRecordHtml(m) {
+            const group = ASIAN_GAMES_GROUPS.find(teams => teams.includes(m.team1) && teams.includes(m.team2));
+            if (!group) return '';
+            const standings = group.map((team, seed) => {
+                const record = teamStats[team] || { w: 0, d: 0, l: 0, results: [], h2h: {} };
+                const decisions = record.w + record.l;
+                return { team, seed, record, rate: decisions ? record.w / decisions : 0 };
+            }).sort((a, b) => (b.rate - a.rate) || (b.record.w - a.record.w) || (a.record.l - b.record.l) || (a.seed - b.seed));
+            const rankOf = team => standings.findIndex(row => row.team === team) + 1;
+            const recordText = record => `${record.w}승 ${record.d}무 ${record.l}패`;
+            const resultLabel = result => result === 'W' ? '승' : result === 'L' ? '패' : '무';
+            const recentHtml = (team, side) => {
+                let results = (teamStats[team] && teamStats[team].results || []).slice(-5);
+                if (side === 'home') results = results.reverse();
+                return results.map((result, index) => {
+                    const isLatest = side === 'away' ? index === results.length - 1 : index === 0;
+                    return `<span class="matchup-result result-${result}${isLatest ? ' latest' : ''}">${resultLabel(result)}</span>`;
+                }).join('') || '<span class="matchup-recent-empty">경기 없음</span>';
+            };
+            const awayRecord = teamStats[m.team1] || { w: 0, d: 0, l: 0, results: [], h2h: {} };
+            const homeRecord = teamStats[m.team2] || { w: 0, d: 0, l: 0, results: [], h2h: {} };
+            const awayH2h = awayRecord.h2h[m.team2] || { w: 0, d: 0, l: 0 };
+            const homeH2h = homeRecord.h2h[m.team1] || { w: 0, d: 0, l: 0 };
+            return `<section class="matchup-record" aria-label="2026 아시안게임 양 팀 비교">
+                <div class="matchup-record-teams">
+                    <div class="matchup-record-team matchup-record-away"><strong>${m.team1}</strong><span><b>${rankOf(m.team1)}위</b> · ${recordText(awayRecord)}</span></div>
+                    <span class="matchup-record-vs">VS</span>
+                    <div class="matchup-record-team matchup-record-home"><strong>${m.team2}</strong><span><b>${rankOf(m.team2)}위</b> · ${recordText(homeRecord)}</span></div>
+                </div>
+                <div class="matchup-record-divider"></div>
+                <div class="matchup-record-recent">
+                    <div class="matchup-recent-results matchup-recent-away">${recentHtml(m.team1, 'away')}</div>
+                    <strong>최근경기</strong>
+                    <div class="matchup-recent-results matchup-recent-home">${recentHtml(m.team2, 'home')}</div>
+                </div>
+                <div class="matchup-record-head-to-head">
+                    <strong>${recordText(awayH2h)}</strong>
+                    <span>상대전적</span>
+                    <strong>${recordText(homeH2h)}</strong>
+                </div>
+            </section>`;
+        }
         function matchupRecordHtml(m) {
+            if (m && window.enjoyBaseballCompetition.isAsianGames(m)) return asianGamesMatchupRecordHtml(m);
             if (!m || !KBO_TEAMS.includes(m.team1) || !KBO_TEAMS.includes(m.team2)) return '';
             if (!scheduleData.length) return '';
 
@@ -1674,6 +1722,12 @@
         if (!raw) return;
         const game = normalizeGame(raw);
         let scheduled = scheduleData.find(item => String(item.id) === game.id);
+        if (!scheduled && window.enjoyBaseballCompetition.isAsianGames(game)) {
+            scheduled = scheduleData.find(item => {
+                if (!window.enjoyBaseballCompetition.isAsianGames(item) || item.date !== game.date) return false;
+                return [item.team1, item.team2].sort().join('|') === [game.team1, game.team2].sort().join('|');
+            });
+        }
         if (!scheduled) {
             scheduled = game;
             scheduleData.push(scheduled);
@@ -1692,6 +1746,12 @@
         Object.values(window.KBO_HISTORY_2026.gamesByDate).forEach(dayGames => {
             dayGames.forEach(game => mergeGame(game, true));
         });
+        loadAsianGamesPlayedHistory();
+    }
+
+    function loadAsianGamesPlayedHistory() {
+        if (!window.getAsianGamesBaseballPlayedGames) return;
+        window.getAsianGamesBaseballPlayedGames().forEach(game => mergeGame(game, true));
     }
 
     async function refreshRequestedGame(showError) {
@@ -1707,6 +1767,7 @@
             mergeDocument(results[0], false);
             mergeDocument(results[1], true);
             mergeDocument(results[2], true);
+            loadAsianGamesPlayedHistory();
             scheduleData.sort((a, b) => a.date === b.date
                 ? (a.time || '00:00').localeCompare(b.time || '00:00')
                 : String(a.date || '').localeCompare(String(b.date || '')));
