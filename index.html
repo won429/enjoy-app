@@ -3908,7 +3908,7 @@
             -webkit-backdrop-filter: blur(1rem) saturate(1.45);
             backdrop-filter: blur(1rem) saturate(1.45);
         }
-        /* 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정): 굵은 흰 글씨 + 활성 탭 아래 짧은 흰색 바 */
+        /* 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정 / 쇼핑): 굵은 흰 글씨 + 활성 탭 아래 짧은 흰색 바 */
         .home-tabs {
             position: relative;
             z-index: 23;
@@ -4415,6 +4415,33 @@
         .academic-event-title { display: block; color: var(--academic-text); font-size: .875rem; font-weight: 850; line-height: 1.4; overflow-wrap: anywhere; white-space: normal; }
         .academic-event-note { display: block; margin-top: .1875rem; color: var(--academic-sub); font-size: .6875rem; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; white-space: normal; }
         .academic-empty { padding: 3rem 1rem; color: var(--academic-sub); text-align: center; font-size: .8125rem; line-height: 1.6; }
+
+        /* 쇼핑 탭 */
+        #shopping-screen {
+            width: 100%;
+            min-height: 0;
+            flex: none;
+            padding: .875rem 0 max(5.5rem, calc(3rem + env(safe-area-inset-bottom)));
+            color: #F2F4F6;
+        }
+        #shopping-screen.hidden { display: none; }
+        .shop-products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+        .shop-product { min-width: 0; overflow: hidden; border: .0625rem solid rgba(255,255,255,.09); border-radius: 1.25rem; background: #171719; box-shadow: 0 .875rem 2.25rem rgba(0,0,0,.22); }
+        .shop-product-image-wrap { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: #F2F4F6; }
+        .shop-product-image { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .35s cubic-bezier(.22,1,.36,1); }
+        .shop-product:active .shop-product-image { transform: scale(1.035); }
+        .shop-product-chip { position: absolute; top: .625rem; left: .625rem; padding: .3125rem .5rem; border: .0625rem solid rgba(255,255,255,.36); border-radius: 999px; color: #FFF; background: rgba(0,0,0,.34); font-size: .5625rem; font-weight: 800; -webkit-backdrop-filter: blur(.75rem); backdrop-filter: blur(.75rem); }
+        .shop-product-body { padding: .8125rem .8125rem .9375rem; }
+        .shop-product-name { margin: 0; color: #FFF; font-size: .875rem; font-weight: 850; line-height: 1.35; word-break: keep-all; }
+        .shop-product-note { margin: .25rem 0 .75rem; color: #8B95A1; font-size: .625rem; font-weight: 600; line-height: 1.4; }
+        .shop-product-price { display: flex; align-items: baseline; gap: .125rem; color: #FFF; font-variant-numeric: tabular-nums; }
+        .shop-product-price strong { font-size: 1.125rem; font-weight: 950; line-height: 1; }
+        .shop-product-price span { font-size: .6875rem; font-weight: 750; }
+        .shop-price-status { min-height: 1.125rem; margin: .875rem .125rem 0; color: #6B7684; font-size: .625rem; font-weight: 650; text-align: right; }
+        .shop-price-status.is-live { color: #5BA1FF; }
+        @media (max-width: 340px) {
+            .shop-products { grid-template-columns: 1fr; }
+        }
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
             .academic-event { background: rgba(28,28,30,.9); }
         }
@@ -7855,13 +7882,14 @@
             </div>
         </header>
 
-        <!-- 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) -->
+        <!-- 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정 / 쇼핑) -->
         <nav id="home-tabs" class="home-tabs" role="tablist" aria-label="상단 메뉴">
             <button type="button" class="home-tab is-active" data-home-tab="home" role="tab" aria-selected="true" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
             <button type="button" class="home-tab" data-home-tab="baseball" role="tab" aria-selected="false" aria-controls="home-baseball-panel" onclick="window.switchHomeTab('baseball')">야구</button>
             <button type="button" class="home-tab" data-home-tab="vlog" role="tab" aria-selected="false" aria-controls="home-vlog-panel" onclick="window.switchHomeTab('vlog')">브이로그</button>
             <button type="button" class="home-tab" data-home-tab="shorts" role="tab" aria-selected="false" aria-controls="shorts-screen" onclick="window.switchHomeTab('shorts')">숏츠</button>
             <button type="button" class="home-tab" data-home-tab="academic" role="tab" aria-selected="false" aria-controls="academic-schedule-screen" onclick="window.switchHomeTab('academic')">학사일정</button>
+            <button type="button" class="home-tab" data-home-tab="shopping" role="tab" aria-selected="false" aria-controls="shopping-screen" onclick="window.switchHomeTab('shopping')">쇼핑</button>
         </nav>
         
         <!-- 카드 나열 (배너/슬라이더 제거, 각 항목을 사진 카드로 세로 나열) -->
@@ -8477,6 +8505,79 @@
         </div>
     </section>
 
+    <!-- 쇼핑 화면 -->
+    <section id="shopping-screen" class="hidden" aria-hidden="true">
+        <div class="shop-products" aria-label="판매 상품">
+            <article class="shop-product" data-shop-product="water">
+                <div class="shop-product-image-wrap">
+                    <img class="shop-product-image" src="assets/shop/water-500ml-6pack.jpg" alt="500밀리리터 생수 6병" loading="lazy">
+                    <span class="shop-product-chip">생활 필수품</span>
+                </div>
+                <div class="shop-product-body">
+                    <h3 class="shop-product-name">생수 500mL 6병</h3>
+                    <p class="shop-product-note">가볍게 챙기기 좋은 소용량 묶음</p>
+                    <p class="shop-product-price"><strong id="shop-water-price">3,900</strong><span>원</span></p>
+                </div>
+            </article>
+            <article class="shop-product" data-shop-product="shoes">
+                <div class="shop-product-image-wrap">
+                    <img class="shop-product-image" src="assets/shop/everyday-sneakers.jpg" alt="회색과 흰색으로 된 데일리 신발" loading="lazy">
+                    <span class="shop-product-chip">데일리 추천</span>
+                </div>
+                <div class="shop-product-body">
+                    <h3 class="shop-product-name">데일리 스니커즈</h3>
+                    <p class="shop-product-note">매일 편하게 신는 라이트 그레이</p>
+                    <p class="shop-product-price"><strong id="shop-shoes-price">59,000</strong><span>원</span></p>
+                </div>
+            </article>
+            <article class="shop-product" data-shop-product="porkBelly">
+                <div class="shop-product-image-wrap">
+                    <img class="shop-product-image" src="assets/shop/pork-belly.jpg" alt="도톰하게 썬 생삼겹살" loading="lazy">
+                    <span class="shop-product-chip">정육</span>
+                </div>
+                <div class="shop-product-body">
+                    <h3 class="shop-product-name">생삼겹살 600g</h3>
+                    <p class="shop-product-note">구이용 · 600g 한 팩</p>
+                    <p class="shop-product-price"><strong id="shop-pork-belly-price">15,900</strong><span>원</span></p>
+                </div>
+            </article>
+            <article class="shop-product" data-shop-product="porkNeck">
+                <div class="shop-product-image-wrap">
+                    <img class="shop-product-image" src="assets/shop/pork-neck.jpg" alt="도톰하게 썬 생목살" loading="lazy">
+                    <span class="shop-product-chip">정육</span>
+                </div>
+                <div class="shop-product-body">
+                    <h3 class="shop-product-name">생목살 600g</h3>
+                    <p class="shop-product-note">구이용 · 600g 한 팩</p>
+                    <p class="shop-product-price"><strong id="shop-pork-neck-price">13,900</strong><span>원</span></p>
+                </div>
+            </article>
+            <article class="shop-product" data-shop-product="top">
+                <div class="shop-product-image-wrap">
+                    <img class="shop-product-image" src="assets/shop/navy-top.jpg" alt="네이비색 긴팔 상의" loading="lazy">
+                    <span class="shop-product-chip">의류 · 상의</span>
+                </div>
+                <div class="shop-product-body">
+                    <h3 class="shop-product-name">데일리 스웨트셔츠</h3>
+                    <p class="shop-product-note">편하게 입는 네이비 상의</p>
+                    <p class="shop-product-price"><strong id="shop-top-price">29,900</strong><span>원</span></p>
+                </div>
+            </article>
+            <article class="shop-product" data-shop-product="bottom">
+                <div class="shop-product-image-wrap">
+                    <img class="shop-product-image" src="assets/shop/charcoal-bottom.jpg" alt="차콜색 긴 바지 하의" loading="lazy">
+                    <span class="shop-product-chip">의류 · 하의</span>
+                </div>
+                <div class="shop-product-body">
+                    <h3 class="shop-product-name">데일리 코튼 팬츠</h3>
+                    <p class="shop-product-note">여유로운 핏의 차콜 하의</p>
+                    <p class="shop-product-price"><strong id="shop-bottom-price">39,900</strong><span>원</span></p>
+                </div>
+            </article>
+        </div>
+        <p id="shop-price-status" class="shop-price-status" role="status">가격 정보를 준비 중이에요.</p>
+    </section>
+
     <script src="baseball-competition.js"></script>
     <script src="baseball-game-players.js"></script>
     <script src="asian-games-2026-player-images.js?v=20260921-agphotos"></script>
@@ -8491,12 +8592,82 @@
     <script>
     (function () {
         const academicPanel = document.getElementById('academic-schedule-screen');
+        const shoppingPanel = document.getElementById('shopping-screen');
         const homeScreen = document.getElementById('home-screen');
         const deliveryNowbar = document.getElementById('delivery-nowbar');
         if (academicPanel && homeScreen) {
             homeScreen.insertBefore(academicPanel, deliveryNowbar || homeScreen.querySelector('.app-copyright-slot'));
             academicPanel.classList.add('home-academic-panel');
         }
+        if (shoppingPanel && homeScreen) {
+            homeScreen.insertBefore(shoppingPanel, deliveryNowbar || homeScreen.querySelector('.app-copyright-slot'));
+        }
+
+        const shopFallbackPrices = {
+            water: 3900, shoes: 59000,
+            porkBelly: 15900, porkNeck: 13900,
+            top: 29900, bottom: 39900
+        };
+        let shopPriceUnsubscribe = null;
+        let shopPriceSyncStarting = false;
+
+        function shopNormalizePrice(value, fallback) {
+            if (value == null || value === '') return fallback;
+            const number = Number(value);
+            return Number.isFinite(number) && number >= 0 ? Math.round(number) : fallback;
+        }
+
+        function renderShopPrices(data, isLive) {
+            data = data && typeof data === 'object' ? data : {};
+            const products = data.products && typeof data.products === 'object' ? data.products : {};
+            let missingPrice = false;
+            Object.entries(shopFallbackPrices).forEach(function ([key, fallback]) {
+                const product = products[key] && typeof products[key] === 'object' ? products[key] : {};
+                const storedPrice = product.price != null ? product.price : data[key + 'Price'];
+                if (storedPrice == null || storedPrice === '') missingPrice = true;
+                const priceElement = document.querySelector('[data-shop-product="' + key + '"] .shop-product-price strong');
+                if (priceElement) priceElement.textContent = shopNormalizePrice(storedPrice, fallback).toLocaleString('ko-KR');
+            });
+            const status = document.getElementById('shop-price-status');
+            if (status) {
+                status.textContent = isLive
+                    ? (missingPrice ? 'Firebase 가격 반영 · 미등록 상품은 기본 가격' : '모임통장 Firebase에서 가격 동기화 중')
+                    : '기본 가격을 표시하고 있어요.';
+                status.classList.toggle('is-live', !!isLive);
+            }
+        }
+
+        window.prepareShop = function () {
+            renderShopPrices(window.enjoyShopPrices || null, !!window.enjoyShopPricesLive);
+            if (shopPriceUnsubscribe || shopPriceSyncStarting) return;
+            if (!(window.meetingDb && window.fsOnSnapshot && window.fsDoc)) {
+                shopPriceSyncStarting = true;
+                window.setTimeout(function () {
+                    shopPriceSyncStarting = false;
+                    if (window.homeActiveTab === 'shopping') window.prepareShop();
+                }, 600);
+                return;
+            }
+            shopPriceSyncStarting = true;
+            try {
+                shopPriceUnsubscribe = window.fsOnSnapshot(window.fsDoc(...(window.SHOP_PATH || ['meeting_account', 'shop'])), function (snapshot) {
+                    window.enjoyShopPrices = snapshot.exists() ? snapshot.data() : null;
+                    window.enjoyShopPricesLive = snapshot.exists();
+                    renderShopPrices(window.enjoyShopPrices, window.enjoyShopPricesLive);
+                }, function (error) {
+                    console.warn('Shop price snapshot error:', error);
+                    window.enjoyShopPrices = null;
+                    window.enjoyShopPricesLive = false;
+                    renderShopPrices(null, false);
+                });
+            } catch (error) {
+                console.warn('Shop price subscription error:', error);
+                window.enjoyShopPricesLive = false;
+                renderShopPrices(null, false);
+            } finally {
+                shopPriceSyncStarting = false;
+            }
+        };
 
         let sideMenuPreviousFocus = null;
         let sideMenuCloseTimer = 0;
@@ -11128,10 +11299,10 @@
             if (!game) return;
             window.openEnjoyBaseballGame(game.id, matchDate || game.date, game.team1 === '삼성' || game.team2 === '삼성' ? '삼성' : 'KIA');
         };
-        // 홈 상단 탭 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) — 모두 홈 화면 안에서 전환된다.
+        // 홈 상단 탭 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정 / 쇼핑) — 모두 홈 화면 안에서 전환된다.
         window.homeActiveTab = 'home';
         window.selectHomeTab = function (tab) {
-            tab = ['baseball', 'vlog', 'shorts', 'academic'].includes(tab) ? tab : 'home';
+            tab = ['baseball', 'vlog', 'shorts', 'academic', 'shopping'].includes(tab) ? tab : 'home';
             window.homeActiveTab = tab;
             document.querySelectorAll('#home-tabs .home-tab').forEach(function (button) {
                 const active = button.dataset.homeTab === tab;
@@ -11143,6 +11314,7 @@
             const vlogPanel = document.getElementById('home-vlog-panel');
             const shortsPanel = document.getElementById('shorts-screen');
             const academicPanel = document.getElementById('academic-schedule-screen');
+            const shoppingPanel = document.getElementById('shopping-screen');
             if (homePanel) homePanel.classList.toggle('hidden', tab !== 'home');
             if (baseballPanel) baseballPanel.classList.toggle('hidden', tab !== 'baseball');
             if (vlogPanel) vlogPanel.classList.toggle('hidden', tab !== 'vlog');
@@ -11153,6 +11325,10 @@
             if (academicPanel) {
                 academicPanel.classList.toggle('hidden', tab !== 'academic');
                 academicPanel.setAttribute('aria-hidden', tab === 'academic' ? 'false' : 'true');
+            }
+            if (shoppingPanel) {
+                shoppingPanel.classList.toggle('hidden', tab !== 'shopping');
+                shoppingPanel.setAttribute('aria-hidden', tab === 'shopping' ? 'false' : 'true');
             }
             const home = document.getElementById('home-screen');
             if (home) {
@@ -11168,6 +11344,7 @@
             if (tab === 'baseball') window.loadKboScoreboard();
             if (tab === 'shorts' && typeof window.prepareEnjoyShorts === 'function') window.prepareEnjoyShorts();
             if (tab === 'academic' && typeof window.prepareAcademicSchedule === 'function') window.prepareAcademicSchedule();
+            if (tab === 'shopping' && typeof window.prepareShop === 'function') window.prepareShop();
         };
         let kboScoreboardLoading = null;
         window.loadKboScoreboard = function () {
@@ -22729,6 +22906,9 @@
         
         window.MEETING_PATH = ['meeting_account', 'dues_status'];
         window.SCHEDULE_PATH = ['meeting_account', 'schedules'];
+        // 쇼핑 가격: meeting_account/shop 문서의 products.<상품 키>.price
+        // 또는 waterPrice, shoesPrice, porkBellyPrice, porkNeckPrice, topPrice, bottomPrice를 구독한다.
+        window.SHOP_PATH = ['meeting_account', 'shop'];
         window.BACKUP_PATH = ['meeting_account', 'backups', 'history']; 
         window.NOTICE_ALERT_PATH = ['app_settings', 'notice_alert'];
         // 로그인 전에도 상태를 확인해야 한다. Firestore 규칙에서 이 문서만 공개 get/listen을 허용하고 쓰기는 관리자만 허용한다.
