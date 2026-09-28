@@ -61,8 +61,6 @@
     const teamColors = {'LG':'bg-[#C30452]', '두산':'bg-[#131230]', 'KIA':'bg-[#EA0029]', '삼성':'bg-[#074CA1]', 'SSG':'bg-[#CE0E2D]', '롯데':'bg-[#041E42]', '한화':'bg-[#FF6600]', 'KT':'bg-[#000000]', 'NC':'bg-[#315288]', '키움':'bg-[#820024]', '나눔':'bg-[#002038]', '드림':'bg-[#90C0E0]', '북부 올스타':'bg-[#123B8D]', '남부 올스타':'bg-[#13B9D1]'};
     const teamHex = {'LG':'#C30452', '두산':'#131230', 'KIA':'#EA0029', '삼성':'#074CA1', 'SSG':'#CE0E2D', '롯데':'#041E42', '한화':'#FF6600', 'KT':'#000000', 'NC':'#315288', '키움':'#820024', '나눔':'#002038', '드림':'#90C0E0', '북부 올스타':'#123B8D', '남부 올스타':'#13B9D1'};
     const teamLogos = {'삼성':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png', 'KIA':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kia_logoo.png', '롯데':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/lotteegi.png', 'NC':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ncdin.png', 'LG':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/lgtwins.png', '두산':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/doosa.png', 'SSG':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ssglan.png', 'KT':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kt_logo.png', '한화':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/hanwha_logo.png', '키움':'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kiwoom.png'};
-    Object.assign(teamLogos, window.enjoyBaseballCompetition.flags);
-    Object.assign(teamHex, window.enjoyBaseballCompetition.colors);
     const ALLSTAR_DATES = new Set(['2026-07-10', '2026-07-11']);
     const ALLSTAR_LOGO_URL = 'https://qlotfqlu5749.edge.naverncp.com/KBO_IMAGE/KBOAllstar/Client/resources/images/common/img_logo.png';
     const FUTURES_ALLSTAR_LOGO_URL = ALLSTAR_LOGO_URL;
@@ -71,13 +69,7 @@
         ? `<img src="${teamLogos[team]}" class="${imgCls} object-contain ${extraCls}">`
         : `<div class="${divCls} rounded-full ${teamColors[team] || 'bg-gray-500'} flex items-center justify-center text-white text-[0.625rem] font-bold ${extraCls}">${team.substring(0,1)}</div>`;
     const teamWinHex = {'LG':'#E4376E', '두산':'#3D5AFE', 'KIA':'#FF2D55', '삼성':'#2F7BE0', 'SSG':'#E63950', '롯데':'#3B6FD4', '한화':'#FF7A1A', 'KT':'#9AA0A6', 'NC':'#4A78C0', '키움':'#C23A6B', '나눔':'#002038', '드림':'#90C0E0', '북부 올스타':'#123B8D', '남부 올스타':'#13B9D1'};
-    Object.assign(teamWinHex, window.enjoyBaseballCompetition.colors);
     const KBO_TEAMS = ['LG','두산','KIA','삼성','SSG','롯데','한화','KT','NC','키움'];
-    const ASIAN_GAMES_GROUPS = [
-        ['일본', '중국', '필리핀', '팔레스타인'],
-        ['대만', '대한민국', '태국', '홍콩']
-    ];
-    const ASIAN_GAMES_TEAMS = ASIAN_GAMES_GROUPS.flat();
     // 로컬 히스토리에 빠진 8월 28~30일 경기를 보정하는 KBO 공식 기준 전적.
     // 메인 순위표(index.html)와 같은 기준을 사용한다.
     const KBO_RANKING_BASELINE = Object.freeze({
@@ -106,15 +98,6 @@
     function playerPhotoForGame(name, game, team) {
         const playerName = String(name || '').trim();
         if (!playerName || playerName === '-') return '';
-        if (window.enjoyBaseballCompetition.isAsianGames(game)) {
-            if (window.enjoyBaseballCompetition.teamName(team) === '대한민국') {
-                return (window.enjoyAsianGamesPlayerImages && window.enjoyAsianGamesPlayerImages[playerName]) || '';
-            }
-            if (window.enjoyBaseballCompetition.isChineseTaipei(team)) {
-                return (window.enjoyAsianGamesTpePlayerImages && window.enjoyAsianGamesTpePlayerImages[playerName]) || '';
-            }
-            return '';
-        }
         return playerImages[playerName] || '';
     }
 
@@ -149,7 +132,7 @@
         // 완료된 경기들로부터 팀별 전적/최근 흐름/상대전적을 집계한다. (과거 데이터 파일 기반)
         function buildTeamStats() {
             const s = {};
-            KBO_TEAMS.concat(ASIAN_GAMES_TEAMS).forEach(t => s[t] = { w: 0, l: 0, d: 0, results: [], dates: [], h2h: {} });
+            KBO_TEAMS.forEach(t => s[t] = { w: 0, l: 0, d: 0, results: [], dates: [], h2h: {} });
             let finished = scheduleData.filter(m => {
                 let l = liveDataStore[m.id];
                 if (!l || l.gameStatus !== '종료') return false;
@@ -362,50 +345,7 @@
 
         // 과거 기록과 실시간으로 갱신된 완료 경기를 함께 사용해
         // 순위·최근 흐름·상대 전적을 동일한 기준으로 표시한다.
-        function asianGamesMatchupRecordHtml(m) {
-            const group = ASIAN_GAMES_GROUPS.find(teams => teams.includes(m.team1) && teams.includes(m.team2));
-            if (!group) return '';
-            const standings = group.map((team, seed) => {
-                const record = teamStats[team] || { w: 0, d: 0, l: 0, results: [], h2h: {} };
-                const decisions = record.w + record.l;
-                return { team, seed, record, rate: decisions ? record.w / decisions : 0 };
-            }).sort((a, b) => (b.rate - a.rate) || (b.record.w - a.record.w) || (a.record.l - b.record.l) || (a.seed - b.seed));
-            const rankOf = team => standings.findIndex(row => row.team === team) + 1;
-            const recordText = record => `${record.w}승 ${record.d}무 ${record.l}패`;
-            const resultLabel = result => result === 'W' ? '승' : result === 'L' ? '패' : '무';
-            const recentHtml = (team, side) => {
-                let results = (teamStats[team] && teamStats[team].results || []).slice(-5);
-                if (side === 'home') results = results.reverse();
-                return results.map((result, index) => {
-                    const isLatest = side === 'away' ? index === results.length - 1 : index === 0;
-                    return `<span class="matchup-result result-${result}${isLatest ? ' latest' : ''}">${resultLabel(result)}</span>`;
-                }).join('') || '<span class="matchup-recent-empty">경기 없음</span>';
-            };
-            const awayRecord = teamStats[m.team1] || { w: 0, d: 0, l: 0, results: [], h2h: {} };
-            const homeRecord = teamStats[m.team2] || { w: 0, d: 0, l: 0, results: [], h2h: {} };
-            const awayH2h = awayRecord.h2h[m.team2] || { w: 0, d: 0, l: 0 };
-            const homeH2h = homeRecord.h2h[m.team1] || { w: 0, d: 0, l: 0 };
-            return `<section class="matchup-record" aria-label="2026 아시안게임 양 팀 비교">
-                <div class="matchup-record-teams">
-                    <div class="matchup-record-team matchup-record-away"><strong>${m.team1}</strong><span><b>${rankOf(m.team1)}위</b> · ${recordText(awayRecord)}</span></div>
-                    <span class="matchup-record-vs">VS</span>
-                    <div class="matchup-record-team matchup-record-home"><strong>${m.team2}</strong><span><b>${rankOf(m.team2)}위</b> · ${recordText(homeRecord)}</span></div>
-                </div>
-                <div class="matchup-record-divider"></div>
-                <div class="matchup-record-recent">
-                    <div class="matchup-recent-results matchup-recent-away">${recentHtml(m.team1, 'away')}</div>
-                    <strong>최근경기</strong>
-                    <div class="matchup-recent-results matchup-recent-home">${recentHtml(m.team2, 'home')}</div>
-                </div>
-                <div class="matchup-record-head-to-head">
-                    <strong>${recordText(awayH2h)}</strong>
-                    <span>상대전적</span>
-                    <strong>${recordText(homeH2h)}</strong>
-                </div>
-            </section>`;
-        }
         function matchupRecordHtml(m) {
-            if (m && window.enjoyBaseballCompetition.isAsianGames(m)) return asianGamesMatchupRecordHtml(m);
             if (!m || !KBO_TEAMS.includes(m.team1) || !KBO_TEAMS.includes(m.team2)) return '';
             if (!scheduleData.length) return '';
 
@@ -843,7 +783,6 @@
         function _starterForLineup(m, l, side) {
             const official = _officialStarterForSide(m, l, side);
             if (official) return { raw: official, name: _pitcherName(official), predicted: false };
-            if (window.enjoyBaseballCompetition.isAsianGames(m)) return { raw: null, name: '', predicted: false };
             const dayDistance = _dayDistanceFromToday(m.date);
             if (dayDistance < 0 || dayDistance > 14 || String(l.gameStatus || '경기전') !== '경기전') return { raw: null, name: '', predicted: false };
             const team = side === 'away' ? m.team1 : m.team2;
@@ -1541,11 +1480,11 @@
                     centerArea = `<div class="flex gap-[0.1875rem] mr-1.5">${outDotsHtml}</div><span class="text-[0.75rem] font-black text-[#FFFFFF] tracking-widest mt-px">${bCount}-${sCount}</span>`;
                 }
 
-                const allstarLogo1 = isAllstarGame || window.enjoyBaseballCompetition.flags[m.team1] ? `${teamLogos[m.team1] ? `<img src="${teamLogos[m.team1]}" class="${isAllstarGame ? 'w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)]' : 'scoreboard-country-flag'} object-contain shrink-0">` : ''}` : '';
-                const allstarLogo2 = isAllstarGame || window.enjoyBaseballCompetition.flags[m.team2] ? `${teamLogos[m.team2] ? `<img src="${teamLogos[m.team2]}" class="${isAllstarGame ? 'w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)]' : 'scoreboard-country-flag'} object-contain shrink-0">` : ''}` : '';
+                const allstarLogo1 = isAllstarGame ? `${teamLogos[m.team1] ? `<img src="${teamLogos[m.team1]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : ''}` : '';
+                const allstarLogo2 = isAllstarGame ? `${teamLogos[m.team2] ? `<img src="${teamLogos[m.team2]}" class="w-[clamp(1.625rem,8vw,2.625rem)] h-[clamp(1.625rem,8vw,2.625rem)] object-contain shrink-0">` : ''}` : '';
                 const sideWidthClass = isAllstarGame ? 'w-[40%]' : 'w-[36%]';
                 const centerWidthClass = isAllstarGame ? 'w-[20%]' : 'w-[28%]';
-                const sideGapClass = isAllstarGame || window.enjoyBaseballCompetition.isAsianGames(m) ? 'gap-1' : 'gap-3';
+                const sideGapClass = isAllstarGame ? 'gap-1' : 'gap-3';
                 const allstarNameStyle = isAllstarGame ? 'font-size:clamp(0.8125rem,4.2vw,1.375rem);white-space:nowrap;line-height:1;' : '';
 
                 sbh = `<div class="sb-dark scoreboard-surface w-[calc(100%+3rem)] -mx-6 rounded-none border-x-0 relative overflow-hidden mb-5 shadow-xl flex flex-col border-y border-white/15" style="background: linear-gradient(to right, ${h1}E6 0%, #18181b 45%, #18181b 55%, ${h2}E6 100%); --score-away-soft:${h1}24; --score-home-soft:${h2}24;">
@@ -1605,15 +1544,14 @@
             let wpb = isClassic ? '' : winProbBarHtml(m, l);
             const matchupRecord = matchupRecordHtml(m);
             const infoTabs = gameInfoTabsHtml();
-            const competitionLabel = (window.enjoyBaseballCompetition.isAsianGames(m) ? '<div class="text-center text-xs text-gray-400 mb-3">아시안게임</div>' : '');
 
             if (currentGameInfoTab === 'broadcast') {
-                c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + gameBroadcastHtml(m, l);
+                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + gameBroadcastHtml(m, l);
             queueScoreboardNameFit();
                 return;
             }
             if (currentGameInfoTab === 'record') {
-                c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + gameRecordHtml(m, l);
+                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + gameRecordHtml(m, l);
             queueScoreboardNameFit();
                 requestAnimationFrame(() => {
                     const activeInning = c.querySelector('.game-record-inning-tab.active');
@@ -1632,7 +1570,7 @@
 
             if (aLineupSrc.length === 0 && hLineupSrc.length === 0) {
                 const starterPreview = expectedStarterPreviewHtml(m, awayStarterInfo, homeStarterInfo);
-                c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
+                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
             queueScoreboardNameFit();
                 return;
             }
@@ -1701,7 +1639,7 @@
             let abh = lineupRows(aLineupSrc, h1, m.team1);
             let hbh = lineupRows(hLineupSrc, h2, m.team2);
             
-            c.innerHTML = competitionLabel + sbh + wpb + matchupRecord + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
+            c.innerHTML = sbh + wpb + matchupRecord + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
             queueScoreboardNameFit();
         }
 
@@ -1711,8 +1649,8 @@
     function normalizeGame(raw) {
         const game = Object.assign({}, raw || {});
         game.id = game.id == null ? '' : String(game.id);
-        game.team1 = window.enjoyBaseballCompetition.teamName(game.awayTeam || game.team1);
-        game.team2 = window.enjoyBaseballCompetition.teamName(game.homeTeam || game.team2);
+        game.team1 = String(game.awayTeam || game.team1 || '').trim();
+        game.team2 = String(game.homeTeam || game.team2 || '').trim();
         game.time = game.gameTime || game.time;
         game.bannerLink = '';
         return game;
@@ -1721,13 +1659,9 @@
     function mergeGame(raw, live) {
         if (!raw) return;
         const game = normalizeGame(raw);
+        if (!Object.prototype.hasOwnProperty.call(teamHex, game.team1) ||
+            !Object.prototype.hasOwnProperty.call(teamHex, game.team2)) return;
         let scheduled = scheduleData.find(item => String(item.id) === game.id);
-        if (!scheduled && window.enjoyBaseballCompetition.isAsianGames(game)) {
-            scheduled = scheduleData.find(item => {
-                if (!window.enjoyBaseballCompetition.isAsianGames(item) || item.date !== game.date) return false;
-                return [item.team1, item.team2].sort().join('|') === [game.team1, game.team2].sort().join('|');
-            });
-        }
         if (!scheduled) {
             scheduled = game;
             scheduleData.push(scheduled);
@@ -1746,12 +1680,6 @@
         Object.values(window.KBO_HISTORY_2026.gamesByDate).forEach(dayGames => {
             dayGames.forEach(game => mergeGame(game, true));
         });
-        loadAsianGamesPlayedHistory();
-    }
-
-    function loadAsianGamesPlayedHistory() {
-        if (!window.getAsianGamesBaseballPlayedGames) return;
-        window.getAsianGamesBaseballPlayedGames().forEach(game => mergeGame(game, true));
     }
 
     async function refreshRequestedGame(showError) {
@@ -1767,7 +1695,6 @@
             mergeDocument(results[0], false);
             mergeDocument(results[1], true);
             mergeDocument(results[2], true);
-            loadAsianGamesPlayedHistory();
             scheduleData.sort((a, b) => a.date === b.date
                 ? (a.time || '00:00').localeCompare(b.time || '00:00')
                 : String(a.date || '').localeCompare(String(b.date || '')));
