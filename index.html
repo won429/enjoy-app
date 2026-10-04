@@ -7439,6 +7439,75 @@
             .echo-compose textarea { background: #f4f6f9; color: #657086; }
             .drop-write-status, .echo-compose-status { color: #b95c5c; }
         }
+
+        /* 글 게시물의 포스트잇 표면: 일반 글은 노랑, 일정은 연두 */
+        .drop-note-card,
+        .drop-viewer-card.is-note,
+        .drop-comments-photo-shell.is-note {
+            --postit-paper: #f7edb6;
+            --postit-fold: #d9cb8a;
+            --postit-ink: #4e4937;
+            --postit-muted: #81785b;
+        }
+        .drop-note-card.is-schedule,
+        .drop-viewer-card.is-note.is-schedule,
+        .drop-comments-photo-shell.is-note.is-schedule {
+            --postit-paper: #e1edcc;
+            --postit-fold: #bdcba6;
+            --postit-ink: #404d37;
+            --postit-muted: #75856a;
+        }
+        .drop-note-card { filter: drop-shadow(0 .35rem .4rem #0002); }
+        .drop-note-card .drop-photo-frame,
+        .drop-viewer-card.is-note,
+        .drop-comments-photo-shell.is-note {
+            --drop-action-ink: var(--postit-muted);
+            background: var(--postit-paper);
+            background-image: linear-gradient(180deg, #57451509, transparent 2.5rem);
+            border: 0;
+            border-radius: .15rem;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 1.1rem), calc(100% - 1.1rem) 100%, 0 100%);
+            box-shadow: inset 0 1px #ffffff6b;
+        }
+        .drop-note-card .drop-photo-frame::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto;
+            height: .35rem;
+            background: #59462508;
+            pointer-events: none;
+        }
+        .drop-note-card .drop-photo-frame::after,
+        .drop-viewer-card.is-note::after,
+        .drop-comments-photo-shell.is-note::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 1.1rem;
+            height: 1.1rem;
+            background: linear-gradient(135deg, var(--postit-fold) 48%, #0002 50%, transparent 53%);
+            pointer-events: none;
+        }
+        .drop-comments-photo-shell.is-note { position: relative; }
+        :is(.drop-note-card, .drop-viewer-card.is-note, .drop-comments-photo-shell.is-note) .drop-note-paper { color: var(--postit-ink); }
+        :is(.drop-note-card, .drop-viewer-card.is-note, .drop-comments-photo-shell.is-note) .drop-note-copy { color: var(--postit-muted); }
+        :is(.drop-note-card, .drop-viewer-card.is-note, .drop-comments-photo-shell.is-note) .drop-note-kind { color: var(--postit-muted); background: #493b200a; }
+        :is(.drop-note-card, .drop-viewer-card.is-note, .drop-comments-photo-shell.is-note) .drop-note-schedule { color: #607653; }
+        .drop-note-card .drop-photo-meta-copy strong,
+        .drop-viewer-card.is-note .drop-photo-meta-copy strong { color: var(--postit-ink); }
+        .drop-note-card .drop-photo-meta-copy time,
+        .drop-viewer-card.is-note .drop-photo-meta-copy time,
+        .drop-viewer-card.is-note .drop-photo-action,
+        .drop-viewer-card.is-note .drop-viewer-likers-label,
+        .drop-viewer-card.is-note .drop-viewer-liker { color: var(--postit-muted); }
+        .drop-note-card .drop-photo-author-avatar,
+        .drop-viewer-card.is-note .drop-photo-author-avatar,
+        .drop-viewer-card.is-note .drop-viewer-liker-avatar { color: var(--postit-ink); background: #493b2012; }
+        .drop-note-card .drop-photo-actions { right: .85rem !important; }
+        .drop-viewer-card.is-note .drop-viewer-meta { border-color: #493b2012; }
+        .drop-viewer-card.is-note .drop-viewer-close,
+        .drop-note-owner-actions button { color: var(--postit-muted); background: #493b200d; }
     </style>
     <link rel="stylesheet" href="tailwind.css">
 </head>
@@ -18573,6 +18642,7 @@
             const imageUrl = dropEsc(post.imageUrl || '');
             const isNote = post._source === 'community_posts';
             card.classList.toggle('is-note', isNote);
+            card.classList.toggle('is-schedule', isNote && dropIsSchedule(post));
             blur.innerHTML = isNote ? '' : '<img src="' + imageUrl + '" alt="" draggable="false">';
             card.innerHTML = '<button type="button" class="drop-viewer-close" onclick="window.closeDropViewer()" aria-label="크게 보기 닫기"><i class="ph ph-x" aria-hidden="true"></i></button>' +
                 (isNote ? dropNoteHtml(post) : '<div class="drop-viewer-image-shell"><img src="' + imageUrl + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" draggable="false"></div>') +
@@ -18785,7 +18855,7 @@
             const note = document.getElementById('drop-comments-note');
             const shell = document.getElementById('drop-comments-photo-shell');
             if (note) { note.classList.toggle('hidden', !isNote); note.innerHTML = isNote ? dropNoteHtml(post) : ''; }
-            if (shell) { shell.classList.toggle('is-note', isNote); shell.style.removeProperty('width'); shell.style.removeProperty('height'); shell.style.removeProperty('aspect-ratio'); }
+            if (shell) { shell.classList.toggle('is-note', isNote); shell.classList.toggle('is-schedule', isNote && dropIsSchedule(post)); shell.style.removeProperty('width'); shell.style.removeProperty('height'); shell.style.removeProperty('aspect-ratio'); }
             if (photo) {
                 photo.classList.toggle('hidden', isNote);
                 photo.onload = null;
