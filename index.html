@@ -9757,7 +9757,10 @@
 
         function enjoyBaseballHistorySourceForDate(date) {
             const target = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
-            if (target.getFullYear() > 2026 || (target.getFullYear() === 2026 && target.getMonth() >= 8)) {
+            if (target.getFullYear() > 2026 || (target.getFullYear() === 2026 && target.getMonth() >= 9)) {
+                return 'kbo_history_2026_10.js';
+            }
+            if (target.getFullYear() === 2026 && target.getMonth() >= 8) {
                 return 'kbo_history_2026_09.js';
             }
             if (target.getFullYear() === 2026 && target.getMonth() >= 7) {
@@ -9805,11 +9808,8 @@
             if (window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate &&
                 enjoyBaseballMoreHistoryLoadedSource === finalSource) return Promise.resolve();
             if (enjoyBaseballMoreHistoryPromise) return enjoyBaseballMoreHistoryPromise;
-            const sources = finalSource === 'kbo_history_2026_09.js'
-                ? ['kbo_history_2026.js', 'kbo_history_2026_08.js', 'kbo_history_2026_09.js']
-                : finalSource === 'kbo_history_2026_08.js'
-                    ? ['kbo_history_2026.js', 'kbo_history_2026_08.js']
-                    : ['kbo_history_2026.js'];
+            const historySources = ['kbo_history_2026.js', 'kbo_history_2026_08.js', 'kbo_history_2026_09.js', 'kbo_history_2026_10.js'];
+            const sources = historySources.slice(0, historySources.indexOf(finalSource) + 1);
             let mergedHistory = null;
             enjoyBaseballMoreHistoryPromise = sources.reduce(function (promise, source) {
                 return promise.then(function () {
