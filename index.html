@@ -15618,8 +15618,8 @@
             try {
                 const feedQuery = window.fsQuery(
                     window.fsCol('community_posts'),
-                    window.fsOrderBy('createdAt', 'desc'),
-                    window.fsLimit(30)
+                    // 일반 글이 쌓여도 영구 일정이 목록 제한에 밀려 사라지지 않도록 한다.
+                    window.fsOrderBy('createdAt', 'desc')
                 );
                 window._communityPostsUnsub = window.fsOnSnapshot(feedQuery, function (snapshot) {
                     const next = [];
@@ -18136,7 +18136,7 @@
         }
 
         function dropExpiryTime(post) {
-            if (post && post._source === 'community_posts') return Infinity;
+            if (post && post._source === 'community_posts' && dropIsSchedule(post)) return Infinity;
             return dropMillis(post && post.expiresAt) || (dropMillis(post && post.createdAt) + DROP_VISIBLE_MS);
         }
 
