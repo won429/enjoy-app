@@ -798,7 +798,7 @@
 
     function _starterPlayerName(raw) {
         if (raw && typeof raw === 'object') {
-            return raw.name || raw._starterPlayerName || raw.inName || (raw.player && raw.player.name) || '';
+            return raw.name || raw.playerName || raw.inName || (raw.player && raw.player.name) || '';
         }
         return raw || '';
     }
@@ -817,9 +817,6 @@
         const candidates = [
             game[side + 'StarterDetail'], game[side + 'Starter']
         ];
-        if (String(game.gameStatus || '경기전') === '경기전') {
-            candidates.push(game[side + 'PitcherDetail'], game[side + 'Pitcher']);
-        }
         for (let index = 0; index < candidates.length; index += 1) {
             const name = _starterPlayerName(candidates[index]);
             if (name && name !== '-') return candidates[index];
@@ -828,8 +825,7 @@
     }
     function _starterDeclared(game, side) {
         const candidates = [
-            game[side + 'StarterDetail'], game[side + 'Starter'],
-            game[side + 'PitcherDetail'], game[side + 'Pitcher']
+            game[side + 'StarterDetail'], game[side + 'Starter']
         ];
         for (let index = 0; index < candidates.length; index += 1) {
             const name = _starterPlayerName(candidates[index]);
@@ -860,15 +856,10 @@
                 String(first.time || '').localeCompare(String(second.time || ''));
         });
         const previousTeamGame = previousTeamGames[previousTeamGames.length - 1];
-        if (previousTeamGame && _starterIsCanceled(previousTeamGame)) {
-            const canceledSide = previousTeamGame.team1 === team ? 'away' : 'home';
-            const canceledStarter = _starterDeclared(previousTeamGame, canceledSide);
-            if (canceledStarter) return { raw: canceledStarter, name: canceledStarter, predicted: true, carriedFromCancellation: true };
-        }
-
         const history = historyGames.filter(function (item) {
             return String(item.date || '') < gameDate &&
                 String(item.gameStatus || '') === '종료' &&
+                !_starterIsCanceled(item) &&
                 (item.team1 === team || item.team2 === team);
         }).sort(function (first, second) {
             return String(first.date || '').localeCompare(String(second.date || '')) ||
@@ -876,17 +867,34 @@
         });
         const starts = history.map(function (item) {
             const itemSide = item.team1 === team ? 'away' : 'home';
-            const name = _starterPlayerName(
-                item[itemSide + 'StarterDetail'] ||
-                item[itemSide + 'Starter'] ||
-                item[itemSide + 'PitcherDetail'] ||
-                item[itemSide + 'Pitcher']
-            );
+            const name = _starterDeclared(item, itemSide);
             return { name: name, game: item };
         }).filter(function (entry) { return entry.name && entry.name !== '-'; });
+        // A single spot start is insufficient evidence of a rotation role.
+        const recentCutoffDate = new Date(today + 'T00:00:00');
+        recentCutoffDate.setDate(recentCutoffDate.getDate() - 30);
+        const recentCutoff = recentCutoffDate.getFullYear() + '-' + String(recentCutoffDate.getMonth() + 1).padStart(2, '0') + '-' + String(recentCutoffDate.getDate()).padStart(2, '0');
+        const recentStartCounts = new Map();
+        starts.forEach(function (entry) {
+            if (String(entry.game.date || '') >= recentCutoff) {
+                recentStartCounts.set(entry.name, (recentStartCounts.get(entry.name) || 0) + 1);
+            }
+        });
+        const rotationCandidates = new Set();
+        recentStartCounts.forEach(function (count, name) {
+            if (count >= 2) rotationCandidates.add(name);
+        });
+        // Only established recent starters may be predicted after a cancellation.
+        if (previousTeamGame && _starterIsCanceled(previousTeamGame)) {
+            const canceledSide = previousTeamGame.team1 === team ? 'away' : 'home';
+            const canceledStarter = _starterDeclared(previousTeamGame, canceledSide);
+            if (canceledStarter && rotationCandidates.has(canceledStarter)) {
+                return { raw: canceledStarter, name: canceledStarter, predicted: true, carriedFromCancellation: true };
+            }
+        }
         const recentUnique = [];
         for (let index = starts.length - 1; index >= 0 && recentUnique.length < 5; index -= 1) {
-            if (!recentUnique.includes(starts[index].name)) recentUnique.push(starts[index].name);
+            if (rotationCandidates.has(starts[index].name) && !recentUnique.includes(starts[index].name)) recentUnique.push(starts[index].name);
         }
         recentUnique.reverse();
         if (recentUnique.length < 3) return { raw: null, name: '', predicted: false };
@@ -951,7 +959,6 @@
         }
 
         function expectedStarterPreviewHtml(m, awayInfo, homeInfo) {
-            if (!awayInfo.name && !homeInfo.name) return '';
             const column = (info, team, opponent, color) => {
                 if (!info.name) return `<div class="expected-starter-column"><div class="expected-starter-team">${team}</div><div class="expected-starter-label">예상 선발</div><div class="expected-starter-name">미정</div></div>`;
                 const record = pitcherRecords(info.name, team, opponent);
