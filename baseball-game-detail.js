@@ -345,6 +345,58 @@
 
         // 과거 기록과 실시간으로 갱신된 완료 경기를 함께 사용해
         // 순위·최근 흐름·상대 전적을 동일한 기준으로 표시한다.
+        function seasonClinchInfo(standings, team) {
+            // KBO regular season: 144 games per team; draws are excluded from win percentage.
+            // Require a strictly higher final percentage so a tie never becomes a claimed clinch.
+            const rows = standings.map(row => {
+                const { w, d, l } = row.record;
+                const remaining = 144 - w - d - l;
+                return { team: row.team, w, remaining, denominator: 144 - d, maxWins: w + remaining };
+            });
+            if (rows.some(row => row.remaining < 0 || row.denominator <= 0)) return null;
+            const own = rows.find(row => row.team === team);
+            if (!own) return null;
+            const rivals = rows.filter(row => row.team !== team).sort((a, b) =>
+                b.maxWins * a.denominator - a.maxWins * b.denominator);
+            const securedRank = 1 + rivals.filter(row =>
+                row.maxWins * own.denominator >= own.w * row.denominator).length;
+            const bestPossibleRank = 1 + rivals.filter(row =>
+                row.w * own.denominator > own.maxWins * row.denominator).length;
+            const rankFixed = bestPossibleRank === securedRank;
+            const seasonComplete = rows.every(row => row.remaining === 0);
+            if (securedRank === 1) return { securedRank, nextRank: null, magicNumber: 0, rankFixed };
+            const nextRank = securedRank - 1;
+            const rival = rivals[nextRank - 1];
+            // Wins needed to finish strictly above the next rank's strongest remaining challenger.
+            // Recalculate when any rival loses; differing draw totals need the percentage formula.
+            const magicNumber = Math.max(0,
+                Math.floor(rival.maxWins * own.denominator / rival.denominator) - own.w + 1);
+            return { securedRank, nextRank, magicNumber, remaining: own.remaining,
+                rankFixed, seasonComplete, nextPossible: bestPossibleRank <= nextRank };
+        }
+
+        function seasonClinchHtml(standings, match) {
+            const column = team => {
+                const info = seasonClinchInfo(standings, team);
+                if (!info) return '';
+                const secured = info.rankFixed ? `정규시즌 ${info.securedRank}위 확정` : `최소 ${info.securedRank}위 확보`;
+                let next = info.nextRank
+                    ? `${info.nextRank}위 확보 매직넘버 <b>${info.magicNumber}</b>`
+                    : '매직넘버 <b>0</b>';
+                if (info.nextRank && !info.nextPossible) next = `${info.nextRank}위 상승 불가`;
+                else if (info.seasonComplete && !info.rankFixed) next = '동률 순위 결정 대기';
+                const help = info.nextRank && info.nextPossible && !info.seasonComplete && info.magicNumber > info.remaining
+                    ? '<small>경쟁팀 패배 필요</small>' : '';
+                return `<div class="season-clinch-team" aria-label="${team} ${secured}"><strong>${secured}</strong><span>${next}</span>${help}</div>`;
+            };
+            const away = column(match.team1), home = column(match.team2);
+            if (!away || !home) return '';
+            return `<section class="season-clinch" aria-label="정규시즌 순위 확보 현황">
+                <div class="season-clinch-grid">${away}${home}</div>
+                <p class="season-clinch-note">144경기·승률 기준, 동률 제외<br>경쟁팀 잔여 전승 기준 필요 승수 · 경쟁팀 패배 시 재계산</p>
+            </section>`;
+        }
+
         function matchupRecordHtml(m) {
             if (!m || !KBO_TEAMS.includes(m.team1) || !KBO_TEAMS.includes(m.team2)) return '';
             if (!scheduleData.length) return '';
@@ -451,6 +503,7 @@
                     <span>상대전적</span>
                     <strong>${recordText(h2h[m.team2])}</strong>
                 </div>
+                ${seasonClinchHtml(standings, m)}
             </section>`;
         }
 
@@ -743,62 +796,158 @@
             return { vsW, vsL, seasonW, seasonL };
         }
 
-        function _dayDistanceFromToday(dateStr) {
-            const from = new Date(`${todayStr}T00:00:00`);
-            const to = new Date(`${dateStr}T00:00:00`);
-            return Math.round((to.getTime() - from.getTime()) / 86400000);
+    function _starterPlayerName(raw) {
+        if (raw && typeof raw === 'object') {
+            return raw.name || raw._starterPlayerName || raw.inName || (raw.player && raw.player.name) || '';
+        }
+        return raw || '';
+    }
+    function _starterIsCanceled(game) {
+        const text = [game.gameStatus, game.status, game.inning, game.cancelType, game.cancelReason,
+            game.cancellationType, game.cancellationReason].filter(Boolean).join(' ').toLowerCase();
+        return /취소|우취|우천|그라운드|폭염|cancel|rain|ground|heat/.test(text);
+    }
+    function _starterSameGame(first, second) {
+        if (first.id != null && second.id != null) return String(first.id) === String(second.id);
+        return first.date === second.date && first.team1 === second.team1 && first.team2 === second.team2 && first.time === second.time;
+    }
+
+    // Keep rotation, cancellation and confirmed-start rules aligned with index.html.
+    function _starterOfficial(game, side) {
+        const candidates = [
+            game[side + 'StarterDetail'], game[side + 'Starter']
+        ];
+        if (String(game.gameStatus || '경기전') === '경기전') {
+            candidates.push(game[side + 'PitcherDetail'], game[side + 'Pitcher']);
+        }
+        for (let index = 0; index < candidates.length; index += 1) {
+            const name = _starterPlayerName(candidates[index]);
+            if (name && name !== '-') return candidates[index];
+        }
+        return '';
+    }
+    function _starterDeclared(game, side) {
+        const candidates = [
+            game[side + 'StarterDetail'], game[side + 'Starter'],
+            game[side + 'PitcherDetail'], game[side + 'Pitcher']
+        ];
+        for (let index = 0; index < candidates.length; index += 1) {
+            const name = _starterPlayerName(candidates[index]);
+            if (name && name !== '-') return name;
+        }
+        return '';
+    }
+    function _starterPrediction(game, side, options) {
+        const scheduleGames = options.scheduleGames || [];
+        const historyGames = options.historyGames || [];
+        const today = options.today;
+        const official = _starterOfficial(game, side);
+        if (official) return { raw: official, name: _starterPlayerName(official), predicted: false };
+        const gameDate = String(game.date || '');
+        const dayDistance = Math.round((new Date(gameDate + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86400000);
+        if (!gameDate || dayDistance < 0 || dayDistance > 14 || String(game.gameStatus || '경기전') !== '경기전') {
+            return { raw: null, name: '', predicted: false };
         }
 
-        function _officialStarterForSide(m, l, side) {
-            const values = [
-                l[side + 'StarterDetail'], l[side + 'Starter'],
-                m[side + 'StarterDetail'], m[side + 'Starter']
-            ];
-            if (String(l.gameStatus || '경기전') === '경기전') {
-                values.push(l[side + 'PitcherDetail'], l[side + 'Pitcher'], m[side + 'PitcherDetail'], m[side + 'Pitcher']);
-            }
-            const raw = values.find(value => {
-                const name = _pitcherName(value);
-                return name && name !== '-';
-            });
-            return raw || null;
+        const team = side === 'away' ? game.team1 : game.team2;
+        const previousTeamGames = scheduleGames.filter(function (item) {
+            const itemDate = String(item.date || '');
+            const itemTime = String(item.time || '');
+            const beforeTarget = itemDate < gameDate || (itemDate === gameDate && itemTime < String(game.time || ''));
+            return beforeTarget && (item.team1 === team || item.team2 === team);
+        }).sort(function (first, second) {
+            return String(first.date || '').localeCompare(String(second.date || '')) ||
+                String(first.time || '').localeCompare(String(second.time || ''));
+        });
+        const previousTeamGame = previousTeamGames[previousTeamGames.length - 1];
+        if (previousTeamGame && _starterIsCanceled(previousTeamGame)) {
+            const canceledSide = previousTeamGame.team1 === team ? 'away' : 'home';
+            const canceledStarter = _starterDeclared(previousTeamGame, canceledSide);
+            if (canceledStarter) return { raw: canceledStarter, name: canceledStarter, predicted: true, carriedFromCancellation: true };
         }
 
-        function _recentStarterRotation(team) {
-            const starts = scheduleData.filter(game => {
-                const live = liveDataStore[game.id] || game;
-                return game.date < todayStr && (game.team1 === team || game.team2 === team) && live.gameStatus === '종료';
-            }).sort((a, b) => a.date.localeCompare(b.date) || String(a.time || '').localeCompare(String(b.time || ''))).map(game => {
-                const live = liveDataStore[game.id] || game;
-                const side = game.team1 === team ? 'away' : 'home';
-                return _pitcherName(live[side + 'StarterDetail'] || live[side + 'Starter'] || live[side + 'PitcherDetail'] || live[side + 'Pitcher']);
-            }).filter(name => name && name !== '-');
-            const recentUnique = [];
-            for (let index = starts.length - 1; index >= 0 && recentUnique.length < 5; index--) {
-                if (!recentUnique.includes(starts[index])) recentUnique.push(starts[index]);
-            }
-            return recentUnique.reverse();
+        const history = historyGames.filter(function (item) {
+            return String(item.date || '') < gameDate &&
+                String(item.gameStatus || '') === '종료' &&
+                (item.team1 === team || item.team2 === team);
+        }).sort(function (first, second) {
+            return String(first.date || '').localeCompare(String(second.date || '')) ||
+                String(first.time || '').localeCompare(String(second.time || ''));
+        });
+        const starts = history.map(function (item) {
+            const itemSide = item.team1 === team ? 'away' : 'home';
+            const name = _starterPlayerName(
+                item[itemSide + 'StarterDetail'] ||
+                item[itemSide + 'Starter'] ||
+                item[itemSide + 'PitcherDetail'] ||
+                item[itemSide + 'Pitcher']
+            );
+            return { name: name, game: item };
+        }).filter(function (entry) { return entry.name && entry.name !== '-'; });
+        const recentUnique = [];
+        for (let index = starts.length - 1; index >= 0 && recentUnique.length < 5; index -= 1) {
+            if (!recentUnique.includes(starts[index].name)) recentUnique.push(starts[index].name);
         }
+        recentUnique.reverse();
+        if (recentUnique.length < 3) return { raw: null, name: '', predicted: false };
+
+        const latestStart = starts[starts.length - 1];
+        let rotationAnchor = latestStart;
+        const confirmedScheduleStarts = scheduleGames.map(function (item) {
+            const itemDate = String(item.date || '');
+            const itemTime = String(item.time || '');
+            const beforeTarget = itemDate < gameDate || (itemDate === gameDate && itemTime < String(game.time || ''));
+            if (!beforeTarget || _starterIsCanceled(item) || (item.team1 !== team && item.team2 !== team)) return null;
+            const itemSide = item.team1 === team ? 'away' : 'home';
+            const name = _starterPlayerName(_starterOfficial(item, itemSide));
+            return name ? { name: name, game: item } : null;
+        }).filter(Boolean).sort(function (first, second) {
+            return String(first.game.date || '').localeCompare(String(second.game.date || '')) ||
+                String(first.game.time || '').localeCompare(String(second.game.time || ''));
+        });
+        const latestConfirmedScheduleStart = confirmedScheduleStarts[confirmedScheduleStarts.length - 1];
+        if (latestConfirmedScheduleStart) {
+            const historyAnchorKey = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.date) || '') + ' ' +
+                String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.time) || '');
+            const scheduleAnchorKey = String(latestConfirmedScheduleStart.game.date || '') + ' ' +
+                String(latestConfirmedScheduleStart.game.time || '');
+            if (!rotationAnchor || scheduleAnchorKey >= historyAnchorKey) rotationAnchor = latestConfirmedScheduleStart;
+        }
+
+        const anchorDate = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.date) || '');
+        const anchorTime = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.time) || '');
+        const upcoming = scheduleGames.filter(function (item) {
+            const itemDate = String(item.date || '');
+            const itemTime = String(item.time || '');
+            const afterAnchor = itemDate > anchorDate || (itemDate === anchorDate && itemTime > anchorTime);
+            return afterAnchor && itemDate <= gameDate &&
+                (item.team1 === team || item.team2 === team) &&
+                !_starterIsCanceled(item);
+        }).sort(function (first, second) {
+            return String(first.date || '').localeCompare(String(second.date || '')) ||
+                String(first.time || '').localeCompare(String(second.time || ''));
+        });
+        let gameIndex = upcoming.findIndex(function (item) { return _starterSameGame(item, game); });
+        if (gameIndex < 0) gameIndex = Math.max(0, upcoming.length - 1);
+        const anchorRotationIndex = rotationAnchor ? recentUnique.indexOf(rotationAnchor.name) : -1;
+        const predictedRotationIndex = anchorRotationIndex >= 0
+            ? (anchorRotationIndex + gameIndex + 1) % recentUnique.length
+            : gameIndex % recentUnique.length;
+        let predictedName = recentUnique[predictedRotationIndex];
+        if (rotationAnchor && predictedName === rotationAnchor.name && recentUnique.length > 1) {
+            predictedName = recentUnique[(predictedRotationIndex + 1) % recentUnique.length];
+        }
+        return { raw: predictedName, name: predictedName, predicted: true };
+    }
+
 
         function _starterForLineup(m, l, side) {
-            const official = _officialStarterForSide(m, l, side);
-            if (official) return { raw: official, name: _pitcherName(official), predicted: false };
-            const dayDistance = _dayDistanceFromToday(m.date);
-            if (dayDistance < 0 || dayDistance > 14 || String(l.gameStatus || '경기전') !== '경기전') return { raw: null, name: '', predicted: false };
-            const team = side === 'away' ? m.team1 : m.team2;
-            const rotation = _recentStarterRotation(team);
-            if (rotation.length < 3) return { raw: null, name: '', predicted: false };
-            const upcoming = scheduleData.filter(game => {
-                if (game.date < todayStr || game.date > m.date || (game.team1 !== team && game.team2 !== team)) return false;
-                const live = liveDataStore[game.id] || {};
-                const status = String(live.gameStatus || '경기전');
-                const inning = String(live.inning || '');
-                return !status.includes('취소') && !status.includes('우취') && !inning.includes('취소') && !inning.includes('우취');
-            }).sort((a, b) => a.date.localeCompare(b.date) || String(a.time || '').localeCompare(String(b.time || '')));
-            let gameIndex = upcoming.findIndex(game => String(game.id) === String(m.id));
-            if (gameIndex < 0) gameIndex = Math.max(0, upcoming.length - 1);
-            const name = rotation[gameIndex % rotation.length];
-            return { raw: name, name, predicted: true };
+            const history = (window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate) || {};
+            return _starterPrediction(Object.assign({}, m, l), side, {
+                today: todayStr,
+                historyGames: Object.values(history).flat().map(normalizeGame).filter(game => game.date <= todayStr),
+                scheduleGames: scheduleData.map(game => Object.assign({}, game, liveDataStore[game.id] || {}))
+            });
         }
 
         function expectedStarterPreviewHtml(m, awayInfo, homeInfo) {
@@ -1687,14 +1836,17 @@
         const date = params.get('matchDate') || todayStr;
         const month = /^\d{4}-\d{2}/.test(date) ? date.slice(0, 7) : todayStr.slice(0, 7);
         try {
-            const results = await Promise.all([
-                _fsGetDoc(`schedule/${month}`),
-                _fsGetDoc(`games/${date}`),
-                _fsGetDoc('live/today')
-            ]);
-            mergeDocument(results[0], false);
-            mergeDocument(results[1], true);
-            mergeDocument(results[2], true);
+            const nextMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+            const nextMonth = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
+            const yesterdayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 1);
+            const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
+            // Use the same current/next month and latest game documents as the daily list.
+            const paths = [...new Set([
+                `schedule/${todayStr.slice(0, 7)}`, `schedule/${nextMonth}`, `schedule/${month}`,
+                `games/${yesterday}`, `games/${todayStr}`, `games/${date}`, 'live/today'
+            ])];
+            const results = await Promise.all(paths.map(path => _fsGetDoc(path)));
+            results.forEach(documentData => mergeDocument(documentData, true));
             scheduleData.sort((a, b) => a.date === b.date
                 ? (a.time || '00:00').localeCompare(b.time || '00:00')
                 : String(a.date || '').localeCompare(String(b.date || '')));
