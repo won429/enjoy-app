@@ -7281,129 +7281,163 @@
             .app-copyright { color: #9b95a8; }
         }
 
-        /* 드롭의 글도 사진과 같은 스크랩 카드로 표시 */
-        .drop-note-card .drop-photo-frame { --drop-action-ink: #51473e; background: #f5eedf; }
-        .drop-note-card.is-schedule .drop-photo-frame { background: #e5eee7; }
-        .drop-note-paper { display: flex; flex-direction: column; gap: .65rem; height: 100%; padding: 3.5rem 1.25rem 4rem; text-align: left; color: #413b34; font-family: 'NanumPenScript', cursive; background-image: repeating-linear-gradient(transparent 0, transparent 27px, rgba(85,74,58,.07) 28px); background-position: 0 5.5rem; overflow: hidden; }
-        .drop-note-kind { display: flex; align-items: center; gap: .3rem; font: 700 .65rem/1.3 sans-serif; letter-spacing: .08em; color: #817462; }
-        .drop-note-paper h3 { font-size: 1.7rem; line-height: 1.15; overflow-wrap: anywhere; margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-        .drop-note-copy { font-size: 1.25rem; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
-        .drop-note-schedule { display: flex; flex-direction: column; gap: .3rem; font: 650 .72rem/1.5 sans-serif; color: #47634e; overflow-wrap: anywhere; }
-        .drop-note-schedule span { display: flex; align-items: baseline; gap: .35rem; }
-        .drop-note-card .drop-photo-meta { left: .75rem !important; right: auto !important; top: auto !important; bottom: .75rem !important; }
-        .drop-note-card .drop-photo-actions { right: .75rem !important; left: auto !important; top: .7rem !important; bottom: auto !important; }
-        .drop-note-card .drop-photo-meta-copy strong, .drop-note-card .drop-photo-meta-copy time { color: #51473e; text-shadow: none; }
-        .drop-note-card .drop-photo-author-avatar { color: #51473e; background: #e0d6c4; box-shadow: none; }
-        .drop-viewer-card.is-note { background: #f5eedf; color: #413b34; border-radius: 1.5rem; max-height: 88dvh; overflow-y: auto; }
+        /* 드롭 글쓰기와 글 카드 — 컴팩트한 공통 UI */
+        .drop-note-card { grid-column: 2 / 12 !important; margin-top: .25rem !important; transform: none !important; }
+        .drop-note-card + .drop-photo-card { margin-top: .25rem; }
+        .drop-note-card .drop-photo-frame { --drop-action-ink: #aeb4c2; background: #17191e; border: 1px solid #ffffff12; border-radius: 1.1rem; box-shadow: 0 .4rem 1rem #0002; }
+        .drop-note-card .drop-photo-open { height: auto; cursor: pointer; }
+        .drop-note-paper { display: flex; flex-direction: column; gap: .45rem; height: auto; padding: 3.1rem .9rem 2.6rem; text-align: left; color: #e9ebf1; font-family: inherit; overflow: hidden; }
+        .drop-note-kind { display: inline-flex; align-self: flex-start; align-items: center; gap: .25rem; padding: .15rem .4rem; border-radius: .35rem; font-size: .5625rem; font-weight: 700; line-height: 1.3; color: #a6afc0; background: #ffffff08; }
+        .drop-note-paper h3 { font-size: .9375rem; font-weight: 750; letter-spacing: -.025em; line-height: 1.45; overflow-wrap: anywhere; margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+        .drop-note-copy { font-size: .78125rem; line-height: 1.65; color: #aeb4c2; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+        .drop-note-schedule { display: flex; flex-wrap: wrap; gap: .3rem .5rem; font-size: .625rem; line-height: 1.5; color: #aea7ef; overflow-wrap: anywhere; }
+        .drop-note-schedule span { display: inline-flex; align-items: baseline; gap: .25rem; max-width: 100%; }
+        .drop-note-card .drop-photo-meta { left: .9rem !important; right: .9rem !important; top: .7rem !important; bottom: auto !important; max-width: calc(100% - 1.8rem); }
+        .drop-note-card .drop-photo-actions { right: .6rem !important; left: auto !important; top: auto !important; bottom: .4rem !important; gap: .3rem; }
+        .drop-note-card .drop-photo-action { min-width: 1.875rem; min-height: 1.875rem; width: auto; height: 1.875rem; padding: .3rem; font-size: 1rem; }
+        .drop-note-card .drop-photo-meta-copy, .drop-note-card .drop-photo-meta-copy strong, .drop-note-card .drop-photo-meta-copy time { font-family: inherit !important; text-shadow: none; }
+        .drop-note-card .drop-photo-meta-copy strong { color: #cbd0dc; font-size: .625rem; line-height: 1.35; }
+        .drop-note-card .drop-photo-meta-copy time { color: #757d8e; font-size: .5rem; }
+        .drop-note-card .drop-photo-author-avatar { width: 1.5rem; height: 1.5rem; color: #b9b2ed; background: #282637; box-shadow: none; }
+        .drop-note-card .drop-photo-comment-bubbles { position: static; width: auto; max-width: 100%; margin: .3rem .5rem 0; gap: .25rem; }
+        .drop-note-card .drop-photo-comment-bubble { max-width: 100%; transform: none !important; flex-direction: row; text-align: left; gap: .3rem; }
+        .drop-note-card .drop-photo-comment-text { font-family: inherit !important; font-size: .625rem; max-width: 100%; padding: .3rem .5rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .drop-note-card .drop-photo-comment-bubble .drop-comment-avatar { width: 1.125rem; height: 1.125rem; }
+        .drop-viewer-card.is-note { width: min(100%, 25rem); background: #17191e; color: #e9ebf1; border: 1px solid #ffffff12; border-radius: 1.1rem; max-height: 85dvh; overflow-y: auto; gap: .5rem; }
         .drop-viewer-card.is-note > * { flex-shrink: 0; }
-        .drop-viewer-card.is-note .drop-note-paper { height: auto; min-height: 14rem; padding: 2.8rem 1.5rem 1.5rem; overflow: visible; }
+        .drop-viewer-card.is-note .drop-note-paper { min-height: 0; padding: 2.5rem 1rem .6rem; overflow: visible; }
         .drop-viewer-card.is-note .drop-note-paper h3, .drop-viewer-card.is-note .drop-note-copy { display: block; overflow: visible; }
-        .drop-viewer-card.is-note .drop-note-schedule { border-top: 1px dashed #bfcbbf; padding-top: .75rem; }
-        .drop-viewer-card.is-note .drop-viewer-meta { padding: 1rem; }
-        .drop-viewer-card.is-note .drop-photo-meta-copy strong, .drop-viewer-card.is-note .drop-photo-meta-copy time, .drop-viewer-card.is-note .drop-photo-action { color: #51473e; text-shadow: none; }
-        .drop-viewer-card.is-note .drop-viewer-likers { color: #51473e; padding: 0 1rem 1rem; }
-        .drop-viewer-card.is-note .drop-viewer-likers-label, .drop-viewer-card.is-note .drop-viewer-liker { color: #51473e; }
-        .drop-viewer-card.is-note .drop-photo-author-avatar, .drop-viewer-card.is-note .drop-viewer-liker-avatar { color: #51473e; background: #e0d6c4; }
-        .drop-viewer-card.is-note .drop-viewer-close { color: #51473e; background: #e9dfce; }
-        .drop-note-owner-actions { display: flex; justify-content: flex-end; gap: .5rem; padding: 0 1rem 1rem; }
-        .drop-note-owner-actions button { font-size: .75rem; padding: .4rem .8rem; border-radius: 99px; background: #e9dfce; color: #51473e; }
+        .drop-viewer-card.is-note .drop-note-copy { font-size: .875rem; line-height: 1.8; }
+        .drop-viewer-card.is-note .drop-viewer-meta { padding: .6rem 1rem; border-top: 1px solid #ffffff0b; }
+        .drop-viewer-card.is-note .drop-photo-meta-copy strong, .drop-viewer-card.is-note .drop-photo-meta-copy time { font-family: inherit !important; color: #aeb4c2; text-shadow: none; }
+        .drop-viewer-card.is-note .drop-photo-action { color: #aeb4c2; }
+        .drop-viewer-card.is-note .drop-viewer-likers { color: #aeb4c2; padding: 0 1rem .75rem; }
+        .drop-viewer-card.is-note .drop-viewer-likers-label, .drop-viewer-card.is-note .drop-viewer-liker { color: #aeb4c2; }
+        .drop-viewer-card.is-note .drop-photo-author-avatar, .drop-viewer-card.is-note .drop-viewer-liker-avatar { color: #b9b2ed; background: #282637; }
+        .drop-viewer-card.is-note .drop-viewer-close { width: 1.75rem; height: 1.75rem; color: #b3b9c6; background: #252831; font-size: .875rem; }
+        .drop-note-owner-actions { display: flex; justify-content: flex-end; gap: .4rem; padding: 0 1rem .75rem; }
+        .drop-note-owner-actions button { font-size: .625rem; padding: .35rem .65rem; border-radius: .45rem; background: #252831; color: #b3b9c6; }
         #drop-comments-note { height: 100%; overflow: hidden; }
-        #drop-comments-note .drop-note-paper { padding: 1.25rem; }
-        #drop-comments-note .drop-note-paper h3 { font-size: 1.4rem; }
-        #drop-comments-note .drop-note-copy { -webkit-line-clamp: 2; font-size: 1rem; }
-        .drop-comments-photo-shell.is-note { background: #f5eedf; }
+        #drop-comments-note .drop-note-paper { padding: .85rem; }
+        #drop-comments-note .drop-note-paper h3 { font-size: .875rem; }
+        #drop-comments-note .drop-note-copy { -webkit-line-clamp: 2; font-size: .75rem; }
+        .drop-comments-photo-shell.is-note { background: #17191e; }
         .drop-comments-photo-shell img.hidden { display: none; }
-        #community-write-screen.drop-write-shell { background: #101113; color: #f5f2eb; }
-        .drop-write-topbar { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: calc(1rem + env(safe-area-inset-top)) 1.25rem .75rem; flex: none; }
-        .drop-write-topbar > span { font-size: .85rem; font-weight: 700; }
-        .drop-write-close { width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border-radius: 50%; background: #24252a; font-size: 1.2rem; }
-        .drop-write-submit { background: #ede5d4; color: #3b352b; font-weight: 800; font-size: .8rem; padding: .65rem 1.2rem; border-radius: 99px; }
-        .drop-write-scroll { padding: .5rem 1.25rem calc(2rem + env(safe-area-inset-bottom)); overscroll-behavior: contain; }
-        .drop-write-intro { padding: 1rem .15rem 1.5rem; }
-        .drop-write-eyebrow { font-size: .6rem; font-weight: 800; letter-spacing: .15em; color: #c1b49c; }
-        .drop-write-intro h2 { font-size: 1.6rem; font-weight: 800; letter-spacing: -.04em; margin-top: .6rem; }
-        .drop-write-intro p { font-size: .75rem; color: #999b9f; line-height: 1.6; margin-top: .5rem; }
-        .drop-write-paper { padding: 1.35rem; background: #f5eedf; border-radius: .55rem 1.7rem 1.7rem .55rem; box-shadow: 0 8px 25px #0002; color: #413b34; transform: rotate(-.6deg); }
-        #community-write-screen .drop-write-title, #community-write-screen .drop-write-body { display: block; width: 100%; border: 0; outline: none; border-radius: 0; color: #413b34 !important; background: transparent !important; font-family: 'NanumPenScript', cursive !important; box-shadow: none; }
-        #community-write-screen .drop-write-title { font-size: 1.9rem !important; line-height: 1.3; padding: 0 0 .8rem; border-bottom: 1px solid #d8cebb; }
-        #community-write-screen .drop-write-body { font-size: 1.45rem !important; line-height: 1.7; min-height: 14rem; padding: .9rem 0; resize: vertical; }
-        .drop-write-title::placeholder, .drop-write-body::placeholder { color: #a59a85; }
-        .drop-write-paper-mark { display: flex; gap: .4rem; align-items: center; justify-content: flex-end; font-size: .65rem; color: #9a8d75; }
-        .drop-schedule-toggle { display: flex; align-items: center; gap: .8rem; padding: 1.25rem 0; margin-top: .75rem; cursor: pointer; }
-        .drop-schedule-toggle-icon { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; border-radius: .85rem; color: #bad4bc; background: #28352c; font-size: 1.3rem; }
+        #community-write-screen.drop-write-shell { background: #0d0f14; color: #e9ebf1; }
+        .drop-write-topbar { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: calc(.6rem + env(safe-area-inset-top)) .85rem .6rem; border-bottom: 1px solid #ffffff0a; flex: none; }
+        .drop-write-topbar > span { font-size: .8125rem; font-weight: 750; }
+        .drop-write-close { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: .65rem; background: transparent; color: #a4abb9; font-size: 1rem; }
+        .drop-write-submit { min-height: 2rem; background: #8575ea; color: #fff; font-weight: 750; font-size: .6875rem; padding: .4rem .85rem; border-radius: .6rem; }
+        .drop-write-scroll { padding: .85rem 1rem calc(1rem + env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+        .drop-write-intro { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .15rem .1rem .85rem; }
+        .drop-write-intro h2 { font-size: .75rem; font-weight: 650; color: #c1c6d1; }
+        .drop-write-intro p { font-size: .625rem; color: #707b8d; margin-top: .2rem; }
+        .drop-write-mode { display: inline-flex; align-items: center; gap: .25rem; flex: none; font-size: .625rem; color: #9187c9; }
+        .drop-write-paper { padding: 0 .85rem; background: #17191f; border: 1px solid #ffffff0b; border-radius: .85rem; color: #e9ebf1; }
+        #community-write-screen .drop-write-title, #community-write-screen .drop-write-body { display: block; width: 100%; border: 0; outline: none; border-radius: 0; color: #e9ebf1 !important; background: transparent !important; font-family: inherit !important; font-size: 1rem !important; box-shadow: none; }
+        #community-write-screen .drop-write-title { line-height: 1.4; padding: .85rem 0; font-weight: 650; border-bottom: 1px solid #ffffff0b; }
+        #community-write-screen .drop-write-body { line-height: 1.65; min-height: 8rem; padding: .75rem 0; resize: vertical; }
+        .drop-write-title::placeholder, .drop-write-body::placeholder { color: #697386; }
+        .drop-write-paper-mark { display: flex; justify-content: flex-end; padding: .2rem 0 .65rem; font-size: .5625rem; color: #697386; }
+        .drop-schedule-toggle { display: flex; align-items: center; gap: .6rem; padding: .7rem .15rem; margin-top: .35rem; cursor: pointer; }
+        .drop-schedule-toggle-icon { width: 1.75rem; height: 1.75rem; display: grid; place-items: center; border-radius: .5rem; color: #aea4ef; background: #272338; font-size: .875rem; }
         .drop-schedule-toggle strong, .drop-schedule-toggle small { display: block; }
-        .drop-schedule-toggle strong { font-size: .85rem; }
-        .drop-schedule-toggle small { font-size: .65rem; color: #999b9f; margin-top: .25rem; }
-        .drop-schedule-toggle input { margin-left: auto; width: 1.3rem; height: 1.3rem; accent-color: #a8c7ad; flex: none; }
-        .drop-schedule-fields { border-top: 1px solid #ffffff15; padding-top: .25rem; }
-        .drop-schedule-section { padding: 1rem 0; }
-        .drop-schedule-section h3 { display: flex; gap: .45rem; align-items: center; font-size: .85rem; font-weight: 750; margin-bottom: 1rem; color: #c8dbcb; }
-        .drop-schedule-section .community-control { background: #202326; border-color: #363a3d; border-radius: .8rem; }
-        .drop-write-help { margin-top: .7rem; color: #999b9f; font-size: .65rem; line-height: 1.6; }
-        .drop-write-status { min-height: 1.5rem; margin-top: 1rem; font-size: .75rem; color: #ff9a95; }
-        @media (prefers-color-scheme: light) {
-            #community-write-screen.drop-write-shell { background: #f2f0eb; color: #343a36; }
-            .drop-write-close { background: #e5e2da; }
-            .drop-write-submit { background: #353f36; color: white; }
-            .drop-write-intro p, .drop-schedule-toggle small, .drop-write-help { color: #777a73; }
-            .drop-write-eyebrow { color: #88785c; }
-            .drop-schedule-toggle-icon { background: #dde8dd; color: #536d54; }
-            .drop-schedule-fields { border-color: #d8ddd4; }
-            .drop-schedule-section h3 { color: #536d54; }
-            #community-write-screen.drop-write-shell .community-control { background: #fff; border-color: #d8ddd4; color: #343a36; }
-            .drop-write-status { color: #bd423b; }
-        }
-
-        #echo-screen { position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%, 28rem); z-index: 20; background: #08090b; color: #f5f5f7; flex-direction: column; overflow: hidden; }
+        .drop-schedule-toggle strong { font-size: .6875rem; font-weight: 650; }
+        .drop-schedule-toggle small { font-size: .5625rem; color: #778297; margin-top: .125rem; }
+        .drop-schedule-toggle input { margin-left: auto; width: 1rem; height: 1rem; accent-color: #8575ea; flex: none; }
+        .drop-schedule-fields { border-top: 1px solid #ffffff0b; padding-top: .1rem; }
+        .drop-schedule-section { padding: .65rem 0; }
+        .drop-schedule-section h3 { display: flex; gap: .3rem; align-items: center; font-size: .6875rem; font-weight: 650; margin-bottom: .6rem; color: #aeb4c2; }
+        #community-write-screen .drop-schedule-section .community-control { background: #17191f; color: #cbd0dc; border-color: #ffffff12; border-radius: .6rem; min-height: 2.35rem; height: 2.35rem; padding: .45rem .65rem; font-size: .75rem; }
+        #community-write-screen .drop-schedule-section .community-label { font-size: .5625rem; margin-bottom: .3rem; color: #778297; }
+        #community-write-screen .drop-schedule-section input[type="date"] { padding-right: 2rem; line-height: 2.35rem; }
+        #community-write-screen .drop-schedule-section input[type="date"]::-webkit-date-and-time-value { height: 2.35rem; line-height: 2.35rem; }
+        #community-write-screen .drop-schedule-section input[type="date"]::-webkit-datetime-edit, #community-write-screen .drop-schedule-section input[type="date"]::-webkit-datetime-edit-fields-wrapper { min-height: 2.35rem; }
+        #community-write-screen .drop-schedule-section .community-date-icon { right: .7rem; bottom: .8rem; font-size: .6875rem; }
+        #community-write-screen .drop-schedule-section .community-add-place-button { min-height: 2rem; border-radius: .6rem; font-size: .625rem; background: #272338; color: #aea4ef; }
+        .drop-write-help { margin-top: .45rem; color: #778297; font-size: .5625rem; line-height: 1.6; }
+        .drop-write-status { font-size: .6875rem; color: #ef9b9a; line-height: 1.5; margin-top: .65rem; }
+        .drop-write-status:empty { display: none; }
+        /* Echo — 작은 목록 행과 간결한 채팅 화면 */
+        #echo-screen { position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%, 28rem); z-index: 20; background: #0d0f14; color: #e9ebf1; flex-direction: column; overflow: hidden; }
         .echo-list-view, .echo-thread { display: flex; flex-direction: column; min-height: 0; flex: 1; }
         .echo-list-view.hidden, .echo-thread.hidden { display: none; }
-        .echo-header { padding: calc(1.3rem + env(safe-area-inset-top)) 1.5rem 1.15rem; display: flex; align-items: center; gap: .8rem; flex: none; }
-        .echo-wordmark { font-size: 2.1rem; font-weight: 900; letter-spacing: -.06em; }
-        .echo-header-copy p { color: #9699a3; font-size: .75rem; margin-top: .25rem; }
-        .echo-new { margin-left: auto; width: 2.7rem; height: 2.7rem; display: grid; place-items: center; border-radius: 50%; color: #c7c5ff; background: #24233d; font-size: 1.35rem; }
-        .echo-list-scroll { overflow-y: auto; flex: 1; min-height: 0; padding: 0 1.25rem calc(8rem + env(safe-area-inset-bottom)); }
-        .echo-section-label { color: #9598a3; font-size: .7rem; font-weight: 750; margin: 1rem .25rem .5rem; letter-spacing: .02em; }
-        .echo-person { display: flex; width: 100%; align-items: center; gap: .85rem; text-align: left; padding: 1rem .3rem; border-bottom: 1px solid #ffffff0b; }
-        .echo-avatar { display: grid; place-items: center; width: 3.1rem; height: 3.1rem; flex: none; border-radius: 1.15rem; overflow: hidden; color: #d6d1ff; background: #27243c; font-size: 1rem; font-weight: 800; }
+        .echo-header { padding: calc(.85rem + env(safe-area-inset-top)) 1rem .55rem; display: flex; align-items: center; gap: .6rem; flex: none; }
+        .echo-brand { display: flex; align-items: center; gap: .5rem; }
+        .echo-brand > i { width: 1.85rem; height: 1.85rem; display: grid; place-items: center; border-radius: .6rem; background: #272338; color: #aaa0e8; font-size: 1rem; }
+        .echo-wordmark { font-size: 1.3125rem; font-weight: 750; letter-spacing: -.045em; }
+        .echo-header-copy p { color: #778297; font-size: .625rem; margin-top: .2rem; }
+        .echo-new { margin-left: auto; width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: .65rem; color: #b8b0e8; background: #ffffff06; font-size: 1.0625rem; }
+        .echo-tabs { display: flex; align-items: center; gap: .35rem; padding: .6rem 1rem .75rem; border-bottom: 1px solid #ffffff0a; }
+        .echo-tab { min-height: 2rem; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; padding: .4rem .85rem; border-radius: .6rem; color: #778297; font-size: .6875rem; font-weight: 650; }
+        .echo-tab.is-active { color: #c3bcec; background: #272338; }
+        .echo-tab-count { font-size: .5625rem; color: #778297; }
+        .echo-list-scroll { overflow-y: auto; flex: 1; min-height: 0; padding: .25rem 1rem calc(7rem + env(safe-area-inset-bottom)); }
+        .echo-section-label { color: #778297; font-size: .625rem; font-weight: 650; margin: .75rem .25rem .3rem; }
+        .echo-person { display: flex; width: 100%; min-height: 3.65rem; align-items: center; gap: .65rem; text-align: left; padding: .55rem .25rem; border-bottom: 1px solid #ffffff08; }
+        .echo-person:active { background: #ffffff04; }
+        .echo-avatar { display: grid; place-items: center; width: 2.125rem; height: 2.125rem; flex: none; border-radius: 50%; overflow: hidden; color: #b8b0e8; background: #272338; font-size: .75rem; font-weight: 700; }
         .echo-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .echo-person-copy { min-width: 0; flex: 1; }
-        .echo-person-copy strong { display: block; font-size: .95rem; font-weight: 750; }
-        .echo-person-copy p { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #9296a1; font-size: .8rem; margin-top: .35rem; }
-        .echo-person time { align-self: flex-start; padding-top: .2rem; font-size: .65rem; color: #787d8b; }
-        .echo-state { padding: 2rem 1rem; text-align: center; font-size: .8rem; line-height: 1.7; color: #9699a3; }
-        .echo-state i { display: block; font-size: 2rem; margin-bottom: .75rem; color: #a49cf7; }
-        .echo-state button { display: block; margin: 1rem auto 0; border-radius: 99px; padding: .6rem 1rem; color: #eeeaff; background: #29253e; }
-        .echo-thread-header { display: flex; gap: .8rem; align-items: center; padding: calc(.8rem + env(safe-area-inset-top)) 1rem .8rem; border-bottom: 1px solid #ffffff0d; flex: none; }
-        .echo-back { width: 2.1rem; height: 2.5rem; font-size: 1.35rem; }
-        .echo-thread-header .echo-avatar { width: 2.5rem; height: 2.5rem; border-radius: .9rem; }
-        .echo-thread-header strong { display: block; font-size: .95rem; }
-        .echo-thread-header small { display: block; font-size: .65rem; color: #9699a3; margin-top: .2rem; }
-        .echo-messages { flex: 1; min-height: 0; overflow-y: auto; padding: 1rem; overscroll-behavior: contain; }
-        .echo-message-row { display: flex; align-items: flex-end; gap: .4rem; margin: .65rem 0; }
+        .echo-person-copy strong { display: block; font-size: .78125rem; font-weight: 650; }
+        .echo-person-copy p { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #778297; font-size: .65625rem; margin-top: .2rem; }
+        .echo-person time { align-self: flex-start; padding-top: .3rem; font-size: .5625rem; color: #626d80; }
+        .echo-person > i { color: #626d80; font-size: .625rem; }
+        .echo-state { padding: 1.5rem .75rem; text-align: center; font-size: .6875rem; line-height: 1.7; color: #778297; }
+        .echo-state i { display: block; font-size: 1.25rem; margin-bottom: .45rem; color: #9187c9; }
+        .echo-state button { display: block; margin: .65rem auto 0; border-radius: .6rem; padding: .4rem .75rem; color: #b8b0e8; background: #272338; font-size: .625rem; }
+        .echo-thread-header { display: flex; gap: .55rem; align-items: center; padding: calc(.55rem + env(safe-area-inset-top)) .85rem .55rem; border-bottom: 1px solid #ffffff0a; flex: none; }
+        .echo-back { width: 1.9rem; height: 2.25rem; font-size: 1rem; color: #aeb4c2; }
+        .echo-thread-header .echo-avatar { width: 1.875rem; height: 1.875rem; }
+        .echo-thread-header strong { display: block; font-size: .8125rem; font-weight: 650; }
+        .echo-thread-header small { display: block; font-size: .5625rem; color: #778297; margin-top: .1rem; }
+        .echo-messages { flex: 1; min-height: 0; overflow-y: auto; padding: .6rem .85rem; overscroll-behavior: contain; }
+        .echo-message-row { display: flex; align-items: flex-end; gap: .3rem; margin: .35rem 0; }
         .echo-message-row.is-mine { flex-direction: row-reverse; }
-        .echo-message { max-width: 78%; padding: .75rem .9rem; background: #20222a; color: #f4f4f7; border-radius: 1.1rem 1.1rem 1.1rem .3rem; font-size: .85rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
-        .echo-message-row.is-mine .echo-message { background: #6c5ce7; color: white; border-radius: 1.1rem 1.1rem .3rem 1.1rem; }
-        .echo-message-row time { flex: none; color: #8b8f9b; font-size: .55rem; white-space: nowrap; }
-        .echo-date { margin: 1rem auto; width: max-content; max-width: 100%; padding: .35rem .7rem; border-radius: 99px; background: #181a20; color: #8b8f9b; font-size: .65rem; }
-        .echo-load-more { display: block; margin: 0 auto 1rem; color: #b4acf9; font-size: .7rem; padding: .4rem; }
-        .echo-compose { flex: none; padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom)); background: #101116; border-top: 1px solid #ffffff0d; }
-        .echo-compose form { display: flex; gap: .65rem; align-items: flex-end; }
-        .echo-compose textarea { width: 100%; flex: 1; resize: none; border-radius: 1.1rem; background: #22242b; border: 1px solid transparent; color: #f5f5f7; outline: none; padding: .75rem .9rem; font-size: 1rem; min-height: 3rem; max-height: 8rem; }
-        .echo-compose textarea:focus { border-color: #8374ed; }
-        .echo-send { display: grid; place-items: center; flex: none; width: 3rem; height: 3rem; border-radius: 50%; background: #6c5ce7; color: white; font-size: 1.2rem; }
-        .echo-send:disabled { opacity: .4; }
-        .echo-compose-status { color: #f4a8a6; font-size: .7rem; line-height: 1.5; }
+        .echo-message { max-width: 78%; padding: .5rem .7rem; background: #20242d; color: #d7dce6; border-radius: .8rem .8rem .8rem .25rem; font-size: .78125rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .echo-message-row.is-mine .echo-message { background: #6658b7; color: #fff; border-radius: .8rem .8rem .25rem .8rem; }
+        .echo-message-row time { flex: none; color: #626d80; font-size: .5rem; white-space: nowrap; }
+        .echo-date { margin: .8rem auto; width: max-content; max-width: 100%; color: #626d80; font-size: .5625rem; }
+        .echo-load-more { display: block; margin: 0 auto .65rem; color: #aaa0e8; font-size: .625rem; padding: .4rem; }
+        .echo-compose { flex: none; padding: .55rem .85rem calc(.55rem + env(safe-area-inset-bottom)); background: #101319; border-top: 1px solid #ffffff0a; }
+        .echo-compose form { display: flex; gap: .45rem; align-items: flex-end; }
+        .echo-compose textarea { width: 100%; flex: 1; resize: none; border-radius: .75rem; background: #1c2029; border: 1px solid transparent; color: #e9ebf1; outline: none; padding: .45rem .65rem; font-size: 1rem; line-height: 1.4; min-height: 2.3rem; max-height: 6rem; }
+        .echo-compose textarea:focus { border-color: #6658b7; }
+        .echo-send { display: grid; place-items: center; flex: none; width: 2.3rem; height: 2.3rem; border-radius: .75rem; background: #6658b7; color: white; font-size: 1rem; }
+        .echo-send:disabled { opacity: .35; }
+        .echo-compose-status { color: #ef9b9a; font-size: .625rem; line-height: 1.5; }
         .echo-compose-status:empty { display: none; }
+        @media (max-width: 360px) {
+            .drop-note-card { grid-column: 1 / 13 !important; }
+        }
         @media (prefers-color-scheme: light) {
-            #echo-screen { background: #fafafa; color: #20222a; }
-            .echo-person, .echo-thread-header { border-color: #e8e8ed; }
-            .echo-avatar, .echo-new { background: #eeeafa; color: #7363ca; }
-            .echo-message { background: #ececf1; color: #252733; }
-            .echo-compose { background: #fff; border-color: #e8e8ed; }
-            .echo-compose textarea { background: #f3f3f7; color: #252733; }
-            .echo-date { background: #efeff4; color: #707482; }
-            .echo-state button { background: #eeeafa; color: #7363ca; }
-            .echo-compose-status { color: #b43d40; }
+            #community-write-screen.drop-write-shell, #echo-screen { background: #f7f8fa; color: #303747; }
+            .drop-note-card .drop-photo-frame, .drop-viewer-card.is-note, .drop-comments-photo-shell.is-note { background: #fff; border-color: #e9ecf1; }
+            .drop-note-card .drop-photo-frame { --drop-action-ink: #7d8799; box-shadow: 0 .2rem .7rem #1d274508; }
+            .drop-note-paper { color: #303747; }
+            .drop-note-kind { color: #8a819f; background: #f5f2fa; }
+            .drop-note-copy, .drop-viewer-card.is-note .drop-photo-meta-copy strong, .drop-viewer-card.is-note .drop-photo-meta-copy time, .drop-viewer-card.is-note .drop-photo-action, .drop-viewer-card.is-note .drop-viewer-likers-label, .drop-viewer-card.is-note .drop-viewer-liker { color: #7d8799; }
+            .drop-note-schedule { color: #8a79b3; }
+            .drop-note-card .drop-photo-meta-copy strong { color: #657086; }
+            .drop-note-card .drop-photo-meta-copy time { color: #a2abba; }
+            .drop-note-card .drop-photo-author-avatar, .drop-viewer-card.is-note .drop-photo-author-avatar, .drop-viewer-card.is-note .drop-viewer-liker-avatar { background: #eeeaf6; color: #8a79b3; }
+            .drop-viewer-card.is-note .drop-viewer-close, .drop-note-owner-actions button { background: #f1f3f7; color: #7d8799; }
+            .drop-viewer-card.is-note .drop-viewer-meta, .drop-write-topbar, .drop-schedule-fields, .echo-tabs, .echo-person, .echo-thread-header { border-color: #e9ecf1; }
+            .drop-write-paper { background: #fff; border-color: #e9ecf1; }
+            #community-write-screen .drop-write-title, #community-write-screen .drop-write-body { color: #303747 !important; }
+            #community-write-screen .drop-write-title { border-color: #e9ecf1; }
+            .drop-write-intro h2, .drop-schedule-section h3 { color: #657086; }
+            .drop-write-intro p, .drop-schedule-toggle small, .drop-write-help { color: #9aa4b5; }
+            .drop-write-submit { background: #9988cf; }
+            .drop-schedule-toggle-icon, .echo-avatar, .echo-brand > i, .echo-tab.is-active, .echo-state button { background: #eeeaf6; color: #8a79b3; }
+            .echo-new { background: #f0f2f7; color: #8a79b3; }
+            #community-write-screen .drop-schedule-section .community-control { background: #fff; border-color: #e9ecf1; color: #657086; }
+            #community-write-screen .drop-schedule-section .community-add-place-button { background: #eeeaf6; color: #8a79b3; }
+            .echo-message { background: #edf0f5; color: #657086; }
+            .echo-message-row.is-mine .echo-message, .echo-send { background: #9988cf; color: white; }
+            .echo-compose { background: #fff; border-color: #e9ecf1; }
+            .echo-compose textarea { background: #f4f6f9; color: #657086; }
+            .drop-write-status, .echo-compose-status { color: #b95c5c; }
         }
     </style>
     <link rel="stylesheet" href="tailwind.css">
@@ -9005,10 +9039,14 @@
     <!-- Echo: 하단 메뉴의 1:1 채팅 -->
     <section id="echo-screen" class="hidden" aria-label="에코 1:1 채팅">
         <div id="echo-list-view" class="echo-list-view">
-            <header class="echo-header"><div class="echo-header-copy"><h1 class="echo-wordmark">Echo</h1><p>우리 둘의 대화</p></div><button class="echo-new" type="button" onclick="window.showEchoPeople()" aria-label="새 대화 시작"><i class="ph ph-note-pencil" aria-hidden="true"></i></button></header>
+            <header class="echo-header"><div class="echo-header-copy"><div class="echo-brand"><i class="ph ph-chats-circle" aria-hidden="true"></i><h1 class="echo-wordmark">Echo</h1></div><p>가볍게 나누는 1:1 대화</p></div><button class="echo-new" type="button" onclick="window.showEchoPeople()" aria-label="새 대화 시작"><i class="ph ph-note-pencil" aria-hidden="true"></i></button></header>
+            <div class="echo-tabs" role="tablist" aria-label="에코 목록">
+                <button id="echo-tab-rooms" type="button" role="tab" class="echo-tab is-active" aria-selected="true" aria-controls="echo-rooms" onclick="window.setEchoListMode('rooms')">대화 <span id="echo-room-count" class="echo-tab-count"></span></button>
+                <button id="echo-tab-people" type="button" role="tab" class="echo-tab" aria-selected="false" aria-controls="echo-people-section" onclick="window.setEchoListMode('people')">멤버 <span id="echo-people-count" class="echo-tab-count"></span></button>
+            </div>
             <div id="echo-list-scroll" class="echo-list-scroll scrollbar-hide">
-                <div id="echo-rooms" aria-live="polite"></div>
-                <div id="echo-people-section"><h2 class="echo-section-label">대화할 멤버</h2><div id="echo-people"></div></div>
+                <div id="echo-rooms" role="tabpanel" aria-labelledby="echo-tab-rooms" aria-live="polite"></div>
+                <div id="echo-people-section" class="hidden" role="tabpanel" aria-labelledby="echo-tab-people"><div id="echo-people"></div></div>
             </div>
         </div>
         <div id="echo-thread" class="echo-thread hidden">
@@ -9022,18 +9060,18 @@
     <section id="community-write-screen" class="drop-write-shell hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-md flex-col overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="community-write-heading">
         <header class="drop-write-topbar">
             <button type="button" onclick="window.closeCommunityComposer(false)" class="drop-write-close" aria-label="글쓰기 나가기"><i class="ph ph-x" aria-hidden="true"></i></button>
-            <span>새로운 드롭</span>
+            <span>드롭 쓰기</span>
             <button id="community-submit-btn" type="submit" form="community-write-form" class="drop-write-submit">올리기</button>
         </header>
         <div class="drop-write-scroll flex-1 overflow-y-auto scrollbar-hide">
-            <div class="drop-write-intro"><span class="drop-write-eyebrow">DROP A NOTE</span><h2 id="community-write-heading">오늘의 이야기를 남겨요.</h2><p id="community-write-subheading">짧은 생각부터 다음 모임까지, 편하게 나눠요.</p></div>
+            <div class="drop-write-intro"><div><h2 id="community-write-heading">새 게시물</h2><p id="community-write-subheading">멤버들과 공유할 이야기를 적어주세요.</p></div><span class="drop-write-mode"><i class="ph ph-pencil-simple" aria-hidden="true"></i> 글</span></div>
             <form id="community-write-form" onsubmit="event.preventDefault(); window.submitCommunityPost()" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <div class="drop-write-paper">
                     <label class="sr-only" for="community-post-title">제목</label>
                     <input id="community-post-title" maxlength="80" placeholder="어떤 이야기인가요?" class="drop-write-title">
                     <label id="drop-write-body-label" class="sr-only" for="community-post-days">내용</label>
-                    <textarea id="community-post-days" maxlength="2000" rows="8" placeholder="함께 나누고 싶은 이야기를 적어보세요." class="drop-write-body"></textarea>
-                    <span class="drop-write-paper-mark" aria-hidden="true"><i class="ph ph-pencil-simple"></i> 나의 드롭</span>
+                    <textarea id="community-post-days" maxlength="2000" rows="5" placeholder="함께 나누고 싶은 이야기를 적어보세요." class="drop-write-body"></textarea>
+                    <span class="drop-write-paper-mark">최대 2,000자</span>
                 </div>
                 <label class="drop-schedule-toggle" for="drop-post-schedule">
                     <span class="drop-schedule-toggle-icon"><i class="ph ph-calendar-blank" aria-hidden="true"></i></span>
@@ -15666,8 +15704,8 @@
             const heading = document.getElementById('community-write-heading');
             const subheading = document.getElementById('community-write-subheading');
             const submit = document.getElementById('community-submit-btn');
-            if (heading) heading.textContent = post ? '드롭을 다듬어요.' : '오늘의 이야기를 남겨요.';
-            if (subheading) subheading.textContent = post ? '이야기와 일정을 수정한 뒤 저장해 주세요.' : '짧은 생각부터 다음 모임까지, 편하게 나눠요.';
+            if (heading) heading.textContent = post ? '게시물 수정' : '새 게시물';
+            if (subheading) subheading.textContent = post ? '바꾼 내용을 저장해주세요.' : '멤버들과 공유할 이야기를 적어주세요.';
             if (submit) submit.textContent = post ? '저장' : '올리기';
             window._communityView = 'write';
             const screen = document.getElementById('community-write-screen');
@@ -18091,7 +18129,7 @@
             const body = typeof post.body === 'string' ? post.body : (Array.isArray(post.itinerary) ? post.itinerary.join('\n') : '');
             const place = (typeof communityPostPlaces === 'function' ? communityPostPlaces(post).map(function (item) { return item.label; }).join(' · ') : post.place) || '';
             const dates = post.startDate === post.endDate ? post.startDate : (post.startDate || '') + ' — ' + (post.endDate || '');
-            return '<div class="drop-note-paper"><span class="drop-note-kind"><i class="ph ' + (schedule ? 'ph-calendar-blank' : 'ph-pencil-simple') + '" aria-hidden="true"></i>' + (schedule ? '함께할 일정' : '오늘의 이야기') + '</span>' +
+            return '<div class="drop-note-paper"><span class="drop-note-kind"><i class="ph ' + (schedule ? 'ph-calendar-blank' : 'ph-pencil-simple') + '" aria-hidden="true"></i>' + (schedule ? '일정' : '글') + '</span>' +
                 '<h3>' + dropEsc(post.title || '') + '</h3>' +
                 (schedule ? '<div class="drop-note-schedule"><span><i class="ph ph-calendar-dots" aria-hidden="true"></i>' + dropEsc(dates) + '</span><span><i class="ph ph-map-pin" aria-hidden="true"></i>' + dropEsc(place) + '</span></div>' : '') +
                 '<div class="drop-note-copy">' + dropEsc(body) + '</div></div>';
@@ -18183,7 +18221,7 @@
 
         function dropCommentBubblesHtml(post, side) {
             const postId = dropEsc(dropPostId(post));
-            const previews = Array.isArray(post.commentPreview) ? post.commentPreview.slice(-3) : [];
+            const previews = Array.isArray(post.commentPreview) ? post.commentPreview.slice(post._source === 'community_posts' ? -1 : -3) : [];
             return '<div class="drop-photo-comment-bubbles is-' + side + '">' + previews.map(function (comment) {
                 return '<button type="button" class="drop-photo-comment-bubble" onclick="window.openDropComments(\'' + postId + '\')" aria-label="' + dropEsc((comment.authorName || '멤버') + '님의 댓글 보기') + '">' +
                     dropCommentAvatar(comment) + '<span class="drop-photo-comment-text">' + dropEsc(comment.text || '') + '</span></button>';
@@ -18308,12 +18346,12 @@
                 const width = Math.max(1, Number(post.width) || 4);
                 const height = Math.max(1, Number(post.height) || 5);
                 const isNote = post._source === 'community_posts';
-                const ratio = isNote ? .72 : Math.max(.62, Math.min(1.6, width / height));
+                const ratio = Math.max(.62, Math.min(1.6, width / height));
                 const createdAt = dropMillis(post.createdAt);
                 const postId = dropEsc(dropPostId(post));
                 const bubbleSide = ['left', 'right', 'left', 'left', 'right', 'right'][index % 6];
                 return '<article class="drop-photo-card is-meta-bottom-left is-actions-top-right' + (isNote ? ' drop-note-card' + (dropIsSchedule(post) ? ' is-schedule' : '') : '') + '" data-drop-card-id="' + postId + '">' +
-                    '<div class="drop-photo-frame" style="aspect-ratio:' + ratio.toFixed(4) + '">' +
+                    '<div class="drop-photo-frame"' + (isNote ? '' : ' style="aspect-ratio:' + ratio.toFixed(4) + '"') + '>' +
                     '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\', this)" aria-label="드롭 크게 보기">' + (isNote ? dropNoteHtml(post) : '<img crossorigin="anonymous" src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false">') + '</button>' +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
                     '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
@@ -18466,7 +18504,7 @@
             cards.forEach(function (card, cardIndex) {
                 const frame = frameBounds[cardIndex];
                 const bubbles = card.querySelector('.drop-photo-comment-bubbles');
-                if (!frame || !bubbles || !bubbles.children.length) return;
+                if (!frame || !bubbles || !bubbles.children.length || card.classList.contains('drop-note-card')) return;
                 const measured = bubbles.getBoundingClientRect();
                 const bubbleWidth = Math.min(measured.width, feedBounds.width - 16);
                 const bubbleHeight = measured.height;
@@ -21305,7 +21343,7 @@ service cloud.firestore {
     -->
     <script id="echo-controller">
     (function () {
-        const state = { uid: '', rooms: [], roomsUnsub: null, roomsEpoch: 0, roomsLoading: false, roomsError: '', peer: null, roomId: '', openingUid: '', openEpoch: 0, messages: [], messagesUnsub: null, messagesEpoch: 0, messagesReady: false, messageLimit: 100, loadingOlder: false, sendBusy: false, pendingMessage: null };
+        const state = { uid: '', rooms: [], roomsUnsub: null, roomsEpoch: 0, roomsLoading: false, roomsError: '', listMode: 'rooms', peer: null, roomId: '', openingUid: '', openEpoch: 0, messages: [], messagesUnsub: null, messagesEpoch: 0, messagesReady: false, messageLimit: 100, loadingOlder: false, sendBusy: false, pendingMessage: null };
         const byId = id => document.getElementById(id);
         const user = () => window.enjoyUser && window.enjoyUser.uid ? window.enjoyUser : null;
         const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -21350,12 +21388,16 @@ service cloud.firestore {
             if (!current) {
                 rooms.innerHTML = '<div class="echo-state"><i class="ph ph-chats-circle" aria-hidden="true"></i>로그인하고 대화를 시작해보세요.<button type="button" onclick="window.showLoginPrompt()">로그인하기</button></div>';
                 people.innerHTML = '';
+                ['echo-room-count', 'echo-people-count'].forEach(id => { const count = byId(id); if (count) count.textContent = ''; });
                 return;
             }
             const sorted = state.rooms.slice().sort((a, b) => millis(b.updatedAt) - millis(a.updatedAt));
             rooms.innerHTML = state.roomsError ? '<div class="echo-state" role="status">' + esc(state.roomsError) + '<button type="button" onclick="window.startEcho()">다시 시도</button></div>' :
-                (sorted.length ? '<h2 class="echo-section-label">최근 대화</h2>' + sorted.map(room => personRow(peerForRoom(room), room.lastMessage || '첫 메시지를 남겨보세요.', room.updatedAt)).join('') : '<div class="echo-state"><i class="ph ph-chat-teardrop-dots" aria-hidden="true"></i>' + (state.roomsLoading ? '대화를 불러오는 중이에요.' : '멤버를 선택해 첫 대화를 시작해보세요.') + '</div>');
+                (sorted.length ? sorted.map(room => personRow(peerForRoom(room), room.lastMessage || '첫 메시지를 남겨보세요.', room.updatedAt)).join('') : '<div class="echo-state"><i class="ph ph-chat-teardrop-dots" aria-hidden="true"></i>' + (state.roomsLoading ? '대화를 불러오는 중이에요.' : '아직 대화가 없어요.<button type="button" onclick="window.showEchoPeople()">대화 시작</button>') + '</div>');
             const roster = members().filter(member => member.uid !== current.uid);
+            const roomCount = byId('echo-room-count'), peopleCount = byId('echo-people-count');
+            if (roomCount) roomCount.textContent = sorted.length ? String(sorted.length) : '';
+            if (peopleCount) peopleCount.textContent = roster.length ? String(roster.length) : '';
             people.innerHTML = roster.length ? roster.map(member => personRow(member, state.openingUid === member.uid ? '대화를 여는 중…' : '1:1 대화 시작', 0)).join('') : '<p class="echo-state">대화할 멤버가 아직 없습니다.</p>';
             if (state.peer) {
                 const fresh = roster.find(member => member.uid === state.peer.uid);
@@ -21364,9 +21406,19 @@ service cloud.firestore {
                 byId('echo-peer-name').textContent = state.peer.name;
             }
         };
-        window.showEchoPeople = function () {
-            byId('echo-people-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.setEchoListMode = function (mode) {
+            state.listMode = mode === 'people' ? 'people' : 'rooms';
+            byId('echo-rooms').classList.toggle('hidden', state.listMode !== 'rooms');
+            byId('echo-people-section').classList.toggle('hidden', state.listMode !== 'people');
+            ['rooms', 'people'].forEach(key => {
+                const tab = byId('echo-tab-' + key), active = key === state.listMode;
+                tab.classList.toggle('is-active', active);
+                tab.setAttribute('aria-selected', String(active));
+                tab.tabIndex = active ? 0 : -1;
+            });
+            byId('echo-list-scroll').scrollTop = 0;
         };
+        window.showEchoPeople = function () { window.setEchoListMode('people'); };
         window.startEcho = function () {
             window.renderEchoList();
             const current = user();
@@ -21512,8 +21564,17 @@ service cloud.firestore {
         };
         window.enjoyEchoOnAuth = function (current) {
             window.leaveEcho(); state.rooms = []; state.uid = current && current.uid || ''; state.roomsError = ''; state.pendingMessage = null;
-            window.renderEchoList(); if (current && window.activeTabIndex === 1) window.startEcho();
+            window.setEchoListMode('rooms'); window.renderEchoList(); if (current && window.activeTabIndex === 1) window.startEcho();
         };
+        ['rooms', 'people'].forEach(key => {
+            byId('echo-tab-' + key).addEventListener('keydown', event => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                const mode = event.key === 'Home' ? 'rooms' : (event.key === 'End' ? 'people' : (key === 'rooms' ? 'people' : 'rooms'));
+                window.setEchoListMode(mode);
+                byId('echo-tab-' + mode).focus();
+            });
+        });
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', sizeEchoViewport);
             window.visualViewport.addEventListener('scroll', sizeEchoViewport);
