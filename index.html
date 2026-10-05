@@ -10801,6 +10801,21 @@
             enjoyBaseballRankingTrendRange = range;
             renderEnjoyBaseballRankingTrend();
         };
+        let kboSeasonBannerTimer = null;
+        window.stopKboSeasonBannerAuto = function () {
+            if (kboSeasonBannerTimer !== null) window.clearInterval(kboSeasonBannerTimer);
+            kboSeasonBannerTimer = null;
+        };
+        window.startKboSeasonBannerAuto = function () {
+            window.stopKboSeasonBannerAuto();
+            const track = document.getElementById('kbo-season-banner-track');
+            if (!track || track.children.length < 2) return;
+            kboSeasonBannerTimer = window.setInterval(function () {
+                if (document.hidden || window.homeActiveTab !== 'baseball' || !track.getClientRects().length) return;
+                const active = window.updateKboSeasonBannerPage();
+                if (active !== undefined) window.selectKboSeasonBanner((active + 1) % track.children.length);
+            }, 2000);
+        };
         window.updateKboSeasonBannerPage = function () {
             const track = document.getElementById('kbo-season-banner-track');
             const pages = document.getElementById('kbo-season-banner-pages');
@@ -10815,6 +10830,7 @@
                 button.classList.toggle('is-active', index === active);
                 button.setAttribute('aria-current', index === active ? 'true' : 'false');
             });
+            return active;
         };
         window.selectKboSeasonBanner = function (index) {
             const track = document.getElementById('kbo-season-banner-track');
@@ -10827,7 +10843,7 @@
             if (!wrap) return;
             wrap.innerHTML =
                 '<div class="kbo-more-shell">' +
-                    '<div class="kbo-season-banners" role="region" aria-label="2026 KBO 정규리그 우승·준우승 배너" aria-roledescription="슬라이드 배너">' +
+                    '<div class="kbo-season-banners" role="region" aria-label="2026 KBO 정규리그 우승·준우승 배너" aria-roledescription="슬라이드 배너" onpointerdown="window.stopKboSeasonBannerAuto()" onpointerup="window.startKboSeasonBannerAuto()" onpointercancel="window.startKboSeasonBannerAuto()" onpointerleave="window.startKboSeasonBannerAuto()">' +
                     '<div id="kbo-season-banner-track" class="kbo-season-banner-track" tabindex="0" aria-label="좌우로 넘겨 우승·준우승 보기" onscroll="window.updateKboSeasonBannerPage()">' +
                     '<aside class="kbo-season-champion" aria-label="2026 KBO 정규리그 우승 KT wiz">' +
                         '<img src="' + enjoyBaseballEscape(enjoyBaseballTeamLogos.KT) + '" alt="KT wiz 구단 로고">' +
@@ -10912,6 +10928,7 @@
             renderEnjoyBaseballMoreCalendar();
             renderEnjoyBaseballMoreRanking();
             renderEnjoyBaseballRankingTrend();
+            window.startKboSeasonBannerAuto();
         }
         window.switchKboMoreTeam = function (team) {
             team = String(team || '').trim();
@@ -11014,6 +11031,8 @@
         window.selectHomeTab = function (tab) {
             tab = ['baseball', 'vlog', 'shorts', 'academic'].includes(tab) ? tab : 'home';
             window.homeActiveTab = tab;
+            if (tab === 'baseball') window.startKboSeasonBannerAuto();
+            else window.stopKboSeasonBannerAuto();
             document.querySelectorAll('#home-tabs .home-tab').forEach(function (button) {
                 const active = button.dataset.homeTab === tab;
                 button.classList.toggle('is-active', active);
