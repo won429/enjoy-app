@@ -7377,7 +7377,31 @@
         }
 
         /* 드롭 글쓰기와 글 카드 — 컴팩트한 공통 UI */
-        .drop-note-card { grid-column: 2 / 12 !important; margin-top: .25rem !important; transform: none !important; }
+        .drop-photo-card.drop-note-card {
+            grid-column: var(--drop-note-column, 2 / 12);
+            margin-top: .25rem;
+            transform-origin: 50% 0;
+            transform: translateX(var(--drop-note-shift, 0px)) rotate(var(--drop-note-tilt, -1.8deg));
+        }
+        .drop-note-card.is-expiring {
+            animation: dropNoteLoosening 4.8s ease-in-out infinite;
+            animation-delay: var(--drop-note-phase, 0s);
+        }
+        .drop-note-card.is-expiring-soon { animation-duration: 2.8s; }
+        @keyframes dropNoteLoosening {
+            0%, 100% { transform: translateX(var(--drop-note-shift, 0px)) rotate(var(--drop-note-tilt)); }
+            35% { transform: translate(var(--drop-note-shift, 0px), 2px) rotate(calc(var(--drop-note-tilt) - .8deg)); }
+            70% { transform: translate(var(--drop-note-shift, 0px), 3px) rotate(calc(var(--drop-note-tilt) + 1.2deg)); }
+        }
+        .drop-note-card.is-expiring-soon { animation-name: dropNoteAlmostFalling; }
+        @keyframes dropNoteAlmostFalling {
+            0%, 100% { transform: translateX(var(--drop-note-shift, 0px)) rotate(var(--drop-note-tilt)); }
+            30% { transform: translate(var(--drop-note-shift, 0px), 3px) rotate(calc(var(--drop-note-tilt) - 1.8deg)); }
+            65% { transform: translate(var(--drop-note-shift, 0px), 5px) rotate(calc(var(--drop-note-tilt) + 2.2deg)); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .drop-note-card.is-expiring { animation: none; }
+        }
         .drop-note-card + .drop-photo-card { margin-top: .25rem; }
         .drop-note-card .drop-photo-frame { --drop-action-ink: #aeb4c2; background: #17191e; border: 1px solid #ffffff12; border-radius: 1.1rem; box-shadow: 0 .4rem 1rem #0002; }
         .drop-note-card .drop-photo-open { height: auto; cursor: pointer; }
@@ -7502,9 +7526,6 @@
         .echo-send:disabled { opacity: .35; }
         .echo-compose-status { color: #ef9b9a; font-size: .625rem; line-height: 1.5; }
         .echo-compose-status:empty { display: none; }
-        @media (max-width: 360px) {
-            .drop-note-card { grid-column: 1 / 13 !important; }
-        }
         @media (prefers-color-scheme: light) {
             #community-write-screen.drop-write-shell, #echo-screen { background: #f7f8fa; color: #303747; }
             .drop-note-card .drop-photo-frame, .drop-viewer-card.is-note, .drop-comments-photo-shell.is-note { background: #fff; border-color: #e9ecf1; }
@@ -18286,6 +18307,8 @@
             folder: 'enjoy_drop'
         };
         const DROP_VISIBLE_MS = 24 * 60 * 60 * 1000;
+        const DROP_NOTE_LOOSEN_MS = 60 * 60 * 1000;
+        const DROP_NOTE_FALL_SOON_MS = 10 * 60 * 1000;
         window._dropPosts = [];
         window._dropPostsUnsub = null;
         window._dropLoading = false;
@@ -18399,9 +18422,15 @@
         function scheduleDropExpiry(posts) {
             if (window._dropExpiryTimer) window.clearTimeout(window._dropExpiryTimer);
             window._dropExpiryTimer = null;
+            const now = Date.now();
             const nextExpiry = (posts || []).reduce(function (soonest, post) {
                 const expiry = dropExpiryTime(post);
-                return Number.isFinite(expiry) && expiry > Date.now() && (!soonest || expiry < soonest) ? expiry : soonest;
+                const boundaries = post._source === 'community_posts'
+                    ? [expiry - DROP_NOTE_LOOSEN_MS, expiry - DROP_NOTE_FALL_SOON_MS, expiry]
+                    : [expiry];
+                return boundaries.reduce(function (next, time) {
+                    return Number.isFinite(time) && time > now && (!next || time < next) ? time : next;
+                }, soonest);
             }, 0);
             if (!nextExpiry) return;
             window._dropExpiryTimer = window.setTimeout(function () {
@@ -18563,6 +18592,21 @@
                 '<span class="drop-add-label">' + (uploading ? '올리는 중' : '드롭 추가') + '</span></button>';
         };
 
+        function dropNotePresentation(post) {
+            // Keep each note's placement stable when likes, comments, or time change.
+            let seed = 0;
+            const id = dropPostId(post);
+            for (let i = 0; i < id.length; i++) seed = (Math.imul(seed, 31) + id.charCodeAt(i)) >>> 0;
+            const columns = ['1 / 10', '4 / 13', '2 / 12', '1 / 11', '3 / 13', '2 / 11'];
+            const tilts = [-2.7, 1.8, -1.2, 2.4, -2, 1.1];
+            const variation = seed % columns.length;
+            const remaining = dropExpiryTime(post) - Date.now();
+            return {
+                classes: remaining <= DROP_NOTE_LOOSEN_MS ? ' is-expiring' + (remaining <= DROP_NOTE_FALL_SOON_MS ? ' is-expiring-soon' : '') : '',
+                style: '--drop-note-column:' + columns[variation] + ';--drop-note-tilt:' + tilts[variation] + 'deg;--drop-note-phase:-' + (seed % 28 / 10) + 's'
+            };
+        }
+
         window.renderDropFeed = function () {
             const wrap = document.getElementById('drop-feed');
             if (!wrap) return;
@@ -18595,11 +18639,12 @@
                 const width = Math.max(1, Number(post.width) || 4);
                 const height = Math.max(1, Number(post.height) || 5);
                 const isNote = post._source === 'community_posts';
+                const notePresentation = isNote ? dropNotePresentation(post) : null;
                 const ratio = Math.max(.62, Math.min(1.6, width / height));
                 const createdAt = dropMillis(post.createdAt);
                 const postId = dropEsc(dropPostId(post));
                 const bubbleSide = ['left', 'right', 'left', 'left', 'right', 'right'][index % 6];
-                return '<article class="drop-photo-card is-meta-bottom-left is-actions-top-right' + (isNote ? ' drop-note-card' + (dropIsSchedule(post) ? ' is-schedule' : '') : '') + '" data-drop-card-id="' + postId + '">' +
+                return '<article class="drop-photo-card is-meta-bottom-left is-actions-top-right' + (isNote ? ' drop-note-card' + (dropIsSchedule(post) ? ' is-schedule' : '') + notePresentation.classes : '') + '" data-drop-card-id="' + postId + '"' + (isNote ? ' style="' + notePresentation.style + '"' : '') + '>' +
                     '<div class="drop-photo-frame"' + (isNote ? '' : ' style="aspect-ratio:' + ratio.toFixed(4) + '"') + '>' +
                     '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\', this)" aria-label="드롭 크게 보기">' + (isNote ? dropNoteHtml(post) : '<img crossorigin="anonymous" src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false">') + '</button>' +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
@@ -18673,9 +18718,50 @@
             window.requestAnimationFrame(positionDropCardControls);
         }
 
+        function spaceDropNotes(feed) {
+            const cards = Array.from(feed.querySelectorAll('.drop-photo-card'));
+            if (!cards.some(function (card) { return card.classList.contains('drop-note-card'); })) return;
+            // Reserve the entire sway envelope, including each note's inline comments.
+            cards.forEach(function (card) { card.style.removeProperty('margin-top'); });
+            const feedBounds = feed.getBoundingClientRect();
+            let occupiedBottom = feedBounds.top;
+            let noteBottom = -Infinity;
+            cards.forEach(function (card) {
+                const isNote = card.classList.contains('drop-note-card');
+                let top, bottom;
+                if (isNote) {
+                    const width = card.offsetWidth;
+                    const height = card.offsetHeight;
+                    const swing = Math.sin(6 * Math.PI / 180);
+                    const sideRoom = height * swing;
+                    const minShift = 8 + sideRoom - card.offsetLeft;
+                    const maxShift = feed.clientWidth - 8 - sideRoom - card.offsetLeft - width;
+                    const shift = minShift <= maxShift ? Math.max(minShift, Math.min(0, maxShift)) : (minShift + maxShift) / 2;
+                    card.style.setProperty('--drop-note-shift', shift.toFixed(2) + 'px');
+                    const verticalRoom = width * .5 * swing + 6;
+                    top = feedBounds.top + card.offsetTop - verticalRoom;
+                    bottom = feedBounds.top + card.offsetTop + height + verticalRoom;
+                } else {
+                    const bounds = card.getBoundingClientRect();
+                    top = bounds.top;
+                    bottom = bounds.bottom;
+                }
+                const neededTop = (isNote ? occupiedBottom : noteBottom) + 16;
+                const extra = Math.max(0, neededTop - top);
+                if (extra) {
+                    const margin = parseFloat(window.getComputedStyle(card).marginTop) || 0;
+                    card.style.marginTop = (margin + Math.ceil(extra)) + 'px';
+                    bottom += Math.ceil(extra);
+                }
+                occupiedBottom = Math.max(occupiedBottom, bottom);
+                if (isNote) noteBottom = bottom;
+            });
+        }
+
         function positionDropCardControls() {
             const feed = document.querySelector('.drop-feed-grid');
             if (!feed) return;
+            spaceDropNotes(feed);
             const feedBounds = feed.getBoundingClientRect();
             const cards = Array.from(feed.querySelectorAll('.drop-photo-card'));
             const frames = cards.map(function (card) { return card.querySelector('.drop-photo-frame'); });
