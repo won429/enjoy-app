@@ -5888,6 +5888,9 @@
             border-radius: 50%;
             background: var(--ranking-color);
         }
+        .kbo-ranking-legend .is-confirmed-rank i {
+            border-radius: 0;
+        }
         .kbo-original-section-head {
             display: flex;
             align-items: center;
@@ -6311,6 +6314,13 @@
             text-align: center;
             font-size: 0.9375rem;
             font-weight: 900;
+        }
+        .kbo-original-rank-number.is-confirmed {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--rank-color);
         }
         .kbo-original-rank-team {
             width: 2.375rem;
@@ -10364,17 +10374,42 @@
                 return row;
             });
         }
+        function enjoyBaseballMoreConfirmedRanks(standings) {
+            // 144경기·무승부 제외 승률 기준. 동률 가능성이 남으면 확정하지 않는다.
+            const rows = standings.map(function (row) {
+                return { team: row.team, rank: row.rank, w: row.w,
+                    remaining: 144 - row.w - row.d - row.l, denominator: 144 - row.d };
+            });
+            const confirmed = new Set();
+            if (rows.some(function (row) { return row.remaining < 0 || row.denominator <= 0; })) return confirmed;
+            rows.forEach(function (own) {
+                const rivals = rows.filter(function (row) { return row.team !== own.team; });
+                const securedRank = 1 + rivals.filter(function (row) {
+                    return (row.w + row.remaining) * own.denominator >= own.w * row.denominator;
+                }).length;
+                const bestPossibleRank = 1 + rivals.filter(function (row) {
+                    return row.w * own.denominator > (own.w + own.remaining) * row.denominator;
+                }).length;
+                if (bestPossibleRank === securedRank && securedRank === own.rank) confirmed.add(own.team);
+            });
+            return confirmed;
+        }
         function renderEnjoyBaseballMoreRanking() {
             const body = document.getElementById('kbo-more-ranking-body');
             if (!body) return;
-            body.innerHTML = enjoyBaseballMoreRankings().map(function (row) {
+            const standings = enjoyBaseballMoreRankings();
+            const confirmedRanks = enjoyBaseballMoreConfirmedRanks(standings);
+            body.innerHTML = standings.map(function (row) {
                 const rankColors = ['#4C75F6', '#7BDBE5', '#61C684', '#B2DA67', '#B2DA67'];
                 const rankColor = rankColors[row.rank - 1] || '#9CA3AF';
+                const confirmed = confirmedRanks.has(row.team);
+                const numberColor = confirmed ? (row.rank === 1 ? '#FFFFFF' : '#111827') : rankColor;
                 const streakColor = row.streak.includes('승') ? '#EA0029' : (row.streak.includes('패') ? '#074CA1' : '#9CA3AF');
                 const logo = enjoyBaseballTeamWordmarks[row.team] || '';
                 return '<div class="kbo-original-ranking-row">' +
                     '<div class="kbo-original-ranking-data">' +
-                        '<span class="kbo-original-rank-number" style="color:' + rankColor + ';">' + row.rank + '</span>' +
+                        '<span class="kbo-original-rank-number' + (confirmed ? ' is-confirmed' : '') + '" style="--rank-color:' + rankColor + ';color:' + numberColor + ';"' +
+                            (confirmed ? ' title="정규리그 ' + row.rank + '위 확정" aria-label="' + row.rank + '위 확정"' : '') + '>' + row.rank + '</span>' +
                         '<span class="kbo-original-rank-team">' + enjoyBaseballEscape(row.team) + '</span>' +
                         '<span class="kbo-original-ranking-stats">' +
                             '<span>' + row.games + '</span><span>' + row.w + '</span><span>' + row.d + '</span><span>' + row.l + '</span>' +
@@ -10721,6 +10756,7 @@
                                 '<span><i style="--ranking-color:#7BDBE5;"></i>플레이오프 진출</span>' +
                                 '<span><i style="--ranking-color:#61C684;"></i>준플레이오프 진출</span>' +
                                 '<span><i style="--ranking-color:#B2DA67;"></i>와일드카드 결정전 진출</span>' +
+                                '<span class="is-confirmed-rank"><i style="--ranking-color:#9CA3AF;"></i>순위 칸 배경색: 확정 순위</span>' +
                             '</div>' +
                         '</div>' +
                         '<div class="kbo-original-ranking-head">' +
