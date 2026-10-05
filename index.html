@@ -10,7 +10,7 @@
     <link rel="icon" href="icon.png">
 
     <link rel="stylesheet" href="attendance.css?v=20261005">
-    <link rel="stylesheet" href="meeting-benefits.css?v=20261005">
+    <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
 
     <!-- Firebase(데이터 동기화) 도메인 미리 연결로 로딩 속도 개선 -->
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -9493,6 +9493,7 @@
             </div>
 
             <section id="meeting-my-benefits" class="meeting-my-benefits" aria-label="내 부과금·유예 및 면제권" aria-live="polite"></section>
+            <section id="meeting-my-discounts" class="meeting-my-benefits" aria-label="내 보유 할인권 내역" aria-live="polite"></section>
 
             <!-- 공지사항 배너 (가로 자동 스크롤) -->
             <div id="meeting-notice-banner" class="hidden mb-6">
@@ -9513,6 +9514,10 @@
                 <details class="meeting-full-list">
                     <summary><span><i class="fa-solid fa-ticket-simple text-[#3182F6]" aria-hidden="true"></i>면제권 보유 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
                     <div id="ticket-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full"></div>
+                </details>
+                <details class="meeting-full-list">
+                    <summary><span><i class="fa-solid fa-ticket-simple text-[#3182F6]" aria-hidden="true"></i>할인권 보유 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
+                    <div id="discount-list-mini" class="meeting-discount-members" aria-live="polite"></div>
                 </details>
             </div>
 
@@ -20735,6 +20740,12 @@
             if (!decayTimer) decayTimer = setInterval(() => { if (lastMembers.length) renderMembers(); }, 30000);
         }
 
+        // 모임통장용: 기존 멤버 구독에서 할인권 내역만 가져온다.
+        window.enjoyMeetingDiscountMembers = function () {
+            return (lastMembers || []).filter(m => m && m.uid && m.name).map(m => ({
+                uid: m.uid, name: m.name, coupons: m.attendance && m.attendance.coupons || {}
+            }));
+        };
         // 스케줄(가능여부)용: 가입 멤버 목록 + 각자 등록한 avail
         window.enjoyJoinedMembers = function () {
             return (lastMembers || []).filter(m => m && m.name).map(m => ({ uid: m.uid, name: m.name, photoURL: m.photoURL || '', avail: m.avail || {} }));
@@ -22210,8 +22221,8 @@ service cloud.firestore {
     })();
     </script>
 
-    <script src="attendance.js?v=20261005"></script>
-    <script src="meeting-benefits.js?v=20261005"></script>
+    <script src="attendance.js?v=20261006"></script>
+    <script src="meeting-benefits.js?v=20261006-discounts"></script>
 
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";

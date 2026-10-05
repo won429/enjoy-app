@@ -91,6 +91,7 @@
         return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     }
     function render() {
+        if (window.renderMeetingDiscounts) window.renderMeetingDiscounts();
         const root = byId('home-attendance-panel');
         if (!root) return;
         const today = dateParts();
@@ -226,6 +227,11 @@
         }
         checkAttendance();
     }
+    window.getEnjoyAttendanceCoupons = function (expectedUid) {
+        const user = signedInUser();
+        if (!uid || uid !== expectedUid || !user || user.uid !== uid) return null;
+        return Object.values(state.coupons || {}).filter(coupon => coupon && typeof coupon === 'object').map(coupon => ({ ...coupon }));
+    };
     window.prepareEnjoyAttendance = function () { render(); start(); };
     window.changeEnjoyAttendanceMonth = function (offset) {
         const month = monthParts(selectedMonth);
