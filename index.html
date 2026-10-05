@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" href="attendance.css?v=20261005">
     <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
+    <link rel="stylesheet" href="store.css?v=20261006">
 
     <!-- Firebase(데이터 동기화) 도메인 미리 연결로 로딩 속도 개선 -->
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -9352,23 +9353,11 @@
         </div>
     </section>
 
-    <!-- Echo: 하단 메뉴의 1:1 채팅 -->
-    <section id="echo-screen" class="hidden" aria-label="에코 1:1 채팅">
-        <div id="echo-list-view" class="echo-list-view">
-            <header class="echo-header"><div class="echo-header-copy"><div class="echo-brand"><i class="ph ph-chats-circle" aria-hidden="true"></i><h1 class="echo-wordmark">Echo</h1></div><p>가볍게 나누는 1:1 대화</p></div><button class="echo-new" type="button" onclick="window.showEchoPeople()" aria-label="새 대화 시작"><i class="ph ph-note-pencil" aria-hidden="true"></i></button></header>
-            <div class="echo-tabs" role="tablist" aria-label="에코 목록">
-                <button id="echo-tab-rooms" type="button" role="tab" class="echo-tab is-active" aria-selected="true" aria-controls="echo-rooms" onclick="window.setEchoListMode('rooms')">대화 <span id="echo-room-count" class="echo-tab-count"></span></button>
-                <button id="echo-tab-people" type="button" role="tab" class="echo-tab" aria-selected="false" aria-controls="echo-people-section" onclick="window.setEchoListMode('people')">멤버 <span id="echo-people-count" class="echo-tab-count"></span></button>
-            </div>
-            <div id="echo-list-scroll" class="echo-list-scroll scrollbar-hide">
-                <div id="echo-rooms" role="tabpanel" aria-labelledby="echo-tab-rooms" aria-live="polite"></div>
-                <div id="echo-people-section" class="hidden" role="tabpanel" aria-labelledby="echo-tab-people"><div id="echo-people"></div></div>
-            </div>
-        </div>
-        <div id="echo-thread" class="echo-thread hidden">
-            <header class="echo-thread-header"><button class="echo-back" type="button" onclick="window.closeEchoChat()" aria-label="대화 목록으로 돌아가기"><i class="ph ph-caret-left" aria-hidden="true"></i></button><div id="echo-peer-avatar"></div><div><strong id="echo-peer-name"></strong><small>Echo · 1:1 대화</small></div></header>
-            <div id="echo-messages" class="echo-messages scrollbar-hide" aria-label="대화 내용"></div>
-            <div class="echo-compose"><p id="echo-compose-status" class="echo-compose-status" role="status" aria-live="polite"></p><form onsubmit="event.preventDefault(); window.sendEchoMessage()"><label class="sr-only" for="echo-message-input">메시지</label><textarea id="echo-message-input" rows="1" maxlength="2000" placeholder="메시지 보내기" oninput="window.updateEchoSendButton()"></textarea><button id="echo-send" class="echo-send" type="submit" aria-label="메시지 보내기" disabled><i class="ph ph-arrow-up" aria-hidden="true"></i></button></form></div>
+    <!-- 스토어: 포인트 상품 -->
+    <section id="store-screen" class="hidden" aria-label="스토어">
+        <header class="store-header"><h1>스토어</h1><p>포인트로 모임 혜택을 구매해요</p></header>
+        <div class="store-scroll scrollbar-hide">
+            <div id="store-root" aria-live="polite"></div>
         </div>
     </section>
 
@@ -9623,11 +9612,11 @@
                 </div>
             </button>
 
-            <!-- 에코 1:1 채팅 메뉴 -->
-            <button id="nav-echo" class="relative w-[68px] py-2 rounded-full group z-10 active:scale-95 transition-transform" onclick="window.haptic(); window.goEcho();" aria-label="에코, 1:1 채팅">
+            <!-- 스토어 메뉴 -->
+            <button id="nav-store" class="relative w-[68px] py-2 rounded-full group z-10 active:scale-95 transition-transform" onclick="window.haptic(); window.goStore();" aria-label="스토어">
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                    <i class="ph ph-chats-circle text-base text-gray-300 group-hover:text-white transition-colors"></i>
-                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">에코</span>
+                    <i class="ph ph-storefront text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">스토어</span>
                 </div>
             </button>
 
@@ -13721,6 +13710,7 @@
             if (balanceEl) balanceEl.innerHTML = (data.totalBalance || 0).toLocaleString() + '<span class="text-[22px] font-bold text-white ml-1">원</span>';
             window.renderDues(window.currentDuesMonth, window.currentDuesYear);
             if (window.renderMeetingBenefits) window.renderMeetingBenefits();
+            if (window.refreshEnjoyStore) window.refreshEnjoyStore();
             try { window.renderExpenses(); } catch (e) {}
             try { window.renderEnjoyToday(); } catch (e) {}
         };
@@ -15407,7 +15397,7 @@
 
         window.goHome = () => { window.activeTabIndex = 2; window.updateTabUI(2); }
         window.goCommunity = () => { window.goHome(); window.switchHomeTab('home'); }
-        window.goEcho = () => { window.activeTabIndex = 1; window.updateTabUI(1); }
+        window.goStore = () => { window.activeTabIndex = 1; window.updateTabUI(1); }
         window.goSchedule = () => { if (window._schedSub === 'community') window._schedSub = 'calendar'; window.activeTabIndex = 3; window.updateTabUI(3); }
         window.goMeeting = () => { window.activeTabIndex = 4; window.updateTabUI(4); }
 
@@ -16825,7 +16815,8 @@
                         let isPaymentStopped = status === 'stopped';
 
                         let regularDues = y >= 2026 ? 20000 : 15000;
-                        let baseDues = isPaymentStopped ? 0 : regularDues;
+                        let duesDiscountAmount = isPaymentStopped ? 0 : Math.min(regularDues, Math.max(0, Math.floor(Number(mem && mem.duesDiscountAmount) || 0)));
+                        let baseDues = isPaymentStopped ? 0 : regularDues - duesDiscountAmount;
                         let penaltyAmount = 0;
                         
                         let isPastOrCurrent = (y < currentYear || (y === currentYear && m <= currentRealMonth));
@@ -16843,7 +16834,7 @@
                         let balanceAfter = amount - totalOwed; 
                         // 과거 미납이 남아 있어도 이번 달 정상 회비를 냈다면
                         // 이번 달을 원인으로 다음 달 부과금이 다시 생기지 않는다.
-                        let currentDuesPaid = isPaymentStopped || amount >= regularDues;
+                        let currentDuesPaid = isPaymentStopped || amount >= baseDues;
                         let exemptionAppliesToNextPenalty = isExempted && !penaltyWaived && !currentDuesPaid;
                         
                         history[key] = {
@@ -16856,6 +16847,7 @@
                             rawPenaltyText: rawPenaltyText,
                             baseDues: baseDues,
                             regularDues: regularDues,
+                            ...(duesDiscountAmount ? { duesDiscountAmount: duesDiscountAmount } : {}),
                             penaltyAmount: penaltyAmount,
                             carriedDebt: carriedDebt,
                             totalOwed: totalOwed,
@@ -16924,6 +16916,10 @@
                         
                         records.forEach(mem => {
                             let h = hist[mem.name] && hist[mem.name][key];
+                            if (mem.duesDiscountAmount > 0) {
+                                hasPenalty = true;
+                                htmlPenalty += `<div class="w-full flex-none flex flex-wrap justify-between gap-x-3 gap-y-1"><span class="text-[13px] font-semibold text-white/90">${duesEscape(mem.name)}</span><span class="text-[12px] font-semibold text-[#3182F6]">${y}년 ${m}월 포인트 모임비 ${Number(mem.duesDiscountAmount).toLocaleString('ko-KR')}원 차감</span></div>`;
+                            }
                             if (mem.ticketUsedByUid) {
                                 hasPenalty = true;
                                 htmlPenalty += `<div class="w-full flex-none flex flex-wrap justify-between gap-x-3 gap-y-1"><span class="text-[13px] font-semibold text-white/90">${duesEscape(mem.name)}</span><span class="text-[12px] font-semibold text-[#3182F6]">${y}년 ${m}월 면제권 사용 · 부과금 10,000원 면제</span></div>`;
@@ -17053,10 +17049,11 @@
                 const isTarget = item.year === targetYear && item.month === targetMonth;
                 const display = duesDisplayAmounts(history, item.year, item.month);
                 const regularDues = history.isPaymentStopped ? 0 : Math.max(0, Number(history.regularDues) || 0);
+                const discountedDues = Math.max(0, regularDues - (Number(history.duesDiscountAmount) || 0));
                 const paidAmount = Math.max(0, Number(history.amount) || 0);
                 const newlyUnpaid = history.status === 'deferred'
-                    ? regularDues
-                    : Math.max(0, regularDues - Math.min(paidAmount, regularDues));
+                    ? discountedDues
+                    : Math.max(0, discountedDues - Math.min(paidAmount, discountedDues));
                 const penaltyAmount = Math.max(0, Number(history.penaltyAmount) || 0) +
                     (isTarget ? display.overduePenaltyAmount : 0);
                 const cumulativeDebt = Math.max(0, Math.abs(Math.min(0, Number(history.balanceAfter) || 0)) +
@@ -17068,6 +17065,7 @@
                     month: item.month,
                     status: history.status === 'deferred' ? '유예' : (newlyUnpaid > 0 ? (paidAmount > 0 ? '일부 미납' : '미납') : '부과금 반영'),
                     regularDues: regularDues,
+                    ...(history.duesDiscountAmount ? { duesDiscountAmount: history.duesDiscountAmount } : {}),
                     paidAmount: paidAmount,
                     newlyUnpaid: newlyUnpaid,
                     penaltyAmount: penaltyAmount,
@@ -17115,7 +17113,10 @@
                 rows.push(`<div class="flex items-center justify-between gap-4 py-2.5"><span class="text-[13px] font-medium text-gray-400">${duesEscape(label)}</span><strong class="text-[14px] font-bold ${className}">${Number(amount).toLocaleString('ko-KR')}원</strong></div>`);
             };
 
-            if (history.baseDues > 0) addAmountRow('이번 달 회비', history.baseDues);
+            if (history.duesDiscountAmount > 0) {
+                addAmountRow('이번 달 회비', history.regularDues);
+                addAmountRow('스토어 포인트 모임비 차감', -history.duesDiscountAmount, 'text-[#3182F6]');
+            } else if (history.baseDues > 0) addAmountRow('이번 달 회비', history.baseDues);
             if (history.carriedDebt > 0) addAmountRow(`이전 미납·유예 (${previousMonthLabel} 이월)`, history.carriedDebt, 'text-yellow-400');
             if (history.penaltyAmount > 0) addAmountRow('이전 미납 부과금', history.penaltyAmount, 'text-[#F04452]');
             if (amounts.overduePenaltyAmount > 0) addAmountRow(`${month}월 미납 부과금`, amounts.overduePenaltyAmount, 'text-[#F04452]');
@@ -17138,6 +17139,7 @@
             }
 
             const notes = [];
+            if (history.duesDiscountAmount > 0) notes.push(`포인트로 모임비 ${history.duesDiscountAmount.toLocaleString('ko-KR')}원을 차감했어요.`);
             if (amounts.overduePenaltyAmount > 0) notes.push(`${month}월 마감 후 확정된 미납 부과금 10,000원을 포함했어요.`);
             if (history.penaltyWaived || history.exemptionAppliesToNextPenalty) notes.push(memberRecord.ticketUsedByUid ? '면제권 1개 사용 · 부과금 10,000원 면제' : '부과금 면제권 1개가 적용됐어요.');
             if (memberRecord.paidDate) notes.push(`납부일: ${duesEscape(memberRecord.paidDate)}`);
@@ -17160,6 +17162,7 @@
                             if (entry.newlyUnpaid > 0) details.push(`새 미납 ${entry.newlyUnpaid.toLocaleString('ko-KR')}원`);
                             if (entry.penaltyAmount > 0) details.push(`부과금 ${entry.penaltyAmount.toLocaleString('ko-KR')}원`);
                             if (entry.waived) details.push('부과금 면제');
+                            if (entry.duesDiscountAmount) details.push(`포인트 모임비 차감 ${entry.duesDiscountAmount.toLocaleString('ko-KR')}원`);
                             return `<div class="px-4 py-3.5 ${entryIndex ? 'border-t border-white/10' : ''}">
                                 <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                                     <div class="flex min-w-0 items-center gap-2"><strong class="whitespace-nowrap text-[13px] font-bold text-white">${entry.year}년 ${entry.month}월</strong><span class="whitespace-nowrap rounded-full px-2 py-0.5 text-[9.5px] font-bold ${statusClass}">${entry.status}</span></div>
@@ -17374,12 +17377,15 @@
 
                 // 부과금이나 이월 미납이 있을 때는 현재 납부액/잔여액만으로는
                 // 총액을 알기 어려우므로, 실제 총 납부금액과 구성을 항상 따로 표시한다.
-                const hasExtraPayment = !isPaymentStopped && (h.carriedDebt > 0 || h.penaltyAmount > 0 || h.penaltyWaived || overduePenaltyAmount > 0);
+                const hasExtraPayment = !isPaymentStopped && (h.carriedDebt > 0 || h.penaltyAmount > 0 || h.penaltyWaived || overduePenaltyAmount > 0 || h.duesDiscountAmount > 0);
                 if (hasExtraPayment) {
                     const paidAmount = Math.max(0, Number(h.amount) || 0);
                     const remainingAmount = Math.max(0, payableTotal - paidAmount);
                     const paymentParts = [];
-                    if (h.baseDues > 0) paymentParts.push(`이번 달 회비 ${h.baseDues.toLocaleString()}원`);
+                    if (h.duesDiscountAmount > 0) {
+                        paymentParts.push(`이번 달 회비 ${h.regularDues.toLocaleString()}원`);
+                        paymentParts.push(`포인트 모임비 차감 -${h.duesDiscountAmount.toLocaleString()}원`);
+                    } else if (h.baseDues > 0) paymentParts.push(`이번 달 회비 ${h.baseDues.toLocaleString()}원`);
                     if (h.carriedDebt > 0) paymentParts.push(`이전 미납 ${h.carriedDebt.toLocaleString()}원`);
                     if (h.penaltyAmount > 0) paymentParts.push(`부과금 ${h.penaltyAmount.toLocaleString()}원`);
                     if (overduePenaltyAmount > 0) paymentParts.push(`해당 월 미납 부과금 ${overduePenaltyAmount.toLocaleString()}원`);
@@ -17421,6 +17427,7 @@
                         </div>
                     </div>
                     ${penaltyText ? `<div class="ml-[56px] mt-1 text-[12px] ${penaltyColorClass} font-medium leading-snug">· ${penaltyText}</div>` : ''}
+                    ${h.duesDiscountAmount > 0 ? `<div class="ml-[56px] mt-1 text-[12px] text-[#3182F6] font-semibold leading-snug">스토어 포인트 모임비 ${h.duesDiscountAmount.toLocaleString('ko-KR')}원 차감</div>` : ''}
                     ${m.ticketUsedByUid ? '<div class="ml-[56px] mt-1 text-[12px] text-[#3182F6] font-semibold leading-snug">면제권 사용 · 부과금 10,000원 면제</div>' : ''}
                     ${paymentTotalHtml}
                 </button>`;
@@ -17881,12 +17888,12 @@
         };
 
         window.updateTabUI = function(index) {
-            if (index !== 1 && window.leaveEcho) window.leaveEcho();
+            if (index !== 1 && window.leaveEnjoyStore) window.leaveEnjoyStore();
             window.activeTabIndex = index;
             if (index !== 4 && window.closeDuesDetail) window.closeDuesDetail();
             const home = document.getElementById('home-screen');
-            const echo = document.getElementById('echo-screen');
-            if (echo) { echo.classList.add('hidden'); echo.classList.remove('flex'); }
+            const store = document.getElementById('store-screen');
+            if (store) { store.classList.add('hidden'); store.classList.remove('flex'); }
             const more = document.getElementById('more-screen');
             const sched = document.getElementById('schedule-screen');
             const meet = document.getElementById('meeting-screen');
@@ -17899,8 +17906,8 @@
             if(shorts && !shorts.classList.contains('hidden') && window.closeEnjoyShorts) window.closeEnjoyShorts();
 
             if(index===1) {
-                if (echo) { echo.classList.remove('hidden'); echo.classList.add('flex'); }
-                if (window.startEcho) window.startEcho();
+                if (store) { store.classList.remove('hidden'); store.classList.add('flex'); }
+                if (window.prepareEnjoyStore) window.prepareEnjoyStore();
             }
             else if(index===2) {
                 home.classList.remove('hidden');
@@ -17928,7 +17935,7 @@
             const ind = document.getElementById('nav-indicator');
             const btns = [
                 null, // 음악 메뉴 삭제됨 (인덱스 유지)
-                document.getElementById('nav-echo'),
+                document.getElementById('nav-store'),
                 document.getElementById('nav-home'),
                 document.getElementById('nav-calendar'),
                 document.getElementById('nav-meeting')
@@ -17982,7 +17989,7 @@
         // 활성 탭에 맞춰 인디케이터 위치/너비 재계산
         window.updateNavIndicator = function() {
             const ind = document.getElementById('nav-indicator');
-            const btns = [null, document.getElementById('nav-echo'), document.getElementById('nav-home'), document.getElementById('nav-calendar'), document.getElementById('nav-meeting')];
+            const btns = [null, document.getElementById('nav-store'), document.getElementById('nav-home'), document.getElementById('nav-calendar'), document.getElementById('nav-meeting')];
             const index = window.activeTabIndex;
             if (btns[index] && ind) {
                 ind.style.width = `${btns[index].offsetWidth}px`;
@@ -18588,6 +18595,7 @@
         /* ----- 로그인 사용자: 홈 회원 탈퇴 버튼 표시 ----- */
         function updateProfileCard() {
             if (window.renderMeetingBenefits) window.renderMeetingBenefits();
+            if (window.refreshEnjoyStore) window.refreshEnjoyStore();
             const homeWd = $('home-withdraw');
             if (homeWd) homeWd.classList.toggle('hidden', !window.enjoyUser);
             if (window.renderHomeDeliveryNowBar) window.renderHomeDeliveryNowBar();
@@ -20740,6 +20748,18 @@
             if (!decayTimer) decayTimer = setInterval(() => { if (lastMembers.length) renderMembers(); }, 30000);
         }
 
+        window.enjoyStoreMember = function () {
+            const user = window.enjoyUser;
+            const member = user && (lastMembers || []).find(m => m && m.uid === user.uid);
+            return member ? { uid: member.uid, name: member.name, points: member.points, storePurchaseLimits: member.storePurchaseLimits } : null;
+        };
+        window.enjoyApplyStoreMember = function (uid, points, storePurchaseLimits) {
+            if (!window.enjoyUser || window.enjoyUser.uid !== uid) return;
+            const member = (lastMembers || []).find(m => m && m.uid === uid);
+            if (member) { member.points = points; member.storePurchaseLimits = storePurchaseLimits; updateProfilePointBalance(member.name); }
+            updateProfileCard();
+        };
+
         // 모임통장용: 기존 멤버 구독에서 할인권 내역만 가져온다.
         window.enjoyMeetingDiscountMembers = function () {
             return (lastMembers || []).filter(m => m && m.uid && m.name).map(m => ({
@@ -21920,309 +21940,9 @@
     </script>
 
     <!-- Firebase Module -->
-    <!-- Echo용 Firestore 규칙: Firebase 콘솔에서 기존 규칙 전체를 아래 내용으로 교체 후 게시
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function participant(data) {
-      return signedIn() && request.auth.uid in data.participantUids;
-    }
-    function roomParticipant(roomId) {
-      return participant(get(/databases/$(database)/documents/echo_rooms/$(roomId)).data);
-    }
-    // 에코 이외의 기존 접근 권한 유지
-    match /{collection}/{document=**} {
-      allow read, write: if collection != 'echo_rooms';
-    }
-    match /echo_rooms/{roomId} {
-      allow get: if signedIn() &&
-        (!exists(/databases/$(database)/documents/echo_rooms/$(roomId)) || participant(resource.data));
-      allow list: if participant(resource.data);
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['participantUids', 'createdAt', 'updatedAt', 'lastMessage', 'lastSenderUid'])
-        && request.resource.data.participantUids is list
-        && request.resource.data.participantUids.size() == 2
-        && request.resource.data.participantUids[0] is string
-        && request.resource.data.participantUids[1] is string
-        && request.resource.data.participantUids[0].size() > 0
-        && request.resource.data.participantUids[1].size() > 0
-        && request.resource.data.participantUids[0] != request.resource.data.participantUids[1]
-        && participant(request.resource.data)
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time
-        && request.resource.data.lastMessage == ''
-        && request.resource.data.lastSenderUid == '';
-      allow update: if participant(resource.data)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastSenderUid', 'updatedAt'])
-        && request.resource.data.lastSenderUid == request.auth.uid
-        && request.resource.data.lastMessage is string
-        && request.resource.data.lastMessage.size() <= 150
-        && request.resource.data.updatedAt == request.time;
-      allow delete: if false;
-      match /messages/{messageId} {
-        allow read: if roomParticipant(roomId);
-        allow create: if roomParticipant(roomId)
-          && request.resource.data.keys().hasOnly(['senderUid', 'text', 'createdAt', 'sentAt'])
-          && request.resource.data.senderUid == request.auth.uid
-          && request.resource.data.text is string
-          && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 2000
-          && request.resource.data.createdAt == request.time
-          && request.resource.data.sentAt is int;
-        allow update, delete: if false;
-      }
-    }
-  }
-}
-    -->
-    <script id="echo-controller">
-    (function () {
-        const state = { uid: '', rooms: [], roomsUnsub: null, roomsEpoch: 0, roomsLoading: false, roomsError: '', listMode: 'rooms', peer: null, roomId: '', openingUid: '', openEpoch: 0, messages: [], messagesUnsub: null, messagesEpoch: 0, messagesReady: false, messageLimit: 100, loadingOlder: false, sendBusy: false, pendingMessage: null };
-        const byId = id => document.getElementById(id);
-        const user = () => window.enjoyUser && window.enjoyUser.uid ? window.enjoyUser : null;
-        const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-        const millis = value => value && typeof value.toMillis === 'function' ? value.toMillis() : (value && typeof value.seconds === 'number' ? value.seconds * 1000 : Number(value) || 0);
-        const members = () => (typeof window.enjoyJoinedMembers === 'function' ? window.enjoyJoinedMembers() : []).filter(member => member && member.uid && member.name && (!window.ENJOY_MEMBERS || window.ENJOY_MEMBERS.includes(member.name)));
-        const avatar = member => '<span class="echo-avatar">' + (member.photoURL ? '<img src="' + esc(member.photoURL) + '" alt="" referrerpolicy="no-referrer">' : esc(String(member.name || '멤버').slice(0, 1))) + '</span>';
-        const roomKey = (first, second) => [first, second].sort().map(uid => encodeURIComponent(uid).replace(/~/g, '%7E')).join('~');
-        const ready = () => !!(window.meetingDb && window.fsOnSnapshot && window.fsCol && window.fsDoc && window.fsQuery && window.fsWhere && window.fsOrderBy && window.fsLimit && window.runTransaction && window.doc && window.fsServerTimestamp);
-        const timeLabel = value => { const time = millis(value); return time ? new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(time)) : ''; };
-        const peerForRoom = room => {
-            const uid = room.participantUids.find(uid => uid !== state.uid);
-            return members().find(member => member.uid === uid) || { uid: uid, name: '멤버', photoURL: '' };
-        };
-        function sizeEchoViewport() {
-            const screen = byId('echo-screen'), viewport = window.visualViewport;
-            if (!screen) return;
-            if (viewport && window.activeTabIndex === 1 && state.roomId) {
-                screen.style.height = Math.round(viewport.height) + 'px';
-                screen.style.top = Math.round(viewport.offsetTop) + 'px';
-                screen.style.bottom = 'auto';
-            } else ['height', 'top', 'bottom'].forEach(property => screen.style.removeProperty(property));
-        }
-        function stopMessages() {
-            state.messagesEpoch++;
-            if (state.messagesUnsub) state.messagesUnsub();
-            state.messagesUnsub = null;
-            state.messagesReady = false;
-        }
-        function stopRooms() {
-            state.roomsEpoch++;
-            if (state.roomsUnsub) state.roomsUnsub();
-            state.roomsUnsub = null;
-            state.roomsLoading = false;
-        }
-        function personRow(member, preview, time) {
-            return '<button type="button" class="echo-person" data-echo-uid="' + esc(member.uid) + '" onclick="window.openEchoChat(this.dataset.echoUid)">' + avatar(member) + '<span class="echo-person-copy"><strong>' + esc(member.name) + '</strong><p>' + esc(preview) + '</p></span>' + (time ? '<time>' + esc(timeLabel(time)) + '</time>' : '<i class="ph ph-caret-right" aria-hidden="true"></i>') + '</button>';
-        }
-        window.renderEchoList = function () {
-            const rooms = byId('echo-rooms'), people = byId('echo-people');
-            if (!rooms || !people) return;
-            const current = user();
-            if (!current) {
-                rooms.innerHTML = '<div class="echo-state"><i class="ph ph-chats-circle" aria-hidden="true"></i>로그인하고 대화를 시작해보세요.<button type="button" onclick="window.showLoginPrompt()">로그인하기</button></div>';
-                people.innerHTML = '';
-                ['echo-room-count', 'echo-people-count'].forEach(id => { const count = byId(id); if (count) count.textContent = ''; });
-                return;
-            }
-            const sorted = state.rooms.slice().sort((a, b) => millis(b.updatedAt) - millis(a.updatedAt));
-            rooms.innerHTML = state.roomsError ? '<div class="echo-state" role="status">' + esc(state.roomsError) + '<button type="button" onclick="window.startEcho()">다시 시도</button></div>' :
-                (sorted.length ? sorted.map(room => personRow(peerForRoom(room), room.lastMessage || '첫 메시지를 남겨보세요.', room.updatedAt)).join('') : '<div class="echo-state"><i class="ph ph-chat-teardrop-dots" aria-hidden="true"></i>' + (state.roomsLoading ? '대화를 불러오는 중이에요.' : '아직 대화가 없어요.<button type="button" onclick="window.showEchoPeople()">대화 시작</button>') + '</div>');
-            const roster = members().filter(member => member.uid !== current.uid);
-            const roomCount = byId('echo-room-count'), peopleCount = byId('echo-people-count');
-            if (roomCount) roomCount.textContent = sorted.length ? String(sorted.length) : '';
-            if (peopleCount) peopleCount.textContent = roster.length ? String(roster.length) : '';
-            people.innerHTML = roster.length ? roster.map(member => personRow(member, state.openingUid === member.uid ? '대화를 여는 중…' : '1:1 대화 시작', 0)).join('') : '<p class="echo-state">대화할 멤버가 아직 없습니다.</p>';
-            if (state.peer) {
-                const fresh = roster.find(member => member.uid === state.peer.uid);
-                if (fresh) state.peer = fresh;
-                byId('echo-peer-avatar').innerHTML = avatar(state.peer);
-                byId('echo-peer-name').textContent = state.peer.name;
-            }
-        };
-        window.setEchoListMode = function (mode) {
-            state.listMode = mode === 'people' ? 'people' : 'rooms';
-            byId('echo-rooms').classList.toggle('hidden', state.listMode !== 'rooms');
-            byId('echo-people-section').classList.toggle('hidden', state.listMode !== 'people');
-            ['rooms', 'people'].forEach(key => {
-                const tab = byId('echo-tab-' + key), active = key === state.listMode;
-                tab.classList.toggle('is-active', active);
-                tab.setAttribute('aria-selected', String(active));
-                tab.tabIndex = active ? 0 : -1;
-            });
-            byId('echo-list-scroll').scrollTop = 0;
-        };
-        window.showEchoPeople = function () { window.setEchoListMode('people'); };
-        window.startEcho = function () {
-            window.renderEchoList();
-            const current = user();
-            if (!current || state.roomsUnsub || state.roomsLoading) return;
-            if (!ready()) { state.roomsError = '연결을 준비하고 있어요. 잠시 후 다시 시도해주세요.'; window.renderEchoList(); return; }
-            if (state.uid !== current.uid) { state.rooms = []; state.uid = current.uid; }
-            const uid = current.uid, epoch = ++state.roomsEpoch;
-            state.roomsLoading = true; state.roomsError = ''; window.renderEchoList();
-            try {
-                state.roomsUnsub = window.fsOnSnapshot(window.fsQuery(window.fsCol('echo_rooms'), window.fsWhere('participantUids', 'array-contains', uid)), snapshot => {
-                    if (state.roomsEpoch !== epoch || !user() || user().uid !== uid) return;
-                    const rooms = [];
-                    snapshot.forEach(entry => {
-                        const data = entry.data({ serverTimestamps: 'estimate' }) || {};
-                        if (Array.isArray(data.participantUids) && data.participantUids.length === 2 && data.participantUids.includes(uid)) rooms.push(Object.assign({ _id: entry.id }, data));
-                    });
-                    state.rooms = rooms; state.roomsLoading = false; state.roomsError = ''; window.renderEchoList();
-                }, error => {
-                    if (state.roomsEpoch !== epoch) return;
-                    console.warn('Echo rooms', error); stopRooms();
-                    state.roomsError = '대화를 불러오지 못했어요. 잠시 후 다시 시도해주세요.';
-                    window.renderEchoList();
-                });
-            } catch (error) { stopRooms(); state.roomsError = '대화 연결을 확인해주세요.'; window.renderEchoList(); }
-        };
-        function renderMessages() {
-            const wrap = byId('echo-messages');
-            const previousHeight = wrap.scrollHeight, previousTop = wrap.scrollTop;
-            const atBottom = previousHeight - previousTop - wrap.clientHeight < 100;
-            const older = state.loadingOlder; state.loadingOlder = false;
-            let day = '';
-            wrap.innerHTML = (state.messages.length >= state.messageLimit ? '<button type="button" class="echo-load-more" onclick="window.loadOlderEchoMessages()">이전 대화 더 보기</button>' : '') +
-                (state.messages.length ? state.messages.map(message => {
-                    const time = millis(message.createdAt) || millis(message.sentAt);
-                    const nextDay = time ? new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(time)) : '';
-                    const separator = nextDay && nextDay !== day ? '<div class="echo-date">' + esc(nextDay) + '</div>' : ''; day = nextDay;
-                    return separator + '<div class="echo-message-row' + (message.senderUid === state.uid ? ' is-mine' : '') + '"><div class="echo-message">' + esc(message.text) + '</div><time>' + (message._pending ? '전송 중' : esc(timeLabel(time))) + '</time></div>';
-                }).join('') : '<div class="echo-state">' + esc(state.peer.name) + '님에게 첫 메시지를 남겨보세요.</div>');
-            const epoch = state.messagesEpoch;
-            window.requestAnimationFrame(() => {
-                if (state.messagesEpoch !== epoch) return;
-                if (older) wrap.scrollTop = previousTop + wrap.scrollHeight - previousHeight;
-                else if (atBottom || previousHeight <= wrap.clientHeight) wrap.scrollTop = wrap.scrollHeight;
-                else wrap.scrollTop = previousTop;
-            });
-        }
-        function subscribeMessages() {
-            stopMessages();
-            const roomId = state.roomId, uid = state.uid, epoch = state.messagesEpoch;
-            const query = window.fsQuery(window.fsCol('echo_rooms', roomId, 'messages'), window.fsOrderBy('createdAt', 'desc'), window.fsLimit(state.messageLimit));
-            try {
-                state.messagesUnsub = window.fsOnSnapshot(query, { includeMetadataChanges: true }, snapshot => {
-                    if (state.messagesEpoch !== epoch || state.roomId !== roomId || !user() || user().uid !== uid) return;
-                    const messages = [];
-                    snapshot.forEach(entry => {
-                        const data = entry.data({ serverTimestamps: 'estimate' }) || {};
-                        if (data.senderUid === uid || data.senderUid === state.peer.uid) messages.push(Object.assign({ _id: entry.id, _pending: !!(entry.metadata && entry.metadata.hasPendingWrites) }, data));
-                    });
-                    state.messages = messages.reverse(); state.messagesReady = true;
-                    byId('echo-compose-status').textContent = ''; renderMessages(); window.updateEchoSendButton();
-                }, error => {
-                    if (state.messagesEpoch !== epoch) return;
-                    console.warn('Echo messages', error); stopMessages();
-                    byId('echo-messages').innerHTML = '<div class="echo-state">대화를 불러오지 못했어요.<button type="button" onclick="window.retryEchoMessages()">다시 시도</button></div>';
-                    window.updateEchoSendButton();
-                });
-            } catch (error) { stopMessages(); byId('echo-compose-status').textContent = '대화 연결을 확인해주세요.'; window.updateEchoSendButton(); }
-        }
-        window.retryEchoMessages = function () { if (state.roomId && ready()) subscribeMessages(); };
-        window.loadOlderEchoMessages = function () { if (!state.messagesReady) return; state.messageLimit += 100; state.loadingOlder = true; subscribeMessages(); };
-        window.openEchoChat = async function (peerUid) {
-            const current = user();
-            if (!current) { if (window.showLoginPrompt) window.showLoginPrompt(); return; }
-            if (state.openingUid || state.sendBusy || !peerUid || peerUid === current.uid) return;
-            const member = members().find(member => member.uid === peerUid) || state.rooms.filter(room => room.participantUids.includes(peerUid)).map(peerForRoom)[0];
-            if (!member) return;
-            if (!ready()) { state.roomsError = '연결을 준비하고 있어요. 잠시 후 다시 시도해주세요.'; window.renderEchoList(); return; }
-            state.openingUid = peerUid; state.roomsError = ''; const epoch = ++state.openEpoch;
-            window.renderEchoList();
-            const roomId = roomKey(current.uid, peerUid), participantUids = [current.uid, peerUid].sort();
-            try {
-                const ref = window.fsDoc('echo_rooms', roomId);
-                await window.runTransaction(window.meetingDb, async transaction => {
-                    const snapshot = await transaction.get(ref);
-                    if (snapshot.exists()) {
-                        const participants = snapshot.data().participantUids;
-                        if (!Array.isArray(participants) || participants.length !== 2 || !participantUids.every(uid => participants.includes(uid))) throw new Error('ECHO_PARTICIPANTS');
-                    } else transaction.set(ref, { participantUids: participantUids, createdAt: window.fsServerTimestamp(), updatedAt: window.fsServerTimestamp(), lastMessage: '', lastSenderUid: '' });
-                });
-                if (state.openEpoch !== epoch || window.activeTabIndex !== 1 || !user() || user().uid !== current.uid) return;
-                state.uid = current.uid; state.peer = member; state.roomId = roomId; state.messages = []; state.messageLimit = 100; state.loadingOlder = false;
-                byId('echo-list-view').classList.add('hidden'); byId('echo-thread').classList.remove('hidden');
-                const nav = byId('bottom-nav'); if (nav) nav.classList.add('hidden');
-                byId('echo-peer-avatar').innerHTML = avatar(member); byId('echo-peer-name').textContent = member.name;
-                byId('echo-message-input').value = ''; byId('echo-compose-status').textContent = '';
-                byId('echo-messages').innerHTML = '<div class="echo-state">대화를 불러오는 중이에요.</div>';
-                sizeEchoViewport(); subscribeMessages(); window.updateEchoSendButton();
-            } catch (error) {
-                if (state.openEpoch !== epoch) return;
-                console.warn('Echo open', error); state.roomsError = '대화를 열지 못했어요. 잠시 후 다시 시도해주세요.'; window.renderEchoList();
-            } finally { if (state.openEpoch === epoch) { state.openingUid = ''; window.renderEchoList(); } }
-        };
-        window.closeEchoChat = function () {
-            state.openEpoch++; state.openingUid = ''; stopMessages(); state.peer = null; state.roomId = ''; state.messages = []; state.pendingMessage = null;
-            byId('echo-thread').classList.add('hidden'); byId('echo-list-view').classList.remove('hidden');
-            byId('echo-messages').innerHTML = ''; byId('echo-message-input').value = ''; byId('echo-compose-status').textContent = '';
-            const nav = byId('bottom-nav'); if (nav) nav.classList.remove('hidden');
-            sizeEchoViewport(); window.updateEchoSendButton(); if (window.updateNavIndicator) window.requestAnimationFrame(window.updateNavIndicator);
-        };
-        window.leaveEcho = function () { window.closeEchoChat(); stopRooms(); };
-        window.updateEchoSendButton = function () {
-            const input = byId('echo-message-input'), button = byId('echo-send');
-            if (button) button.disabled = !user() || !state.roomId || !state.messagesReady || state.sendBusy || !input.value.trim();
-        };
-        window.sendEchoMessage = async function () {
-            const current = user(), roomId = state.roomId, peer = state.peer, input = byId('echo-message-input');
-            const text = input.value.trim();
-            if (!current || current.uid !== state.uid || !roomId || !peer || !state.messagesReady || state.sendBusy || !text || text.length > 2000 || !ready()) return;
-            state.sendBusy = true; byId('echo-compose-status').textContent = ''; window.updateEchoSendButton();
-            if (!state.pendingMessage || state.pendingMessage.roomId !== roomId || state.pendingMessage.text !== text || state.pendingMessage.uid !== current.uid) {
-                state.pendingMessage = { roomId: roomId, uid: current.uid, text: text, ref: window.doc(window.fsCol('echo_rooms', roomId, 'messages')), sentAt: Date.now() };
-            }
-            const pending = state.pendingMessage;
-            try {
-                const ref = window.fsDoc('echo_rooms', roomId);
-                await window.runTransaction(window.meetingDb, async transaction => {
-                    const room = await transaction.get(ref), message = await transaction.get(pending.ref);
-                    const participants = room.exists() && room.data().participantUids;
-                    if (!Array.isArray(participants) || participants.length !== 2 || !participants.includes(current.uid) || !participants.includes(peer.uid)) throw new Error('ECHO_PARTICIPANTS');
-                    if (message.exists()) return;
-                    transaction.set(pending.ref, { senderUid: current.uid, text: text, createdAt: window.fsServerTimestamp(), sentAt: pending.sentAt });
-                    transaction.update(ref, { lastMessage: text.slice(0, 150), lastSenderUid: current.uid, updatedAt: window.fsServerTimestamp() });
-                });
-                if (state.roomId === roomId && user() && user().uid === current.uid) {
-                    if (input.value.trim() === text) input.value = '';
-                    state.pendingMessage = null;
-                    const wrap = byId('echo-messages'); window.requestAnimationFrame(() => { if (state.roomId === roomId) wrap.scrollTop = wrap.scrollHeight; });
-                }
-            } catch (error) {
-                console.warn('Echo send', error);
-                if (state.roomId === roomId && user() && user().uid === current.uid) byId('echo-compose-status').textContent = '보내지 못했어요. 작성한 메시지는 남아 있어요. 다시 보내주세요.';
-            } finally { state.sendBusy = false; window.updateEchoSendButton(); }
-        };
-        window.enjoyEchoOnAuth = function (current) {
-            window.leaveEcho(); state.rooms = []; state.uid = current && current.uid || ''; state.roomsError = ''; state.pendingMessage = null;
-            window.setEchoListMode('rooms'); window.renderEchoList(); if (current && window.activeTabIndex === 1) window.startEcho();
-        };
-        ['rooms', 'people'].forEach(key => {
-            byId('echo-tab-' + key).addEventListener('keydown', event => {
-                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-                event.preventDefault();
-                const mode = event.key === 'Home' ? 'rooms' : (event.key === 'End' ? 'people' : (key === 'rooms' ? 'people' : 'rooms'));
-                window.setEchoListMode(mode);
-                byId('echo-tab-' + mode).focus();
-            });
-        });
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', sizeEchoViewport);
-            window.visualViewport.addEventListener('scroll', sizeEchoViewport);
-        }
-        byId('echo-message-input').addEventListener('keydown', event => {
-            if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) { event.preventDefault(); window.sendEchoMessage(); }
-        });
-        document.addEventListener('keydown', event => { if (event.key === 'Escape' && window.activeTabIndex === 1 && state.roomId) { event.preventDefault(); window.closeEchoChat(); } });
-    })();
-    </script>
-
     <script src="attendance.js?v=20261006"></script>
-    <script src="meeting-benefits.js?v=20261006-discounts"></script>
+    <script src="meeting-benefits.js?v=20261006-store"></script>
+    <script src="store.js?v=20261006-limits"></script>
 
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
