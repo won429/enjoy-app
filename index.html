@@ -10,6 +10,7 @@
     <link rel="icon" href="icon.png">
 
     <link rel="stylesheet" href="attendance.css?v=20261005">
+    <link rel="stylesheet" href="meeting-benefits.css?v=20261005">
 
     <!-- Firebase(데이터 동기화) 도메인 미리 연결로 로딩 속도 개선 -->
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -9491,6 +9492,8 @@
                 <h3 id="total-balance" class="text-[36px] font-bold text-white tracking-tight leading-none">448,999<span class="text-[22px] font-bold text-white ml-1">원</span></h3>
             </div>
 
+            <section id="meeting-my-benefits" class="meeting-my-benefits" aria-label="내 부과금·유예 및 면제권" aria-live="polite"></section>
+
             <!-- 공지사항 배너 (가로 자동 스크롤) -->
             <div id="meeting-notice-banner" class="hidden mb-6">
                 <div class="flex items-center gap-2.5">
@@ -9501,24 +9504,16 @@
                 </div>
             </div>
 
-            <!-- 현황 요약 (박스/색 없이 얇은 구분선만) -->
-            <div class="grid grid-cols-2 gap-x-5 mb-7">
-                <!-- 부과금 및 유예 -->
-                <div class="flex flex-col min-h-[120px]">
-                    <div class="flex items-center gap-1.5 mb-3">
-                        <i class="fa-solid fa-triangle-exclamation text-[#F04452] text-[12px]"></i>
-                        <h3 class="text-[12px] font-bold text-gray-400 tracking-tight">부과금 · 유예</h3>
-                    </div>
-                    <div id="penalty-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full flex-1"></div>
-                </div>
-                <!-- 면제권 -->
-                <div class="flex flex-col min-h-[120px] border-l border-white/5 pl-5">
-                    <div class="flex items-center gap-1.5 mb-3">
-                        <i class="fa-solid fa-ticket-simple text-[#3182F6] text-[12px]"></i>
-                        <h3 class="text-[12px] font-bold text-gray-400 tracking-tight">면제권 보유</h3>
-                    </div>
-                    <div id="ticket-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full flex-1"></div>
-                </div>
+            <!-- 전체 내역: 처음에는 접힌 상태 -->
+            <div class="meeting-full-lists">
+                <details class="meeting-full-list">
+                    <summary><span><i class="fa-solid fa-triangle-exclamation text-[#F04452]" aria-hidden="true"></i>부과금·유예 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
+                    <div id="penalty-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full"></div>
+                </details>
+                <details class="meeting-full-list">
+                    <summary><span><i class="fa-solid fa-ticket-simple text-[#3182F6]" aria-hidden="true"></i>면제권 보유 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
+                    <div id="ticket-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full"></div>
+                </details>
             </div>
 
             <!-- 납부 내역 / 가계부 (탭으로 전환) -->
@@ -13720,6 +13715,7 @@
             const balanceEl = document.getElementById('total-balance');
             if (balanceEl) balanceEl.innerHTML = (data.totalBalance || 0).toLocaleString() + '<span class="text-[22px] font-bold text-white ml-1">원</span>';
             window.renderDues(window.currentDuesMonth, window.currentDuesYear);
+            if (window.renderMeetingBenefits) window.renderMeetingBenefits();
             try { window.renderExpenses(); } catch (e) {}
             try { window.renderEnjoyToday(); } catch (e) {}
         };
@@ -16788,15 +16784,15 @@
             '성원제': { bg: 'bg-pink-500/20', text: 'text-pink-400', char: '성' } 
         };
         
-        window.calculateMemberHistory = function() {
+        window.calculateMemberHistory = function(sourceData, now = new Date()) {
             const startYear = 2025;
-            const now = new Date(); 
             const currentRealMonth = now.getMonth() + 1;
             const currentYear = now.getFullYear();
             const members = ['홍박사', '류짱', '오스틴', '전시기', '이진누', '성원제'];
             const memberHistory = {};
 
-            if (!window.meetingData) window.meetingData = getInitialMeetingData();
+            if (!sourceData && !window.meetingData) window.meetingData = getInitialMeetingData();
+            const data = sourceData || window.meetingData;
 
             members.forEach(name => {
                 let history = {}; 
@@ -16804,15 +16800,15 @@
                 let prevStatus = 'paid';
                 let shouldApplyPenalty = false;
 
-                let maxYear = Math.max(currentYear, window.currentDuesYear);
+                let maxYear = Math.max(currentYear, window.currentDuesYear || currentYear);
                 for (let y = startYear; y <= maxYear; y++) {
                     let startM = (y === startYear) ? 10 : 1;
                     for (let m = startM; m <= 12; m++) {
                         let key = `${y}-${m}`;
                         let isL25 = (y === 2025 && m >= 10);
                         let isL26 = (y === 2026 && m <= 9);
-                        let records = (window.meetingData && window.meetingData.records) 
-                                        ? (window.meetingData.records[key] || ((isL25 || isL26) ? window.meetingData.records[m] : [])) 
+                        let records = (data && data.records)
+                                        ? (data.records[key] || ((isL25 || isL26) ? data.records[m] : []))
                                         : [];
                         let mem = records ? records.find(r => r.name === name) : null;
                         
@@ -16907,6 +16903,7 @@
             const currentYear = now.getFullYear();
             const lastDay = new Date(currentYear, currentRealMonth, 0).getDate();
             
+            if (window.renderMeetingBenefits) window.renderMeetingBenefits();
             const hist = window.calculateMemberHistory();
             let htmlPenalty = ''; let hasPenalty = false;
             
@@ -16921,7 +16918,11 @@
                         const records = window.meetingData.records[key] || ((isLegacy2025 || isLegacy2026) ? window.meetingData.records[m] : null) || [];
                         
                         records.forEach(mem => {
-                            let h = hist[mem.name][key];
+                            let h = hist[mem.name] && hist[mem.name][key];
+                            if (mem.ticketUsedByUid) {
+                                hasPenalty = true;
+                                htmlPenalty += `<div class="w-full flex-none flex flex-wrap justify-between gap-x-3 gap-y-1"><span class="text-[13px] font-semibold text-white/90">${duesEscape(mem.name)}</span><span class="text-[12px] font-semibold text-[#3182F6]">${y}년 ${m}월 면제권 사용 · 부과금 10,000원 면제</span></div>`;
+                            }
                             if (h && h.isPaymentStopped) {
                                 return;
                             }
@@ -17133,7 +17134,7 @@
 
             const notes = [];
             if (amounts.overduePenaltyAmount > 0) notes.push(`${month}월 마감 후 확정된 미납 부과금 10,000원을 포함했어요.`);
-            if (history.penaltyWaived || history.exemptionAppliesToNextPenalty) notes.push('부과금 면제권 1개가 적용됐어요.');
+            if (history.penaltyWaived || history.exemptionAppliesToNextPenalty) notes.push(memberRecord.ticketUsedByUid ? '면제권 1개 사용 · 부과금 10,000원 면제' : '부과금 면제권 1개가 적용됐어요.');
             if (memberRecord.paidDate) notes.push(`납부일: ${duesEscape(memberRecord.paidDate)}`);
 
             title.textContent = `${memberName} 납부 상세`;
@@ -17415,6 +17416,7 @@
                         </div>
                     </div>
                     ${penaltyText ? `<div class="ml-[56px] mt-1 text-[12px] ${penaltyColorClass} font-medium leading-snug">· ${penaltyText}</div>` : ''}
+                    ${m.ticketUsedByUid ? '<div class="ml-[56px] mt-1 text-[12px] text-[#3182F6] font-semibold leading-snug">면제권 사용 · 부과금 10,000원 면제</div>' : ''}
                     ${paymentTotalHtml}
                 </button>`;
             });
@@ -18580,6 +18582,7 @@
 
         /* ----- 로그인 사용자: 홈 회원 탈퇴 버튼 표시 ----- */
         function updateProfileCard() {
+            if (window.renderMeetingBenefits) window.renderMeetingBenefits();
             const homeWd = $('home-withdraw');
             if (homeWd) homeWd.classList.toggle('hidden', !window.enjoyUser);
             if (window.renderHomeDeliveryNowBar) window.renderHomeDeliveryNowBar();
@@ -22208,6 +22211,7 @@ service cloud.firestore {
     </script>
 
     <script src="attendance.js?v=20261005"></script>
+    <script src="meeting-benefits.js?v=20261005"></script>
 
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
