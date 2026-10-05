@@ -6315,12 +6315,13 @@
             font-size: 0.9375rem;
             font-weight: 900;
         }
-        .kbo-original-rank-number.is-confirmed {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .kbo-original-ranking-row.is-confirmed {
             background: var(--rank-color);
+        }
+        .kbo-original-ranking-row.is-confirmed .kbo-original-rank-team,
+        .kbo-original-ranking-row.is-confirmed .kbo-original-ranking-stats,
+        .kbo-original-ranking-row.is-confirmed .kbo-original-ranking-stats span {
+            color: var(--rank-ink);
         }
         .kbo-original-rank-team {
             width: 2.375rem;
@@ -6375,8 +6376,6 @@
             filter: drop-shadow(0 0.25rem 0.3125rem rgba(0,0,0,.5));
             transform: translate(-50%,-50%);
         }
-        .kbo-original-team-panel img.is-kia { transform: translate(-50%,-50%); }
-        .kbo-original-team-panel img.is-kt { transform: translate(-50%,calc(-50% - 0.125rem)) scale(1.15); }
         .kbo-ranking-trend {
             margin-top: 1.25rem;
             padding: 1.125rem 1.25rem 0;
@@ -10405,19 +10404,20 @@
                 const confirmed = confirmedRanks.has(row.team);
                 const numberColor = confirmed ? (row.rank === 1 ? '#FFFFFF' : '#111827') : rankColor;
                 const streakColor = row.streak.includes('승') ? '#EA0029' : (row.streak.includes('패') ? '#074CA1' : '#9CA3AF');
-                const logo = enjoyBaseballTeamWordmarks[row.team] || '';
-                return '<div class="kbo-original-ranking-row">' +
+                const logo = enjoyBaseballTeamLogos[row.team] || '';
+                return '<div class="kbo-original-ranking-row' + (confirmed ? ' is-confirmed' : '') + '"' +
+                    (confirmed ? ' style="--rank-color:' + rankColor + ';--rank-ink:' + numberColor + ';"' : '') + '>' +
                     '<div class="kbo-original-ranking-data">' +
-                        '<span class="kbo-original-rank-number' + (confirmed ? ' is-confirmed' : '') + '" style="--rank-color:' + rankColor + ';color:' + numberColor + ';"' +
+                        '<span class="kbo-original-rank-number" style="color:' + numberColor + ';"' +
                             (confirmed ? ' title="정규리그 ' + row.rank + '위 확정" aria-label="' + row.rank + '위 확정"' : '') + '>' + row.rank + '</span>' +
                         '<span class="kbo-original-rank-team">' + enjoyBaseballEscape(row.team) + '</span>' +
                         '<span class="kbo-original-ranking-stats">' +
                             '<span>' + row.games + '</span><span>' + row.w + '</span><span>' + row.d + '</span><span>' + row.l + '</span>' +
-                            '<span>' + row.winRate + '</span><span>' + row.gap + '</span><span style="color:' + streakColor + ';">' + row.streak + '</span>' +
+                            '<span>' + row.winRate + '</span><span>' + row.gap + '</span><span style="color:' + (confirmed ? numberColor : streakColor) + ';">' + row.streak + '</span>' +
                         '</span>' +
                     '</div>' +
                     '<span class="kbo-original-team-panel" style="--team-color:' + (enjoyBaseballTeamColors[row.team] || '#64748B') + ';">' +
-                        (logo ? '<img src="' + enjoyBaseballEscape(logo) + '" class="' + (row.team === 'KIA' ? 'is-kia' : (row.team === 'KT' ? 'is-kt' : '')) + '" alt="">' : '') +
+                        (logo ? '<img src="' + enjoyBaseballEscape(logo) + '" alt="' + enjoyBaseballEscape(row.team + ' 구단 로고') + '">' : '') +
                     '</span>' +
                 '</div>';
             }).join('');
@@ -10756,7 +10756,7 @@
                                 '<span><i style="--ranking-color:#7BDBE5;"></i>플레이오프 진출</span>' +
                                 '<span><i style="--ranking-color:#61C684;"></i>준플레이오프 진출</span>' +
                                 '<span><i style="--ranking-color:#B2DA67;"></i>와일드카드 결정전 진출</span>' +
-                                '<span class="is-confirmed-rank"><i style="--ranking-color:#9CA3AF;"></i>순위 칸 배경색: 확정 순위</span>' +
+                                '<span class="is-confirmed-rank"><i style="--ranking-color:#9CA3AF;"></i>배경색: 확정 순위 (로고 제외)</span>' +
                             '</div>' +
                         '</div>' +
                         '<div class="kbo-original-ranking-head">' +
