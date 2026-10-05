@@ -3732,6 +3732,89 @@
             padding: 0.875rem 0 1.5rem;
             background: transparent;
         }
+        .kbo-season-banners { margin-bottom: 1rem; }
+        .kbo-season-banner-track {
+            position: relative;
+            display: flex;
+            gap: 0.625rem;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none;
+        }
+        .kbo-season-banner-track::-webkit-scrollbar { display: none; }
+        .kbo-season-banner-pages {
+            display: flex;
+            justify-content: center;
+            gap: 0.125rem;
+            margin-top: 0.25rem;
+        }
+        .kbo-season-banner-pages button {
+            display: grid;
+            place-items: center;
+            width: 1.25rem;
+            height: 1rem;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+        }
+        .kbo-season-banner-pages button::before {
+            content: '';
+            width: 0.3125rem;
+            height: 0.3125rem;
+            border-radius: 50%;
+            background: #9ca3af;
+            opacity: .4;
+        }
+        .kbo-season-banner-pages button.is-active::before { opacity: 1; }
+        .kbo-season-banner-pages button:focus-visible { outline: 2px solid #9ca3af; border-radius: 0.25rem; }
+        .kbo-season-champion {
+            box-sizing: border-box;
+            flex: 0 0 100%;
+            min-width: 0;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.625rem 0.875rem;
+            border-radius: 0.75rem;
+            background: linear-gradient(110deg, #231c1c, #151515 70%);
+            color: #fff;
+        }
+        .kbo-season-champion img {
+            flex: none;
+            width: 2.5rem;
+            height: 2.5rem;
+            object-fit: contain;
+        }
+        .kbo-season-champion-copy { min-width: 0; flex: 1; }
+        .kbo-season-champion small {
+            display: block;
+            margin-bottom: 0.1875rem;
+            color: #dcb86a;
+            font-size: 0.5625rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+        }
+        .kbo-season-champion strong {
+            display: block;
+            font-size: 0.8125rem;
+            line-height: 1.4;
+            font-weight: 800;
+        }
+        .kbo-season-champion > i {
+            flex: none;
+            color: #dcb86a;
+            font-size: 1.125rem;
+        }
+        .kbo-season-champion.is-runner-up {
+            background: linear-gradient(110deg, #19243b, #151515 70%);
+        }
+        .kbo-season-champion.is-runner-up small,
+        .kbo-season-champion.is-runner-up > i {
+            color: #c3cedf;
+        }
         .home-brand {
             height: 1.75rem;
             display: flex;
@@ -10718,11 +10801,50 @@
             enjoyBaseballRankingTrendRange = range;
             renderEnjoyBaseballRankingTrend();
         };
+        window.updateKboSeasonBannerPage = function () {
+            const track = document.getElementById('kbo-season-banner-track');
+            const pages = document.getElementById('kbo-season-banner-pages');
+            if (!track || !pages || !track.children.length) return;
+            const origin = track.children[0].offsetLeft;
+            let active = 0;
+            Array.from(track.children).forEach(function (slide, index) {
+                if (Math.abs(slide.offsetLeft - origin - track.scrollLeft) <
+                    Math.abs(track.children[active].offsetLeft - origin - track.scrollLeft)) active = index;
+            });
+            Array.from(pages.children).forEach(function (button, index) {
+                button.classList.toggle('is-active', index === active);
+                button.setAttribute('aria-current', index === active ? 'true' : 'false');
+            });
+        };
+        window.selectKboSeasonBanner = function (index) {
+            const track = document.getElementById('kbo-season-banner-track');
+            if (!track || !track.children[index]) return;
+            track.scrollTo({ left: track.children[index].offsetLeft - track.children[0].offsetLeft,
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        };
         function renderKboScoreboard() {
             const wrap = document.getElementById('baseball-detail-content');
             if (!wrap) return;
             wrap.innerHTML =
                 '<div class="kbo-more-shell">' +
+                    '<div class="kbo-season-banners" role="region" aria-label="2026 KBO 정규리그 우승·준우승 배너" aria-roledescription="슬라이드 배너">' +
+                    '<div id="kbo-season-banner-track" class="kbo-season-banner-track" tabindex="0" aria-label="좌우로 넘겨 우승·준우승 보기" onscroll="window.updateKboSeasonBannerPage()">' +
+                    '<aside class="kbo-season-champion" aria-label="2026 KBO 정규리그 우승 KT wiz">' +
+                        '<img src="' + enjoyBaseballEscape(enjoyBaseballTeamLogos.KT) + '" alt="KT wiz 구단 로고">' +
+                        '<div class="kbo-season-champion-copy"><small>2026 KBO</small><strong>KT wiz 정규리그 우승</strong></div>' +
+                        '<i class="fa-solid fa-trophy" aria-hidden="true"></i>' +
+                    '</aside>' +
+                    '<aside class="kbo-season-champion is-runner-up" aria-label="2026 KBO 정규리그 준우승 삼성 라이온즈">' +
+                        '<img src="' + enjoyBaseballEscape(enjoyBaseballTeamLogos['삼성']) + '" alt="삼성 라이온즈 구단 로고">' +
+                        '<div class="kbo-season-champion-copy"><small>2026 KBO</small><strong>삼성 라이온즈 정규리그 준우승</strong></div>' +
+                        '<i class="fa-solid fa-trophy" aria-hidden="true"></i>' +
+                    '</aside>' +
+                    '</div>' +
+                    '<div id="kbo-season-banner-pages" class="kbo-season-banner-pages" aria-label="배너 선택">' +
+                        '<button type="button" class="is-active" aria-label="KT 정규리그 우승 배너 보기" aria-current="true" aria-controls="kbo-season-banner-track" onclick="window.selectKboSeasonBanner(0)"></button>' +
+                        '<button type="button" aria-label="삼성 정규리그 준우승 배너 보기" aria-current="false" aria-controls="kbo-season-banner-track" onclick="window.selectKboSeasonBanner(1)"></button>' +
+                    '</div>' +
+                    '</div>' +
                     '<section id="kbo-more-daily-section" class="kbo-original-section">' +
                         '<div id="kbo-more-daily-dial" class="kbo-daily-dial" role="group" aria-label="경기 날짜 선택"' +
                             ' onpointerdown="window.startKboMoreDailyDial(event)"' +
@@ -10759,7 +10881,7 @@
                                 '<span><i style="--ranking-color:#7BDBE5;"></i>플레이오프 진출</span>' +
                                 '<span><i style="--ranking-color:#61C684;"></i>준플레이오프 진출</span>' +
                                 '<span><i style="--ranking-color:#B2DA67;"></i>와일드카드 결정전 진출</span>' +
-                                '<span class="is-confirmed-rank"><i style="--ranking-color:#9CA3AF;"></i>배경색: 확정 순위 (로고 제외)</span>' +
+                                '<span class="is-confirmed-rank"><i style="--ranking-color:#9CA3AF;"></i>배경색: 확정 순위</span>' +
                             '</div>' +
                         '</div>' +
                         '<div class="kbo-original-ranking-head">' +
