@@ -8000,13 +8000,7 @@
             <button class="lg-guest" onclick="window.haptic && window.haptic(); window.enjoyGuest && window.enjoyGuest()">로그인 없이 둘러보기</button>
 
             <!-- 광고 (카카오 애드핏) -->
-            <div class="lg-ad">
-                <ins class="kakao_ad_area" style="display:none;"
-                    data-ad-unit="DAN-uEbYtdHZNXbnKtgT"
-                    data-ad-width="320"
-                    data-ad-height="50"></ins>
-                <script type="text/javascript" src="//t1.kakaocdn.net/kas/static/ba.min.js" async></script>
-            </div>
+            <div id="login-ad" class="lg-ad"></div>
 
             <p id="login-status" class="lg-status text-center"></p>
 
@@ -15442,60 +15436,156 @@
         window.goSchedule = () => { if (window._schedSub === 'community') window._schedSub = 'calendar'; window.activeTabIndex = 3; window.updateTabUI(3); }
         window.goMeeting = () => { window.activeTabIndex = 4; window.updateTabUI(4); }
 
-        // 카카오 애드핏 광고 표시 (홈/모임통장/커뮤니티 — 로그인 화면 광고와 별개 광고단위)
-        // 화면 전환과 레이아웃이 끝난 다음 요청하고, iframe 생성에 실패한 경우 한 번만 다시 시도한다.
-        const enjoyAdTimers = Object.create(null);
-        window.enjoyScheduleAd = function (holderId, adUnit, width, height, delay, attempt) {
-            if (enjoyAdTimers[holderId]) clearTimeout(enjoyAdTimers[holderId]);
-            enjoyAdTimers[holderId] = setTimeout(function () {
-                delete enjoyAdTimers[holderId];
-                requestAnimationFrame(function () {
-                    requestAnimationFrame(function () {
-                        window.enjoyShowAd(holderId, adUnit, width, height, attempt);
-                    });
-                });
-            }, Math.max(0, Number(delay) || 0));
-        };
-        window.enjoyShowAd = function (holderId, adUnit, width, height, attempt) {
-            try {
+        /* ===== 광고 연속 클릭 제한: 익명 브라우저 상태와 실제 송출 중단 ===== */
+        (function installEnjoyAdGuard() {
+            const STORAGE_KEY = 'enjoy_ad_cooldown_v1';
+            const CLICK_LIMIT = 10;
+            const COOLDOWN_MS = 30 * 60 * 1000;
+            const placements = {
+                'login-ad': { unit: 'DAN-uEbYtdHZNXbnKtgT', width: 320, height: 50 },
+                'home-ad': { unit: 'DAN-I5XORHdPd5Vfu6a2', width: 320, height: 50 },
+                'community-ad': { unit: 'DAN-Y60v78Z4ID5hsdjF', width: 320, height: 100 },
+                'meeting-ad': { unit: 'DAN-Jvtr8N7gGvSbJ9V1', width: 320, height: 50 }
+            };
+            const requestTimers = Object.create(null);
+            let memory = {}, storageFailed = false, paused = false, wakeTimer = null, wakeAt = 0;
+            function dayKey(now) {
+                return new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+            }
+            function normalize(raw, now) {
+                const day = dayKey(now), sameDay = raw && raw.day === day;
+                const integer = value => Number.isSafeInteger(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
+                const blockedUntil = integer(raw && raw.blockedUntil);
+                return { day: day, todayClicks: sameDay ? integer(raw.todayClicks) : 0,
+                    limitClicks: sameDay && (!blockedUntil || blockedUntil > now) ? integer(raw.limitClicks) : 0,
+                    blockedUntil: blockedUntil > now ? blockedUntil : 0 };
+            }
+            function read() {
+                let raw = memory;
+                if (!storageFailed) {
+                    try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+                    catch (error) { storageFailed = true; }
+                }
+                memory = normalize(raw, Date.now());
+                return memory;
+            }
+            function save(value) {
+                memory = value;
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)); }
+                catch (error) { storageFailed = true; }
+            }
+            function stopHolder(holderId) {
+                if (requestTimers[holderId]) clearTimeout(requestTimers[holderId]);
+                delete requestTimers[holderId];
                 const holder = document.getElementById(holderId);
-                if (!holder || holder.querySelector('iframe')) return;
-                const loginScreen = document.getElementById('login-screen');
-                if (holderId === 'home-ad' && loginScreen && getComputedStyle(loginScreen).display !== 'none') return;
+                if (!holder) return;
+                const config = placements[holderId];
                 const rect = holder.getBoundingClientRect();
-                if (!holder.getClientRects().length || rect.width <= 0 || rect.height <= 0) return;
-                if (holder.dataset.adLoading === 'true') return;
-
-                const w = width || 320, h = height || 50;
-                const currentAttempt = Math.max(0, Number(attempt) || 0);
-                holder.dataset.adLoading = 'true';
-                holder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="' + adUnit + '" data-ad-width="' + w + '" data-ad-height="' + h + '"></ins>';
-                const s = document.createElement('script');
-                let verificationTimer = 0;
-                let verified = false;
-                const verify = function () {
-                    if (verified) return;
-                    verified = true;
-                    holder.dataset.adLoading = 'false';
-                    if (holder.querySelector('iframe') || currentAttempt >= 1) return;
-                    holder.innerHTML = '';
-                    window.enjoyScheduleAd(holderId, adUnit, w, h, 400, currentAttempt + 1);
-                };
-                s.type = 'text/javascript';
-                s.async = true;
-                s.src = 'https://t1.kakaocdn.net/kas/static/ba.min.js';
-                s.addEventListener('load', function () {
-                    if (verificationTimer) clearTimeout(verificationTimer);
-                    verificationTimer = setTimeout(verify, 1400);
-                }, { once: true });
-                s.addEventListener('error', function () {
-                    if (verificationTimer) clearTimeout(verificationTimer);
-                    verificationTimer = setTimeout(verify, 250);
-                }, { once: true });
-                holder.appendChild(s);
-                verificationTimer = setTimeout(verify, 2500);
-            } catch (e) {}
-        };
+                // 콘텐츠가 위로 밀리지 않도록 기존 광고 영역 크기를 유지한다.
+                holder.style.minHeight = Math.max(config.height, Math.ceil(rect.height || 0)) + 'px';
+                holder.dataset.adPaused = 'true';
+                holder.dataset.adLoading = 'false';
+                holder.dataset.adGeneration = String((Number(holder.dataset.adGeneration) || 0) + 1);
+                if (holder.firstChild) {
+                    try { if (window.adfit && typeof window.adfit.destroy === 'function') window.adfit.destroy(config.unit); } catch (error) {}
+                    holder.replaceChildren();
+                }
+            }
+            function stopAll() { Object.keys(placements).forEach(stopHolder); }
+            function resumeVisible() {
+                if (document.visibilityState === 'hidden') return;
+                Object.entries(placements).forEach(function ([id, config]) {
+                    const holder = document.getElementById(id);
+                    if (!holder) return;
+                    delete holder.dataset.adPaused;
+                    if (holder.getClientRects().length && !holder.querySelector('iframe')) window.enjoyScheduleAd(id, config.unit, config.width, config.height);
+                });
+            }
+            function refresh() {
+                const value = read(), wasPaused = paused;
+                paused = value.blockedUntil > Date.now();
+                if (paused) stopAll();
+                if (wakeAt !== value.blockedUntil) {
+                    if (wakeTimer) clearTimeout(wakeTimer);
+                    wakeTimer = null; wakeAt = value.blockedUntil;
+                    if (paused) wakeTimer = setTimeout(refresh, Math.max(1, wakeAt - Date.now()));
+                }
+                if (wasPaused && !paused) { save(value); resumeVisible(); }
+                return paused;
+            }
+            function recordClick() {
+                if (refresh()) return false;
+                const value = read();
+                value.todayClicks++;
+                value.limitClicks++;
+                if (value.limitClicks > CLICK_LIMIT) value.blockedUntil = Date.now() + COOLDOWN_MS;
+                save(value); refresh();
+                return true;
+            }
+            window.enjoyAdGuard = { isPaused: refresh, recordClick: recordClick, refresh: refresh };
+            window.enjoyScheduleAd = function (holderId, adUnit, width, height, delay, attempt) {
+                placements[holderId] = { unit: adUnit, width: width || 320, height: height || 50 };
+                if (refresh()) return;
+                if (requestTimers[holderId]) clearTimeout(requestTimers[holderId]);
+                requestTimers[holderId] = setTimeout(function () {
+                    delete requestTimers[holderId];
+                    requestAnimationFrame(function () {
+                        requestAnimationFrame(function () { window.enjoyShowAd(holderId, adUnit, width, height, attempt); });
+                    });
+                }, Math.max(0, Number(delay) || 0));
+            };
+            window.enjoyShowAd = function (holderId, adUnit, width, height, attempt) {
+                try {
+                    placements[holderId] = { unit: adUnit, width: width || 320, height: height || 50 };
+                    if (refresh() || document.visibilityState === 'hidden') return;
+                    const holder = document.getElementById(holderId);
+                    if (!holder || holder.querySelector('iframe')) return;
+                    const loginScreen = document.getElementById('login-screen');
+                    if (holderId === 'home-ad' && loginScreen && getComputedStyle(loginScreen).display !== 'none') return;
+                    const rect = holder.getBoundingClientRect();
+                    if (!holder.getClientRects().length || rect.width <= 0 || rect.height <= 0 || holder.dataset.adLoading === 'true') return;
+                    const w = width || 320, h = height || 50, currentAttempt = Math.max(0, Number(attempt) || 0);
+                    const generation = (Number(holder.dataset.adGeneration) || 0) + 1;
+                    holder.dataset.adGeneration = String(generation);
+                    holder.dataset.adLoading = 'true';
+                    holder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="' + adUnit + '" data-ad-width="' + w + '" data-ad-height="' + h + '"></ins>';
+                    const script = document.createElement('script');
+                    let verificationTimer = null, verified = false;
+                    function verify() {
+                        if (verified) return;
+                        verified = true;
+                        if (refresh() || !holder.isConnected || Number(holder.dataset.adGeneration) !== generation) return;
+                        holder.dataset.adLoading = 'false';
+                        if (holder.querySelector('iframe') || currentAttempt >= 1) return;
+                        holder.replaceChildren();
+                        window.enjoyScheduleAd(holderId, adUnit, w, h, 400, currentAttempt + 1);
+                    }
+                    script.type = 'text/javascript'; script.async = true;
+                    script.src = 'https://t1.kakaocdn.net/kas/static/ba.min.js';
+                    script.addEventListener('load', function () {
+                        if (verificationTimer) clearTimeout(verificationTimer);
+                        if (refresh() || Number(holder.dataset.adGeneration) !== generation) return;
+                        verificationTimer = setTimeout(verify, 1400);
+                    }, { once: true });
+                    script.addEventListener('error', function () {
+                        if (verificationTimer) clearTimeout(verificationTimer);
+                        if (refresh() || Number(holder.dataset.adGeneration) !== generation) return;
+                        verificationTimer = setTimeout(verify, 250);
+                    }, { once: true });
+                    holder.appendChild(script);
+                    verificationTimer = setTimeout(verify, 2500);
+                } catch (error) {}
+            };
+            window.addEventListener('storage', function (event) {
+                if (event.key === STORAGE_KEY || event.key === null) { storageFailed = false; refresh(); }
+            });
+            function wake() { if (!refresh()) resumeVisible(); }
+            window.addEventListener('focus', wake);
+            window.addEventListener('pageshow', wake);
+            document.addEventListener('visibilitychange', function () { if (document.visibilityState !== 'hidden') wake(); });
+            refresh();
+        })();
+        /* ===== 광고 연속 클릭 제한 끝 ===== */
 
         /* ===== 카카오 애드핏 멤버별 클릭 추정 =====
          * 애드핏은 교차 출처 iframe 안에서 동작하므로 실제 click 이벤트를 직접 읽을 수 없다.
@@ -15504,6 +15594,7 @@
          */
         (function installAdClickEstimator() {
             const AD_PLACEMENTS = {
+                'login-ad': 'login',
                 'home-ad': 'home',
                 'community-ad': 'community',
                 'meeting-ad': 'meeting'
@@ -15526,8 +15617,8 @@
             function focusedAdPlacement() {
                 const active = document.activeElement;
                 if (!active || String(active.tagName || '').toLowerCase() !== 'iframe') return '';
-                const holder = active.closest && active.closest('#home-ad, #community-ad, #meeting-ad, .lg-ad');
-                if (!holder || !holder.id) return ''; // 로그인 광고는 멤버를 식별할 수 없어 제외
+                const holder = active.closest && active.closest('#home-ad, #community-ad, #meeting-ad, #login-ad');
+                if (!holder || !holder.id) return '';
                 return AD_PLACEMENTS[holder.id] || '';
             }
 
@@ -15536,14 +15627,18 @@
                 if (!placement) return;
                 if (placement === lastRecordedPlacement && now - lastRecordedAt < DUPLICATE_GUARD_MS) return;
 
+                if (window.enjoyAdGuard && window.enjoyAdGuard.isPaused()) return;
+                lastRecordedAt = now;
+                lastRecordedPlacement = placement;
+                if (window.enjoyAdGuard) window.enjoyAdGuard.recordClick();
+                // 로그인 여부와 통계 저장 성공 여부에 관계없이 익명 브라우저 제한은 먼저 적용한다.
+                if (placement === 'login') return;
                 const user = window.enjoyUser;
                 const memberName = String(window.enjoyProfileName || '').trim();
                 if (!user || !user.uid || !memberName ||
                     !(window.enjoyIsMemberName && window.enjoyIsMemberName(memberName))) return;
                 if (!window.fsDoc || !window.fsUpdateDoc || !window.fsIncrement || !window.meetingDb) return;
 
-                lastRecordedAt = now;
-                lastRecordedPlacement = placement;
                 try {
                     const changes = {
                         adClickCount: window.fsIncrement(1),
@@ -15559,8 +15654,7 @@
                 } catch (error) {
                     // 광고 이동은 방해하지 않고, 개발 중에만 저장 실패 원인을 확인할 수 있게 남긴다.
                     console.warn('광고 클릭 횟수 저장 실패:', error);
-                    lastRecordedAt = 0;
-                    lastRecordedPlacement = '';
+                    // 로컬 제한의 중복 방지 시각은 유지한다.
                 }
             }
 
@@ -22065,15 +22159,7 @@
                 // 카카오 애드핏: 로그인 화면(컨테이너)이 보이게 된 뒤 광고를 (재)요청한다.
                 // 숨겨진 상태에서 최초 스캔되면 렌더되지 않을 수 있어, 노출 시점에 새로 그린다.
                 const renderLoginAd = () => {
-                    try {
-                        const holder = document.querySelector('#login-content .lg-ad');
-                        if (!holder || holder.querySelector('iframe')) return;   // 이미 렌더됐으면 스킵
-                        holder.innerHTML = '<ins class="kakao_ad_area" style="display:none;" data-ad-unit="DAN-uEbYtdHZNXbnKtgT" data-ad-width="320" data-ad-height="50"></ins>';
-                        const s = document.createElement('script');
-                        s.type = 'text/javascript'; s.async = true;
-                        s.src = '//t1.kakaocdn.net/kas/static/ba.min.js';
-                        holder.appendChild(s);
-                    } catch (e) {}
+                    if (window.enjoyScheduleAd) window.enjoyScheduleAd('login-ad', 'DAN-uEbYtdHZNXbnKtgT', 320, 50);
                 };
                 const showLoginForm = () => {
                     if (loginScreen)   { loginScreen.style.display = 'block'; }
