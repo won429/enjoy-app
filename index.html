@@ -11,7 +11,48 @@
 
     <link rel="stylesheet" href="attendance.css?v=20261005">
     <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
-    <link rel="stylesheet" href="store.css?v=20261006">
+    <!-- 스토어 스타일은 별도 파일 누락 시에도 적용되도록 본문에 포함한다. -->
+    <style id="enjoy-store-styles">
+        #store-screen { position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%,28rem); z-index: 20; background: #000; color: #f2f4f6; flex-direction: column; overflow: hidden; }
+        .store-header { flex: none; padding: max(1.25rem,env(safe-area-inset-top)) 1.25rem .875rem; }
+        .store-header h1 { margin: 0; font-size: 1.375rem; font-weight: 800; letter-spacing: -.04em; }
+        .store-header p { margin: .375rem 0 0; color: #8b95a1; font-size: .75rem; }
+        .store-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: .5rem 1.25rem 8rem; }
+        .store-balance { padding: 1.25rem 0 1.5rem; }
+        .store-balance > span { font-size: .8125rem; color: #8b95a1; }
+        .store-balance > strong { display: block; margin-top: .375rem; font-size: 1.875rem; line-height: 1.2; font-weight: 800; letter-spacing: -.035em; overflow-wrap: anywhere; }
+        .store-balance strong small { font-size: 1.125rem; color: #3182f6; }
+        .store-balance p { margin: .625rem 0 0; font-size: .6875rem; color: #8b95a1; line-height: 1.6; }
+        .store-products { display: grid; gap: .875rem; }
+        .store-product { padding: 1.25rem; border: 1px solid #ffffff12; border-radius: 1.25rem; background: #17191e; }
+        .store-product-icon { width: 2.5rem; height: 2.5rem; border-radius: .875rem; display: grid; place-items: center; color: #3182f6; background: #3182f618; font-size: 1.125rem; }
+        .store-product-icon.is-baemin { color: #2ac1bc; background: #2ac1bc18; }
+        .store-product h2 { margin: .875rem 0 .375rem; font-size: 1rem; line-height: 1.4; font-weight: 800; }
+        .store-product > p { margin: 0; font-size: .75rem; line-height: 1.7; color: #8b95a1; }
+        .store-product-price { display: block; margin-top: 1rem; color: #3182f6; font-size: 1.25rem; font-weight: 800; overflow-wrap: anywhere; }
+        .store-product > small { display: block; margin-top: .375rem; color: #8b95a1; font-size: .6875rem; line-height: 1.6; }
+        .store-product button { width: 100%; margin-top: 1rem; padding: .75rem; border: 0; border-radius: .75rem; background: #3182f6; color: #fff; font: inherit; font-size: .8125rem; font-weight: 700; cursor: pointer; }
+        .store-product button:disabled { opacity: .35; cursor: default; }
+        .store-product button:active:not(:disabled) { transform: scale(.99); }
+        .store-product button:focus-visible, .store-history summary:focus-visible { outline: 2px solid #3182f6; outline-offset: 4px; }
+        .store-history { margin-top: 1.5rem; border-top: 1px solid #ffffff12; }
+        .store-history summary { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; font-size: .8125rem; font-weight: 700; list-style: none; cursor: pointer; }
+        .store-history summary::-webkit-details-marker { display: none; }
+        .store-history summary i { color: #8b95a1; font-size: .6875rem; }
+        .store-history[open] summary i { transform: rotate(180deg); }
+        .store-order { padding: .875rem 0; border-top: 1px solid #ffffff0a; }
+        .store-order strong, .store-order span, .store-order small { display: block; }
+        .store-order strong { font-size: .8125rem; }
+        .store-order span { margin-top: .375rem; color: #8b95a1; font-size: .75rem; }
+        .store-order small { margin-top: .375rem; color: #3182f6; font-size: .6875rem; }
+        .store-empty { margin: 0; padding: .5rem 0 1rem; color: #8b95a1; font-size: .75rem; }
+        @media (prefers-color-scheme: light) {
+            #store-screen { background: #f2f2f7; color: #191f28; }
+            .store-product { background: #fff; border-color: #0000000c; }
+            .store-history { border-color: #00000012; }
+            .store-order { border-color: #0000000a; }
+        }
+    </style>
 
     <!-- Firebase(데이터 동기화) 도메인 미리 연결로 로딩 속도 개선 -->
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
