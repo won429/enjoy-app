@@ -4,7 +4,7 @@
     const memberNames = ['홍박사', '류짱', '오스틴', '전시기', '이진누', '성원제'];
     const products = {
         waiver: { title: '부과금 면제권', amount: 10000, cost: 1000000, icon: 'fa-ticket-simple' },
-        dues: { title: '모임비 차감권', icon: 'fa-coins' },
+        dues: { title: '모임비 차감권', minPoints: 10000, icon: 'fa-coins' },
         baemin: { title: '배달의 민족 5천원 상품권', amount: 5000, cost: 500000, icon: 'fa-motorcycle' }
     };
     const nameOf = value => value === '지노' ? '이진누' : String(value || '').trim();
@@ -65,7 +65,7 @@
         if (productId === 'dues') {
             if (!meeting || !calculate) error('모임통장 정보를 불러온 후 다시 시도해 주세요.');
             const quote = duesQuote(member, meeting, calculate, now);
-            if (points < RATE) error('모임비 차감에는 최소 100포인트가 필요합니다.');
+            if (points < product.minPoints) error('모임비 차감권은 10,000포인트 이상 보유 시 구매할 수 있습니다.');
             if (quote.remainingDues <= 0) error('이번 달 차감할 회비가 없습니다.');
             if (quote.amount !== expectedAmount) error('할인 가능 금액이 변경되었습니다. 화면을 확인한 후 다시 구매해 주세요.');
             ({ cost, amount, monthKey } = quote);
@@ -128,10 +128,10 @@
             const blocked = purchaseBlock(current, key, history);
             const checking = !!(allowed && (ordersLoading || ordersError || ordersUid !== user().uid));
             const confirming = !!(pendingAttempt && pendingAttempt.productId === key);
-            const disabled = busy || !allowed || (!confirming && (checking || !!blocked || (key === 'dues' ? quote.amount <= 0 : points < cost)));
+            const disabled = busy || !allowed || (!confirming && (checking || !!blocked || (key === 'dues' ? points < product.minPoints || quote.amount <= 0 : points < cost)));
             const waiverStart = root.enjoyMeetingBenefits && !root.enjoyMeetingBenefits.canUseExemption() ? ' 면제권 사용은 11월 1일부터 가능합니다.' : '';
             const description = key === 'waiver' ? '부과금 10,000원 면제권 1개를 모임통장에 지급해요.' + waiverStart : key === 'baemin' ? '관리자 확인 후 상품권을 지급해요. 구매 내역에서 지급 상태를 확인할 수 있어요.' :
-                `포인트 환산 ${format(quote.converted)}원 · 이번 달 남은 회비 ${format(quote.remainingDues)}원`;
+                `10,000포인트 이상 보유 시 구매할 수 있어요. 포인트 환산 ${format(quote.converted)}원 · 이번 달 남은 회비 ${format(quote.remainingDues)}원`;
             const price = key === 'dues' ? `모임비 ${format(quote.amount)}원 차감` : `${format(cost)} P`;
             const sub = key === 'dues' ? `${format(cost)} P 사용 · 남는 포인트 ${format(points - cost)} P` : `100 P = 1원 · ${format(product.amount)}원`;
             return `<article class="store-product"><div class="store-product-icon ${key === 'baemin' ? 'is-baemin' : ''}"><i class="fa-solid ${product.icon}" aria-hidden="true"></i></div><h2>${product.title}</h2><p>${description}</p><strong class="store-product-price">${price}</strong><small>${sub}</small><button type="button" onclick="window.buyEnjoyStoreProduct('${key}', ${key === 'dues' ? quote.amount : 'null'})" ${disabled ? 'disabled' : ''}>${busy ? '구매 처리 중…' : confirming ? '구매 저장 확인' : blocked ? key === 'baemin' ? '지급 완료 대기' : '이번 달 구매 완료' : checking ? '구매 내역 확인 중' : key === 'baemin' ? '구매 신청' : '구매'}</button><small>${blocked || (key === 'baemin' ? '관리자 지급 완료 전까지 추가 구매가 제한돼요.' : '상품별 월 1회 · 매월 1일 0시(KST)에 초기화돼요.')}</small></article>`;
