@@ -8195,8 +8195,8 @@
                         </div>
                     </section>
 
-                    <!-- 광고 (카카오 애드핏) — 로그인 화면 광고와 별개 -->
-                    <div id="home-ad" class="my-2 flex justify-center min-h-[50px]"></div>
+                    <!-- 광고 (카카오 애드핏) — 드롭 화면 320×200 -->
+                    <div id="drop-ad" class="my-2 flex justify-center" style="min-height:200px;"></div>
 
                     <!-- 멤버가 올린 드롭 사진 -->
                     <section id="drop-feed-section" class="drop-feed-section" aria-label="멤버 드롭">
@@ -8603,6 +8603,8 @@
                     <span>전편 몰아보기</span><i class="fa-solid fa-chevron-right text-[7px]"></i>
                 </button>
             </section>
+            <!-- 광고 (카카오 애드핏) — 전남광주 브이로그 위 -->
+            <div id="home-ad" class="my-2 flex justify-center min-h-[50px]"></div>
             <div id="home-vlog-catalog" class="home-catalog"></div>
         </section>
 
@@ -11365,6 +11367,8 @@
             if (homePanel) homePanel.classList.toggle('hidden', tab !== 'home');
             if (baseballPanel) baseballPanel.classList.toggle('hidden', tab !== 'baseball');
             if (vlogPanel) vlogPanel.classList.toggle('hidden', tab !== 'vlog');
+            if (tab === 'vlog' && window.enjoyScheduleAd) window.enjoyScheduleAd('home-ad', 'DAN-I5XORHdPd5Vfu6a2');
+            if (tab === 'home' && window.enjoyScheduleAd) window.enjoyScheduleAd('drop-ad', 'DAN-tNXHwtQXCpmmSlSu', 320, 200);
             if (shortsPanel) {
                 shortsPanel.classList.toggle('hidden', tab !== 'shorts');
                 shortsPanel.setAttribute('aria-hidden', tab === 'shorts' ? 'false' : 'true');
@@ -15444,6 +15448,7 @@
             const placements = {
                 'login-ad': { unit: 'DAN-uEbYtdHZNXbnKtgT', width: 320, height: 50 },
                 'home-ad': { unit: 'DAN-I5XORHdPd5Vfu6a2', width: 320, height: 50 },
+                'drop-ad': { unit: 'DAN-tNXHwtQXCpmmSlSu', width: 320, height: 200 },
                 'community-ad': { unit: 'DAN-Y60v78Z4ID5hsdjF', width: 320, height: 100 },
                 'meeting-ad': { unit: 'DAN-Jvtr8N7gGvSbJ9V1', width: 320, height: 50 }
             };
@@ -15541,7 +15546,7 @@
                     const holder = document.getElementById(holderId);
                     if (!holder || holder.querySelector('iframe')) return;
                     const loginScreen = document.getElementById('login-screen');
-                    if (holderId === 'home-ad' && loginScreen && getComputedStyle(loginScreen).display !== 'none') return;
+                    if ((holderId === 'home-ad' || holderId === 'drop-ad') && loginScreen && getComputedStyle(loginScreen).display !== 'none') return;
                     const rect = holder.getBoundingClientRect();
                     if (!holder.getClientRects().length || rect.width <= 0 || rect.height <= 0 || holder.dataset.adLoading === 'true') return;
                     const w = width || 320, h = height || 50, currentAttempt = Math.max(0, Number(attempt) || 0);
@@ -15596,6 +15601,7 @@
             const AD_PLACEMENTS = {
                 'login-ad': 'login',
                 'home-ad': 'home',
+                'drop-ad': 'home',
                 'community-ad': 'community',
                 'meeting-ad': 'meeting'
             };
@@ -15617,7 +15623,7 @@
             function focusedAdPlacement() {
                 const active = document.activeElement;
                 if (!active || String(active.tagName || '').toLowerCase() !== 'iframe') return '';
-                const holder = active.closest && active.closest('#home-ad, #community-ad, #meeting-ad, #login-ad');
+                const holder = active.closest && active.closest('#home-ad, #drop-ad, #community-ad, #meeting-ad, #login-ad');
                 if (!holder || !holder.id) return '';
                 return AD_PLACEMENTS[holder.id] || '';
             }
@@ -18048,6 +18054,7 @@
                 home.classList.remove('hidden');
                 initBannerScrollListener();
                 if (window.enjoyScheduleAd) window.enjoyScheduleAd('home-ad', 'DAN-I5XORHdPd5Vfu6a2');
+                if (window.enjoyScheduleAd) window.enjoyScheduleAd('drop-ad', 'DAN-tNXHwtQXCpmmSlSu', 320, 200);
             }
             else if(index===3) {
                 sched.classList.remove('hidden');
@@ -22191,6 +22198,7 @@
                     if (window.enjoyShowPendingNoticeFloat) window.enjoyShowPendingNoticeFloat();
                     if (window.activeTabIndex === 2 && window.enjoyScheduleAd) {
                         window.enjoyScheduleAd('home-ad', 'DAN-I5XORHdPd5Vfu6a2');
+                        window.enjoyScheduleAd('drop-ad', 'DAN-tNXHwtQXCpmmSlSu', 320, 200);
                     }
                 };
 
