@@ -14,6 +14,7 @@
 
     <link rel="stylesheet" href="attendance.css?v=20261005">
     <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
+    <link rel="stylesheet" href="uno.css?v=20261011">
     <!-- 스토어 스타일은 별도 파일 누락 시에도 적용되도록 본문에 포함한다. -->
     <style id="enjoy-store-styles">
         #store-screen { position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%,28rem); z-index: 20; background: #000; color: #f2f4f6; flex-direction: column; overflow: hidden; }
@@ -8198,6 +8199,7 @@
                         <div id="story-tray" class="flex overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch; gap:0.3125rem;">
                             <!-- 멤버 항목은 JS가 채웁니다 -->
                         </div>
+                        <div class="drop-game-entry"><button id="drop-game-button" type="button" onclick="window.openDropGame()"><i class="ph ph-game-controller" aria-hidden="true"></i> 게임 드롭</button></div>
                     </section>
 
                     <!-- 멤버가 올린 드롭 사진 -->
@@ -22089,6 +22091,28 @@
     <script src="attendance.js?v=20261006"></script>
     <script src="meeting-benefits.js?v=20261006-store"></script>
     <script src="store.js?v=20261007-min-points"></script>
+    <section id="uno-screen" hidden role="dialog" aria-modal="true" aria-labelledby="uno-heading" tabindex="-1">
+        <header class="uno-header">
+            <button type="button" class="uno-back" data-uno-action="close" aria-label="드롭으로 돌아가기">‹</button>
+            <div><span>게임 드롭</span><h1 id="uno-heading">우노</h1></div>
+            <span id="uno-connection" role="status">연결 중</span>
+        </header>
+        <div class="uno-scroll">
+            <div id="uno-content"></div>
+            <p id="uno-status" role="status" aria-live="polite"></p>
+            <details class="uno-rules"><summary>우노 플레이 방법</summary>
+                <p>2~10명이 7장씩 받고, 같은 색·숫자·기호 또는 와일드 카드를 냅니다. 먼저 손의 카드를 모두 내면 이번 판 승리!</p>
+                <p>낼 카드가 없거나 내고 싶지 않으면 1장을 뽑습니다. 뽑은 카드만 바로 낼 수 있고, 차례를 넘길 수도 있어요.</p>
+                <p>⊘는 다음 차례 건너뛰기, ⇄는 방향 바꾸기, +2는 다음 사람이 2장 뽑고 쉬기입니다. 2명일 때 ⇄도 상대 차례를 건너뜁니다. +2·+4를 겹쳐 쌓지는 않아요.</p>
+                <p>와일드는 다음 색을 정해요. +4는 현재 색의 카드가 없을 때만 내는 것이 원칙입니다. 상대는 4장을 받거나 도전할 수 있어요. 같은 색을 가지고 있었다면 낸 사람이 4장, 정당했다면 도전한 사람이 6장을 받습니다.</p>
+                <p>두 장에서 한 장으로 줄어들 때 ‘UNO 함께 외치기’를 켜주세요. 잊었다면 다음 사람이 카드를 내거나 뽑기 전에 우노를 외치세요. 친구에게 지적당하면 2장을 받습니다.</p>
+                <p>뒤로 가도 방에는 남아 있어요. 진행 중 ‘방 나가기’를 누르면 이번 판이 종료되고 남은 친구들은 다시 시작할 수 있습니다.</p>
+                <a href="https://service.mattel.com/instruction_sheets/53641.pdf" target="_blank" rel="noopener noreferrer">Mattel 공식 규칙 보기</a>
+            </details>
+        </div>
+    </section>
+    <script src="uno-engine.js?v=20261011"></script>
+    <script src="uno.js?v=20261011"></script>
 
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
