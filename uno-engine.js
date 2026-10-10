@@ -186,7 +186,26 @@
             status: players.length ? 'waiting' : 'closed', updatedAt: now, revision: input.revision + 1,
             notice: input.status === 'playing' ? '멤버가 나가서 이번 판이 종료되었어요. 다시 시작할 수 있어요.' : '' };
     }
-    const api = { COLORS, deck, shuffle, nextUid, canPlay, start, move, createRoom, joinRoom, leaveRoom };
+    // Bots inspect their own hand and public information only.
+    function botAction(state, uid) {
+        if (state.winnerUid || state.turnUid !== uid) return null;
+        const hand = state.hands[uid] || [];
+        const counts = Object.fromEntries(COLORS.map(color => [color, hand.filter(card => card.color === color).length]));
+        const color = COLORS.reduce((best, candidate) => counts[candidate] > counts[best] ? candidate : best, COLORS[0]);
+        if (state.openingColorUid) return { type: 'color', color };
+        if (state.challenge) return { type: 'accept4' };
+        if (state.unoPendingUid === uid) return { type: 'uno' };
+        if (state.unoPendingUid) return { type: 'catch' };
+        const nextCount = state.hands[nextUid(state, uid)]?.length || 0;
+        const priority = card => (card.color === 'wild' ? -20 : counts[card.color] * 3) +
+            (['skip', 'reverse', 'draw2'].includes(card.value) ? (nextCount <= 2 ? 15 : 2) : Number(card.value) || 0);
+        const playable = hand.filter(card => canPlay(state, uid, card) &&
+            (card.value !== 'wild4' || !hand.some(item => item.color === state.color)));
+        playable.sort((left, right) => priority(right) - priority(left));
+        if (playable.length) return { type: 'play', cardId: playable[0].id, color, uno: true };
+        return { type: state.drawnCardId ? 'pass' : 'draw' };
+    }
+    const api = { COLORS, deck, shuffle, nextUid, canPlay, start, move, botAction, createRoom, joinRoom, leaveRoom };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.EnjoyUno = api;
 })(typeof window === 'undefined' ? globalThis : window);
