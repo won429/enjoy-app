@@ -5,13 +5,13 @@
   <meta name="theme-color" content="#071217"><meta name="referrer" content="no-referrer">
   <title>드롭 전쟁</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-  <link rel="stylesheet" href="war.css?v=20261011-1">
+  <link rel="stylesheet" href="war.css?v=20261012-3">
 </head>
 <body>
   <header class="topbar"><button id="back" class="icon-button" aria-label="드롭으로 돌아가기">‹</button><div class="brand"><span class="brand-mark">✣</span><strong>드롭 전쟁</strong><span class="brand-tag">KOREA CAMPAIGN</span></div><span id="connection" role="status">작전 대기</span><button id="help" class="icon-button" aria-label="플레이 방법">?</button></header>
   <main class="command-center">
     <section class="map-panel" aria-label="대한민국 작전 지도">
-      <div class="map-heading"><div><span class="eyebrow">대한민국 · TERRITORY MAP</span><h1 id="map-title">여섯 멤버, 하나의 전장.</h1><p id="map-subtitle">내 지역에서 시작해, 한 지역씩 진격하세요.</p></div><span class="live-badge"><i></i><span id="clock">전쟁 준비</span></span></div>
+      <div class="map-heading"><div><span class="eyebrow">대한민국 · TERRITORY MAP</span><h1 id="map-title">여섯 멤버, 하나의 전장.</h1><p id="map-subtitle">내 지역에서 시작해, 한 지역씩 진격하세요.</p></div><span class="live-badge"><i></i><span id="clock">상시 공동 전장</span></span></div>
       <div id="map-wrap"><svg id="korea-map" viewBox="0 0 740 880" role="group" aria-label="지역을 선택하는 대한민국 지도"><defs><pattern id="grid" width="35" height="35" patternUnits="userSpaceOnUse"><path d="M35 0H0V35" fill="none" stroke="#244047" stroke-width=".4"/></pattern><filter id="glow"><feGaussianBlur stdDeviation="3"/></filter></defs><rect width="740" height="880" fill="url(#grid)"/><g id="map-camera"><g id="map-regions"></g><g id="map-routes"></g><g id="map-labels"></g></g></svg><div id="map-loading" role="status">대한민국 지도를 불러오는 중…</div><div class="map-water west">서해</div><div class="map-water east">동해</div><div class="map-water south">남해</div><span class="north">N ↑</span><div class="map-controls"><button data-map="out" aria-label="지도 축소">−</button><button data-map="reset" aria-label="지도 원래 크기">⌖</button><button data-map="in" aria-label="지도 확대">+</button></div></div>
       <div class="map-legend"><span><i style="background:#30454b"></i>중립 지역</span><span><i style="background:var(--player-color,#34d399)"></i>내 영토</span><span><i class="frontier-key"></i>침략 가능</span><span><i class="battle-key"></i>교전 중</span></div>
       <footer class="map-source">경계 2026.07 · 인구 2026.09 <button id="sources">자료 출처</button></footer>
@@ -19,26 +19,27 @@
     <aside class="sidebar">
       <section id="lobby" class="lobby">
         <div class="intro"><span class="eyebrow">DROP WAR / 01</span><h2>당신의 지역에서<br>전쟁을 시작하세요.</h2><p>사이에 있는 땅을 점령해야<br>친구의 지역까지 갈 수 있습니다.</p></div>
-        <div class="mode-tabs"><button id="mode-solo" class="active">혼자 연습</button><button id="mode-friends">친구와 전쟁</button></div>
-        <div id="solo-options"><label class="field-label">시작할 멤버를 선택하세요</label><div id="faction-picker" class="faction-picker"></div><button id="solo-start" class="primary full">작전 시작 <span>→</span></button><p class="quiet">나머지 다섯 멤버는 AI가 플레이합니다.</p></div>
-        <div id="friends-options" hidden><p id="auth-note" class="quiet">기존 엔조이 멤버 계정으로 참가합니다.</p><button id="create-room" class="primary full">전쟁방 만들기 +</button><form id="join-form" class="join-form"><label class="sr-only" for="room-code">방 코드</label><input id="room-code" placeholder="방 코드 6자리" maxlength="6" pattern="[A-Za-z2-9]{6}" required autocomplete="off"><button type="submit" class="secondary">참가</button></form><div class="list-heading"><strong>친구들의 전쟁방</strong><button id="refresh-rooms" class="text-button">새로고침</button></div><div id="room-list" class="room-list"><p class="quiet">멤버 로그인을 확인하고 있습니다.</p></div><button id="resume-room" class="secondary full" hidden>이전 전쟁방 다시 연결</button></div>
+        <div class="mode-tabs"><button id="mode-friends" class="active">친구와 전쟁</button><button id="mode-solo">혼자 연습</button></div>
+        <div class="account-panel"><label class="field-label">내 엔조이 멤버</label><p id="member-note" class="quiet" role="status" aria-live="polite">엔조이 멤버 계정을 확인하고 있습니다.</p><button id="retry-member" class="text-button" hidden>다시 확인</button><div id="faction-picker" class="faction-picker"></div></div>
+        <div id="friends-options"><div class="world-intro"><span class="eyebrow">ALWAYS OPEN</span><strong>여섯 멤버의 공동 전장</strong><p>방 코드 없이 같은 지도에서 계속 이어집니다.<br>접속을 끊어도 영토와 침략은 유지됩니다.</p><div class="world-facts"><span>1시간 단위 전투</span><span>종료 기한 없음</span></div></div><button id="enter-world" class="primary full" disabled>공동 전장 접속 →</button><p class="quiet">엔조이 로그인 후 자동 접속합니다. 미접속 멤버도 본인의 지역을 유지합니다.</p></div>
+        <div id="solo-options" hidden><button id="solo-start" class="primary full" disabled>빠른 연습 시작 →</button><p class="quiet">AI 다섯 명과 5초 단위로 연습합니다.<br>공동 전장의 영토나 자원에 영향을 주지 않습니다.</p></div>
       </section>
-      <section id="waiting" hidden><span class="eyebrow">CAMPAIGN LOBBY</span><h2>멤버들이 모이는 중</h2><div class="room-share"><span>방 코드</span><strong id="waiting-code"></strong><button id="copy-code" class="text-button">복사</button></div><div id="waiting-players"></div><p class="quiet">빈 자리는 AI가 맡습니다. 각 멤버는 본인 지역으로 자동 배정됩니다.</p><button id="start-room" class="primary full">전쟁 시작 →</button><button id="leave-waiting" class="secondary full">방 나가기</button></section>
       <section id="battle" hidden>
         <div class="player-heading"><div><span class="eyebrow">MY COMMAND</span><h2 id="player-name"></h2><p id="player-home"></p></div><span id="player-avatar"></span></div>
+        <div id="campaign-meta" class="campaign-meta"><strong id="campaign-age"></strong><p id="world-sync" role="status"></p></div>
         <div class="stats"><div><span>보유 영토</span><strong id="territory-count">1<small>개</small></strong></div><div><span>작전 포인트</span><strong id="credits">80<small>CP</small></strong></div></div>
         <div class="supply-row"><span>보급</span><div class="meter"><i id="supply-meter"></i></div><strong id="supply-number">100%</strong><button id="resupply" class="text-button">보강 · 35 CP</button></div>
         <div id="target-card" class="target-card"></div>
         <div class="upgrades"><div class="list-heading"><strong>작전 강화</strong><span>최대 5단계</span></div><div id="upgrade-list"></div></div>
         <div class="rank-section"><div class="list-heading"><strong>전장 현황</strong><span id="death-total"></span></div><div id="ranking"></div></div>
-        <div class="list-heading"><strong>작전 기록</strong><button id="pause-solo" class="text-button" hidden>일시정지</button></div><ol id="event-log" class="event-log"></ol>
-        <button id="leave-match" class="secondary full">전쟁방 나가기</button>
+        <div class="list-heading"><strong>작전 기록</strong><button id="history" class="text-button">전체 기록</button><button id="pause-solo" class="text-button" hidden>일시정지</button></div><ol id="event-log" class="event-log"></ol>
+        <button id="leave-match" class="secondary full">전장 화면 닫기 · 영토 유지</button>
       </section>
       <p id="status" class="status" role="status" aria-live="polite"></p>
     </aside>
   </main>
   <dialog id="info-dialog"><button id="close-info" class="icon-button dialog-close" aria-label="닫기">×</button><div id="info-content"></div></dialog>
-  <script src="war-regions.js?v=20261011-1"></script><script src="war-engine.js?v=20261011-1"></script>
+  <script src="war-regions.js?v=20261012-3"></script><script src="war-engine.js?v=20261012-3"></script>
   <script>window.ENJOY_WAR_SERVER='https://enjoy-war.sungwon4867.workers.dev';</script>
-  <script src="war.js?v=20261011-1"></script><script type="module" src="war-page.js?v=20261011-1"></script>
+  <script src="war.js?v=20261012-3"></script><script type="module" src="war-page.js?v=20261012-3"></script>
 </body></html>
