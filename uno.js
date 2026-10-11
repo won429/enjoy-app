@@ -39,6 +39,98 @@
     const allowed = () => !motionBusy && (mode === 'solo' ? !busy : ready() && online() && !busy && (!room || synchronized()));
     const name = value => room?.players.find(player => player.uid === value)?.name || '친구';
     const button = (action, text, disabled = false, secondary = false) => '<button type="button" class="uno-btn' + (secondary ? ' uno-btn-secondary' : '') + '" data-uno-action="' + action + '"' + (disabled ? ' disabled' : '') + '>' + text + '</button>';
+    // Original paper/card sounds are synthesized locally; gameplay never waits for audio.
+    const sound = (() => {
+        let context = null, master = null, noise = null, muted = false;
+        const voices = new Set(), control = document.getElementById('uno-sound');
+        try { muted = window.localStorage.getItem('enjoy_uno_sound_muted_v1') === '1'; } catch (_) {}
+        function updateControl() {
+            if (!control) return;
+            control.innerHTML = icon(muted ? 'speaker-slash' : 'speaker-high');
+            control.setAttribute('aria-label', muted ? '효과음 켜기' : '효과음 끄기');
+            control.setAttribute('aria-pressed', String(!muted));
+            control.setAttribute('title', muted ? '효과음 켜기' : '효과음 끄기');
+        }
+        function stop() {
+            for (const voice of [...voices]) { try { voice.source.stop(); } catch (_) {} voice.dispose(); }
+        }
+        function unlock() {
+            if (muted || document.hidden || !open()) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                if (!context || context.state === 'closed') {
+                    context = new AudioContext();
+                    master = context.createGain(); master.gain.value = .55; master.connect(context.destination);
+                    noise = context.createBuffer(1, Math.ceil(context.sampleRate * .4), context.sampleRate);
+                    const samples = noise.getChannelData(0);
+                    for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+                }
+                if (context.state !== 'running') context.resume()?.catch(() => {});
+            } catch (_) {} // Unsupported or blocked audio must not interrupt a turn.
+        }
+        function voice(source, filter, start, duration, volume) {
+            const gain = context.createGain();
+            gain.gain.setValueAtTime(.0001, start);
+            gain.gain.exponentialRampToValueAtTime(volume, start + .008);
+            gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+            source.connect(filter); filter.connect(gain); gain.connect(master);
+            const item = { source, dispose() { voices.delete(item); source.disconnect(); filter.disconnect(); gain.disconnect(); } };
+            voices.add(item); source.onended = item.dispose;
+            source.start(start); source.stop(start + duration + .02);
+        }
+        function rustle(start, duration, volume, frequency) {
+            const source = context.createBufferSource(), filter = context.createBiquadFilter();
+            source.buffer = noise;
+            filter.type = 'bandpass'; filter.Q.value = .65;
+            filter.frequency.setValueAtTime(frequency, start);
+            filter.frequency.exponentialRampToValueAtTime(frequency * .45, start + duration);
+            voice(source, filter, start, duration, volume);
+        }
+        function note(start, frequency, duration, volume = .12) {
+            const source = context.createOscillator(), filter = context.createBiquadFilter();
+            source.type = 'sine'; source.frequency.setValueAtTime(frequency, start);
+            filter.type = 'lowpass'; filter.frequency.value = 2600;
+            voice(source, filter, start, duration, volume);
+        }
+        function play(kind) {
+            if (muted || document.hidden || !open() || context?.state !== 'running' || voices.size > 40) return;
+            try {
+                const now = context.currentTime + .005;
+                if (kind === 'shuffle') {
+                    for (let i = 0; i < 9; i++) rustle(now + i * .08, .07, .13, 1600 + i % 3 * 500);
+                } else if (kind === 'deal' || kind === 'draw') {
+                    rustle(now, kind === 'draw' ? .2 : .12, kind === 'draw' ? .2 : .14, 2900);
+                } else if (kind === 'play') {
+                    rustle(now, .2, .22, 3400);
+                    rustle(now + .57, .075, .3, 750);
+                    note(now + .57, 145, .09, .2);
+                } else if (kind === 'special') {
+                    [520, 660].forEach((frequency, i) => note(now + i * .075, frequency, .13, .09));
+                } else if (kind === 'uno') {
+                    [660, 880, 1100].forEach((frequency, i) => note(now + i * .075, frequency, .16));
+                } else if (kind === 'turn') {
+                    [660, 880].forEach((frequency, i) => note(now + i * .09, frequency, .18, .09));
+                } else if (kind === 'win' || kind === 'finish') {
+                    (kind === 'win' ? [523, 659, 784, 1047] : [523, 659, 784]).forEach((frequency, i) => note(now + i * .12, frequency, .3, .13));
+                }
+            } catch (_) {}
+        }
+        function toggle() {
+            muted = !muted;
+            try { window.localStorage.setItem('enjoy_uno_sound_muted_v1', muted ? '1' : '0'); } catch (_) {}
+            updateControl();
+            if (muted) stop(); else { unlock(); play('turn'); }
+        }
+        updateControl();
+        return { unlock, play, stop, toggle };
+    })();
+    function soundFeedback(next, before) {
+        if (next.winnerUid && !before?.winnerUid) { sound.play(next.winnerUid === uid() ? 'win' : 'finish'); return; }
+        if (next.message?.type === 'uno' || next.message?.uno) sound.play('uno');
+        else if ((next.message?.type === 'play' && names[next.message.value]) || next.message?.type === 'color') sound.play('special');
+        else if (next.turnUid === uid() && before?.turnUid !== uid() && state === next) sound.play('turn');
+    }
     function random() {
         if (!window.crypto?.getRandomValues) return Math.random();
         return window.crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
@@ -285,7 +377,8 @@
         );
         return artwork;
     }
-    function cancelMotion() {
+    function cancelMotion(silence = true) {
+        if (silence) sound.stop();
         motionToken++;
         motionQueue.length = 0;
         motionTimers.forEach((resolve, id) => { window.clearTimeout(id); resolve(false); }); motionTimers.clear();
@@ -387,6 +480,7 @@
         dealing = { counts: {}, received: new Set(), label: '카드를 섞고 있어요…' }; syncDealView();
         const origin = rect(content.querySelector('[data-uno-action="draw"]'));
         if (!origin) return;
+        sound.play('shuffle');
         const stack = Array.from({ length: 3 }, () => motionCard(backHtml(), origin, origin));
         await Promise.all(stack.map((node, index) => animateNode(node, [
             { transform: 'translate(' + (index - 1) * 3 + 'px,0) rotate(0deg)' },
@@ -403,6 +497,7 @@
             for (const player of plan.state.players) {
                 if (token !== motionToken) return;
                 const card = plan.state.hands[player][index];
+                sound.play('deal');
                 flights.push(fly(backHtml(), origin, recipientRect(player, card.id), token, { deal: true }).then(() => receiveCard(player, card, token)));
                 if (!await pauseMotion(gap, token)) return;
             }
@@ -411,9 +506,11 @@
         if (token !== motionToken) return;
         // Opening +2 follows the regular seven cards, using the real game state.
         for (const player of plan.state.players) for (const card of plan.state.hands[player].slice(7)) {
+            sound.play('draw');
             await fly(backHtml(), origin, recipientRect(player, card.id), token, { deal: true }); await receiveCard(player, card, token);
         }
         dealing.label = '첫 카드를 공개해요'; syncDealView();
+        sound.play('play');
         await fly(cardHtml(plan.state.discard[0]), origin, rect(content.querySelector('.uno-discard .uno-card')), token);
         if (token !== motionToken) return;
         dealing = null; screen.classList.remove('uno-is-dealing');
@@ -427,6 +524,7 @@
                 { duration: 420, easing: 'cubic-bezier(.22,.7,.22,1)' }, token));
         });
         if (plan.card) {
+            sound.play('play');
             screen.classList.add('uno-is-playing');
             const target = rect(content.querySelector('.uno-discard .uno-card'));
             const previous = target && motionCard(cardHtml(plan.oldTop), target, target);
@@ -441,6 +539,7 @@
         const flights = [], origin = rect(content.querySelector('[data-uno-action="draw"]'));
         for (const item of plan.draws) {
             if (token !== motionToken) return;
+            sound.play('draw');
             flights.push(fly(backHtml(), origin, recipientRect(item.player, item.card.id), token, { deal: true }).then(() => receiveCard(item.player, item.card, token)));
             if (!await pauseMotion(75, token)) return;
         }
@@ -452,7 +551,16 @@
         if (presentation?.key === key && presentation.state.revision === state.revision) return;
         const before = presentation, currentGeometry = geometry();
         presentation = { key, state, geometry: currentGeometry };
-        if (!motionEnabled()) return;
+        if (!motionEnabled()) {
+            if (!before || before.key !== key) {
+                if (!state.message && !state.winnerUid) { sound.play('shuffle'); sound.play('deal'); soundFeedback(state); }
+            } else {
+                if (state.discard.at(-1).id !== before.state.discard.at(-1).id) sound.play('play');
+                if (state.players.some(player => state.hands[player].length > before.state.hands[player].length)) sound.play('draw');
+                soundFeedback(state, before.state);
+            }
+            return;
+        }
         if (!before || before.key !== key) {
             if (!state.message && !state.winnerUid) motionQueue.push({ type: 'deal', state });
         } else {
@@ -460,8 +568,9 @@
             const actor = top.id !== oldTop.id ? (state.message?.type === 'play' ? state.message.uid : before.state.players.find(player => before.state.hands[player].some(card => card.id === top.id))) : null;
             const draws = state.players.flatMap(player => state.hands[player].filter(card => !before.state.hands[player]?.some(old => old.id === card.id)).map(card => ({ player, card })));
             draws.forEach(item => pendingReceipts.add(item.card.id));
-            if (actor || draws.length) motionQueue.push({ type: 'turn', card: actor ? top : null, oldTop, actor, draws, handRects: currentGeometry.cards.size ? currentGeometry.cards : before.geometry.cards,
+            if (actor || draws.length) motionQueue.push({ type: 'turn', state, before: before.state, card: actor ? top : null, oldTop, actor, draws, handRects: currentGeometry.cards.size ? currentGeometry.cards : before.geometry.cards,
                 origin: currentGeometry.cards.get(top.id) || before.geometry.cards.get(top.id) || currentGeometry.fans.get(actor) || before.geometry.fans.get(actor) || currentGeometry.players.get(actor) || before.geometry.players.get(actor) });
+            else soundFeedback(state, before.state);
         }
         if (motionQueue.length) {
             motionBusy = true;
@@ -483,11 +592,12 @@
                 const plan = motionQueue.shift();
                 if (plan.type === 'deal') await animateDeal(plan, token);
                 else await animateTurn(plan, token);
+                if (token === motionToken && open()) soundFeedback(plan.state, plan.before);
             }
         } catch (error) {
             window.console?.warn('우노 카드 연출을 건너뜁니다.', error);
         } finally {
-            if (token === motionToken) { cancelMotion(); render(); }
+            if (token === motionToken) { cancelMotion(false); render(); }
         }
     }
     function render() {
@@ -592,6 +702,8 @@
         const target = event.target.closest('[data-uno-action]');
         if (!target || target.disabled) return;
         const action = target.dataset.unoAction;
+        if (action === 'sound') { sound.toggle(); return; }
+        sound.unlock();
         if (action === 'close') return mode === 'solo' && code ? returnToSoloSetup() : close();
         if (!code && !busy && (action === 'mode-friends' || action === 'mode-solo')) {
             mode = action === 'mode-solo' ? 'solo' : 'friends'; status.textContent = '';
@@ -627,6 +739,7 @@
     });
     screen.addEventListener('submit', event => {
         if (event.target.id !== 'uno-join-form') return;
+        sound.unlock();
         event.preventDefault(); join(document.getElementById('uno-join-code').value);
     });
     screen.addEventListener('keydown', event => {
