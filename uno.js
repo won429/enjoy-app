@@ -12,7 +12,9 @@
     const cardValue = card => card.value === 'skip' ? icon('prohibit') : card.value === 'reverse' ? icon('arrows-clockwise') : card.value === 'wild' ? icon('palette') : esc(labels[card.value] || card.value);
     const names = { skip: '건너뛰기', reverse: '방향 바꾸기', draw2: '두 장 뽑기', wild: '색 바꾸기', wild4: '와일드 네 장 뽑기' };
     let code = '', room = null, state = null, busy = false, liveRoom = false, liveGame = false;
-    let roomUnsub = null, gameUnsub = null, selectedCard = null, armed = false, lastUid = '', epoch = 0;
+    let socket = null, reconnectTimer = null, connectCancel = null, reconnectAttempts = 0;
+    const requests = new Map();
+    let selectedCard = null, armed = false, lastUid = '', epoch = 0;
     let savedOverflow = '', previousFocus = null;
     let historyToken = '';
     let mode = 'friends', soloCount = 4, botTimer = null;
@@ -28,14 +30,13 @@
     const user = () => window.enjoyUser;
     const accountUid = () => user()?.uid || '';
     const uid = () => mode === 'solo' ? soloUid : accountUid();
-    const storageKey = () => 'enjoy_uno_room_v1_' + uid();
+    const storageKey = () => 'enjoy_uno_cloudflare_room_v1_' + uid();
     const open = () => !screen.hidden;
-    const ready = () => !!(accountUid() && window.meetingAuthed && window.meetingDb && window.fsDoc && window.runTransaction && window.fsOnSnapshot && window.getDoc);
+    const ready = () => !!(accountUid() && window.getEnjoyIdToken);
+    const server = () => window.ENJOY_UNO_SERVER || 'https://enjoy-uno.sungwon4867.workers.dev';
     const online = () => window.navigator.onLine !== false;
     const synchronized = () => mode === 'solo' || liveRoom && (room?.status !== 'playing' && room?.status !== 'finished' || liveGame && state?.revision === room?.revision);
     const allowed = () => !motionBusy && (mode === 'solo' ? !busy : ready() && online() && !busy && (!room || synchronized()));
-    const roomRef = value => window.fsDoc('uno_rooms', value);
-    const gameRef = value => window.fsDoc('uno_rooms', value, 'private', 'game');
     const name = value => room?.players.find(player => player.uid === value)?.name || '친구';
     const button = (action, text, disabled = false, secondary = false) => '<button type="button" class="uno-btn' + (secondary ? ' uno-btn-secondary' : '') + '" data-uno-action="' + action + '"' + (disabled ? ' disabled' : '') + '>' + text + '</button>';
     function random() {
@@ -55,9 +56,10 @@
     function stop() {
         cancelMotion();
         window.clearTimeout(botTimer); botTimer = null;
-        if (roomUnsub) roomUnsub();
-        if (gameUnsub) gameUnsub();
-        roomUnsub = gameUnsub = null;
+        window.clearTimeout(reconnectTimer); reconnectTimer = null;
+        const old = socket; socket = null; old?.close();
+        const cancel = connectCancel; connectCancel = null; cancel?.(new Error('게임 연결이 중단되었어요.'));
+        requests.forEach(pending => { window.clearTimeout(pending.timer); pending.reject(new Error('연결이 끊겼어요. 최신 상태를 확인하고 다시 눌러주세요.')); }); requests.clear();
         liveRoom = liveGame = false;
     }
     function clearRoom() { stop(); presentation = null; persist(''); code = ''; room = state = selectedCard = null; armed = false; }
@@ -89,57 +91,89 @@
         }, state.unoPendingUid ? 1500 : 850);
     }
     function errorText(error) {
-        if (error?.code === 'permission-denied') return '게임의 Firebase 접근 권한이 없어요. uno_rooms 규칙 설정을 확인해주세요.';
+
         if (['unavailable', 'deadline-exceeded'].includes(error?.code) || !online()) return '인터넷 연결을 확인해주세요. 연결이 복구되면 방에 다시 들어올 수 있어요.';
         return error?.message || '게임 연결에 실패했어요. 잠시 후 다시 시도해주세요.';
     }
-    function watch(value) {
-        stop();
-        code = value;
-        room = state = selectedCard = null;
-        armed = false;
+    function watch(value, creating = false) {
+        stop(); code = value; selectedCard = null; armed = false;
         const currentEpoch = epoch, currentUid = uid();
-        roomUnsub = window.fsOnSnapshot(roomRef(code), { includeMetadataChanges: true }, snapshot => {
-            if (currentEpoch !== epoch || uid() !== currentUid) return;
-            if (!snapshot.exists()) {
-                // A cache miss is not evidence that the room has been deleted.
-                if (snapshot.metadata.fromCache) return;
-                clearRoom(); status.textContent = '이 방은 더 이상 존재하지 않아요.'; render(); return;
-            }
-            const next = snapshot.data();
-            if (!next.playerIds.includes(currentUid) || next.status === 'closed') {
-                clearRoom(); status.textContent = '방에서 나왔어요. 새 방을 만들거나 친구의 방에 참가해주세요.'; render(); return;
-            }
-            room = next;
-            liveRoom = !snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites;
-            if (['playing', 'finished'].includes(room.status) && !gameUnsub) {
-                gameUnsub = window.fsOnSnapshot(gameRef(code), { includeMetadataChanges: true }, gameSnapshot => {
-                    if (currentEpoch !== epoch || uid() !== currentUid) return;
-                    state = gameSnapshot.exists() ? gameSnapshot.data() : null;
-                    liveGame = !gameSnapshot.metadata.fromCache && !gameSnapshot.metadata.hasPendingWrites;
-                    if (selectedCard && (!state?.hands[currentUid]?.some(card => card.id === selectedCard.id) || state.turnUid !== currentUid || state.challenge)) selectedCard = null;
-                    render();
-                }, error => { liveGame = false; status.textContent = errorText(error); render(); });
-            } else if (!['playing', 'finished'].includes(room.status)) {
-                if (gameUnsub) gameUnsub();
-                gameUnsub = null; state = selectedCard = null; liveGame = false;
-            }
+        return new Promise((resolve, reject) => {
+            let settled = false, fatal = false;
+            const finish = error => {
+                if (settled) return; settled = true;
+                if (connectCancel === finish) connectCancel = null;
+                window.clearTimeout(timeout);
+                error ? reject(error) : resolve();
+            };
+            const timeout = window.setTimeout(() => { fatal = true; finish(new Error('게임 서버에 연결하지 못했어요. 잠시 후 다시 연결해주세요.')); ws?.close(); }, 15000);
+            connectCancel = finish;
+            let ws;
+            (async () => {
+                try {
+                    const token = await window.getEnjoyIdToken();
+                    if (!token) throw new Error('멤버 계정으로 로그인해주세요.');
+                    if (settled || currentEpoch !== epoch || currentUid !== uid()) return;
+                    const url = new URL('/rooms/' + value, server());
+                    url.protocol = url.protocol === 'http:' ? 'ws:' : 'wss:';
+                    ws = new window.WebSocket(url.href); socket = ws;
+                    const active = () => socket === ws && epoch === currentEpoch && currentUid === uid() && mode === 'friends';
+                    ws.onopen = () => { if (active()) ws.send(JSON.stringify({ type: 'hello', token, create: creating })); };
+                    ws.onmessage = event => {
+                        if (!active()) return;
+                        let packet; try { packet = JSON.parse(event.data); } catch (_) { return; }
+                        if (packet.type === 'snapshot') {
+                            room = packet.room; state = packet.state; liveRoom = true; liveGame = !!state;
+                            reconnectAttempts = 0; persist(value);
+                            if (selectedCard && (!state?.hands[currentUid]?.some(card => card.id === selectedCard.id) || state.turnUid !== currentUid || state.challenge)) selectedCard = null;
+                            finish(); render();
+                        } else if (packet.type === 'ack') {
+                            const pending = requests.get(packet.id);
+                            if (pending) { window.clearTimeout(pending.timer); requests.delete(packet.id); pending.resolve(); }
+                        } else if (packet.type === 'removed') {
+                            finish(); clearRoom(); status.textContent = packet.message || '방에서 나왔어요.'; render();
+                        } else if (packet.type === 'error') {
+                            const error = Object.assign(new Error(packet.message), { code: packet.code });
+                            if (!settled) { fatal = true; finish(error); }
+                            const pending = requests.get(packet.id);
+                            if (pending) { window.clearTimeout(pending.timer); requests.delete(packet.id); pending.reject(error); }
+                            status.textContent = errorText(error); render();
+                        }
+                    };
+                    ws.onclose = () => {
+                        if (!active()) return;
+                        socket = null; liveRoom = liveGame = false;
+                        requests.forEach(pending => { window.clearTimeout(pending.timer); pending.reject(new Error('연결이 끊겼어요. 최신 상태를 확인하고 다시 눌러주세요.')); }); requests.clear();
+                        finish(new Error('게임 연결이 끊겼어요.'));
+                        if (!fatal && open() && online() && code) {
+                            status.textContent = '연결을 복구하고 있어요…';
+                            reconnectTimer = window.setTimeout(() => { reconnectTimer = null; reconnect(); }, Math.min(15000, 800 * 2 ** Math.min(reconnectAttempts++, 5)));
+                        }
+                        render();
+                    };
+                    ws.onerror = () => {}; // onclose handles retry without sending a move twice.
+                } catch (error) { fatal = true; finish(error); render(); }
+            })();
             render();
-        }, error => { liveRoom = false; status.textContent = errorText(error); render(); });
-        render();
+        });
     }
-    async function profile() {
-        if (!ready()) throw new Error('Firebase에 연결된 멤버 계정으로 로그인해주세요.');
-        const current = user();
-        const snapshot = await window.getDoc(window.fsDoc('members', current.uid));
-        const member = snapshot.exists() ? snapshot.data() : null;
-        if (!member?.name) throw new Error('멤버 프로필 등록 후 게임에 참가해주세요.');
-        if (uid() !== current.uid) throw new Error('계정이 변경되었어요. 다시 들어와주세요.');
-        return { uid: current.uid, name: String(member.name) };
+    function reconnect() {
+        if (!ready() || !code || mode !== 'friends') return;
+        watch(code).catch(error => { status.textContent = errorText(error); render(); });
+    }
+    function sendAction(action) {
+        if (!socket || socket.readyState !== 1) return Promise.reject(new Error('게임 서버에 다시 연결해주세요.'));
+        const id = window.crypto?.randomUUID?.() || 'move-' + Date.now() + '-' + Math.floor(random() * 1e9);
+        return new Promise((resolve, reject) => {
+            const timer = window.setTimeout(() => { requests.delete(id); reject(new Error('응답을 확인하지 못했어요. 최신 게임 상태를 확인해주세요.')); reconnect(); }, 12000);
+            requests.set(id, { resolve, reject, timer });
+            try { socket.send(JSON.stringify({ type: 'action', id, revision: room.revision, action })); }
+            catch (error) { window.clearTimeout(timer); requests.delete(id); reject(error); }
+        });
     }
     async function execute(operation) {
         if (busy) return;
-        if (!ready()) { status.textContent = 'Firebase에 연결된 멤버 계정으로 로그인해주세요.'; return; }
+        if (!ready()) { status.textContent = '멤버 계정으로 로그인해주세요.'; return; }
         if (!online()) { status.textContent = '인터넷 연결 후 게임을 진행해주세요.'; return; }
         busy = true;
         const currentEpoch = epoch;
@@ -151,41 +185,19 @@
     }
     async function create() {
         await execute(async () => {
-            const player = await profile(), currentEpoch = epoch;
             for (let attempts = 0; attempts < 5; attempts++) {
-                const value = makeCode(), ref = roomRef(value);
-                const created = await window.runTransaction(window.meetingDb, async tx => {
-                    const snapshot = await tx.get(ref);
-                    if (snapshot.exists()) return false;
-                    tx.set(ref, game.createRoom(player, Date.now()));
-                    return true;
-                });
-                if (created) {
-                    if (epoch !== currentEpoch) return;
-                    persist(value); code = value;
-                    if (open()) watch(value);
-                    return;
-                }
+                try { room = state = null; await watch(makeCode(), true); return; }
+                catch (error) { if (error.code !== 'room-exists') { clearRoom(); throw error; } }
             }
-            throw new Error('방 코드를 만들지 못했어요. 다시 시도해주세요.');
+            clearRoom(); throw new Error('방 코드를 만들지 못했어요. 다시 시도해주세요.');
         });
     }
     async function join(value) {
         value = String(value || '').trim().toUpperCase();
         if (!/^[A-Z2-9]{6}$/.test(value)) { status.textContent = '친구가 알려준 6자리 방 코드를 입력해주세요.'; return; }
         await execute(async () => {
-            const player = await profile(), currentEpoch = epoch;
-            await window.runTransaction(window.meetingDb, async tx => {
-                const ref = roomRef(value), snapshot = await tx.get(ref);
-                if (!snapshot.exists()) throw new Error('해당 코드의 방을 찾을 수 없어요.');
-                const current = snapshot.data();
-                if (current.version !== 1 || current.game !== 'uno' || current.status === 'closed') throw new Error('이 방에 참가할 수 없어요.');
-                const next = game.joinRoom(current, player, Date.now());
-                if (next !== current) tx.set(ref, next);
-            });
-            if (epoch !== currentEpoch) return;
-            persist(value); code = value;
-            if (open()) watch(value);
+            room = state = null;
+            try { await watch(value); } catch (error) { clearRoom(); throw error; }
         });
     }
     async function act(action) {
@@ -194,32 +206,10 @@
             if (action.type === 'start') return startSolo();
             return localMove(soloUid, action);
         }
-        if (!allowed() || !room) { status.textContent = '방과 게임 상태가 동기화될 때까지 잠시 기다려주세요.'; return; }
-        const value = code, currentUid = uid(), revision = room.revision, currentEpoch = epoch;
+        if (!allowed() || !room) { status.textContent = '게임 상태가 동기화될 때까지 잠시 기다려주세요.'; return; }
+        const currentEpoch = epoch;
         await execute(async () => {
-            await window.runTransaction(window.meetingDb, async tx => {
-                const ref = roomRef(value), privateRef = gameRef(value);
-                const roomSnapshot = await tx.get(ref);
-                if (!roomSnapshot.exists()) throw new Error('방이 종료되었어요.');
-                const current = roomSnapshot.data();
-                if (!current.playerIds.includes(currentUid)) throw new Error('이 방에 참가한 멤버만 진행할 수 있어요.');
-                if (current.revision !== revision) throw new Error('친구가 먼저 진행했어요. 갱신된 화면에서 다시 눌러주세요.');
-                const next = { ...current, updatedAt: Date.now(), revision: revision + 1 };
-                if (action.type === 'start') {
-                    if (current.hostUid !== currentUid || !['waiting', 'finished'].includes(current.status)) throw new Error('방장만 새 게임을 시작할 수 있어요.');
-                    next.round = current.round + 1; next.status = 'playing'; next.notice = '';
-                    const initial = game.start(current.playerIds, next.round, random);
-                    tx.set(privateRef, { ...initial, revision: next.revision });
-                } else {
-                    if (current.status !== 'playing') throw new Error('진행 중인 게임이 없어요.');
-                    const gameSnapshot = await tx.get(privateRef);
-                    if (!gameSnapshot.exists() || gameSnapshot.data().revision !== revision) throw new Error('게임 정보를 다시 불러와주세요.');
-                    const result = game.move(gameSnapshot.data(), currentUid, action, random);
-                    if (result.winnerUid) next.status = 'finished';
-                    tx.set(privateRef, { ...result, revision: next.revision });
-                }
-                tx.set(ref, next);
-            });
+            await sendAction(action);
             if (epoch === currentEpoch) { selectedCard = null; armed = false; }
         });
     }
@@ -232,18 +222,7 @@
             returnToSoloSetup(); return;
         }
         if (room?.status === 'playing' && !window.confirm('방에서 나가면 이번 판이 종료됩니다. 나갈까요?')) return;
-        const value = code, currentUid = uid(), currentEpoch = epoch;
-        await execute(async () => {
-            await window.runTransaction(window.meetingDb, async tx => {
-                const ref = roomRef(value), snapshot = await tx.get(ref);
-                if (!snapshot.exists()) return;
-                const current = snapshot.data();
-                if (!current.playerIds.includes(currentUid)) return;
-                tx.set(ref, game.leaveRoom(current, currentUid, Date.now()));
-                tx.delete(gameRef(value));
-            });
-            if (epoch === currentEpoch) clearRoom();
-        });
+        await execute(async () => { await sendAction({ type: 'leave' }); clearRoom(); });
     }
     function cardHtml(card, playable = false, interactive = false, angle = 0) {
         const color = colors[card.color] || colors.wild;
@@ -478,7 +457,7 @@
             if (!state.message && !state.winnerUid) motionQueue.push({ type: 'deal', state });
         } else {
             const oldTop = before.state.discard.at(-1), top = state.discard.at(-1);
-            const actor = top.id !== oldTop.id ? before.state.players.find(player => before.state.hands[player].some(card => card.id === top.id)) : null;
+            const actor = top.id !== oldTop.id ? (state.message?.type === 'play' ? state.message.uid : before.state.players.find(player => before.state.hands[player].some(card => card.id === top.id))) : null;
             const draws = state.players.flatMap(player => state.hands[player].filter(card => !before.state.hands[player]?.some(old => old.id === card.id)).map(card => ({ player, card })));
             draws.forEach(item => pendingReceipts.add(item.card.id));
             if (actor || draws.length) motionQueue.push({ type: 'turn', card: actor ? top : null, oldTop, actor, draws, handRects: currentGeometry.cards.size ? currentGeometry.cards : before.geometry.cards,
@@ -528,7 +507,7 @@
         if (!code) {
             const intro = '<div class="uno-intro"><div class="uno-logo" aria-hidden="true">' + ['red', 'yellow', 'green', 'blue'].map((color, index) => cardHtml({ color, value: String(index + 1) })).join('') + '</div><span class="uno-eyebrow">색을 맞추고, 한 장 남으면 UNO!</span><h2>가볍게 즐기는 우노 한 판</h2><p>친구와 함께, 또는 가상 플레이어와 함께.<br>내 카드를 가장 먼저 내려놓으면 승리해요.</p></div>';
             const tabs = '<div class="uno-modes" role="group" aria-label="플레이 방식"><button type="button" data-uno-action="mode-friends" aria-pressed="' + (mode === 'friends') + '">친구와 하기</button><button type="button" data-uno-action="mode-solo" aria-pressed="' + (mode === 'solo') + '">혼자하기</button></div>';
-            const friends = '<div class="uno-panel uno-setup"><h2>친구들과 함께</h2><p class="uno-note">2~10명 · 방 코드를 공유해서 모여요.</p>' + button('create', '우노 방 만들기', !allowed()) + '<form id="uno-join-form" class="uno-join"><label for="uno-join-code">초대받은 코드가 있나요?</label><div><input id="uno-join-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="6자리 방 코드" aria-describedby="uno-friends-help" value="' + esc(inputValue) + '" required><button type="submit" class="uno-btn"' + (!allowed() ? ' disabled' : '') + '>참가</button></div></form><p id="uno-friends-help" class="uno-footnote">' + (!ready() ? '친구와 하려면 멤버 계정으로 로그인해주세요.' : '친구와의 게임은 실시간으로 연결돼요.') + '</p></div>';
+            const friends = '<div class="uno-panel uno-setup"><h2>친구들과 함께</h2><p class="uno-note">2~10명 · 방 코드를 공유해서 모여요.</p>' + (!ready() ? button('login', '멤버 로그인하기') : button('create', '우노 방 만들기', !allowed())) + '<form id="uno-join-form" class="uno-join"><label for="uno-join-code">초대받은 코드가 있나요?</label><div><input id="uno-join-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="6자리 방 코드" aria-describedby="uno-friends-help" value="' + esc(inputValue) + '" required><button type="submit" class="uno-btn"' + (!allowed() ? ' disabled' : '') + '>참가</button></div></form><p id="uno-friends-help" class="uno-footnote">' + (!ready() ? '친구와 하려면 멤버 계정으로 로그인해주세요.' : '친구와의 게임은 실시간으로 연결돼요.') + '</p></div>';
             const solo = '<div class="uno-panel uno-setup"><h2>가상 플레이어와 함께</h2><p class="uno-note">로그인 없이, 인터넷 없이도 즐길 수 있어요.</p><div class="uno-count-heading"><strong>총 플레이 인원</strong><span>나 포함</span></div><div class="uno-counts" role="group" aria-label="나를 포함한 총 플레이 인원">' + Array.from({ length: 9 }, (_, index) => index + 2).map(count => '<button type="button" data-uno-action="count" data-count="' + count + '" aria-pressed="' + (count === soloCount) + '">' + count + '명</button>').join('') + '</div><p class="uno-solo-description">나 1명 + 가상 플레이어 ' + (soloCount - 1) + '명</p>' + button('solo-start', '혼자하기 시작') + '<p class="uno-footnote">이 게임은 내 기기에서만 진행돼요.</p></div>';
             content.innerHTML = intro + tabs + (mode === 'solo' ? solo : friends);
         } else if (!room) {
@@ -594,14 +573,18 @@
         screen.hidden = false;
         loadArtwork();
         screen.focus({ preventScroll: true });
+        if (!window.ENJOY_UNO_PAGE) {
         historyToken = 'uno-' + Date.now() + '-' + random();
         window.history.pushState({ ...window.history.state, modal: 'uno', unoViewId: historyToken }, '', window.location.href);
+        }
         status.textContent = '';
         const resume = mode === 'solo' ? '' : code || storedCode();
-        if (resume && ready()) watch(resume);
+        if (resume && ready()) { reconnectAttempts = 0; watch(resume).catch(error => { status.textContent = errorText(error); render(); }); }
         else render();
     };
+    window.pauseUnoGame = hide;
     function close() {
+        if (window.ENJOY_UNO_PAGE) { hide(); window.leaveUnoPage?.(); return; }
         if (window.history.state?.unoViewId === historyToken) window.history.back();
         else hide();
     }
@@ -614,14 +597,15 @@
             mode = action === 'mode-solo' ? 'solo' : 'friends'; status.textContent = '';
             if (mode === 'friends') {
                 lastUid = accountUid(); const resume = storedCode();
-                if (resume && ready()) { watch(resume); return; }
+                if (resume && ready()) { code = resume; reconnect(); return; }
             }
             render(); return;
         }
         if (action === 'count' && mode === 'solo' && !code) { soloCount = Math.max(2, Math.min(10, Number(target.dataset.count) || 4)); render(); return; }
         if (action === 'solo-start' && mode === 'solo' && !code) return startSolo();
+        if (action === 'login') return window.loginForUno?.();
         if (action === 'create') return create();
-        if (action === 'retry') { status.textContent = ''; if (ready() && code) watch(code); return; }
+        if (action === 'retry') { status.textContent = ''; if (ready() && code) reconnect(); return; }
         if (action === 'forget') { clearRoom(); status.textContent = ''; render(); return; }
         if (action === 'leave') return leave();
         if (action === 'copy') {
@@ -658,7 +642,9 @@
         if (mode === 'solo') { lastUid = accountUid(); return; }
         if (lastUid !== accountUid()) {
             epoch++; stop(); code = ''; room = state = selectedCard = null; armed = busy = false; lastUid = accountUid();
-            if (open()) {
+            if (open() && window.ENJOY_UNO_PAGE) {
+                const resume = storedCode(); if (resume && ready()) { code = resume; reconnect(); } else render();
+            } else if (open()) {
                 hide();
                 if (window.history.state?.modal === 'uno') {
                     const previous = { ...window.history.state }; delete previous.modal; delete previous.unoViewId;
@@ -667,7 +653,7 @@
             }
         }
     });
-    window.addEventListener('online', () => { if (mode === 'solo') return render(); if (open() && ready() && code) { status.textContent = ''; watch(code); } else render(); });
+    window.addEventListener('online', () => { if (mode === 'solo') return render(); if (open() && ready() && code) { status.textContent = ''; reconnect(); } else render(); });
     window.addEventListener('offline', () => { if (mode === 'solo') return render(); if (open()) { status.textContent = '연결이 끊겼어요. 연결이 돌아오면 이어서 진행할 수 있습니다.'; render(); } });
     document.addEventListener('visibilitychange', () => { window.clearTimeout(botTimer); botTimer = null; cancelMotion(); render(); });
     window.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', () => { cancelMotion(); render(); });
