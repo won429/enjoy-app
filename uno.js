@@ -37,7 +37,7 @@
     const ready = () => !!(accountUid() && window.getEnjoyIdToken);
     const server = () => window.ENJOY_UNO_SERVER || 'https://enjoy-uno.sungwon4867.workers.dev';
     const online = () => window.navigator.onLine !== false;
-    const synchronized = () => mode === 'solo' || liveRoom && (room?.status !== 'playing' && room?.status !== 'finished' || liveGame && state?.revision === room?.revision);
+    const synchronized = () => mode === 'solo' || liveRoom && (!['playing', 'choosing', 'finished'].includes(room?.status) || liveGame && state?.revision === room?.revision);
     const allowed = () => !motionBusy && (mode === 'solo' ? !busy : ready() && online() && !busy && (!room || synchronized()));
     const name = value => room?.players.find(player => player.uid === value)?.name || '친구';
     const button = (action, text, disabled = false, secondary = false) => '<button type="button" class="uno-btn' + (secondary ? ' uno-btn-secondary' : '') + '" data-uno-action="' + action + '"' + (disabled ? ' disabled' : '') + '>' + text + '</button>';
@@ -176,32 +176,40 @@
         stop();
         presentation = null;
         const players = [{ uid: soloUid, name: '나' }, ...botNames.slice(0, soloCount - 1).map((name, index) => ({ uid: 'solo-bot-' + index, name }))];
-        room = { ...game.createRoom(players[0], Date.now()), players, playerIds: players.map(player => player.uid), round: (room?.round || 0) + 1, status: 'playing' };
-        state = { ...game.start(room.playerIds, room.round, random), revision: 0 };
+        room = { ...game.createRoom(players[0], Date.now()), players, playerIds: players.map(player => player.uid), round: (room?.round || 0) + 1, status: 'choosing' };
+        state = { ...game.orderStart(room.playerIds, room.round, random), revision: 0 };
         code = 'LOCAL'; selectedCard = null; armed = false; status.textContent = ''; render();
     }
     function localMove(actor, action) {
         window.clearTimeout(botTimer); botTimer = null;
         try {
             state = { ...game.move(state, actor, action, random), revision: room.revision + 1 };
-            room = { ...room, revision: state.revision, status: state.winnerUid ? 'finished' : 'playing' };
+            room = { ...room, revision: state.revision, status: state.phase === 'order' ? 'choosing' : state.winnerUid ? 'finished' : 'playing' };
             selectedCard = null; armed = false; status.textContent = '';
         } catch (error) { status.textContent = errorText(error); }
         render();
     }
     function scheduleBot() {
-        if (botTimer || motionBusy || mode !== 'solo' || !open() || document.hidden || !state || state.winnerUid || state.turnUid === soloUid) return;
-        const current = state, actor = state.turnUid;
+        if (botTimer || motionBusy || mode !== 'solo' || !open() || document.hidden || !state || state.winnerUid) return;
+        const selecting = state.phase === 'order', complete = selecting && state.orderComplete;
+        const actor = selecting ? room.players.find(player => player.uid !== soloUid && !state.orderCards.some(card => card.uid === player.uid))?.uid : state.turnUid;
+        if (!complete && (!actor || actor === soloUid)) return;
+        const current = state;
         botTimer = window.setTimeout(() => {
             botTimer = null;
             if (mode !== 'solo' || !open() || document.hidden || state !== current) return;
-            const action = game.botAction(state, actor);
+            if (complete) {
+                state = { ...game.orderDeal(state, random), revision: room.revision + 1 };
+                room = { ...room, revision: state.revision, status: 'playing' };
+                render(); return;
+            }
+            const action = game.botAction(state, actor, random);
             if (action) localMove(actor, action);
-        }, state.unoPendingUid ? 1500 : 850);
+        }, complete ? 2600 : state.unoPendingUid ? 1500 : 850);
     }
     function errorText(error) {
 
-        if (['unavailable', 'deadline-exceeded'].includes(error?.code) || !online()) return '인터넷 연결을 확인해주세요. 연결이 복구되면 방에 다시 들어올 수 있어요.';
+        if (mode !== 'solo' && (['unavailable', 'deadline-exceeded'].includes(error?.code) || !online())) return '인터넷 연결을 확인해주세요. 연결이 복구되면 방에 다시 들어올 수 있어요.';
         return error?.message || '게임 연결에 실패했어요. 잠시 후 다시 시도해주세요.';
     }
     const lobbyActive = () => open() && mode === 'friends' && !code && ready() && online() && !document.hidden;
@@ -261,7 +269,7 @@
         else if (!lobbyRooms.length) list = '<p class="uno-note uno-room-empty">아직 만들어진 방이 없어요.<br>첫 번째 방을 만들어 친구를 기다려보세요.</p>';
         else list = '<div class="uno-room-list">' + lobbyRooms.map(item => {
             const full = Number(item.playerCount) >= 10, available = item.status === 'waiting' && !full;
-            const label = full ? '정원 마감' : item.status === 'playing' ? '게임 중' : item.status === 'finished' ? '게임 종료' : '입장';
+            const label = full ? '정원 마감' : item.status === 'choosing' ? '순서 선택 중' : item.status === 'playing' ? '게임 중' : item.status === 'finished' ? '게임 종료' : '입장';
             return '<div class="uno-room-row"><div><strong>' + esc(item.title) + '</strong><small>멤버 ' + esc(Number(item.humanCount) || 0) + '명' + (item.botCount ? ' · 가상 ' + esc(Number(item.botCount) || 0) + '명' : '') + ' · ' + esc(Number(item.playerCount) || 0) + '/10명</small></div><button type="button" class="uno-btn uno-room-enter" data-uno-action="join-room" data-room-id="' + esc(item.id) + '" aria-label="' + esc(item.title + ' ' + label) + '"' + (!available || !allowed() ? ' disabled' : '') + '>' + label + '</button></div>';
         }).join('') + '</div>';
         return '<div class="uno-room-list-heading"><h3>친구들의 방</h3><button type="button" class="uno-list-refresh" data-uno-action="refresh-rooms" aria-label="방 목록 다시 연결"' + (!ready() || !online() || busy ? ' disabled' : '') + '>' + icon('arrow-clockwise') + '</button></div>' + list;
@@ -289,7 +297,7 @@
                     url.protocol = url.protocol === 'http:' ? 'ws:' : 'wss:';
                     ws = new window.WebSocket(url.href); socket = ws;
                     const active = () => socket === ws && epoch === currentEpoch && currentUid === uid() && mode === 'friends';
-                    ws.onopen = () => { if (active()) ws.send(JSON.stringify({ type: 'hello', token, create: creating })); };
+                    ws.onopen = () => { if (active()) ws.send(JSON.stringify({ type: 'hello', token, create: creating, orderSelection: true })); };
                     ws.onmessage = event => {
                         if (!active()) return;
                         let packet; try { packet = JSON.parse(event.data); } catch (_) { return; }
@@ -389,10 +397,10 @@
     }
     async function leave() {
         if (mode === 'solo') {
-            if (room?.status === 'playing' && !window.confirm('혼자하기를 끝내고 인원 선택으로 돌아갈까요?')) return;
+            if (['playing', 'choosing'].includes(room?.status) && !window.confirm('혼자하기를 끝내고 인원 선택으로 돌아갈까요?')) return;
             returnToSoloSetup(); return;
         }
-        if (room?.status === 'playing' && !window.confirm('방에서 나가면 이번 판이 종료됩니다. 나갈까요?')) return;
+        if (['playing', 'choosing'].includes(room?.status) && !window.confirm('방에서 나가면 이번 판이 종료됩니다. 나갈까요?')) return;
         await execute(async () => { await sendAction({ type: 'leave' }); clearRoom(); });
     }
     function cardHtml(card, playable = false, interactive = false, angle = 0) {
@@ -424,8 +432,20 @@
             return '<li' + (entry.uid === uid() ? ' class="is-me"' : '') + '><span class="uno-rank-number">' + esc(entry.rank) + '위</span>' + avatarHtml(player) + '<div><strong>' + esc(player.name) + (entry.uid === uid() ? ' · 나' : '') + '</strong><small>' + (player.bot ? '가상 플레이어 · ' : '') + '남은 ' + esc(entry.remainingCards) + '장</small></div><span class="uno-rank-score">' + esc(entry.penaltyPoints) + '점</span></li>';
         }).join('') + '</ol></div>';
     }
+    function orderHtml() {
+        const mine = state.orderCards.some(card => card.uid === uid()), complete = state.orderComplete;
+        const selected = state.orderCards.filter(card => card.uid).length;
+        const cards = state.orderCards.map(card => {
+            const player = room.players.find(player => player.uid === card.uid);
+            const label = player ? player.name + '님 선택 · ' + card.value : '순서 카드 ' + (Number(card.id.split('-')[1]) + 1) + ' 선택';
+            return '<div class="uno-order-slot' + (player ? ' is-picked' : '') + (card.uid === uid() ? ' is-mine' : '') + (state.message?.cardId === card.id ? ' is-recent' : '') + '"><button type="button" class="uno-order-choice" data-uno-action="order-pick" data-card-id="' + esc(card.id) + '" aria-label="' + esc(label) + '"' + (player || mine || complete || !allowed() ? ' disabled' : '') + '>' + (player ? cardHtml(card) : '<div class="uno-card uno-card-back"></div>') + '</button><div class="uno-order-owner">' + (player ? avatarHtml(player) + '<strong>' + esc(player.name) + (card.uid === uid() ? ' · 나' : '') + '</strong>' : '<small>선택 전</small>') + '</div></div>';
+        }).join('');
+        const sequence = complete ? '<ol class="uno-order-sequence">' + state.players.map((id, index) => '<li><span>' + (index + 1) + '</span><strong>' + esc(name(id)) + '</strong><small>' + state.orderCards.find(card => card.uid === id).value + '</small></li>').join('') + '</ol>' : '';
+        return '<section class="uno-order-board" data-player-count="' + room.players.length + '"><div class="uno-order-heading"><span>플레이 순서 정하기</span><h2>' + (complete ? '순서가 정해졌어요!' : mine ? '친구들의 선택을 기다려요' : '카드를 한 장 골라주세요') + '</h2><p>가장 높은 숫자부터, 다음 높은 숫자 순으로 진행해요.</p><small aria-live="polite">' + (complete ? '잠시 후 카드를 나눠드려요.' : selected + '/' + state.players.length + '명 선택 완료') + '</small></div><div class="uno-order-cards" style="--order-cols:' + Math.min(state.players.length, 5) + '">' + cards + '</div>' + sequence + '<p class="uno-order-hint">' + (complete ? esc(name(state.players[0])) + '님이 먼저 시작해요.' : '선택한 카드는 모두에게 표시돼요. 한 사람당 한 장씩!') + '</p></section>';
+    }
     function seatsHtml() {
-        const ordered = room.players.slice(room.playerIds.indexOf(uid()) + 1).concat(room.players.slice(0, room.playerIds.indexOf(uid())));
+        const players = state.players.map(id => room.players.find(player => player.uid === id));
+        const ordered = players.slice(state.players.indexOf(uid()) + 1).concat(players.slice(0, state.players.indexOf(uid())));
         const topCount = ordered.length % 2 ? 3 : 2, sideCount = (ordered.length - topCount) / 2;
         const sideRows = sideCount === 1 ? [56] : sideCount === 2 ? [43, 77] : [40, 63, 86];
         const positions = ordered.length === 1 ? [[50, 22]] : ordered.length === 2 ? [[23, 25], [77, 25]] : ordered.length === 3 ? [[13, 52], [50, 21], [87, 52]] :
@@ -695,14 +715,15 @@
         if (!open()) return;
         watchLobby();
         planMotion();
-        if (!code || room?.status === 'waiting' || room?.status === 'closed') cancelMotion();
+        if (!code || ['waiting', 'choosing', 'closed'].includes(room?.status)) cancelMotion();
         const focus = document.activeElement;
         const focusAction = focus?.dataset?.unoAction, focusCard = focus?.dataset?.cardId, focusColor = focus?.dataset?.color;
         const handScroll = content.querySelector('.uno-hand')?.scrollLeft || 0;
         connection.textContent = mode === 'solo' ? '혼자하기' : !ready() ? '로그인 필요' : !online() ? '연결 끊김' : busy ? '반영 중…' : code && !synchronized() ? '동기화 중…' : code ? '실시간 연결' : '온라인';
         connection.classList.toggle('is-live', mode === 'solo' || ready() && online() && (!code || synchronized()) && !busy);
-        screen.classList.toggle('uno-game-active', !!(code && state && room && ['playing', 'finished'].includes(room.status)));
-        screen.classList.toggle('uno-fullscreen-match', !!(code && state && room && state.revision === room.revision && ['playing', 'finished'].includes(room.status) && (!state.winnerUid || motionBusy)));
+        screen.classList.toggle('uno-game-active', !!(code && state && room && ['playing', 'choosing', 'finished'].includes(room.status)));
+        screen.classList.toggle('uno-fullscreen-match', !!(code && state && room && state.revision === room.revision && ['playing', 'choosing', 'finished'].includes(room.status) && (!state.winnerUid || motionBusy)));
+        screen.classList.toggle('uno-selecting-order', room?.status === 'choosing');
         screen.classList.toggle('uno-lobby', !screen.classList.contains('uno-fullscreen-match'));
         screen.querySelector('.uno-back')?.setAttribute('aria-label', mode === 'solo' && code ? '인원 선택으로 돌아가기' : '드롭으로 돌아가기');
         if (!code) {
@@ -719,6 +740,8 @@
                 html += '<div class="uno-panel"><h2>친구들을 기다리는 중</h2><p class="uno-note">' + room.players.length + '/10명 참가 · 2명부터 시작할 수 있어요.</p>' + playersHtml() + botSettingsHtml() + button('start', uid() === room.hostUid ? '우노 시작하기' : '방장이 시작하면 함께 들어가요', !allowed() || room.players.length < 2 || uid() !== room.hostUid) + (room.notice ? '<p class="uno-note">' + esc(room.notice) + '</p>' : '') + '</div>';
             } else if (!state || state.revision !== room.revision) {
                 html += '<div class="uno-panel"><p class="uno-note">최신 게임 상태를 불러오고 있어요.</p>' + button('retry', '다시 연결', busy, true) + '</div>';
+            } else if (state.phase === 'order') {
+                html += orderHtml();
             } else if (state.winnerUid && !motionBusy) {
                 html += '<div class="uno-panel uno-result"><span aria-hidden="true">' + icon('trophy') + '</span><h2>' + (state.winnerUid === uid() ? '내가 이겼어요!' : esc(name(state.winnerUid)) + '님 승리!') + '</h2><p>모든 카드를 가장 먼저 냈어요.<br>이번 판 점수 ' + state.roundPoints + '점</p>' + button('start', '한 판 더 하기', !allowed() || uid() !== room.hostUid) + (uid() !== room.hostUid ? '<p>방장이 다시 시작할 수 있어요.</p>' : '') + '</div>' + (mode === 'friends' ? rankingsHtml() : playersHtml());
             } else {
@@ -811,6 +834,7 @@
         if (action === 'join-room') return join(target.dataset.roomId);
         if (action === 'add-bot') return act({ type: 'add-bot' });
         if (action === 'remove-bot') return act({ type: 'remove-bot', uid: target.dataset.playerUid });
+        if (action === 'order-pick') return act({ type: 'order-pick', cardId: target.dataset.cardId, round: room?.round });
         if (action === 'refresh-rooms') {
             lobbyError = ''; lobbyAttempts = 0;
             if (lobbySocket?.readyState === 1) { lobbyLoading = true; lobbySocket.send(JSON.stringify({ type: 'refresh' })); }

@@ -57,7 +57,31 @@
         state.unoPendingUid = null;
         state.provisionalWinnerUid = null;
     }
-    function start(players, round = 1, random = Math.random) {
+    function orderStart(players, round = 1, random = Math.random) {
+        if (players.length < 2 || players.length > 10 || new Set(players).size !== players.length) fail('우노는 2~10명이 함께할 수 있어요.');
+        const numbers = shuffle(Array.from({ length: 10 }, (_, i) => i), random).slice(0, players.length);
+        return { phase: 'order', round, players: players.slice(), hands: Object.fromEntries(players.map(uid => [uid, []])),
+            deck: [], discard: [], turnUid: players[0], winnerUid: null, orderComplete: false,
+            orderCards: numbers.map((number, i) => ({ id: 'order-' + i, color: COLORS[i % 4], value: String(number), uid: null })) };
+    }
+    function orderPick(input, uid, cardId) {
+        if (input.phase !== 'order' || input.orderComplete || !input.players.includes(uid)) fail('지금은 순서 카드를 고를 수 없어요.');
+        if (input.orderCards.some(card => card.uid === uid)) fail('이미 순서 카드를 골랐어요.');
+        const card = input.orderCards.find(card => card.id === cardId);
+        if (!card || card.uid) fail('다른 사람이 고른 카드예요. 남은 카드를 골라주세요.');
+        const state = JSON.parse(JSON.stringify(input));
+        state.orderCards.find(card => card.id === cardId).uid = uid;
+        state.orderComplete = state.orderCards.every(card => card.uid);
+        if (state.orderComplete) state.players = state.orderCards.slice().sort((a, b) => Number(b.value) - Number(a.value)).map(card => card.uid);
+        state.turnUid = state.orderComplete ? state.players[0] : state.players.find(player => !state.orderCards.some(card => card.uid === player));
+        state.message = { type: 'order-pick', uid, cardId };
+        return state;
+    }
+    function orderDeal(input, random = Math.random) {
+        if (input.phase !== 'order' || !input.orderComplete) fail('모두 순서 카드를 골라주세요.');
+        return { ...start(input.players, input.round, random, true), orderCards: input.orderCards };
+    }
+    function start(players, round = 1, random = Math.random, ordered = false) {
         if (players.length < 2 || players.length > 10 || new Set(players).size !== players.length) fail('우노는 2~10명이 함께할 수 있어요.');
         const state = { players: players.slice(), hands: {}, deck: shuffle(deck(), random), discard: [], direction: 1,
             color: null, turnUid: null, drawnCardId: null, unoPendingUid: null, challenge: null,
@@ -66,9 +90,10 @@
         for (let i = 0; i < 7; i++) players.forEach(uid => take(state, uid, 1, random));
         // The host deals the first round; subsequent rounds rotate the dealer.
         const dealer = players[(round - 1) % players.length];
-        state.turnUid = nextUid(state, dealer);
+        state.turnUid = ordered ? players[0] : nextUid(state, dealer);
         let top = state.deck.pop();
-        while (top.value === 'wild4') {
+        // A numbered opener preserves the chosen first player and descending order.
+        while (top.value === 'wild4' || ordered && !/^\d$/.test(top.value)) {
             state.deck = shuffle([...state.deck, top], random);
             top = state.deck.pop();
         }
@@ -84,6 +109,10 @@
         return state;
     }
     function move(input, uid, action, random = Math.random) {
+        if (input.phase === 'order') {
+            if (action.type !== 'order-pick') fail('먼저 순서 카드를 골라주세요.');
+            return orderPick(input, uid, action.cardId);
+        }
         const state = JSON.parse(JSON.stringify(input));
         if (!state.players.includes(uid)) fail('이 방에 참가한 멤버만 게임을 진행할 수 있어요.');
         if (state.winnerUid) fail('이번 판이 끝났어요.');
@@ -184,10 +213,16 @@
         const players = input.players.filter(player => player.uid !== uid);
         return { ...input, players, playerIds: players.map(player => player.uid), hostUid: input.hostUid === uid ? (players[0]?.uid || '') : input.hostUid,
             status: players.length ? 'waiting' : 'closed', updatedAt: now, revision: input.revision + 1,
-            notice: input.status === 'playing' ? '멤버가 나가서 이번 판이 종료되었어요. 다시 시작할 수 있어요.' : '' };
+            notice: ['playing', 'choosing'].includes(input.status) ? '멤버가 나가서 이번 판이 종료되었어요. 다시 시작할 수 있어요.' : '' };
     }
     // Bots inspect their own hand and public information only.
-    function botAction(state, uid) {
+    function botAction(state, uid, random = Math.random) {
+        if (state.phase === 'order') {
+            if (state.orderComplete || !state.players.includes(uid) || state.orderCards.some(card => card.uid === uid)) return null;
+            // Choose a position without inspecting the hidden numbers.
+            const available = state.orderCards.filter(card => !card.uid);
+            return { type: 'order-pick', cardId: available[Math.floor(random() * available.length)].id };
+        }
         if (state.winnerUid || state.turnUid !== uid) return null;
         const hand = state.hands[uid] || [];
         const counts = Object.fromEntries(COLORS.map(color => [color, hand.filter(card => card.color === color).length]));
@@ -205,7 +240,7 @@
         if (playable.length) return { type: 'play', cardId: playable[0].id, color, uno: true };
         return { type: state.drawnCardId ? 'pass' : 'draw' };
     }
-    const api = { COLORS, deck, shuffle, nextUid, canPlay, start, move, botAction, createRoom, joinRoom, leaveRoom };
+    const api = { COLORS, deck, shuffle, nextUid, canPlay, start, move, orderStart, orderPick, orderDeal, botAction, createRoom, joinRoom, leaveRoom };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.EnjoyUno = api;
 })(typeof window === 'undefined' ? globalThis : window);
