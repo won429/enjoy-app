@@ -13,6 +13,8 @@
     const names = { skip: '건너뛰기', reverse: '방향 바꾸기', draw2: '두 장 뽑기', wild: '색 바꾸기', wild4: '와일드 네 장 뽑기' };
     let code = '', room = null, state = null, busy = false, liveRoom = false, liveGame = false;
     let socket = null, reconnectTimer = null, connectCancel = null, reconnectAttempts = 0;
+    let lobbySocket = null, lobbyTimer = null, lobbyEpoch = 0, lobbyAttempts = 0, lobbyLoading = false;
+    let lobbyRooms = [], lobbyError = '';
     const requests = new Map();
     let selectedCard = null, armed = false, lastUid = '', epoch = 0;
     let savedOverflow = '', previousFocus = null;
@@ -160,6 +162,7 @@
         return Array.from({ length: 6 }, () => alphabet[Math.floor(random() * alphabet.length)]).join('');
     }
     function stop() {
+        stopLobby();
         cancelMotion();
         window.clearTimeout(botTimer); botTimer = null;
         window.clearTimeout(reconnectTimer); reconnectTimer = null;
@@ -200,6 +203,68 @@
 
         if (['unavailable', 'deadline-exceeded'].includes(error?.code) || !online()) return '인터넷 연결을 확인해주세요. 연결이 복구되면 방에 다시 들어올 수 있어요.';
         return error?.message || '게임 연결에 실패했어요. 잠시 후 다시 시도해주세요.';
+    }
+    const lobbyActive = () => open() && mode === 'friends' && !code && ready() && online() && !document.hidden;
+    function stopLobby() {
+        lobbyEpoch++;
+        window.clearTimeout(lobbyTimer); lobbyTimer = null;
+        const old = lobbySocket; lobbySocket = null; old?.close();
+        lobbyLoading = false;
+    }
+    function watchLobby() {
+        if (!lobbyActive()) { if (lobbySocket || lobbyLoading || lobbyTimer) stopLobby(); return; }
+        if (lobbySocket || lobbyLoading || lobbyTimer || lobbyAttempts >= 5) return;
+        lobbyLoading = true;
+        const generation = ++lobbyEpoch;
+        (async () => {
+            let ws;
+            try {
+                const token = await window.getEnjoyIdToken();
+                if (generation !== lobbyEpoch || !lobbyActive()) return;
+                if (!token) throw new Error('멤버 계정으로 로그인해주세요.');
+                const url = new URL('/rooms', server()); url.protocol = url.protocol === 'http:' ? 'ws:' : 'wss:';
+                ws = new window.WebSocket(url.href); lobbySocket = ws;
+                const active = () => lobbySocket === ws && generation === lobbyEpoch && lobbyActive();
+                const timeout = window.setTimeout(() => { if (active() && lobbyLoading) ws.close(); }, 15000);
+                ws.onopen = () => { if (active()) ws.send(JSON.stringify({ type: 'hello', token })); };
+                ws.onmessage = event => {
+                    if (!active()) return;
+                    let packet; try { packet = JSON.parse(event.data); } catch (_) { return; }
+                    if (packet.type === 'rooms' && Array.isArray(packet.rooms)) {
+                        lobbyRooms = packet.rooms.filter(item => /^[A-Z2-9]{6}$/.test(item.id));
+                        lobbyLoading = false; lobbyError = ''; lobbyAttempts = 0; window.clearTimeout(timeout); render();
+                    } else if (packet.type === 'error') {
+                        lobbyError = packet.message || '방 목록에 다시 연결해주세요.'; lobbyAttempts = 5;
+                    }
+                };
+                ws.onclose = () => {
+                    window.clearTimeout(timeout);
+                    if (lobbySocket !== ws || generation !== lobbyEpoch) return;
+                    lobbySocket = null; lobbyLoading = false;
+                    lobbyError = lobbyError || '방 목록 연결이 끊겼어요. 다시 연결해주세요.';
+                    if (lobbyActive() && lobbyAttempts < 5) lobbyTimer = window.setTimeout(() => { lobbyTimer = null; watchLobby(); render(); }, Math.min(15000, 800 * 2 ** lobbyAttempts++));
+                    else lobbyAttempts = 5;
+                    render();
+                };
+                ws.onerror = () => {};
+            } catch (error) {
+                if (generation !== lobbyEpoch) return;
+                lobbyLoading = false; lobbyError = errorText(error); lobbyAttempts = 5; render();
+            }
+        })();
+    }
+    function roomListHtml() {
+        let list;
+        if (!ready()) list = '<p class="uno-note uno-room-empty">로그인하면 친구들의 방을 볼 수 있어요.</p>';
+        else if (lobbyError) list = '<p class="uno-note uno-room-empty" role="status">' + esc(lobbyError) + '</p>';
+        else if (lobbyLoading || !online()) list = '<p class="uno-note uno-room-empty" role="status">' + (online() ? '친구들의 방을 불러오고 있어요…' : '인터넷 연결을 확인해주세요.') + '</p>';
+        else if (!lobbyRooms.length) list = '<p class="uno-note uno-room-empty">아직 만들어진 방이 없어요.<br>첫 번째 방을 만들어 친구를 기다려보세요.</p>';
+        else list = '<div class="uno-room-list">' + lobbyRooms.map(item => {
+            const full = Number(item.playerCount) >= 10, available = item.status === 'waiting' && !full;
+            const label = full ? '정원 마감' : item.status === 'playing' ? '게임 중' : item.status === 'finished' ? '게임 종료' : '입장';
+            return '<div class="uno-room-row"><div><strong>' + esc(item.title) + '</strong><small>멤버 ' + esc(Number(item.humanCount) || 0) + '명' + (item.botCount ? ' · 가상 ' + esc(Number(item.botCount) || 0) + '명' : '') + ' · ' + esc(Number(item.playerCount) || 0) + '/10명</small></div><button type="button" class="uno-btn uno-room-enter" data-uno-action="join-room" data-room-id="' + esc(item.id) + '" aria-label="' + esc(item.title + ' ' + label) + '"' + (!available || !allowed() ? ' disabled' : '') + '>' + label + '</button></div>';
+        }).join('') + '</div>';
+        return '<div class="uno-room-list-heading"><h3>친구들의 방</h3><button type="button" class="uno-list-refresh" data-uno-action="refresh-rooms" aria-label="방 목록 다시 연결"' + (!ready() || !online() || busy ? ' disabled' : '') + '>' + icon('arrow-clockwise') + '</button></div>' + list;
     }
     function watch(value, creating = false) {
         stop(); code = value; selectedCard = null; armed = false;
@@ -300,7 +365,7 @@
     }
     async function join(value) {
         value = String(value || '').trim().toUpperCase();
-        if (!/^[A-Z2-9]{6}$/.test(value)) { status.textContent = '친구가 알려준 6자리 방 코드를 입력해주세요.'; return; }
+        if (!/^[A-Z2-9]{6}$/.test(value)) { status.textContent = '방 목록에서 참가할 방을 선택해주세요.'; return; }
         await execute(async () => {
             room = state = null;
             try { await watch(value); } catch (error) { clearRoom(); throw error; }
@@ -342,10 +407,22 @@
         return '<span class="uno-avatar" aria-hidden="true" style="--avatar-x:' + index % 5 * 25 + '%;--avatar-y:' + Math.floor(index / 5) * 100 + '%"></span>';
     }
     function profileHtml(player) {
-        return '<div class="uno-player' + (state?.turnUid === player.uid && room.status === 'playing' ? ' is-turn' : '') + '" data-player-uid="' + esc(player.uid) + '">' + avatarHtml(player) + '<div><strong>' + esc(player.name) + (mode !== 'solo' && player.uid === uid() ? ' · 나' : '') + '</strong><small data-uno-count="' + esc(player.uid) + '">' + (state ? (state.hands[player.uid]?.length || 0) + '장' : player.uid === room.hostUid ? '방장' : '참가 완료') + '</small></div></div>';
+        return '<div class="uno-player' + (state?.turnUid === player.uid && room.status === 'playing' ? ' is-turn' : '') + '" data-player-uid="' + esc(player.uid) + '">' + avatarHtml(player) + '<div><strong>' + esc(player.name) + (mode !== 'solo' && player.uid === uid() ? ' · 나' : '') + '</strong><small data-uno-count="' + esc(player.uid) + '">' + (state ? (state.hands[player.uid]?.length || 0) + '장' : player.bot ? '가상' : player.uid === room.hostUid ? '방장' : '참가 완료') + '</small></div></div>';
     }
     function playersHtml() {
         return '<div class="uno-players' + (room.players.length > 4 ? ' uno-players-many' : '') + '">' + room.players.map(profileHtml).join('') + '</div>';
+    }
+    function botSettingsHtml() {
+        const bots = room.players.filter(player => player.bot), host = uid() === room.hostUid, disabled = !host || !allowed();
+        return '<div class="uno-bot-settings"><div><strong>가상 플레이어</strong><small>' + (host ? '인원이 부족하면 함께할 친구를 추가해요.' : '방장이 가상 플레이어를 추가할 수 있어요.') + '</small></div><div class="uno-bot-controls"><button type="button" data-uno-action="remove-bot" data-player-uid="' + esc(bots.at(-1)?.uid || '') + '" aria-label="가상 플레이어 한 명 삭제"' + (disabled || !bots.length ? ' disabled' : '') + '>' + icon('minus') + '</button><span aria-live="polite">' + bots.length + '명</span><button type="button" data-uno-action="add-bot" aria-label="가상 플레이어 한 명 추가"' + (disabled || room.players.length >= 10 ? ' disabled' : '') + '>' + icon('plus') + '</button></div></div>';
+    }
+    function rankingsHtml() {
+        if (mode !== 'friends' || !state?.rankings?.length) return '';
+        return '<div class="uno-panel uno-rankings"><h2>이번 판 순위</h2><p class="uno-note">1위는 승자, 나머지는 남은 카드 점수가 낮은 순이에요.<br>점수가 같으면 공동 순위예요.</p><ol>' + state.rankings.map(entry => {
+            const player = room.players.find(player => player.uid === entry.uid);
+            if (!player) return '';
+            return '<li' + (entry.uid === uid() ? ' class="is-me"' : '') + '><span class="uno-rank-number">' + esc(entry.rank) + '위</span>' + avatarHtml(player) + '<div><strong>' + esc(player.name) + (entry.uid === uid() ? ' · 나' : '') + '</strong><small>' + (player.bot ? '가상 플레이어 · ' : '') + '남은 ' + esc(entry.remainingCards) + '장</small></div><span class="uno-rank-score">' + esc(entry.penaltyPoints) + '점</span></li>';
+        }).join('') + '</ol></div>';
     }
     function seatsHtml() {
         const ordered = room.players.slice(room.playerIds.indexOf(uid()) + 1).concat(room.players.slice(0, room.playerIds.indexOf(uid())));
@@ -616,12 +693,11 @@
     }
     function render() {
         if (!open()) return;
+        watchLobby();
         planMotion();
         if (!code || room?.status === 'waiting' || room?.status === 'closed') cancelMotion();
         const focus = document.activeElement;
         const focusAction = focus?.dataset?.unoAction, focusCard = focus?.dataset?.cardId, focusColor = focus?.dataset?.color;
-        const oldInput = document.getElementById('uno-join-code');
-        const inputValue = oldInput?.value || '', inputFocused = focus === oldInput;
         const handScroll = content.querySelector('.uno-hand')?.scrollLeft || 0;
         connection.textContent = mode === 'solo' ? '혼자하기' : !ready() ? '로그인 필요' : !online() ? '연결 끊김' : busy ? '반영 중…' : code && !synchronized() ? '동기화 중…' : code ? '실시간 연결' : '온라인';
         connection.classList.toggle('is-live', mode === 'solo' || ready() && online() && (!code || synchronized()) && !busy);
@@ -632,19 +708,19 @@
         if (!code) {
             const intro = '<div class="uno-intro"><div class="uno-logo" aria-hidden="true">' + ['red', 'yellow', 'green', 'blue'].map((color, index) => cardHtml({ color, value: String(index + 1) })).join('') + '</div><span class="uno-eyebrow">색을 맞추고, 한 장 남으면 UNO!</span><h2>가볍게 즐기는 우노 한 판</h2><p>친구와 함께, 또는 가상 플레이어와 함께.<br>내 카드를 가장 먼저 내려놓으면 승리해요.</p></div>';
             const tabs = '<div class="uno-modes" role="group" aria-label="플레이 방식"><button type="button" data-uno-action="mode-friends" aria-pressed="' + (mode === 'friends') + '">친구와 하기</button><button type="button" data-uno-action="mode-solo" aria-pressed="' + (mode === 'solo') + '">혼자하기</button></div>';
-            const friends = '<div class="uno-panel uno-setup"><h2>친구들과 함께</h2><p class="uno-note">2~10명 · 방 코드를 공유해서 모여요.</p>' + (!ready() ? button('login', '멤버 로그인하기') : button('create', '우노 방 만들기', !allowed())) + '<form id="uno-join-form" class="uno-join"><label for="uno-join-code">초대받은 코드가 있나요?</label><div><input id="uno-join-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="6자리 방 코드" aria-describedby="uno-friends-help" value="' + esc(inputValue) + '" required><button type="submit" class="uno-btn"' + (!allowed() ? ' disabled' : '') + '>참가</button></div></form><p id="uno-friends-help" class="uno-footnote">' + (!ready() ? '친구와 하려면 멤버 계정으로 로그인해주세요.' : '친구와의 게임은 실시간으로 연결돼요.') + '</p></div>';
+            const friends = '<div class="uno-panel uno-setup"><h2>친구들과 함께</h2><p class="uno-note">2~10명 · 친구가 만든 방을 골라 참가해요.</p>' + (!ready() ? button('login', '멤버 로그인하기') : button('create', '우노 방 만들기', !allowed())) + roomListHtml() + '<p class="uno-footnote">친구와의 게임은 실시간으로 연결돼요.</p></div>';
             const solo = '<div class="uno-panel uno-setup"><h2>가상 플레이어와 함께</h2><p class="uno-note">로그인 없이, 인터넷 없이도 즐길 수 있어요.</p><div class="uno-count-heading"><strong>총 플레이 인원</strong><span>나 포함</span></div><div class="uno-counts" role="group" aria-label="나를 포함한 총 플레이 인원">' + Array.from({ length: 9 }, (_, index) => index + 2).map(count => '<button type="button" data-uno-action="count" data-count="' + count + '" aria-pressed="' + (count === soloCount) + '">' + count + '명</button>').join('') + '</div><p class="uno-solo-description">나 1명 + 가상 플레이어 ' + (soloCount - 1) + '명</p>' + button('solo-start', '혼자하기 시작') + '<p class="uno-footnote">이 게임은 내 기기에서만 진행돼요.</p></div>';
             content.innerHTML = intro + tabs + (mode === 'solo' ? solo : friends);
         } else if (!room) {
-            content.innerHTML = '<div class="uno-panel"><h2>방에 연결하고 있어요</h2><p class="uno-note">' + esc(code) + '</p>' + button('retry', '다시 연결', busy) + button('forget', '다른 방 찾기', busy, true) + '</div>';
+            content.innerHTML = '<div class="uno-panel"><h2>방에 연결하고 있어요</h2><p class="uno-note">잠시만 기다려주세요.</p>' + button('retry', '다시 연결', busy) + button('forget', '다른 방 찾기', busy, true) + '</div>';
         } else {
-            let html = mode === 'solo' ? '' : '<div class="uno-room-top"><div class="uno-room-code"><small>친구에게 알려줄 방 코드</small><strong>' + esc(code) + '</strong></div>' + button('copy', '코드 복사', false, true) + '</div>';
+            let html = mode === 'solo' ? '' : '<div class="uno-room-top"><div class="uno-room-code"><small>친구와 함께</small><strong>' + esc(name(room.hostUid)) + '님의 방</strong></div></div>';
             if (room.status === 'waiting') {
-                html += '<div class="uno-panel"><h2>친구들을 기다리는 중</h2><p class="uno-note">' + room.players.length + '/10명 참가 · 2명부터 시작할 수 있어요.</p>' + playersHtml() + button('start', uid() === room.hostUid ? '우노 시작하기' : '방장이 시작하면 함께 들어가요', !allowed() || room.players.length < 2 || uid() !== room.hostUid) + (room.notice ? '<p class="uno-note">' + esc(room.notice) + '</p>' : '') + '</div>';
+                html += '<div class="uno-panel"><h2>친구들을 기다리는 중</h2><p class="uno-note">' + room.players.length + '/10명 참가 · 2명부터 시작할 수 있어요.</p>' + playersHtml() + botSettingsHtml() + button('start', uid() === room.hostUid ? '우노 시작하기' : '방장이 시작하면 함께 들어가요', !allowed() || room.players.length < 2 || uid() !== room.hostUid) + (room.notice ? '<p class="uno-note">' + esc(room.notice) + '</p>' : '') + '</div>';
             } else if (!state || state.revision !== room.revision) {
                 html += '<div class="uno-panel"><p class="uno-note">최신 게임 상태를 불러오고 있어요.</p>' + button('retry', '다시 연결', busy, true) + '</div>';
             } else if (state.winnerUid && !motionBusy) {
-                html += '<div class="uno-panel uno-result"><span aria-hidden="true">' + icon('trophy') + '</span><h2>' + (state.winnerUid === uid() ? '내가 이겼어요!' : esc(name(state.winnerUid)) + '님 승리!') + '</h2><p>모든 카드를 가장 먼저 냈어요.<br>이번 판 점수 ' + state.roundPoints + '점</p>' + button('start', '한 판 더 하기', !allowed() || uid() !== room.hostUid) + (uid() !== room.hostUid ? '<p>방장이 다시 시작할 수 있어요.</p>' : '') + '</div>' + playersHtml();
+                html += '<div class="uno-panel uno-result"><span aria-hidden="true">' + icon('trophy') + '</span><h2>' + (state.winnerUid === uid() ? '내가 이겼어요!' : esc(name(state.winnerUid)) + '님 승리!') + '</h2><p>모든 카드를 가장 먼저 냈어요.<br>이번 판 점수 ' + state.roundPoints + '점</p>' + button('start', '한 판 더 하기', !allowed() || uid() !== room.hostUid) + (uid() !== room.hostUid ? '<p>방장이 다시 시작할 수 있어요.</p>' : '') + '</div>' + (mode === 'friends' ? rankingsHtml() : playersHtml());
             } else {
                 const hand = state.hands[uid()] || [], mine = state.turnUid === uid(), active = allowed() && mine;
                 const top = state.discard[state.discard.length - 1], currentColor = colors[state.color] || colors.wild;
@@ -662,9 +738,8 @@
             content.innerHTML = html;
         }
         const nextHand = content.querySelector('.uno-hand'); if (nextHand) nextHand.scrollLeft = handScroll;
-        if (inputFocused) document.getElementById('uno-join-code')?.focus({ preventScroll: true });
-        else if (focusAction && content.contains(focus) === false) {
-            const replacement = Array.from(content.querySelectorAll('[data-uno-action]')).find(element => element.dataset.unoAction === focusAction && element.dataset.cardId === focusCard && element.dataset.color === focusColor && element.dataset.count === focus?.dataset?.count);
+        if (focusAction && content.contains(focus) === false) {
+            const replacement = Array.from(content.querySelectorAll('[data-uno-action]')).find(element => element.dataset.unoAction === focusAction && element.dataset.cardId === focusCard && element.dataset.color === focusColor && element.dataset.count === focus?.dataset?.count && element.dataset.roomId === focus?.dataset?.roomId && element.dataset.playerUid === focus?.dataset?.playerUid);
             if (replacement && !replacement.disabled) replacement.focus({ preventScroll: true });
         }
         syncDealView();
@@ -689,7 +764,7 @@
     }
     window.openDropGame = function () {
         if (open()) return;
-        if (mode !== 'solo' && lastUid !== accountUid()) { epoch++; stop(); code = ''; room = state = selectedCard = null; armed = false; lastUid = accountUid(); busy = false; }
+        if (mode !== 'solo' && lastUid !== accountUid()) { epoch++; stop(); code = ''; room = state = selectedCard = null; armed = false; lastUid = accountUid(); busy = false; lobbyRooms = []; lobbyError = ''; lobbyAttempts = 0; }
         previousFocus = document.activeElement;
         savedOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
@@ -722,7 +797,7 @@
         sound.unlock();
         if (action === 'close') return mode === 'solo' && code ? returnToSoloSetup() : close();
         if (!code && !busy && (action === 'mode-friends' || action === 'mode-solo')) {
-            mode = action === 'mode-solo' ? 'solo' : 'friends'; status.textContent = '';
+            mode = action === 'mode-solo' ? 'solo' : 'friends'; status.textContent = ''; lobbyError = ''; lobbyAttempts = 0;
             if (mode === 'friends') {
                 lastUid = accountUid(); const resume = storedCode();
                 if (resume && ready()) { code = resume; reconnect(); return; }
@@ -733,14 +808,18 @@
         if (action === 'solo-start' && mode === 'solo' && !code) return startSolo();
         if (action === 'login') return window.loginForUno?.();
         if (action === 'create') return create();
+        if (action === 'join-room') return join(target.dataset.roomId);
+        if (action === 'add-bot') return act({ type: 'add-bot' });
+        if (action === 'remove-bot') return act({ type: 'remove-bot', uid: target.dataset.playerUid });
+        if (action === 'refresh-rooms') {
+            lobbyError = ''; lobbyAttempts = 0;
+            if (lobbySocket?.readyState === 1) { lobbyLoading = true; lobbySocket.send(JSON.stringify({ type: 'refresh' })); }
+            else stopLobby();
+            render(); return;
+        }
         if (action === 'retry') { status.textContent = ''; if (ready() && code) reconnect(); return; }
         if (action === 'forget') { clearRoom(); status.textContent = ''; render(); return; }
         if (action === 'leave') return leave();
-        if (action === 'copy') {
-            try { await window.navigator.clipboard.writeText(code); status.textContent = '방 코드를 복사했어요. 친구에게 보내주세요.'; }
-            catch (_) { status.textContent = '친구에게 이 방 코드를 알려주세요: ' + code; }
-            return;
-        }
         if (action === 'arm') { armed = !armed; render(); return; }
         if (action === 'cancel-color') { selectedCard = null; render(); return; }
         if (action === 'card') {
@@ -752,11 +831,6 @@
         }
         if (action === 'color') return act(selectedCard ? { type: 'play', cardId: selectedCard.id, color: target.dataset.color, uno: armed } : { type: 'color', color: target.dataset.color });
         if (['start', 'draw', 'pass', 'uno', 'catch', 'accept4', 'challenge4'].includes(action)) return act({ type: action });
-    });
-    screen.addEventListener('submit', event => {
-        if (event.target.id !== 'uno-join-form') return;
-        sound.unlock();
-        event.preventDefault(); join(document.getElementById('uno-join-code').value);
     });
     screen.addEventListener('keydown', event => {
         if (event.key === 'Escape') { event.preventDefault(); close(); return; }
@@ -770,7 +844,7 @@
     window.addEventListener('enjoy-auth-ready', () => {
         if (mode === 'solo') { lastUid = accountUid(); return; }
         if (lastUid !== accountUid()) {
-            epoch++; stop(); code = ''; room = state = selectedCard = null; armed = busy = false; lastUid = accountUid();
+            epoch++; stop(); code = ''; room = state = selectedCard = null; armed = busy = false; lastUid = accountUid(); lobbyRooms = []; lobbyError = ''; lobbyAttempts = 0;
             if (open() && window.ENJOY_UNO_PAGE) {
                 const resume = storedCode(); if (resume && ready()) { code = resume; reconnect(); } else render();
             } else if (open()) {
