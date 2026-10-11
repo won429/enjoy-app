@@ -8199,7 +8199,7 @@
                         <div id="story-tray" class="flex overflow-x-auto scrollbar-hide pb-1 pt-1 px-1" style="-webkit-overflow-scrolling:touch; gap:0.3125rem;">
                             <!-- 멤버 항목은 JS가 채웁니다 -->
                         </div>
-                        <div class="drop-game-entry"><button id="drop-game-button" type="button" onclick="window.openDropGame()"><i class="ph ph-game-controller" aria-hidden="true"></i> 게임 드롭</button></div>
+                        <div class="drop-game-entry"><button id="drop-game-button" type="button" onclick="window.openDropGame()"><i class="ph ph-game-controller" aria-hidden="true"></i> 드롭 우노</button></div>
                     </section>
 
                     <!-- 멤버가 올린 드롭 사진 -->
@@ -22091,13 +22091,13 @@
     <script src="attendance.js?v=20261006"></script>
     <script src="meeting-benefits.js?v=20261006-store"></script>
     <script src="store.js?v=20261007-min-points"></script>
-    <section id="uno-game-screen" hidden role="dialog" aria-modal="true" aria-label="게임 드롭" style="position:fixed;inset:0;z-index:65;background:#090b10">
+    <section id="uno-game-screen" hidden role="dialog" aria-modal="true" aria-label="드롭 우노" style="position:fixed;inset:0;z-index:65;background:#090b10">
         <iframe id="uno-game-frame" title="우노 게임" allow="clipboard-write" style="display:block;width:100%;height:100%;border:0"></iframe>
     </section>
     <script>
         (() => {
             const screen = document.getElementById('uno-game-screen'), frame = document.getElementById('uno-game-frame');
-            let historyId = '', previousFocus = null, overflow = '';
+            let historyId = '', previousFocus = null, overflow = '', loaded = false;
             function hide() {
                 if (screen.hidden) return;
                 frame.contentWindow?.pauseUnoGame?.();
@@ -22110,12 +22110,17 @@
                 screen.hidden = false; document.body.style.overflow = 'hidden';
                 historyId = 'uno-page-' + Date.now();
                 history.pushState({ ...history.state, modal: 'uno', unoViewId: historyId }, '', location.href);
-                if (!frame.getAttribute('src')) frame.src = 'uno.html?v=20261011-cloudflare1';
+                if (!loaded) {
+                    loaded = true;
+                    frame.contentWindow.location.replace('uno.html?v=20261011-refine1');
+                }
                 else frame.contentWindow?.openDropGame?.();
                 frame.focus();
             };
             window.closeDropGame = () => {
-                if (history.state?.unoViewId === historyId) history.back(); else hide();
+                const undoEntry = history.state?.unoViewId === historyId;
+                hide();
+                if (undoEntry) history.back();
             };
             window.addEventListener('popstate', () => { if (!screen.hidden && history.state?.unoViewId !== historyId) hide(); });
             screen.addEventListener('keydown', event => { if (event.key === 'Escape') window.closeDropGame(); });

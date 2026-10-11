@@ -7,8 +7,7 @@ try {
 
 window.leaveUnoPage = () => {
     if (host) host.closeDropGame();
-    else if (document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1) history.back();
-    else location.assign('index.html');
+    else location.assign(new URL('index.html', location.href).href);
 };
 window.loginForUno = () => { window.leaveUnoPage(); };
 function authChanged(user) {
