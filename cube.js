@@ -1,7 +1,9 @@
 (() => {
   'use strict';
-  const E = window.DropCube, L=window.CubeLayout, content = document.getElementById('cube-content'), status = document.getElementById('cube-status'), connection = document.getElementById('cube-connection');
+  const E = window.DropCube, L=window.CubeLayout, C=window.CubeCues, content = document.getElementById('cube-content'), status = document.getElementById('cube-status'), connection = document.getElementById('cube-connection');
   let mode='solo', count=2, room=null, state=null, code='', active=true, selected=[], draft=null, soloPlayers=[], soloTimer=null, socket=null, lobby=null, rooms=[], live=false, pending=null, pendingTimer=null, reconnectTimer=null, messageTimer=null, lastUid='', generation=0, lobbyGeneration=0, retry=0, clockOffset=0, sort='color', sound=true, audio=null, drag=null, suppressClickUntil=0, lastPaint=new Map(), fitFrame=null, draftLayout=[], rackSlots=[], landingOrigin=null, lastAnimatedMove="", showErrors=false;
+  let weekly=null,friendsTab='rooms',weeklyOpen=false,lobbyRetry=0,lobbyReconnectTimer=null,soloRound=0,noticeTimer=null;
+  const cueTracker=C.createTracker();
   const TURN_MS=30000, screen=document.getElementById('cube-screen');
   try { sound=localStorage.getItem('drop-cube-sound')!=='off'; } catch (_) {}
   const esc = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -16,7 +18,7 @@
   const hintsLeft = () => Math.max(0,E.HINT_LIMIT-(state?.hintsUsed?.[you()]||0));
   const btn=(action,label,cls='',disabled=false,attrs='')=>`<button class="cube-btn ${cls}" data-action="${action}" ${disabled?'disabled':''} ${attrs}>${label}</button>`;
   function note(message) { status.textContent=message; clearTimeout(messageTimer); if(message) messageTimer=setTimeout(()=>{status.textContent='';},6500); }
-  const mediaEffects=Object.fromEntries(['pick','draw','done'].map(kind=>[kind,{element:new Audio('assets/cube/sound-'+kind+'.wav'),unlocked:false,used:false}]));
+  const mediaEffects=Object.fromEntries(['pick','draw','done','tick','urgent','timeout'].map(kind=>[kind,{element:new Audio('assets/cube/sound-'+kind+'.wav'),unlocked:false,used:false}]));
   function unlockAudio() {
     if(!sound)return;
     try {
@@ -36,8 +38,20 @@
       const effect=mediaEffects[kind]||mediaEffects.pick;effect.used=true;effect.element.muted=false;effect.element.volume=1;effect.element.currentTime=0;
       effect.element.play().catch(()=>{});return;
     }
-    try { const osc=audio.createOscillator(), gain=audio.createGain(); osc.connect(gain);gain.connect(audio.destination); osc.type='sine';osc.frequency.value=kind==='done'?740:kind==='draw'?260:480;gain.gain.setValueAtTime(.045,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.12);osc.start();osc.stop(audio.currentTime+.13); }catch(_){}
+    try {
+      const settings={pick:[480,.13,.045],draw:[260,.13,.045],done:[740,.13,.045],tick:[1500,.055,.025],urgent:[980,.12,.045],timeout:[520,.6,.065]},[frequency,duration,volume]=settings[kind]||settings.pick;
+      for(const offset of kind==='urgent'?[0,.16]:[0]){const start=audio.currentTime+offset,osc=audio.createOscillator(),gain=audio.createGain();osc.connect(gain);gain.connect(audio.destination);osc.type=kind==='tick'?'triangle':'sine';osc.frequency.value=frequency;gain.gain.setValueAtTime(.001,start);gain.gain.linearRampToValueAtTime(volume,start+.006);gain.gain.exponentialRampToValueAtTime(.001,start+duration);osc.start(start);osc.stop(start+duration+.01);}
+    }catch(_){}
   }
+  function hideTurnNotice(){clearTimeout(noticeTimer);const notice=document.getElementById('cube-turn-notice');notice.hidden=true;notice.classList.remove('show');}
+  function showTurnNotice(){const notice=document.getElementById('cube-turn-notice');clearTimeout(noticeTimer);notice.hidden=false;notice.classList.remove('show');void notice.offsetWidth;notice.classList.add('show');noticeTimer=setTimeout(hideTurnNotice,1400);}
+  function weeklyHtml(){
+    if(!weekly)return '<div class="cube-weekly"><p class="cube-caption">주간 순위를 불러오고 있어요.</p></div>';
+    const dates=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric'}),period=dates.format(weekly.startsAt)+' – '+dates.format(weekly.endsAt-1);
+    const row=p=>`<li class="${p.uid===user()?'me':''}"><b class="cube-rank-number">${p.rank}</b>${avatar({...p,account:true},0)}<div><strong>${esc(p.name)}${p.uid===user()?' · 나':''}</strong><small>${p.games}판 · ${p.points>0?'+':''}${p.points}점</small></div><b>${p.wins}승</b></li>`;
+    return `<section class="cube-weekly"><div class="cube-weekly-title"><h3>주간 순위</h3><span>${esc(period)}</span></div><p class="cube-caption">승수순 · 동률이면 누적 점수순<br>친구 2명 이상 완료한 판 · 월요일 0시 초기화(한국시간)</p>${weekly.entries.length?`<ol class="cube-weekly-list">${weekly.entries.map(row).join('')}</ol>${weekly.myEntry&&!weekly.entries.some(p=>p.uid===user())?`<ol class="cube-weekly-list cube-my-rank">${row(weekly.myEntry)}</ol>`:''}`:'<p class="cube-weekly-empty">이번 주 첫 승리를 기록해보세요!</p>'}</section>`;
+  }
+
   function avatar(p,i=0) {
     if(!p.bot&&(p.account||mode==='friends')){
       let photo='';try{const url=new URL(p.photoURL||'');if(url.protocol==='https:'&&!url.username&&!url.password)photo=url.href;}catch(_){}
@@ -57,16 +71,18 @@
     const logo=[{id:'logo-r',color:'red',n:10},{id:'logo-b',color:'blue',n:10},{id:'logo-o',color:'orange',n:10},{id:'logo-j',color:'joker',n:0}].map(t=>tile(t,'logo',true)).join('');
     let panel=mode==='solo'?`<h3>몇 명이 함께할까요?</h3><p class="cube-caption">나와 가상 플레이어가 한 테이블에서 만나요.</p><div class="cube-counts">${[2,3,4].map(n=>`<button data-action="count" data-count="${n}" aria-pressed="${count===n}">${n}명</button>`).join('')}</div>${btn('solo-start','게임 시작','wide')}<p class="cube-note">로그인 없이, 한 차례에 30초씩 즐겨요.</p>`:
     !user()?`<h3>멤버와 함께 플레이</h3><p class="cube-caption">드롭에서 멤버 계정으로 로그인하면 방을 만들고 친구와 함께할 수 있어요.</p>${btn('login','드롭으로 돌아가기','wide')}`:
-    `${btn('create','새 방 만들기','wide',!!socket)}<div class="cube-join"><input id="cube-code" aria-label="6자리 방 코드" maxlength="6" placeholder="방 코드 6자리" autocomplete="off" autocapitalize="characters">${btn('join','입장','secondary',!!socket)}</div><div class="cube-room-list"><h3>친구들의 테이블</h3>${rooms.length?rooms.map(r=>`<div class="cube-room-item"><div><strong>${esc(r.title)}</strong><small>${esc(r.id)} · ${r.playerCount}/4명 · ${r.status==='waiting'?'대기 중':r.status==='finished'?'게임 종료':'플레이 중'}</small></div>${btn('join-listed','입장','secondary',r.status!=='waiting'||r.playerCount>=4||!!socket,`data-code="${esc(r.id)}"`)}</div>`).join(''):`<p class="cube-caption">${lobby?.readyState===WebSocket.OPEN?'열려 있는 방이 없어요. 첫 테이블을 만들어보세요.':'친구들의 방을 연결하고 있어요.'}</p>`}</div>`;
-    content.innerHTML=`<div class="cube-setup"><div class="cube-hero"><span class="cube-kicker">A LITTLE STRATEGY. A LOT OF FUN.</span><div class="cube-logo">${logo}</div><h2>타일 하나로 바뀌는 판</h2><p>숫자를 잇고, 색을 모으고.<br>나만의 한 수를 내려놓으세요.</p></div><div class="cube-panel"><div class="cube-modes"><button data-action="mode-solo" aria-pressed="${mode==='solo'}">혼자하기</button><button data-action="mode-friends" aria-pressed="${mode==='friends'}">친구와 하기</button></div>${panel}</div></div>`;
+    `<div class="cube-friends-tabs"><button data-action="rooms-tab" aria-pressed="${friendsTab==='rooms'}">방 목록</button><button data-action="weekly-tab" aria-pressed="${friendsTab==='weekly'}"><i class="ph ph-trophy" aria-hidden="true"></i> 주간 순위</button></div>${friendsTab==='weekly'?weeklyHtml():`${btn('create','새 방 만들기','wide',!!socket)}<div class="cube-room-list"><h3>친구들의 테이블</h3>${rooms.length?rooms.map(r=>`<div class="cube-room-item"><div><strong>${esc(r.title)}</strong><small>${r.playerCount}/4명 · ${r.status==='waiting'?'대기 중':r.status==='finished'?'게임 종료':'플레이 중'}</small></div>${btn('join-listed',r.playerCount>=4?'만석':r.status==='playing'?'플레이 중':r.status==='finished'?'게임 종료':'입장','secondary',r.status!=='waiting'||r.playerCount>=4||!!socket,`data-code="${esc(r.id)}"`)}</div>`).join(''):`<p class="cube-caption">${lobby?.readyState===WebSocket.OPEN?'열려 있는 방이 없어요. 첫 테이블을 만들어보세요.':'친구들의 방을 연결하고 있어요.'}</p>`}</div>`}`;
+
+    content.innerHTML=`<div class="cube-setup"><div class="cube-hero"><span class="cube-kicker">A LITTLE STRATEGY. A LOT OF FUN.</span><div class="cube-logo">${logo}</div><h2>타일 하나로 바뀌는 판</h2><p>숫자를 잇고, 색을 모으고.<br>나만의 한 수를 내려놓으세요.</p></div><div class="cube-panel ${mode==='friends'?'cube-friends-panel':''}"><div class="cube-modes"><button data-action="mode-solo" aria-pressed="${mode==='solo'}">혼자하기</button><button data-action="mode-friends" aria-pressed="${mode==='friends'}">친구와 하기</button></div>${panel}</div></div>`;
   }
   function renderWaiting() {
     const host=room.hostUid===user();
-    content.innerHTML=`<div class="cube-setup"><div class="cube-panel"><div class="cube-room-code"><div><small>친구에게 알려줄 방 코드</small><strong>${esc(code)}</strong></div>${btn('copy','코드 복사','secondary')}</div><h3>테이블을 준비하고 있어요</h3><p class="cube-caption">${esc(room.notice||'친구와 함께, 또는 가상 플레이어를 추가해 시작하세요.')}</p>${room.players.map((p,i)=>`<div class="cube-wait-player">${avatar(p,i)}<div><strong>${esc(p.name)}</strong><small>${p.uid===room.hostUid?'방장':p.bot?'가상 플레이어':'멤버'}${p.uid===user()?' · 나':''}</small></div>${host&&p.bot?btn('remove-bot','삭제','secondary',!live||!!pending,`data-uid="${esc(p.uid)}"`):''}</div>`).join('')}<div class="cube-wait-actions">${host?btn('add-bot','가상 플레이어 +','secondary',room.players.length>=4||!live||!!pending)+btn('start','게임 시작','',room.players.length<2||!live||!!pending):'<p class="cube-caption">방장이 시작하면 게임이 열려요.</p>'}</div><button class="cube-leave" data-action="leave" ${!live||pending?'disabled':''}>방 나가기</button></div></div>`;
+    content.innerHTML=`<div class="cube-setup"><div class="cube-panel"><div class="cube-room-code"><div><small>함께할 친구를 기다리고 있어요</small><strong>${esc(room.players.find(p=>p.uid===room.hostUid)?.name||'친구')}님의 방</strong></div></div><h3>테이블을 준비하고 있어요</h3><p class="cube-caption">${esc(room.notice||'친구와 함께, 또는 가상 플레이어를 추가해 시작하세요.')}</p>${room.players.map((p,i)=>`<div class="cube-wait-player">${avatar(p,i)}<div><strong>${esc(p.name)}</strong><small>${p.uid===room.hostUid?'방장':p.bot?'가상 플레이어':'멤버'}${p.uid===user()?' · 나':''}</small></div>${host&&p.bot?btn('remove-bot','삭제','secondary',!live||!!pending,`data-uid="${esc(p.uid)}"`):''}</div>`).join('')}<div class="cube-wait-actions">${host?btn('add-bot','가상 플레이어 +','secondary',room.players.length>=4||!live||!!pending)+btn('start','게임 시작','',room.players.length<2||!live||!!pending):'<p class="cube-caption">방장이 시작하면 게임이 열려요.</p>'}</div><button class="cube-leave" data-action="leave" ${!live||pending?'disabled':''}>방 나가기</button></div></div>`;
   }
   function renderResult() {
     const ranking=mode==='solo'?E.rankings(state):state.rankings;
-    content.innerHTML=`<div class="cube-setup"><div class="cube-panel cube-result"><i class="ph ph-trophy" aria-hidden="true"></i><h2>${esc(name(state.winnerUid))} 승리!</h2><p class="cube-caption">${state.blocked?'더미가 비고 모두 차례를 넘겼어요. 남은 타일 점수로 승자를 정했습니다.':'받침대의 모든 타일을 내려놓았어요.'}</p>${ranking.map((r,i)=>`<div class="cube-score"><div><strong>${i+1}. ${esc(name(r.uid))}</strong><small>남은 ${r.remaining}장 · 타일 점수 ${r.penalty}</small></div><b>${r.score>0?'+':''}${r.score}점</b></div>`).join('')}${mode==='solo'?btn('solo-start','한 판 더 하기','wide'):room.hostUid===user()?btn('start','새 판 시작','wide',!live||!!pending):'<p class="cube-caption">방장이 새 판을 시작할 수 있어요.</p>'}<button class="cube-leave" data-action="${mode==='solo'?'solo-exit':'leave'}">${mode==='solo'?'인원 선택으로':'방 나가기'}</button></div></div>`;
+    content.innerHTML=`<div class="cube-setup"><div class="cube-panel cube-result"><i class="ph ph-trophy" aria-hidden="true"></i><h2>${esc(name(state.winnerUid))} 승리!</h2><p class="cube-caption">${state.blocked?'더미가 비고 모두 차례를 넘겼어요. 남은 타일 점수로 승자를 정했습니다.':'받침대의 모든 타일을 내려놓았어요.'}</p>${ranking.map((r,i)=>`<div class="cube-score"><div><strong>${i+1}. ${esc(name(r.uid))}</strong><small>남은 ${r.remaining}장 · 타일 점수 ${r.penalty}</small></div><b>${r.score>0?'+':''}${r.score}점</b></div>`).join('')}${mode==='solo'?btn('solo-start','한 판 더 하기','wide'):room.hostUid===user()?btn('start','새 판 시작','wide',!live||!!pending):'<p class="cube-caption">방장이 새 판을 시작할 수 있어요.</p>'}<button class="cube-leave" data-action="${mode==='solo'?'solo-exit':'leave'}">${mode==='solo'?'인원 선택으로':'방 나가기'}</button>${mode==='friends'?btn('toggle-weekly',weeklyOpen?'주간 순위 접기':'주간 순위 보기','secondary wide')+(weeklyOpen?weeklyHtml():''):''}</div></div>`;
+    if(mode==='friends')connectLobby();
   }
   function renderMatch() {
     const map=currentTiles(), edit=canEdit(), me=you(), myself=people().find(p=>p.uid===me)||{name:'나'}, opponents=players().filter(p=>p.uid!==me);
@@ -87,7 +103,7 @@
       `<div class="cube-empty"><h2>숫자를 잇고,<br>색을 모으세요</h2><p>패를 끌어 놓으세요 · 첫 등록은 30점 이상</p></div>`;
     content.innerHTML=`<div class="cube-match ${showErrors?'cube-validation-errors':''}" data-player-count="${people().length}" ${showErrors?'data-invalid="true"':''}>
       <aside class="cube-players-rail" aria-label="플레이어">${opponents.map((p,i)=>seat(p,i)).join('')}${seat(myself,3,true)}</aside>
-      <div class="cube-turnbar"><strong class="${mine()?'myturn':''}">${mine()?'나의 차례':esc(name(state.turnUid))+'의 차례'}</strong><span>${mode==='friends'?'친구와 플레이':'혼자하기'}${code&&mode==='friends'?' · '+esc(code):''}</span></div>
+      <div class="cube-turnbar"><strong class="${mine()?'myturn':''}">${mine()?'나의 차례':esc(name(state.turnUid))+'의 차례'}</strong><span>${mode==='friends'?'친구와 플레이':'혼자하기'}</span></div>
       <div class="cube-board" aria-label="공유 테이블">${board}</div>
       <aside class="cube-game-controls" aria-label="게임 조작" data-editing="${JSON.stringify(rows.filter(row=>row.length))!==JSON.stringify(state.table.map(row=>row.map(t=>t.id)))}">
         <div class="cube-registration"><i class="ph ph-squares-four" aria-hidden="true"></i><strong>${state.opened[me]?'등록 완료':opening+' / 30'}</strong><small>${state.opened[me]?'타일을 자유롭게 조합':'첫 등록 점수'}</small></div>
@@ -110,17 +126,18 @@
     const input=document.getElementById('cube-code'), inputValue=input?.value||'', focused=document.activeElement, focusId=focused?.dataset?.id, focusAction=focused?.dataset?.action, inputFocused=focused===input;
     document.getElementById('cube-screen').classList.toggle('cube-playing',!!state&&!state.winnerUid);
     statusText();if(state?.winnerUid) renderResult();else if(state) renderMatch();else if(room) renderWaiting();else renderSetup();
-    const board=content.querySelector('.cube-board'),rack=content.querySelector('.cube-rack');if(rack)rack.scrollLeft=rackScroll;content.scrollTop=outerScroll; animateTiles();
+    const board=content.querySelector('.cube-board'),rack=content.querySelector('.cube-rack');if(rack)rack.scrollLeft=rackScroll;content.scrollTop=outerScroll; animateTiles();updateClock();
     const field=document.getElementById('cube-code');if(field){field.value=inputValue;if(inputFocused)field.focus({preventScroll:true});}
     if(focusId){const next=Array.from(content.querySelectorAll('[data-id]')).find(el=>el.dataset.id===focusId);next?.focus({preventScroll:true});}
     else if(focusAction&&!inputFocused&&content.contains(focused)===false){Array.from(content.querySelectorAll('[data-action]')).find(el=>el.dataset.action===focusAction)?.focus({preventScroll:true});}
   }
   function updateClock() {
-    const el=document.getElementById('cube-clock');
-    if(el&&state?.turnDeadline) {
-      const seconds=Math.max(0,Math.ceil((state.turnDeadline-Date.now()-(mode==='friends'?clockOffset:0))/1000));
-      el.textContent=seconds;el.setAttribute('aria-label','남은 차례 시간 '+seconds+'초');el.closest('.cube-portrait')?.style.setProperty('--turn-angle',Math.max(0,Math.min(360,(state.turnDeadline-Date.now()-(mode==='friends'?clockOffset:0))/TURN_MS*360))+'deg');el.closest('.cube-seat')?.classList.toggle('urgent',seconds<=10);
-    }
+    const el=document.getElementById('cube-clock'),now=Date.now()+(mode==='friends'?clockOffset:0),deadline=state?.turnDeadline||0;
+    if(el&&deadline){const seconds=Math.max(0,Math.ceil((deadline-now)/1000));el.textContent=seconds;el.setAttribute('aria-label','남은 차례 시간 '+seconds+'초');el.closest('.cube-portrait')?.style.setProperty('--turn-angle',Math.max(0,Math.min(360,(deadline-now)/TURN_MS*360))+'deg');el.closest('.cube-seat')?.classList.toggle('urgent',seconds<=10);}
+    const key=state?mode+'|'+(mode==='solo'?soloRound:code+'|'+room?.createdAt+'|'+room?.round)+'|'+state.turn:null;
+    const cue=cueTracker.update({key,own:mine(),deadline,now,enabled:active&&!document.hidden,sound,finished:!!state?.winnerUid});
+    if(cue.announce)showTurnNotice();if(cue.effect)beep(cue.effect);
+    if(!active||document.hidden||!mine())hideTurnNotice();
   }
   setInterval(updateClock,250);
   function stopSolo() { clearTimeout(soloTimer);soloTimer=null; }
@@ -130,12 +147,12 @@
     const remaining=Math.max(0,state.turnDeadline-Date.now());
     soloTimer=setTimeout(()=>{
       if(!active||mode!=='solo'||!state||state.winnerUid)return;
-      try {const timeout=Date.now()>=state.turnDeadline;advanceSolo(timeout?{type:'draw'}:E.botAction(state,state.turnUid));beep(timeout?'draw':'done');render();if(timeout)note('30초가 끝나 미완성 배치를 취소하고 1장을 뽑았어요.');scheduleSolo();}catch(e){note(e.message);}
+      try {const timeout=Date.now()>=state.turnDeadline;advanceSolo(timeout?{type:'draw'}:E.botAction(state,state.turnUid));if(!timeout)beep('done');render();if(timeout)note('30초가 끝나 미완성 배치를 취소하고 1장을 뽑았어요.');scheduleSolo();}catch(e){note(e.message);}
     },mine()?remaining:Math.min(1300,remaining));
   }
-  function beginSolo() { rackSlots=[];lastAnimatedMove='';disconnectRoom();stopLobby();room=null;mode='solo';soloPlayers=[{uid:'you',name:'나'},...Array.from({length:count-1},(_,i)=>({uid:'bot-'+i,name:['루미','모모','하루'][i],bot:true}))];state=E.start(soloPlayers.map(p=>p.uid));state.turnDeadline=Date.now()+TURN_MS;resetDraft();note('14장씩 나눴어요. '+name(state.turnUid)+'부터 시작!');beep('done');render();scheduleSolo(); }
+  function beginSolo() { soloRound++;weeklyOpen=false;rackSlots=[];lastAnimatedMove='';disconnectRoom();stopLobby();room=null;mode='solo';soloPlayers=[{uid:'you',name:'나'},...Array.from({length:count-1},(_,i)=>({uid:'bot-'+i,name:['루미','모모','하루'][i],bot:true}))];state=E.start(soloPlayers.map(p=>p.uid));state.turnDeadline=Date.now()+TURN_MS;resetDraft();note('14장씩 나눴어요. '+name(state.turnUid)+'부터 시작!');beep('done');render();scheduleSolo(); }
   function disconnectRoom() { generation++;clearTimeout(reconnectTimer);reconnectTimer=null;clearTimeout(pendingTimer);pendingTimer=null;const old=socket;socket=null;live=false;old?.close(); }
-  function stopLobby() { lobbyGeneration++;const old=lobby;lobby=null;old?.close(); }
+  function stopLobby() { lobbyGeneration++;clearTimeout(lobbyReconnectTimer);lobbyReconnectTimer=null;const old=lobby;lobby=null;old?.close(); }
   function clearRoom() { disconnectRoom();pending=null;room=null;state=null;draft=null;selected=[];code='';try{localStorage.removeItem(key());}catch(_){}render();connectLobby(); }
   async function connectRoom(roomCode,create=false) {
     if(!user()||!window.getEnjoyIdToken) {note('먼저 멤버 계정으로 로그인해주세요.');return;}
@@ -153,7 +170,7 @@
       let p;try{p=JSON.parse(e.data);}catch(_){return;}
       if(p.type==='ready'){accepted=true;live=true;retry=0;clearTimeout(handshake);try{localStorage.setItem(key(),code);}catch(_){}if(pending){ws.send(JSON.stringify(pending));armPending();}statusText();}
       if(p.type==='snapshot'){
-        const changed=room?.revision!==p.room.revision;if(room?.round!==p.room.round)rackSlots=[];room=p.room;state=p.state;clockOffset=(p.serverNow||Date.now())-Date.now();if(changed)resetDraft();render();
+        const changed=room?.revision!==p.room.revision;if(room?.round!==p.room.round){rackSlots=[];weeklyOpen=false;}room=p.room;state=p.state;clockOffset=(p.serverNow||Date.now())-Date.now();if(changed)resetDraft();if(state&&!state.winnerUid&&lobby)stopLobby();render();
       }
       if(p.type==='ack'&&pending?.id===p.id){if(['commit','draw'].includes(pending.action.type))beep(pending.action.type==='draw'?'draw':'done');const leaving=pending.action.type==='leave',hinting=pending.action.type==='hint';pending=null;clearTimeout(pendingTimer);if(leaving)clearRoom();else if(hinting)showHint();else render();}
       if(p.type==='removed'){note(p.message||'방에서 나왔어요.');clearRoom();}
@@ -167,13 +184,13 @@
     ws.onerror=()=>{};
   }
   async function connectLobby() {
-    if(!active||mode!=='friends'||room||socket||!user()||!window.getEnjoyIdToken||lobby) return;
-    const gen=++lobbyGeneration,uid=user();let token;try{token=await window.getEnjoyIdToken();}catch(_){}
+    if(!active||mode!=='friends'||(room||socket)&&!state?.winnerUid||!user()||!window.getEnjoyIdToken||lobby)return;
+    const gen=++lobbyGeneration,uid=user();let token;try{token=await window.getEnjoyIdToken(lobbyRetry>0);}catch(_){}
     if(gen!==lobbyGeneration||!token||uid!==user()||!active||mode!=='friends')return;
     const ws=new WebSocket(window.ENJOY_CUBE_SERVER.replace(/^http/,'ws')+'/rooms');lobby=ws;
     ws.onopen=()=>ws.send(JSON.stringify({type:'hello',token}));
-    ws.onmessage=e=>{if(lobby!==ws)return;let p;try{p=JSON.parse(e.data);}catch(_){return;}if(p.type==='rooms'){rooms=p.rooms;live=true;render();}else if(p.type==='error'){note(p.message);}};
-    ws.onclose=()=>{if(lobby!==ws)return;lobby=null;live=false;render();};ws.onerror=()=>{};
+    ws.onmessage=e=>{if(lobby!==ws)return;let p;try{p=JSON.parse(e.data);}catch(_){return;}if(p.type==='rooms'){rooms=p.rooms;weekly=p.weekly||null;lobbyRetry=0;if(!room)live=true;if(!room||state?.winnerUid)render();}else if(p.type==='error'){note(p.message);}};
+    ws.onclose=()=>{if(lobby!==ws)return;lobby=null;if(!room)live=false;render();if(active&&mode==='friends'&&(!room||state?.winnerUid)){clearTimeout(lobbyReconnectTimer);lobbyReconnectTimer=setTimeout(connectLobby,Math.min(1000*2**lobbyRetry++,15000));}};ws.onerror=()=>{};
   }
   function armPending(){clearTimeout(pendingTimer);pendingTimer=setTimeout(()=>{if(pending&&active){note('연결을 다시 확인하고 있어요.');connectRoom(code);}},12000);}
   function send(action){
@@ -308,13 +325,15 @@
     if(action==='back'){if(mode==='solo'&&state){stopSolo();state=null;resetDraft();render();}else window.leaveCubePage?.();return;}
     if(action==='mode-solo'){stopLobby();disconnectRoom();pending=null;mode='solo';render();return;}
     if(action==='mode-friends'){mode='friends';render();let saved='';try{saved=localStorage.getItem(key())||'';}catch(_){}if(saved&&user())connectRoom(saved);else connectLobby();return;}
+    if(action==='rooms-tab'||action==='weekly-tab'){friendsTab=action==='rooms-tab'?'rooms':'weekly';render();connectLobby();return;}
+    if(action==='toggle-weekly'){weeklyOpen=!weeklyOpen;render();connectLobby();return;}
     if(action==='login'){window.loginForCube?.();return;}
     if(action==='count'){count=Number(button.dataset.count);render();return;}
     if(action==='solo-start'){beginSolo();return;}
     if(action==='solo-exit'){stopSolo();state=null;resetDraft();render();return;}
     if(action==='create'){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const values=crypto.getRandomValues(new Uint32Array(6));connectRoom(Array.from(values,n=>alphabet[n%alphabet.length]).join(''),true);return;}
-    if(action==='join'||action==='join-listed'){connectRoom(action==='join'?document.getElementById('cube-code').value.trim().toUpperCase():button.dataset.code);return;}
-    if(action==='copy'){try{await navigator.clipboard.writeText(code);note('방 코드를 복사했어요.');}catch(_){note('방 코드: '+code);}return;}
+    if(action==='join-listed'){connectRoom(button.dataset.code);return;}
+
     if(action==='start'||action==='add-bot'||action==='remove-bot'||action==='leave'){send({type:action,uid:button.dataset.uid});return;}
     if(['sort','sort-number','sort-color'].includes(action)){sort=action==='sort-number'?'number':action==='sort-color'?'color':sort==='color'?'number':'color';rackSlots=[];render();return;}
     if(!canEdit())return;
@@ -331,12 +350,12 @@
       }catch(e){showErrors=true;render();note(e.message);}return;
     }
   }
-  window.pauseCubeGame=()=>{cancelDrag();audio?.suspend().catch(()=>{});for(const {element} of Object.values(mediaEffects))element.pause();active=false;stopSolo();disconnectRoom();stopLobby();};
+  window.pauseCubeGame=()=>{hideTurnNotice();cancelDrag();audio?.suspend().catch(()=>{});for(const {element} of Object.values(mediaEffects))element.pause();active=false;stopSolo();disconnectRoom();stopLobby();};
   window.openDropCube=()=>{active=true;render();scheduleSolo();if(mode==='friends'){if(code)connectRoom(code);else connectLobby();}};
-  window.addEventListener('enjoy-auth-ready',()=>{const uid=user();if(uid!==lastUid){disconnectRoom();stopLobby();pending=null;room=null;if(mode==='friends'){state=null;draft=null;selected=[];}code='';rooms=[];lastUid=uid;}render();if(active&&mode==='friends'){let saved='';try{saved=localStorage.getItem(key())||'';}catch(_){}if(saved&&uid)connectRoom(saved);else connectLobby();}});
+  window.addEventListener('enjoy-auth-ready',()=>{const uid=user();if(uid!==lastUid){disconnectRoom();stopLobby();pending=null;room=null;if(mode==='friends'){state=null;draft=null;selected=[];}code='';rooms=[];weekly=null;lastUid=uid;}render();if(active&&mode==='friends'){let saved='';try{saved=localStorage.getItem(key())||'';}catch(_){}if(saved&&uid)connectRoom(saved);else connectLobby();}});
   window.addEventListener('online',()=>{if(active&&mode==='friends'){if(code)connectRoom(code);else connectLobby();}});
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('cube-rules').open)window.leaveCubePage?.();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){stopSolo();}else if(active){scheduleSolo();if(mode==='friends'&&code&&!socket)connectRoom(code);}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){hideTurnNotice();stopSolo();}else if(active){scheduleSolo();if(mode==='friends'&&code&&!socket)connectRoom(code);}});
   const soundButton=document.querySelector('[data-action="sound"]');soundButton.setAttribute('aria-pressed',String(sound));soundButton.setAttribute('aria-label',sound?'효과음 끄기':'효과음 켜기');soundButton.innerHTML=`<i class="ph ph-speaker-${sound?'high':'slash'}" aria-hidden="true"></i>`;
   render();
 })();

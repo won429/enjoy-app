@@ -5,7 +5,7 @@
 ## 플레이
 
 - 혼자하기: 2~4인, 가상 플레이어, 로그인/서버 없이 진행. 차례당 30초. 뒤로가기는 인원 선택, 브라우저 뒤로가기와 호스트 닫기는 일시 중지.
-- 친구와 하기: 기존 Firebase meetingApp 멤버 인증, 실시간 방 목록, 6자리 방 코드, 방장 시작/가상 플레이어 추가·삭제, 최대 4인.
+- 친구와 하기: 기존 Firebase meetingApp 멤버 인증, 실시간 방 목록에서 바로 입장, 방장 시작/가상 플레이어 추가·삭제, 최대 4인.
 - 106장, 14장 배분, 같은 숫자/다른 색 그룹과 같은 색 연속 숫자, 첫 등록 30점, 조커, 기존 테이블 재배열, 1장 뽑기, 승리/벌점/새 판.
 - 별도 새 묶음 버튼이나 양끝 화살표 없이, 패를 테이블의 원하는 곳에 끌어놓는다. 가까운 묶음의 끝이나 사이에 놓으면 이어진다. 놓은 위치는 유지되고, 패가 많아지면 테이블 전체가 함께 축소된다. 받침대에서도 빈칸 이동과 자리 교환이 가능하며 공간이 채워지면 열을 늘리고 패를 축소한다. 첫 등록 후에는 테이블 타일도 옮길 수 있다. 받침대로는 자신의 이번 차례 타일만 되돌릴 수 있다. 되돌리기는 이번 차례 편집 전체 취소.
 - 친구 모드 차례는 서버 기준 30초. 초안은 기기에만 있고 차례 완료 때 원자적으로 검증·반영된다. 시간이 끝나면 기존 테이블을 유지하고 1장 뽑는다. 혼자하기는 차례당 30초.
@@ -38,7 +38,7 @@ npm run deploy:cube
 ## 검증
 
 ```sh
-node --test tests/cube.test.cjs tests/cube-layout.test.cjs tests/cube-server.test.cjs
+node --test tests/cube.test.cjs tests/cube-layout.test.cjs tests/cube-cues.test.cjs tests/cube-weekly.test.cjs tests/cube-server.test.cjs
 node --test tests/uno.test.cjs tests/uno-solo.test.cjs tests/war-host.test.cjs
 ```
 
@@ -89,3 +89,12 @@ Reference: https://www.youtube.com/watch?v=zHEn8jo5MnU (placement, rack, clock a
 - Embedded games use the host's Enjoy member cache for account nicknames and photos. Direct visits restore the same Firebase session and read the member profile once. Anonymous solo remains playable offline. Friend profiles are verified by the Worker at connection and refreshed on reconnection without changing the turn, tiles or draft revision. HTTPS pictures render with no-referrer and fall back to the name initial if absent or unavailable. Bots keep the existing artwork.
 - Rack tiles are 18% smaller at the normal size. Landscape bottom spacing drops from a minimum 10px to 6px while retaining the device safe-area inset, moving the rack downward and expanding the shared board.
 - All 23 Cube tests pass, including automatic run splitting and a legal reuse submission, free-placement behavior, signed mock-member pictures and profile-refresh persistence. Browser QA covers the split/reuse interaction, keyboard movement, selected-tile clipping, smaller rack dimensions and the embedded account profile. Actual iPhone/Galaxy touch hardware and real two-account play were not available.
+
+## Countdown cues, turn notice and friend weekly standings (2026-10-12)
+
+- Own turns tick once per second for 10–6 seconds, double-ring at 5–1 seconds and play one expiry bell. Muting, hidden pages and other players' timers suppress the new sounds. The existing playback audio-session path remains; new PCM WAV fallbacks are sound-tick.wav, sound-urgent.wav and sound-timeout.wav.
+- A large, non-blocking 1.4-second Korean turn notice appears once on each own turn. Hint, sort and draft updates do not repeat it. Reduced-motion settings keep the message without its animation.
+- Friend entry has Room list and Weekly standings tabs; manual code entry and code copying are removed from the visible flow. Room identifiers and automatic reconnect remain internal. Lobby and result screens can display weekly standings; solo never records or displays them.
+- Completed rounds with at least two verified human members qualify. Bots do not appear in standings. Wins sort first, cumulative signed round score breaks ties, equal totals share rank. The week begins Monday 00:00 Asia/Seoul; current top 50 and the member's own rank are returned by the authenticated lobby stream. Past-week records remain stored.
+- Room objects save each completed result in a durable outbox. A private lobby call records it atomically by unique room-createdAt-round id, so retries and reconnection cannot award the round twice. Failed delivery retries via alarm and survives room departure and restart. The same existing CubeLobby SQLite object holds the scores; no new Durable Object binding or UNO store is used.
+- All 28 Cube tests pass, including a signed two-member finish, a failed ranking publication across restart, duplicate completion receipts, shared ranks, own rank below the top 50, week reset, cues and 120 AI games. Browser QA confirms one-click room entry, standings, the transient notice, and five ticks / five double-rings / one expiry per tested countdown. PCM amplitudes and durations are verified. Real phone hardware and real member-to-member play were not available.

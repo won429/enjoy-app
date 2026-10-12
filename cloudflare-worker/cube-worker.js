@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { CubeRoom, ROOM_TTL, TURN_MS, fail } from './cube-room.js';
+import { weekWindow, roundRecord, setupWeekly, recordWeekly, weeklyBoard } from './cube-weekly.js';
 
 const MAX_BYTES = 16384;
 let signingKeys = null, keysUntil = 0;
@@ -53,7 +54,7 @@ async function member(token, claims, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/health') return json({ ok: true, service: 'enjoy-cube', version: 7, turnMs: TURN_MS, layoutVersion: 1, hintLimit: 2 });
+    if (url.pathname === '/health') return json({ ok: true, service: 'enjoy-cube', version: 8, turnMs: TURN_MS, layoutVersion: 1, hintLimit: 2, weeklyRanking: true });
     const match = url.pathname.match(/^\/rooms\/([A-Z2-9]{6})$/);
     const lobby = url.pathname === '/rooms';
     if ((!match && !lobby) || request.method !== 'GET' || request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return json({ error: 'Not found' }, 404);
@@ -86,18 +87,21 @@ export class CubeGameRoom extends DurableObject {
   }
   send(ws, data) { try { ws.send(JSON.stringify(data)); } catch (_) { try { ws.close(1011, '연결을 다시 확인해주세요.'); } catch (_) {} } }
   async save() {
-    await this.ctx.storage.put('game', this.model.data);
-    await this.syncDirectory();
+    const record=roundRecord(this.model.data);
+    if(record&&this.model.data.weeklyQueuedId!==record.id){this.model.data.weeklyQueuedId=record.id;this.model.data.weeklyDirty=true;await this.ctx.storage.transaction(async tx=>{await tx.put('weekly:'+record.id,record);await tx.put('game',this.model.data);});}
+    else await this.ctx.storage.put('game',this.model.data);
+    await this.syncDirectory();await this.syncRankings();
     await this.scheduleAlarm();
   }
   async scheduleAlarm() {
-    if (!this.model.room) return;
-    const due = [this.model.room.updatedAt + ROOM_TTL];
-    if (this.model.data.nextBotAt) due.push(this.model.data.nextBotAt);
-    if (this.model.data.turnDeadline) due.push(this.model.data.turnDeadline);
-    if (this.model.data.directoryDirty) due.push(Date.now() + 5000);
-    if (this.model.room.status === 'closed') due.push(Date.now() + (this.model.data.directoryDirty ? 5000 : 1));
-    await this.ctx.storage.setAlarm(Math.min(...due));
+    if(!this.model.room)return;
+    const now=Date.now(),expires=this.model.room.updatedAt+ROOM_TTL,due=[];
+    if(this.model.room.status!=='closed'&&expires>now)due.push(expires);
+    if(this.model.room.status==='playing'){if(this.model.data.nextBotAt)due.push(this.model.data.nextBotAt);if(this.model.data.turnDeadline)due.push(this.model.data.turnDeadline);}
+    const dirty=this.model.data.directoryDirty||this.model.data.weeklyDirty;
+    if(dirty)due.push(now+5000);
+    if(this.model.room.status==='closed'&&!dirty)due.push(now+1);
+    await this.ctx.storage.setAlarm(due.length?Math.min(...due):now+1);
   }
   async syncDirectory() {
     const id = this.model.data?.code || this.roomCode;
@@ -112,6 +116,14 @@ export class CubeGameRoom extends DurableObject {
       this.model.data.directoryDirty = false;
     } catch (_) { this.model.data.directoryDirty = true; }
     await this.ctx.storage.put('game', this.model.data);
+  }
+  async syncRankings() {
+    if(!this.model.data||!this.env.CUBE_LOBBY)return;
+    const pending=await this.ctx.storage.list({prefix:'weekly:',limit:16});
+    try {for(const [key,record] of pending){const response=await this.env.CUBE_LOBBY.get(this.env.CUBE_LOBBY.idFromName('members')).fetch('https://directory/finish',{method:'POST',body:JSON.stringify(record)});if(!response.ok)throw Error('Rankings unavailable');await this.ctx.storage.delete(key);}}
+    catch(_){this.model.data.weeklyDirty=true;await this.ctx.storage.put('game',this.model.data);return;}
+    this.model.data.weeklyDirty=(await this.ctx.storage.list({prefix:'weekly:',limit:1})).size>0;
+    await this.ctx.storage.put('game',this.model.data);
   }
   view(session) {
     const snapshot = this.model.view(session.uid);
@@ -152,7 +164,7 @@ export class CubeGameRoom extends DurableObject {
         try {
           changed = this.model.connect(player, packet.create === true);
           this.model.data.code = this.roomCode;
-          if (changed) await this.save(); else { await this.syncDirectory(); await this.scheduleAlarm(); }
+          if (changed) await this.save(); else { await this.syncDirectory();await this.syncRankings(); await this.scheduleAlarm(); }
         }
         catch (error) { this.model = new CubeRoom(previous); throw error; }
         session = { ...session, authenticated: true, uid: player.uid, expiresAt: claims.exp * 1000, orderSelection: packet.orderSelection === true };
@@ -186,14 +198,14 @@ export class CubeGameRoom extends DurableObject {
       const now = Date.now(), next = this.model.room?.updatedAt + ROOM_TTL;
       if (Number.isFinite(next) && next > now && this.model.room.status !== 'closed') {
         if (this.model.advanceOrder(now) || this.model.advanceBot(now)) { await this.save(); this.broadcast(); }
-        else { await this.syncDirectory(); await this.scheduleAlarm(); }
+        else { await this.syncDirectory();await this.syncRankings(); await this.scheduleAlarm(); }
         return;
       }
       for (const ws of this.ctx.getWebSockets()) { this.send(ws, { type: 'removed', message: '오래 사용하지 않은 방이 종료되었어요.' }); ws.close(1000, '방 종료'); }
       if (this.model.data) {
         this.model.data.room.status = 'closed';
-        await this.syncDirectory();
-        if (this.model.data.directoryDirty) { await this.scheduleAlarm(); return; }
+        await this.syncDirectory();await this.syncRankings();
+        if (this.model.data.directoryDirty||this.model.data.weeklyDirty) { await this.scheduleAlarm(); return; }
       }
       await this.ctx.storage.deleteAll(); this.model = new CubeRoom();
     });
@@ -208,6 +220,7 @@ export class CubeLobby extends DurableObject {
     super(ctx, env);
     this.queue = Promise.resolve();
     ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS rooms (code TEXT PRIMARY KEY, payload TEXT NOT NULL, expires INTEGER NOT NULL)');
+    setupWeekly(ctx.storage.sql);
   }
   enqueue(operation) {
     const result = this.queue.then(operation);
@@ -219,19 +232,20 @@ export class CubeLobby extends DurableObject {
   }
   async scheduleAlarm() {
     const row = [...this.ctx.storage.sql.exec('SELECT MIN(expires) AS next FROM rooms')][0];
-    if (row?.next) await this.ctx.storage.setAlarm(row.next); else await this.ctx.storage.deleteAlarm();
+    await this.ctx.storage.setAlarm(Math.min(row?.next||Infinity,weekWindow().endsAt));
   }
   send(ws, packet) { try { ws.send(JSON.stringify(packet)); } catch (_) { try { ws.close(1011); } catch (_) {} } }
   async broadcast() {
-    const packet = { type: 'rooms', rooms: await this.entries() };
+    const rooms=await this.entries();
     for (const ws of this.ctx.getWebSockets()) {
       const session = ws.deserializeAttachment();
       if (!session?.uid) continue;
       if (session.expiresAt <= Date.now()) { ws.close(4001, '로그인을 갱신해주세요.'); continue; }
-      this.send(ws, packet);
+      this.send(ws,{type:'rooms',rooms,weekly:weeklyBoard(this.ctx.storage.sql,session.uid)});
     }
   }
   fetch(request) {
+    if(request.method==='POST'&&new URL(request.url).pathname==='/finish')return this.enqueue(async()=>{try{const recorded=recordWeekly(this.ctx.storage,await request.json());await this.scheduleAlarm();if(recorded)await this.broadcast();return json({ok:true,recorded});}catch(_){return json({error:'Invalid result'},400);}});
     if (request.method === 'POST' && new URL(request.url).pathname === '/publish') return this.enqueue(async () => {
       // This path has no public Worker route. Only the bound room objects call it.
       const { id, room } = await request.json();
@@ -267,7 +281,7 @@ export class CubeLobby extends DurableObject {
           if (this.ctx.getWebSockets().filter(socket => socket.deserializeAttachment()?.uid === claims.sub).length >= 4) fail('다른 기기의 방 목록을 닫아주세요.');
           ws.serializeAttachment({ ...session, uid: claims.sub, expiresAt: claims.exp * 1000 });
         } else if (packet.type !== 'refresh' || !session.uid || session.expiresAt <= now) fail('멤버 계정으로 다시 연결해주세요.', 'auth-required');
-        this.send(ws, { type: 'rooms', rooms: await this.entries() });
+        this.send(ws, { type: 'rooms', rooms: await this.entries(),weekly:weeklyBoard(this.ctx.storage.sql,ws.deserializeAttachment().uid) });await this.scheduleAlarm();
       } catch (error) {
         this.send(ws, { type: 'error', code: error.code || 'invalid-action', message: error.message });
         ws.close(4001, '다시 연결해주세요.');

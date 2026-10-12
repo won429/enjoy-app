@@ -47,13 +47,14 @@ export class CubeRoom {
       room.playerIds = room.players.map(p=>p.uid);
     } else if (action.type === 'start') {
       if (uid !== current.hostUid || !['waiting','finished'].includes(current.status)) fail('방장만 새 판을 시작할 수 있어요.');
-      state = engine.start(current.playerIds,this.random); room.round++; room.status = 'playing'; room.notice = '';
+      state = engine.start(current.playerIds,this.random); room.round++; room.status = 'playing'; room.notice = ''; room.finishedAt=null;
     } else {
       if (current.status !== 'playing' || !state) fail('진행 중인 게임이 없어요.');
       if (this.data.turnDeadline <= now) fail('차례 시간이 끝났어요. 다음 화면을 기다려주세요.');
       state = engine.move(state,uid,{ type: action.type, table: action.table });
       state.tableLayout = action.type==='commit' ? layout.normalize(state.table,action.layout) : layout.ensure(state.table,state.tableLayout); room.status = state.winnerUid ? 'finished' : 'playing';
     }
+    if(current.status==='playing'&&room.status==='finished')room.finishedAt=now;
     this.data = { ...this.data, room, state, turnDeadline: action.type==='hint' ? this.data.turnDeadline : room.status==='playing' ? now+TURN_MS : null, nextBotAt: action.type==='hint' ? this.data.nextBotAt : this.botTurn(room,state) ? now+1400 : null, receipts: [...this.data.receipts,{ uid,id:packet.id }].slice(-100) }; return true;
   }
   botTurn(room = this.room, state = this.state) { return room?.status==='playing' && !state?.winnerUid && room.players.some(p=>p.bot&&p.uid===state?.turnUid); }
@@ -64,7 +65,7 @@ export class CubeRoom {
     if (!bot && !timeout) return false;
     const uid = this.state.turnUid, state = engine.move(this.state,uid,bot ? engine.botAction(this.state,uid) : { type:'draw' });
     state.tableLayout=layout.ensure(state.table,state.tableLayout);
-    const room = { ...this.room, revision: this.room.revision+1, updatedAt:now, status: state.winnerUid?'finished':'playing' };
+    const room = { ...this.room, revision: this.room.revision+1, updatedAt:now, status: state.winnerUid?'finished':'playing', finishedAt:state.winnerUid?now:this.room.finishedAt };
     this.data = { ...this.data,room,state, turnDeadline: room.status==='playing'?now+TURN_MS:null, nextBotAt:this.botTurn(room,state)?now+1400:null }; return true;
   }
   listing(id) { const r=this.room; if (!r || r.status==='closed') return null; const botCount=r.players.filter(p=>p.bot).length; return { id,title:(r.players.find(p=>p.uid===r.hostUid)?.name||'친구')+'님의 방',playerCount:r.players.length,humanCount:r.players.length-botCount,botCount,capacity:4,status:r.status,createdAt:r.createdAt,expiresAt:r.updatedAt+ROOM_TTL }; }
