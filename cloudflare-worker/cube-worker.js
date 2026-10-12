@@ -52,7 +52,7 @@ async function member(token, claims, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/health') return json({ ok: true, service: 'enjoy-cube', version: 5, turnMs: TURN_MS, layoutVersion: 1 });
+    if (url.pathname === '/health') return json({ ok: true, service: 'enjoy-cube', version: 6, turnMs: TURN_MS, layoutVersion: 1, hintLimit: 2 });
     const match = url.pathname.match(/^\/rooms\/([A-Z2-9]{6})$/);
     const lobby = url.pathname === '/rooms';
     if ((!match && !lobby) || request.method !== 'GET' || request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return json({ error: 'Not found' }, 404);

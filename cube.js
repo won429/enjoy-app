@@ -13,6 +13,7 @@
   const players = () => people().slice();
   const mine = () => !!state && state.turnUid===you() && !state.winnerUid;
   const canEdit = () => active && mine() && !pending && (mode==='solo'||live) && (!state.turnDeadline || state.turnDeadline>Date.now()+(mode==='friends'?clockOffset:0));
+  const hintsLeft = () => Math.max(0,E.HINT_LIMIT-(state?.hintsUsed?.[you()]||0));
   const btn=(action,label,cls='',disabled=false,attrs='')=>`<button class="cube-btn ${cls}" data-action="${action}" ${disabled?'disabled':''} ${attrs}>${label}</button>`;
   function note(message) { status.textContent=message; clearTimeout(messageTimer); if(message) messageTimer=setTimeout(()=>{status.textContent='';},6500); }
   const mediaEffects=Object.fromEntries(['pick','draw','done'].map(kind=>[kind,{element:new Audio('assets/cube/sound-'+kind+'.wav'),unlocked:false,used:false}]));
@@ -40,7 +41,7 @@
   function avatar(p,i=0) { return `<span class="cube-avatar" style="--avatar-x:${(i%5)*25}%" aria-hidden="true"></span>`; }
   function tile(t,where,disabled=false,index=0) {
     const colors={red:'빨강',blue:'파랑',orange:'주황',black:'검정',joker:'조커'};
-    return `<button class="cube-tile ${selected.includes(t.id)?'selected':''}" data-action="tile" data-id="${esc(t.id)}" data-where="${where}" data-slot="${index}" data-color="${esc(t.color)}" aria-label="${colors[t.color]} ${t.n||''}${selected.includes(t.id)?', 선택됨':''}" aria-pressed="${selected.includes(t.id)}" style="--tile-index:${index}" ${disabled?'disabled':''}><small>${t.color==='joker'?'':esc(colors[t.color])}</small>${t.color==='joker'?'<i class="ph ph-smiley" aria-hidden="true"></i>':t.n}</button>`;
+    return `<button draggable="false" class="cube-tile ${selected.includes(t.id)?'selected':''}" data-action="tile" data-id="${esc(t.id)}" data-where="${where}" data-slot="${index}" data-color="${esc(t.color)}" aria-label="${colors[t.color]} ${t.n||''}${selected.includes(t.id)?', 선택됨':''}" aria-pressed="${selected.includes(t.id)}" style="--tile-index:${index}" ${disabled?'disabled':''}><small>${t.color==='joker'?'':esc(colors[t.color])}</small>${t.color==='joker'?'<i class="ph ph-smiley" aria-hidden="true"></i>':t.n}</button>`;
   }
   function currentTiles() { return new Map([...(state?.table.flat()||[]),...(state?.hands[you()]||[])].map(t=>[t.id,t])); }
   function resetDraft() { showErrors=false;selected=[];draft=state?.table.map(row=>row.map(t=>t.id))||null;draftLayout=draft?L.ensure(draft,state.tableLayout):[]; }
@@ -89,7 +90,7 @@
         <button class="cube-submit" data-action="commit" ${!edit||!played?'disabled':''}><i class="ph ph-check" aria-hidden="true"></i><span>${pending?'확인 중…':'차례 완료'}</span></button>
       </aside>
       <div class="cube-rack-area">
-        <div class="cube-draft-tools"><span>${selected.length?`${selected.length}장 함께 이동`:played?`${played}장 내려놓는 중`:esc(last)}</span><button data-action="hint" aria-label="힌트" ${!edit?'disabled':''}><i class="ph ph-lightbulb" aria-hidden="true"></i></button></div>
+        <div class="cube-draft-tools"><span>${selected.length?`${selected.length}장 함께 이동`:played?`${played}장 내려놓는 중`:esc(last)}</span><button data-action="hint" aria-label="힌트, ${hintsLeft()}회 남음" title="한 게임에 2번 · ${hintsLeft()}회 남음" ${!edit||!hintsLeft()?'disabled':''}><i class="ph ph-lightbulb" aria-hidden="true"></i><small aria-hidden="true">${hintsLeft()}</small></button></div>
         <div class="cube-rack-shell"><div class="cube-rack" aria-label="내 타일 받침대" style="--rack-columns:${columns}">${slots}${!rack.length?'<p class="cube-rack-empty">차례 완료를 눌러 타일을 제출하세요.</p>':''}</div></div>
       </div>
       ${mode==='friends'?`<button class="cube-match-leave" data-action="leave" ${pending?'disabled':''}><i class="ph ph-sign-out" aria-hidden="true"></i><span>방 나가기</span></button>`:''}
@@ -147,7 +148,7 @@
       if(p.type==='snapshot'){
         const changed=room?.revision!==p.room.revision;if(room?.round!==p.room.round)rackSlots=[];room=p.room;state=p.state;clockOffset=(p.serverNow||Date.now())-Date.now();if(changed)resetDraft();render();
       }
-      if(p.type==='ack'&&pending?.id===p.id){if(['commit','draw'].includes(pending.action.type))beep(pending.action.type==='draw'?'draw':'done');const leaving=pending.action.type==='leave';pending=null;clearTimeout(pendingTimer);if(leaving)clearRoom();else render();}
+      if(p.type==='ack'&&pending?.id===p.id){if(['commit','draw'].includes(pending.action.type))beep(pending.action.type==='draw'?'draw':'done');const leaving=pending.action.type==='leave',hinting=pending.action.type==='hint';pending=null;clearTimeout(pendingTimer);if(leaving)clearRoom();else if(hinting)showHint();else render();}
       if(p.type==='removed'){note(p.message||'방에서 나왔어요.');clearRoom();}
       if(p.type==='error'){
         if(p.id===pending?.id){pending=null;clearTimeout(pendingTimer);}
@@ -169,7 +170,7 @@
   }
   function armPending(){clearTimeout(pendingTimer);pendingTimer=setTimeout(()=>{if(pending&&active){note('연결을 다시 확인하고 있어요.');connectRoom(code);}},12000);}
   function send(action){
-    if(mode==='solo'){try{advanceSolo(action);beep(action.type==='draw'?'draw':'done');render();scheduleSolo();}catch(e){note(e.message);}return;}
+    if(mode==='solo'){try{if(action.type==='hint'){state=E.move(state,you(),action);showHint();return;}advanceSolo(action);beep(action.type==='draw'?'draw':'done');render();scheduleSolo();}catch(e){note(e.message);}return;}
     if(!live||socket?.readyState!==WebSocket.OPEN||pending){note('서버 연결을 기다려주세요.');return;}
     pending={type:'action',id:crypto.randomUUID(),revision:room.revision,action};socket.send(JSON.stringify(pending));armPending();render();
   }
@@ -219,6 +220,12 @@
     if(ids.some(id=>original.has(id))){note('공유 테이블의 타일은 다른 위치로 옮겨주세요.');return false;}
     draft=draft.map(row=>row.filter(id=>!ids.includes(id)));if(slot!==null)rackSlots=L.moveRack(rackSlots,ids,slot);selected=[];beep();render();return true;
   }
+  function selectTile(id) {selected=selected.includes(id)?selected.filter(t=>t!==id):[...selected,id];beep();render();}
+  function showHint() {
+    const hint=E.botAction(state,you());
+    if(hint?.type==='commit'){draft=hint.table;draftLayout=L.ensure(draft,draftLayout);selected=[];showErrors=false;render();note('가능한 배치를 준비했어요. 힌트 '+hintsLeft()+'회 남음. 확인하고 차례 완료를 누르세요.');}
+    else {render();note('배치 힌트를 찾지 못했어요. 힌트 '+hintsLeft()+'회 남음. 테이블을 재배열하거나 1장을 뽑아보세요.');}
+  }
   function cancelDrag() {
     if(!drag)return;
     const current=drag;drag=null;
@@ -226,15 +233,16 @@
     current.ghost?.remove();current.source?.classList.remove('drag-source');content.querySelector('.drop-target')?.classList.remove('drop-target');
   }
   screen.addEventListener('pointerdown',event=>{
-    if(event.button!==0||!canEdit())return;
+    if(event.button!==0||!canEdit()||drag)return;
     const source=event.target.closest('.cube-match .cube-tile:not(:disabled)');if(!source)return;
-    const box=source.getBoundingClientRect();unlockAudio();drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,grabX:event.clientX-box.x,grabY:event.clientY-box.y,source,ids:selected.includes(source.dataset.id)?selected.slice():[source.dataset.id],started:false};
-  });
+    event.preventDefault();source.focus({preventScroll:true});
+    const box=source.getBoundingClientRect();unlockAudio();drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,grabX:event.clientX-box.x,grabY:event.clientY-box.y,source,ids:selected.includes(source.dataset.id)?selected.slice():[source.dataset.id],started:false};screen.setPointerCapture(event.pointerId);
+  },{passive:false});
   screen.addEventListener('pointermove',event=>{
     if(!drag||event.pointerId!==drag.pointer)return;
     if(!drag.started&&Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<6)return;
     if(!canEdit()){cancelDrag();return;}event.preventDefault();
-    if(!drag.started){screen.setPointerCapture(event.pointerId);drag.started=true;drag.ghost=drag.source.cloneNode(true);drag.ghost.classList.remove('selected');drag.ghost.classList.add('cube-drag-ghost');drag.ghost.style.width=drag.source.offsetWidth+'px';drag.ghost.style.height=drag.source.offsetHeight+'px';drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost);drag.source.classList.add('drag-source');}
+    if(!drag.started){drag.started=true;drag.ghost=drag.source.cloneNode(true);drag.ghost.classList.remove('selected');drag.ghost.classList.add('cube-drag-ghost');drag.ghost.style.width=drag.source.offsetWidth+'px';drag.ghost.style.height=drag.source.offsetHeight+'px';drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost);drag.source.classList.add('drag-source');}
     drag.ghost.style.left=event.clientX-drag.grabX+'px';drag.ghost.style.top=event.clientY-drag.grabY+'px';
     content.querySelector('.drop-target')?.classList.remove('drop-target');
     document.elementFromPoint(event.clientX,event.clientY)?.closest('.cube-meld,.cube-board,.cube-rack-shell')?.classList.add('drop-target');
@@ -243,7 +251,8 @@
     if(!drag||event.pointerId!==drag.pointer)return;
     const current=drag,target=document.elementFromPoint(event.clientX,event.clientY),ghost=current.ghost?.getBoundingClientRect();
     if(current.started&&ghost)landingOrigin={ids:current.ids,box:{x:ghost.x,y:ghost.y,width:ghost.width,height:ghost.height}};
-    cancelDrag();if(!current.started)return;suppressClickUntil=Date.now()+350;
+    event.preventDefault();cancelDrag();suppressClickUntil=Date.now()+350;
+    if(!current.started){if(canEdit())selectTile(current.source.dataset.id);return;}
     if(!canEdit()||!target){landingOrigin=null;return;}
     if(target.closest('.cube-rack-shell')){
       const rack=content.querySelector('.cube-rack'),r=rack.getBoundingClientRect(),columns=Number(rack.style.getPropertyValue('--rack-columns'))||10;
@@ -255,7 +264,10 @@
     placeAt(current.ids,{x:(event.clientX-r.x-4)/unit,y:(event.clientY-r.y-4)/unit});
   });
   screen.addEventListener('pointercancel',cancelDrag);
-  screen.addEventListener('lostpointercapture',()=>{if(drag?.started)cancelDrag();});
+  screen.addEventListener('lostpointercapture',cancelDrag);
+  // Suppress native selection, image dragging and long-press copy on the game tiles.
+  for(const type of ['dragstart','selectstart','contextmenu'])screen.addEventListener(type,event=>{if(event.target.closest('.cube-match .cube-tile'))event.preventDefault();});
+  screen.addEventListener('touchstart',event=>{if(event.target.closest('.cube-match .cube-tile:not(:disabled)')&&canEdit())event.preventDefault();},{passive:false});
   window.addEventListener('blur',cancelDrag);
   content.addEventListener('keydown',event=>{
     const tile=event.target.closest('.cube-match .cube-tile:not(:disabled)');if(!tile||!canEdit())return;
@@ -278,7 +290,7 @@
   document.querySelector('.cube-header').addEventListener('click',handle);
   document.getElementById('cube-rules').addEventListener('click',handle);
   async function handle(event){
-    if(Date.now()<suppressClickUntil)return;
+    if(Date.now()<suppressClickUntil&&event.target.closest('[data-action=tile]'))return;
     unlockAudio();
     const button=event.target.closest('[data-action]');if(!button||button.disabled)return;const action=button.dataset.action;
     if(action==='rules'){document.getElementById('cube-rules').showModal();return;}
@@ -297,10 +309,10 @@
     if(action==='start'||action==='add-bot'||action==='remove-bot'||action==='leave'){send({type:action,uid:button.dataset.uid});return;}
     if(['sort','sort-number','sort-color'].includes(action)){sort=action==='sort-number'?'number':action==='sort-color'?'color':sort==='color'?'number':'color';rackSlots=[];render();return;}
     if(!canEdit())return;
-    if(action==='tile'){const id=button.dataset.id;selected=selected.includes(id)?selected.filter(t=>t!==id):[...selected,id];beep();render();return;}
+    if(action==='tile'){selectTile(button.dataset.id);return;}
     if(action==='return'){returnTiles(selected);return;}
     if(action==='undo'){resetDraft();render();return;}
-    if(action==='hint'){const hint=E.botAction(state,you());if(hint?.type==='commit'){draft=hint.table;draftLayout=L.ensure(draft,draftLayout);selected=[];render();note('가능한 배치를 준비했어요. 확인하고 차례 완료를 누르세요.');}else note('새 묶음이나 양끝 추가 힌트를 찾지 못했어요. 테이블을 재배열하거나 1장을 뽑아보세요.');return;}
+    if(action==='hint'){if(hintsLeft())send({type:'hint'});return;}
     if(action==='draw'){resetDraft();send({type:'draw'});return;}
     if(action==='commit'){
       const table=draft.filter(row=>row.length),layout=draftLayout.filter((_,i)=>draft[i].length);

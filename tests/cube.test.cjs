@@ -39,3 +39,11 @@ test('120 seeded AI games complete with valid board and every tile conserved',()
   assert.ok(s.winnerUid,'seed '+seed);assert.equal(E.rankings(s).reduce((n,r)=>n+r.score,0),0);
  }
 });
+
+test('each player has two hints per game without changing tiles, turns or deadline',()=>{
+ let s=E.start(['a','b'],()=>.25);s.turnUid='a';s.turnDeadline=100000;const original=JSON.stringify(s),tiles=JSON.stringify([s.hands,s.table,s.pool]),turn=s.turn;
+ s=E.move(s,'a',{type:'hint'});assert.equal(s.hintsUsed.a,1);assert.equal(s.hintsUsed.b,0);assert.equal(s.turnUid,'a');assert.equal(s.turn,turn);assert.equal(s.turnDeadline,100000);assert.equal(JSON.stringify([s.hands,s.table,s.pool]),tiles);
+ s=E.move(s,'a',{type:'hint'});assert.equal(s.hintsUsed.a,2);const exhausted=JSON.stringify(s);assert.throws(()=>E.move(s,'a',{type:'hint'}),/2번/);assert.equal(JSON.stringify(s),exhausted);
+ assert.throws(()=>E.move(s,'b',{type:'hint'}),/차례/);s=E.move(s,'a',{type:'draw'});assert.equal(s.hintsUsed.a,2);s=E.move(s,'b',{type:'hint'});assert.equal(s.hintsUsed.b,1);assert.equal(s.hintsUsed.a,2);assert.deepEqual(E.start(['a','b']).hintsUsed,{a:0,b:0});
+ const legacy=JSON.parse(original);delete legacy.hintsUsed;assert.equal(E.move(legacy,'a',{type:'hint'}).hintsUsed.a,1);
+});

@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs'),os=require('node:os'),{generateKeyPairSync,sign}=require('node:crypto');
-const {Miniflare,convertV4MiniflareOptions}=require('../cloudflare-worker/node_modules/miniflare'),esbuild=require('../cloudflare-worker/node_modules/esbuild');
+const miniflare=require('../cloudflare-worker/node_modules/miniflare'),{Miniflare}=miniflare,convertV4MiniflareOptions=miniflare.convertV4MiniflareOptions||(options=>({...options,durableObjectsPersist:options.resourcePersistencePath})),esbuild=require('../cloudflare-worker/node_modules/esbuild');
 function inbox(ws){const items=[],waits=[];ws.addEventListener('message',e=>{const p=JSON.parse(e.data),i=waits.findIndex(w=>w.match(p));if(i<0)items.push(p);else{const [w]=waits.splice(i,1);clearTimeout(w.timer);w.resolve(p);}});ws.accept();return match=>{const i=items.findIndex(match);if(i>=0)return Promise.resolve(items.splice(i,1)[0]);return new Promise((resolve,reject)=>{const w={match,resolve,timer:setTimeout(()=>reject(Error('packet timeout')),8000)};waits.push(w);});};}
 test('authenticated Cloudflare rooms synchronize private racks, persist reconnects, reject races and advance offline timeouts',{timeout:60000},async()=>{
  const {privateKey,publicKey}=generateKeyPairSync('rsa',{modulusLength:2048}),jwk={...publicKey.export({format:'jwk'}),kid:'cube-test',alg:'RS256',use:'sig'},project='enjoy-meeting-account',origin='https://enjoy-app.pages.dev',encode=o=>Buffer.from(JSON.stringify(o)).toString('base64url');let now=Date.now(),reads=0;
@@ -16,12 +16,13 @@ test('authenticated Cloudflare rooms synchronize private racks, persist reconnec
   const a=await connect('a',true);await a.snapshot();const listing=(await list.next(p=>p.type==='rooms')).rooms[0];assert.equal(listing.capacity,4);assert.ok(!listing.players&&!listing.state);
   const b=await connect('b');let sb=await b.snapshot(),sa=await a.snapshot();b.send('wrong-host',sb.room.revision,{type:'start'});await b.next(p=>p.type==='error'&&p.id==='wrong-host');
   a.send('start',sa.room.revision,{type:'start'});sa=await a.snapshot();sb=await b.snapshot();assert.equal(sa.room.status,'playing');assert.equal(sa.state.hands.a.length,14);assert.ok(sa.state.hands.a.every(t=>t.color));assert.ok(sa.state.hands.b.every(t=>!t.color));assert.deepEqual(sa.state.pool,[]);assert.equal(sa.state.poolCount,78);assert.equal(sa.state.turnDeadline-now,30000);
-  const actor=sa.state.turnUid==='a'?a:b,other=actor===a?b:a,uid=sa.state.turnUid,oldRevision=sa.room.revision,readCount=reads;
+  const actor=sa.state.turnUid==='a'?a:b,other=actor===a?b:a,uid=sa.state.turnUid,readCount=reads;let oldRevision=sa.room.revision;
+  const hintDeadline=sa.state.turnDeadline;actor.send('hint-once',oldRevision,{type:'hint'});await actor.next(p=>p.type==='ack'&&p.id==='hint-once');sa=await a.snapshot();sb=await b.snapshot();assert.equal(sa.state.hintsUsed[uid],1);assert.equal(sb.state.hintsUsed[uid],1);assert.equal(sa.state.turnDeadline,hintDeadline);assert.equal(sa.state.turnUid,uid);oldRevision=sa.room.revision;
   other.send('wrong-turn',oldRevision,{type:'draw'});assert.match((await other.next(p=>p.type==='error'&&p.id==='wrong-turn')).message,/차례/);
   actor.send('draw-once',oldRevision,{type:'draw'});actor.send('draw-once',oldRevision,{type:'draw'});await actor.next(p=>p.type==='ack'&&p.id==='draw-once');await actor.next(p=>p.type==='ack'&&p.id==='draw-once');sa=await a.snapshot();sb=await b.snapshot();assert.equal(sa.state.hands[uid].length,15);assert.equal(sb.room.revision,oldRevision+1);assert.equal(sa.state.turnDeadline-now,30000);assert.equal(reads,readCount);
   actor.send('stale',oldRevision,{type:'draw'});assert.equal((await actor.next(p=>p.type==='error'&&p.id==='stale')).code,'stale-revision');
   const expectedTurn=sa.state.turnUid,deadline=sa.state.turnDeadline;for(const ws of clients)try{ws.close();}catch(_){}await mf.dispose();now=deadline+1;mf=new Miniflare(options());await mf.ready;
-  const ns=await mf.getDurableObjectNamespace('CUBE_ROOMS');await ns.get(ns.idFromName('ABCDEF')).fetch('https://cube.test/__alarm');const returned=await connect('a');sa=await returned.snapshot();assert.equal(sa.room.revision,oldRevision+2);assert.notEqual(sa.state.turnUid,expectedTurn);assert.equal(sa.state.hands[expectedTurn].length,15);assert.equal(sa.state.poolCount,76);
+  const ns=await mf.getDurableObjectNamespace('CUBE_ROOMS');await ns.get(ns.idFromName('ABCDEF')).fetch('https://cube.test/__alarm');const returned=await connect('a');sa=await returned.snapshot();assert.equal(sa.room.revision,oldRevision+2);assert.notEqual(sa.state.turnUid,expectedTurn);assert.equal(sa.state.hands[expectedTurn].length,15);assert.equal(sa.state.poolCount,76);assert.equal(sa.state.hintsUsed[uid],1);
   returned.send('leave',sa.room.revision,{type:'leave'});await returned.next(p=>p.type==='ack'&&p.id==='leave');const host=await connect('b');sb=await host.snapshot();assert.equal(sb.room.hostUid,'b');assert.equal(sb.room.status,'waiting');assert.equal(sb.state,null);
  }finally{for(const ws of clients)try{ws.close();}catch(_){}await mf.dispose();fs.rmSync(persist,{recursive:true,force:true});}
 });
@@ -52,4 +53,15 @@ test('committed positions are public, survive reconnects and reject malformed la
  assert.equal(m.apply('a',packet,now+1),true);assert.deepEqual(m.view('a').state.tableLayout,[{x:7.3,y:2.1}]);assert.deepEqual(m.view('b').state.tableLayout,[{x:7.3,y:2.1}]);
  assert.ok(m.view('b').state.hands.a.every(t=>!t.color));
  const restored=new CubeRoom(JSON.parse(JSON.stringify(m.data)));assert.deepEqual(restored.view('b').state.tableLayout,[{x:7.3,y:2.1}]);
+});
+
+test('hint allowance persists per player and round with receipts and the original deadline',async()=>{
+ const {CubeRoom}=await import('../cloudflare-worker/cube-room.js'),now=100000,m=new CubeRoom(null,()=>.25);m.connect({uid:'a',name:'A'},true,now);m.connect({uid:'b',name:'B'},false,now);m.apply('a',{id:'start',revision:m.room.revision,action:{type:'start'}},now);
+ const uid=m.state.turnUid,other=uid==='a'?'b':'a',deadline=m.data.turnDeadline,turn=m.state.turn,tiles=JSON.stringify([m.state.hands,m.state.table,m.state.pool]);
+ const packet={id:'hint-1',revision:m.room.revision,action:{type:'hint'}};assert.throws(()=>m.apply(other,packet,now+1000),/차례/);assert.equal(m.apply(uid,packet,now+1000),true);assert.equal(m.apply(uid,packet,now+1100),false);
+ assert.equal(m.state.hintsUsed[uid],1);assert.equal(m.data.turnDeadline,deadline);assert.equal(m.state.turn,turn);assert.equal(JSON.stringify([m.state.hands,m.state.table,m.state.pool]),tiles);
+ const restored=new CubeRoom(JSON.parse(JSON.stringify(m.data))),second={id:'hint-2',revision:restored.room.revision,action:{type:'hint'}};restored.apply(uid,second,now+2000);assert.equal(restored.view(uid).state.hintsUsed[uid],2);assert.equal(restored.data.turnDeadline,deadline);assert.equal(restored.state.hintsUsed[other],0);
+ const saved=JSON.stringify(restored.data);assert.throws(()=>restored.apply(uid,{id:'hint-3',revision:restored.room.revision,action:{type:'hint'}},now+3000),/2번/);assert.equal(JSON.stringify(restored.data),saved);
+ assert.throws(()=>restored.apply(uid,{id:'late-hint',revision:restored.room.revision,action:{type:'hint'}},deadline),/차례 시간이 끝/);
+ restored.data.room.status='finished';restored.apply('a',{id:'restart',revision:restored.room.revision,action:{type:'start'}},deadline+1);assert.deepEqual(restored.state.hintsUsed,{a:0,b:0});assert.equal(restored.room.round,2);
 });

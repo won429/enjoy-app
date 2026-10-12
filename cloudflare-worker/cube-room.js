@@ -25,7 +25,7 @@ export class CubeRoom {
     if (this.data.receipts.some(r=>r.uid===uid&&r.id===packet.id)) return false;
     if (packet.revision !== current.revision) fail('화면이 갱신됐어요. 다시 진행해주세요.', 'stale-revision');
     const action = packet.action;
-    if (!action || !['leave','start','add-bot','remove-bot','commit','draw'].includes(action.type)) fail('게임 동작을 확인해주세요.');
+    if (!action || !['leave','start','add-bot','remove-bot','commit','draw','hint'].includes(action.type)) fail('게임 동작을 확인해주세요.');
     let room = { ...current, revision: current.revision+1, updatedAt: now }, state = this.state;
     if (action.type === 'leave') {
       room.players = current.players.filter(p=>p.uid!==uid); const humans = room.players.filter(p=>!p.bot);
@@ -51,7 +51,7 @@ export class CubeRoom {
       state = engine.move(state,uid,{ type: action.type, table: action.table });
       state.tableLayout = action.type==='commit' ? layout.normalize(state.table,action.layout) : layout.ensure(state.table,state.tableLayout); room.status = state.winnerUid ? 'finished' : 'playing';
     }
-    this.data = { ...this.data, room, state, turnDeadline: room.status==='playing' ? now+TURN_MS : null, nextBotAt: this.botTurn(room,state) ? now+1400 : null, receipts: [...this.data.receipts,{ uid,id:packet.id }].slice(-100) }; return true;
+    this.data = { ...this.data, room, state, turnDeadline: action.type==='hint' ? this.data.turnDeadline : room.status==='playing' ? now+TURN_MS : null, nextBotAt: action.type==='hint' ? this.data.nextBotAt : this.botTurn(room,state) ? now+1400 : null, receipts: [...this.data.receipts,{ uid,id:packet.id }].slice(-100) }; return true;
   }
   botTurn(room = this.room, state = this.state) { return room?.status==='playing' && !state?.winnerUid && room.players.some(p=>p.bot&&p.uid===state?.turnUid); }
   advanceOrder() { return false; }

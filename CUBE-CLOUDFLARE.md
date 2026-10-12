@@ -74,3 +74,10 @@ Reference: https://www.youtube.com/watch?v=zHEn8jo5MnU (placement, rack, clock a
 - FLIP movement starts at the drag release position, and sorting, dealing, drawing and board zoom glide between their old and new positions. Opponent draws animate a face-down tile.
 - The active avatar contains the 30-second countdown and shrinking ring. Editing replaces the draw plus with a round undo control; the check button submits the turn.
 - All 17 Cube tests pass, including 120 seeded complete AI games, rack conservation, stable anchors, fit bounds, server layout persistence and two signed mock WebSocket clients. Browser QA covers neighbour insertion, free multi-tile placement, rack return, 80/100 tile tables, 667×280 landscape and the portrait gate. Real iPhone/Galaxy hardware and two real member devices were not available.
+
+## Touch and hint fixes (2026-10-12)
+
+- Tile pointer-down cancels browser defaults and immediately captures the gesture. Tap selection is handled on pointer-up, separately from dragging. Native drag, text selection and long-press copy menus are disabled on tiles, including their child labels. WebKit user-select/user-drag overrides and explicit draggable=false cover Safari's native selection path.
+- Raised rack tiles can paint above the rack without clipping. Table selections retain their position to stay inside the fitted board. The board and rack still fit without scrolling.
+- Each player has two hint attempts per round in both modes. The button shows the remaining count and disables at zero. Requests without a found placement also consume one attempt. New games reset the allowance; undo, subsequent turns and friend reconnection do not. Friend requests are counted atomically by the Worker with duplicate receipts and deadline enforcement, and never restart the 30-second turn clock.
+- Nineteen Cube tests pass, including signed mock WebSocket hint requests, reconnect persistence, duplicate handling, allowance exhaustion, per-player isolation and new-round reset. Browser QA verifies tap selection, selected-tile dragging, an exposed raised top edge and the 2→1→0 hint button. Real iPhone/Galaxy touch hardware was not available.

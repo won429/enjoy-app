@@ -1,6 +1,7 @@
 (function (root, factory) { const api = factory(); if (typeof module === 'object' && module.exports) module.exports = api; else root.DropCube = api; })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
   const COLORS = ['red', 'blue', 'orange', 'black'];
+  const HINT_LIMIT = 2;
   const fail = message => { throw new Error(message); };
   const copy = value => JSON.parse(JSON.stringify(value));
   function deck() {
@@ -27,12 +28,17 @@
     const pool = shuffle(deck(), random), hands = {};
     for (const uid of players) hands[uid] = pool.splice(0, 14);
     const order = shuffle(players, random);
-    return { players: order, hands, pool, table: [], opened: Object.fromEntries(players.map(p => [p, false])), turnUid: order[0], revision: 0, winnerUid: null, blocked: false, passes: 0, turn: 1, lastMove: null };
+    return { players: order, hands, pool, table: [], opened: Object.fromEntries(players.map(p => [p, false])), hintsUsed: Object.fromEntries(players.map(p => [p, 0])), turnUid: order[0], revision: 0, winnerUid: null, blocked: false, passes: 0, turn: 1, lastMove: null };
   }
   function points(tiles) { return tiles.reduce((sum, t) => sum + (t.color === 'joker' ? 30 : t.n), 0); }
   function move(source, uid, action) {
     if (source.winnerUid || source.turnUid !== uid) fail('내 차례에만 진행할 수 있어요.');
     const state = copy(source), hand = state.hands[uid];
+    if (action.type === 'hint') {
+      const used=state.hintsUsed?.[uid]||0;
+      if(used>=HINT_LIMIT)fail('힌트는 한 게임에 2번까지 사용할 수 있어요.');
+      state.hintsUsed={...state.hintsUsed,[uid]:used+1};state.revision++;return state;
+    }
     if (action.type === 'draw') {
       const tile = state.pool.shift(); if (tile) hand.push(tile);
       state.passes = tile ? 0 : state.passes + 1;
@@ -118,5 +124,5 @@
     entries.find(e=>e.uid===state.winnerUid).score = -entries.reduce((s,e)=>s+e.score,0);
     return entries.sort((a,b)=>a.uid===state.winnerUid?-1:b.uid===state.winnerUid?1:a.penalty-b.penalty);
   }
-  return { COLORS, deck, shuffle, meld, start, move, points, candidates, botAction, rankings };
+  return { COLORS, HINT_LIMIT, deck, shuffle, meld, start, move, points, candidates, botAction, rankings };
 });
