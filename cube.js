@@ -192,7 +192,7 @@
         if(Math.abs(dx)+Math.abs(dy)>1||Math.abs(sx-1)>.01)el.animate([{translate:`${dx}px ${dy}px`,scale:`${sx} ${sy}`},{translate:'0px 0px',scale:'1 1'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
       }else if(draw){const origin=el.dataset.where==='table'&&actor?actor:draw;el.animate([{translate:`${origin.x+origin.width/2-after.x}px ${origin.y+origin.height/2-after.y}px`,scale:'.45',opacity:0,rotate:'-12deg'},{translate:'0px 0px',scale:'1',opacity:1,rotate:'0deg'}],{duration:360,delay:lastPaint.size?0:Math.min(Number(el.dataset.slot)||0,14)*22,easing:'cubic-bezier(.2,.8,.2,1)'});}
     }
-    const move=state?.lastMove,tag=move?state.revision+':'+state.turn+':'+move.uid:'';
+    const move=state?.lastMove,tag=move?state.turn+':'+move.uid+':'+move.type+':'+move.count:'';
     if(move?.type==='draw'&&move.uid!==you()&&tag!==lastAnimatedMove&&draw){
       const seat=Array.from(content.querySelectorAll('.cube-seat')).find(el=>el.dataset.uid===move.uid)?.querySelector('.cube-avatar')?.getBoundingClientRect();
       if(seat){const card=document.createElement('span');card.className='cube-tile cube-flying-back';document.body.append(card);const flight=card.animate([{translate:`${draw.x}px ${draw.y}px`,scale:'.5',opacity:0},{translate:`${seat.x}px ${seat.y}px`,scale:'.3',opacity:1}],{duration:360,easing:'ease-out'});flight.onfinish=()=>card.remove();}
