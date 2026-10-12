@@ -10227,6 +10227,12 @@
             });
         }
         const enjoyBaseballMoreTeams = ['LG', '두산', 'KIA', '삼성', 'SSG', '롯데', '한화', 'KT', 'NC', '키움'];
+        const enjoyBaseballPostseasonRankingLogos = Object.freeze({
+            '삼성': 'assets/kbo-postseason-logos/samsung-2026.png',
+            '두산': 'assets/kbo-postseason-logos/doosan-2026.png',
+            'KIA': 'assets/kbo-postseason-logos/kia-2026.png',
+            'KT': 'assets/kbo-postseason-logos/kt-2026.png'
+        });
         const enjoyBaseballRankColors = Object.freeze(['#4C75F6', '#7BDBE5', '#61C684', '#B2DA67', '#B2DA67']);
         // KBO 공식 2026-08-30 순위. 로컬 히스토리가 8월 27일에서 끝나므로
         // 이 스냅샷을 기준으로 이후 Firebase 종료 경기만 더해 누락/중복 집계를 막는다.
@@ -10770,7 +10776,8 @@
                 const confirmed = confirmedRanks.has(row.team);
                 const numberColor = confirmed ? (row.rank === 1 ? '#FFFFFF' : '#111827') : rankColor;
                 const streakColor = row.streak.includes('승') ? '#EA0029' : (row.streak.includes('패') ? '#074CA1' : '#9CA3AF');
-                const logo = enjoyBaseballTeamLogos[row.team] || '';
+                const logo = (enjoyBaseballCompetition === 'postseason' && enjoyBaseballPostseasonRankingLogos[row.team])
+                    || enjoyBaseballTeamLogos[row.team] || '';
                 return '<div class="kbo-original-ranking-row' + (confirmed ? ' is-confirmed' : '') + '"' +
                     (confirmed ? ' style="--rank-color:' + rankColor + ';--rank-ink:' + numberColor + ';"' : '') + '>' +
                     '<div class="kbo-original-ranking-data">' +
