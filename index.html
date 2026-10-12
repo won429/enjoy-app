@@ -3783,6 +3783,20 @@
             padding: 0.875rem 0 1.5rem;
             background: transparent;
         }
+        .kbo-competition-link {
+            display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+            width: 100%; padding: .875rem 1rem; margin-bottom: 1rem;
+            border: 1px solid rgba(255,255,255,.12); border-radius: .875rem;
+            background: rgba(255,255,255,.05); color: #fff; font-size: .8125rem; font-weight: 700; text-align: left;
+        }
+        .kbo-competition-link:active { opacity: .7; }
+        .kbo-competition-link:focus-visible, .kbo-postseason-calendar-game:focus-visible { outline: 2px solid #7BDBE5; outline-offset: 2px; }
+        .kbo-competition-title { margin-bottom: 1rem; color: #fff; font-size: 1.125rem; font-weight: 900; }
+        .kbo-postseason-calendar-day { height: auto; min-height: 5.25rem; justify-content: flex-start; padding: .4rem .1rem; }
+        .kbo-postseason-calendar-game { display: flex; flex-direction: column; align-items: center; gap: .2rem; width: 100%; padding: .2rem 0; border: 0; background: transparent; color: inherit; }
+        .kbo-postseason-calendar-logos { display: flex; align-items: center; justify-content: center; gap: .1rem; width: 100%; }
+        .kbo-postseason-calendar-logos .kbo-original-day-logo { width: min(1.125rem, 42%); height: 1.125rem; object-fit: contain; margin: 0; }
+        .kbo-postseason-calendar-game small { font-size: .5625rem; font-weight: 700; }
         .kbo-season-banners { margin-bottom: 1rem; }
         .kbo-season-banner-track {
             position: relative;
@@ -10240,6 +10254,8 @@
                 return 'KIA';
             }
         })();
+        let enjoyBaseballCompetition = 'postseason';
+        const enjoyBaseballCompetitionDates = {};
         let enjoyBaseballMoreDailyDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
         let enjoyBaseballMoreMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         let enjoyBaseballMoreHistoryPromise = null;
@@ -10364,6 +10380,33 @@
                     String(first.time || '').localeCompare(String(second.time || ''));
             });
         }
+        function enjoyBaseballCompetitionGames() {
+            const seasons = enjoyBaseballMoreSeasonGames();
+            return enjoyBaseballCompetition === 'postseason' ? seasons.postseason : seasons.regular;
+        }
+        window.switchKboCompetition = function (competition) {
+            if (!['regular', 'postseason'].includes(competition) || competition === enjoyBaseballCompetition) return;
+            window.haptic && window.haptic();
+            enjoyBaseballCompetitionDates[enjoyBaseballCompetition] = {
+                date: new Date(enjoyBaseballMoreDailyDate), month: new Date(enjoyBaseballMoreMonth)
+            };
+            enjoyBaseballCompetition = competition;
+            let saved = enjoyBaseballCompetitionDates[competition];
+            if (!saved) {
+                const games = enjoyBaseballCompetitionGames();
+                const today = enjoyBaseballDateKey(new Date());
+                const last = games.filter(function (game) { return game.date <= today; }).at(-1);
+                const dateKey = competition === 'regular' && last ? last.date : today;
+                const parts = dateKey.split('-').map(Number);
+                const date = new Date(parts[0], parts[1] - 1, parts[2]);
+                saved = { date: date, month: new Date(date.getFullYear(), date.getMonth(), 1) };
+            }
+            enjoyBaseballMoreDailyDate = new Date(saved.date);
+            enjoyBaseballMoreMonth = new Date(saved.month);
+            renderKboScoreboard();
+            const home = document.getElementById('home-screen');
+            if (home) home.scrollTop = 0;
+        };
         function enjoyBaseballMoreLogo(team, className) {
             const logo = enjoyBaseballTeamLogos[team];
             if (logo) return '<img src="' + enjoyBaseballEscape(logo) + '" class="' + className + '" alt="">';
@@ -10506,7 +10549,7 @@
             const dial = document.getElementById('kbo-more-daily-dial');
             if (!list || !meta || !dial) return;
             const date = enjoyBaseballDateKey(enjoyBaseballMoreDailyDate);
-            const games = enjoyBaseballMoreAllGames().filter(function (game) {
+            const games = enjoyBaseballCompetitionGames().filter(function (game) {
                 return game.date === date && String(game.id || '') !== '260711_ALLSTAR';
             });
             renderEnjoyBaseballDailyDial();
@@ -10537,9 +10580,11 @@
             const tabs = document.querySelectorAll('.kbo-original-tab[data-kbo-more-team]');
             if (!title || !grid) return;
             const requestedMonth = new Date(enjoyBaseballMoreMonth);
+            const competition = enjoyBaseballCompetition;
+            const postseason = competition === 'postseason';
             const team = enjoyBaseballMoreTeam;
             const competitionBadge = document.getElementById('kbo-more-competition');
-            if (competitionBadge) competitionBadge.textContent = requestedMonth.getFullYear() + ' KBO';
+            if (competitionBadge) competitionBadge.textContent = requestedMonth.getFullYear() + ' KBO' + (postseason ? ' 포스트시즌' : '');
             title.textContent = requestedMonth.getFullYear() + '년 ' + (requestedMonth.getMonth() + 1) + '월';
             grid.innerHTML = '<div class="kbo-more-loading" style="grid-column:1/-1;padding:2.125rem 0.625rem;"><i class="fa-solid fa-baseball fa-spin"></i><span>일정을 불러오는 중...</span></div>';
             tabs.forEach(function (tab) {
@@ -10548,24 +10593,37 @@
                 tab.setAttribute('aria-selected', active ? 'true' : 'false');
             });
             await enjoyBaseballMoreFetchMonth(requestedMonth);
-            if (team !== enjoyBaseballMoreTeam || enjoyBaseballMonthKey(requestedMonth) !== enjoyBaseballMonthKey(enjoyBaseballMoreMonth)) return;
+            if (competition !== enjoyBaseballCompetition || team !== enjoyBaseballMoreTeam || enjoyBaseballMonthKey(requestedMonth) !== enjoyBaseballMonthKey(enjoyBaseballMoreMonth)) return;
 
             const year = requestedMonth.getFullYear();
             const month = requestedMonth.getMonth();
             const firstDay = new Date(year, month, 1).getDay();
             const days = new Date(year, month + 1, 0).getDate();
             const today = enjoyBaseballDateKey(new Date());
-            const games = enjoyBaseballMoreAllGames();
+            const games = enjoyBaseballCompetitionGames();
             let html = '';
             for (let blank = 0; blank < firstDay; blank += 1) html += '<span class="kbo-original-calendar-day" aria-hidden="true"></span>';
             for (let day = 1; day <= days; day += 1) {
                 const date = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
                 const dayGames = games.filter(function (game) {
-                    return game.date === date && (game.team1 === team || game.team2 === team);
+                    return game.date === date && (postseason || game.team1 === team || game.team2 === team);
                 });
                 if (!dayGames.length) {
                     html += '<span class="kbo-original-calendar-day' + (date === today ? ' is-today' : '') +
                         '"><span class="kbo-original-day-number">' + day + '</span></span>';
+                    continue;
+                }
+                if (postseason) {
+                    html += '<div class="kbo-original-calendar-day kbo-postseason-calendar-day' + (date === today ? ' is-today' : '') + '"><span class="kbo-original-day-number">' + day + '</span>' +
+                        dayGames.map(function (game) {
+                            const action = 'window.openEnjoyBaseballFromMore(' + JSON.stringify(String(game.id)) + ',' + JSON.stringify(date) + ')';
+                            const finished = game.gameStatus === '종료' && !enjoyBaseballIsCanceled(game);
+                            const cancellation = enjoyBaseballCancellationInfo(game);
+                            const label = cancellation ? cancellation.shortLabel : (finished ? game.awayScore + ':' + game.homeScore : (game.time || '미정'));
+                            return '<button type="button" class="kbo-postseason-calendar-game" onclick="' + enjoyBaseballEscape(action) + '" aria-label="' + enjoyBaseballEscape(date + ' ' + game.team1 + ' 대 ' + game.team2 + ' ' + label + ' 경기 정보 보기') + '">' +
+                                '<span class="kbo-postseason-calendar-logos">' + enjoyBaseballMoreLogo(game.team1, 'kbo-original-day-logo') + enjoyBaseballMoreLogo(game.team2, 'kbo-original-day-logo') + '</span>' +
+                                '<small>' + enjoyBaseballEscape(label) + '</small></button>';
+                        }).join('') + '</div>';
                     continue;
                 }
                 const game = dayGames[0];
@@ -10605,7 +10663,7 @@
             (sourceGames || enjoyBaseballMoreAllGames()).slice().sort(function (a, b) {
                 return String(a.date || '').localeCompare(String(b.date || '')) || String(a.time || '').localeCompare(String(b.time || ''));
             }).forEach(function (game) {
-                // 기존 JS 파일처럼 라운드 필드가 없어도 두 팀의 정규리그 144경기 이후는 별도로 집계한다.
+                // 기존 JS 파일처럼 라운드 필드가 없어도 두 팀의 정규시즌 144경기 이후는 별도로 집계한다.
                 const afterBaseline = String(game.date || '') > enjoyBaseballRankingBaseline.date;
                 if (enjoyBaseballPostseasonRound(game) || (afterBaseline && played[game.team1] >= 144 && played[game.team2] >= 144)) {
                     postseason.push(game);
@@ -10703,7 +10761,9 @@
             if (!body) return;
             const standings = enjoyBaseballMoreRankings();
             const confirmedRanks = enjoyBaseballMoreConfirmedRanks(standings);
-            body.innerHTML = standings.map(function (row) {
+            const visibleStandings = enjoyBaseballCompetition === 'postseason'
+                ? standings.filter(function (row) { return row.rank <= 5; }) : standings;
+            body.innerHTML = visibleStandings.map(function (row) {
                 const rankColors = enjoyBaseballRankColors;
                 const rankColor = rankColors[row.rank - 1] || '#9CA3AF';
                 const confirmed = confirmedRanks.has(row.team);
@@ -10714,7 +10774,7 @@
                     (confirmed ? ' style="--rank-color:' + rankColor + ';--rank-ink:' + numberColor + ';"' : '') + '>' +
                     '<div class="kbo-original-ranking-data">' +
                         '<span class="kbo-original-rank-number" style="color:' + numberColor + ';"' +
-                            (confirmed ? ' title="정규리그 ' + row.rank + '위 확정" aria-label="' + row.rank + '위 확정"' : '') + '>' + row.rank + '</span>' +
+                            (confirmed ? ' title="정규시즌 ' + row.rank + '위 확정" aria-label="' + row.rank + '위 확정"' : '') + '>' + row.rank + '</span>' +
                         '<span class="kbo-original-rank-team">' + enjoyBaseballEscape(row.team) + '</span>' +
                         '<span class="kbo-original-ranking-stats">' +
                             '<span>' + row.games + '</span><span>' + row.w + '</span><span>' + row.d + '</span><span>' + row.l + '</span>' +
@@ -10731,7 +10791,7 @@
         function enjoyBaseballPostseasonBracket(standings, confirmedRanks, games) {
             const seed = function (rank) {
                 const row = standings.find(function (item) { return item.rank === rank && confirmedRanks.has(item.team); });
-                return { team: row ? row.team : '', label: rank + '위 확정 대기', detail: '정규리그 ' + rank + '위' };
+                return { team: row ? row.team : '', label: rank + '위 확정 대기', detail: '정규시즌 ' + rank + '위' };
             };
             const rounds = [
                 { key: 'wc', title: '와일드카드 결정전', format: '최대 2경기 · 4위 1승 어드밴티지', rank: 4, target: 2 },
@@ -10776,8 +10836,12 @@
             standings = standings || enjoyBaseballMoreRankings();
             confirmedRanks = confirmedRanks || enjoyBaseballMoreConfirmedRanks(standings);
             const confirmedSeeds = standings.filter(function (row) { return row.rank <= 5 && confirmedRanks.has(row.team); });
-            section.hidden = !confirmedSeeds.length;
+            section.hidden = enjoyBaseballCompetition === 'regular' && !confirmedSeeds.length;
             if (section.hidden) { section.innerHTML = ''; return; }
+            if (!confirmedSeeds.length) {
+                section.innerHTML = '<div class="kbo-postseason-head"><strong id="kbo-postseason-title">포스트시즌 대진표</strong></div><div class="kbo-original-empty">정규시즌 순위가 확정되면 대진표가 표시됩니다.</div>';
+                return;
+            }
             const rounds = enjoyBaseballPostseasonBracket(standings, confirmedRanks, enjoyBaseballMoreSeasonGames().postseason);
             const positions = [
                 { node: 20, input: 10, width: 20 },
@@ -10819,7 +10883,7 @@
                     const rank = 5 - index;
                     return '<div class="kbo-postseason-team' + (slot.team ? ' is-confirmed' : ' is-pending') +
                         '" style="--seed-x:' + (10 + index * 20) + ';--seed-level:' + (index < 2 ? 4 : 5 - index) + ';--seed-color:' + enjoyBaseballRankColors[rank - 1] + ';--seed-ink:' + (rank === 1 ? '#FFFFFF' : '#111827') +
-                        ';" aria-label="' + enjoyBaseballEscape(slot.team ? '정규리그 ' + rank + '위 ' + slot.team : slot.label) + '">' +
+                        ';" aria-label="' + enjoyBaseballEscape(slot.team ? '정규시즌 ' + rank + '위 ' + slot.team : slot.label) + '">' +
                         (slot.team ? enjoyBaseballMoreLogo(slot.team, 'kbo-postseason-logo') : '<span class="kbo-postseason-empty" aria-hidden="true"></span>') +
                         '<span class="kbo-postseason-seed">정규 ' + rank + '위</span>' +
                         (slot.team ? '<strong>' + enjoyBaseballEscape(slot.team) + '</strong>' : '') + '</div>';
@@ -11166,26 +11230,14 @@
         function renderKboScoreboard() {
             const wrap = document.getElementById('baseball-detail-content');
             if (!wrap) return;
+            const postseason = enjoyBaseballCompetition === 'postseason';
+            window.stopKboSeasonBannerAuto();
+            if (enjoyBaseballRankingTrendResizeObserver) enjoyBaseballRankingTrendResizeObserver.disconnect();
             wrap.innerHTML =
                 '<div class="kbo-more-shell">' +
-                    '<div class="kbo-season-banners" role="region" aria-label="2026 KBO 정규리그 우승·준우승 배너" aria-roledescription="슬라이드 배너" onpointerdown="window.stopKboSeasonBannerAuto()" onpointerup="window.startKboSeasonBannerAuto()" onpointercancel="window.startKboSeasonBannerAuto()" onpointerleave="window.startKboSeasonBannerAuto()">' +
-                    '<div id="kbo-season-banner-track" class="kbo-season-banner-track" tabindex="0" aria-label="좌우로 넘겨 우승·준우승 보기" onscroll="window.updateKboSeasonBannerPage()">' +
-                    '<aside class="kbo-season-champion" aria-label="2026 KBO 정규리그 우승 KT wiz">' +
-                        '<img src="' + enjoyBaseballEscape(enjoyBaseballTeamLogos.KT) + '" alt="KT wiz 구단 로고">' +
-                        '<div class="kbo-season-champion-copy"><small>2026 KBO</small><strong>KT wiz 정규리그 우승</strong></div>' +
-                        '<i class="fa-solid fa-trophy" aria-hidden="true"></i>' +
-                    '</aside>' +
-                    '<aside class="kbo-season-champion is-runner-up" aria-label="2026 KBO 정규리그 준우승 삼성 라이온즈">' +
-                        '<img src="' + enjoyBaseballEscape(enjoyBaseballTeamLogos['삼성']) + '" alt="삼성 라이온즈 구단 로고">' +
-                        '<div class="kbo-season-champion-copy"><small>2026 KBO</small><strong>삼성 라이온즈 정규리그 준우승</strong></div>' +
-                        '<i class="fa-solid fa-trophy" aria-hidden="true"></i>' +
-                    '</aside>' +
-                    '</div>' +
-                    '<div id="kbo-season-banner-pages" class="kbo-season-banner-pages" aria-label="배너 선택">' +
-                        '<button type="button" class="is-active" aria-label="KT 정규리그 우승 배너 보기" aria-current="true" aria-controls="kbo-season-banner-track" onclick="window.selectKboSeasonBanner(0)"></button>' +
-                        '<button type="button" aria-label="삼성 정규리그 준우승 배너 보기" aria-current="false" aria-controls="kbo-season-banner-track" onclick="window.selectKboSeasonBanner(1)"></button>' +
-                    '</div>' +
-                    '</div>' +
+                    '<button type="button" class="kbo-competition-link" onclick="window.switchKboCompetition(\'' + (postseason ? 'regular' : 'postseason') + '\')">' +
+                        '<span>' + (postseason ? '2026 KBO 정규시즌 기록 보러가기' : '2026 KBO 포스트 시즌으로 가기') + '</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>' +
+                    '<div class="kbo-competition-title"><strong>' + (postseason ? '2026 KBO 포스트 시즌' : '2026 KBO 정규시즌') + '</strong></div>' +
                     '<section id="kbo-more-daily-section" class="kbo-original-section">' +
                         '<div id="kbo-more-daily-dial" class="kbo-daily-dial" role="group" aria-label="경기 날짜 선택"' +
                             ' onpointerdown="window.startKboMoreDailyDial(event)"' +
@@ -11195,7 +11247,7 @@
                         '<div id="kbo-more-daily-meta" class="kbo-original-day-meta"></div>' +
                         '<div id="kbo-more-daily-list" class="kbo-original-game-list"></div>' +
                     '</section>' +
-                    '<section id="kbo-more-calendar-section" class="kbo-original-section" style="--kbo-point:' + (enjoyBaseballTeamColors[enjoyBaseballMoreTeam] || '#EA0029') + ';">' +
+                    '<section id="kbo-more-calendar-section" class="kbo-original-section" style="--kbo-point:' + (postseason ? '#4C75F6' : (enjoyBaseballTeamColors[enjoyBaseballMoreTeam] || '#EA0029')) + ';">' +
                         '<div class="kbo-original-section-head">' +
                             '<div class="kbo-original-section-title"><strong>경기 일정</strong><small>날짜를 눌러 경기 정보를 확인하세요</small></div>' +
                             '<span id="kbo-more-competition" class="kbo-original-section-badge">2026 KBO</span>' +
@@ -11206,17 +11258,17 @@
                                 '<strong id="kbo-more-month-title" class="kbo-original-date-title"></strong>' +
                                 '<button type="button" class="kbo-original-date-button" onclick="window.changeKboMoreMonth(1)" aria-label="다음 달"><i class="fa-solid fa-chevron-right"></i></button>' +
                             '</div>' +
-                            '<div class="kbo-original-tabs" role="tablist" aria-label="구단 일정 선택">' +
+                            (postseason ? '' : '<div class="kbo-original-tabs" role="tablist" aria-label="구단 일정 선택">' +
                                 '<button type="button" class="kbo-original-tab" data-kbo-more-team="KIA" style="--tab-color:#EA0029;" onclick="window.switchKboMoreTeam(\'KIA\')" role="tab">KIA</button>' +
                                 '<button type="button" class="kbo-original-tab" data-kbo-more-team="삼성" style="--tab-color:#074CA1;" onclick="window.switchKboMoreTeam(\'삼성\')" role="tab">삼성</button>' +
-                            '</div>' +
+                            '</div>') +
                         '</div>' +
                         '<div class="kbo-original-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>' +
                         '<div id="kbo-more-calendar-grid" class="kbo-original-calendar-grid"></div>' +
                     '</section>' +
                     '<section id="kbo-more-ranking-section" class="kbo-original-section">' +
                         '<div class="kbo-original-section-head is-ranking-head">' +
-                            '<div class="kbo-original-section-title"><strong>정규리그 순위 <span style="color:#9ca3af;font-size:0.625rem;">· 2026시즌</span></strong></div>' +
+                            '<div class="kbo-original-section-title"><strong>' + (postseason ? '포스트시즌 순위' : '정규시즌 순위') + ' <span style="color:#9ca3af;font-size:0.625rem;">· 2026시즌</span></strong></div>' +
                             '<div class="kbo-ranking-legend" aria-label="포스트시즌 진출 기준">' +
                                 '<span><i style="--ranking-color:#4C75F6;"></i>한국시리즈 진출</span>' +
                                 '<span><i style="--ranking-color:#7BDBE5;"></i>플레이오프 진출</span>' +
@@ -11231,7 +11283,7 @@
                         '</div>' +
                         '<div id="kbo-more-ranking-body" class="kbo-original-ranking-list"></div>' +
                         '<section id="kbo-postseason-section" class="kbo-postseason" aria-labelledby="kbo-postseason-title" hidden></section>' +
-                        '<div class="kbo-ranking-trend" aria-labelledby="kbo-ranking-trend-title">' +
+                        (postseason ? '' : '<div class="kbo-ranking-trend" aria-labelledby="kbo-ranking-trend-title">' +
                             '<div class="kbo-ranking-trend-head">' +
                                 '<div class="kbo-ranking-trend-title"><strong id="kbo-ranking-trend-title">순위 변동</strong><small>두 야구 데이터 파일의 경기 종료일 기준</small></div>' +
                                 '<div id="kbo-ranking-trend-quote" class="kbo-ranking-trend-quote" aria-live="polite"></div>' +
@@ -11247,14 +11299,13 @@
                                 '<button type="button" class="kbo-ranking-range-button" data-kbo-ranking-range="90d" onclick="window.changeKboRankingTrendRange(\'90d\')">3개월</button>' +
                                 '<button type="button" class="kbo-ranking-range-button" data-kbo-ranking-range="season" onclick="window.changeKboRankingTrendRange(\'season\')">시즌</button>' +
                             '</div>' +
-                        '</div>' +
+                        '</div>') +
                     '</section>' +
                 '</div>';
             renderEnjoyBaseballMoreDaily();
             renderEnjoyBaseballMoreCalendar();
             renderEnjoyBaseballMoreRanking();
-            renderEnjoyBaseballRankingTrend();
-            window.startKboSeasonBannerAuto();
+            if (!postseason) renderEnjoyBaseballRankingTrend();
         }
         window.switchKboMoreTeam = function (team) {
             team = String(team || '').trim();
@@ -12958,7 +13009,11 @@
                 enjoyBaseballScheduleGames = games;
                 enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today, now));
                 enjoyBaseballSetRotation('kia', enjoyBaseballChooseRotation(games, 'KIA', today, now));
-                if (document.getElementById('kbo-postseason-section')) renderEnjoyBaseballPostseason();
+                if (document.getElementById('kbo-more-ranking-body')) {
+                    renderEnjoyBaseballMoreDaily();
+                    renderEnjoyBaseballMoreCalendar();
+                    renderEnjoyBaseballMoreRanking();
+                }
                 if (document.getElementById('kbo-ranking-trend-chart')) renderEnjoyBaseballRankingTrend();
             } catch (error) {
                 console.warn('엔조이 야구 점수판을 불러오지 못했습니다.', error);
