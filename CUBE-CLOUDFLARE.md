@@ -43,3 +43,14 @@ node --test tests/uno.test.cjs tests/uno-solo.test.cjs tests/war-host.test.cjs
 ```
 
 규칙·조커·첫 등록·재배열·타일 보존 및 120판 AI 완주, Cloudflare 로컬 실행 환경의 서명된 모의 계정 2인 동기화/비공개 받침대/중복 요청/재접속/오프라인 차례 종료/방장 이관을 확인했다. 기존 우노와 전쟁 진입 관련 42개 테스트 통과. 실제 서로 다른 두 멤버 계정의 기기 간 한 판 완주는 별도로 진행하지 않았다.
+
+## Reference layout update (2026-10-12)
+
+The game view now follows the supplied landscape reference: full royal-blue playing field, circular profiles and tile counts down the left, two-row ivory tiles on a honey-wood rack at bottom center, sorting and draw controls on the right. Solo back returns to player selection; the duplicate solo exit link is removed. Friend-room leave, pending actions, server rules and authentication retain their previous behavior.
+
+Built-in image_gen generated assets (selected original and consuming asset):
+- Blue board: assets/cube/blue-board-v2.png; assets/cube/blue-board-v2.jpg. Prompt: assets/cube/blue-board-v2-prompt.txt.
+- Wood rack: assets/cube/wood-rack-v3.png; assets/cube/wood-rack-v3.webp. Prompt: assets/cube/wood-rack-v3-prompt.txt.
+- Ivory tile: assets/cube/ivory-tile-v2.png; assets/cube/ivory-tile-v2.webp. Prompt: assets/cube/ivory-tile-v2-prompt.txt.
+
+Visual QA: design-qa.md. Sources and comparisons: artifacts/cube/layout-v2/.
