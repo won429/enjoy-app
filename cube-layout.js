@@ -5,9 +5,13 @@
   const valid=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.y>=0&&p.x<=128&&p.y<=128;
   const rect=(row,p)=>({x:p.x,y:p.y,w:row.length,h:TILE_HEIGHT});
   const overlaps=(a,b)=>a.x<b.x+b.w+GAP&&a.x+a.w+GAP>b.x&&a.y<b.y+b.h+.2&&a.y+a.h+.2>b.y;
-  function freeSpace(rows,layout,n,preferred={x:0,y:0},width=22){
+  function freeSpace(rows,layout,n,preferred={x:0,y:0},width=22,nearby=false){
     const clear=p=>rows.every((row,i)=>!row.length||!layout[i]||!overlaps(rect(new Array(n),p),rect(row,layout[i])));
     if(clear(preferred))return {...preferred};
+    if(nearby)for(let d=.25;d<=8;d+=.25){
+      const choices=[[d,0],[-d,0],[0,d],[0,-d],[d,d],[-d,d],[d,-d],[-d,-d]];
+      for(const [dx,dy] of choices){const p={x:Math.max(0,preferred.x+dx),y:Math.max(0,preferred.y+dy)};if(valid(p)&&clear(p))return p;}
+    }
     for(let y=0;y<180;y+=1.7)for(let x=0;x+n<=Math.max(width,n);x+=.25){const p={x,y:Math.round(y*100)/100};if(clear(p))return p;}
     return {x:0,y:Math.max(0,...layout.map(p=>p?.y||0))+1.7};
   }
@@ -23,18 +27,28 @@
     const bounds=rows.reduce((out,row,i)=>row.length?{w:Math.max(out.w,layout[i].x+row.length+.25),h:Math.max(out.h,layout[i].y+TILE_HEIGHT+.25)}:out,{w:0,h:0});
     return {unit:Math.max(.01,Math.min(base,bounds.w?width/bounds.w:base,bounds.h?height/bounds.h:base)),...bounds};
   }
-  function move(source,anchors,ids,point){
+  function remove(source,anchors,ids,options={}){
+    const prior=ensure(source,anchors),moving=new Set(ids),rows=[],layout=[];
+    source.forEach((row,i)=>{
+      if(!row.some(id=>moving.has(id))){rows.push(row.slice());layout.push({...prior[i]});return;}
+      if(options.split?.(row)===false){const rest=row.filter(id=>!moving.has(id)),first=row.findIndex(id=>!moving.has(id));if(rest.length){rows.push(rest);layout.push({x:prior[i].x+first,y:prior[i].y});}return;}
+      let chunk=[],start=0;
+      const flush=()=>{if(chunk.length){rows.push(chunk);layout.push({x:prior[i].x+start,y:prior[i].y});chunk=[];}};
+      row.forEach((id,j)=>{if(moving.has(id))flush();else {if(!chunk.length)start=j;chunk.push(id);}});flush();
+    });
+    return {rows,layout};
+  }
+  function move(source,anchors,ids,point,options={}){
     if(!ids.length||new Set(ids).size!==ids.length)throw Error('타일을 확인해주세요.');
-    const rows=source.map(row=>row.slice()),layout=ensure(rows,anchors),moving=new Set(ids);
-    rows.forEach((row,i)=>{const first=row.findIndex(id=>!moving.has(id));if(first>0)layout[i].x+=first;rows[i]=row.filter(id=>!moving.has(id));});
+    const {rows,layout}=remove(source,anchors,ids,options);
     let target=-1,distance=Infinity;
-    rows.forEach((row,i)=>{if(!row.length)return;const p=layout[i],dy=Math.abs(point.y-p.y-TILE_HEIGHT/2),dx=Math.max(p.x-point.x,point.x-(p.x+row.length),0);if(dy<=.65&&dx<=.7&&dy+dx<distance){target=i;distance=dy+dx;}});
+    if(!options.free)rows.forEach((row,i)=>{if(!row.length)return;const p=layout[i],dy=Math.abs(point.y-p.y-TILE_HEIGHT/2),dx=Math.max(p.x-point.x,point.x-(p.x+row.length),0);if(dy<=.35&&dx<=.6&&dy+dx<distance){target=i;distance=dy+dx;}});
     if(target>=0){
       const p=layout[target],index=clamp(Math.round(point.x-p.x),0,rows[target].length);
       if(point.x<p.x)p.x=Math.max(0,p.x-ids.length);
       rows[target].splice(index,0,...ids);
     }else {
-      target=rows.length;rows.push(ids.slice());layout.push(freeSpace(rows.slice(0,-1),layout,ids.length,{x:Math.max(0,Math.round((point.x-.5)*10)/10),y:Math.max(0,Math.round((point.y-TILE_HEIGHT/2)*10)/10)}));
+      target=rows.length;rows.push(ids.slice());layout.push(freeSpace(rows.slice(0,-1),layout,ids.length,{x:Math.max(0,Math.round((point.x-.5)*10)/10),y:Math.max(0,Math.round((point.y-TILE_HEIGHT/2)*10)/10)},22,true));
     }
     // An insertion only nudges its immediate neighbours; the rest of the table keeps its anchors.
     const queue=[target],visited=new Set();
@@ -60,5 +74,5 @@
     }
     return out;
   }
-  return {TILE_HEIGHT,ensure,fit,move,normalize,freeSpace,syncRack,moveRack};
+  return {TILE_HEIGHT,ensure,fit,remove,move,normalize,freeSpace,syncRack,moveRack};
 });

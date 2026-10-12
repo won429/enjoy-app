@@ -14,7 +14,10 @@ export class CubeRoom {
       this.data = { room: { hostUid: player.uid, players: [player], playerIds: [player.uid], status: 'waiting', round: 0, revision: 0, createdAt: now, updatedAt: now, notice: '' }, state: null, receipts: [] }; return true;
     }
     if (!this.room || this.room.status === 'closed' || now-this.room.updatedAt >= ROOM_TTL) fail('해당 코드의 방을 찾을 수 없어요.', 'room-missing');
-    if (this.room.playerIds.includes(player.uid)) return false;
+    if (this.room.playerIds.includes(player.uid)) {
+      const current=this.room.players.find(p=>p.uid===player.uid);if(current.name===player.name&&(current.photoURL||'')===(player.photoURL||''))return false;
+      this.data.room={...this.room,players:this.room.players.map(p=>p.uid===player.uid?{...p,name:player.name,photoURL:player.photoURL||''}:p),updatedAt:now};return true;
+    }
     if (this.room.status !== 'waiting' || this.room.players.length >= 4) fail('대기 중인 빈자리가 있는 방에만 참가할 수 있어요.');
     this.data.room = { ...this.room, players: [...this.room.players,player], playerIds: [...this.room.playerIds,player.uid], revision: this.room.revision+1, updatedAt: now }; return true;
   }

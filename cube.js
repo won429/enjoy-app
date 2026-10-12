@@ -8,7 +8,7 @@
   const user = () => window.enjoyUser?.uid || '';
   const you = () => mode==='solo'?'you':user();
   const key = () => 'drop-cube-room-'+user();
-  const people = () => mode==='solo'?soloPlayers:room?.players||[];
+  const people = () => mode==='solo'?soloPlayers.map(p=>p.uid==='you'&&window.enjoyUser?{...p,name:window.enjoyCubeProfile?.name||window.enjoyUser.displayName||'나',photoURL:window.enjoyCubeProfile?.photoURL||window.enjoyUser.photoURL||'',account:true}:p):room?.players||[];
   const name = uid => people().find(p=>p.uid===uid)?.name || '친구';
   const players = () => people().slice();
   const mine = () => !!state && state.turnUid===you() && !state.winnerUid;
@@ -38,7 +38,14 @@
     }
     try { const osc=audio.createOscillator(), gain=audio.createGain(); osc.connect(gain);gain.connect(audio.destination); osc.type='sine';osc.frequency.value=kind==='done'?740:kind==='draw'?260:480;gain.gain.setValueAtTime(.045,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.12);osc.start();osc.stop(audio.currentTime+.13); }catch(_){}
   }
-  function avatar(p,i=0) { return `<span class="cube-avatar" style="--avatar-x:${(i%5)*25}%" aria-hidden="true"></span>`; }
+  function avatar(p,i=0) {
+    if(!p.bot&&(p.account||mode==='friends')){
+      let photo='';try{const url=new URL(p.photoURL||'');if(url.protocol==='https:'&&!url.username&&!url.password)photo=url.href;}catch(_){}
+      return `<span class="cube-avatar cube-member-avatar" aria-hidden="true"><span class="cube-initial">${esc(Array.from(p.name||'?')[0])}</span>${photo?`<img src="${esc(photo)}" alt="" referrerpolicy="no-referrer" draggable="false">`:''}</span>`;
+    }
+    return `<span class="cube-avatar" style="--avatar-x:${(i%5)*25}%" aria-hidden="true"></span>`;
+  }
+  content.addEventListener('error',event=>{if(event.target.matches('.cube-member-avatar img'))event.target.remove();},true);
   function tile(t,where,disabled=false,index=0) {
     const colors={red:'빨강',blue:'파랑',orange:'주황',black:'검정',joker:'조커'};
     return `<button draggable="false" class="cube-tile ${selected.includes(t.id)?'selected':''}" data-action="tile" data-id="${esc(t.id)}" data-where="${where}" data-slot="${index}" data-color="${esc(t.color)}" aria-label="${colors[t.color]} ${t.n||''}${selected.includes(t.id)?', 선택됨':''}" aria-pressed="${selected.includes(t.id)}" style="--tile-index:${index}" ${disabled?'disabled':''}><small>${t.color==='joker'?'':esc(colors[t.color])}</small>${t.color==='joker'?'<i class="ph ph-smiley" aria-hidden="true"></i>':t.n}</button>`;
@@ -174,9 +181,10 @@
     if(!live||socket?.readyState!==WebSocket.OPEN||pending){note('서버 연결을 기다려주세요.');return;}
     pending={type:'action',id:crypto.randomUUID(),revision:room.revision,action};socket.send(JSON.stringify(pending));armPending();render();
   }
-  function placeAt(ids,point) {
+  const splitRow = row => E.meld(row.map(id=>currentTiles().get(id)))?.kind!=='group';
+  function placeAt(ids,point,free=false) {
     if(!canEdit()||!ids.length)return;
-    showErrors=false;const next=L.move(draft,draftLayout,ids,point);draft=next.rows;draftLayout=next.layout;selected=[];beep();render();
+    showErrors=false;const next=L.move(draft,draftLayout,ids,point,{split:splitRow,free});draft=next.rows;draftLayout=next.layout;selected=[];beep();render();
   }
   function captureTiles() {
     lastPaint=new Map(Array.from(content.querySelectorAll('.cube-match .cube-tile'),el=>[el.dataset.id,{box:el.getBoundingClientRect(),where:el.dataset.where}]));
@@ -203,7 +211,7 @@
     const match=content.querySelector('.cube-match'),rack=content.querySelector('.cube-rack');
     if(match&&rack?.clientWidth){
       match.style.removeProperty('--tile-w');match.style.removeProperty('--tile-h');
-      const base=parseFloat(getComputedStyle(rack.querySelector('.cube-tile')||match).width)||50,columns=Number(rack.style.getPropertyValue('--rack-columns'))||10;
+      const base=parseFloat(getComputedStyle(rack.querySelector('.cube-tile,.cube-rack-space')||match).width)*.82||41,columns=Number(rack.style.getPropertyValue('--rack-columns'))||10;
       const width=Math.min(base,(rack.clientWidth-columns-1)/columns);
       if(width>0){match.style.setProperty('--tile-w',width+'px');match.style.setProperty('--tile-h',width*1.4+'px');}
     }
@@ -218,7 +226,7 @@
   function returnTiles(ids,slot=null) {
     const original=new Set(state.table.flat().map(t=>t.id));
     if(ids.some(id=>original.has(id))){note('공유 테이블의 타일은 다른 위치로 옮겨주세요.');return false;}
-    draft=draft.map(row=>row.filter(id=>!ids.includes(id)));if(slot!==null)rackSlots=L.moveRack(rackSlots,ids,slot);selected=[];beep();render();return true;
+    const remaining=L.remove(draft,draftLayout,ids,{split:splitRow});draft=remaining.rows;draftLayout=remaining.layout;if(slot!==null)rackSlots=L.moveRack(rackSlots,ids,slot);selected=[];beep();render();return true;
   }
   function selectTile(id) {selected=selected.includes(id)?selected.filter(t=>t!==id):[...selected,id];beep();render();}
   function showHint() {
@@ -236,13 +244,13 @@
     if(event.button!==0||!canEdit()||drag)return;
     const source=event.target.closest('.cube-match .cube-tile:not(:disabled)');if(!source)return;
     event.preventDefault();source.focus({preventScroll:true});
-    const box=source.getBoundingClientRect();unlockAudio();drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,grabX:event.clientX-box.x,grabY:event.clientY-box.y,source,ids:selected.includes(source.dataset.id)?selected.slice():[source.dataset.id],started:false};screen.setPointerCapture(event.pointerId);
+    const box=source.getBoundingClientRect();unlockAudio();drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,grabX:event.clientX-box.x,grabY:event.clientY-box.y,source,downAt:Date.now(),free:event.altKey,ids:selected.includes(source.dataset.id)?selected.slice():[source.dataset.id],started:false};screen.setPointerCapture(event.pointerId);
   },{passive:false});
   screen.addEventListener('pointermove',event=>{
     if(!drag||event.pointerId!==drag.pointer)return;
     if(!drag.started&&Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<6)return;
     if(!canEdit()){cancelDrag();return;}event.preventDefault();
-    if(!drag.started){drag.started=true;drag.ghost=drag.source.cloneNode(true);drag.ghost.classList.remove('selected');drag.ghost.classList.add('cube-drag-ghost');drag.ghost.style.width=drag.source.offsetWidth+'px';drag.ghost.style.height=drag.source.offsetHeight+'px';drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost);drag.source.classList.add('drag-source');}
+    if(!drag.started){drag.free ||=Date.now()-drag.downAt>=450;drag.started=true;drag.ghost=drag.source.cloneNode(true);drag.ghost.classList.remove('selected');drag.ghost.classList.add('cube-drag-ghost');drag.ghost.classList.toggle('cube-free-drag',drag.free);drag.ghost.style.width=drag.source.offsetWidth+'px';drag.ghost.style.height=drag.source.offsetHeight+'px';drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost);drag.source.classList.add('drag-source');}
     drag.ghost.style.left=event.clientX-drag.grabX+'px';drag.ghost.style.top=event.clientY-drag.grabY+'px';
     content.querySelector('.drop-target')?.classList.remove('drop-target');
     document.elementFromPoint(event.clientX,event.clientY)?.closest('.cube-meld,.cube-board,.cube-rack-shell')?.classList.add('drop-target');
@@ -261,7 +269,8 @@
     }
     const board=target.closest('.cube-board');if(!board){render();return;}
     const r=board.getBoundingClientRect(),unit=Number(board.dataset.unit);
-    placeAt(current.ids,{x:(event.clientX-r.x-4)/unit,y:(event.clientY-r.y-4)/unit});
+    const x=ghost?ghost.x+ghost.width/2:event.clientX,y=ghost?ghost.y+ghost.height/2:event.clientY;
+    placeAt(current.ids,{x:(x-r.x-4)/unit,y:(y-r.y-4)/unit},current.free);
   });
   screen.addEventListener('pointercancel',cancelDrag);
   screen.addEventListener('lostpointercapture',cancelDrag);
@@ -276,7 +285,7 @@
     else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();returnTiles(ids);}
     else if(tile.dataset.where==='table'&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){
       event.preventDefault();const row=Number(tile.closest('.cube-meld').dataset.row),p=draftLayout[row],index=draft[row].indexOf(tile.dataset.id);
-      placeAt(ids,{x:Math.max(.5,p.x+index+.5+(event.key==='ArrowLeft'?-.5:event.key==='ArrowRight'?.5:0)),y:Math.max(.7,p.y+.7+(event.key==='ArrowUp'?-1.7:event.key==='ArrowDown'?1.7:0))});
+      placeAt(ids,{x:Math.max(.5,p.x+index+.5+(event.key==='ArrowLeft'?-.5:event.key==='ArrowRight'?.5:0)),y:Math.max(.7,p.y+.7+(event.key==='ArrowUp'?-1.7:event.key==='ArrowDown'?1.7:0))},true);
     }
   });
   const portrait=matchMedia('(orientation:portrait)');

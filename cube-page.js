@@ -10,14 +10,30 @@ window.leaveCubePage = () => {
     else location.assign(new URL('index.html', location.href).href);
 };
 window.loginForCube = () => { window.leaveCubePage(); };
+let profileGeneration=0;
 function authChanged(user) {
-    window.enjoyUser = user && !user.isAnonymous ? { uid: user.uid, displayName: user.displayName || '' } : null;
+    const generation=++profileGeneration;
+    window.enjoyUser = user && !user.isAnonymous ? { uid:user.uid, displayName:user.displayName||'', photoURL:user.photoURL||'' } : null;
+    const member=window.enjoyUser&&host?.enjoyJoinedMembers?.().find(p=>p.uid===user.uid);
+    window.enjoyCubeProfile=window.enjoyUser?{uid:user.uid,name:member?.name||user.displayName||'나',photoURL:member?.photoURL||host?.enjoyMemberPhoto?.(user.uid)||user.photoURL||''}:null;
     window.dispatchEvent(new Event('enjoy-auth-ready'));
+    if(!window.enjoyUser||member)return;
+    // A single member-profile read supplies the Enjoy nickname and photo in direct visits too.
+    (async()=>{
+        const token=await window.getEnjoyIdToken?.();if(!token)return;
+        const response=await fetch('https://firestore.googleapis.com/v1/projects/enjoy-meeting-account/databases/(default)/documents/members/'+encodeURIComponent(user.uid),{headers:{Authorization:'Bearer '+token}});
+        if(!response.ok)return;const data=await response.json();
+        if(generation!==profileGeneration||window.enjoyUser?.uid!==user.uid)return;
+        window.enjoyCubeProfile={uid:user.uid,name:data.fields?.name?.stringValue?.trim()||user.displayName||'나',photoURL:data.fields?.photoURL?.stringValue||user.photoURL||''};
+        window.dispatchEvent(new Event('enjoy-auth-ready'));
+    })().catch(()=>{});
 }
+
 if (host) {
-    window.enjoyUser = host.enjoyUser || null;
     window.getEnjoyIdToken = force => host.getEnjoyIdToken?.(force);
-    host.addEventListener('enjoy-auth-ready', () => authChanged(host.enjoyUser));
+    window.refreshCubeProfile=()=>authChanged(host.enjoyUser);
+    host.addEventListener('enjoy-auth-ready',window.refreshCubeProfile);
+    window.refreshCubeProfile();
     window.openDropCube();
 } else {
     window.openDropCube();
@@ -40,10 +56,10 @@ if (host) {
         });
         return authPromise;
     }
-    // Solo never starts an Auth connection. It remains usable without a server.
+    // Account restoration enriches portraits after rendering; offline solo still works.
     document.getElementById('cube-screen').addEventListener('click', event => {
         if (event.target.closest('[data-action="mode-friends"]')) restoreAuth();
     });
     if (new URLSearchParams(location.search).get('mode') === 'solo') document.querySelector('[data-action="mode-solo"]').click();
-    else restoreAuth();
+    restoreAuth();
 }

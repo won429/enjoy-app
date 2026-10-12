@@ -46,13 +46,14 @@ async function member(token, claims, env) {
   const data = await response.json();
   const name = data.fields?.name?.stringValue?.trim();
   if (!name) fail('멤버 프로필 등록 후 게임에 참가해주세요.', 'not-member');
-  return { uid: claims.sub, name: name.slice(0, 40) };
+  let photoURL='';try{const photo=new URL(data.fields?.photoURL?.stringValue||claims.picture||'');if(photo.protocol==='https:'&&!photo.username&&!photo.password&&photo.href.length<=2048)photoURL=photo.href;}catch(_){}
+  return { uid: claims.sub, name: name.slice(0, 40), photoURL };
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/health') return json({ ok: true, service: 'enjoy-cube', version: 6, turnMs: TURN_MS, layoutVersion: 1, hintLimit: 2 });
+    if (url.pathname === '/health') return json({ ok: true, service: 'enjoy-cube', version: 7, turnMs: TURN_MS, layoutVersion: 1, hintLimit: 2 });
     const match = url.pathname.match(/^\/rooms\/([A-Z2-9]{6})$/);
     const lobby = url.pathname === '/rooms';
     if ((!match && !lobby) || request.method !== 'GET' || request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return json({ error: 'Not found' }, 404);
