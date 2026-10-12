@@ -1,6 +1,7 @@
 (function (root) {
     'use strict';
     const COLORS = ['red', 'yellow', 'green', 'blue'];
+    const RESET_LIMIT = 2;
     const isWild = card => ['wild', 'wild4', 'wild9'].includes(card?.value);
     const cardPoints = card => isWild(card) ? 50 : /^\d$/.test(card.value) ? Number(card.value) : 20;
     function fail(message) { throw new Error(message); }
@@ -49,6 +50,7 @@
     }
     function canPlay(state, uid, card) {
         if (!card || state.turnUid !== uid || state.challenge || state.openingColorUid || state.winnerUid) return false;
+        if (card.value === 'reset' && (state.resetCount || 0) >= RESET_LIMIT) return false;
         if (state.drawnCardId && state.drawnCardId !== card.id) return false;
         const top = state.discard[state.discard.length - 1];
         return card.color === 'wild' || card.color === state.color || card.value === top.value;
@@ -89,7 +91,7 @@
         if (players.length < 2 || players.length > 10 || new Set(players).size !== players.length) fail('우노는 2~10명이 함께할 수 있어요.');
         const state = { players: players.slice(), hands: {}, deck: shuffle(deck(), random), discard: [], direction: 1,
             color: null, turnUid: null, drawnCardId: null, unoPendingUid: null, challenge: null,
-            openingColorUid: null, provisionalWinnerUid: null, winnerUid: null, roundPoints: 0 };
+            openingColorUid: null, provisionalWinnerUid: null, winnerUid: null, roundPoints: 0, resetCount: 0 };
         players.forEach(uid => { state.hands[uid] = []; });
         for (let i = 0; i < 7; i++) players.forEach(uid => take(state, uid, 1, random));
         // The host deals the first round; subsequent rounds rotate the dealer.
@@ -113,15 +115,17 @@
         return state;
     }
     function reset(state, random) {
-        // Reuse every card, including the played reset and any painted colors.
-        state.deck = shuffle([...state.deck, ...state.discard, ...Object.values(state.hands).flat()], random);
+        state.resetCount = (state.resetCount || 0) + 1;
+        // After the second reset, retire every reset card before redealing.
+        // Preserve the identities and painted colors of all remaining cards.
+        const cards = [...state.deck, ...state.discard, ...Object.values(state.hands).flat()];
+        state.deck = shuffle(cards.filter(card => state.resetCount < RESET_LIMIT || card.value !== 'reset'), random);
         state.hands = Object.fromEntries(state.players.map(player => [player, []]));
         state.discard = [];
         state.direction = 1;
         state.turnUid = state.players[0];
         state.drawnCardId = state.unoPendingUid = state.challenge = state.openingColorUid = state.provisionalWinnerUid = state.winnerUid = null;
         state.roundPoints = 0;
-        state.resetCount = (state.resetCount || 0) + 1;
         for (let i = 0; i < 7; i++) state.players.forEach(player => take(state, player, 1, random));
         // Select a numbered opener without repeatedly shuffling action cards.
         const index = state.deck.findLastIndex(card => /^\d$/.test(card.value));
@@ -199,6 +203,7 @@
         if (action.type !== 'play') fail('게임 동작을 확인해주세요.');
         const index = hand.findIndex(card => card.id === action.cardId);
         const card = hand[index];
+        if (card?.value === 'reset' && (state.resetCount || 0) >= RESET_LIMIT) fail('리셋은 게임당 2회까지만 사용할 수 있어요.');
         if (!canPlay(state, uid, card)) fail('같은 색, 숫자 또는 기호의 카드를 내주세요.');
         if (isWild(card) && !COLORS.includes(action.color)) fail('다음 색을 골라주세요.');
         const illegal = card.value === 'wild4' && hand.some(item => item.id !== card.id && item.color === state.color);
