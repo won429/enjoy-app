@@ -7,10 +7,10 @@
     const status = document.getElementById('uno-status');
     const connection = document.getElementById('uno-connection');
     const colors = { red: ['빨강', '#ce3447', '●'], yellow: ['노랑', '#f0be3b', '◆'], green: ['초록', '#168664', '▲'], blue: ['파랑', '#2468c8', '■'], wild: ['와일드', '#242939', '✦'] };
-    const labels = { draw2: '+2', wild4: '+4', wild9: '+9' };
+    const labels = { draw2: '+2', wild4: '+4' };
     const icon = value => '<i class="ph ph-' + value + '" aria-hidden="true"></i>';
-    const cardValue = card => card.value === 'skip' ? icon('prohibit') : card.value === 'reverse' ? icon('arrows-clockwise') : card.value === 'wild' ? icon('palette') : card.value === 'reset' ? icon('cards') : card.value === 'paint' ? icon('paint-brush') : esc(labels[card.value] || card.value);
-    const names = { skip: '건너뛰기', reverse: '방향 바꾸기', draw2: '두 장 뽑기', wild: '색 바꾸기', wild4: '와일드 네 장 뽑기', wild9: '와일드 아홉 장 뽑기', reset: '리셋', paint: '페인트' };
+    const cardValue = card => card.value === 'skip' ? icon('prohibit') : card.value === 'reverse' ? icon('arrows-clockwise') : ['wild', 'wild9'].includes(card.value) ? icon('palette') : card.value === 'reset' ? icon('cards') : card.value === 'paint' ? icon('paint-brush') : esc(labels[card.value] || card.value);
+    const names = { skip: '건너뛰기', reverse: '방향 바꾸기', draw2: '두 장 뽑기', wild: '색 바꾸기', wild4: '와일드 네 장 뽑기', wild9: '색 바꾸기', reset: '리셋', paint: '페인트' };
     let code = '', room = null, state = null, busy = false, liveRoom = false, liveGame = false;
     let socket = null, reconnectTimer = null, connectCancel = null, reconnectAttempts = 0;
     let lobbySocket = null, lobbyTimer = null, lobbyEpoch = 0, lobbyAttempts = 0, lobbyLoading = false;
@@ -466,7 +466,6 @@
         const target = message.target === uid() ? '내가' : esc(name(message.target)) + '님이';
         if (message.type === 'play' && message.value === 'reset') return actor + ' 리셋! 모든 카드를 섞고 7장씩 다시 나눠 진행해요.';
         if (message.type === 'play' && message.value === 'paint') return actor + ' 페인트! ' + target + ' 손패의 색상만 무작위로 바뀌었어요.' + (message.uno ? ' UNO!' : '');
-        if (message.type === 'play' && message.value === 'wild9') return actor + ' +9! ' + target + ' 카드 9장을 받고 차례를 쉬어요.' + (message.uno ? ' UNO!' : '');
         if (message.type === 'play') return actor + ' ' + esc(names[message.value] || message.value) + ' 카드를 냈어요.' + (message.uno ? ' UNO!' : '');
         if (message.type === 'draw') return actor + ' 카드 1장을 뽑았어요.';
         if (message.type === 'pass') return actor + ' 차례를 넘겼어요.';

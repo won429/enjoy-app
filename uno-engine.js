@@ -2,6 +2,7 @@
     'use strict';
     const COLORS = ['red', 'yellow', 'green', 'blue'];
     const RESET_LIMIT = 2;
+    // Legacy +9 cards in saved games now behave as ordinary color-change wilds.
     const isWild = card => ['wild', 'wild4', 'wild9'].includes(card?.value);
     const cardPoints = card => isWild(card) ? 50 : /^\d$/.test(card.value) ? Number(card.value) : 20;
     function fail(message) { throw new Error(message); }
@@ -25,7 +26,6 @@
         });
         for (let copy = 0; copy < 4; copy++) ['wild', 'wild4'].forEach(value => add('wild', value));
         COLORS.forEach(color => ['reset', 'paint'].forEach(value => add(color, value)));
-        for (let copy = 0; copy < 4; copy++) add('wild', 'wild9');
         return cards;
     }
     const nextUid = (state, uid, steps = 1) => {
@@ -222,7 +222,6 @@
         if (card.value === 'skip') steps = 2;
         const target = nextUid(state, uid);
         if (card.value === 'draw2') { take(state, target, 2, random); steps = 2; }
-        if (card.value === 'wild9') { take(state, target, 9, random); steps = 2; }
         if (card.value === 'paint') state.hands[target].forEach(item => {
             const choices = COLORS.filter(color => color !== item.color);
             item.color = choices[Math.floor(random() * choices.length)];
@@ -233,7 +232,7 @@
             if (!hand.length) state.provisionalWinnerUid = uid;
         } else finish(state, uid);
         state.message = { type: 'play', uid, value: card.value, color: state.color, uno: hand.length === 1 && !!action.uno,
-            ...(['paint', 'wild9'].includes(card.value) ? { target } : {}) };
+            ...(card.value === 'paint' ? { target } : {}) };
         return state;
     }
     function createRoom(player, now) {
@@ -271,7 +270,7 @@
         if (state.unoPendingUid) return { type: 'catch' };
         const nextCount = state.hands[nextUid(state, uid)]?.length || 0;
         const priority = card => (card.color === 'wild' ? -20 : counts[card.color] * 3) +
-            (['skip', 'reverse', 'draw2', 'wild9', 'paint'].includes(card.value) ? (nextCount <= 2 ? 15 : 2) :
+            (['skip', 'reverse', 'draw2', 'paint'].includes(card.value) ? (nextCount <= 2 ? 15 : 2) :
                 card.value === 'reset' ? (hand.length > 7 ? 8 : -30) : Number(card.value) || 0);
         const playable = hand.filter(card => canPlay(state, uid, card) &&
             (card.value !== 'wild4' || !hand.some(item => item.id !== card.id && item.color === state.color)));
