@@ -1,7 +1,8 @@
 (() => {
   'use strict';
   const E = window.DropCube, content = document.getElementById('cube-content'), status = document.getElementById('cube-status'), connection = document.getElementById('cube-connection');
-  let mode='solo', count=2, room=null, state=null, code='', active=true, selected=[], draft=null, soloPlayers=[], soloTimer=null, socket=null, lobby=null, rooms=[], live=false, pending=null, pendingTimer=null, reconnectTimer=null, messageTimer=null, lastUid='', generation=0, lobbyGeneration=0, retry=0, clockOffset=0, sort='color', sound=true, audio=null;
+  let mode='solo', count=2, room=null, state=null, code='', active=true, selected=[], draft=null, soloPlayers=[], soloTimer=null, socket=null, lobby=null, rooms=[], live=false, pending=null, pendingTimer=null, reconnectTimer=null, messageTimer=null, lastUid='', generation=0, lobbyGeneration=0, retry=0, clockOffset=0, sort='color', sound=true, audio=null, drag=null, suppressClickUntil=0, lastPaint=new Map(), fitFrame=null;
+  const TURN_MS=30000, screen=document.getElementById('cube-screen');
   try { sound=localStorage.getItem('drop-cube-sound')!=='off'; } catch (_) {}
   const esc = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const user = () => window.enjoyUser?.uid || '';
@@ -11,12 +12,30 @@
   const name = uid => people().find(p=>p.uid===uid)?.name || '친구';
   const players = () => people().slice();
   const mine = () => !!state && state.turnUid===you() && !state.winnerUid;
-  const canEdit = () => active && mine() && !pending && (mode==='solo'||live);
+  const canEdit = () => active && mine() && !pending && (mode==='solo'||live) && (!state.turnDeadline || state.turnDeadline>Date.now()+(mode==='friends'?clockOffset:0));
   const btn=(action,label,cls='',disabled=false,attrs='')=>`<button class="cube-btn ${cls}" data-action="${action}" ${disabled?'disabled':''} ${attrs}>${label}</button>`;
   function note(message) { status.textContent=message; clearTimeout(messageTimer); if(message) messageTimer=setTimeout(()=>{status.textContent='';},6500); }
+  const mediaEffects=Object.fromEntries(['pick','draw','done'].map(kind=>[kind,{element:new Audio('assets/cube/sound-'+kind+'.wav'),unlocked:false,used:false}]));
+  function unlockAudio() {
+    if(!sound)return;
+    try {
+      if(navigator.audioSession)navigator.audioSession.type='playback';
+      else for(const effect of Object.values(mediaEffects))if(!effect.unlocked){
+        effect.element.muted=true;
+        effect.element.play().then(()=>{effect.unlocked=true;if(!effect.used){effect.element.pause();effect.element.currentTime=0;}effect.element.muted=false;effect.element.volume=1;}).catch(()=>{});
+      }
+      audio ||= new (window.AudioContext||window.webkitAudioContext)();
+      audio.resume().catch(()=>{});
+    }catch(_){}
+  }
   function beep(kind='pick') {
     if(!sound) return;
-    try { audio ||= new (window.AudioContext||window.webkitAudioContext)(); audio.resume(); const osc=audio.createOscillator(), gain=audio.createGain(); osc.connect(gain);gain.connect(audio.destination); osc.type='sine';osc.frequency.value=kind==='done'?740:kind==='draw'?260:480;gain.gain.setValueAtTime(.045,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.12);osc.start();osc.stop(audio.currentTime+.13); }catch(_){}
+    unlockAudio();
+    if(!navigator.audioSession){
+      const effect=mediaEffects[kind]||mediaEffects.pick;effect.used=true;effect.element.muted=false;effect.element.volume=1;effect.element.currentTime=0;
+      effect.element.play().catch(()=>{});return;
+    }
+    try { const osc=audio.createOscillator(), gain=audio.createGain(); osc.connect(gain);gain.connect(audio.destination); osc.type='sine';osc.frequency.value=kind==='done'?740:kind==='draw'?260:480;gain.gain.setValueAtTime(.045,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.12);osc.start();osc.stop(audio.currentTime+.13); }catch(_){}
   }
   function avatar(p,i=0) { return `<span class="cube-avatar" style="--avatar-x:${(i%5)*25}%" aria-hidden="true"></span>`; }
   function tile(t,where,disabled=false,index=0) {
@@ -28,7 +47,7 @@
   function statusText() { connection.textContent=mode==='solo'?'기기에서 플레이':live?'실시간 연결':socket||lobby?'연결 중':'연결 끊김';connection.classList.toggle('live',mode==='friends'&&live); }
   function renderSetup() {
     const logo=[{id:'logo-r',color:'red',n:10},{id:'logo-b',color:'blue',n:10},{id:'logo-o',color:'orange',n:10},{id:'logo-j',color:'joker',n:0}].map(t=>tile(t,'logo',true)).join('');
-    let panel=mode==='solo'?`<h3>몇 명이 함께할까요?</h3><p class="cube-caption">나와 가상 플레이어가 한 테이블에서 만나요.</p><div class="cube-counts">${[2,3,4].map(n=>`<button data-action="count" data-count="${n}" aria-pressed="${count===n}">${n}명</button>`).join('')}</div>${btn('solo-start','게임 시작','wide')}<p class="cube-note">로그인 없이, 시간 제한 없이 즐겨요.</p>`:
+    let panel=mode==='solo'?`<h3>몇 명이 함께할까요?</h3><p class="cube-caption">나와 가상 플레이어가 한 테이블에서 만나요.</p><div class="cube-counts">${[2,3,4].map(n=>`<button data-action="count" data-count="${n}" aria-pressed="${count===n}">${n}명</button>`).join('')}</div>${btn('solo-start','게임 시작','wide')}<p class="cube-note">로그인 없이, 한 차례에 30초씩 즐겨요.</p>`:
     !user()?`<h3>멤버와 함께 플레이</h3><p class="cube-caption">드롭에서 멤버 계정으로 로그인하면 방을 만들고 친구와 함께할 수 있어요.</p>${btn('login','드롭으로 돌아가기','wide')}`:
     `${btn('create','새 방 만들기','wide',!!socket)}<div class="cube-join"><input id="cube-code" aria-label="6자리 방 코드" maxlength="6" placeholder="방 코드 6자리" autocomplete="off" autocapitalize="characters">${btn('join','입장','secondary',!!socket)}</div><div class="cube-room-list"><h3>친구들의 테이블</h3>${rooms.length?rooms.map(r=>`<div class="cube-room-item"><div><strong>${esc(r.title)}</strong><small>${esc(r.id)} · ${r.playerCount}/4명 · ${r.status==='waiting'?'대기 중':r.status==='finished'?'게임 종료':'플레이 중'}</small></div>${btn('join-listed','입장','secondary',r.status!=='waiting'||r.playerCount>=4||!!socket,`data-code="${esc(r.id)}"`)}</div>`).join(''):`<p class="cube-caption">${lobby?.readyState===WebSocket.OPEN?'열려 있는 방이 없어요. 첫 테이블을 만들어보세요.':'친구들의 방을 연결하고 있어요.'}</p>`}</div>`;
     content.innerHTML=`<div class="cube-setup"><div class="cube-hero"><span class="cube-kicker">A LITTLE STRATEGY. A LOT OF FUN.</span><div class="cube-logo">${logo}</div><h2>타일 하나로 바뀌는 판</h2><p>숫자를 잇고, 색을 모으고.<br>나만의 한 수를 내려놓으세요.</p></div><div class="cube-panel"><div class="cube-modes"><button data-action="mode-solo" aria-pressed="${mode==='solo'}">혼자하기</button><button data-action="mode-friends" aria-pressed="${mode==='friends'}">친구와 하기</button></div>${panel}</div></div>`;
@@ -49,13 +68,13 @@
     const played=state.hands[me]?.length-rack.length;
     const opening=rows.filter(row=>row.every(id=>state.hands[me].some(t=>t.id===id))).reduce((sum,row)=>sum+(E.meld(row.map(id=>map.get(id)))?.points||0),0);
     const pool=mode==='solo'?state.pool.length:state.poolCount;
-    const last=state.lastMove?`${name(state.lastMove.uid)} · ${state.lastMove.type==='draw'?(state.lastMove.count?'1장 뽑음':'차례 넘김'):`${state.lastMove.count}장 냄`}`:'타일을 선택해 새 묶음을 만드세요';
+    const last=state.lastMove?`${name(state.lastMove.uid)} · ${state.lastMove.type==='draw'?(state.lastMove.count?'1장 뽑음':'차례 넘김'):`${state.lastMove.count}장 냄`}`:'타일을 끌어 테이블에 놓으세요';
     const seat=(p,i,self=false)=>`<div class="cube-seat ${self?'cube-self':''} ${state.turnUid===p.uid?'active':''}">${avatar(p,i)}<div class="cube-seat-label"><strong>${esc(p.name)}</strong><span><i class="ph ph-cards" aria-hidden="true"></i> ${state.hands[p.uid].length}</span></div><small>${state.opened[p.uid]?'등록 완료':'첫 등록 전'}</small></div>`;
-    const board=rows.some(row=>row.length)?rows.map((row,i)=>row.length?`<div class="cube-meld ${E.meld(row.map(id=>map.get(id)))?'':'invalid'}" aria-label="${i+1}번 묶음"><button class="cube-append" data-action="append-left" data-row="${i}" aria-label="${i+1}번 묶음 앞에 선택 타일 붙이기" ${!edit||!selected.length?'disabled':''}><i class="ph ph-caret-left" aria-hidden="true"></i></button>${row.map(id=>tile(map.get(id),'table',!edit||!state.opened[me]&&!state.hands[me].some(t=>t.id===id))).join('')}<button class="cube-append" data-action="append-right" data-row="${i}" aria-label="${i+1}번 묶음 뒤에 선택 타일 붙이기" ${!edit||!selected.length?'disabled':''}><i class="ph ph-caret-right" aria-hidden="true"></i></button></div>`:'').join(''):
+    const board=rows.some(row=>row.length)?rows.map((row,i)=>row.length?`<div class="cube-meld ${E.meld(row.map(id=>map.get(id)))?'':'invalid'}" data-row="${i}" aria-label="${i+1}번 묶음"><button class="cube-append" data-action="append-left" data-row="${i}" aria-label="${i+1}번 묶음 앞에 선택 타일 붙이기" ${!edit||!selected.length?'disabled':''}><i class="ph ph-caret-left" aria-hidden="true"></i></button>${row.map(id=>tile(map.get(id),'table',!edit||!state.opened[me]&&!state.hands[me].some(t=>t.id===id))).join('')}<button class="cube-append" data-action="append-right" data-row="${i}" aria-label="${i+1}번 묶음 뒤에 선택 타일 붙이기" ${!edit||!selected.length?'disabled':''}><i class="ph ph-caret-right" aria-hidden="true"></i></button></div>`:'').join(''):
       `<div class="cube-empty"><h2>숫자를 잇고,<br>색을 모으세요</h2><p>첫 묶음은 내 타일로 30점 이상</p></div>`;
     content.innerHTML=`<div class="cube-match" data-player-count="${people().length}">
       <aside class="cube-players-rail" aria-label="플레이어">${opponents.map((p,i)=>seat(p,i)).join('')}${seat(myself,3,true)}</aside>
-      <div class="cube-turnbar"><strong class="${mine()?'myturn':''}">${mine()?'나의 차례':esc(name(state.turnUid))+'의 차례'}</strong><span>${mode==='friends'?'친구와 플레이':'혼자하기'}${code&&mode==='friends'?' · '+esc(code):''}</span>${mode==='friends'?'<span id="cube-clock" class="cube-clock"></span>':''}</div>
+      <div class="cube-turnbar"><strong class="${mine()?'myturn':''}">${mine()?'나의 차례':esc(name(state.turnUid))+'의 차례'}</strong><span>${mode==='friends'?'친구와 플레이':'혼자하기'}${code&&mode==='friends'?' · '+esc(code):''}</span><span id="cube-clock" class="cube-clock" role="timer" aria-label="남은 차례 시간"></span></div>
       <div class="cube-board" aria-label="공유 테이블">${board}</div>
       <aside class="cube-game-controls" aria-label="게임 조작">
         <div class="cube-registration"><i class="ph ph-squares-four" aria-hidden="true"></i><strong>${state.opened[me]?'등록 완료':opening+' / 30'}</strong><small>${state.opened[me]?'타일을 자유롭게 조합':'첫 등록 점수'}</small></div>
@@ -69,23 +88,38 @@
       </div>
       ${mode==='friends'?`<button class="cube-match-leave" data-action="leave" ${pending?'disabled':''}><i class="ph ph-sign-out" aria-hidden="true"></i><span>방 나가기</span></button>`:''}
     </div>`;
-    updateClock();
+    fitBoard(); updateClock();
   }
   function render() {
-    const boardScroll=content.querySelector('.cube-board')?.scrollTop||0, rackScroll=content.querySelector('.cube-rack')?.scrollLeft||0, outerScroll=content.scrollTop;
+    cancelDrag(); captureTiles();
+    const rackScroll=content.querySelector('.cube-rack')?.scrollLeft||0, outerScroll=content.scrollTop;
     const input=document.getElementById('cube-code'), inputValue=input?.value||'', focused=document.activeElement, focusId=focused?.dataset?.id, focusAction=focused?.dataset?.action, inputFocused=focused===input;
     document.getElementById('cube-screen').classList.toggle('cube-playing',!!state&&!state.winnerUid);
     statusText();if(state?.winnerUid) renderResult();else if(state) renderMatch();else if(room) renderWaiting();else renderSetup();
-    const board=content.querySelector('.cube-board'),rack=content.querySelector('.cube-rack');if(board)board.scrollTop=boardScroll;if(rack)rack.scrollLeft=rackScroll;content.scrollTop=outerScroll;
+    const board=content.querySelector('.cube-board'),rack=content.querySelector('.cube-rack');if(rack)rack.scrollLeft=rackScroll;content.scrollTop=outerScroll; animateTiles();
     const field=document.getElementById('cube-code');if(field){field.value=inputValue;if(inputFocused)field.focus({preventScroll:true});}
     if(focusId){const next=Array.from(content.querySelectorAll('[data-id]')).find(el=>el.dataset.id===focusId);next?.focus({preventScroll:true});}
     else if(focusAction&&!inputFocused&&content.contains(focused)===false){Array.from(content.querySelectorAll('[data-action]')).find(el=>el.dataset.action===focusAction)?.focus({preventScroll:true});}
   }
-  function updateClock() { const el=document.getElementById('cube-clock');if(el&&state?.turnDeadline) {const seconds=Math.max(0,Math.ceil((state.turnDeadline-Date.now()-clockOffset)/1000));el.textContent=seconds+'초';el.style.color=seconds<=10?'#ffaf98':'';} }
-  setInterval(updateClock,1000);
+  function updateClock() {
+    const el=document.getElementById('cube-clock');
+    if(el&&state?.turnDeadline) {
+      const seconds=Math.max(0,Math.ceil((state.turnDeadline-Date.now()-(mode==='friends'?clockOffset:0))/1000));
+      el.textContent=seconds+'초';el.classList.toggle('urgent',seconds<=10);
+    }
+  }
+  setInterval(updateClock,250);
   function stopSolo() { clearTimeout(soloTimer);soloTimer=null; }
-  function scheduleSolo() { stopSolo();if(!active||mode!=='solo'||!state||state.winnerUid||mine()) return;soloTimer=setTimeout(()=>{if(!active||mode!=='solo'||!state||state.winnerUid) return;try {state=E.move(state,state.turnUid,E.botAction(state,state.turnUid));resetDraft();beep('done');render();scheduleSolo();}catch(e){note(e.message);}},1300); }
-  function beginSolo() { disconnectRoom();stopLobby();room=null;mode='solo';soloPlayers=[{uid:'you',name:'나'},...Array.from({length:count-1},(_,i)=>({uid:'bot-'+i,name:['루미','모모','하루'][i],bot:true}))];state=E.start(soloPlayers.map(p=>p.uid));resetDraft();note('14장씩 나눴어요. '+name(state.turnUid)+'부터 시작!');render();scheduleSolo(); }
+  function advanceSolo(action) { state=E.move(state,state.turnUid,action);state.turnDeadline=state.winnerUid?null:Date.now()+TURN_MS;resetDraft(); }
+  function scheduleSolo() {
+    stopSolo();if(!active||mode!=='solo'||!state||state.winnerUid) return;
+    const remaining=Math.max(0,state.turnDeadline-Date.now());
+    soloTimer=setTimeout(()=>{
+      if(!active||mode!=='solo'||!state||state.winnerUid)return;
+      try {const timeout=Date.now()>=state.turnDeadline;advanceSolo(timeout?{type:'draw'}:E.botAction(state,state.turnUid));beep(timeout?'draw':'done');render();if(timeout)note('30초가 끝나 미완성 배치를 취소하고 1장을 뽑았어요.');scheduleSolo();}catch(e){note(e.message);}
+    },mine()?remaining:Math.min(1300,remaining));
+  }
+  function beginSolo() { disconnectRoom();stopLobby();room=null;mode='solo';soloPlayers=[{uid:'you',name:'나'},...Array.from({length:count-1},(_,i)=>({uid:'bot-'+i,name:['루미','모모','하루'][i],bot:true}))];state=E.start(soloPlayers.map(p=>p.uid));state.turnDeadline=Date.now()+TURN_MS;resetDraft();note('14장씩 나눴어요. '+name(state.turnUid)+'부터 시작!');beep('done');render();scheduleSolo(); }
   function disconnectRoom() { generation++;clearTimeout(reconnectTimer);reconnectTimer=null;clearTimeout(pendingTimer);pendingTimer=null;const old=socket;socket=null;live=false;old?.close(); }
   function stopLobby() { lobbyGeneration++;const old=lobby;lobby=null;old?.close(); }
   function clearRoom() { disconnectRoom();pending=null;room=null;state=null;draft=null;selected=[];code='';try{localStorage.removeItem(key());}catch(_){}render();connectLobby(); }
@@ -107,7 +141,7 @@
       if(p.type==='snapshot'){
         const changed=room?.revision!==p.room.revision;room=p.room;state=p.state;clockOffset=(p.serverNow||Date.now())-Date.now();if(changed)resetDraft();render();
       }
-      if(p.type==='ack'&&pending?.id===p.id){const leaving=pending.action.type==='leave';pending=null;clearTimeout(pendingTimer);if(leaving)clearRoom();else render();}
+      if(p.type==='ack'&&pending?.id===p.id){if(['commit','draw'].includes(pending.action.type))beep(pending.action.type==='draw'?'draw':'done');const leaving=pending.action.type==='leave';pending=null;clearTimeout(pendingTimer);if(leaving)clearRoom();else render();}
       if(p.type==='removed'){note(p.message||'방에서 나왔어요.');clearRoom();}
       if(p.type==='error'){
         if(p.id===pending?.id){pending=null;clearTimeout(pendingTimer);}
@@ -129,7 +163,7 @@
   }
   function armPending(){clearTimeout(pendingTimer);pendingTimer=setTimeout(()=>{if(pending&&active){note('연결을 다시 확인하고 있어요.');connectRoom(code);}},12000);}
   function send(action){
-    if(mode==='solo'){try{state=E.move(state,you(),action);resetDraft();beep(action.type==='draw'?'draw':'done');render();scheduleSolo();}catch(e){note(e.message);}return;}
+    if(mode==='solo'){try{advanceSolo(action);beep(action.type==='draw'?'draw':'done');render();scheduleSolo();}catch(e){note(e.message);}return;}
     if(!live||socket?.readyState!==WebSocket.OPEN||pending){note('서버 연결을 기다려주세요.');return;}
     pending={type:'action',id:crypto.randomUUID(),revision:room.revision,action};socket.send(JSON.stringify(pending));armPending();render();
   }
@@ -140,14 +174,103 @@
     if(rowIndex===null)draft.push(ids);else draft[rowIndex]=side==='left'?[...ids,...target]:[...target,...ids];
     selected=[];beep();render();
   }
+  function captureTiles() {
+    lastPaint=new Map(Array.from(content.querySelectorAll('.cube-match .cube-tile'),el=>[el.dataset.id,{box:el.getBoundingClientRect(),where:el.dataset.where}]));
+  }
+  function animateTiles() {
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    for(const el of content.querySelectorAll('.cube-match .cube-tile')) {
+      const before=lastPaint.get(el.dataset.id),after=el.getBoundingClientRect();
+      if(before) {
+        const dx=before.box.x-after.x,dy=before.box.y-after.y;
+        if(Math.abs(dx)+Math.abs(dy)>2)el.animate([{translate:`${dx}px ${dy}px`,opacity:.65},{translate:'0px 0px',opacity:1}],{duration:240,easing:'cubic-bezier(.2,.8,.2,1)'});
+      }else el.animate([{opacity:0,translate:'0px -14px'},{opacity:1,translate:'0px 0px'}],{duration:220,easing:'ease-out'});
+    }
+  }
+  function fitBoard() {
+    const match=content.querySelector('.cube-match'),rack=content.querySelector('.cube-rack');
+    if(match&&rack?.clientWidth){
+      match.style.removeProperty('--tile-w');match.style.removeProperty('--tile-h');
+      const base=parseFloat(getComputedStyle(rack.querySelector('.cube-tile')||match).width)||50,columns=Math.max(10,Math.ceil(rack.querySelectorAll('.cube-tile').length/2));
+      const width=Math.min(base,(rack.clientWidth-columns-1)/columns);
+      if(width>0){match.style.setProperty('--tile-w',width+'px');match.style.setProperty('--tile-h',width*1.4+'px');}
+    }
+    const board=content.querySelector('.cube-board');if(!board||!board.clientWidth||!board.clientHeight)return;
+    const rows=Array.from(board.querySelectorAll('.cube-meld')),style=getComputedStyle(board);
+    const width=board.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)-2;
+    const height=board.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)-2;
+    const small=matchMedia('(max-height:600px)').matches,baseW=small?34:50,baseH=baseW*1.4,append=small?15:20,gap=small?10:18;
+    const fits=scale=>{
+      let x=0,y=0;const rowHeight=(baseH+10)*scale;
+      for(const row of rows){const n=row.querySelectorAll('.cube-tile').length,w=(n*baseW+(n+1)*2+append*2)*scale;if(w>width)return false;if(x&&x+w>width){x=0;y+=rowHeight+gap*scale;}if(y+rowHeight>height)return false;x+=w+gap*scale;}return true;
+    };
+    let low=0,high=1;for(let i=0;i<22;i++){const mid=(low+high)/2;if(fits(mid))low=mid;else high=mid;}
+    const scale=rows.length?low:1;
+    board.style.setProperty('--board-tile-w',baseW*scale+'px');board.style.setProperty('--board-tile-h',baseH*scale+'px');
+    board.style.setProperty('--board-font',baseW*.62*scale+'px');board.style.setProperty('--board-append',append*scale+'px');
+    board.style.setProperty('--board-gap',gap*scale+'px');board.style.setProperty('--meld-gap',2*scale+'px');board.style.setProperty('--meld-pad',5*scale+'px');
+    board.dataset.scale=scale.toFixed(3);
+  }
+  new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(fitBoard);}).observe(content);
+  function returnTiles(ids) {
+    const original=new Set(state.table.flat().map(t=>t.id));
+    if(ids.some(id=>original.has(id))){note('공유 테이블의 타일은 다른 묶음으로 옮겨주세요.');return;}
+    draft=draft.map(row=>row.filter(id=>!ids.includes(id)));selected=[];beep();render();
+  }
+  function cancelDrag() {
+    if(!drag)return;
+    const current=drag;drag=null;
+    if(screen.hasPointerCapture(current.pointer))screen.releasePointerCapture(current.pointer);
+    current.ghost?.remove();current.source?.classList.remove('drag-source');content.querySelector('.drop-target')?.classList.remove('drop-target');
+  }
+  screen.addEventListener('pointerdown',event=>{
+    if(event.button!==0||!canEdit())return;
+    const source=event.target.closest('.cube-match .cube-tile:not(:disabled)');if(!source)return;
+    unlockAudio();drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,source,ids:selected.includes(source.dataset.id)?selected.slice():[source.dataset.id],started:false};
+  });
+  screen.addEventListener('pointermove',event=>{
+    if(!drag||event.pointerId!==drag.pointer)return;
+    if(!drag.started&&Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<6)return;
+    if(!canEdit()){cancelDrag();return;}event.preventDefault();
+    if(!drag.started){screen.setPointerCapture(event.pointerId);drag.started=true;drag.ghost=drag.source.cloneNode(true);drag.ghost.classList.remove('selected');drag.ghost.classList.add('cube-drag-ghost');drag.ghost.style.width=drag.source.offsetWidth+'px';drag.ghost.style.height=drag.source.offsetHeight+'px';drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost);drag.source.classList.add('drag-source');}
+    drag.ghost.style.left=event.clientX+'px';drag.ghost.style.top=event.clientY+'px';
+    content.querySelector('.drop-target')?.classList.remove('drop-target');
+    document.elementFromPoint(event.clientX,event.clientY)?.closest('.cube-meld,.cube-board,.cube-rack-shell')?.classList.add('drop-target');
+  });
+  screen.addEventListener('pointerup',event=>{
+    if(!drag||event.pointerId!==drag.pointer)return;
+    const current=drag,target=document.elementFromPoint(event.clientX,event.clientY);cancelDrag();
+    if(!current.started)return;suppressClickUntil=Date.now()+350;
+    if(!canEdit()||!target)return;
+    if(target.closest('.cube-rack-shell')){returnTiles(current.ids);return;}
+    const board=target.closest('.cube-board');if(!board)return;
+    const meld=target.closest('.cube-meld'),rowIndex=meld?Number(meld.dataset.row):null;
+    let index=0;
+    if(meld){const tiles=Array.from(meld.querySelectorAll('.cube-tile'));index=tiles.filter(el=>{const r=el.getBoundingClientRect();return r.x+r.width/2<event.clientX&&!current.ids.includes(el.dataset.id);}).length;}
+    draft=draft.map(row=>row.filter(id=>!current.ids.includes(id)));
+    if(rowIndex===null)draft.push(current.ids);else draft[rowIndex].splice(index,0,...current.ids);
+    selected=[];beep('done');render();
+  });
+  screen.addEventListener('pointercancel',cancelDrag);
+  screen.addEventListener('lostpointercapture',()=>{if(drag?.started)cancelDrag();});
+  window.addEventListener('blur',cancelDrag);
+  const portrait=matchMedia('(orientation:portrait)');
+  function orientationChanged(){screen.inert=portrait.matches;if(portrait.matches&&document.getElementById('cube-rules').open)document.getElementById('cube-rules').close();cancelDrag();requestAnimationFrame(fitBoard);}
+  portrait.addEventListener('change',orientationChanged);orientationChanged();
+  document.querySelector('[data-action="rotate-back"]').addEventListener('click',()=>window.leaveCubePage?.());
+  document.querySelector('[data-action="landscape"]').addEventListener('click',async()=>{
+    try{await document.documentElement.requestFullscreen?.();await window.screen.orientation?.lock?.('landscape');}catch(_){}
+  });
   content.addEventListener('click',handle);
   document.querySelector('.cube-header').addEventListener('click',handle);
   document.getElementById('cube-rules').addEventListener('click',handle);
   async function handle(event){
+    if(Date.now()<suppressClickUntil)return;
+    unlockAudio();
     const button=event.target.closest('[data-action]');if(!button||button.disabled)return;const action=button.dataset.action;
     if(action==='rules'){document.getElementById('cube-rules').showModal();return;}
     if(action==='rules-close'){document.getElementById('cube-rules').close();return;}
-    if(action==='sound'){sound=!sound;try{localStorage.setItem('drop-cube-sound',sound?'on':'off');}catch(_){}button.setAttribute('aria-pressed',String(sound));button.setAttribute('aria-label',sound?'효과음 끄기':'효과음 켜기');button.innerHTML=`<i class="ph ph-speaker-${sound?'high':'slash'}" aria-hidden="true"></i>`;return;}
+    if(action==='sound'){sound=!sound;try{localStorage.setItem('drop-cube-sound',sound?'on':'off');}catch(_){}button.setAttribute('aria-pressed',String(sound));button.setAttribute('aria-label',sound?'효과음 끄기':'효과음 켜기');button.innerHTML=`<i class="ph ph-speaker-${sound?'high':'slash'}" aria-hidden="true"></i>`;if(sound)beep();else {audio?.suspend().catch(()=>{});for(const {element} of Object.values(mediaEffects))element.pause();}return;}
     if(action==='back'){if(mode==='solo'&&state){stopSolo();state=null;resetDraft();render();}else window.leaveCubePage?.();return;}
     if(action==='mode-solo'){stopLobby();disconnectRoom();pending=null;mode='solo';render();return;}
     if(action==='mode-friends'){mode='friends';render();let saved='';try{saved=localStorage.getItem(key())||'';}catch(_){}if(saved&&user())connectRoom(saved);else connectLobby();return;}
@@ -164,10 +287,7 @@
     if(action==='tile'){const id=button.dataset.id;selected=selected.includes(id)?selected.filter(t=>t!==id):[...selected,id];beep();render();return;}
     if(action==='new-meld'){place(null);return;}
     if(action==='append-left'||action==='append-right'){place(Number(button.dataset.row),action==='append-left'?'left':'right');return;}
-    if(action==='return'){
-      const original=new Set(state.table.flat().map(t=>t.id));if(selected.some(id=>original.has(id))){note('테이블에 있던 타일은 받침대로 가져올 수 없어요. 다른 묶음으로 옮겨주세요.');return;}
-      draft=draft.map(row=>row.filter(id=>!selected.includes(id)));selected=[];render();return;
-    }
+    if(action==='return'){returnTiles(selected);return;}
     if(action==='undo'){resetDraft();render();return;}
     if(action==='hint'){const hint=E.botAction(state,you());if(hint?.type==='commit'){draft=hint.table;selected=[];render();note('가능한 배치를 준비했어요. 확인하고 차례 완료를 누르세요.');}else note('새 묶음이나 양끝 추가 힌트를 찾지 못했어요. 테이블을 재배열하거나 1장을 뽑아보세요.');return;}
     if(action==='draw'){resetDraft();send({type:'draw'});return;}
@@ -179,7 +299,7 @@
       }catch(e){note(e.message);}return;
     }
   }
-  window.pauseCubeGame=()=>{active=false;stopSolo();disconnectRoom();stopLobby();};
+  window.pauseCubeGame=()=>{cancelDrag();audio?.suspend().catch(()=>{});for(const {element} of Object.values(mediaEffects))element.pause();active=false;stopSolo();disconnectRoom();stopLobby();};
   window.openDropCube=()=>{active=true;render();scheduleSolo();if(mode==='friends'){if(code)connectRoom(code);else connectLobby();}};
   window.addEventListener('enjoy-auth-ready',()=>{const uid=user();if(uid!==lastUid){disconnectRoom();stopLobby();pending=null;room=null;if(mode==='friends'){state=null;draft=null;selected=[];}code='';rooms=[];lastUid=uid;}render();if(active&&mode==='friends'){let saved='';try{saved=localStorage.getItem(key())||'';}catch(_){}if(saved&&uid)connectRoom(saved);else connectLobby();}});
   window.addEventListener('online',()=>{if(active&&mode==='friends'){if(code)connectRoom(code);else connectLobby();}});

@@ -278,3 +278,57 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 @media(max-width:360px){.cube-players-rail{gap:10px}.cube-seat{min-height:66px}.cube-seat .cube-avatar{width:43px;height:43px}.cube-seat small{display:none}}
 
 @media(min-width:600px){.cube-match-leave{left:calc(var(--rail) + 250px);top:15px;bottom:auto}.cube-turnbar strong{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
+/* Cube alone uses a landscape field with room for camera cutouts on either side. */
+#cube-screen { --safe-left: env(safe-area-inset-left, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); min-height: 0; }
+.cube-header { padding-top: 12px; }
+.cube-playing .cube-header { top: var(--safe-top); right: calc(var(--safe-right) + 10px); }
+.cube-match { min-height: 0; }
+.cube-board { overflow: hidden; gap: var(--board-gap, 18px); }
+.cube-meld { gap: var(--meld-gap, 2px); padding: var(--meld-pad, 5px) 0; overflow: visible; }
+.cube-board .cube-tile { width: var(--board-tile-w, 50px); height: var(--board-tile-h, 70px); font-size: var(--board-font, 31px); border-radius: min(6px, calc(var(--board-tile-w, 50px) * .12)); }
+.cube-board .cube-tile small { display: none; }
+.cube-board .cube-append { width: var(--board-append, 20px); height: var(--board-tile-h, 70px); font-size: var(--board-font, 24px); }
+.cube-board .cube-tile.selected { transform: none; }
+.cube-match .cube-tile { touch-action: none; -webkit-touch-callout: none; }
+.cube-match .cube-tile:not(:disabled) { cursor: grab; }
+.cube-drag-ghost { position: fixed; z-index: 100; pointer-events: none; translate: -50% -65%; rotate: -5deg; opacity: .95; box-shadow: 0 8px 16px #00153688; cursor: grabbing; }
+.drag-source { opacity: .35 !important; }
+.drop-target { background-color: #79aaf33b; outline: 2px dashed #f7df99; outline-offset: -2px; }
+.cube-seat.active .cube-avatar { animation: cube-turn-glow 2s ease-in-out infinite; }
+.cube-clock.urgent { color: #ffaf98; border-color: #f68b72; animation: cube-clock-pulse 1s ease-in-out infinite; }
+@keyframes cube-turn-glow { 50% { box-shadow: 0 0 0 3px #7a694b, 0 0 12px #f5d68055; } }
+@keyframes cube-clock-pulse { 50% { background: #873525a0; } }
+#cube-rotate { display: none; position: fixed; inset: 0; z-index: 30; padding: max(30px, env(safe-area-inset-top)) 24px max(30px, env(safe-area-inset-bottom)); background: #123972 url('assets/cube/blue-board-v2.jpg') center / cover; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+#cube-rotate > i { font-size: 64px; color: var(--gold); rotate: 90deg; margin-bottom: 20px; }
+#cube-rotate h2 { font-size: 26px; margin: 0 0 10px; }
+#cube-rotate p { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+@media (orientation: portrait) { #cube-screen { visibility: hidden; } #cube-rotate { display: flex; } #cube-rules { display: none; } }
+@media (orientation: landscape) and (pointer: coarse), (orientation: landscape) and (max-height: 500px) {
+  #cube-screen { --safe-left: max(48px, env(safe-area-inset-left, 0px)); --safe-right: max(48px, env(safe-area-inset-right, 0px)); --safe-top: max(6px, env(safe-area-inset-top, 0px)); --safe-bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
+  .cube-playing #cube-status { max-width: calc(100% - var(--safe-left) - var(--safe-right) - 20px); top: calc(var(--safe-top) + 42px); font-size: 10px; padding: 7px 10px; }
+  .cube-setup { width: min(100% - 28px, 610px); margin: 12px auto 20px; display: grid; grid-template-columns: .85fr 1fr; gap: 20px; align-items: center; }
+  .cube-hero { padding: 5px 0; }
+  .cube-hero h2 { font-size: 25px; margin: 10px 0; }
+  .cube-hero p { font-size: 11px; }
+  .cube-logo { margin: 8px 0; }
+  .cube-logo .cube-tile { width: 32px; height: 45px; font-size: 23px; }
+  .cube-panel { padding: 14px; }
+  .cube-modes { margin-bottom: 12px; }
+  .cube-counts { margin: 10px 0; }
+  .cube-counts button { padding: 9px; }
+  .cube-setup:has(.cube-result), .cube-setup:has(.cube-wait-player) { display: block; max-width: 470px; }
+  .cube-note { font-size: 10px; }
+  .cube-players-rail { top: 10px; bottom: 8px; gap: 6px; }
+  .cube-seat { min-height: 64px; }
+  .cube-seat .cube-avatar { width: 48px; height: 48px; }
+  .cube-seat-label strong, .cube-seat-label span { font-size: 10px; }
+  .cube-seat-label i { font-size: 12px; }
+  .cube-clock { padding: 4px 7px; }
+  .cube-turnbar { right: calc(var(--right) + 12px); gap: 6px; }
+  .cube-match-leave { left: auto; right: calc(var(--right) + 10px); top: 33px; font-size: 9px; padding: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.cube-rack .cube-tile { font-size: calc(var(--tile-w) * .56); }
+.cube-rack .cube-tile small { font-size: clamp(4px, calc(var(--tile-w) * .1), 7px); bottom: calc(var(--tile-h) * .1); }

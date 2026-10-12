@@ -15,10 +15,10 @@ test('authenticated Cloudflare rooms synchronize private racks, persist reconnec
   const list=await connect('a',false,token('a'),true);assert.deepEqual((await list.next(p=>p.type==='rooms')).rooms,[]);
   const a=await connect('a',true);await a.snapshot();const listing=(await list.next(p=>p.type==='rooms')).rooms[0];assert.equal(listing.capacity,4);assert.ok(!listing.players&&!listing.state);
   const b=await connect('b');let sb=await b.snapshot(),sa=await a.snapshot();b.send('wrong-host',sb.room.revision,{type:'start'});await b.next(p=>p.type==='error'&&p.id==='wrong-host');
-  a.send('start',sa.room.revision,{type:'start'});sa=await a.snapshot();sb=await b.snapshot();assert.equal(sa.room.status,'playing');assert.equal(sa.state.hands.a.length,14);assert.ok(sa.state.hands.a.every(t=>t.color));assert.ok(sa.state.hands.b.every(t=>!t.color));assert.deepEqual(sa.state.pool,[]);assert.equal(sa.state.poolCount,78);assert.ok(sa.state.turnDeadline>now);
+  a.send('start',sa.room.revision,{type:'start'});sa=await a.snapshot();sb=await b.snapshot();assert.equal(sa.room.status,'playing');assert.equal(sa.state.hands.a.length,14);assert.ok(sa.state.hands.a.every(t=>t.color));assert.ok(sa.state.hands.b.every(t=>!t.color));assert.deepEqual(sa.state.pool,[]);assert.equal(sa.state.poolCount,78);assert.equal(sa.state.turnDeadline-now,30000);
   const actor=sa.state.turnUid==='a'?a:b,other=actor===a?b:a,uid=sa.state.turnUid,oldRevision=sa.room.revision,readCount=reads;
   other.send('wrong-turn',oldRevision,{type:'draw'});assert.match((await other.next(p=>p.type==='error'&&p.id==='wrong-turn')).message,/차례/);
-  actor.send('draw-once',oldRevision,{type:'draw'});actor.send('draw-once',oldRevision,{type:'draw'});await actor.next(p=>p.type==='ack'&&p.id==='draw-once');await actor.next(p=>p.type==='ack'&&p.id==='draw-once');sa=await a.snapshot();sb=await b.snapshot();assert.equal(sa.state.hands[uid].length,15);assert.equal(sb.room.revision,oldRevision+1);assert.equal(reads,readCount);
+  actor.send('draw-once',oldRevision,{type:'draw'});actor.send('draw-once',oldRevision,{type:'draw'});await actor.next(p=>p.type==='ack'&&p.id==='draw-once');await actor.next(p=>p.type==='ack'&&p.id==='draw-once');sa=await a.snapshot();sb=await b.snapshot();assert.equal(sa.state.hands[uid].length,15);assert.equal(sb.room.revision,oldRevision+1);assert.equal(sa.state.turnDeadline-now,30000);assert.equal(reads,readCount);
   actor.send('stale',oldRevision,{type:'draw'});assert.equal((await actor.next(p=>p.type==='error'&&p.id==='stale')).code,'stale-revision');
   const expectedTurn=sa.state.turnUid,deadline=sa.state.turnDeadline;for(const ws of clients)try{ws.close();}catch(_){}await mf.dispose();now=deadline+1;mf=new Miniflare(options());await mf.ready;
   const ns=await mf.getDurableObjectNamespace('CUBE_ROOMS');await ns.get(ns.idFromName('ABCDEF')).fetch('https://cube.test/__alarm');const returned=await connect('a');sa=await returned.snapshot();assert.equal(sa.room.revision,oldRevision+2);assert.notEqual(sa.state.turnUid,expectedTurn);assert.equal(sa.state.hands[expectedTurn].length,15);assert.equal(sa.state.poolCount,76);
@@ -30,3 +30,13 @@ test('room commands enforce capacity, private tiles, bots, receipts and valid in
  act('a','add-bot');act('a','add-bot');assert.throws(()=>act('a','add-bot'),/4명/);act('a','remove-bot',{uid:'cube-bot-2'});act('a','start');assert.equal(m.state.players.length,3);
  for(let i=0;i<5&&m.botTurn();i++){m.advanceBot(Date.now()+10000);}assert.equal(m.view('a').state.hands.b.every(t=>!t.color),true);const uid=m.state.turnUid;assert.throws(()=>act(uid==='a'?'b':'a','commit',{table:[['fake','fake2','fake3']]}));
 });
+
+ test('30-second deadlines reject late actions and discard unfinished edits on timeout',async()=>{
+ const {CubeRoom,TURN_MS}=await import('../cloudflare-worker/cube-room.js');assert.equal(TURN_MS,30000);
+ const startAt=100000,m=new CubeRoom(null,()=>.25);m.connect({uid:'a',name:'A'},true,startAt);m.connect({uid:'b',name:'B'},false,startAt);
+ m.apply('a',{id:'start',revision:m.room.revision,action:{type:'start'}},startAt);assert.equal(m.data.turnDeadline,startAt+30000);
+ const uid=m.state.turnUid,before=m.state.hands[uid].length,original=JSON.stringify(m.state.table);
+ assert.equal(m.advanceBot(startAt+29999),false);
+ assert.throws(()=>m.apply(uid,{id:'late',revision:m.room.revision,action:{type:'draw'}},startAt+30000),/차례 시간이 끝/);
+ assert.equal(m.advanceBot(startAt+30000),true);assert.equal(m.state.hands[uid].length,before+1);assert.equal(JSON.stringify(m.state.table),original);assert.equal(m.data.turnDeadline,startAt+60000);
+ });

@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { CubeRoom, ROOM_TTL, fail } from './cube-room.js';
+import { CubeRoom, ROOM_TTL, TURN_MS, fail } from './cube-room.js';
 
 const MAX_BYTES = 16384;
 let signingKeys = null, keysUntil = 0;
@@ -52,7 +52,7 @@ async function member(token, claims, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/health') return json({ ok: true, service: 'enjoy-cube', version: 3 });
+    if (url.pathname === '/health') return json({ ok: true, service: 'enjoy-cube', version: 4, turnMs: TURN_MS });
     const match = url.pathname.match(/^\/rooms\/([A-Z2-9]{6})$/);
     const lobby = url.pathname === '/rooms';
     if ((!match && !lobby) || request.method !== 'GET' || request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return json({ error: 'Not found' }, 404);

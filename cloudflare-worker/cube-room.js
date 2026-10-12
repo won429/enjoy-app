@@ -1,4 +1,5 @@
 import engine from '../cube-engine.js';
+export const TURN_MS = 30000;
 export const ROOM_TTL = 24 * 60 * 60 * 1000;
 export function fail(message, code = 'invalid-action') { throw Object.assign(new Error(message), { code }); }
 const random = () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
@@ -48,7 +49,7 @@ export class CubeRoom {
       if (this.data.turnDeadline <= now) fail('차례 시간이 끝났어요. 다음 화면을 기다려주세요.');
       state = engine.move(state,uid,{ type: action.type, table: action.table }); room.status = state.winnerUid ? 'finished' : 'playing';
     }
-    this.data = { ...this.data, room, state, turnDeadline: room.status==='playing' ? now+60000 : null, nextBotAt: this.botTurn(room,state) ? now+1400 : null, receipts: [...this.data.receipts,{ uid,id:packet.id }].slice(-100) }; return true;
+    this.data = { ...this.data, room, state, turnDeadline: room.status==='playing' ? now+TURN_MS : null, nextBotAt: this.botTurn(room,state) ? now+1400 : null, receipts: [...this.data.receipts,{ uid,id:packet.id }].slice(-100) }; return true;
   }
   botTurn(room = this.room, state = this.state) { return room?.status==='playing' && !state?.winnerUid && room.players.some(p=>p.bot&&p.uid===state?.turnUid); }
   advanceOrder() { return false; }
@@ -58,7 +59,7 @@ export class CubeRoom {
     if (!bot && !timeout) return false;
     const uid = this.state.turnUid, state = engine.move(this.state,uid,bot ? engine.botAction(this.state,uid) : { type:'draw' });
     const room = { ...this.room, revision: this.room.revision+1, updatedAt:now, status: state.winnerUid?'finished':'playing' };
-    this.data = { ...this.data,room,state, turnDeadline: room.status==='playing'?now+60000:null, nextBotAt:this.botTurn(room,state)?now+1400:null }; return true;
+    this.data = { ...this.data,room,state, turnDeadline: room.status==='playing'?now+TURN_MS:null, nextBotAt:this.botTurn(room,state)?now+1400:null }; return true;
   }
   listing(id) { const r=this.room; if (!r || r.status==='closed') return null; const botCount=r.players.filter(p=>p.bot).length; return { id,title:(r.players.find(p=>p.uid===r.hostUid)?.name||'친구')+'님의 방',playerCount:r.players.length,humanCount:r.players.length-botCount,botCount,capacity:4,status:r.status,createdAt:r.createdAt,expiresAt:r.updatedAt+ROOM_TTL }; }
   view(uid) {
