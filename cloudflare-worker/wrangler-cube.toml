@@ -1,0 +1,31 @@
+name = "enjoy-cube"
+main = "cube-worker.js"
+compatibility_date = "2026-08-19"
+workers_dev = true
+
+[vars]
+FIREBASE_PROJECT_ID = "enjoy-meeting-account"
+ALLOWED_ORIGINS = "https://enjoy-app.pages.dev,https://won429.github.io,http://localhost:8765,http://127.0.0.1:8765"
+
+[[durable_objects.bindings]]
+name = "CUBE_ROOMS"
+class_name = "CubeGameRoom"
+
+[[durable_objects.bindings]]
+name = "CUBE_LOBBY"
+class_name = "CubeLobby"
+
+[[migrations]]
+tag = "cube-v1"
+new_sqlite_classes = ["CubeGameRoom"]
+
+[[migrations]]
+tag = "cube-v2-lobby"
+new_sqlite_classes = ["CubeLobby"]
+
+[[ratelimits]]
+name = "CUBE_CONNECT_LIMITER"
+namespace_id = "429007"
+[ratelimits.simple]
+limit = 30
+period = 60
