@@ -489,18 +489,16 @@
         function postseasonSeriesHtml(match, info) {
             const column = team => {
                 const record = info.teams[team];
-                const result = `${record.w}승 ${record.l}패` + (record.d ? ` ${record.d}무` : '');
                 const progress = info.winner ? (info.winner === team ? `${info.next} 확정` : `${info.title} ${info.round === 'ks' ? '준우승' : '탈락'}`)
                     : (record.needed == null ? '라운드 정보 등록 대기' : `${info.next}까지 <b>${record.needed}승</b> 남음`);
-                return `<div class="postseason-series-team"><strong>${_recordSafeText(team)}</strong><span class="postseason-series-record">${result}</span><span>${progress}</span></div>`;
+                return `<div class="postseason-series-team"><strong>${_recordSafeText(team)}</strong><span>${progress}</span></div>`;
             };
-            return `<section class="postseason-series" aria-label="${info.title} 시리즈 전적"><div class="postseason-series-heading">${info.title} 시리즈 전적</div><div class="postseason-series-grid">${column(match.team1)}${column(match.team2)}</div><p>${info.format}${info.round === 'wc' ? ` · ${_recordSafeText(info.higherSeed)} 1승 어드밴티지 (실제 전적과 별도)` : ''}</p></section>`;
+            return `<section class="postseason-series" aria-label="${info.title} 진출 현황"><div class="postseason-series-heading">${info.round === 'ks' ? '한국시리즈 우승' : '포스트시즌 진출'} 현황</div><div class="postseason-series-grid">${column(match.team1)}${column(match.team2)}</div><p>${info.format}${info.round === 'wc' ? ` · ${_recordSafeText(info.higherSeed)} 1승 어드밴티지` : ''}</p></section>`;
         }
         function matchupRecordHtml(m) {
             if (!m || !KBO_TEAMS.includes(m.team1) || !KBO_TEAMS.includes(m.team2)) return '';
             if (!scheduleData.length) return '';
             const postseason = postseasonSeriesInfo(m);
-            if (postseason) return postseasonSeriesHtml(m, postseason);
 
             const season = {};
             KBO_TEAMS.forEach(team => season[team] = { w: 0, d: 0, l: 0, recent: [] });
@@ -587,7 +585,7 @@
                 }).join('') || '<span class="matchup-recent-empty">경기 없음</span>';
             };
 
-            return `<section class="matchup-record" aria-label="2026 정규시즌 양 팀 비교">
+            return `<section class="matchup-record" aria-label="${postseason ? '2026 시즌 양 팀 비교' : '2026 정규시즌 양 팀 비교'}">
                 <div class="matchup-record-teams">
                     <div class="matchup-record-team matchup-record-away"><strong>${m.team1}</strong><span><b>${rankOf(m.team1)}위</b> · ${recordText(rankingSeason[m.team1])}</span></div>
                     <span class="matchup-record-vs">VS</span>
@@ -604,7 +602,7 @@
                     <span>상대전적</span>
                     <strong>${recordText(h2h[m.team2])}</strong>
                 </div>
-                ${seasonClinchHtml(standings, m)}
+                ${postseason ? postseasonSeriesHtml(m, postseason) : seasonClinchHtml(standings, m)}
             </section>`;
         }
 
