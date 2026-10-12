@@ -1,6 +1,8 @@
 (function (root) {
     'use strict';
     const COLORS = ['red', 'yellow', 'green', 'blue'];
+    const isWild = card => ['wild', 'wild4', 'wild9'].includes(card?.value);
+    const cardPoints = card => isWild(card) ? 50 : /^\d$/.test(card.value) ? Number(card.value) : 20;
     function fail(message) { throw new Error(message); }
     function shuffle(cards, random = Math.random) {
         const result = cards.slice();
@@ -21,6 +23,8 @@
             }
         });
         for (let copy = 0; copy < 4; copy++) ['wild', 'wild4'].forEach(value => add('wild', value));
+        COLORS.forEach(color => ['reset', 'paint'].forEach(value => add(color, value)));
+        for (let copy = 0; copy < 4; copy++) add('wild', 'wild9');
         return cards;
     }
     const nextUid = (state, uid, steps = 1) => {
@@ -53,7 +57,7 @@
         if (state.hands[uid].length) return;
         state.winnerUid = uid;
         state.roundPoints = Object.entries(state.hands).reduce((total, [player, cards]) => total + (player === uid ? 0 : cards.reduce((sum, card) =>
-            sum + (card.color === 'wild' ? 50 : /^\d$/.test(card.value) ? Number(card.value) : 20), 0)), 0);
+            sum + cardPoints(card), 0)), 0);
         state.unoPendingUid = null;
         state.provisionalWinnerUid = null;
     }
@@ -93,7 +97,7 @@
         state.turnUid = ordered ? players[0] : nextUid(state, dealer);
         let top = state.deck.pop();
         // A numbered opener preserves the chosen first player and descending order.
-        while (top.value === 'wild4' || ordered && !/^\d$/.test(top.value)) {
+        while (['wild4', 'wild9', 'reset', 'paint'].includes(top.value) || ordered && !/^\d$/.test(top.value)) {
             state.deck = shuffle([...state.deck, top], random);
             top = state.deck.pop();
         }
@@ -107,6 +111,24 @@
             state.turnUid = nextUid(state, state.turnUid);
         }
         return state;
+    }
+    function reset(state, random) {
+        // Reuse every card, including the played reset and any painted colors.
+        state.deck = shuffle([...state.deck, ...state.discard, ...Object.values(state.hands).flat()], random);
+        state.hands = Object.fromEntries(state.players.map(player => [player, []]));
+        state.discard = [];
+        state.direction = 1;
+        state.turnUid = state.players[0];
+        state.drawnCardId = state.unoPendingUid = state.challenge = state.openingColorUid = state.provisionalWinnerUid = state.winnerUid = null;
+        state.roundPoints = 0;
+        state.resetCount = (state.resetCount || 0) + 1;
+        for (let i = 0; i < 7; i++) state.players.forEach(player => take(state, player, 1, random));
+        // Select a numbered opener without repeatedly shuffling action cards.
+        const index = state.deck.findLastIndex(card => /^\d$/.test(card.value));
+        if (index < 0) fail('다시 시작할 숫자 카드가 없어요.');
+        const [top] = state.deck.splice(index, 1);
+        state.discard.push(top);
+        state.color = top.color;
     }
     function move(input, uid, action, random = Math.random) {
         if (input.phase === 'order') {
@@ -178,24 +200,35 @@
         const index = hand.findIndex(card => card.id === action.cardId);
         const card = hand[index];
         if (!canPlay(state, uid, card)) fail('같은 색, 숫자 또는 기호의 카드를 내주세요.');
-        if (card.color === 'wild' && !COLORS.includes(action.color)) fail('다음 색을 골라주세요.');
-        const illegal = card.value === 'wild4' && hand.some(item => item.color === state.color);
+        if (isWild(card) && !COLORS.includes(action.color)) fail('다음 색을 골라주세요.');
+        const illegal = card.value === 'wild4' && hand.some(item => item.id !== card.id && item.color === state.color);
         hand.splice(index, 1);
         state.discard.push(card);
-        state.color = card.color === 'wild' ? action.color : card.color;
+        state.color = isWild(card) ? action.color : card.color;
         state.drawnCardId = null;
         state.unoPendingUid = hand.length === 1 && !action.uno ? uid : null;
+        if (card.value === 'reset') {
+            reset(state, random);
+            state.message = { type: 'play', uid, value: card.value, color: card.color, uno: false };
+            return state;
+        }
         let steps = 1;
         if (card.value === 'reverse') { state.direction *= -1; if (state.players.length === 2) steps = 2; }
         if (card.value === 'skip') steps = 2;
         const target = nextUid(state, uid);
         if (card.value === 'draw2') { take(state, target, 2, random); steps = 2; }
+        if (card.value === 'wild9') { take(state, target, 9, random); steps = 2; }
+        if (card.value === 'paint') state.hands[target].forEach(item => {
+            const choices = COLORS.filter(color => color !== item.color);
+            item.color = choices[Math.floor(random() * choices.length)];
+        });
         state.turnUid = nextUid(state, uid, steps);
         if (card.value === 'wild4') {
             state.challenge = { actorUid: uid, targetUid: target, illegal };
             if (!hand.length) state.provisionalWinnerUid = uid;
         } else finish(state, uid);
-        state.message = { type: 'play', uid, value: card.value, color: state.color, uno: hand.length === 1 && !!action.uno };
+        state.message = { type: 'play', uid, value: card.value, color: state.color, uno: hand.length === 1 && !!action.uno,
+            ...(['paint', 'wild9'].includes(card.value) ? { target } : {}) };
         return state;
     }
     function createRoom(player, now) {
@@ -233,14 +266,15 @@
         if (state.unoPendingUid) return { type: 'catch' };
         const nextCount = state.hands[nextUid(state, uid)]?.length || 0;
         const priority = card => (card.color === 'wild' ? -20 : counts[card.color] * 3) +
-            (['skip', 'reverse', 'draw2'].includes(card.value) ? (nextCount <= 2 ? 15 : 2) : Number(card.value) || 0);
+            (['skip', 'reverse', 'draw2', 'wild9', 'paint'].includes(card.value) ? (nextCount <= 2 ? 15 : 2) :
+                card.value === 'reset' ? (hand.length > 7 ? 8 : -30) : Number(card.value) || 0);
         const playable = hand.filter(card => canPlay(state, uid, card) &&
-            (card.value !== 'wild4' || !hand.some(item => item.color === state.color)));
+            (card.value !== 'wild4' || !hand.some(item => item.id !== card.id && item.color === state.color)));
         playable.sort((left, right) => priority(right) - priority(left));
         if (playable.length) return { type: 'play', cardId: playable[0].id, color, uno: true };
         return { type: state.drawnCardId ? 'pass' : 'draw' };
     }
-    const api = { COLORS, deck, shuffle, nextUid, canPlay, start, move, orderStart, orderPick, orderDeal, botAction, createRoom, joinRoom, leaveRoom };
+    const api = { COLORS, isWild, cardPoints, deck, shuffle, nextUid, canPlay, start, move, orderStart, orderPick, orderDeal, botAction, createRoom, joinRoom, leaveRoom };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.EnjoyUno = api;
 })(typeof window === 'undefined' ? globalThis : window);

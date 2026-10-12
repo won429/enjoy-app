@@ -7,10 +7,10 @@
     const status = document.getElementById('uno-status');
     const connection = document.getElementById('uno-connection');
     const colors = { red: ['빨강', '#ce3447', '●'], yellow: ['노랑', '#f0be3b', '◆'], green: ['초록', '#168664', '▲'], blue: ['파랑', '#2468c8', '■'], wild: ['와일드', '#242939', '✦'] };
-    const labels = { draw2: '+2', wild4: '+4' };
+    const labels = { draw2: '+2', wild4: '+4', wild9: '+9' };
     const icon = value => '<i class="ph ph-' + value + '" aria-hidden="true"></i>';
-    const cardValue = card => card.value === 'skip' ? icon('prohibit') : card.value === 'reverse' ? icon('arrows-clockwise') : card.value === 'wild' ? icon('palette') : esc(labels[card.value] || card.value);
-    const names = { skip: '건너뛰기', reverse: '방향 바꾸기', draw2: '두 장 뽑기', wild: '색 바꾸기', wild4: '와일드 네 장 뽑기' };
+    const cardValue = card => card.value === 'skip' ? icon('prohibit') : card.value === 'reverse' ? icon('arrows-clockwise') : card.value === 'wild' ? icon('palette') : card.value === 'reset' ? icon('cards') : card.value === 'paint' ? icon('paint-brush') : esc(labels[card.value] || card.value);
+    const names = { skip: '건너뛰기', reverse: '방향 바꾸기', draw2: '두 장 뽑기', wild: '색 바꾸기', wild4: '와일드 네 장 뽑기', wild9: '와일드 아홉 장 뽑기', reset: '리셋', paint: '페인트' };
     let code = '', room = null, state = null, busy = false, liveRoom = false, liveGame = false;
     let socket = null, reconnectTimer = null, connectCancel = null, reconnectAttempts = 0;
     let lobbySocket = null, lobbyTimer = null, lobbyEpoch = 0, lobbyAttempts = 0, lobbyLoading = false;
@@ -408,7 +408,7 @@
         const label = names[card.value] || card.value;
         const tag = interactive ? 'button' : 'div';
         return '<' + tag + (interactive ? ' type="button" data-uno-action="card" data-card-id="' + esc(card.id) + '"' + (!playable ? ' disabled' : '') : '') +
-            ' class="uno-card' + (playable ? ' is-playable' : '') + '" style="--hand-angle:' + angle + 'deg" data-color="' + esc(card.color) + '" aria-label="' + esc(color[0] + ' ' + label) + '"><small>' + cardValue(card) + '</small><b>' + cardValue(card) + '</b><small>' + cardValue(card) + '</small></' + tag + '>';
+            ' class="uno-card' + (card.value === 'reset' ? ' uno-card-reset' : '') + (playable ? ' is-playable' : '') + '" style="--hand-angle:' + angle + 'deg" data-color="' + esc(card.color) + '" aria-label="' + esc(color[0] + ' ' + label) + '"><small>' + cardValue(card) + '</small><b>' + cardValue(card) + (card.value === 'reset' ? '<span class="uno-reset-label">RESET</span>' : '') + '</b><small>' + cardValue(card) + '</small></' + tag + '>';
     }
     function avatarHtml(player) {
         const index = room.players.findIndex(item => item.uid === player.uid);
@@ -464,6 +464,9 @@
         if (!message) return '카드를 골라 게임을 시작하세요.';
         const actor = message.uid === uid() ? '내가' : esc(name(message.uid)) + '님이';
         const target = message.target === uid() ? '내가' : esc(name(message.target)) + '님이';
+        if (message.type === 'play' && message.value === 'reset') return actor + ' 리셋! 모든 카드를 섞고 7장씩 다시 나눠 진행해요.';
+        if (message.type === 'play' && message.value === 'paint') return actor + ' 페인트! ' + target + ' 손패의 색상만 무작위로 바뀌었어요.' + (message.uno ? ' UNO!' : '');
+        if (message.type === 'play' && message.value === 'wild9') return actor + ' +9! ' + target + ' 카드 9장을 받고 차례를 쉬어요.' + (message.uno ? ' UNO!' : '');
         if (message.type === 'play') return actor + ' ' + esc(names[message.value] || message.value) + ' 카드를 냈어요.' + (message.uno ? ' UNO!' : '');
         if (message.type === 'draw') return actor + ' 카드 1장을 뽑았어요.';
         if (message.type === 'pass') return actor + ' 차례를 넘겼어요.';
@@ -658,13 +661,13 @@
     }
     function planMotion() {
         if (!code || !room || !state || state.revision !== room.revision || !['playing', 'finished'].includes(room.status)) return;
-        const key = mode + ':' + code + ':' + room.round;
+        const key = mode + ':' + code + ':' + room.round + ':' + (state.resetCount || 0);
         if (presentation?.key === key && presentation.state.revision === state.revision) return;
         const before = presentation, currentGeometry = geometry();
         presentation = { key, state, geometry: currentGeometry };
         if (!motionEnabled()) {
             if (!before || before.key !== key) {
-                if (!state.message && !state.winnerUid) { sound.play('shuffle'); sound.play('deal'); soundFeedback(state); }
+                if ((!state.message || state.message.value === 'reset') && !state.winnerUid) { sound.play('shuffle'); sound.play('deal'); soundFeedback(state); }
             } else {
                 if (state.discard.at(-1).id !== before.state.discard.at(-1).id) sound.play('play');
                 if (state.players.some(player => state.hands[player].length > before.state.hands[player].length)) sound.play('draw');
@@ -673,7 +676,7 @@
             return;
         }
         if (!before || before.key !== key) {
-            if (!state.message && !state.winnerUid) motionQueue.push({ type: 'deal', state });
+            if ((!state.message || state.message.value === 'reset') && !state.winnerUid) motionQueue.push({ type: 'deal', state });
         } else {
             const oldTop = before.state.discard.at(-1), top = state.discard.at(-1);
             const actor = top.id !== oldTop.id ? (state.message?.type === 'play' ? state.message.uid : before.state.players.find(player => before.state.hands[player].some(card => card.id === top.id))) : null;
@@ -849,7 +852,7 @@
         if (action === 'card') {
             const card = state?.hands[uid()]?.find(item => item.id === target.dataset.cardId);
             if (!card || !game.canPlay(state, uid(), card)) return;
-            if (card.color === 'wild') { selectedCard = card; render(); content.querySelector('.uno-colors button')?.focus(); }
+            if (game.isWild(card)) { selectedCard = card; render(); content.querySelector('.uno-colors button')?.focus(); }
             else return act({ type: 'play', cardId: card.id, uno: armed });
             return;
         }
