@@ -19,15 +19,20 @@
   }
   async function resolveAccount(){
     const revision=++accountRevision;accountFaction=null;accountControls(false);picker();
+    $('war-content').hidden=true;$('war-access').hidden=false;$('help').hidden=true;
+    $('war-access-note').textContent='접근 권한을 확인하고 있습니다.';
     $('member-note').textContent='엔조이 멤버 계정을 확인하고 있습니다.';$('retry-member').hidden=true;
     try{
       const member=await window.getEnjoyWarMember();if(revision!==accountRevision)return false;
+      if(member.name!=='성원제'||member.faction!=='seongwon')throw Error('현재 드롭 전쟁은 성원제만 사용할 수 있습니다.');
+      $('war-content').hidden=false;$('war-access').hidden=true;$('help').hidden=false;
       accountFaction=member.faction;selectedFaction=member.faction;
       if(!state&&!world){you=selectedFaction;selected=member.home;chooseRegion(selected);}
       const text=`${member.name} · ${E.regions[member.home].name}에서 시작합니다.`;
       $('member-note').textContent=text;accountControls(true);picker();return true;
     }catch(error){
       if(revision!==accountRevision)return false;
+      $('war-access-note').textContent=error.message;
       $('member-note').textContent=error.message;$('retry-member').hidden=false;return false;
     }
   }
@@ -184,6 +189,7 @@
   $('help').onclick=()=>info(rules);$('close-info').onclick=()=>$('info-dialog').close();$('info-dialog').addEventListener('click',event=>{if(event.target===$('info-dialog'))$('info-dialog').close();});
   $('sources').onclick=()=>info(`<span class="eyebrow">DATA & CREDITS</span><h2>실제 지도, 실제 인구.</h2><p>경계 기준일 2026년 7월 1일 · 자료 갱신 2026년 8월 26일. 인천 행정체제 개편과 전남광주통합특별시를 반영했습니다.</p><p>본 데이터는 통계청 통계지리정보서비스(<a href="https://sgis.kostat.go.kr" target="_blank" rel="noopener">SGIS</a>)에서 공공누리 제1유형으로 개방한 행정동 경계를 가공한 것이며(가공: <a href="https://github.com/vuski/admdongkor" target="_blank" rel="noopener">vuski/admdongkor</a>), CC BY 4.0으로 배포됩니다.</p><p>게임용으로 대구·부산·대전·전남광주를 전체 지역으로 병합하고 실제 교량과 해상 항로를 연결했습니다. 나머지는 시군구 단위로 총 ${E.data.regions.length}개 영토를 구성했습니다.</p><p>인구: <a href="https://jumin.mois.go.kr/statMonth.do" target="_blank" rel="noopener">행정안전부 주민등록 인구통계</a>, 2026년 9월 말 전체 주민등록 인구(외국인 제외). 전국 합계 ${fmt(E.data.regions.reduce((n,r)=>n+r.population,0))}명. 게임의 전투와 방어 병력은 가상 수치입니다.</p>`);
   $('back').onclick=()=>window.leaveWarPage?.();$('mode-solo').onclick=()=>switchMode('solo');$('mode-friends').onclick=()=>switchMode('friends');$('solo-start').onclick=startSolo;
+  $('retry-access').onclick=()=>authChanged();
   $('retry-member').onclick=async()=>{if(await resolveAccount()&&mode==='friends')connectWorld();};
   $('enter-world').onclick=()=>connectWorld();$('history').onclick=()=>requestHistory();$('leave-match').onclick=leave;
   $('resupply').onclick=()=>command({type:'resupply'});$('upgrade-list').onclick=event=>{const b=event.target.closest('[data-upgrade]');if(b)command({type:'upgrade',kind:b.dataset.upgrade});};
