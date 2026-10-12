@@ -3792,7 +3792,8 @@
         .kbo-competition-link:active { opacity: .7; }
         .kbo-competition-link:focus-visible, .kbo-postseason-calendar-game:focus-visible { outline: 2px solid #7BDBE5; outline-offset: 2px; }
         .kbo-competition-title { margin-bottom: 1rem; color: #fff; font-size: 1.125rem; font-weight: 900; }
-        .kbo-postseason-calendar-day { height: auto; min-height: 5.25rem; justify-content: flex-start; padding: .4rem .1rem; }
+        .kbo-original-calendar-day.kbo-postseason-calendar-day { height: auto; min-height: 5.25rem; aspect-ratio: auto; justify-content: flex-start; gap: .375rem; padding: .4375rem .1rem .4rem; }
+        .kbo-postseason-calendar-day .kbo-original-day-number { position: static; align-self: flex-start; margin-left: .4rem; flex-shrink: 0; line-height: 1; }
         .kbo-postseason-calendar-game { display: flex; flex-direction: column; align-items: center; gap: .2rem; width: 100%; padding: .2rem 0; border: 0; background: transparent; color: inherit; }
         .kbo-postseason-calendar-logos { display: flex; align-items: center; justify-content: center; gap: .1rem; width: 100%; }
         .kbo-postseason-calendar-logos .kbo-original-day-logo { width: min(1.125rem, 42%); height: 1.125rem; object-fit: contain; margin: 0; }
@@ -13028,9 +13029,20 @@
             if (loader) loader.classList.remove('hidden');
             frame.classList.add('opacity-0');
             const theme = arguments.length > 2 && arguments[2] === '삼성' ? '삼성' : 'KIA';
+            const game = enjoyBaseballMoreAllGames().find(function (item) { return String(item.id) === String(matchId); });
+            const postseason = game && enjoyBaseballMoreSeasonGames().postseason.some(function (item) { return String(item.id) === String(matchId); });
+            let postseasonQuery = '';
+            if (postseason) {
+                const standings = enjoyBaseballMoreRankings();
+                const pair = standings.filter(function (row) { return row.team === game.team1 || row.team === game.team2; });
+                const higherSeed = pair[0];
+                const explicit = enjoyBaseballPostseasonRound(game);
+                const round = explicit && explicit !== 'postseason' ? explicit : ({ 1: 'ks', 2: 'po', 3: 'semi', 4: 'wc' }[higherSeed && higherSeed.rank] || 'postseason');
+                postseasonQuery = '&postseasonRound=' + encodeURIComponent(round) + '&higherSeedTeam=' + encodeURIComponent(higherSeed ? higherSeed.team : '');
+            }
             frame.src = 'baseball-game-detail.html?matchId=' + encodeURIComponent(String(matchId)) +
                 '&matchDate=' + encodeURIComponent(String(matchDate || '')) +
-                '&theme=' + encodeURIComponent(theme);
+                '&theme=' + encodeURIComponent(theme) + postseasonQuery;
             screen.classList.remove('hidden');
             screen.classList.add('flex');
         };

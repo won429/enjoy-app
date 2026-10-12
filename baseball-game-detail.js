@@ -397,9 +397,110 @@
             </section>`;
         }
 
+        function postseasonRound(game) {
+            const label = [game.postseasonRound, game.round, game.stage, game.series, game.seriesName,
+                game.gameType, game.gameTypeName, game.leagueName, game.competition].filter(Boolean).join(' ').toLowerCase();
+            if (/와일드\s*카드|wild[\s_-]*card|\bwc\b/.test(label)) return 'wc';
+            if (/준\s*플레이오프|준\s*po|semi[\s_-]*playoff|\bsemi\b|\bjpo\b/.test(label)) return 'semi';
+            if (/한국\s*시리즈|korean?[\s_-]*series|\bks\b/.test(label)) return 'ks';
+            if (/플레이오프|play[\s_-]*off|\bpo\b/.test(label)) return 'po';
+            if (game.isPostseason === true || /포스트\s*시즌|post[\s_-]*season/.test(label)) return 'postseason';
+            return '';
+        }
+        function postseasonGames() {
+            const played = {};
+            KBO_TEAMS.forEach(team => {
+                const baseline = KBO_RANKING_BASELINE.teams[team];
+                played[team] = baseline.w + baseline.d + baseline.l;
+            });
+            const post = [];
+            scheduleData.map(game => Object.assign({}, game, liveDataStore[game.id] || {})).sort((a, b) =>
+                String(a.date || '').localeCompare(String(b.date || '')) || String(a.time || '').localeCompare(String(b.time || ''))
+            ).forEach(game => {
+                const afterBaseline = String(game.date || '') > KBO_RANKING_BASELINE.date;
+                const requestedPost = String(game.id) === params.get('matchId') && Boolean(params.get('postseasonRound'));
+                if (postseasonRound(game) || requestedPost || (afterBaseline && played[game.team1] >= 144 && played[game.team2] >= 144)) {
+                    post.push(game);
+                } else if (afterBaseline && game.gameStatus === '종료' && !gameCancellationLabel(game)) {
+                    if (played[game.team1] != null) played[game.team1] += 1;
+                    if (played[game.team2] != null) played[game.team2] += 1;
+                }
+            });
+            return post;
+        }
+        function postseasonSeriesInfo(match) {
+            const game = Object.assign({}, match, liveDataStore[match.id] || {});
+            const allPost = postseasonGames();
+            if (!allPost.some(item => String(item.id) === String(match.id))) return null;
+            let round = postseasonRound(game);
+            const requested = String(match.id) === params.get('matchId');
+            if (!round || round === 'postseason') round = requested ? params.get('postseasonRound') || round : round;
+            const records = {};
+            KBO_TEAMS.forEach(team => { records[team] = Object.assign({}, KBO_RANKING_BASELINE.teams[team]); });
+            const postIds = new Set(allPost.map(item => String(item.id)));
+            scheduleData.forEach(item => {
+                const result = Object.assign({}, item, liveDataStore[item.id] || {});
+                if (postIds.has(String(item.id)) || result.date <= KBO_RANKING_BASELINE.date || result.gameStatus !== '종료' || gameCancellationLabel(result)) return;
+                if (!records[result.team1] || !records[result.team2]) return;
+                const away = Number(result.awayScore), home = Number(result.homeScore);
+                if (result.awayScore == null || result.homeScore == null || !Number.isFinite(away) || !Number.isFinite(home)) return;
+                if (away === home) { records[result.team1].d++; records[result.team2].d++; }
+                else { records[away > home ? result.team1 : result.team2].w++; records[away > home ? result.team2 : result.team1].l++; }
+            });
+            const standings = KBO_TEAMS.slice().sort((a, b) => {
+                const x = records[a], y = records[b];
+                return y.w / (y.w + y.l) - x.w / (x.w + x.l) || y.w - x.w || x.l - y.l;
+            });
+            const pair = standings.filter(team => team === match.team1 || team === match.team2);
+            let higherSeed = game.higherSeedTeam || game.wildcardAdvantageTeam || (requested ? params.get('higherSeedTeam') : '') || pair[0];
+            if (![match.team1, match.team2].includes(higherSeed)) higherSeed = pair[0];
+            if (!round || round === 'postseason') round = ({ 1: 'ks', 2: 'po', 3: 'semi', 4: 'wc' }[standings.indexOf(higherSeed) + 1] || 'postseason');
+            const definitions = {
+                wc: { title: '와일드카드 결정전', target: 2, next: '준플레이오프 진출', format: '최대 2경기' },
+                semi: { title: '준플레이오프', target: 3, next: '플레이오프 진출', format: '5전 3선승제' },
+                po: { title: '플레이오프', target: 3, next: '한국시리즈 진출', format: '5전 3선승제' },
+                ks: { title: '한국시리즈', target: 4, next: '한국시리즈 우승', format: '7전 4선승제' },
+                postseason: { title: '포스트시즌', target: null, next: '', format: '라운드 정보 등록 대기' }
+            };
+            const info = Object.assign({ round, higherSeed, winner: '', teams: {} }, definitions[round] || definitions.postseason);
+            [match.team1, match.team2].forEach(team => { info.teams[team] = { w: 0, l: 0, d: 0, needed: null }; });
+            allPost.filter(item => isMatchup(item, match.team1, match.team2) &&
+                (!postseasonRound(item) || postseasonRound(item) === 'postseason' || postseasonRound(item) === round) &&
+                String(item.date || '') <= String(match.date || '') &&
+                (item.date !== match.date || String(item.time || '') <= String(match.time || '23:59'))
+            ).forEach(item => {
+                if (info.winner || item.gameStatus !== '종료' || gameCancellationLabel(item)) return;
+                if (item.awayScore == null || item.homeScore == null || item.awayScore === '' || item.homeScore === '') return;
+                const away = Number(item.awayScore), home = Number(item.homeScore);
+                if (!Number.isFinite(away) || !Number.isFinite(home)) return;
+                const winner = away > home ? item.team1 : home > away ? item.team2 : '';
+                if (winner) {
+                    info.teams[winner].w++;
+                    info.teams[winner === match.team1 ? match.team2 : match.team1].l++;
+                } else { info.teams[match.team1].d++; info.teams[match.team2].d++; }
+                if (round === 'wc' && (!winner || winner === higherSeed)) info.winner = higherSeed;
+                else if (winner && info.target && info.teams[winner].w >= info.target) info.winner = winner;
+            });
+            [match.team1, match.team2].forEach(team => {
+                if (info.target) info.teams[team].needed = Math.max(0, info.target - info.teams[team].w - (round === 'wc' && team === higherSeed ? 1 : 0));
+            });
+            return info;
+        }
+        function postseasonSeriesHtml(match, info) {
+            const column = team => {
+                const record = info.teams[team];
+                const result = `${record.w}승 ${record.l}패` + (record.d ? ` ${record.d}무` : '');
+                const progress = info.winner ? (info.winner === team ? `${info.next} 확정` : `${info.title} ${info.round === 'ks' ? '준우승' : '탈락'}`)
+                    : (record.needed == null ? '라운드 정보 등록 대기' : `${info.next}까지 <b>${record.needed}승</b> 남음`);
+                return `<div class="postseason-series-team"><strong>${_recordSafeText(team)}</strong><span class="postseason-series-record">${result}</span><span>${progress}</span></div>`;
+            };
+            return `<section class="postseason-series" aria-label="${info.title} 시리즈 전적"><div class="postseason-series-heading">${info.title} 시리즈 전적</div><div class="postseason-series-grid">${column(match.team1)}${column(match.team2)}</div><p>${info.format}${info.round === 'wc' ? ` · ${_recordSafeText(info.higherSeed)} 1승 어드밴티지 (실제 전적과 별도)` : ''}</p></section>`;
+        }
         function matchupRecordHtml(m) {
             if (!m || !KBO_TEAMS.includes(m.team1) || !KBO_TEAMS.includes(m.team2)) return '';
             if (!scheduleData.length) return '';
+            const postseason = postseasonSeriesInfo(m);
+            if (postseason) return postseasonSeriesHtml(m, postseason);
 
             const season = {};
             KBO_TEAMS.forEach(team => season[team] = { w: 0, d: 0, l: 0, recent: [] });
@@ -1329,6 +1430,18 @@
             const cancelText = gameCancellationLabel(l);
             const iC = Boolean(cancelText);
             
+            const postseason = postseasonSeriesInfo(m);
+            document.body.classList.toggle('is-postseason-game', Boolean(postseason));
+            let watermark = document.getElementById('postseason-detail-watermark');
+            if (postseason && !watermark) {
+                watermark = document.createElement('img');
+                watermark.id = 'postseason-detail-watermark';
+                watermark.src = 'assets/kbo-postseason-2026-cutout.png';
+                watermark.alt = '';
+                watermark.setAttribute('aria-hidden', 'true');
+                document.getElementById('detail-wrapper').prepend(watermark);
+            }
+            if (watermark) watermark.hidden = !postseason;
             const isAllstarGame = isAllstarDate(m.date);
             let h1 = teamHex[m.team1] || '#888888', h2 = teamHex[m.team2] || '#888888';
             
@@ -1695,6 +1808,7 @@
             }
 
             if (isClassicSeries) sbh = classicSeriesHeader(m) + sbh;
+            if (postseason) sbh = `<div class="postseason-game-heading"><strong>${postseason.title} 경기</strong><span>2026 KBO 포스트시즌</span></div>` + sbh;
 
             // [추가] 스코어보드 밑 승리 확률 막대 (클래식 테마는 레트로 디자인 유지 위해 제외)
             let wpb = isClassic ? '' : winProbBarHtml(m, l);
@@ -1857,9 +1971,16 @@
             scheduleData.sort((a, b) => a.date === b.date
                 ? (a.time || '00:00').localeCompare(b.time || '00:00')
                 : String(a.date || '').localeCompare(String(b.date || '')));
-            refreshRankingFromHistory();
             const match = scheduleData.find(game => String(game.id) === String(id));
             if (!match) throw new Error('match not found');
+            // 시리즈가 달을 넘겨도 이전 달의 승패를 함께 집계한다.
+            if (postseasonSeriesInfo(match)) {
+                const parts = month.split('-').map(Number);
+                const previous = new Date(parts[0], parts[1] - 2, 1);
+                const previousMonth = `${previous.getFullYear()}-${String(previous.getMonth() + 1).padStart(2, '0')}`;
+                mergeDocument(await _fsGetDoc(`schedule/${previousMonth}`), true);
+            }
+            refreshRankingFromHistory();
             currentPopupMatchId = match.id;
             renderPopupContent(match.id);
             const loader = document.getElementById('detail-loader');
