@@ -347,3 +347,52 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .cube-draw small { font-size: 12px; }
   .cube-submit { min-height: 30px; }
 }
+
+/* Video interaction: a stable tabletop, rack gaps, and the active player's clock. */
+@property --turn-angle { syntax: '<angle>'; inherits: true; initial-value: 360deg; }
+.cube-board { display: block; padding: 0; overflow: hidden; }
+.cube-meld { position: absolute; display: flex; gap: 0; padding: 0; max-width: none; overflow: visible; }
+.cube-meld.invalid { outline: none; }
+.cube-validation-errors .cube-meld.invalid { outline: 2px solid #fa858c; outline-offset: 3px; }
+.cube-board.drop-target { background-color: transparent; outline: none; }
+.cube-rack { overflow: hidden; }
+.cube-rack-space { width: var(--tile-w); height: var(--tile-h); }
+.cube-draft-tools { min-height: 26px; justify-content: flex-end; margin-bottom: 4px; }
+.cube-draft-tools > span { width: auto; margin-right: auto; text-align: left; }
+.cube-draft-tools button { width: 30px; min-height: 28px; padding: 4px; }
+.cube-drag-ghost { translate: none; rotate: 0deg; transform-origin: top left; }
+.cube-match .cube-tile { transform-origin: top left; }
+.cube-flying-back { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 15; }
+.cube-portrait { position: relative; width: max-content; margin-left: 12px; }
+.cube-portrait .cube-avatar { margin-left: 0; }
+.cube-turn-ring { position: absolute; inset: -5px; border-radius: 50%; background: conic-gradient(from -90deg, #a9ffcf var(--turn-angle), #81b2ec30 0deg); mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)); transition: --turn-angle .25s linear; pointer-events: none; }
+.cube-seat-clock { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%; color: white; background: #00163244; font-size: 30px; font-weight: 600; text-shadow: 0 2px 3px #001536; }
+.cube-seat.active .cube-avatar { animation: none; border-color: #bfe5ff; box-shadow: 0 0 0 3px #2d6384, 0 0 18px #a4e2e956; }
+.cube-seat.urgent .cube-turn-ring { background: conic-gradient(from -90deg, #ffbc71 var(--turn-angle), #81b2ec30 0deg); }
+.cube-seat.urgent .cube-seat-clock { color: #ffe3b1; }
+.cube-game-controls { gap: 10px; }
+.cube-undo { display: none; align-items: center; justify-content: center; align-self: center; width: 84px; min-height: 84px; margin-top: auto; border: 3px solid #e18383; border-radius: 50%; background: #254a80d0; color: #f79392; font-size: 45px; }
+.cube-game-controls[data-editing=true] .cube-draw { display: none; }
+.cube-game-controls[data-editing=true] .cube-undo { display: flex; }
+.cube-submit { border: 2px solid #b1ecbd; background: #2e507dba; color: #99f3a2; min-height: 60px; }
+.cube-submit i { font-size: 32px; }
+@media (max-height: 600px) {
+  .cube-portrait { margin-left: 8px; }
+  .cube-seat-clock { font-size: 20px; }
+  .cube-turn-ring { inset: -4px; mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px)); }
+  .cube-game-controls { gap: 7px; }
+  .cube-undo { width: 50px; min-height: 50px; font-size: 30px; border-width: 2px; }
+  .cube-submit { min-height: 40px; }
+  .cube-submit i { font-size: 23px; }
+}
+@media (max-height: 350px) {
+  .cube-seat-clock { font-size: 18px; }
+  .cube-game-controls { gap: 5px; }
+  .cube-undo { width: 42px; min-height: 42px; font-size: 26px; }
+  .cube-submit { min-height: 30px; }
+  .cube-submit i { font-size: 20px; }
+  .cube-draft-tools > span { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .cube-turn-ring { transition: none; } }
+
+.cube-board { bottom: calc(var(--tile-h) * 2 + 42px); }

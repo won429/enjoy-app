@@ -40,3 +40,16 @@ test('room commands enforce capacity, private tiles, bots, receipts and valid in
  assert.throws(()=>m.apply(uid,{id:'late',revision:m.room.revision,action:{type:'draw'}},startAt+30000),/차례 시간이 끝/);
  assert.equal(m.advanceBot(startAt+30000),true);assert.equal(m.state.hands[uid].length,before+1);assert.equal(JSON.stringify(m.state.table),original);assert.equal(m.data.turnDeadline,startAt+60000);
  });
+
+test('committed positions are public, survive reconnects and reject malformed layout atomically',async()=>{
+ const {CubeRoom}=await import('../cloudflare-worker/cube-room.js'),E=require('../cube-engine.js');
+ const now=Date.now(),m=new CubeRoom(null,()=>.25);m.connect({uid:'a',name:'A'},true,now);m.connect({uid:'b',name:'B'},false,now);
+ m.apply('a',{id:'start',revision:m.room.revision,action:{type:'start'}},now);
+ const deck=E.deck(),initial=deck.filter(t=>['red-10-0','blue-10-0','orange-10-0'].includes(t.id)),rest=deck.filter(t=>!initial.some(i=>i.id===t.id));
+ m.data.state={...E.start(['a','b']),hands:{a:[...initial,...rest.slice(0,11)],b:rest.slice(11,25)},pool:rest.slice(25),table:[],turnUid:'a'};
+ const revision=m.room.revision,table=[initial.map(t=>t.id)],packet={id:'commit',revision,action:{type:'commit',table,layout:[{x:7.3,y:2.1}]}};
+ assert.throws(()=>m.apply('a',{...packet,action:{...packet.action,layout:[{x:NaN,y:0}]}},now+1),/위치/);assert.equal(m.room.revision,revision);assert.deepEqual(m.state.table,[]);
+ assert.equal(m.apply('a',packet,now+1),true);assert.deepEqual(m.view('a').state.tableLayout,[{x:7.3,y:2.1}]);assert.deepEqual(m.view('b').state.tableLayout,[{x:7.3,y:2.1}]);
+ assert.ok(m.view('b').state.hands.a.every(t=>!t.color));
+ const restored=new CubeRoom(JSON.parse(JSON.stringify(m.data)));assert.deepEqual(restored.view('b').state.tableLayout,[{x:7.3,y:2.1}]);
+});

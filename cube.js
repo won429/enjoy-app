@@ -1,7 +1,7 @@
 (() => {
   'use strict';
-  const E = window.DropCube, content = document.getElementById('cube-content'), status = document.getElementById('cube-status'), connection = document.getElementById('cube-connection');
-  let mode='solo', count=2, room=null, state=null, code='', active=true, selected=[], draft=null, soloPlayers=[], soloTimer=null, socket=null, lobby=null, rooms=[], live=false, pending=null, pendingTimer=null, reconnectTimer=null, messageTimer=null, lastUid='', generation=0, lobbyGeneration=0, retry=0, clockOffset=0, sort='color', sound=true, audio=null, drag=null, suppressClickUntil=0, lastPaint=new Map(), fitFrame=null;
+  const E = window.DropCube, L=window.CubeLayout, content = document.getElementById('cube-content'), status = document.getElementById('cube-status'), connection = document.getElementById('cube-connection');
+  let mode='solo', count=2, room=null, state=null, code='', active=true, selected=[], draft=null, soloPlayers=[], soloTimer=null, socket=null, lobby=null, rooms=[], live=false, pending=null, pendingTimer=null, reconnectTimer=null, messageTimer=null, lastUid='', generation=0, lobbyGeneration=0, retry=0, clockOffset=0, sort='color', sound=true, audio=null, drag=null, suppressClickUntil=0, lastPaint=new Map(), fitFrame=null, draftLayout=[], rackSlots=[], landingOrigin=null, lastAnimatedMove="", showErrors=false;
   const TURN_MS=30000, screen=document.getElementById('cube-screen');
   try { sound=localStorage.getItem('drop-cube-sound')!=='off'; } catch (_) {}
   const esc = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -40,10 +40,10 @@
   function avatar(p,i=0) { return `<span class="cube-avatar" style="--avatar-x:${(i%5)*25}%" aria-hidden="true"></span>`; }
   function tile(t,where,disabled=false,index=0) {
     const colors={red:'빨강',blue:'파랑',orange:'주황',black:'검정',joker:'조커'};
-    return `<button class="cube-tile ${selected.includes(t.id)?'selected':''}" data-action="tile" data-id="${esc(t.id)}" data-where="${where}" data-color="${esc(t.color)}" aria-label="${colors[t.color]} ${t.n||''}${selected.includes(t.id)?', 선택됨':''}" aria-pressed="${selected.includes(t.id)}" style="--tile-index:${index}" ${disabled?'disabled':''}><small>${t.color==='joker'?'':esc(colors[t.color])}</small>${t.color==='joker'?'<i class="ph ph-smiley" aria-hidden="true"></i>':t.n}</button>`;
+    return `<button class="cube-tile ${selected.includes(t.id)?'selected':''}" data-action="tile" data-id="${esc(t.id)}" data-where="${where}" data-slot="${index}" data-color="${esc(t.color)}" aria-label="${colors[t.color]} ${t.n||''}${selected.includes(t.id)?', 선택됨':''}" aria-pressed="${selected.includes(t.id)}" style="--tile-index:${index}" ${disabled?'disabled':''}><small>${t.color==='joker'?'':esc(colors[t.color])}</small>${t.color==='joker'?'<i class="ph ph-smiley" aria-hidden="true"></i>':t.n}</button>`;
   }
   function currentTiles() { return new Map([...(state?.table.flat()||[]),...(state?.hands[you()]||[])].map(t=>[t.id,t])); }
-  function resetDraft() { selected=[];draft=state?.table.map(row=>row.map(t=>t.id))||null; }
+  function resetDraft() { showErrors=false;selected=[];draft=state?.table.map(row=>row.map(t=>t.id))||null;draftLayout=draft?L.ensure(draft,state.tableLayout):[]; }
   function statusText() { connection.textContent=mode==='solo'?'기기에서 플레이':live?'실시간 연결':socket||lobby?'연결 중':'연결 끊김';connection.classList.toggle('live',mode==='friends'&&live); }
   function renderSetup() {
     const logo=[{id:'logo-r',color:'red',n:10},{id:'logo-b',color:'blue',n:10},{id:'logo-o',color:'orange',n:10},{id:'logo-j',color:'joker',n:0}].map(t=>tile(t,'logo',true)).join('');
@@ -65,26 +65,32 @@
     const rows=draft||state.table.map(row=>row.map(t=>t.id)), onBoard=new Set(rows.flat());
     const rack=state.hands[me]?.filter(t=>!onBoard.has(t.id))||[];
     rack.sort(sort==='number'?(a,b)=>a.n-b.n||E.COLORS.indexOf(a.color)-E.COLORS.indexOf(b.color):(a,b)=>E.COLORS.indexOf(a.color)-E.COLORS.indexOf(b.color)||a.n-b.n);
+    const ordered=[...rack.map(t=>t.id),...(state.hands[me]||[]).filter(t=>onBoard.has(t.id)).map(t=>t.id)];
+    rackSlots=L.syncRack(rackSlots,(state.hands[me]||[]).map(t=>t.id),ordered);
+    const columns=Math.max(10,Math.ceil(rackSlots.length/2));
+    const slots=Array.from({length:columns*2},(_,i)=>{const id=rackSlots[i];return id&&!onBoard.has(id)?tile(map.get(id),'rack',!edit,i):`<span class="cube-rack-space" data-slot="${i}" aria-hidden="true"></span>`;}).join('');
     const played=state.hands[me]?.length-rack.length;
     const opening=rows.filter(row=>row.every(id=>state.hands[me].some(t=>t.id===id))).reduce((sum,row)=>sum+(E.meld(row.map(id=>map.get(id)))?.points||0),0);
     const pool=mode==='solo'?state.pool.length:state.poolCount;
     const last=state.lastMove?`${name(state.lastMove.uid)} · ${state.lastMove.type==='draw'?(state.lastMove.count?'1장 뽑음':'차례 넘김'):`${state.lastMove.count}장 냄`}`:'타일을 끌어 테이블에 놓으세요';
-    const seat=(p,i,self=false)=>`<div class="cube-seat ${self?'cube-self':''} ${state.turnUid===p.uid?'active':''}">${avatar(p,i)}<div class="cube-seat-label"><strong>${esc(p.name)}</strong><span><i class="ph ph-cards" aria-hidden="true"></i> ${state.hands[p.uid].length}</span></div><small>${state.opened[p.uid]?'등록 완료':'첫 등록 전'}</small></div>`;
-    const board=rows.some(row=>row.length)?rows.map((row,i)=>row.length?`<div class="cube-meld ${E.meld(row.map(id=>map.get(id)))?'':'invalid'}" data-row="${i}" aria-label="${i+1}번 묶음"><button class="cube-append" data-action="append-left" data-row="${i}" aria-label="${i+1}번 묶음 앞에 선택 타일 붙이기" ${!edit||!selected.length?'disabled':''}><i class="ph ph-caret-left" aria-hidden="true"></i></button>${row.map(id=>tile(map.get(id),'table',!edit||!state.opened[me]&&!state.hands[me].some(t=>t.id===id))).join('')}<button class="cube-append" data-action="append-right" data-row="${i}" aria-label="${i+1}번 묶음 뒤에 선택 타일 붙이기" ${!edit||!selected.length?'disabled':''}><i class="ph ph-caret-right" aria-hidden="true"></i></button></div>`:'').join(''):
-      `<div class="cube-empty"><h2>숫자를 잇고,<br>색을 모으세요</h2><p>첫 묶음은 내 타일로 30점 이상</p></div>`;
-    content.innerHTML=`<div class="cube-match" data-player-count="${people().length}">
+    const seat=(p,i,self=false)=>`<div data-uid="${esc(p.uid)}" class="cube-seat ${self?'cube-self':''} ${state.turnUid===p.uid?'active':''}"><div class="cube-portrait">${avatar(p,i)}${state.turnUid===p.uid?'<span class="cube-turn-ring" aria-hidden="true"></span><span id="cube-clock" class="cube-seat-clock" role="timer" aria-label="남은 차례 시간"></span>':''}</div><div class="cube-seat-label"><strong>${esc(p.name)}</strong><span><i class="ph ph-cards" aria-hidden="true"></i> ${state.hands[p.uid].length}</span></div><small>${state.opened[p.uid]?'등록 완료':'첫 등록 전'}</small></div>`;
+    draftLayout=L.ensure(rows,draftLayout);
+    const board=rows.some(row=>row.length)?rows.map((row,i)=>row.length?`<div class="cube-meld ${E.meld(row.map(id=>map.get(id)))?'':'invalid'}" data-row="${i}" aria-label="${i+1}번 묶음">${row.map(id=>tile(map.get(id),'table',!edit||!state.opened[me]&&!state.hands[me].some(t=>t.id===id))).join('')}</div>`:'').join(''):
+      `<div class="cube-empty"><h2>숫자를 잇고,<br>색을 모으세요</h2><p>패를 끌어 놓으세요 · 첫 등록은 30점 이상</p></div>`;
+    content.innerHTML=`<div class="cube-match ${showErrors?'cube-validation-errors':''}" data-player-count="${people().length}" ${showErrors?'data-invalid="true"':''}>
       <aside class="cube-players-rail" aria-label="플레이어">${opponents.map((p,i)=>seat(p,i)).join('')}${seat(myself,3,true)}</aside>
-      <div class="cube-turnbar"><strong class="${mine()?'myturn':''}">${mine()?'나의 차례':esc(name(state.turnUid))+'의 차례'}</strong><span>${mode==='friends'?'친구와 플레이':'혼자하기'}${code&&mode==='friends'?' · '+esc(code):''}</span><span id="cube-clock" class="cube-clock" role="timer" aria-label="남은 차례 시간"></span></div>
+      <div class="cube-turnbar"><strong class="${mine()?'myturn':''}">${mine()?'나의 차례':esc(name(state.turnUid))+'의 차례'}</strong><span>${mode==='friends'?'친구와 플레이':'혼자하기'}${code&&mode==='friends'?' · '+esc(code):''}</span></div>
       <div class="cube-board" aria-label="공유 테이블">${board}</div>
-      <aside class="cube-game-controls" aria-label="게임 조작">
+      <aside class="cube-game-controls" aria-label="게임 조작" data-editing="${JSON.stringify(rows.filter(row=>row.length))!==JSON.stringify(state.table.map(row=>row.map(t=>t.id)))}">
         <div class="cube-registration"><i class="ph ph-squares-four" aria-hidden="true"></i><strong>${state.opened[me]?'등록 완료':opening+' / 30'}</strong><small>${state.opened[me]?'타일을 자유롭게 조합':'첫 등록 점수'}</small></div>
         <div class="cube-sort-controls"><button data-action="sort-number" aria-label="숫자순 정렬" aria-pressed="${sort==='number'}"><b aria-hidden="true">789</b><small>숫자순</small></button><button data-action="sort-color" aria-label="색상순 정렬" aria-pressed="${sort==='color'}"><b aria-hidden="true">777</b><small>색상순</small></button></div>
         <button class="cube-draw" data-action="draw" aria-label="${pool?'1장 뽑기':'차례 넘기기'}" ${!edit?'disabled':''}><i class="ph ph-plus" aria-hidden="true"></i><span>${pool?'1장 뽑기':'차례 넘김'}</span><small><i class="ph ph-cards" aria-hidden="true"></i> ${pool}</small></button>
+        <button class="cube-undo" data-action="undo" aria-label="이번 차례 되돌리기" ${!edit?'disabled':''}><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i></button>
         <button class="cube-submit" data-action="commit" ${!edit||!played?'disabled':''}><i class="ph ph-check" aria-hidden="true"></i><span>${pending?'확인 중…':'차례 완료'}</span></button>
       </aside>
       <div class="cube-rack-area">
-        <div class="cube-draft-tools"><span>${selected.length?`${selected.length}장 선택`:played?`${played}장 내려놓는 중`:esc(last)}</span><button data-action="new-meld" ${!edit||!selected.length?'disabled':''}><i class="ph ph-plus" aria-hidden="true"></i> 새 묶음</button><button data-action="return" ${!edit||!selected.length?'disabled':''}>받침대로</button><button data-action="undo" ${!edit?'disabled':''}><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> 되돌리기</button><button data-action="hint" ${!edit?'disabled':''}><i class="ph ph-lightbulb" aria-hidden="true"></i> 힌트</button></div>
-        <div class="cube-rack-shell"><div class="cube-rack" aria-label="내 타일 받침대" style="--rack-columns:${Math.max(10,Math.ceil(rack.length/2))}">${rack.map((t,i)=>tile(t,'rack',!edit,i)).join('')}${!rack.length?'<p class="cube-rack-empty">차례 완료를 눌러 타일을 제출하세요.</p>':''}</div></div>
+        <div class="cube-draft-tools"><span>${selected.length?`${selected.length}장 함께 이동`:played?`${played}장 내려놓는 중`:esc(last)}</span><button data-action="hint" aria-label="힌트" ${!edit?'disabled':''}><i class="ph ph-lightbulb" aria-hidden="true"></i></button></div>
+        <div class="cube-rack-shell"><div class="cube-rack" aria-label="내 타일 받침대" style="--rack-columns:${columns}">${slots}${!rack.length?'<p class="cube-rack-empty">차례 완료를 눌러 타일을 제출하세요.</p>':''}</div></div>
       </div>
       ${mode==='friends'?`<button class="cube-match-leave" data-action="leave" ${pending?'disabled':''}><i class="ph ph-sign-out" aria-hidden="true"></i><span>방 나가기</span></button>`:''}
     </div>`;
@@ -105,12 +111,12 @@
     const el=document.getElementById('cube-clock');
     if(el&&state?.turnDeadline) {
       const seconds=Math.max(0,Math.ceil((state.turnDeadline-Date.now()-(mode==='friends'?clockOffset:0))/1000));
-      el.textContent=seconds+'초';el.classList.toggle('urgent',seconds<=10);
+      el.textContent=seconds;el.setAttribute('aria-label','남은 차례 시간 '+seconds+'초');el.closest('.cube-portrait')?.style.setProperty('--turn-angle',Math.max(0,Math.min(360,(state.turnDeadline-Date.now()-(mode==='friends'?clockOffset:0))/TURN_MS*360))+'deg');el.closest('.cube-seat')?.classList.toggle('urgent',seconds<=10);
     }
   }
   setInterval(updateClock,250);
   function stopSolo() { clearTimeout(soloTimer);soloTimer=null; }
-  function advanceSolo(action) { state=E.move(state,state.turnUid,action);state.turnDeadline=state.winnerUid?null:Date.now()+TURN_MS;resetDraft(); }
+  function advanceSolo(action) { state=E.move(state,state.turnUid,action);state.tableLayout=action.type==='commit'?L.normalize(state.table,action.layout):L.ensure(state.table,state.tableLayout);state.turnDeadline=state.winnerUid?null:Date.now()+TURN_MS;resetDraft(); }
   function scheduleSolo() {
     stopSolo();if(!active||mode!=='solo'||!state||state.winnerUid) return;
     const remaining=Math.max(0,state.turnDeadline-Date.now());
@@ -119,7 +125,7 @@
       try {const timeout=Date.now()>=state.turnDeadline;advanceSolo(timeout?{type:'draw'}:E.botAction(state,state.turnUid));beep(timeout?'draw':'done');render();if(timeout)note('30초가 끝나 미완성 배치를 취소하고 1장을 뽑았어요.');scheduleSolo();}catch(e){note(e.message);}
     },mine()?remaining:Math.min(1300,remaining));
   }
-  function beginSolo() { disconnectRoom();stopLobby();room=null;mode='solo';soloPlayers=[{uid:'you',name:'나'},...Array.from({length:count-1},(_,i)=>({uid:'bot-'+i,name:['루미','모모','하루'][i],bot:true}))];state=E.start(soloPlayers.map(p=>p.uid));state.turnDeadline=Date.now()+TURN_MS;resetDraft();note('14장씩 나눴어요. '+name(state.turnUid)+'부터 시작!');beep('done');render();scheduleSolo(); }
+  function beginSolo() { rackSlots=[];lastAnimatedMove='';disconnectRoom();stopLobby();room=null;mode='solo';soloPlayers=[{uid:'you',name:'나'},...Array.from({length:count-1},(_,i)=>({uid:'bot-'+i,name:['루미','모모','하루'][i],bot:true}))];state=E.start(soloPlayers.map(p=>p.uid));state.turnDeadline=Date.now()+TURN_MS;resetDraft();note('14장씩 나눴어요. '+name(state.turnUid)+'부터 시작!');beep('done');render();scheduleSolo(); }
   function disconnectRoom() { generation++;clearTimeout(reconnectTimer);reconnectTimer=null;clearTimeout(pendingTimer);pendingTimer=null;const old=socket;socket=null;live=false;old?.close(); }
   function stopLobby() { lobbyGeneration++;const old=lobby;lobby=null;old?.close(); }
   function clearRoom() { disconnectRoom();pending=null;room=null;state=null;draft=null;selected=[];code='';try{localStorage.removeItem(key());}catch(_){}render();connectLobby(); }
@@ -139,7 +145,7 @@
       let p;try{p=JSON.parse(e.data);}catch(_){return;}
       if(p.type==='ready'){accepted=true;live=true;retry=0;clearTimeout(handshake);try{localStorage.setItem(key(),code);}catch(_){}if(pending){ws.send(JSON.stringify(pending));armPending();}statusText();}
       if(p.type==='snapshot'){
-        const changed=room?.revision!==p.room.revision;room=p.room;state=p.state;clockOffset=(p.serverNow||Date.now())-Date.now();if(changed)resetDraft();render();
+        const changed=room?.revision!==p.room.revision;if(room?.round!==p.room.round)rackSlots=[];room=p.room;state=p.state;clockOffset=(p.serverNow||Date.now())-Date.now();if(changed)resetDraft();render();
       }
       if(p.type==='ack'&&pending?.id===p.id){if(['commit','draw'].includes(pending.action.type))beep(pending.action.type==='draw'?'draw':'done');const leaving=pending.action.type==='leave';pending=null;clearTimeout(pendingTimer);if(leaving)clearRoom();else render();}
       if(p.type==='removed'){note(p.message||'방에서 나왔어요.');clearRoom();}
@@ -167,55 +173,51 @@
     if(!live||socket?.readyState!==WebSocket.OPEN||pending){note('서버 연결을 기다려주세요.');return;}
     pending={type:'action',id:crypto.randomUUID(),revision:room.revision,action};socket.send(JSON.stringify(pending));armPending();render();
   }
-  function place(rowIndex,side){
-    if(!canEdit()||!selected.length)return;
-    const ids=selected.slice(), target=rowIndex===null?[]:draft[rowIndex].filter(id=>!ids.includes(id));
-    draft=draft.map(row=>row.filter(id=>!ids.includes(id)));
-    if(rowIndex===null)draft.push(ids);else draft[rowIndex]=side==='left'?[...ids,...target]:[...target,...ids];
-    selected=[];beep();render();
+  function placeAt(ids,point) {
+    if(!canEdit()||!ids.length)return;
+    showErrors=false;const next=L.move(draft,draftLayout,ids,point);draft=next.rows;draftLayout=next.layout;selected=[];beep();render();
   }
   function captureTiles() {
     lastPaint=new Map(Array.from(content.querySelectorAll('.cube-match .cube-tile'),el=>[el.dataset.id,{box:el.getBoundingClientRect(),where:el.dataset.where}]));
+    if(landingOrigin){landingOrigin.ids.forEach((id,i)=>lastPaint.set(id,{box:{...landingOrigin.box,x:landingOrigin.box.x+i*landingOrigin.box.width},where:'drag'}));landingOrigin=null;}
   }
   function animateTiles() {
     if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const draw=content.querySelector('.cube-draw')?.getBoundingClientRect(),actor=Array.from(content.querySelectorAll('.cube-seat')).find(el=>el.dataset.uid===state?.lastMove?.uid)?.querySelector('.cube-avatar')?.getBoundingClientRect();
     for(const el of content.querySelectorAll('.cube-match .cube-tile')) {
       const before=lastPaint.get(el.dataset.id),after=el.getBoundingClientRect();
       if(before) {
-        const dx=before.box.x-after.x,dy=before.box.y-after.y;
-        if(Math.abs(dx)+Math.abs(dy)>2)el.animate([{translate:`${dx}px ${dy}px`,opacity:.65},{translate:'0px 0px',opacity:1}],{duration:240,easing:'cubic-bezier(.2,.8,.2,1)'});
-      }else el.animate([{opacity:0,translate:'0px -14px'},{opacity:1,translate:'0px 0px'}],{duration:220,easing:'ease-out'});
+        const dx=before.box.x-after.x,dy=before.box.y-after.y,sx=before.box.width/after.width,sy=before.box.height/after.height;
+        if(Math.abs(dx)+Math.abs(dy)>1||Math.abs(sx-1)>.01)el.animate([{translate:`${dx}px ${dy}px`,scale:`${sx} ${sy}`},{translate:'0px 0px',scale:'1 1'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
+      }else if(draw){const origin=el.dataset.where==='table'&&actor?actor:draw;el.animate([{translate:`${origin.x+origin.width/2-after.x}px ${origin.y+origin.height/2-after.y}px`,scale:'.45',opacity:0,rotate:'-12deg'},{translate:'0px 0px',scale:'1',opacity:1,rotate:'0deg'}],{duration:360,delay:lastPaint.size?0:Math.min(Number(el.dataset.slot)||0,14)*22,easing:'cubic-bezier(.2,.8,.2,1)'});}
     }
+    const move=state?.lastMove,tag=move?state.revision+':'+state.turn+':'+move.uid:'';
+    if(move?.type==='draw'&&move.uid!==you()&&tag!==lastAnimatedMove&&draw){
+      const seat=Array.from(content.querySelectorAll('.cube-seat')).find(el=>el.dataset.uid===move.uid)?.querySelector('.cube-avatar')?.getBoundingClientRect();
+      if(seat){const card=document.createElement('span');card.className='cube-tile cube-flying-back';document.body.append(card);const flight=card.animate([{translate:`${draw.x}px ${draw.y}px`,scale:'.5',opacity:0},{translate:`${seat.x}px ${seat.y}px`,scale:'.3',opacity:1}],{duration:360,easing:'ease-out'});flight.onfinish=()=>card.remove();}
+    }
+    if(tag)lastAnimatedMove=tag;
   }
   function fitBoard() {
     const match=content.querySelector('.cube-match'),rack=content.querySelector('.cube-rack');
     if(match&&rack?.clientWidth){
       match.style.removeProperty('--tile-w');match.style.removeProperty('--tile-h');
-      const base=parseFloat(getComputedStyle(rack.querySelector('.cube-tile')||match).width)||50,columns=Math.max(10,Math.ceil(rack.querySelectorAll('.cube-tile').length/2));
+      const base=parseFloat(getComputedStyle(rack.querySelector('.cube-tile')||match).width)||50,columns=Number(rack.style.getPropertyValue('--rack-columns'))||10;
       const width=Math.min(base,(rack.clientWidth-columns-1)/columns);
       if(width>0){match.style.setProperty('--tile-w',width+'px');match.style.setProperty('--tile-h',width*1.4+'px');}
     }
     const board=content.querySelector('.cube-board');if(!board||!board.clientWidth||!board.clientHeight)return;
-    const rows=Array.from(board.querySelectorAll('.cube-meld')),style=getComputedStyle(board);
-    const width=board.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)-2;
-    const height=board.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)-2;
-    const small=matchMedia('(max-height:600px)').matches,baseW=small?34:50,baseH=baseW*1.4,append=small?15:20,gap=small?10:18;
-    const fits=scale=>{
-      let x=0,y=0;const rowHeight=(baseH+10)*scale;
-      for(const row of rows){const n=row.querySelectorAll('.cube-tile').length,w=(n*baseW+(n+1)*2+append*2)*scale;if(w>width)return false;if(x&&x+w>width){x=0;y+=rowHeight+gap*scale;}if(y+rowHeight>height)return false;x+=w+gap*scale;}return true;
-    };
-    let low=0,high=1;for(let i=0;i<22;i++){const mid=(low+high)/2;if(fits(mid))low=mid;else high=mid;}
-    const scale=rows.length?low:1;
-    board.style.setProperty('--board-tile-w',baseW*scale+'px');board.style.setProperty('--board-tile-h',baseH*scale+'px');
-    board.style.setProperty('--board-font',baseW*.62*scale+'px');board.style.setProperty('--board-append',append*scale+'px');
-    board.style.setProperty('--board-gap',gap*scale+'px');board.style.setProperty('--meld-gap',2*scale+'px');board.style.setProperty('--meld-pad',5*scale+'px');
-    board.dataset.scale=scale.toFixed(3);
+    const rows=draft||state.table.map(row=>row.map(t=>t.id));draftLayout=L.ensure(rows,draftLayout);
+    const base=matchMedia('(max-height:600px)').matches?34:50,fit=L.fit(rows,draftLayout,board.clientWidth-8,board.clientHeight-8,base);
+    board.style.setProperty('--board-tile-w',fit.unit+'px');board.style.setProperty('--board-tile-h',fit.unit*L.TILE_HEIGHT+'px');board.style.setProperty('--board-font',fit.unit*.62+'px');
+    board.dataset.unit=fit.unit;board.dataset.scale=(fit.unit/base).toFixed(3);
+    for(const el of board.querySelectorAll('.cube-meld')){const p=draftLayout[Number(el.dataset.row)];el.style.left=4+p.x*fit.unit+'px';el.style.top=4+p.y*fit.unit+'px';}
   }
   new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(fitBoard);}).observe(content);
-  function returnTiles(ids) {
+  function returnTiles(ids,slot=null) {
     const original=new Set(state.table.flat().map(t=>t.id));
-    if(ids.some(id=>original.has(id))){note('공유 테이블의 타일은 다른 묶음으로 옮겨주세요.');return;}
-    draft=draft.map(row=>row.filter(id=>!ids.includes(id)));selected=[];beep();render();
+    if(ids.some(id=>original.has(id))){note('공유 테이블의 타일은 다른 위치로 옮겨주세요.');return false;}
+    draft=draft.map(row=>row.filter(id=>!ids.includes(id)));if(slot!==null)rackSlots=L.moveRack(rackSlots,ids,slot);selected=[];beep();render();return true;
   }
   function cancelDrag() {
     if(!drag)return;
@@ -226,34 +228,45 @@
   screen.addEventListener('pointerdown',event=>{
     if(event.button!==0||!canEdit())return;
     const source=event.target.closest('.cube-match .cube-tile:not(:disabled)');if(!source)return;
-    unlockAudio();drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,source,ids:selected.includes(source.dataset.id)?selected.slice():[source.dataset.id],started:false};
+    const box=source.getBoundingClientRect();unlockAudio();drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,grabX:event.clientX-box.x,grabY:event.clientY-box.y,source,ids:selected.includes(source.dataset.id)?selected.slice():[source.dataset.id],started:false};
   });
   screen.addEventListener('pointermove',event=>{
     if(!drag||event.pointerId!==drag.pointer)return;
     if(!drag.started&&Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<6)return;
     if(!canEdit()){cancelDrag();return;}event.preventDefault();
     if(!drag.started){screen.setPointerCapture(event.pointerId);drag.started=true;drag.ghost=drag.source.cloneNode(true);drag.ghost.classList.remove('selected');drag.ghost.classList.add('cube-drag-ghost');drag.ghost.style.width=drag.source.offsetWidth+'px';drag.ghost.style.height=drag.source.offsetHeight+'px';drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost);drag.source.classList.add('drag-source');}
-    drag.ghost.style.left=event.clientX+'px';drag.ghost.style.top=event.clientY+'px';
+    drag.ghost.style.left=event.clientX-drag.grabX+'px';drag.ghost.style.top=event.clientY-drag.grabY+'px';
     content.querySelector('.drop-target')?.classList.remove('drop-target');
     document.elementFromPoint(event.clientX,event.clientY)?.closest('.cube-meld,.cube-board,.cube-rack-shell')?.classList.add('drop-target');
   });
   screen.addEventListener('pointerup',event=>{
     if(!drag||event.pointerId!==drag.pointer)return;
-    const current=drag,target=document.elementFromPoint(event.clientX,event.clientY);cancelDrag();
-    if(!current.started)return;suppressClickUntil=Date.now()+350;
-    if(!canEdit()||!target)return;
-    if(target.closest('.cube-rack-shell')){returnTiles(current.ids);return;}
-    const board=target.closest('.cube-board');if(!board)return;
-    const meld=target.closest('.cube-meld'),rowIndex=meld?Number(meld.dataset.row):null;
-    let index=0;
-    if(meld){const tiles=Array.from(meld.querySelectorAll('.cube-tile'));index=tiles.filter(el=>{const r=el.getBoundingClientRect();return r.x+r.width/2<event.clientX&&!current.ids.includes(el.dataset.id);}).length;}
-    draft=draft.map(row=>row.filter(id=>!current.ids.includes(id)));
-    if(rowIndex===null)draft.push(current.ids);else draft[rowIndex].splice(index,0,...current.ids);
-    selected=[];beep('done');render();
+    const current=drag,target=document.elementFromPoint(event.clientX,event.clientY),ghost=current.ghost?.getBoundingClientRect();
+    if(current.started&&ghost)landingOrigin={ids:current.ids,box:{x:ghost.x,y:ghost.y,width:ghost.width,height:ghost.height}};
+    cancelDrag();if(!current.started)return;suppressClickUntil=Date.now()+350;
+    if(!canEdit()||!target){landingOrigin=null;return;}
+    if(target.closest('.cube-rack-shell')){
+      const rack=content.querySelector('.cube-rack'),r=rack.getBoundingClientRect(),columns=Number(rack.style.getPropertyValue('--rack-columns'))||10;
+      const slot=Math.min(columns*2-1,Math.max(0,Math.floor((event.clientY-r.y)/(r.height/2)))*columns+Math.min(columns-1,Math.max(0,Math.floor((event.clientX-r.x)/(r.width/columns)))));
+      if(!returnTiles(current.ids,slot)){landingOrigin=null;render();}return;
+    }
+    const board=target.closest('.cube-board');if(!board){render();return;}
+    const r=board.getBoundingClientRect(),unit=Number(board.dataset.unit);
+    placeAt(current.ids,{x:(event.clientX-r.x-4)/unit,y:(event.clientY-r.y-4)/unit});
   });
   screen.addEventListener('pointercancel',cancelDrag);
   screen.addEventListener('lostpointercapture',()=>{if(drag?.started)cancelDrag();});
   window.addEventListener('blur',cancelDrag);
+  content.addEventListener('keydown',event=>{
+    const tile=event.target.closest('.cube-match .cube-tile:not(:disabled)');if(!tile||!canEdit())return;
+    const ids=selected.includes(tile.dataset.id)?selected.slice():[tile.dataset.id];
+    if(event.key==='Enter'&&tile.dataset.where==='rack'){event.preventDefault();const point=L.freeSpace(draft,draftLayout,ids.length);placeAt(ids,{x:point.x+.5,y:point.y+.7});}
+    else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();returnTiles(ids);}
+    else if(tile.dataset.where==='table'&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){
+      event.preventDefault();const row=Number(tile.closest('.cube-meld').dataset.row),p=draftLayout[row],index=draft[row].indexOf(tile.dataset.id);
+      placeAt(ids,{x:Math.max(.5,p.x+index+.5+(event.key==='ArrowLeft'?-.5:event.key==='ArrowRight'?.5:0)),y:Math.max(.7,p.y+.7+(event.key==='ArrowUp'?-1.7:event.key==='ArrowDown'?1.7:0))});
+    }
+  });
   const portrait=matchMedia('(orientation:portrait)');
   function orientationChanged(){screen.inert=portrait.matches;if(portrait.matches&&document.getElementById('cube-rules').open)document.getElementById('cube-rules').close();cancelDrag();requestAnimationFrame(fitBoard);}
   portrait.addEventListener('change',orientationChanged);orientationChanged();
@@ -282,21 +295,19 @@
     if(action==='join'||action==='join-listed'){connectRoom(action==='join'?document.getElementById('cube-code').value.trim().toUpperCase():button.dataset.code);return;}
     if(action==='copy'){try{await navigator.clipboard.writeText(code);note('방 코드를 복사했어요.');}catch(_){note('방 코드: '+code);}return;}
     if(action==='start'||action==='add-bot'||action==='remove-bot'||action==='leave'){send({type:action,uid:button.dataset.uid});return;}
-    if(['sort','sort-number','sort-color'].includes(action)){sort=action==='sort-number'?'number':action==='sort-color'?'color':sort==='color'?'number':'color';render();return;}
+    if(['sort','sort-number','sort-color'].includes(action)){sort=action==='sort-number'?'number':action==='sort-color'?'color':sort==='color'?'number':'color';rackSlots=[];render();return;}
     if(!canEdit())return;
     if(action==='tile'){const id=button.dataset.id;selected=selected.includes(id)?selected.filter(t=>t!==id):[...selected,id];beep();render();return;}
-    if(action==='new-meld'){place(null);return;}
-    if(action==='append-left'||action==='append-right'){place(Number(button.dataset.row),action==='append-left'?'left':'right');return;}
     if(action==='return'){returnTiles(selected);return;}
     if(action==='undo'){resetDraft();render();return;}
-    if(action==='hint'){const hint=E.botAction(state,you());if(hint?.type==='commit'){draft=hint.table;selected=[];render();note('가능한 배치를 준비했어요. 확인하고 차례 완료를 누르세요.');}else note('새 묶음이나 양끝 추가 힌트를 찾지 못했어요. 테이블을 재배열하거나 1장을 뽑아보세요.');return;}
+    if(action==='hint'){const hint=E.botAction(state,you());if(hint?.type==='commit'){draft=hint.table;draftLayout=L.ensure(draft,draftLayout);selected=[];render();note('가능한 배치를 준비했어요. 확인하고 차례 완료를 누르세요.');}else note('새 묶음이나 양끝 추가 힌트를 찾지 못했어요. 테이블을 재배열하거나 1장을 뽑아보세요.');return;}
     if(action==='draw'){resetDraft();send({type:'draw'});return;}
     if(action==='commit'){
-      const table=draft.filter(row=>row.length);
+      const table=draft.filter(row=>row.length),layout=draftLayout.filter((_,i)=>draft[i].length);
       try{const map=currentTiles();if(table.some(row=>!E.meld(row.map(id=>map.get(id)))))throw Error('빨간 테두리의 묶음을 먼저 완성해주세요.');
         // Use the same rule engine on the public view without exposing other hands.
-        E.move(state,you(),{type:'commit',table});send({type:'commit',table});
-      }catch(e){note(e.message);}return;
+        E.move(state,you(),{type:'commit',table});send({type:'commit',table,layout});
+      }catch(e){showErrors=true;render();note(e.message);}return;
     }
   }
   window.pauseCubeGame=()=>{cancelDrag();audio?.suspend().catch(()=>{});for(const {element} of Object.values(mediaEffects))element.pause();active=false;stopSolo();disconnectRoom();stopLobby();};

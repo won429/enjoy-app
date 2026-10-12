@@ -1,4 +1,5 @@
 import engine from '../cube-engine.js';
+import layout from '../cube-layout.js';
 export const TURN_MS = 30000;
 export const ROOM_TTL = 24 * 60 * 60 * 1000;
 export function fail(message, code = 'invalid-action') { throw Object.assign(new Error(message), { code }); }
@@ -47,7 +48,8 @@ export class CubeRoom {
     } else {
       if (current.status !== 'playing' || !state) fail('진행 중인 게임이 없어요.');
       if (this.data.turnDeadline <= now) fail('차례 시간이 끝났어요. 다음 화면을 기다려주세요.');
-      state = engine.move(state,uid,{ type: action.type, table: action.table }); room.status = state.winnerUid ? 'finished' : 'playing';
+      state = engine.move(state,uid,{ type: action.type, table: action.table });
+      state.tableLayout = action.type==='commit' ? layout.normalize(state.table,action.layout) : layout.ensure(state.table,state.tableLayout); room.status = state.winnerUid ? 'finished' : 'playing';
     }
     this.data = { ...this.data, room, state, turnDeadline: room.status==='playing' ? now+TURN_MS : null, nextBotAt: this.botTurn(room,state) ? now+1400 : null, receipts: [...this.data.receipts,{ uid,id:packet.id }].slice(-100) }; return true;
   }
@@ -58,6 +60,7 @@ export class CubeRoom {
     const bot = this.botTurn() && this.data.nextBotAt <= now, timeout = this.data.turnDeadline <= now;
     if (!bot && !timeout) return false;
     const uid = this.state.turnUid, state = engine.move(this.state,uid,bot ? engine.botAction(this.state,uid) : { type:'draw' });
+    state.tableLayout=layout.ensure(state.table,state.tableLayout);
     const room = { ...this.room, revision: this.room.revision+1, updatedAt:now, status: state.winnerUid?'finished':'playing' };
     this.data = { ...this.data,room,state, turnDeadline: room.status==='playing'?now+TURN_MS:null, nextBotAt:this.botTurn(room,state)?now+1400:null }; return true;
   }
