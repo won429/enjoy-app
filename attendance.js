@@ -82,6 +82,7 @@
         return Array.isArray(dates) ? dates.filter(value => typeof value === 'string') : [];
     }
     function signedInUser() {
+        if (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest()) return window.enjoyDataUser();
         return window.enjoyUser && window.enjoyUser.uid && !window.isGuest ? window.enjoyUser : null;
     }
     function ready() {
