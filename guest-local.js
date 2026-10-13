@@ -166,14 +166,15 @@
         root.document.documentElement.classList.toggle('enjoy-guest', guest);
         const home = root.document.getElementById('nav-home');
         if (home && guest) home.setAttribute('aria-label', '홈');
-        if (guest && root.homeActiveTab === 'shorts' && root.switchHomeTab) root.switchHomeTab('home');
+        if (guest && ['shorts', 'attendance'].includes(root.homeActiveTab) && root.switchHomeTab) root.switchHomeTab('home');
         if (guest && (root.activeTabIndex === 1 || root.activeTabIndex === 4) && root.goHome) root.goHome();
         if (root.updateNavIndicator) root.requestAnimationFrame(root.updateNavIndicator);
     };
-    root.enjoyGuestProfileName = () => root.localStorage.getItem(PROFILE_KEY) || '';
+    root.enjoyNormalizeProfileName = name => String(name || '').replace(/\s*\(스페셜\)\s*$/, ' (엔조이)');
+    root.enjoyGuestProfileName = () => root.enjoyNormalizeProfileName(root.localStorage.getItem(PROFILE_KEY));
     root.enjoyStartLocalGuest = function (profileName) {
         if (root.enjoyUser) return;
-        const name = String(profileName === undefined ? root.enjoyGuestProfileName() : profileName).trim();
+        const name = root.enjoyNormalizeProfileName(profileName === undefined ? root.enjoyGuestProfileName() : profileName).trim();
         if (!name) return false;
         if (name.length > 30 || /[\u0000-\u001f\u007f<>&"'\\`]/.test(name)) throw new Error('이름은 30자 이내로 입력하고 따옴표와 특수 기호는 제외해주세요.');
         let uid = root.localStorage.getItem(ID_KEY);
@@ -194,6 +195,7 @@
         for (const value of Object.values(records)) {
             if (value.authorUid === uid) value.authorName = name;
             for (const comment of value.commentPreview || []) if (comment.authorUid === uid) comment.authorName = name;
+            if (value.likedByProfiles && value.likedByProfiles[uid]) value.likedByProfiles[uid].name = name;
         }
         if (!records[key].timetable) records[key].timetable = { classes: [] };
         commit(records);

@@ -53,6 +53,29 @@ test('a restored Google session cancels a pending guest profile and retains the 
     assert.equal(app.enjoyDataUser().uid, 'signed-in');
 });
 
+test('legacy profile labels become Enjoy without changing records or another author', async () => {
+    const { window: app, storage } = runtime();
+    const uid = app.enjoyDataUser().uid;
+    const post = app.fsDoc('community_posts', 'legacy');
+    await app.fsSetDoc(post, {
+        authorUid: uid, authorName: '야호 (스페셜)', body: '본문 (스페셜)',
+        commentPreview: [{ authorUid: uid, authorName: '야호 (스페셜)' }, { authorUid: 'other', authorName: '다른 사람' }],
+        likedByProfiles: { [uid]: { name: '야호 (스페셜)' }, other: { name: '다른 사람' } }
+    });
+    storage.set('enjoy_guest_profile_v1', '야호 (스페셜)');
+    const restored = runtime(storage).window;
+    assert.equal(restored.enjoyDataUser().uid, uid);
+    assert.equal(restored.enjoyDataUser().displayName, '야호 (엔조이)');
+    assert.equal(restored.enjoyGuestProfileName(), '야호 (엔조이)');
+    const saved = (await restored.getDoc(post)).data();
+    assert.equal(saved.authorName, '야호 (엔조이)');
+    assert.equal(saved.body, '본문 (스페셜)');
+    assert.equal(saved.commentPreview[0].authorName, '야호 (엔조이)');
+    assert.equal(saved.commentPreview[1].authorName, '다른 사람');
+    assert.equal(saved.likedByProfiles[uid].name, '야호 (엔조이)');
+    assert.equal(saved.likedByProfiles.other.name, '다른 사람');
+});
+
 test('guest feed, comments, availability and timetable survive reload without using cloud functions', async () => {
     const forbidden = () => { throw new Error('guest must not touch cloud'); };
     const { window: app, storage } = runtime(new Map(), { fsSetDoc: forbidden, fsOnSnapshot: forbidden, runTransaction: forbidden });

@@ -604,6 +604,7 @@
             opacity: .3;
         }
         .member-status-item.is-registered .member-status-avatar-color { opacity: 1; }
+        .member-status-avatar-initial { display: grid; place-items: center; opacity: 1; color: #FFF; font-size: 1.25rem; font-weight: 800; }
         .member-status-active-dot {
             position: absolute;
             z-index: 3;
@@ -4679,6 +4680,11 @@
         html.enjoy-guest #nav-store,
         html.enjoy-guest #store-screen,
         html.enjoy-guest #profile-point-status,
+        html.enjoy-guest #profile-activity-status,
+        html.enjoy-guest .member-status-active-dot,
+        html.enjoy-guest .member-status-study-badge,
+        html.enjoy-guest #home-attendance-tab,
+        html.enjoy-guest #home-attendance-panel,
         html.enjoy-guest [data-home-tab="shorts"] { display: none !important; }
 
         /* ===== 로그인 화면 / 로그인 유도 팝업 (기본=다크) ===== */
@@ -11420,7 +11426,7 @@
         // 홈 상단 탭 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) — 모두 홈 화면 안에서 전환된다.
         window.homeActiveTab = 'home';
         window.selectHomeTab = function (tab) {
-            if (tab === 'shorts' && !window.enjoyUser) tab = 'home';
+            if ((tab === 'shorts' || tab === 'attendance') && !window.enjoyUser) tab = 'home';
             tab = ['baseball', 'vlog', 'shorts', 'academic', 'attendance'].includes(tab) ? tab : 'home';
             window.homeActiveTab = tab;
             if (tab === 'baseball') window.startKboSeasonBannerAuto();
@@ -11465,7 +11471,7 @@
             }
         };
         window.switchHomeTab = function (tab) {
-            if (tab === 'shorts' && !window.enjoyUser) tab = 'home';
+            if ((tab === 'shorts' || tab === 'attendance') && !window.enjoyUser) tab = 'home';
             if (window.homeActiveTab === tab) return;
             if (window.homeActiveTab === 'shorts' && typeof window.cleanupEnjoyShorts === 'function') window.cleanupEnjoyShorts();
             window.haptic && window.haptic();
@@ -11582,7 +11588,7 @@
             function currentScratchIdentity() {
                 const user = window.enjoyUser || null;
                 const rawName = String(window.enjoyProfileName || '').trim();
-                const cleanName = rawName.replace(/\s*\(스페셜\)\s*$/, '');
+                const cleanName = rawName.replace(/\s*\((?:스페셜|엔조이)\)\s*$/, '');
                 const isMember = !!(
                     user &&
                     window.enjoySync &&
@@ -13927,7 +13933,7 @@
 
             // 시간대별 인사 헤드라인
             const rawProfileName = String(window.enjoyProfileName || ((window.enjoyUser && window.enjoyUser.displayName) || '') || '').trim();
-            const profileName = rawProfileName.replace(/\s*\(스페셜\)\s*$/, '');
+            const profileName = rawProfileName.replace(/\s*\((?:스페셜|엔조이)\)\s*$/, '');
             const topBriefParts = [];
             const pickSeed = `${todayKey}-${hh}-${profileName || 'guest'}`;
             const pick = (items, salt) => {
@@ -18640,7 +18646,14 @@
         };
 
         // ----- 로컬 프로필 이름 -----
-        window.enjoyLoadLocalProfile = function () { try { return localStorage.getItem('enjoy_local_profile') || null; } catch (e) { return null; } };
+        window.enjoyLoadLocalProfile = function () {
+            try {
+                const saved = localStorage.getItem('enjoy_local_profile');
+                const name = window.enjoyNormalizeProfileName(saved);
+                if (saved && name !== saved) localStorage.setItem('enjoy_local_profile', name);
+                return name || null;
+            } catch (e) { return null; }
+        };
         window.enjoySaveLocalProfile = function (n) { try { localStorage.setItem('enjoy_local_profile', n); } catch (e) {} };
 
         // 게스트/스페셜 공통: 로컬 데이터 로드 + 로더 숨김
@@ -18654,7 +18667,7 @@
     })();
     </script>
 
-    <script src="guest-local.js?v=20261014-profile1"></script>
+    <script src="guest-local.js?v=20261014-profile2"></script>
 
     <!-- [New] 엔조이 멤버: 프로필 이름 + 멤버별 활동상태 트레이 -->
     <script>
@@ -18763,7 +18776,7 @@
             const t = $('profile-title'), d = $('profile-desc'), inp = $('profile-input');
             const st = $('profile-status'), submit = $('profile-submit');
             if (t) t.innerHTML = '엔조이에서 사용할<br>프로필을 만들어주세요';
-            if (d) d.innerHTML = guest ? '엔조이에서 사용할 이름을 입력해주세요.' : '멤버 현황과 활동에 표시되는 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(스페셜)</b>이 붙어요.';
+            if (d) d.innerHTML = guest ? '엔조이에서 사용할 이름을 입력해주세요.' : '멤버 현황과 활동에 표시되는 이름이에요.<br>멤버가 아니면 이름 뒤에 <b>(엔조이)</b>가 붙어요.';
             if (submit) submit.textContent = guest ? '시작하기' : '가입 완료';
             if (inp) inp.value = guest && window.enjoyGuestProfileName ? window.enjoyGuestProfileName() : '';
             const kicker = document.querySelector('#profile-modal .profile-join-kicker');
@@ -18846,8 +18859,9 @@
                 return;
             }
 
-            // 멤버 외 이름 → '(스페셜)' 자동 부착, 본인 기기에만 저장 (파이어베이스 미연동)
-            if (name.indexOf('(스페셜)') < 0) name = name + ' (스페셜)';
+            // 멤버 외 이름에는 엔조이 표시를 붙인다.
+            name = window.enjoyNormalizeProfileName(name);
+            if (!/\(엔조이\)\s*$/.test(name)) name = name + ' (엔조이)';
             window.enjoyProfileName = name;
             window.enjoySaveLocalProfile && window.enjoySaveLocalProfile(name);
             closeProfileModal();
@@ -20171,10 +20185,10 @@
                 const col = window.enjoyMemberColor(name);
                 const photo = registered ? (mem.photoURL || '') : '';
 
-                // 원 안: 구글 사진 > 단색 원 (글자 없음)
+                // 사진이 없으면 이름의 첫 글자를 표시한다.
                 let inner;
                 if (photo) inner = '<img src="' + photo + '" class="member-status-avatar-photo" referrerpolicy="no-referrer">';
-                else inner = '<span class="member-status-avatar-color"></span>';
+                else inner = '<span class="member-status-avatar-color member-status-avatar-initial">' + dropEsc(Array.from(String(name))[0] || '?') + '</span>';
 
                 const circle = '<div class="member-status-avatar-frame"><div class="member-status-avatar-inner">' + inner + '</div></div>';
                 const studyBadge = studying ? '<span class="member-status-study-badge" title="현재 수업 중" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>' : '';
