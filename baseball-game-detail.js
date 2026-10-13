@@ -1430,6 +1430,8 @@
             
             const postseason = postseasonSeriesInfo(m);
             document.body.classList.toggle('is-postseason-game', Boolean(postseason));
+            document.body.classList.toggle('is-postseason-info', Boolean(postseason) && currentGameInfoTab === 'lineup');
+            document.body.dataset.postseasonRound = postseason ? postseason.round : '';
             let watermark = document.getElementById('postseason-detail-watermark');
             if (postseason && !watermark) {
                 watermark = document.createElement('img');
