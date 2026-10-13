@@ -44,7 +44,6 @@
     let liveDataStore = {};
     let currentPopupMatchId = null;
     let currentGameInfoTab = 'lineup';
-    let postseasonComparisonOpen = false;
     let currentGameRecordInning = 1;
 
     const initialRankingData = [
@@ -496,25 +495,7 @@
             };
             return `<section class="postseason-series" aria-label="${info.title} 진출 현황"><div class="postseason-series-heading">${info.round === 'ks' ? '한국시리즈 우승' : '포스트시즌 진출'} 현황</div><div class="postseason-series-grid">${column(match.team1)}${column(match.team2)}</div><p>${info.format}${info.round === 'wc' ? ` · ${_recordSafeText(info.higherSeed)} 1승 어드밴티지` : ''}</p></section>`;
         }
-        function postseasonOverviewHtml(match, info, scoreboard) {
-            const safe = _recordSafeText;
-            const progress = team => {
-                const record = info.teams[team];
-                const clinched = info.winner === team;
-                const label = info.winner ? (clinched ? info.next + ' 확정' : (info.round === 'ks' ? '한국시리즈 준우승' : '이번 시리즈 탈락')) : info.next;
-                const value = info.winner ? (clinched ? (info.round === 'ks' ? '우승 확정' : '진출 확정') : (info.round === 'ks' ? '준우승' : '탈락'))
-                    : (record.needed == null ? '확인 중' : `<b>${record.needed}</b><span>승 남음</span>`);
-                return `<div class="postseason-race-team${clinched ? ' is-clinched' : ''}"><strong>${safe(team)}</strong><div class="postseason-race-value">${value}</div><small>${safe(label || '라운드 정보 등록 대기')}</small></div>`;
-            };
-            const date = /^\d{4}-\d{2}-\d{2}$/.test(match.date || '') ? match.date.slice(5).replace('-', '.') : match.date;
-            const metadata = [date, match.time, match.stadium].filter(Boolean).map(safe).join(' · ');
-            return `<section class="postseason-overview" aria-label="${safe(info.title)} 경기 안내">
-                <header class="postseason-stage"><span class="postseason-eyebrow">2026 KBO POSTSEASON</span><h1>${safe(info.title)}</h1><div class="postseason-stage-meta"><span>${safe(info.format)}</span><span>${metadata}</span></div></header>
-                <div class="postseason-match-card">${scoreboard}</div>
-                <section class="postseason-race" aria-label="${safe(info.title)} 진출 현황"><div class="postseason-race-heading"><strong>${info.round === 'ks' ? '우승까지 남은 승수' : '다음 라운드까지 남은 승수'}</strong><span>${info.winner ? '시리즈 종료' : 'ROAD TO VICTORY'}</span></div><div class="postseason-race-grid">${progress(match.team1)}${progress(match.team2)}</div>${info.round === 'wc' ? `<p class="postseason-advantage">${safe(info.higherSeed)} 1승 어드밴티지 · 무승부 시 ${safe(info.higherSeed)} 진출</p>` : ''}</section>
-            </section>`;
-        }
-        function matchupRecordHtml(m, includePostseasonSeries = true) {
+        function matchupRecordHtml(m) {
             if (!m || !KBO_TEAMS.includes(m.team1) || !KBO_TEAMS.includes(m.team2)) return '';
             if (!scheduleData.length) return '';
             const postseason = postseasonSeriesInfo(m);
@@ -621,7 +602,7 @@
                     <span>상대전적</span>
                     <strong>${recordText(h2h[m.team2])}</strong>
                 </div>
-                ${postseason ? (includePostseasonSeries ? postseasonSeriesHtml(m, postseason) : '') : seasonClinchHtml(standings, m)}
+                ${postseason ? postseasonSeriesHtml(m, postseason) : seasonClinchHtml(standings, m)}
             </section>`;
         }
 
@@ -1443,15 +1424,12 @@
 
         function renderPopupContent(id) {
             const c = document.getElementById('lineup-content'), m = scheduleData.find(x => x.id === parseInt(id) || x.id === id); if (!m) return;
-            const comparison = c.querySelector('.postseason-season-comparison');
-            if (comparison) postseasonComparisonOpen = comparison.open;
             const l = liveDataStore[id] || {}; if (!l.gameStatus) l.gameStatus = '경기전';
             const cancelText = gameCancellationLabel(l);
             const iC = Boolean(cancelText);
             
             const postseason = postseasonSeriesInfo(m);
             document.body.classList.toggle('is-postseason-game', Boolean(postseason));
-            document.body.classList.toggle('is-postseason-overview', Boolean(postseason) && currentGameInfoTab === 'lineup');
             let watermark = document.getElementById('postseason-detail-watermark');
             if (postseason && !watermark) {
                 watermark = document.createElement('img');
@@ -1828,17 +1806,12 @@
             }
 
             if (isClassicSeries) sbh = classicSeriesHeader(m) + sbh;
-            if (postseason && currentGameInfoTab !== 'lineup') sbh = `<div class="postseason-game-heading"><strong>${postseason.title} 경기</strong><span>2026 KBO 포스트시즌</span></div>` + sbh;
+            if (postseason) sbh = `<div class="postseason-game-heading"><strong>${postseason.title} 경기</strong><span>2026 KBO 포스트시즌</span></div>` + sbh;
 
             // [추가] 스코어보드 밑 승리 확률 막대 (클래식 테마는 레트로 디자인 유지 위해 제외)
             let wpb = isClassic ? '' : winProbBarHtml(m, l);
-            const matchupRecord = matchupRecordHtml(m, !(postseason && currentGameInfoTab === 'lineup'));
+            const matchupRecord = matchupRecordHtml(m);
             const infoTabs = gameInfoTabsHtml();
-            // 포스트시즌 개요만 재구성하고 기록·중계의 공통 헤더는 유지한다.
-            const lineupHeader = postseason && currentGameInfoTab === 'lineup'
-                ? postseasonOverviewHtml(m, postseason, sbh) + wpb +
-                    `<details class="postseason-season-comparison"${postseasonComparisonOpen ? ' open' : ''}><summary><span>시즌 기록 비교</span><small>순위 · 최근경기 · 상대전적</small><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>${matchupRecord}</details>` + infoTabs
-                : sbh + wpb + matchupRecord + infoTabs;
 
             if (currentGameInfoTab === 'broadcast') {
                 c.innerHTML = sbh + wpb + matchupRecord + infoTabs + gameBroadcastHtml(m, l);
@@ -1865,7 +1838,7 @@
 
             if (aLineupSrc.length === 0 && hLineupSrc.length === 0) {
                 const starterPreview = expectedStarterPreviewHtml(m, awayStarterInfo, homeStarterInfo);
-                c.innerHTML = lineupHeader + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
+                c.innerHTML = sbh + wpb + matchupRecord + infoTabs + starterPreview + `<div class="flex flex-col items-center justify-center min-h-32 text-gray-400 mt-2 gap-2"><span class="text-[0.9375rem] font-black text-white tracking-wide">라인업 미발표</span><span class="text-[0.6875rem] text-gray-500 text-center leading-relaxed">선발 라인업은 경기 시작 1~2시간 전에 공개됩니다.</span></div>`;
             queueScoreboardNameFit();
                 return;
             }
@@ -1934,7 +1907,7 @@
             let abh = lineupRows(aLineupSrc, h1, m.team1);
             let hbh = lineupRows(hLineupSrc, h2, m.team2);
             
-            c.innerHTML = lineupHeader + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
+            c.innerHTML = sbh + wpb + matchupRecord + infoTabs + `<div class="flex w-full pt-1 px-1"><div class="flex-1 flex flex-col pr-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg1}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team1}선발</span></div>${aph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${abh}</div><div class="w-px bg-white/10 shrink-0 mx-2 mb-4"></div><div class="flex-1 flex flex-col pl-2 min-w-0"><div class="flex items-center gap-1.5 mb-3"><div class="w-6 h-6 flex items-center justify-center shrink-0">${lg2}</div><span class="text-[0.875rem] font-bold text-gray-200 truncate">${m.team2}선발</span></div>${hph}<div class="w-full h-px bg-white/5 mb-3.5"></div>${hbh}</div></div>`;
             queueScoreboardNameFit();
         }
 
