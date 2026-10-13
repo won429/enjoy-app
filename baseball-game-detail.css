@@ -810,9 +810,11 @@
 .scoreboard-team-score { flex-shrink: 0; }
 
 /* 포스트시즌 경기정보에만 적용 */
-#postseason-detail-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(72%, 20rem); height: auto; opacity: .07; pointer-events: none; user-select: none; z-index: 1; }
+#postseason-detail-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(82%, 22rem); height: auto; opacity: .17; pointer-events: none; user-select: none; z-index: 1; }
 #postseason-detail-watermark[hidden] { display: none; }
-body.is-postseason-game #lineup-popup { z-index: 2; background-color: transparent !important; background-image: none !important; }
+body.is-postseason-game #lineup-popup,
+html.light-mode body.is-postseason-game #lineup-popup.app-bg { z-index: 2; background-color: transparent !important; background-image: none !important; }
+html.light-mode #postseason-detail-watermark { opacity: .13; }
 .postseason-game-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: 0 0 .75rem; }
 .postseason-game-heading strong { font-size: .875rem; color: #38bdf8; font-weight: 900; }
 .postseason-game-heading span { font-size: .5625rem; color: #9ca3af; }
@@ -826,3 +828,39 @@ body.is-postseason-game #lineup-popup { z-index: 2; background-color: transparen
 .postseason-series-team .postseason-series-record { font-size: 1rem; font-weight: 900; }
 .postseason-series-team b { color: #38bdf8; }
 .postseason-series p { margin: .75rem 0 0; color: #9ca3af; font-size: .5625rem; text-align: center; line-height: 1.6; }
+
+/* 정규시즌과 기록·중계 탭에는 영향을 주지 않는 포스트시즌 개요 */
+body.is-postseason-overview { --post-accent: #7bddf4; --post-ink: #f4f8ff; --post-muted: #9baec3; --post-line: rgba(123,221,244,.23); --post-panel: rgba(15,27,44,.72); }
+html.light-mode body.is-postseason-overview { --post-accent: #08769a; --post-ink: #122a45; --post-muted: #526880; --post-line: rgba(8,118,154,.2); --post-panel: rgba(238,247,252,.78); }
+.postseason-stage { margin-bottom: 1rem; color: var(--post-ink); }
+.postseason-eyebrow { display: block; color: var(--post-accent); font-size: .625rem; font-weight: 900; letter-spacing: .14em; }
+.postseason-stage h1 { margin: .375rem 0 .625rem; font-size: clamp(1.375rem, 6vw, 1.75rem); line-height: 1.3; font-weight: 900; letter-spacing: -.035em; }
+.postseason-stage-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .375rem .75rem; color: var(--post-muted); font-size: .625rem; line-height: 1.5; }
+.postseason-stage-meta > span:first-child { padding: .1875rem .5rem; border: 1px solid var(--post-line); border-radius: .25rem; color: var(--post-accent); font-weight: 800; }
+.postseason-match-card { padding: .5rem .5rem 0; border: 1px solid var(--post-line); border-top: 3px solid var(--post-accent); border-radius: .875rem; background: linear-gradient(145deg, var(--post-panel), transparent); overflow: hidden; }
+.postseason-match-card .scoreboard-surface { margin-bottom: 0 !important; border-radius: .625rem !important; box-shadow: none !important; }
+.postseason-race { margin: 1.125rem 0; color: var(--post-ink); }
+.postseason-race-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .625rem; }
+.postseason-race-heading strong { font-size: .75rem; font-weight: 800; }
+.postseason-race-heading > span { color: var(--post-muted); font-size: .5rem; letter-spacing: .06em; }
+.postseason-race-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .625rem; }
+.postseason-race-team { display: flex; flex-direction: column; gap: .25rem; min-width: 0; padding: .875rem; background: var(--post-panel); border: 1px solid var(--post-line); border-radius: .625rem; }
+.postseason-race-team > strong { font-size: .8125rem; font-weight: 800; }
+.postseason-race-value { display: flex; align-items: baseline; flex-wrap: wrap; gap: .375rem; min-height: 2.875rem; color: var(--post-accent); font-size: 1.125rem; font-weight: 900; }
+.postseason-race-value b { font-size: 2.375rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.postseason-race-value span { color: var(--post-ink); font-size: .6875rem; font-weight: 700; }
+.postseason-race-team small { color: var(--post-muted); font-size: .5625rem; line-height: 1.6; overflow-wrap: anywhere; }
+.postseason-race-team.is-clinched { border-color: var(--post-accent); }
+.postseason-advantage { margin: .625rem 0 0; color: var(--post-muted); font-size: .5625rem; line-height: 1.6; text-align: center; }
+.postseason-season-comparison { margin: .25rem 0 1.125rem; border-block: 1px solid var(--post-line); color: var(--post-ink); }
+.postseason-season-comparison summary { display: flex; align-items: center; gap: .5rem; padding: .875rem 0; list-style: none; cursor: pointer; }
+.postseason-season-comparison summary::-webkit-details-marker { display: none; }
+.postseason-season-comparison summary > span { font-size: .75rem; font-weight: 800; }
+.postseason-season-comparison summary small { margin-left: auto; color: var(--post-muted); font-size: .5625rem; }
+.postseason-season-comparison summary i { color: var(--post-muted); font-size: .5625rem; transition: transform .2s; }
+.postseason-season-comparison[open] summary i { transform: rotate(180deg); }
+.postseason-season-comparison summary:focus-visible { outline: 2px solid var(--post-accent); outline-offset: 3px; }
+.postseason-season-comparison .matchup-record { margin-top: .25rem; }
+.postseason-season-comparison .matchup-record-divider { margin-inline: 0; }
+body.is-postseason-overview #game-info-tabs { margin-bottom: 1rem; padding: .25rem 0 .5rem; }
+body.is-postseason-overview #game-info-tabs .game-info-tab.active { background: var(--post-accent) !important; border-color: var(--post-accent) !important; color: var(--app-bg) !important; }
