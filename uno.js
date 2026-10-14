@@ -13,6 +13,7 @@
     const names = { skip: '건너뛰기', reverse: '방향 바꾸기', draw2: '두 장 뽑기', wild: '색 바꾸기', wild4: '와일드 네 장 뽑기', wild9: '색 바꾸기', reset: '리셋', paint: '페인트' };
     let code = '', room = null, state = null, busy = false, liveRoom = false, liveGame = false;
     let socket = null, reconnectTimer = null, connectCancel = null, reconnectAttempts = 0;
+    let watchEpoch = 0, connectResume = null, connecting = false, connectionStage = '';
     let lobbySocket = null, lobbyTimer = null, lobbyEpoch = 0, lobbyAttempts = 0, lobbyLoading = false;
     let lobbyRooms = [], lobbyError = '';
     const requests = new Map();
@@ -38,7 +39,7 @@
     const server = () => window.ENJOY_UNO_SERVER || 'https://enjoy-uno.sungwon4867.workers.dev';
     const online = () => window.navigator.onLine !== false;
     const synchronized = () => mode === 'solo' || liveRoom && (!['playing', 'choosing', 'finished'].includes(room?.status) || liveGame && state?.revision === room?.revision);
-    const allowed = () => !motionBusy && (mode === 'solo' ? !busy : ready() && online() && !busy && (!room || synchronized()));
+    const allowed = () => !motionBusy && (mode === 'solo' ? !busy : ready() && online() && !busy && !connecting && (!room || synchronized()));
     const name = value => room?.players.find(player => player.uid === value)?.name || '친구';
     const button = (action, text, disabled = false, secondary = false) => '<button type="button" class="uno-btn' + (secondary ? ' uno-btn-secondary' : '') + '" data-uno-action="' + action + '"' + (disabled ? ' disabled' : '') + '>' + text + '</button>';
     // Recorded cards: Kenney Casino Audio 1.1, CC0 (https://kenney.nl/assets/casino-audio).
@@ -162,6 +163,7 @@
         return Array.from({ length: 6 }, () => alphabet[Math.floor(random() * alphabet.length)]).join('');
     }
     function stop() {
+        watchEpoch++; connectResume = null; connecting = false; connectionStage = '';
         stopLobby();
         cancelMotion();
         window.clearTimeout(botTimer); botTimer = null;
@@ -276,69 +278,102 @@
     }
     function watch(value, creating = false) {
         stop(); code = value; selectedCard = null; armed = false;
-        const currentEpoch = epoch, currentUid = uid();
+        const currentEpoch = epoch, currentUid = uid(), generation = watchEpoch;
+        connecting = true;
         return new Promise((resolve, reject) => {
-            let settled = false, fatal = false;
+            let settled = false, attempting = false, attemptSerial = 0, timeout = null;
+            const valid = () => generation === watchEpoch && currentEpoch === epoch && currentUid === uid() && mode === 'friends' && open();
             const finish = error => {
                 if (settled) return; settled = true;
-                if (connectCancel === finish) connectCancel = null;
                 window.clearTimeout(timeout);
                 error ? reject(error) : resolve();
             };
-            const timeout = window.setTimeout(() => { fatal = true; finish(new Error('게임 서버에 연결하지 못했어요. 잠시 후 다시 연결해주세요.')); ws?.close(); }, 15000);
-            connectCancel = finish;
-            let ws;
-            (async () => {
-                try {
-                    const token = await window.getEnjoyIdToken();
-                    if (!token) throw new Error('멤버 계정으로 로그인해주세요.');
-                    if (settled || currentEpoch !== epoch || currentUid !== uid()) return;
-                    const url = new URL('/rooms/' + value, server());
-                    url.protocol = url.protocol === 'http:' ? 'ws:' : 'wss:';
-                    ws = new window.WebSocket(url.href); socket = ws;
-                    const active = () => socket === ws && epoch === currentEpoch && currentUid === uid() && mode === 'friends';
-                    ws.onopen = () => { if (active()) ws.send(JSON.stringify({ type: 'hello', token, create: creating, orderSelection: true })); };
-                    ws.onmessage = event => {
+            connectCancel = error => { attemptSerial++; window.clearTimeout(timeout); finish(error); };
+            const attempt = () => {
+                if (!valid() || attempting) return;
+                window.clearTimeout(reconnectTimer); reconnectTimer = null;
+                if (!online()) { connectionStage = '인터넷 연결이 돌아오면 자동으로 이어서 연결해요.'; render(); return; }
+                attempting = true;
+                const serial = ++attemptSerial;
+                let ws, recovered = false;
+                const active = () => valid() && serial === attemptSerial && !recovered;
+                const fail = (error, fatal = false) => {
+                    if (!active()) return;
+                    recovered = true; attempting = false;
+                    window.clearTimeout(timeout);
+                    if (socket === ws) socket = null;
+                    ws?.close(); liveRoom = liveGame = false;
+                    requests.forEach(pending => { window.clearTimeout(pending.timer); pending.reject(new Error('연결이 끊겼어요. 최신 상태를 확인하고 다시 눌러주세요.')); }); requests.clear();
+                    if (fatal) {
+                        connecting = false; connectionStage = ''; connectResume = null; connectCancel = null;
+                        finish(error); status.textContent = errorText(error);
+                    } else {
+                        connecting = true;
+                        connectionStage = online() ? '잠시 후 자동으로 다시 시도해요.' : '인터넷 연결이 돌아오면 자동으로 이어서 연결해요.';
+                        status.textContent = '';
+                        if (online()) reconnectTimer = window.setTimeout(attempt, Math.min(15000, 800 * 2 ** Math.min(reconnectAttempts++, 5)));
+                    }
+                    render();
+                };
+                connecting = true; connectionStage = '로그인을 확인하고 있어요.';
+                timeout = window.setTimeout(() => fail(new Error('게임 서버 연결 시간이 초과됐어요.')), 15000);
+                (async () => {
+                    try {
+                        const token = await window.getEnjoyIdToken();
                         if (!active()) return;
-                        let packet; try { packet = JSON.parse(event.data); } catch (_) { return; }
-                        if (packet.type === 'snapshot') {
-                            room = packet.room; state = packet.state; liveRoom = true; liveGame = !!state;
-                            reconnectAttempts = 0; persist(value);
-                            if (selectedCard && (!state?.hands[currentUid]?.some(card => card.id === selectedCard.id) || state.turnUid !== currentUid || state.challenge)) selectedCard = null;
-                            finish(); render();
-                        } else if (packet.type === 'ack') {
-                            const pending = requests.get(packet.id);
-                            if (pending) { window.clearTimeout(pending.timer); requests.delete(packet.id); pending.resolve(); }
-                        } else if (packet.type === 'removed') {
-                            finish(); clearRoom(); status.textContent = packet.message || '방에서 나왔어요.'; render();
-                        } else if (packet.type === 'error') {
-                            const error = Object.assign(new Error(packet.message), { code: packet.code });
-                            if (!settled) { fatal = true; finish(error); }
-                            const pending = requests.get(packet.id);
-                            if (pending) { window.clearTimeout(pending.timer); requests.delete(packet.id); pending.reject(error); }
-                            status.textContent = errorText(error); render();
-                        }
-                    };
-                    ws.onclose = () => {
-                        if (!active()) return;
-                        socket = null; liveRoom = liveGame = false;
-                        requests.forEach(pending => { window.clearTimeout(pending.timer); pending.reject(new Error('연결이 끊겼어요. 최신 상태를 확인하고 다시 눌러주세요.')); }); requests.clear();
-                        finish(new Error('게임 연결이 끊겼어요.'));
-                        if (!fatal && open() && online() && code) {
-                            status.textContent = '연결을 복구하고 있어요…';
-                            reconnectTimer = window.setTimeout(() => { reconnectTimer = null; reconnect(); }, Math.min(15000, 800 * 2 ** Math.min(reconnectAttempts++, 5)));
-                        }
+                        if (!token) throw Object.assign(new Error('멤버 계정으로 로그인해주세요.'), { code: 'auth-required' });
+                        const url = new URL('/rooms/' + value, server());
+                        url.protocol = url.protocol === 'http:' ? 'ws:' : 'wss:';
+                        connectionStage = '게임 서버에 연결하고 있어요.';
+                        ws = new window.WebSocket(url.href); socket = ws;
+                        ws.onopen = () => {
+                            if (!active()) return;
+                            connectionStage = '최신 게임 상태를 불러오고 있어요.';
+                            try { ws.send(JSON.stringify({ type: 'hello', token, create: creating && !room, orderSelection: true })); }
+                            catch (error) { fail(error); return; }
+                            render();
+                        };
+                        ws.onmessage = event => {
+                            if (!active()) return;
+                            let packet; try { packet = JSON.parse(event.data); } catch (_) { return; }
+                            if (packet.type === 'snapshot') {
+                                const wasConnecting = connecting;
+                                room = packet.room; state = packet.state; liveRoom = true; liveGame = !!state;
+                                connecting = false; connectionStage = ''; reconnectAttempts = 0; persist(value);
+                                window.clearTimeout(timeout);
+                                if (wasConnecting) status.textContent = '';
+                                if (selectedCard && (!state?.hands[currentUid]?.some(card => card.id === selectedCard.id) || state.turnUid !== currentUid || state.challenge)) selectedCard = null;
+                                finish(); render();
+                            } else if (packet.type === 'ack') {
+                                const pending = requests.get(packet.id);
+                                if (pending) { window.clearTimeout(pending.timer); requests.delete(packet.id); pending.resolve(); }
+                            } else if (packet.type === 'removed') {
+                                finish(); clearRoom(); status.textContent = packet.message || '방에서 나왔어요.'; render();
+                            } else if (packet.type === 'error') {
+                                const error = Object.assign(new Error(packet.message), { code: packet.code });
+                                if (connecting && !packet.id) { fail(error, !['server-error', 'unavailable', 'deadline-exceeded', 'rate-limit'].includes(packet.code)); return; }
+                                const pending = requests.get(packet.id);
+                                if (pending) { window.clearTimeout(pending.timer); requests.delete(packet.id); pending.reject(error); }
+                                status.textContent = errorText(error); render();
+                            }
+                        };
+                        ws.onclose = () => fail(new Error('게임 연결이 끊겼어요.'));
+                        ws.onerror = () => fail(new Error('게임 서버에 연결하지 못했어요.'));
                         render();
-                    };
-                    ws.onerror = () => {}; // onclose handles retry without sending a move twice.
-                } catch (error) { fatal = true; finish(error); render(); }
-            })();
-            render();
+                    } catch (error) {
+                        fail(error, ['auth-required', 'auth/user-disabled', 'auth/user-token-expired', 'auth/invalid-user-token'].includes(error?.code));
+                    }
+                })();
+                render();
+            };
+            connectResume = () => { if (connecting) attempt(); };
+            attempt();
         });
     }
     function reconnect() {
-        if (!ready() || !code || mode !== 'friends') return;
-        watch(code).catch(error => { status.textContent = errorText(error); render(); });
+        if (!ready() || !code || mode !== 'friends' || !open()) return;
+        if (connectResume && connecting) { connectResume(); return; }
+        watch(code).catch(error => { if (open()) { status.textContent = errorText(error); render(); } });
     }
     function sendAction(action) {
         if (!socket || socket.readyState !== 1) return Promise.reject(new Error('게임 서버에 다시 연결해주세요.'));
@@ -721,8 +756,10 @@
         const focus = document.activeElement;
         const focusAction = focus?.dataset?.unoAction, focusCard = focus?.dataset?.cardId, focusColor = focus?.dataset?.color;
         const handScroll = content.querySelector('.uno-hand')?.scrollLeft || 0;
-        connection.textContent = mode === 'solo' ? '혼자하기' : !ready() ? '로그인 필요' : !online() ? '연결 끊김' : busy ? '반영 중…' : code && !synchronized() ? '동기화 중…' : code ? '실시간 연결' : '온라인';
-        connection.classList.toggle('is-live', mode === 'solo' || ready() && online() && (!code || synchronized()) && !busy);
+        const loading = mode === 'friends' && (connecting || lobbyLoading || !!lobbyTimer);
+        content.setAttribute('aria-busy', String(loading));
+        connection.textContent = mode === 'solo' ? '혼자하기' : !ready() ? '로그인 필요' : loading ? (code && room ? '재연결 중…' : '연결 중…') : !online() ? '연결 끊김' : busy ? '반영 중…' : code && !synchronized() ? '동기화 중…' : code ? '실시간 연결' : '온라인';
+        connection.classList.toggle('is-live', mode === 'solo' || ready() && online() && (!code || synchronized()) && !busy && !loading);
         screen.classList.toggle('uno-game-active', !!(code && state && room && ['playing', 'choosing', 'finished'].includes(room.status)));
         screen.classList.toggle('uno-fullscreen-match', !!(code && state && room && state.revision === room.revision && ['playing', 'choosing', 'finished'].includes(room.status) && (!state.winnerUid || motionBusy)));
         screen.classList.toggle('uno-selecting-order', room?.status === 'choosing');
@@ -762,6 +799,7 @@
             if (mode !== 'solo') html += '<div class="uno-leave">' + (!synchronized() ? button('retry', '다시 연결', busy, true) : '') + '<button type="button" data-uno-action="leave"' + (!allowed() ? ' disabled' : '') + '>방 나가기</button></div>';
             content.innerHTML = html;
         }
+        if (loading) content.innerHTML += '<div class="uno-connection-loading" role="status" aria-live="polite"><span class="uno-connection-spinner" aria-hidden="true"></span><div><strong>' + (code && room ? '서버에 다시 연결하는 중…' : '서버에 연결하는 중…') + '</strong><span>' + esc(code ? connectionStage : lobbyTimer ? '잠시 후 자동으로 다시 시도해요.' : '친구들의 방을 불러오고 있어요.') + '</span></div></div>';
         const nextHand = content.querySelector('.uno-hand'); if (nextHand) nextHand.scrollLeft = handScroll;
         if (focusAction && content.contains(focus) === false) {
             const replacement = Array.from(content.querySelectorAll('[data-uno-action]')).find(element => element.dataset.unoAction === focusAction && element.dataset.cardId === focusCard && element.dataset.color === focusColor && element.dataset.count === focus?.dataset?.count && element.dataset.roomId === focus?.dataset?.roomId && element.dataset.playerUid === focus?.dataset?.playerUid);
@@ -883,7 +921,7 @@
         }
     });
     window.addEventListener('online', () => { if (mode === 'solo') return render(); if (open() && ready() && code) { status.textContent = ''; reconnect(); } else render(); });
-    window.addEventListener('offline', () => { if (mode === 'solo') return render(); if (open()) { status.textContent = '연결이 끊겼어요. 연결이 돌아오면 이어서 진행할 수 있습니다.'; render(); } });
+    window.addEventListener('offline', () => { if (mode === 'solo') return render(); if (open()) { if (code) { if (socket) socket.close(); if (!connecting) reconnect(); } else status.textContent = '연결이 끊겼어요. 연결이 돌아오면 이어서 진행할 수 있습니다.'; render(); } });
     document.addEventListener('visibilitychange', () => { window.clearTimeout(botTimer); botTimer = null; cancelMotion(); if (document.hidden) sound.pause(); else sound.unlock(); render(); });
     window.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', () => { cancelMotion(); render(); });
 })(window, document);
