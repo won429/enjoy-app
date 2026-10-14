@@ -5,7 +5,7 @@ const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control
 const TTL=60*60*1000;
 const validOrigin=(origin,env)=>(env.ALLOWED_ORIGINS||'').split(',').map(x=>x.trim()).includes(origin)||/^https:\/\/[a-f0-9]+\.enjoy-app\.pages\.dev$/.test(origin);
 export default{async fetch(request,env){
- const url=new URL(request.url);if(url.pathname==='/health')return json({ok:true,service:'enjoy-tekken',version:1,authoritative:true,roundSeconds:60,firstTo:2});
+ const url=new URL(request.url);if(url.pathname==='/health')return json({ok:true,service:'enjoy-tekken',version:engine.VERSION,characters:engine.ROSTER.length,authoritative:true,roundSeconds:60,firstTo:2});
  const match=url.pathname.match(/^\/rooms\/([A-Z2-9]{6})$/);if(!match||request.method!=='GET'||request.headers.get('Upgrade')?.toLowerCase()!=='websocket')return json({error:'Not found'},404);
  if(!validOrigin(request.headers.get('Origin')||'',env))return json({error:'Origin not allowed'},403);
  if(env.TEKKEN_CONNECT_LIMITER&&!(await env.TEKKEN_CONNECT_LIMITER.limit({key:request.headers.get('CF-Connecting-IP')||'unknown'})).success)return json({error:'잠시 후 다시 연결해주세요.'},429);
@@ -13,14 +13,14 @@ export default{async fetch(request,env){
 }};
 export class TekkenRoom extends DurableObject{
  constructor(ctx,env){super(ctx,env);this.data=null;this.inputs={};this.timer=null;this.queue=Promise.resolve();this.lastTick=Date.now();this.savedAt=0;this.authPending=new Set();
-  ctx.blockConcurrencyWhile(async()=>{this.data=await ctx.storage.get('match')||null;if(this.data?.state&&!['finished'].includes(this.data.state.phase)){
+  ctx.blockConcurrencyWhile(async()=>{this.data=await ctx.storage.get('match')||null;if(this.data?.state)engine.upgrade(this.data.state);if(this.data?.state&&!['finished'].includes(this.data.state.phase)){
     // Active rounds resume from their last checkpoint after an object restart.
     const gap=(Date.now()-(this.data.savedAt||Date.now()))/1000;engine.advance(this.data.state,{},Math.min(gap,5));this.ensureTimer();
   }});
  }
  async fetch(){for(const ws of this.ctx.getWebSockets()){const a=ws.deserializeAttachment();if(!a?.authenticated&&Date.now()-a?.createdAt>30000)ws.close(4001,'다시 연결해주세요.');}if(this.ctx.getWebSockets().length>=8)return json({error:'연결이 너무 많아요.'},429);const pair=new WebSocketPair(),[client,server]=Object.values(pair);this.ctx.acceptWebSocket(server);server.serializeAttachment({authenticated:false,createdAt:Date.now(),windowAt:Date.now(),count:0,seq:0});return new Response(null,{status:101,webSocket:client});}
  send(ws,packet){try{ws.send(JSON.stringify(packet));}catch(_){}}
- snapshot(){return{type:'snapshot',room:this.data?.room,state:this.data?.state||null,matchId:this.data?.matchId,serverNow:Date.now()};}
+ snapshot(){return{type:'snapshot',room:this.data?.room,state:this.data?.state||null,matchId:this.data?.matchId,protocol:engine.VERSION,serverNow:Date.now()};}
  broadcast(){for(const ws of this.ctx.getWebSockets()){const session=ws.deserializeAttachment();if(!session?.authenticated)continue;if(session.expiresAt<=Date.now()){ws.close(4001,'로그인을 갱신해주세요.');continue;}this.send(ws,this.snapshot());}}
  async save(){if(!this.data)return;this.data.savedAt=Date.now();await this.ctx.storage.put('match',this.data);this.savedAt=Date.now();await this.ctx.storage.setAlarm(this.data.room.updatedAt+TTL);}
  fail(message,code='invalid-action'){throw Object.assign(new Error(message),{code});}
@@ -29,7 +29,7 @@ export class TekkenRoom extends DurableObject{
   if(typeof raw!=='string'||raw.length>8000)this.fail('요청을 확인해주세요.');packet=JSON.parse(raw);if(!packet||typeof packet!=='object'||Array.isArray(packet))this.fail('요청을 확인해주세요.');const now=Date.now();
   if(!session)this.fail('다시 연결해주세요.');if(now-session.windowAt>1000){session.windowAt=now;session.count=0;}if(++session.count>80)this.fail('너무 빠른 요청이에요.','rate-limit');ws.serializeAttachment(session);
   if(packet.type==='hello'){
-   if(session.authenticated||now-session.createdAt>30000)this.fail('다시 연결해주세요.','auth-required');const claims=await verifyToken(packet.token,this.env);if(!claims)this.fail('엔조이 멤버로 다시 로그인해주세요.','auth-required');const player=await member(packet.token,claims,this.env);player.character=packet.character===1?1:0;
+   if(session.authenticated||now-session.createdAt>30000)this.fail('다시 연결해주세요.','auth-required');const claims=await verifyToken(packet.token,this.env);if(!claims)this.fail('엔조이 멤버로 다시 로그인해주세요.','auth-required');const player=await member(packet.token,claims,this.env);player.character=engine.character(packet.character);
    if(packet.create===true){if(this.data&&now-this.data.room.updatedAt<TTL)this.fail('다른 방 코드로 다시 만들어주세요.');this.data={room:{hostUid:player.uid,players:[player],status:'waiting',createdAt:now,updatedAt:now},state:null,matchId:null};}
    else{
     if(!this.data||now-this.data.room.updatedAt>=TTL)this.fail('해당 방을 찾을 수 없어요.');const room=this.data.room,index=room.players.findIndex(p=>p.uid===player.uid);

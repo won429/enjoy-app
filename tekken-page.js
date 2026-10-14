@@ -60,6 +60,6 @@ if (host) {
     document.getElementById('tekken-app').addEventListener('click', event => {
         if (event.target.closest('[data-action="friends"]')) restoreAuth();
     });
-    if (new URLSearchParams(location.search).get('mode') === 'solo') document.querySelector('[data-action="solo"]').click();
+    if (new URLSearchParams(location.search).get('mode') === 'solo') window.tekkenReady.then(ready=>{if(ready)document.querySelector('[data-action="solo"]').click();});
     restoreAuth();
 }
