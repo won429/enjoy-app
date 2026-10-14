@@ -6,7 +6,7 @@
     if (!screen.hidden) return;
     previousFocus = document.activeElement; overflow = document.body.style.overflow; screen.hidden = false; document.body.style.overflow = 'hidden';
     historyId = 'tekken-page-'+Date.now(); history.pushState({ ...history.state,modal:'tekken',tekkenViewId:historyId },'',location.href);
-    if (!loaded) { loaded = true; frame.contentWindow.location.replace('tekken.html?v=20261015-motion2'); } else { frame.contentWindow?.refreshTekkenProfile?.(); frame.contentWindow?.openDropTekken?.(); } frame.focus();
+    if (!loaded) { loaded = true; frame.contentWindow.location.replace('tekken.html?v=20261015-motion3'); } else { frame.contentWindow?.refreshTekkenProfile?.(); frame.contentWindow?.openDropTekken?.(); } frame.focus();
   };
   window.closeDropTekken = () => { const undo = history.state?.tekkenViewId===historyId; hide(); if (undo) history.back(); };
   window.addEventListener('popstate', () => { if (!screen.hidden && history.state?.tekkenViewId!==historyId) hide(); });

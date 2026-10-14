@@ -38,18 +38,40 @@
   if(p.pose==='walk')return{sheet:'base',index:6+(p.walkPhase||0)*5.99,loop:true};
   return{sheet:'base',index:((p.poseTime||0)*5)%6,loop:true};
  }
+ function silhouettes(data,w,h,cols,rows){
+  const n=w*h,labels=new Int32Array(n),queue=new Int32Array(n),parts=[],seams=new Uint8Array(n);let label=0;
+  // A few generated cels touch across rows. Split at the sparsest horizontal
+  // gap near each boundary, preserving the shoes that extend below the grid.
+  for(let row=1;row<rows;row++)for(let col=0;col<cols;col++){
+   const x0=Math.floor(col*w/cols),x1=Math.floor((col+1)*w/cols),boundary=Math.floor(row*h/rows);let best=Infinity,seam=boundary;
+   for(let y=Math.max(0,boundary-8);y<Math.min(h,boundary+64);y++){let count=0;for(let x=x0;x<x1;x++)if(data[(y*w+x)*4+3]>=180)count++;if(count<best){best=count;seam=y;}}
+   for(let x=x0;x<x1;x++)seams[seam*w+x]=1;
+  }
+  for(let index=0;index<n;index++){if(labels[index]||seams[index]||data[index*4+3]<180)continue;label++;let head=0,tail=1,minX=w,minY=h,maxX=0,maxY=0;queue[0]=index;labels[index]=label;
+   while(head<tail){const q=queue[head++],x=q%w,y=Math.floor(q/w);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);for(const next of [x>0?q-1:-1,x<w-1?q+1:-1,y>0?q-w:-1,y<h-1?q+w:-1])if(next>=0&&!labels[next]&&!seams[next]&&data[next*4+3]>=180){labels[next]=label;queue[tail++]=next;}}
+   parts.push({label,count:tail,minX,minY,maxX,maxY});
+  }
+  const frames=Array(cols*rows).fill(null);for(const part of parts){const col=clamp(Math.floor((part.minX+part.maxX)/2/(w/cols)),0,cols-1),row=clamp(Math.floor((part.minY+part.maxY)/2/(h/rows)),0,rows-1),index=row*cols+col;if(part.count>(frames[index]?.count||0))frames[index]=part;}
+  // Grow each silhouette only through its soft alpha edge. Separate body parts
+  // remain attached across grid boundaries instead of being cut at a row seam.
+  const distance=new Uint8Array(n);distance.fill(255);let head=0,tail=0;for(let i=0;i<n;i++)if(labels[i]){distance[i]=0;queue[tail++]=i;}
+  while(head<tail){const q=queue[head++];if(distance[q]>=4)continue;const x=q%w,y=Math.floor(q/w);for(const next of [x>0?q-1:-1,x<w-1?q+1:-1,y>0?q-w:-1,y<h-1?q+w:-1])if(next>=0&&distance[next]===255){distance[next]=distance[q]+1;labels[next]=labels[q];queue[tail++]=next;}}
+  return{frames,labels};
+ }
  function createRenderer(canvas,E,onLoad){
   const ctx=canvas.getContext('2d',{alpha:false}),assets={},atlases={},smooth=new Map(),effects=[],particles=[],trail=[],roster=E.ROSTER;
   let width=0,height=0,dpr=1,last=0,cameraX=550,zoom=1,shake=0,flash=0,flashColor='#fff',lastEvent=0,freezeUntil=0,loaded=0,total=14;
   const reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function metrics(im,cols,rows){const w=im.naturalWidth,h=im.naturalHeight,cw=w/cols,ch=h/rows,off=document.createElement('canvas');off.width=w;off.height=h;const oc=off.getContext('2d',{willReadFrequently:true});oc.drawImage(im,0,0);const data=oc.getImageData(0,0,w,h).data,frames=[];
-   for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){let minX=cw,minY=ch,maxX=0,maxY=0,sum=0,count=0;const sx=Math.round(col*cw),sy=Math.round(row*ch);for(let y=0;y<Math.floor(ch);y++)for(let x=0;x<Math.floor(cw);x++){if(data[((sy+y)*w+sx+x)*4+3]<180)continue;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
-    if(maxY<minY){minX=0;minY=0;maxX=cw;maxY=ch;}
-    for(let y=Math.round(minY+(maxY-minY)*.48);y<minY+(maxY-minY)*.66;y++)for(let x=Math.floor(minX);x<=maxX;x++){if(data[((sy+y)*w+sx+x)*4+3]>180){sum+=x;count++;}}
-    frames.push({sx,sy,cw,ch,root:count?sum/count:cw*.5,foot:maxY,bodyHeight:maxY-minY});
-   }return{im,cols,rows,frames,baseHeight:frames.slice(0,6).map(f=>f.bodyHeight).sort((a,b)=>a-b)[3]||ch*.8};
+  function metrics(im,cols,rows){
+   const w=im.naturalWidth,h=im.naturalHeight,off=document.createElement('canvas');off.width=w;off.height=h;const oc=off.getContext('2d',{willReadFrequently:true});oc.drawImage(im,0,0);const pixels=oc.getImageData(0,0,w,h),data=pixels.data,parts=silhouettes(data,w,h,cols,rows);
+   const frames=parts.frames.map(part=>{
+    if(!part||part.count<100)throw Error('Missing fighter cel');
+    const x=Math.max(0,part.minX-4),y=Math.max(0,part.minY-4),fw=Math.min(w-1,part.maxX+4)-x+1,fh=Math.min(h-1,part.maxY+4)-y+1,cel=document.createElement('canvas');cel.width=fw;cel.height=fh;const c=cel.getContext('2d'),image=c.createImageData(fw,fh);let sum=0,count=0;
+    for(let py=0;py<fh;py++)for(let px=0;px<fw;px++){const q=(y+py)*w+x+px;if(parts.labels[q]!==part.label)continue;const a=q*4,b=(py*fw+px)*4;image.data[b]=data[a];image.data[b+1]=data[a+1];image.data[b+2]=data[a+2];image.data[b+3]=data[a+3];if(data[a+3]>180&&py>=(part.maxY-part.minY)*.48&&py<=(part.maxY-part.minY)*.66){sum+=px;count++;}}
+    c.putImageData(image,0,0);return{im:cel,sx:0,sy:0,cw:fw,ch:fh,root:count?sum/count:fw/2,foot:part.maxY-y,bodyHeight:part.maxY-part.minY};
+   });return{cols,rows,frames,baseHeight:frames.slice(0,6).map(f=>f.bodyHeight).sort((a,b)=>a-b)[3]||h/rows*.8};
   }
-  function load(key,path,cols,rows){return new Promise(resolve=>{const im=new Image();im.onload=()=>{assets[key]=im;if(cols)atlases[key]=metrics(im,cols,rows);loaded++;onLoad?.(loaded,total);resolve(true);};im.onerror=()=>{loaded++;onLoad?.(loaded,total,key);resolve(false);};im.src=path;});}
+  function load(key,path,cols,rows){return new Promise(resolve=>{const im=new Image();im.onload=()=>{try{if(cols)atlases[key]=metrics(im,cols,rows);else assets[key]=im;loaded++;onLoad?.(loaded,total);resolve(true);}catch(_){loaded++;onLoad?.(loaded,total,key);resolve(false);}};im.onerror=()=>{loaded++;onLoad?.(loaded,total,key);resolve(false);};im.src=path;});}
   const ready=Promise.all([...roster.flatMap(c=>[load(c.id,'assets/tekken/v2/'+c.id+'.png',6,4),load(c.id+'-attack','assets/tekken/v2/'+c.id+'-attacks.png',4,6)]),load('air','assets/tekken/v2/air.png',6,4),load('launcher','assets/tekken/v2/launcher.png',6,4),load('reaction','assets/tekken/v2/reactions.png',6,4),load('vfx','assets/tekken/v2/vfx.png'),load('arena','assets/tekken/arena.png'),load('portraits','assets/tekken/v2/portraits.png')]);
   function reset(){lastEvent=0;smooth.clear();effects.length=0;particles.length=0;trail.length=0;freezeUntil=0;cameraX=550;zoom=1;}
   function emit(event,now){if(event.id<=lastEvent)return;lastEvent=event.id;const color=roster[event.character??0]?.color||'#fff';if(['hit','block'].includes(event.kind)){const special=event.move==='special';effects.push({...event,born:now,color,duration:event.kind==='block'?.28:special?.52:.35});if(!reduced){shake=Math.max(shake,event.kind==='block'?1:special?7:3.5);flash=event.kind==='block'?.025:special?.1:.045;flashColor=color;freezeUntil=now+(special?50:28);}for(let j=0;j<(special?24:12);j++){const angle=(j*2.399)+(event.id%5),speed=(special?230:140)*(0.55+(j%5)/7);particles.push({x:event.x,y:365-(event.y||0),vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-50,born:now,life:.25+(j%4)*.075,color,size:1.5+(j%3)});}}
@@ -57,15 +79,14 @@
   }
   function sprite(p,frame,alpha,offset=0){const c=roster[p.character],seq=sequence(p);let sheet=atlases[c.id],index=frame;if(seq.sheet==='attack'&&atlases[c.id+'-attack'])sheet=atlases[c.id+'-attack'];else if(['reaction','air','launcher'].includes(seq.sheet)&&atlases[seq.sheet]){sheet=atlases[seq.sheet];index=p.character*6+frame;}
    const f=sheet?.frames[index];if(!f||alpha<.01)return;const base=seq.sheet==='attack'?sheet.frames[0].bodyHeight:['reaction','air','launcher'].includes(seq.sheet)?(seq.sheet==='air'?atlases.reaction?.frames[p.character*6].bodyHeight:seq.sheet==='launcher'?sheet.frames[p.character*6+5].bodyHeight:sheet.frames[p.character*6].bodyHeight):atlases[c.id]?.baseHeight||f.bodyHeight,h=330*c.size,scale=h/base;ctx.globalAlpha=alpha;
-   ctx.drawImage(sheet.im,f.sx,f.sy,f.cw,f.ch,-f.root*scale+offset,-f.foot*scale,f.cw*scale,f.ch*scale);
+   ctx.drawImage(f.im,f.sx,f.sy,f.cw,f.ch,-f.root*scale+offset,-f.foot*scale,f.cw*scale,f.ch*scale);
   }
   function fighter(p,index,now,dt,preview=false,ghostAlpha=0){const c=roster[p.character];if(!atlases[c.id])return;const key=preview?'preview':p.uid;let r=ghostAlpha?{x:p.x,y:p.y||0}:smooth.get(key);if(!r){r={x:p.x,y:p.y||0};smooth.set(key,r);}const amount=1-Math.exp(-dt*(preview?16:24));r.x=lerp(r.x,p.x,amount);r.y=lerp(r.y,p.y||0,amount);
    ctx.save();ctx.translate(r.x,515);const shadowScale=clamp(1-(p.y||0)/260,.35,1);if(!ghostAlpha){ctx.fillStyle='#08091170';ctx.beginPath();ctx.ellipse(0,0,55*shadowScale,9*shadowScale,0,0,Math.PI*2);ctx.fill();}ctx.translate(0,-r.y);ctx.scale(p.facing||1,1);
    const breath=Math.sin((p.poseTime||0)*4)*.004,bob=p.pose==='walk'?Math.sin((p.walkPhase||0)*Math.PI*2)*2:0;ctx.translate(0,bob);if(preview)ctx.scale(1.22,1.22);ctx.scale(1+breath,1-breath);if(p.pose==='dash')ctx.transform(1,0,-.13,1,0,0);if(p.pose==='hurt')ctx.rotate(-Math.min(.075,(p.stun||0)*.16));
-   const seq=sequence(p),start=seq.sheet==='base'&&seq.index>=6?6:0,end=seq.sheet==='attack'?(seq.index>=12?24:12):['reaction','air','launcher'].includes(seq.sheet)?6:seq.index>=6?12:6;let a=Math.floor(seq.index),b=a+1;if(b>=end)b=seq.loop?start:a;const fraction=seq.index-a;
-   // A short, anchored overlap between adjacent cels avoids hard switches while
-   // retaining a crisp contact silhouette. Root motion remains continuous at rAF.
-   const mix=clamp((fraction-.58)/.42,0,1);sprite(p,a,ghostAlpha||1);if(mix>0)sprite(p,b,(ghostAlpha||1)*mix);
+   // Preserve a crisp silhouette: blending complete generated poses produces
+   // duplicate heads and limbs. Translation and root motion remain continuous.
+   const seq=sequence(p);sprite(p,Math.floor(seq.index),ghostAlpha||1);
    if(p.attack?.move==='special'&&p.attack.t<.28){ctx.globalAlpha=.3+Math.sin(now/30)*.1;ctx.strokeStyle=c.color;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,-115,68,150,0,0,Math.PI*2);ctx.stroke();}
    ctx.restore();
   }
@@ -85,5 +106,5 @@
   }
   return{ready,draw,emit,reset,assets,atlases,get loaded(){return loaded;},get total(){return total;}};
  }
- return{Timeline,sequence,createRenderer,lerp};
+ return{Timeline,sequence,silhouettes,createRenderer,lerp};
 });
