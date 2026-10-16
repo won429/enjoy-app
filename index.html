@@ -4008,13 +4008,13 @@
         }
         .notice-float.is-visible { pointer-events: auto; }
         .notice-float.is-visible .notice-float-card { animation: noticeCardFromHeart .9s cubic-bezier(.22,1,.36,1) both; pointer-events: auto; }
-        .notice-float.is-leaving .notice-float-card { animation: noticeCardFromHeart .9s cubic-bezier(.22,1,.36,1) reverse both; pointer-events: none; }
+        .notice-float.is-leaving .notice-float-card { animation: noticeCardToHeart .9s cubic-bezier(.64,0,.78,0) both; pointer-events: none; }
         .notice-float-card:active { filter: brightness(.96); }
         .notice-float-card:focus-visible { outline: 2px solid #FF667A; outline-offset: 2px; }
         .notice-float-copy { position: absolute; inset: 0 2rem 0 .5rem; display: flex; align-items: center; justify-content: center; }
         .notice-float-copy strong { display: block; font-size: clamp(.5625rem, 8.5cqw, .6875rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.35; white-space: nowrap; }
         .notice-float.is-visible .notice-float-copy { animation: noticeIslandCopyIn .22s .42s ease-out both; }
-        .notice-float.is-leaving .notice-float-copy { animation: noticeIslandCopyIn .22s ease-in reverse both; }
+        .notice-float.is-leaving .notice-float-copy { animation: noticeIslandCopyOut .22s ease-in both; }
         @keyframes noticeCardFromHeart {
             0% { width: 2rem; opacity: 0; transform: scale(.35); }
             20% { width: 2rem; opacity: 1; transform: scale(1.16); }
@@ -4022,9 +4022,20 @@
             42% { width: 2rem; opacity: 1; transform: none; }
             100% { width: 100%; opacity: 1; transform: none; }
         }
+        @keyframes noticeCardToHeart {
+            0% { width: 100%; opacity: 1; transform: none; }
+            58% { width: 2rem; opacity: 1; transform: none; }
+            68% { width: 2rem; opacity: 1; transform: scale(.96); }
+            80% { width: 2rem; opacity: 1; transform: scale(1.16); }
+            100% { width: 2rem; opacity: 0; transform: scale(.35); }
+        }
         @keyframes noticeIslandCopyIn {
             from { opacity: 0; transform: translateX(.375rem); }
             to { opacity: 1; transform: none; }
+        }
+        @keyframes noticeIslandCopyOut {
+            from { opacity: 1; transform: none; }
+            to { opacity: 0; transform: translateX(.375rem); }
         }
         @media (prefers-reduced-motion: reduce) {
             .notice-float.is-visible .notice-float-card { animation: none; opacity: 1; transform: none; }
@@ -9003,12 +9014,21 @@
             return true;
         }
 
+        function finishNoticeFloatDismiss() {
+            const float = document.getElementById('home-notice-float');
+            if (!float || !float.classList.contains('is-leaving')) return;
+            window.clearTimeout(noticeFloatHideTimer);
+            float.hidden = true;
+            float.classList.remove('is-leaving');
+            noticeFloatHideTimer = 0;
+        }
+
         function dismissNoticeFloat() {
             const float = document.getElementById('home-notice-float');
             window.clearTimeout(noticeFloatTimer);
-            window.clearTimeout(noticeFloatHideTimer);
             noticeFloatTimer = 0;
-            if (!float || float.hidden) return;
+            if (!float || float.hidden || float.classList.contains('is-leaving')) return;
+            window.clearTimeout(noticeFloatHideTimer);
             float.classList.remove('is-visible');
             float.classList.add('is-leaving');
             float.setAttribute('aria-hidden', 'true');
@@ -9018,11 +9038,8 @@
             }
             float.inert = true;
             const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            noticeFloatHideTimer = window.setTimeout(function () {
-                float.hidden = true;
-                float.classList.remove('is-leaving');
-                noticeFloatHideTimer = 0;
-            }, reducedMotion ? 0 : 900);
+            // 정상 경로에서는 접힘 애니메이션이 끝난 뒤 숨긴다.
+            noticeFloatHideTimer = window.setTimeout(finishNoticeFloatDismiss, reducedMotion ? 0 : 1100);
         }
 
         function showPendingNoticeFloat() {
@@ -9052,6 +9069,10 @@
         }
 
         window.enjoyShowPendingNoticeFloat = showPendingNoticeFloat;
+        const noticeFloatCard = document.querySelector('#home-notice-float .notice-float-card');
+        if (noticeFloatCard) noticeFloatCard.addEventListener('animationend', function (event) {
+            if (event.target === noticeFloatCard && event.animationName === 'noticeCardToHeart') finishNoticeFloatDismiss();
+        });
         const noticeHeader = document.querySelector('.home-wordmark-bar');
         if (noticeHeader) new ResizeObserver(function () {
             const float = document.getElementById('home-notice-float');
