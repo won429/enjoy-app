@@ -4008,8 +4008,8 @@
         #home-notice-button { width: 2rem; height: 2rem; font-size: 15pt; }
         #home-notice-button.has-notice { color: #FF3B4F; }
         .notice-float {
-            position: absolute;
-            z-index: 1;
+            position: fixed;
+            z-index: 270;
             height: 2rem;
             container-type: inline-size;
             pointer-events: none;
@@ -4044,10 +4044,24 @@
         .notice-float-card:focus-visible { outline: 2px solid #FF667A; outline-offset: 2px; }
         .notice-float-copy { position: absolute; inset: 0 2rem 0 .5rem; display: flex; align-items: center; justify-content: center; }
         .notice-float-copy strong { display: block; font-size: clamp(.5625rem, 8.5cqw, .6875rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.35; white-space: nowrap; }
+        .notice-float-heart { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 2rem; height: 2rem; color: #FF3B4F; font-size: 15pt; }
         .notice-float.is-visible .notice-float-copy { animation: noticeIslandCopyIn .22s .42s ease-out both; }
         .notice-float.is-leaving .notice-float-copy { animation: noticeIslandCopyOut .22s ease-in both; }
+        .notice-float-baseball { position: absolute; inset: 0 .5rem; display: none; align-items: center; justify-content: space-between; gap: .375rem; }
+        .notice-float[data-mode="baseball"] .notice-float-copy { display: none; }
+        .notice-float[data-mode="baseball"] .notice-float-heart { display: none; }
+        .notice-float[data-mode="baseball"] .notice-float-baseball { display: flex; }
+        .notice-float[data-mode="baseball"] .notice-float-card { background: #000; }
+        .notice-float-baseball-team { display: flex; align-items: center; gap: .25rem; }
+        .notice-float-baseball-team strong { color: #FFF; font-size: 1.0625rem; font-weight: 850; line-height: 1; font-variant-numeric: tabular-nums; }
+        .notice-float-baseball-logo { flex: none; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; }
+        .notice-float-baseball-logo img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; }
+        .notice-float-baseball-logo span { grid-area: 1 / 1; display: none; color: #FFF; font-size: .5rem; font-weight: 750; white-space: nowrap; }
+        .notice-float-baseball-logo.has-fallback span { display: block; }
+        .notice-float.is-visible .notice-float-baseball { animation: noticeIslandCopyIn .22s .42s ease-out both; }
+        .notice-float.is-leaving .notice-float-baseball { animation: noticeIslandCopyOut .22s ease-in both; }
         @keyframes noticeCardFromHeart {
-            0% { width: 2rem; opacity: 0; transform: scale(.35); }
+            0% { width: 2rem; opacity: 0; transform: translateX(var(--notice-origin-x, 0px)) scale(.35); }
             20% { width: 2rem; opacity: 1; transform: scale(1.16); }
             32% { width: 2rem; opacity: 1; transform: scale(.96); }
             42% { width: 2rem; opacity: 1; transform: none; }
@@ -4058,7 +4072,7 @@
             58% { width: 2rem; opacity: 1; transform: none; }
             68% { width: 2rem; opacity: 1; transform: scale(.96); }
             80% { width: 2rem; opacity: 1; transform: scale(1.16); }
-            100% { width: 2rem; opacity: 0; transform: scale(.35); }
+            100% { width: 2rem; opacity: 0; transform: translateX(var(--notice-origin-x, 0px)) scale(.35); }
         }
         @keyframes noticeIslandCopyIn {
             from { opacity: 0; transform: translateX(.375rem); }
@@ -4073,6 +4087,8 @@
             .notice-float.is-leaving .notice-float-card { animation: none; }
             .notice-float.is-visible .notice-float-copy { animation: none; }
             .notice-float.is-leaving .notice-float-copy { animation: none; opacity: 0; }
+            .notice-float.is-visible .notice-float-baseball { animation: none; }
+            .notice-float.is-leaving .notice-float-baseball { animation: none; opacity: 0; }
         }
         .home-account-action--danger { color: #F87171; }
         .home-menu-trigger {
@@ -8169,8 +8185,19 @@
             </div>
             <!-- 하트에서 튀어나와 상단 빈 공간으로 펼쳐지는 공지 아일랜드 -->
             <div id="home-notice-float" class="notice-float" role="status" aria-live="polite" aria-hidden="true" hidden inert>
-                <button type="button" class="notice-float-card" onclick="window.haptic && window.haptic(); window.openNoticeInfo && window.openNoticeInfo()" aria-label="새로운 공지 추가! 공지사항 열기">
+                <button type="button" class="notice-float-card" onclick="window.openHomeIsland()" aria-label="새로운 공지 추가! 공지사항 열기">
                     <span class="notice-float-copy"><strong>새로운 공지 추가!</strong></span>
+                    <span class="notice-float-heart" aria-hidden="true"><i class="fa-solid fa-heart"></i></span>
+                    <span class="notice-float-baseball" aria-hidden="true">
+                        <span class="notice-float-baseball-team">
+                            <span class="notice-float-baseball-logo"><img data-island-away-logo alt=""><span data-island-away-name></span></span>
+                            <strong data-island-away-score></strong>
+                        </span>
+                        <span class="notice-float-baseball-team">
+                            <strong data-island-home-score></strong>
+                            <span class="notice-float-baseball-logo"><img data-island-home-logo alt=""><span data-island-home-name></span></span>
+                        </span>
+                    </span>
                 </button>
             </div>
         </header>
@@ -9016,7 +9043,8 @@
         };
 
         window.openNoticeInfo = function () {
-            dismissNoticeFloat();
+            const island = document.getElementById('home-notice-float');
+            if (!island || island.dataset.mode !== 'baseball') dismissNoticeFloat();
             window.openNotionInfo('공지사항', noticeNotionUrl, '공지사항을 준비 중이에요.');
         };
 
@@ -9024,25 +9052,123 @@
         let noticeFloatPending = false;
         let noticeFloatTimer = 0;
         let noticeFloatHideTimer = 0;
+        let homeIslandBaseballGames = [];
+        let homeIslandBaseballIndex = 0;
+        let homeIslandAnchor = null;
+        // 홈의 스크롤, 숨김, inert 상태를 상속하지 않는 공통 고정 레이어로 옮긴다.
+        const homeIslandRoot = document.getElementById('home-notice-float');
+        if (homeIslandRoot) document.body.appendChild(homeIslandRoot);
+
+        function renderHomeBaseballIsland() {
+            const float = document.getElementById('home-notice-float');
+            const game = homeIslandBaseballGames[homeIslandBaseballIndex];
+            if (!float || !game) return;
+            ['away', 'home'].forEach(function (side) {
+                const image = float.querySelector('[data-island-' + side + '-logo]');
+                const logo = image.parentElement;
+                const source = game[side + 'Logo'];
+                if (image.getAttribute('src') !== source) {
+                    image.hidden = false;
+                    logo.classList.remove('has-fallback');
+                    image.onerror = function () {
+                        image.hidden = true;
+                        logo.classList.add('has-fallback');
+                    };
+                    image.src = source;
+                }
+                float.querySelector('[data-island-' + side + '-name]').textContent = game[side + 'Team'];
+                float.querySelector('[data-island-' + side + '-score]').textContent = game[side + 'Score'];
+            });
+            float.querySelector('.notice-float-card').setAttribute('aria-label',
+                game.awayTeam + ' ' + game.awayScore + ' 대 ' + game.homeTeam + ' ' + game.homeScore +
+                ', ' + game.status + '. 경기 정보 열기');
+        }
+
+        window.setHomeBaseballIslandGames = function (games) {
+            const previous = homeIslandBaseballGames[homeIslandBaseballIndex];
+            homeIslandBaseballGames = games;
+            const sameGame = previous ? games.findIndex(function (game) { return game.key === previous.key; }) : -1;
+            homeIslandBaseballIndex = sameGame >= 0 ? sameGame : 0;
+            const float = document.getElementById('home-notice-float');
+            if (float && !float.hidden && float.dataset.mode === 'baseball') {
+                if (!games.length) dismissNoticeFloat();
+                else {
+                    renderHomeBaseballIsland();
+                    // 갱신으로 경기 수가 바뀌면 순환 타이머도 함께 맞춘다.
+                    if (!float.classList.contains('is-leaving')) scheduleHomeIslandDismiss();
+                }
+            }
+            showPendingNoticeFloat();
+        };
+
+        window.openHomeIsland = function () {
+            const float = document.getElementById('home-notice-float');
+            const game = homeIslandBaseballGames[homeIslandBaseballIndex];
+            if (float && float.dataset.mode === 'baseball' && game) {
+                window.openEnjoyBaseballGame(game.id, game.date, game.theme);
+            } else {
+                window.haptic && window.haptic();
+                window.openNoticeInfo();
+            }
+        };
+
+        function scheduleHomeIslandDismiss() {
+            window.clearTimeout(noticeFloatTimer);
+            noticeFloatTimer = 0;
+            const float = document.getElementById('home-notice-float');
+            if (!float || float.hidden) return;
+            if (float.dataset.mode !== 'baseball') {
+                noticeFloatTimer = window.setTimeout(dismissNoticeFloat, 5200);
+            } else if (homeIslandBaseballGames.length > 1) {
+                noticeFloatTimer = window.setTimeout(function () {
+                    homeIslandBaseballIndex = (homeIslandBaseballIndex + 1) % homeIslandBaseballGames.length;
+                    renderHomeBaseballIsland();
+                    scheduleHomeIslandDismiss();
+                }, 8500);
+            }
+        }
 
         function syncNoticeFloatPosition() {
             const float = document.getElementById('home-notice-float');
             const heart = document.getElementById('home-notice-button');
             const header = heart && heart.closest('.home-wordmark-bar');
             const brand = header && header.querySelector('.home-brand');
-            if (!float || !heart || !header || !brand) return false;
-            const heartRect = heart.getBoundingClientRect();
-            const brandRect = brand.getBoundingClientRect();
-            const headerRect = header.getBoundingClientRect();
-            if (!heartRect.width || !heartRect.height || heartRect.bottom <= 0 || heartRect.top >= window.innerHeight) return false;
-            const gapLeft = brandRect.right + 8;
-            // 기존 하트를 오른쪽 끝에 포함하고, 필요한 만큼만 왼쪽으로 펼친다.
-            const width = Math.min(heartRect.width * 4, heartRect.right - gapLeft);
-            if (width < heartRect.width) return false;
-            const left = heartRect.right - width;
+            if (!float) return false;
+            const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+            const home = document.getElementById('home-screen');
+            if (heart && header && brand && (!home || home.scrollTop === 0)) {
+                const heartRect = heart.getBoundingClientRect();
+                const brandRect = brand.getBoundingClientRect();
+                const headerRect = header.getBoundingClientRect();
+                if (heartRect.width && heartRect.height && heartRect.top >= 0 && heartRect.bottom <= window.innerHeight) {
+                    homeIslandAnchor = {
+                        frameLeft: headerRect.left, frameWidth: headerRect.width, viewportWidth: window.innerWidth,
+                        top: heartRect.top, fontSize: fontSize,
+                        brandOffset: brandRect.right - headerRect.left,
+                        heartInset: headerRect.right - heartRect.right
+                    };
+                }
+            }
+            const anchor = homeIslandAnchor;
+            const scale = anchor ? fontSize / anchor.fontSize : 1;
+            const useCachedFrame = anchor && anchor.viewportWidth === window.innerWidth && scale === 1;
+            const frameWidth = useCachedFrame ? anchor.frameWidth : Math.min(window.innerWidth, 28 * fontSize);
+            const frameLeft = useCachedFrame ? anchor.frameLeft : (window.innerWidth - frameWidth) / 2;
+            const heartWidth = 2 * fontSize;
+            const heartRight = frameLeft + frameWidth - (anchor ? anchor.heartInset * scale : 3.625 * fontSize);
+            const gapLeft = frameLeft + (anchor ? anchor.brandOffset * scale : 8.1875 * fontSize) + 8;
+            const gapRight = heartRight - heartWidth - 8;
+            const baseball = float.dataset.mode === 'baseball';
+            const width = Math.min(heartWidth * 4, (baseball ? gapRight : heartRight) - gapLeft);
+            if (width < heartWidth) return false;
+            // 로고·하트를 피하는 범위 안에서 앱 화면의 정중앙에 가장 가까운 위치를 고른다.
+            const left = baseball
+                ? Math.max(gapLeft, Math.min(frameLeft + (frameWidth - width) / 2, gapRight - width))
+                : heartRight - width;
             float.style.width = width + 'px';
-            float.style.left = (left - headerRect.left) + 'px';
-            float.style.top = (heartRect.top - headerRect.top) + 'px';
+            float.style.left = left + 'px';
+            float.style.top = (anchor ? anchor.top * scale : .25 * fontSize) + 'px';
+            float.style.setProperty('--notice-origin-x', (heartRight - left - width) + 'px');
             return true;
         }
 
@@ -9053,6 +9179,7 @@
             float.hidden = true;
             float.classList.remove('is-leaving');
             noticeFloatHideTimer = 0;
+            showPendingNoticeFloat();
         }
 
         function dismissNoticeFloat() {
@@ -9075,7 +9202,9 @@
         }
 
         function showPendingNoticeFloat() {
-            if (!noticeFloatPending || !noticeAlertEnabled || document.hidden) return;
+            if (document.hidden) return;
+            const hasPendingNotice = noticeFloatPending && noticeAlertEnabled;
+            if (!hasPendingNotice && !homeIslandBaseballGames.length) return;
             const login = document.getElementById('login-screen');
             const loader = document.getElementById('app-loader');
             const profile = document.getElementById('profile-modal');
@@ -9084,11 +9213,19 @@
                 (loader && loader.style.display !== 'none') ||
                 (profile && !profile.classList.contains('hidden')) ||
                 (loginPrompt && !loginPrompt.classList.contains('hidden')) ||
-                document.body.classList.contains('renovation-locked') ||
-                document.body.classList.contains('notion-info-active')) return;
+                document.body.classList.contains('renovation-locked')) return;
             const float = document.getElementById('home-notice-float');
-            if (!float || !syncNoticeFloatPosition()) return;
-            noticeFloatPending = false;
+            if (!float) return;
+            if (!float.hidden) {
+                if (hasPendingNotice && float.dataset.mode === 'baseball') dismissNoticeFloat();
+                return;
+            }
+            float.dataset.mode = hasPendingNotice ? 'notice' : 'baseball';
+            if (!syncNoticeFloatPosition()) return;
+            if (hasPendingNotice) {
+                noticeFloatPending = false;
+                float.querySelector('.notice-float-card').setAttribute('aria-label', '새로운 공지 추가! 공지사항 열기');
+            } else renderHomeBaseballIsland();
             window.clearTimeout(noticeFloatHideTimer);
             float.hidden = false;
             float.inert = false;
@@ -9096,8 +9233,7 @@
             void float.offsetWidth;
             float.setAttribute('aria-hidden', 'false');
             float.classList.add('is-visible');
-            window.clearTimeout(noticeFloatTimer);
-            noticeFloatTimer = window.setTimeout(dismissNoticeFloat, 5200);
+            scheduleHomeIslandDismiss();
         }
 
         window.enjoyShowPendingNoticeFloat = showPendingNoticeFloat;
@@ -9106,6 +9242,7 @@
             if (event.target === noticeFloatCard && event.animationName === 'noticeCardToHeart') finishNoticeFloatDismiss();
         });
         const noticeHeader = document.querySelector('.home-wordmark-bar');
+        syncNoticeFloatPosition();
         if (noticeHeader) new ResizeObserver(function () {
             const float = document.getElementById('home-notice-float');
             if (float && !float.hidden) syncNoticeFloatPosition();
@@ -9113,7 +9250,14 @@
         }).observe(noticeHeader);
         const noticeHome = document.getElementById('home-screen');
         if (noticeHome) noticeHome.addEventListener('scroll', showPendingNoticeFloat, { passive: true });
-        document.addEventListener('visibilitychange', showPendingNoticeFloat);
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden && window.enjoyRefreshHomeBaseballIsland) window.enjoyRefreshHomeBaseballIsland();
+            showPendingNoticeFloat();
+        });
+        window.addEventListener('pageshow', function () {
+            if (window.enjoyRefreshHomeBaseballIsland) window.enjoyRefreshHomeBaseballIsland();
+        });
+        window.addEventListener('resize', syncNoticeFloatPosition);
         const noticeLoader = document.getElementById('app-loader');
         if (noticeLoader) new MutationObserver(showPendingNoticeFloat).observe(noticeLoader, { attributes: true, attributeFilter: ['style'] });
         const noticeProfile = document.getElementById('profile-modal');
@@ -9138,7 +9282,8 @@
                 showPendingNoticeFloat();
             } else if (!hasNotice) {
                 noticeFloatPending = false;
-                dismissNoticeFloat();
+                const float = document.getElementById('home-notice-float');
+                if (float && float.dataset.mode !== 'baseball') dismissNoticeFloat();
             }
         };
 
@@ -12453,6 +12598,8 @@
         const enjoyBaseballFeaturedRotations = { samsung: [], kia: [] };
         const enjoyBaseballFeaturedRotationIndexes = { samsung: 0, kia: 0 };
         let enjoyBaseballScheduleGames = [];
+        let homeIslandScheduleSourceGames = [];
+        let homeIslandScheduleTimer = 0;
         let enjoyBaseballStarterHistoryGames = [];
         const enjoyBaseballTeamLogos = {
             '삼성': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png',
@@ -13044,6 +13191,53 @@
                 card.setAttribute('aria-label', game.team1 + ' 대 ' + game.team2 + ' ' + detail + ' 경기 정보 보기');
             });
         }
+        function updateHomeBaseballIsland(games, currentTime = new Date()) {
+            if (!window.setHomeBaseballIslandGames) return;
+            homeIslandScheduleSourceGames = games;
+            window.clearTimeout(homeIslandScheduleTimer);
+            const now = new Date(currentTime);
+            const nowMs = now.getTime();
+            const today = new Date(nowMs + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+            const midnight = Date.parse(today + 'T00:00:00+09:00') + 24 * 60 * 60 * 1000;
+            let nextBoundary = midnight;
+            const eligible = games.filter(function (game) {
+                if (game.date !== today || game.id == null || enjoyBaseballIsCanceled(game) ||
+                    !enjoyBaseballTeamLogos[game.team1] || !enjoyBaseballTeamLogos[game.team2]) return false;
+                const status = game.gameStatus || '경기전';
+                if (status === '경기중' || status === '종료') return true;
+                if (status !== '경기전') return false;
+                const time = String(game.time || '').match(/(\d{1,2}):(\d{2})/);
+                if (!time || Number(time[1]) > 23 || Number(time[2]) > 59) return false;
+                const start = Date.parse(today + 'T' + time[1].padStart(2, '0') + ':' + time[2] + ':00+09:00');
+                const visibleFrom = start - 60 * 60 * 1000;
+                if (visibleFrom > nowMs) nextBoundary = Math.min(nextBoundary, visibleFrom);
+                return nowMs >= visibleFrom;
+            }).sort(function (first, second) {
+                return Number(second.gameStatus === '경기중') - Number(first.gameStatus === '경기중') ||
+                    String(first.time || '').localeCompare(String(second.time || ''));
+            });
+            window.setHomeBaseballIslandGames(eligible.map(function (game) {
+                const pregame = !game.gameStatus || game.gameStatus === '경기전';
+                const score = function (value) {
+                    return !pregame && value != null && String(value).trim() !== '' &&
+                        Number.isFinite(Number(value)) && Number(value) >= 0 ? String(Number(value)) : '–';
+                };
+                return {
+                    key: game.date + '_' + game.id, id: game.id, date: game.date,
+                    awayTeam: game.team1, homeTeam: game.team2,
+                    awayLogo: enjoyBaseballTeamLogos[game.team1], homeLogo: enjoyBaseballTeamLogos[game.team2],
+                    awayScore: score(game.awayScore), homeScore: score(game.homeScore),
+                    status: pregame ? game.time + ' 경기 예정' : (game.gameStatus === '경기중' ? (game.inning || '경기중') : '종료'),
+                    theme: game.team1 === '삼성' || game.team2 === '삼성' ? '삼성' : 'KIA'
+                };
+            }));
+            // 네트워크 갱신과 별개로 시작 1시간 전과 한국 시각 자정에 표시 조건을 다시 계산한다.
+            homeIslandScheduleTimer = window.setTimeout(function () {
+                updateHomeBaseballIsland(homeIslandScheduleSourceGames);
+            }, Math.max(1, nextBoundary - nowMs + 10));
+        }
+        window.enjoyRefreshHomeBaseballIsland = function () { updateHomeBaseballIsland(homeIslandScheduleSourceGames); };
+
         async function refreshEnjoyBaseballFeatured() {
             try {
                 const now = new Date();
@@ -13093,6 +13287,7 @@
                 });
                 const games = Array.from(merged.values());
                 enjoyBaseballScheduleGames = games;
+                updateHomeBaseballIsland(games);
                 enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today, now));
                 enjoyBaseballSetRotation('kia', enjoyBaseballChooseRotation(games, 'KIA', today, now));
                 if (document.getElementById('kbo-more-ranking-body')) {
@@ -13142,6 +13337,7 @@
                 frame.classList.add('opacity-0');
                 frame.src = 'about:blank';
             }
+            window.enjoyShowPendingNoticeFloat && window.enjoyShowPendingNoticeFloat();
         };
         window.openEnjoyBaseballFeatured = function (teamKey) {
             const game = enjoyBaseballFeaturedGames[teamKey];
