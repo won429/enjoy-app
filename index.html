@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- 홈 화면 재등록 시 불투명한 기본 상태 표시줄을 사용한다. -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <script>
+        (function () {
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isStandalone = navigator.standalone === true ||
+                (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+            if (isIOS && isStandalone) document.documentElement.classList.add('ios-home-web-app');
+        })();
+    </script>
     <title>엔조이</title>
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903"
@@ -101,7 +113,23 @@
             overscroll-behavior-y: none;
             touch-action: pan-y;
         }
-        body.renovation-locked > :not(#renovation-screen):not(script) {
+        /* iOS의 상태 표시줄 색상 샘플링에는 가상 요소 대신 실제 요소가 필요하다. */
+        #ios-status-bar-background { display: none; }
+        html.ios-home-web-app #ios-status-bar-background {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            z-index: 2147483647;
+            background-color: #000000;
+            pointer-events: none;
+        }
+        @media (prefers-color-scheme: light) {
+            html.ios-home-web-app #ios-status-bar-background { background-color: #F2F2F7; }
+        }
+        body.renovation-locked > :not(#renovation-screen):not(#ios-status-bar-background):not(script) {
             visibility: hidden !important;
             pointer-events: none !important;
         }
@@ -7833,6 +7861,7 @@
     <link rel="stylesheet" href="tailwind.css">
 </head>
 <body class="w-full h-[100dvh] flex flex-col overflow-hidden bg-black" ontouchstart="">
+    <div id="ios-status-bar-background" aria-hidden="true"></div>
 
     <main id="renovation-screen" class="renovation-screen" data-state="checking" aria-labelledby="renovation-title" aria-busy="true">
         <div class="renovation-content">
