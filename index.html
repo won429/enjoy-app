@@ -4051,15 +4051,46 @@
         .notice-float[data-mode="baseball"] .notice-float-copy { display: none; }
         .notice-float[data-mode="baseball"] .notice-float-heart { display: none; }
         .notice-float[data-mode="baseball"] .notice-float-baseball { display: flex; }
-        .notice-float[data-mode="baseball"] .notice-float-card { background: #000; }
+        .notice-float[data-mode="baseball"] .notice-float-card {
+            right: auto;
+            left: 50%;
+            top: 50%;
+            background: #000;
+            transform: translate(-50%, -50%);
+            transform-origin: center;
+        }
+        .notice-float[data-mode="baseball"].is-visible .notice-float-card { animation: baseballIslandOpen .9s cubic-bezier(.22,1,.36,1) both; }
+        .notice-float[data-mode="baseball"].is-leaving .notice-float-card { animation: baseballIslandClose .9s cubic-bezier(.64,0,.78,0) both; }
         .notice-float-baseball-team { display: flex; align-items: center; gap: .25rem; }
         .notice-float-baseball-team strong { color: #FFF; font-size: 1.0625rem; font-weight: 850; line-height: 1; font-variant-numeric: tabular-nums; }
         .notice-float-baseball-logo { flex: none; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; }
         .notice-float-baseball-logo img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; }
         .notice-float-baseball-logo span { grid-area: 1 / 1; display: none; color: #FFF; font-size: .5rem; font-weight: 750; white-space: nowrap; }
         .notice-float-baseball-logo.has-fallback span { display: block; }
-        .notice-float.is-visible .notice-float-baseball { animation: noticeIslandCopyIn .22s .42s ease-out both; }
-        .notice-float.is-leaving .notice-float-baseball { animation: noticeIslandCopyOut .22s ease-in both; }
+        .notice-float.is-visible .notice-float-baseball { animation: baseballIslandContentIn .22s .52s ease-out both; }
+        .notice-float.is-leaving .notice-float-baseball { animation: baseballIslandContentOut .22s ease-in both; }
+        @keyframes baseballIslandOpen {
+            0% { width: .75rem; height: .75rem; opacity: 0; transform: translate(-50%, -50%) scale(.35); }
+            20% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            32% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%) scale(.95); }
+            42% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%); }
+            100% { width: 100%; height: 2rem; opacity: 1; transform: translate(-50%, -50%); }
+        }
+        @keyframes baseballIslandClose {
+            0% { width: 100%; height: 2rem; opacity: 1; transform: translate(-50%, -50%); }
+            58% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%); }
+            68% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%) scale(.95); }
+            80% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { width: .75rem; height: .75rem; opacity: 0; transform: translate(-50%, -50%) scale(.35); }
+        }
+        @keyframes baseballIslandContentIn {
+            from { opacity: 0; transform: scale(.92); }
+            to { opacity: 1; transform: none; }
+        }
+        @keyframes baseballIslandContentOut {
+            from { opacity: 1; transform: none; }
+            to { opacity: 0; transform: scale(.92); }
+        }
         @keyframes noticeCardFromHeart {
             0% { width: 2rem; opacity: 0; transform: translateX(var(--notice-origin-x, 0px)) scale(.35); }
             20% { width: 2rem; opacity: 1; transform: scale(1.16); }
@@ -4085,6 +4116,8 @@
         @media (prefers-reduced-motion: reduce) {
             .notice-float.is-visible .notice-float-card { animation: none; opacity: 1; transform: none; }
             .notice-float.is-leaving .notice-float-card { animation: none; }
+            .notice-float[data-mode="baseball"].is-visible .notice-float-card { animation: none; opacity: 1; transform: translate(-50%, -50%); }
+            .notice-float[data-mode="baseball"].is-leaving .notice-float-card { animation: none; }
             .notice-float.is-visible .notice-float-copy { animation: none; }
             .notice-float.is-leaving .notice-float-copy { animation: none; opacity: 0; }
             .notice-float.is-visible .notice-float-baseball { animation: none; }
@@ -9239,7 +9272,8 @@
         window.enjoyShowPendingNoticeFloat = showPendingNoticeFloat;
         const noticeFloatCard = document.querySelector('#home-notice-float .notice-float-card');
         if (noticeFloatCard) noticeFloatCard.addEventListener('animationend', function (event) {
-            if (event.target === noticeFloatCard && event.animationName === 'noticeCardToHeart') finishNoticeFloatDismiss();
+            if (event.target === noticeFloatCard &&
+                (event.animationName === 'noticeCardToHeart' || event.animationName === 'baseballIslandClose')) finishNoticeFloatDismiss();
         });
         const noticeHeader = document.querySelector('.home-wordmark-bar');
         syncNoticeFloatPosition();
