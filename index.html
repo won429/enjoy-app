@@ -3948,6 +3948,7 @@
         }
         .home-account-actions {
             position: absolute;
+            z-index: 2;
             top: 50%;
             right: 3.625rem;
             display: flex;
@@ -3989,11 +3990,10 @@
             top: 0;
             width: 100%;
             height: 2rem;
-            padding: 0 .625rem;
+            padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: .375rem;
             overflow: hidden;
             border: .0625rem solid rgba(255,255,255,.16);
             border-radius: 999px;
@@ -4002,41 +4002,25 @@
             box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 .125rem .5rem rgba(0,0,0,.16);
             text-align: left;
             opacity: 0;
-            transform-origin: center;
+            transform-origin: calc(100% - 1rem) center;
             -webkit-tap-highlight-color: transparent;
             pointer-events: none;
         }
         .notice-float.is-visible { pointer-events: auto; }
-        .notice-float.is-visible .notice-float-card { animation: noticeCardFromHeart .85s cubic-bezier(.22,1,.36,1) both; pointer-events: auto; }
-        .notice-float.is-leaving .notice-float-card { animation: noticeFloatOut .32s ease-in both; pointer-events: none; }
+        .notice-float.is-visible .notice-float-card { animation: noticeCardFromHeart .9s cubic-bezier(.22,1,.36,1) both; pointer-events: auto; }
+        .notice-float.is-leaving .notice-float-card { animation: noticeCardFromHeart .9s cubic-bezier(.22,1,.36,1) reverse both; pointer-events: none; }
         .notice-float-card:active { filter: brightness(.96); }
         .notice-float-card:focus-visible { outline: 2px solid #FF667A; outline-offset: 2px; }
-        .notice-float-icon {
-            flex: none;
-            color: #FF667A;
-            font-size: .75rem;
-        }
-        .notice-float-copy { flex: none; }
-        .notice-float-copy strong { display: block; font-size: clamp(.5625rem, 8cqw, .75rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.35; white-space: nowrap; }
-        .notice-float.is-visible .notice-float-icon,
-        .notice-float.is-visible .notice-float-copy { animation: noticeIslandCopyIn .25s .42s ease-out both; }
-        .notice-float.is-leaving .notice-float-icon,
-        .notice-float.is-leaving .notice-float-copy { opacity: 0; }
-        @container (max-width: 140px) {
-            .notice-float-card { padding-inline: .375rem; }
-            .notice-float-icon { display: none; }
-        }
+        .notice-float-copy { position: absolute; inset: 0 2rem 0 .5rem; display: flex; align-items: center; justify-content: center; }
+        .notice-float-copy strong { display: block; font-size: clamp(.5625rem, 8.5cqw, .6875rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.35; white-space: nowrap; }
+        .notice-float.is-visible .notice-float-copy { animation: noticeIslandCopyIn .22s .42s ease-out both; }
+        .notice-float.is-leaving .notice-float-copy { animation: noticeIslandCopyIn .22s ease-in reverse both; }
         @keyframes noticeCardFromHeart {
-            0% { width: 2rem; opacity: 0; transform: translateX(var(--notice-origin-x, 0px)) scale(.35); }
-            24% { width: 2rem; opacity: 1; transform: translateY(-.1875rem) scale(1.1); }
-            38% { width: 2rem; opacity: 1; transform: none; }
-            82% { width: 100%; opacity: 1; transform: scaleX(1.025); }
+            0% { width: 2rem; opacity: 0; transform: scale(.35); }
+            20% { width: 2rem; opacity: 1; transform: scale(1.16); }
+            32% { width: 2rem; opacity: 1; transform: scale(.96); }
+            42% { width: 2rem; opacity: 1; transform: none; }
             100% { width: 100%; opacity: 1; transform: none; }
-        }
-        @keyframes noticeFloatOut {
-            0% { width: 100%; opacity: 1; transform: none; }
-            60% { width: 2rem; opacity: 1; transform: none; }
-            100% { width: 2rem; opacity: 0; transform: translateX(var(--notice-origin-x, 0px)) scale(.35); }
         }
         @keyframes noticeIslandCopyIn {
             from { opacity: 0; transform: translateX(.375rem); }
@@ -4045,8 +4029,8 @@
         @media (prefers-reduced-motion: reduce) {
             .notice-float.is-visible .notice-float-card { animation: none; opacity: 1; transform: none; }
             .notice-float.is-leaving .notice-float-card { animation: none; }
-            .notice-float.is-visible .notice-float-icon,
             .notice-float.is-visible .notice-float-copy { animation: none; }
+            .notice-float.is-leaving .notice-float-copy { animation: none; opacity: 0; }
         }
         .home-account-action--danger { color: #F87171; }
         .home-menu-trigger {
@@ -8143,7 +8127,6 @@
             <!-- 하트에서 튀어나와 상단 빈 공간으로 펼쳐지는 공지 아일랜드 -->
             <div id="home-notice-float" class="notice-float" role="status" aria-live="polite" aria-hidden="true" hidden inert>
                 <button type="button" class="notice-float-card" onclick="window.haptic && window.haptic(); window.openNoticeInfo && window.openNoticeInfo()" aria-label="새로운 공지 추가! 공지사항 열기">
-                    <span class="notice-float-icon" aria-hidden="true"><i class="fa-solid fa-heart"></i></span>
                     <span class="notice-float-copy"><strong>새로운 공지 추가!</strong></span>
                 </button>
             </div>
@@ -9010,15 +8993,13 @@
             const headerRect = header.getBoundingClientRect();
             if (!heartRect.width || !heartRect.height || heartRect.bottom <= 0 || heartRect.top >= window.innerHeight) return false;
             const gapLeft = brandRect.right + 8;
-            const gapRight = heartRect.left - 8;
-            const width = Math.min(176, gapRight - gapLeft);
-            if (width < 32) return false;
-            const left = gapLeft + (gapRight - gapLeft - width) / 2;
+            // 기존 하트를 오른쪽 끝에 포함하고, 필요한 만큼만 왼쪽으로 펼친다.
+            const width = Math.min(heartRect.width * 4, heartRect.right - gapLeft);
+            if (width < heartRect.width) return false;
+            const left = heartRect.right - width;
             float.style.width = width + 'px';
             float.style.left = (left - headerRect.left) + 'px';
             float.style.top = (heartRect.top - headerRect.top) + 'px';
-            // 접힌 캡슐의 중심을 하트 중심에 맞춘 뒤 왼쪽 빈 공간으로 이동한다.
-            float.style.setProperty('--notice-origin-x', (heartRect.left + heartRect.width / 2 - (left + width - heartRect.width / 2)) + 'px');
             return true;
         }
 
@@ -9041,7 +9022,7 @@
                 float.hidden = true;
                 float.classList.remove('is-leaving');
                 noticeFloatHideTimer = 0;
-            }, reducedMotion ? 0 : 320);
+            }, reducedMotion ? 0 : 900);
         }
 
         function showPendingNoticeFloat() {
