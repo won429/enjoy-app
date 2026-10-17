@@ -4097,26 +4097,34 @@
         .notice-float[data-mode="baseball"].is-baseball-entered { transition: width .38s cubic-bezier(.22,1,.36,1), left .38s cubic-bezier(.22,1,.36,1), height .38s cubic-bezier(.22,1,.36,1); }
         .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-card { transition: border-radius .38s cubic-bezier(.22,1,.36,1); }
         .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-baseball { animation: none; opacity: 1; transition: opacity .15s; }
-        .notice-float[data-mode="baseball"].is-expanded { height: 9rem; }
+        .notice-float[data-mode="baseball"].is-expanded { height: 11rem; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-card { border-radius: 2rem; box-shadow: 0 .5rem 1.5rem #0005, inset 0 1px 0 #ffffff0d; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-baseball { opacity: 0; visibility: hidden; }
-        .notice-float-expanded { position: absolute; inset: 1rem 1.125rem; display: grid; grid-template-columns: minmax(0,1fr) 3.5rem minmax(0,1fr); align-items: center; column-gap: .5rem; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
+        .notice-float-expanded { position: absolute; inset: 1.25rem; display: grid; grid-template-columns: minmax(0,1fr) 2.75rem 3rem 2.75rem minmax(0,1fr); grid-template-rows: minmax(0,1fr) 2.75rem; align-items: center; gap: .75rem .375rem; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-expanded { opacity: 1; visibility: visible; transition-delay: .14s; }
-        .notice-float-expanded-side { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; column-gap: .5rem; row-gap: .75rem; align-items: center; }
-        .notice-float-expanded-side.is-home { grid-template-columns: auto minmax(0,1fr); }
-        .notice-float-expanded-club { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
-        .notice-float-expanded-side.is-home .notice-float-expanded-club { grid-column: 2; grid-row: 1; }
-        .notice-float-expanded-side.is-home > strong { grid-column: 1; grid-row: 1; }
-        .notice-float-expanded-club .notice-float-baseball-logo { width: 2rem; height: 2rem; }
-        .notice-float-expanded-club > span:last-child { color: #F5F5F7; font-size: .6875rem; font-weight: 750; white-space: nowrap; }
-        .notice-float-expanded-side > strong { font-size: 1.875rem; }
-        .notice-float-expanded-player { grid-column: 1 / -1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: .25rem; line-height: 1.3; }
-        .notice-float-expanded-player b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #D6DBF6; font-size: .8125rem; font-weight: 700; }
-        .notice-float-expanded-player small { color: #A1A1AA; font-size: .625rem; white-space: nowrap; }
+        /* 팀·점수·선수 정보를 공통 행에 놓아 좌우 정렬이 내용 길이에 따라 달라지지 않게 한다. */
+        .notice-float-expanded-side { display: contents; }
+        .notice-float-expanded-club { grid-column: 1; grid-row: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: .375rem; }
+        .notice-float-expanded-side.is-home .notice-float-expanded-club { grid-column: 5; }
+        .notice-float-expanded-side > strong { grid-column: 2; grid-row: 1; justify-self: center; font-size: 2.125rem; }
+        .notice-float-expanded-side.is-home > strong { grid-column: 4; }
+        .notice-float-expanded-club .notice-float-baseball-logo { width: 2.5rem; height: 2.5rem; }
+        .notice-float-expanded-club > span:last-child { color: #F5F5F7; font-size: .8125rem; font-weight: 750; white-space: nowrap; }
+        .notice-float-expanded-player { grid-column: 1 / 3; grid-row: 2; min-width: 0; height: 2.75rem; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: .25rem; line-height: 1.3; }
+        .notice-float-expanded-side.is-home .notice-float-expanded-player { grid-column: 4 / 6; }
+        .notice-float-expanded-player b { display: flex; justify-content: center; align-items: center; gap: .375rem; max-width: 100%; min-width: 0; white-space: nowrap; color: #D6DBF6; font-size: .875rem; font-weight: 700; }
+        .notice-float-expanded-player [data-island-away-player],
+        .notice-float-expanded-player [data-island-home-player] { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .notice-float-expanded-player small { color: #A1A1AA; font-size: .6875rem; white-space: nowrap; }
+        .notice-float-expanded-player small:empty,
+        .notice-float-expanded-result:empty { display: none; }
+        .notice-float-expanded-player.is-final { grid-column: 1; justify-self: center; width: max-content; max-width: calc(100% + 1.5rem); }
+        .notice-float-expanded-side.is-home .notice-float-expanded-player.is-final { grid-column: 5; }
         .notice-float-expanded-player.is-final b { color: #FFF; }
-        .notice-float-expanded-result.is-win { color: #f87171; margin-right: .25rem; }
-        .notice-float-expanded-result.is-loss { color: #60a5fa; margin-right: .25rem; }
-        .notice-float-expanded-center { align-self: center; display: flex; flex-direction: column; align-items: center; gap: .125rem; }
+        .notice-float-expanded-result { flex: 0 0 1rem; text-align: center; font-weight: 850; }
+        .notice-float-expanded-result.is-win { color: #f87171; }
+        .notice-float-expanded-result.is-loss { color: #60a5fa; }
+        .notice-float-expanded-center { grid-column: 3; grid-row: 1 / 3; align-self: center; display: flex; flex-direction: column; align-items: center; gap: .125rem; }
         /* 경기정보 스코어보드와 같은 크기·배치·점등 색을 사용한다. */
         .notice-float-expanded-bases { position: relative; display: block; width: 1.75rem; height: 1.5rem; }
         .notice-float-expanded-base { position: absolute; width: .5rem; height: .5rem; border: 0; border-radius: 0; background: #374151; transform: rotate(45deg); }
@@ -9322,7 +9330,7 @@
             const gapRight = heartRight - heartWidth - 8;
             const baseball = float.dataset.mode === 'baseball';
             const expanded = baseball && float.classList.contains('is-expanded');
-            const width = expanded ? Math.min(21 * fontSize, frameWidth - 2 * fontSize) : Math.min(heartWidth * 4, (baseball ? gapRight : heartRight) - gapLeft);
+            const width = expanded ? Math.min(25 * fontSize, frameWidth - 1.5 * fontSize) : Math.min(heartWidth * 4, (baseball ? gapRight : heartRight) - gapLeft);
             if (width < heartWidth) return false;
             // 로고·하트를 피하는 범위 안에서 앱 화면의 정중앙에 가장 가까운 위치를 고른다.
             const left = expanded ? frameLeft + (frameWidth - width) / 2 : baseball
