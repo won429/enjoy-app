@@ -4113,6 +4113,9 @@
         .notice-float-expanded-player { grid-column: 1 / -1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: .25rem; line-height: 1.3; }
         .notice-float-expanded-player b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #D6DBF6; font-size: .8125rem; font-weight: 700; }
         .notice-float-expanded-player small { color: #A1A1AA; font-size: .625rem; white-space: nowrap; }
+        .notice-float-expanded-player.is-final b { color: #FFF; }
+        .notice-float-expanded-result.is-win { color: #f87171; margin-right: .25rem; }
+        .notice-float-expanded-result.is-loss { color: #60a5fa; margin-right: .25rem; }
         .notice-float-expanded-center { align-self: center; display: flex; flex-direction: column; align-items: center; gap: .125rem; }
         /* 경기정보 스코어보드와 같은 크기·배치·점등 색을 사용한다. */
         .notice-float-expanded-bases { position: relative; display: block; width: 1.75rem; height: 1.5rem; }
@@ -8297,7 +8300,7 @@
                                 <span data-island-away-name></span>
                             </span>
                             <strong data-island-away-score></strong>
-                            <span class="notice-float-expanded-player"><b data-island-away-player></b><small data-island-away-stat></small></span>
+                            <span class="notice-float-expanded-player"><b><span class="notice-float-expanded-result" data-island-away-result></span><span data-island-away-player></span></b><small data-island-away-stat></small></span>
                         </span>
                         <span class="notice-float-expanded-center">
                             <span class="notice-float-expanded-bases">
@@ -8313,7 +8316,7 @@
                                 <span data-island-home-name></span>
                             </span>
                             <strong data-island-home-score></strong>
-                            <span class="notice-float-expanded-player"><b data-island-home-player></b><small data-island-home-stat></small></span>
+                            <span class="notice-float-expanded-player"><b><span class="notice-float-expanded-result" data-island-home-result></span><span data-island-home-player></span></b><small data-island-home-stat></small></span>
                         </span>
                     </span>
                 </button>
@@ -9207,6 +9210,11 @@
                 const player = detail[side] || { name: '—', stat: '' };
                 float.querySelector('[data-island-' + side + '-player]').textContent = player.name;
                 float.querySelector('[data-island-' + side + '-stat]').textContent = player.stat;
+                const result = float.querySelector('[data-island-' + side + '-result]');
+                result.textContent = player.result === 'win' ? '승' : (player.result === 'loss' ? '패' : '');
+                result.classList.toggle('is-win', player.result === 'win');
+                result.classList.toggle('is-loss', player.result === 'loss');
+                result.closest('.notice-float-expanded-player').classList.toggle('is-final', game.finished === true);
             });
             float.querySelector('[data-island-inning]').textContent = detail.inning;
             float.querySelectorAll('[data-island-base]').forEach(function (base) {
@@ -9216,7 +9224,8 @@
             const detailsLabel = expanded ? ', ' + ((detail.bases || []).length ? detail.bases.join('루, ') + '루 주자 있음' : '주자 없음') +
                 ', ' + ['away', 'home'].map(function (side) {
                     const player = detail[side];
-                    return player ? game[side + 'Team'] + ' ' + player.name + ' ' + player.stat : '';
+                    const label = player && (player.result === 'win' ? '승리 투수 ' : (player.result === 'loss' ? '패전 투수 ' : ''));
+                    return player ? game[side + 'Team'] + ' ' + label + player.name + ' ' + player.stat : '';
                 }).filter(Boolean).join(', ') : '';
             const button = float.querySelector('.notice-float-card');
             button.setAttribute('aria-expanded', String(expanded));
@@ -13442,6 +13451,18 @@
                 }) : []
             };
             ['away', 'home'].forEach(function (side) {
+                if (game.gameStatus === '종료') {
+                    const hasScores = [game.awayScore, game.homeScore].every(function (score) {
+                        return score != null && String(score).trim() !== '' && Number.isFinite(Number(score)) && Number(score) >= 0;
+                    });
+                    if (!hasScores || Number(game.awayScore) === Number(game.homeScore)) {
+                        detail[side] = { name: hasScores ? '무승부' : '—', stat: '' };
+                    } else {
+                        const won = side === 'away' ? Number(game.awayScore) > Number(game.homeScore) : Number(game.homeScore) > Number(game.awayScore);
+                        detail[side] = { name: firstName([game[won ? 'winPitcher' : 'losePitcher']]), stat: '', result: won ? 'win' : 'loss' };
+                    }
+                    return;
+                }
                 if (!offense) {
                     detail[side] = { name: '—', stat: '' };
                     return;
