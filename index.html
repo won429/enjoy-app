@@ -4071,6 +4071,9 @@
         .notice-float-baseball-logo img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; }
         .notice-float-baseball-logo span { grid-area: 1 / 1; display: none; color: #FFF; font-size: .5rem; font-weight: 750; white-space: nowrap; }
         .notice-float-baseball-logo.has-fallback span { display: block; }
+        .notice-float-baseball-team.is-loser .notice-float-baseball-logo { filter: grayscale(1); }
+        .notice-float-baseball-team.is-loser strong,
+        .notice-float-baseball-team.is-loser .notice-float-baseball-logo span { color: #8E8E93; }
         .notice-float.is-visible .notice-float-baseball { animation: baseballIslandContentIn .22s .52s ease-out both; }
         .notice-float.is-leaving .notice-float-baseball { animation: baseballIslandContentOut .22s ease-in both; }
         @keyframes baseballIslandOpen {
@@ -9100,9 +9103,14 @@
             const float = document.getElementById('home-notice-float');
             const game = homeIslandBaseballGames[homeIslandBaseballIndex];
             if (!float || !game) return;
+            const awayScore = Number(game.awayScore);
+            const homeScore = Number(game.homeScore);
+            const finishedWithScores = game.finished === true && Number.isFinite(awayScore) && Number.isFinite(homeScore);
             ['away', 'home'].forEach(function (side) {
                 const image = float.querySelector('[data-island-' + side + '-logo]');
                 const logo = image.parentElement;
+                const lost = finishedWithScores && (side === 'away' ? awayScore < homeScore : homeScore < awayScore);
+                logo.closest('.notice-float-baseball-team').classList.toggle('is-loser', lost);
                 const source = game[side + 'Logo'];
                 if (image.getAttribute('src') !== source) {
                     image.hidden = false;
@@ -13265,6 +13273,7 @@
                     awayTeam: game.team1, homeTeam: game.team2,
                     awayLogo: enjoyBaseballTeamLogos[game.team1], homeLogo: enjoyBaseballTeamLogos[game.team2],
                     awayScore: score(game.awayScore), homeScore: score(game.homeScore),
+                    finished: game.gameStatus === '종료',
                     status: pregame ? game.time + ' 경기 예정' : (game.gameStatus === '경기중' ? (game.inning || '경기중') : '종료'),
                     theme: game.team1 === '삼성' || game.team2 === '삼성' ? '삼성' : 'KIA'
                 };
