@@ -20,15 +20,27 @@
         const date = new Date(now.getTime() + 9 * 60 * 60 * 1000);
         return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
     }
-    function purchaseBlock(member, productId, orders = [], now = new Date()) {
+    function monthlyStock(meeting, members = []) {
+        const stock = { ...(meeting && meeting.storeMonthlySales || {}) };
+        // 기존 개인별 월 구매 기록도 공용 재고에 반영한다.
+        for (const member of members) {
+            if (!memberNames.includes(nameOf(member && member.name))) continue;
+            for (const key of ['waiver', 'dues']) {
+                const sale = member.storePurchaseLimits && member.storePurchaseLimits[key];
+                if (sale && sale.month && (!stock[key] || sale.month > stock[key].month)) stock[key] = sale;
+            }
+        }
+        return stock;
+    }
+    function purchaseBlock(member, productId, orders = [], now = new Date(), stock = {}) {
         const limits = member && member.storePurchaseLimits || {};
         if (productId === 'baemin') {
             if (limits.baemin && limits.baemin.pendingOrderId || orders.some(order => order.productId === 'baemin' && !['fulfilled', 'cancelled'].includes(order.status)))
                 return '관리자가 지급 완료 처리한 후 다시 구매할 수 있습니다.';
         } else if (['waiver', 'dues'].includes(productId)) {
             const month = purchaseMonth(now);
-            if (limits[productId] && limits[productId].month === month || orders.some(order => order.productId === productId && purchaseMonth(new Date(order.createdAt)) === month))
-                return '이 상품은 월 1회 구매할 수 있습니다. 다음 달 1일부터 다시 구매해 주세요.';
+            if (stock[productId] && stock[productId].month === month || limits[productId] && limits[productId].month === month || orders.some(order => order.productId === productId && purchaseMonth(new Date(order.createdAt)) === month))
+                return '품절 · 멤버 전체에서 상품별 월 1회 선착순 구매할 수 있습니다. 다음 달 1일부터 다시 구매해 주세요.';
         }
         return '';
     }
@@ -53,12 +65,13 @@
         return { converted, remainingDues, amount, cost: amount * RATE, monthKey };
     }
     function error(message) { const value = new Error(message); value.storeReason = true; throw value; }
-    function planPurchase({ member, meeting, productId, uid, id, calculate, now = new Date(), expectedAmount, previousOrders = [] }) {
+    function planPurchase({ member, meeting, productId, uid, id, calculate, now = new Date(), expectedAmount, previousOrders = [], previousMembers = [] }) {
         const product = products[productId];
         if (!product) error('구매할 상품을 확인해 주세요.');
         const name = nameOf(member && member.name);
         if (!memberNames.includes(name)) error('정식 멤버로 로그인한 후 구매할 수 있습니다.');
-        const blocked = purchaseBlock(member, productId, previousOrders, now);
+        const stock = monthlyStock(meeting, previousMembers);
+        const blocked = purchaseBlock(member, productId, previousOrders, now, stock);
         if (blocked) error(blocked);
         const points = pointsOf(member);
         let cost = product.cost, amount = product.amount, updatedMeeting = meeting, monthKey = '';
@@ -94,6 +107,9 @@
             const history = calculate(normalizedMeeting(updatedMeeting), date)[name][monthKey];
             if (history.balanceAfter >= 0 && !history.isPaymentStopped) rows[index].status = 'paid';
         }
+        if (productId !== 'baemin') updatedMeeting = { ...updatedMeeting, storeMonthlySales: {
+            ...stock, [productId]: { month: purchaseMonth(now), orderId: id }
+        } };
         const order = { id, uid, memberName: name, productId, productTitle: product.title,
             pointsSpent: cost, amount, createdAt: now.getTime(), status: productId === 'baemin' ? 'pending' : productId === 'dues' ? 'applied' : 'issued' };
         if (monthKey) order.appliedMonth = monthKey;
@@ -102,7 +118,7 @@
             ? { pendingOrderId: id } : { month: purchaseMonth(now), orderId: id } };
         return { points: points - cost, storePurchaseLimits, meeting: updatedMeeting, order };
     }
-    const api = { RATE, products, pointsOf, duesQuote, purchaseMonth, purchaseBlock, planPurchase };
+    const api = { RATE, products, pointsOf, duesQuote, purchaseMonth, monthlyStock, purchaseBlock, planPurchase };
     if (typeof module === 'object' && module.exports) module.exports = api;
     if (!root || !root.document) return;
     root.enjoyStore = api;
@@ -125,8 +141,9 @@
         const cards = Object.entries(products).map(([key, product]) => {
             const cost = key === 'dues' ? quote.cost : product.cost;
             const history = ordersUid === (user() && user().uid) ? orders : [];
-            const blocked = purchaseBlock(current, key, history);
-            const checking = !!(allowed && (ordersLoading || ordersError || ordersUid !== user().uid));
+            const stock = monthlyStock(root.meetingData, root.enjoyStoreMembers ? root.enjoyStoreMembers() : []);
+            const blocked = purchaseBlock(current, key, history, new Date(), stock);
+            const checking = !!(allowed && (ordersLoading || ordersError || ordersUid !== user().uid || key !== 'baemin' && !root.meetingData));
             const confirming = !!(pendingAttempt && pendingAttempt.productId === key);
             const disabled = busy || !allowed || (!confirming && (checking || !!blocked || (key === 'dues' ? points < product.minPoints || quote.amount <= 0 : points < cost)));
             const waiverStart = root.enjoyMeetingBenefits && !root.enjoyMeetingBenefits.canUseExemption() ? ' 면제권 사용은 11월 1일부터 가능합니다.' : '';
@@ -134,8 +151,8 @@
                 `10,000포인트 이상 보유 시 구매할 수 있어요. 포인트 환산 ${format(quote.converted)}원 · 이번 달 남은 회비 ${format(quote.remainingDues)}원`;
             const price = key === 'dues' ? `${format(quote.amount)}원 차감` : `${format(cost)} P`;
             const sub = key === 'dues' ? `${format(cost)} P 사용 · 남는 포인트 ${format(points - cost)} P` : `${format(product.amount)}원 혜택`;
-            const badge = key === 'baemin' ? '배달의민족' : '월 1회';
-            return `<article class="store-product"><div class="store-product-visual is-${key}" aria-hidden="true"><img src="assets/store/${key}-v2.jpg" alt="" width="1024" height="1024" decoding="async"><span class="store-product-badge">${badge}</span></div><div class="store-product-body"><h2>${product.title}</h2><strong class="store-product-price">${price}</strong><small>${sub.replace(' · ', '<br>')}</small><button type="button" onclick="window.buyEnjoyStoreProduct('${key}', ${key === 'dues' ? quote.amount : 'null'})" ${disabled ? 'disabled' : ''}>${busy ? '구매 처리 중…' : confirming ? '구매 저장 확인' : blocked ? key === 'baemin' ? '지급 완료 대기' : '이번 달 구매 완료' : checking ? '구매 내역 확인 중' : key === 'baemin' ? '구매 신청' : '구매'}</button>${blocked ? `<small class="store-purchase-notice">${blocked}</small>` : ''}<details class="store-product-details"><summary>이용 안내 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary><p>${description}</p><small>${key === 'baemin' ? '관리자 지급 완료 전까지 추가 구매가 제한돼요.' : '상품별 월 1회 · 매월 1일 0시(KST)에 초기화돼요.'}</small></details></div></article>`;
+            const badge = key === 'baemin' ? '배달의민족' : blocked ? '품절' : '월 선착순 1개';
+            return `<article class="store-product"><div class="store-product-visual is-${key}" aria-hidden="true"><img src="assets/store/${key}-v2.jpg" alt="" width="1024" height="1024" decoding="async"><span class="store-product-badge">${badge}</span></div><div class="store-product-body"><h2>${product.title}</h2><strong class="store-product-price">${price}</strong><small>${sub.replace(' · ', '<br>')}</small><button type="button" onclick="window.buyEnjoyStoreProduct('${key}', ${key === 'dues' ? quote.amount : 'null'})" ${disabled ? 'disabled' : ''}>${busy ? '구매 처리 중…' : confirming ? '구매 저장 확인' : blocked ? key === 'baemin' ? '지급 완료 대기' : '품절' : checking ? '구매 내역 확인 중' : key === 'baemin' ? '구매 신청' : '구매'}</button>${blocked ? `<small class="store-purchase-notice">${blocked}</small>` : ''}<details class="store-product-details"><summary>이용 안내 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary><p>${description}</p><small>${key === 'baemin' ? '관리자 지급 완료 전까지 추가 구매가 제한돼요.' : '멤버 전체에서 상품별 월 선착순 1개 · 매월 1일 0시(KST)에 초기화돼요.'}</small></details></div></article>`;
         }).join('');
         const history = ordersUid === (user() && user().uid) ? orders : [];
         const statusText = order => order.productId === 'baemin' ? (order.status === 'fulfilled' ? '지급 완료' : order.status === 'cancelled' ? '취소' : '지급 대기') : order.productId === 'dues' ? `${esc(order.appliedMonth || '')} 모임비 차감 완료` : '모임통장 지급 완료';
@@ -175,10 +192,15 @@
         busy = true; root.renderEnjoyStore();
         try {
             const memberRef = root.fsDoc('members', current.uid), meetingRef = root.fsDoc(...root.MEETING_PATH), orderRef = root.fsDoc('store_orders', attempt.id);
-            // 이전 버전에서 저장한 주문도 제한에 포함한다. 새 주문의 동시 구매는 멤버 문서 잠금으로 막는다.
+            // 기존 주문과 개인별 구매 제한도 확인한다. 한정 상품은 모임 문서의 공용 재고를 함께 잠근다.
             const saved = await root.fsGetDocs(root.fsQuery(root.fsCol('store_orders'), root.fsWhere('uid', '==', current.uid)));
             const priorIds = [];
             saved.forEach(entry => { const order = entry.data(); if (order.uid === current.uid && order.productId === productId) priorIds.push(entry.id || order.id); });
+            const memberIds = [];
+            if (productId !== 'baemin') {
+                const members = await root.fsGetDocs(root.fsCol('members'));
+                members.forEach(entry => { if (entry.id !== current.uid) memberIds.push(entry.id); });
+            }
             const result = await root.runTransaction(root.meetingDb, async transaction => {
                 const person = await transaction.get(memberRef);
                 const meeting = productId === 'baemin' ? null : await transaction.get(meetingRef);
@@ -189,7 +211,11 @@
                     if (previous.data().uid !== current.uid || previous.data().productId !== productId) error('구매 기록을 확인할 수 없습니다.');
                     return { points: pointsOf(person.data()), storePurchaseLimits: person.data().storePurchaseLimits || {}, meeting: meeting && meeting.exists() ? meeting.data() : null, order: previous.data() };
                 }
-                const persisted = person.data(), previousOrders = [];
+                const persisted = person.data(), previousOrders = [], previousMembers = [persisted];
+                for (const memberId of memberIds) {
+                    const snapshot = await transaction.get(root.fsDoc('members', memberId));
+                    if (snapshot.exists()) previousMembers.push(snapshot.data());
+                }
                 const pointer = persisted.storePurchaseLimits && persisted.storePurchaseLimits.baemin && persisted.storePurchaseLimits.baemin.pendingOrderId;
                 if (productId === 'baemin' && pointer && !priorIds.includes(pointer)) priorIds.push(pointer);
                 for (const priorId of priorIds) {
@@ -199,11 +225,11 @@
                 // 완료 상태를 직접 확인하므로 완료 직후 주문 목록 갱신을 기다릴 필요가 없다.
                 const effectiveMember = { ...persisted, storePurchaseLimits: { ...(persisted.storePurchaseLimits || {}) } };
                 if (pointer && previousOrders.some(order => order.id === pointer && ['fulfilled', 'cancelled'].includes(order.status))) effectiveMember.storePurchaseLimits.baemin = null;
-                const plan = planPurchase({ member: effectiveMember, previousOrders, meeting: meeting && meeting.exists() ? meeting.data() : null,
+                const plan = planPurchase({ member: effectiveMember, previousOrders, previousMembers, meeting: meeting && meeting.exists() ? meeting.data() : null,
                     productId, uid: current.uid, id: attempt.id, calculate: root.calculateMemberHistory, now: new Date(), expectedAmount: attempt.expectedAmount });
                 transaction.update(memberRef, { points: plan.points, storePurchaseLimits: plan.storePurchaseLimits });
-                if (productId === 'waiver') transaction.update(meetingRef, { exemptions: plan.meeting.exemptions });
-                if (productId === 'dues') transaction.update(meetingRef, { records: plan.meeting.records });
+                if (productId === 'waiver') transaction.update(meetingRef, { exemptions: plan.meeting.exemptions, storeMonthlySales: plan.meeting.storeMonthlySales });
+                if (productId === 'dues') transaction.update(meetingRef, { records: plan.meeting.records, storeMonthlySales: plan.meeting.storeMonthlySales });
                 transaction.set(orderRef, plan.order);
                 return plan;
             });
