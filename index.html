@@ -24,6 +24,9 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
 
+    <link rel="stylesheet" href="loading-island.css?v=20261018-1">
+    <link rel="preload" as="image" href="assets/loading-island/scan.webp">
+    <link rel="preload" as="image" href="assets/loading-island/done.webp">
     <link rel="stylesheet" href="attendance.css?v=20261005">
     <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
     <link rel="stylesheet" href="uno.css?v=20261014-connect1">
@@ -8058,11 +8061,14 @@
         })();
     </script>
 
-    <!-- [New] 앱 전체 로딩 인디케이터 -->
-    <div id="app-loader" class="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center transition-opacity duration-500">
-        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-[#3182F6] mb-4"></i>
-        <span class="text-gray-400 text-sm font-medium tracking-tight">데이터 동기화 중...</span>
+    <!-- Firebase 첫 동기화: 작은 점 → 상단 로딩 아일랜드 → 회전 후 체크 -->
+    <div id="app-loader" class="loading-island-overlay" data-state="opening" role="status" aria-live="polite" aria-atomic="true">
+        <div class="loading-island-anchor" aria-hidden="true">
+            <div class="loading-island-card"><canvas width="256" height="256"></canvas></div>
+        </div>
+        <span class="loading-island-label">데이터 동기화 중</span>
     </div>
+    <script src="loading-island.js?v=20261018-1"></script>
     <script>
         // 인증과 최초 데이터 동기화가 끝난 경우에만 로더를 닫는다.
         // 인증 확인 전에 홈이 노출되면 프로필이 '미가입'처럼 잠깐 보일 수 있다.
@@ -8071,8 +8077,7 @@
             var ready = window.enjoyAuthResolved === true &&
                 (!window.meetingAuthed || window.__enjoyTodayDataReady === true);
             if (ready && l && l.style.display !== 'none') {
-                l.style.opacity = '0';
-                setTimeout(function () { l.style.display = 'none'; }, 400);
+                window.enjoyFinishLoadingIsland();
             }
         }, 2000);
         // SDK 자체가 로드되지 않는 경우에는 로그인 폼으로 오인시키지 않고 연결 오류를 안내한다.
@@ -8088,7 +8093,7 @@
             if (lf) { lf.classList.remove('hidden'); lf.style.display = 'flex'; }
             if (lb) lb.disabled = true;
             if (ls) ls.textContent = '연결이 지연되고 있어요. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
-            if (ld) { ld.style.opacity = '0'; setTimeout(function () { ld.style.display = 'none'; }, 400); }
+            if (ld) window.enjoyCancelLoadingIsland();
         }, 12000);
     </script>
 
@@ -8184,10 +8189,8 @@
 
     <!-- [New] 로그인 화면 — 엔조이 계정 로그인 전에는 서비스 이용 불가 (기본 표시) -->
     <div id="login-screen" class="fixed inset-0 z-[300] overflow-y-auto scrollbar-hide">
-        <!-- 로그인 상태 확인 중 스피너 -->
-        <div id="login-checking" class="absolute inset-0 flex items-center justify-center">
-            <i class="fa-solid fa-circle-notch fa-spin text-3xl" style="color:#3182F6"></i>
-        </div>
+        <!-- 인증 확인 중에는 공통 로딩 아일랜드가 표시된다. -->
+        <div id="login-checking" class="absolute inset-0" aria-label="로그인 상태 확인 중"></div>
         <!-- 미로그인 시 노출되는 로그인 안내 -->
         <div id="login-content" class="hidden w-full max-w-md mx-auto px-7 pt-16 pb-16">
             <!-- 인사말 + 히어로 -->
@@ -9377,6 +9380,15 @@
             const heartRight = frameLeft + frameWidth - (anchor ? anchor.heartInset * scale : 3.625 * fontSize);
             const gapLeft = frameLeft + (anchor ? anchor.brandOffset * scale : 8.1875 * fontSize) + 8;
             const gapRight = heartRight - heartWidth - 8;
+            // 로딩도 접힌 야구 아일랜드와 정확히 같은 상단 기준점을 사용한다.
+            if (window.enjoyPositionLoadingIsland) {
+                const loadingWidth = Math.min(heartWidth * 4, gapRight - gapLeft);
+                window.enjoyPositionLoadingIsland({
+                    left: Math.max(gapLeft, Math.min(frameLeft + (frameWidth - loadingWidth) / 2, gapRight - loadingWidth)),
+                    top: anchor ? anchor.top * scale : .25 * fontSize,
+                    width: loadingWidth
+                });
+            }
             const baseball = float.dataset.mode === 'baseball';
             const expanded = baseball && float.classList.contains('is-expanded');
             const width = expanded ? Math.min(25 * fontSize, frameWidth - 1.5 * fontSize) : Math.min(heartWidth * 4, (baseball ? gapRight : heartRight) - gapLeft);
@@ -19184,8 +19196,8 @@
         function __enjoyHideLoader() {
             const loader = document.getElementById('app-loader');
             if (loader && loader.style.display !== 'none') {
-                loader.style.opacity = '0';
-                setTimeout(() => { loader.style.display = 'none'; }, 400);
+                if (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest()) window.enjoyFinishLoadingIsland();
+                else window.enjoyCancelLoadingIsland();
             }
         }
         // 홈 구조는 먼저 준비하되 인증 전에는 로더를 유지한다.
@@ -19286,7 +19298,7 @@
             window.__enjoyTodayDataReady = true;
             window.enjoyLoadLocalSchedule();
             var ld = document.getElementById('app-loader');
-            if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
+            if (ld) window.enjoyFinishLoadingIsland();
         };
     })();
     </script>
@@ -23000,7 +23012,7 @@
                     window.__enjoyAuthTimeoutShown = false;
                     // 미로그인 상태에서는 데이터 로더를 숨긴다(스피너 무한 회전 방지)
                     const ld = document.getElementById('app-loader');
-                    if (ld) { ld.style.opacity = '0'; ld.style.display = 'none'; }
+                    if (ld) window.enjoyCancelLoadingIsland();
                     setTimeout(renderLoginAd, 150);   // 컨테이너가 표시된 뒤 광고 요청
                 };
                 const showLoginChecking = () => {
@@ -23011,10 +23023,7 @@
                         loginContent.style.display = 'none';
                     }
                     const ld = document.getElementById('app-loader');
-                    if (ld) {
-                        ld.style.display = 'flex';
-                        requestAnimationFrame(() => { ld.style.opacity = '1'; });
-                    }
+                    if (ld) window.enjoyStartLoadingIsland();
                 };
                 const hideLogin = () => {
                     if (loginScreen) loginScreen.style.display = 'none';
@@ -23223,16 +23232,15 @@
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
+                    let initialSyncFailed = false;
                     const checkHideLoader = () => {
                         if (isMeetingLoaded && isScheduleLoaded) {
                             window.__enjoyTodayDataReady = true;
                             try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
                             const loader = document.getElementById('app-loader');
                             if (loader && loader.style.display !== 'none') {
-                                loader.style.opacity = '0';
-                                setTimeout(() => {
-                                    loader.style.display = 'none';
-                                }, 500);
+                                if (initialSyncFailed) window.enjoyCancelLoadingIsland();
+                                else window.enjoyFinishLoadingIsland();
                             }
                         }
                     };
@@ -23245,7 +23253,7 @@
                                 if (typeof window.updateMeetingUI === 'function') { window.updateMeetingUI(docSnap.data()); }
                             }
                             isMeetingLoaded = true; checkHideLoader();
-                        }, (error) => { console.warn("Meeting snapshot error:", error); isMeetingLoaded = true; checkHideLoader(); });
+                        }, (error) => { console.warn("Meeting snapshot error:", error); initialSyncFailed = true; isMeetingLoaded = true; checkHideLoader(); });
 
                         unsubSchedule = onSnapshot(doc(window.meetingDb, ...window.SCHEDULE_PATH), (docSnap) => {
                             if (docSnap.exists()) {
@@ -23255,7 +23263,7 @@
                             } else { window.dynamicEvents = {}; }
                             try { if (window.meetingTab === 'expense') window.renderExpenses(); } catch (e) {}
                             isScheduleLoaded = true; checkHideLoader();
-                        }, (error) => { console.warn("Schedule snapshot error:", error); isScheduleLoaded = true; checkHideLoader(); });
+                        }, (error) => { console.warn("Schedule snapshot error:", error); initialSyncFailed = true; isScheduleLoaded = true; checkHideLoader(); });
                     };
 
                     // 멤버/스페셜 판별 후 동기화(멤버) 또는 로컬 로드(스페셜)는 enjoyOnLogin에서 처리
@@ -23290,10 +23298,7 @@
                 }
                 if (loginStatus) loginStatus.textContent = '연결에 실패했어요. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
                 if (loginButton) loginButton.disabled = true;
-                if (loader) {
-                    loader.style.opacity = '0';
-                    setTimeout(() => { loader.style.display = 'none'; }, 400);
-                }
+                if (loader) window.enjoyCancelLoadingIsland();
             }
         }
 
