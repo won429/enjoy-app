@@ -4100,39 +4100,42 @@
         .notice-float[data-mode="baseball"].is-expanded { height: 11rem; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-card { border-radius: 2rem; box-shadow: 0 .5rem 1.5rem #0005, inset 0 1px 0 #ffffff0d; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-baseball { opacity: 0; visibility: hidden; }
-        .notice-float-expanded { position: absolute; inset: 1.25rem; display: grid; grid-template-columns: minmax(0,1fr) 2.75rem 3rem 2.75rem minmax(0,1fr); grid-template-rows: minmax(0,1fr) 2.75rem; align-items: center; gap: .75rem .375rem; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
+        .notice-float-expanded { position: absolute; inset: 1.25rem; display: grid; grid-template-columns: minmax(0,1fr) 2.5rem 3.25rem 2.5rem minmax(0,1fr); grid-template-rows: 3rem 1.125rem 3rem; align-content: center; align-items: center; gap: .375rem; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-expanded { opacity: 1; visibility: visible; transition-delay: .14s; }
-        /* 팀·점수·선수 정보를 공통 행에 놓아 좌우 정렬이 내용 길이에 따라 달라지지 않게 한다. */
-        .notice-float-expanded-side { display: contents; }
-        .notice-float-expanded-club { grid-column: 1; grid-row: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: .375rem; }
-        .notice-float-expanded-side.is-home .notice-float-expanded-club { grid-column: 5; }
-        .notice-float-expanded-side > strong { grid-column: 2; grid-row: 1; justify-self: center; font-size: 2.125rem; }
+        /* 첫 행은 로고·점수·베이스, 둘째 행은 팀명·이닝, 셋째 행은 선수 정보로 정렬한다. */
+        .notice-float-expanded-side,
+        .notice-float-expanded-club,
+        .notice-float-expanded-center { display: contents; }
+        .notice-float-expanded-side > strong { grid-column: 2; grid-row: 1; justify-self: center; font-size: 2rem; }
         .notice-float-expanded-side.is-home > strong { grid-column: 4; }
-        .notice-float-expanded-club .notice-float-baseball-logo { width: 2.5rem; height: 2.5rem; }
-        .notice-float-expanded-club > span:last-child { color: #F5F5F7; font-size: .8125rem; font-weight: 750; white-space: nowrap; }
-        .notice-float-expanded-player { grid-column: 1 / 3; grid-row: 2; min-width: 0; height: 2.75rem; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: .25rem; line-height: 1.3; }
-        .notice-float-expanded-side.is-home .notice-float-expanded-player { grid-column: 4 / 6; }
-        .notice-float-expanded-player b { display: flex; justify-content: center; align-items: center; gap: .375rem; max-width: 100%; min-width: 0; white-space: nowrap; color: #D6DBF6; font-size: .875rem; font-weight: 700; }
+        .notice-float-expanded-club .notice-float-baseball-logo { grid-column: 1; grid-row: 1; justify-self: center; width: 2.5rem; height: 2.5rem; }
+        .notice-float-expanded-club > span:last-child { grid-column: 1; grid-row: 2; justify-self: center; color: #F5F5F7; font-size: .75rem; font-weight: 750; line-height: 1.2; white-space: nowrap; }
+        .notice-float-expanded-side.is-home .notice-float-expanded-club > span { grid-column: 5; }
+        .notice-float-expanded-player { grid-column: 1; grid-row: 3; justify-self: center; width: var(--island-player-width, 100%); max-width: none; min-width: 0; height: 3rem; display: grid; grid-template-columns: minmax(0,1fr); grid-template-rows: 1.25rem .875rem; align-content: center; align-items: center; justify-items: center; gap: .25rem; line-height: 1.3; }
+        .notice-float-expanded-side.is-home .notice-float-expanded-player { grid-column: 5; }
+        .notice-float-expanded-player b { display: flex; justify-content: center; align-items: center; gap: .375em; max-width: 100%; min-width: 0; white-space: normal; text-align: center; color: #F5F5F7; font-size: var(--island-player-font-size, .875rem); font-weight: 700; }
         .notice-float-expanded-player [data-island-away-player],
-        .notice-float-expanded-player [data-island-home-player] { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-        .notice-float-expanded-player small { color: #A1A1AA; font-size: .6875rem; white-space: nowrap; }
+        .notice-float-expanded-player [data-island-home-player] { min-width: 0; overflow: visible; overflow-wrap: anywhere; }
+        .notice-float-expanded-player small { grid-row: 2; color: #A1A1AA; font-size: .6875rem; white-space: nowrap; }
         .notice-float-expanded-player small:empty,
         .notice-float-expanded-result:empty { display: none; }
-        .notice-float-expanded-player.is-final { grid-column: 1; justify-self: center; width: max-content; max-width: calc(100% + 1.5rem); }
-        .notice-float-expanded-side.is-home .notice-float-expanded-player.is-final { grid-column: 5; }
         .notice-float-expanded-player.is-final b { color: #FFF; }
-        .notice-float-expanded-result { flex: 0 0 1rem; text-align: center; font-weight: 850; }
+        .notice-float:not([data-game-state="live"]) .notice-float-expanded-player b { grid-row: 1 / -1; }
+        .notice-float-expanded-result { flex: 0 0 1em; text-align: center; font-weight: 850; }
         .notice-float-expanded-result.is-win { color: #f87171; }
         .notice-float-expanded-result.is-loss { color: #60a5fa; }
-        .notice-float-expanded-center { grid-column: 3; grid-row: 1 / 3; align-self: center; display: flex; flex-direction: column; align-items: center; gap: .125rem; }
         /* 경기정보 스코어보드와 같은 크기·배치·점등 색을 사용한다. */
-        .notice-float-expanded-bases { position: relative; display: block; width: 1.75rem; height: 1.5rem; }
+        .notice-float-expanded-bases { grid-column: 3; grid-row: 1; justify-self: center; position: relative; display: block; width: 1.75rem; height: 1.125rem; }
         .notice-float-expanded-base { position: absolute; width: .5rem; height: .5rem; border: 0; border-radius: 0; background: #374151; transform: rotate(45deg); }
         .notice-float-expanded-base.is-first { top: .5625rem; left: 1.125rem; }
         .notice-float-expanded-base.is-second { top: .0625rem; left: .625rem; }
         .notice-float-expanded-base.is-third { top: .5625rem; left: .125rem; }
         .notice-float-expanded-base.is-on { background: #6ee7b7; box-shadow: 0 0 .3125rem rgba(110,231,183,.6); }
-        .notice-float-expanded-inning { color: #F5F5F7; font-size: .6875rem; font-weight: 750; white-space: nowrap; }
+        .notice-float-expanded-inning { grid-column: 3; grid-row: 2; justify-self: center; color: #F5F5F7; font-size: .75rem; font-weight: 750; line-height: 1.2; white-space: nowrap; }
+        .notice-float-expanded-caption { grid-column: 3; grid-row: 2; justify-self: center; color: #A1A1AA; font-size: .625rem; line-height: 1.2; white-space: nowrap; }
+        .notice-float[data-game-state="live"] .notice-float-expanded-caption,
+        .notice-float:not([data-game-state="live"]) .notice-float-expanded-bases { display: none; }
+        .notice-float:not([data-game-state="live"]) .notice-float-expanded-inning { grid-row: 1; font-size: .8125rem; }
         .notice-float.is-visible .notice-float-baseball { animation: baseballIslandContentIn .22s .52s ease-out both; }
         .notice-float.is-leaving .notice-float-baseball { animation: baseballIslandContentOut .22s ease-in both; }
         @keyframes baseballIslandOpen {
@@ -8317,6 +8320,7 @@
                                 <i class="notice-float-expanded-base is-first" data-island-base="1"></i>
                             </span>
                             <span class="notice-float-expanded-inning" data-island-inning></span>
+                            <span class="notice-float-expanded-caption" data-island-center-caption></span>
                         </span>
                         <span class="notice-float-baseball-team notice-float-expanded-side is-home">
                             <span class="notice-float-expanded-club">
@@ -9185,9 +9189,50 @@
         let homeIslandBaseballIndex = 0;
         let homeIslandAnchor = null;
         let homeIslandCollapseTimer = 0;
+        let homeIslandPlayerFitFrame = 0;
         // 홈의 스크롤, 숨김, inert 상태를 상속하지 않는 공통 고정 레이어로 옮긴다.
         const homeIslandRoot = document.getElementById('home-notice-float');
         if (homeIslandRoot) document.body.appendChild(homeIslandRoot);
+
+        function fitHomeBaseballIslandPlayerNames() {
+            const float = document.getElementById('home-notice-float');
+            if (!float || float.hidden || !float.classList.contains('is-expanded')) return;
+            const card = float.querySelector('.notice-float-card').getBoundingClientRect();
+            const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+            if (card.height < 8 * fontSize) return;
+            float.querySelectorAll('.notice-float-expanded-player').forEach(function (player) {
+                const logo = player.closest('.notice-float-expanded-side').querySelector('.notice-float-baseball-logo').getBoundingClientRect();
+                const center = logo.left + logo.width / 2;
+                // 경기 중과 종료 후 모두 같은 로고 축과 이름 영역을 사용한다.
+                const width = 2 * Math.min(center - card.left - .625 * fontSize, card.right - center - .625 * fontSize);
+                if (width <= 0) return;
+                player.style.setProperty('--island-player-width', width + 'px');
+                player.style.removeProperty('--island-player-font-size');
+                const line = player.querySelector('b');
+                const name = line.querySelector('[data-island-away-player], [data-island-home-player]');
+                const badge = line.querySelector('.notice-float-expanded-result');
+                name.style.whiteSpace = 'nowrap';
+                const badgeWidth = badge.textContent ? badge.getBoundingClientRect().width + parseFloat(getComputedStyle(line).columnGap) : 0;
+                const naturalWidth = name.scrollWidth + badgeWidth;
+                const available = player.clientWidth - 2;
+                const normalSize = parseFloat(getComputedStyle(line).fontSize);
+                if (available > 0 && naturalWidth > available) {
+                    const fitted = Math.max(.625 * fontSize, Math.floor(normalSize * available / naturalWidth * 10) / 10);
+                    player.style.setProperty('--island-player-font-size', fitted + 'px');
+                }
+                name.style.removeProperty('white-space');
+            });
+        }
+
+        function scheduleHomeIslandPlayerFit() {
+            if (homeIslandPlayerFitFrame) return;
+            homeIslandPlayerFitFrame = window.requestAnimationFrame(function () {
+                homeIslandPlayerFitFrame = 0;
+                fitHomeBaseballIslandPlayerNames();
+            });
+        }
+        if (homeIslandRoot) new ResizeObserver(scheduleHomeIslandPlayerFit).observe(homeIslandRoot);
+        if (document.fonts) document.fonts.ready.then(scheduleHomeIslandPlayerFit);
 
         function renderHomeBaseballIsland() {
             const float = document.getElementById('home-notice-float');
@@ -9197,6 +9242,8 @@
             const homeScore = Number(game.homeScore);
             const finishedWithScores = game.finished === true && Number.isFinite(awayScore) && Number.isFinite(homeScore);
             const detail = game.detail || { inning: game.status, bases: [] };
+            const phase = detail.phase || (game.finished ? 'final' : (String(game.status).includes('예정') ? 'pregame' : 'live'));
+            float.dataset.gameState = phase;
             ['away', 'home'].forEach(function (side) {
                 const lost = finishedWithScores && (side === 'away' ? awayScore < homeScore : homeScore < awayScore);
                 const source = game[side + 'Logo'];
@@ -9224,7 +9271,8 @@
                 result.classList.toggle('is-loss', player.result === 'loss');
                 result.closest('.notice-float-expanded-player').classList.toggle('is-final', game.finished === true);
             });
-            float.querySelector('[data-island-inning]').textContent = detail.inning;
+            float.querySelector('[data-island-inning]').textContent = phase === 'final' ? '종료' : detail.inning;
+            float.querySelector('[data-island-center-caption]').textContent = phase === 'final' ? '경기결과' : (phase === 'pregame' ? '경기 예정' : '');
             float.querySelectorAll('[data-island-base]').forEach(function (base) {
                 base.classList.toggle('is-on', (detail.bases || []).includes(Number(base.dataset.islandBase)));
             });
@@ -9240,6 +9288,7 @@
             button.setAttribute('aria-label',
                 game.awayTeam + ' ' + game.awayScore + ' 대 ' + game.homeTeam + ' ' + game.homeScore +
                 ', ' + game.status + detailsLabel + (expanded ? '. 야구 아일랜드 접기' : '. 야구 아일랜드 펼치기'));
+            scheduleHomeIslandPlayerFit();
         }
 
         function setHomeBaseballIslandExpanded(expanded) {
@@ -13451,6 +13500,7 @@
                 return !['', '0', 'false', 'off', '-', '—'].includes(String(value || '').trim().toLowerCase());
             };
             const detail = {
+                phase: live ? 'live' : (game.gameStatus === '종료' ? 'final' : 'pregame'),
                 inning: live ? (half ? half[1] + '회' + half[2] : (inning || '경기중')) : (game.gameStatus === '종료' ? '경기 종료' : (game.time || '경기 예정')),
                 bases: live ? [1, 2, 3].filter(function (base) {
                     if (Object.prototype.hasOwnProperty.call(game, 'base' + base)) return occupied(game['base' + base]);
