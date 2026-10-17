@@ -11145,17 +11145,62 @@
             });
             return confirmed;
         }
+        function enjoyBaseballPostseasonRankings(standings, confirmedRanks, games) {
+            const rows = standings.filter(function (row) { return row.rank <= 5; }).map(function (row) {
+                return { team: row.team, rank: row.rank, w: 0, d: 0, l: 0,
+                    games: 0, winRate: '-', gap: '-', streak: '-', results: [], confirmed: false };
+            });
+            const byTeam = new Map(rows.map(function (row) { return [row.team, row]; }));
+            games = games.slice().sort(function (a, b) {
+                return String(a.date || '').localeCompare(String(b.date || '')) ||
+                    String(a.time || '').localeCompare(String(b.time || ''));
+            });
+            games.forEach(function (game) {
+                if (game.gameStatus !== '종료' || enjoyBaseballIsCanceled(game)) return;
+                if (game.awayScore == null || game.homeScore == null || game.awayScore === '' || game.homeScore === '') return;
+                const away = Number(game.awayScore), home = Number(game.homeScore);
+                if (!Number.isFinite(away) || !Number.isFinite(home)) return;
+                const first = byTeam.get(game.team1), second = byTeam.get(game.team2);
+                if (!first || !second) return;
+                const result = away > home ? 'W' : (away < home ? 'L' : 'D');
+                [first, second].forEach(function (row, index) {
+                    const own = index === 0 || result === 'D' ? result : (result === 'W' ? 'L' : 'W');
+                    row[own === 'W' ? 'w' : (own === 'L' ? 'l' : 'd')] += 1;
+                    row.games += 1;
+                    row.results.push(own);
+                });
+            });
+            enjoyBaseballPostseasonBracket(standings, confirmedRanks, games).forEach(function (round) {
+                if (!round.winner) return;
+                const winner = byTeam.get(round.winner);
+                const loser = byTeam.get(round.teams.find(function (slot) { return slot.team !== round.winner; }).team);
+                winner.rank = round.rank;
+                loser.rank = round.rank + 1;
+                loser.confirmed = true;
+                if (round.key === 'ks') winner.confirmed = true;
+            });
+            return rows.sort(function (a, b) { return a.rank - b.rank; }).map(function (row) {
+                row.winRate = row.w + row.l ? (row.w / (row.w + row.l)).toFixed(3) : '-';
+                const results = row.results.filter(function (result) { return result !== 'D'; });
+                const last = results[results.length - 1];
+                let count = 0;
+                for (let i = results.length - 1; i >= 0 && results[i] === last; i -= 1) count += 1;
+                row.streak = count ? count + (last === 'W' ? '승' : '패') : '-';
+                return row;
+            });
+        }
         function renderEnjoyBaseballMoreRanking() {
             const body = document.getElementById('kbo-more-ranking-body');
             if (!body) return;
             const standings = enjoyBaseballMoreRankings();
             const confirmedRanks = enjoyBaseballMoreConfirmedRanks(standings);
-            const visibleStandings = enjoyBaseballCompetition === 'postseason'
-                ? standings.filter(function (row) { return row.rank <= 5; }) : standings;
+            const postseason = enjoyBaseballCompetition === 'postseason';
+            const visibleStandings = postseason
+                ? enjoyBaseballPostseasonRankings(standings, confirmedRanks, enjoyBaseballMoreSeasonGames().postseason) : standings;
             body.innerHTML = visibleStandings.map(function (row) {
                 const rankColors = enjoyBaseballRankColors;
                 const rankColor = rankColors[row.rank - 1] || '#9CA3AF';
-                const confirmed = confirmedRanks.has(row.team);
+                const confirmed = postseason ? row.confirmed : confirmedRanks.has(row.team);
                 const numberColor = confirmed ? (row.rank === 1 ? '#FFFFFF' : '#111827') : rankColor;
                 const streakColor = row.streak.includes('승') ? '#EA0029' : (row.streak.includes('패') ? '#074CA1' : '#9CA3AF');
                 const logo = (enjoyBaseballCompetition === 'postseason' && enjoyBaseballPostseasonRankingLogos[row.team])
@@ -11164,7 +11209,7 @@
                     (confirmed ? ' style="--rank-color:' + rankColor + ';--rank-ink:' + numberColor + ';"' : '') + '>' +
                     '<div class="kbo-original-ranking-data">' +
                         '<span class="kbo-original-rank-number" style="color:' + numberColor + ';"' +
-                            (confirmed ? ' title="정규시즌 ' + row.rank + '위 확정" aria-label="' + row.rank + '위 확정"' : '') + '>' + row.rank + '</span>' +
+                            (confirmed ? ' title="' + (postseason ? '최종 ' : '정규시즌 ') + row.rank + '위 확정" aria-label="' + row.rank + '위 확정"' : '') + '>' + row.rank + '</span>' +
                         '<span class="kbo-original-rank-team">' + enjoyBaseballEscape(row.team) + '</span>' +
                         '<span class="kbo-original-ranking-stats">' +
                             '<span>' + row.games + '</span><span>' + row.w + '</span><span>' + row.d + '</span><span>' + row.l + '</span>' +
@@ -11659,19 +11704,21 @@
                     '<section id="kbo-more-ranking-section" class="kbo-original-section">' +
                         '<div class="kbo-original-section-head is-ranking-head">' +
                             '<div class="kbo-original-section-title"><strong>' + (postseason ? '포스트시즌 순위' : '정규시즌 순위') + ' <span style="color:#9ca3af;font-size:0.625rem;">· 2026시즌</span></strong></div>' +
+                            (postseason ? '<div class="kbo-ranking-legend" aria-label="포스트시즌 순위 기준"><span>진출·탈락 결과 기준</span><span class="is-confirmed-rank"><i style="--ranking-color:#9CA3AF;"></i>배경색: 최종 순위 확정</span></div>' :
                             '<div class="kbo-ranking-legend" aria-label="포스트시즌 진출 기준">' +
                                 '<span><i style="--ranking-color:#4C75F6;"></i>한국시리즈 진출</span>' +
                                 '<span><i style="--ranking-color:#7BDBE5;"></i>플레이오프 진출</span>' +
                                 '<span><i style="--ranking-color:#61C684;"></i>준플레이오프 진출</span>' +
                                 '<span><i style="--ranking-color:#B2DA67;"></i>와일드카드 결정전 진출</span>' +
                                 '<span class="is-confirmed-rank"><i style="--ranking-color:#9CA3AF;"></i>배경색: 확정 순위</span>' +
-                            '</div>' +
+                            '</div>') +
                         '</div>' +
                         '<div class="kbo-original-ranking-head">' +
                             '<span class="kbo-original-rank-col">순위</span><span class="kbo-original-team-col">팀명</span>' +
                             '<span class="kbo-original-stat-cols"><span>경기</span><span>승</span><span>무</span><span>패</span><span>승률</span><span>게임차</span><span>연속</span></span>' +
                         '</div>' +
                         '<div id="kbo-more-ranking-body" class="kbo-original-ranking-list"></div>' +
+                        (postseason ? '<p class="kbo-postseason-note">포스트시즌 경기 기록만 집계 · 미확정 순위는 정규시즌 시드순 · 게임차 미적용 · 어드밴티지 제외</p>' : '') +
                         '<section id="kbo-postseason-section" class="kbo-postseason" aria-labelledby="kbo-postseason-title" hidden></section>' +
                         (postseason ? '' : '<div class="kbo-ranking-trend" aria-labelledby="kbo-ranking-trend-title">' +
                             '<div class="kbo-ranking-trend-head">' +
