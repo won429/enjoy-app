@@ -24,7 +24,7 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
 
-    <link rel="stylesheet" href="loading-island.css?v=20261018-4">
+    <link rel="stylesheet" href="loading-island.css?v=20261018-5">
     <link rel="preload" as="image" href="assets/loading-island/scan.webp?v=20261018-4">
     <link rel="preload" as="image" href="assets/loading-island/done.webp">
     <link rel="stylesheet" href="attendance.css?v=20261005">
@@ -19296,8 +19296,7 @@
         function __enjoyHideLoader() {
             const loader = document.getElementById('app-loader');
             if (loader && loader.style.display !== 'none') {
-                if (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest()) window.enjoyFinishLoadingIsland();
-                else window.enjoyCancelLoadingIsland();
+                window.enjoyFinishLoadingIsland();
             }
         }
         // 홈 구조는 먼저 준비하되 인증 전에는 로더를 유지한다.
@@ -23152,9 +23151,9 @@
                     if (loginButton) loginButton.disabled = false;
                     if (window.__enjoyAuthTimeoutShown && loginStatus) loginStatus.textContent = '';
                     window.__enjoyAuthTimeoutShown = false;
-                    // 미로그인 상태에서는 데이터 로더를 숨긴다(스피너 무한 회전 방지)
+                    // 미로그인 확인도 체크 표시를 마친 뒤 로그인 화면을 보여준다.
                     const ld = document.getElementById('app-loader');
-                    if (ld) window.enjoyCancelLoadingIsland();
+                    if (ld) window.enjoyFinishLoadingIsland();
                     setTimeout(renderLoginAd, 150);   // 컨테이너가 표시된 뒤 광고 요청
                 };
                 const showLoginChecking = () => {
