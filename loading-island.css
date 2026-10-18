@@ -60,3 +60,18 @@ body.renovation-locked > #renovation-screen[data-state="active"] ~ #app-loader.l
     #app-loader[data-state] canvas { animation: none; }
     #app-loader[data-state="closing"] .loading-island-card { opacity: 0; }
 }
+/* Keep one continuous black surface when the ready baseball score replaces the check. */
+.loading-island-baseball { opacity: 0; pointer-events: none; }
+#app-loader[data-state="handoff"] .loading-island-card { animation: loadingIslandToBaseball .48s cubic-bezier(.22,1,.36,1) both; }
+#app-loader[data-state="handoff"] canvas { animation: loadingIslandGlowOut .14s ease-in both; }
+#app-loader[data-state="handoff"] .loading-island-baseball { display: flex; animation: loadingIslandScoreIn .2s .24s ease-out both; }
+@keyframes loadingIslandToBaseball {
+    from { width: var(--loading-handoff-width,6.5rem); height: var(--loading-handoff-height,6.5rem); top: var(--loading-handoff-top,0px); border-radius: var(--loading-handoff-radius,1.875rem); }
+    to { width: 100%; height: 2rem; top: 0; border-radius: 1rem; border-color: rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 .125rem .5rem rgba(0,0,0,.16); }
+}
+@keyframes loadingIslandScoreIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    #app-loader[data-state="handoff"] .loading-island-card { animation: none; width: 100%; height: 2rem; top: 0; border-radius: 1rem; }
+    #app-loader[data-state="handoff"] .loading-island-baseball { animation: none; opacity: 1; }
+    #app-loader[data-state="handoff"] canvas { animation: none; opacity: 0; }
+}
