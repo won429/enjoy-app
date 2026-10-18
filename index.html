@@ -4099,13 +4099,18 @@
         .notice-float-baseball-team.is-loser strong,
         .notice-float-baseball-team.is-loser .notice-float-baseball-logo span { color: #8E8E93; }
         .notice-float[data-mode="baseball"].is-baseball-entered { transition: width .38s cubic-bezier(.22,1,.36,1), left .38s cubic-bezier(.22,1,.36,1), height .38s cubic-bezier(.22,1,.36,1); }
-        .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-card { transition: border-radius .38s cubic-bezier(.22,1,.36,1); }
+        .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-card { transition: width .38s cubic-bezier(.22,1,.36,1), height .38s cubic-bezier(.22,1,.36,1), border-radius .38s cubic-bezier(.22,1,.36,1); }
         .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-baseball { animation: none; opacity: 1; transition: opacity .15s; }
         .notice-float[data-mode="baseball"].is-expanded { height: 11rem; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-card { border-radius: 2rem; box-shadow: 0 .5rem 1.5rem #0005, inset 0 1px 0 #ffffff0d; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-baseball { opacity: 0; visibility: hidden; }
         .notice-float-expanded { position: absolute; inset: 1.25rem; display: grid; grid-template-columns: minmax(0,1fr) 2.5rem 3.25rem 2.5rem minmax(0,1fr); grid-template-rows: 3rem 1.125rem 3rem; align-content: center; align-items: center; gap: .375rem; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
         .notice-float[data-mode="baseball"].is-expanded .notice-float-expanded { opacity: 1; visibility: visible; transition-delay: .14s; }
+        .notice-float[data-mode="baseball"].is-minimized { pointer-events: none; }
+        .notice-float[data-mode="baseball"].is-visible.is-minimized .notice-float-card { width: .75rem; height: .75rem; border-radius: 50%; overflow: visible; }
+        .notice-float[data-mode="baseball"].is-minimized .notice-float-card::after { content: ''; position: absolute; inset: -.625rem; border-radius: 50%; }
+        .notice-float[data-mode="baseball"].is-minimized .notice-float-baseball,
+        .notice-float[data-mode="baseball"].is-minimized .notice-float-expanded { opacity: 0; visibility: hidden; animation: none; }
         /* 첫 행은 로고·점수·베이스, 둘째 행은 팀명·이닝, 셋째 행은 선수 정보로 정렬한다. */
         .notice-float-expanded-side,
         .notice-float-expanded-club,
@@ -9194,6 +9199,7 @@
         let homeIslandAnchor = null;
         let homeIslandCollapseTimer = 0;
         let homeIslandPlayerFitFrame = 0;
+        let homeIslandContextKey = null;
         // 홈의 스크롤, 숨김, inert 상태를 상속하지 않는 공통 고정 레이어로 옮긴다.
         const homeIslandRoot = document.getElementById('home-notice-float');
         if (homeIslandRoot) document.body.appendChild(homeIslandRoot);
@@ -9300,10 +9306,39 @@
             if (!float || float.hidden || float.dataset.mode !== 'baseball' || float.classList.contains('is-leaving')) return;
             // 최초 팝 모션이 끝난 상태로 전환해, 펼치고 접을 때 작은 점부터 다시 재생하지 않는다.
             float.classList.add('is-baseball-entered');
+            float.classList.remove('is-minimized');
             float.classList.toggle('is-expanded', expanded);
             syncNoticeFloatPosition();
             renderHomeBaseballIsland();
             scheduleHomeIslandDismiss();
+        }
+
+        function setHomeBaseballIslandMinimized(minimized) {
+            const float = document.getElementById('home-notice-float');
+            if (!float || float.hidden || float.dataset.mode !== 'baseball' || float.classList.contains('is-leaving') ||
+                float.classList.contains('is-minimized') === minimized) return;
+            float.classList.add('is-baseball-entered');
+            float.classList.toggle('is-minimized', minimized);
+            if (minimized) float.classList.remove('is-expanded');
+            syncNoticeFloatPosition();
+            renderHomeBaseballIsland();
+            scheduleHomeIslandDismiss();
+        }
+
+        function syncHomeBaseballIslandContext(force) {
+            const home = document.getElementById('home-screen');
+            if (!home) return;
+            const otherScreens = Array.from(document.querySelectorAll('[id$="-screen"]')).filter(function (screen) {
+                return screen !== home && screen.getClientRects().length && getComputedStyle(screen).visibility !== 'hidden';
+            }).map(function (screen) { return screen.id; });
+            const away = document.hidden || !home.getClientRects().length || home.inert ||
+                home.getAttribute('aria-hidden') === 'true' || (window.homeActiveTab || 'home') !== 'home' || otherScreens.length > 0;
+            const scrolled = home.scrollTop > 0;
+            const key = [document.hidden, Boolean(away), scrolled, window.homeActiveTab || 'home', otherScreens.join(',')].join('|');
+            // 수동으로 펼친 상태는 데이터 갱신으로 접지 않고, 다음 스크롤·화면 전환 때 갱신한다.
+            if (force !== true && homeIslandContextKey === key) return;
+            homeIslandContextKey = key;
+            setHomeBaseballIslandMinimized(Boolean(away || scrolled));
         }
 
         window.setHomeBaseballIslandGames = function (games) {
@@ -9328,7 +9363,8 @@
             const game = homeIslandBaseballGames[homeIslandBaseballIndex];
             if (float && float.dataset.mode === 'baseball' && game) {
                 window.haptic && window.haptic();
-                setHomeBaseballIslandExpanded(!float.classList.contains('is-expanded'));
+                if (float.classList.contains('is-minimized')) setHomeBaseballIslandMinimized(false);
+                else setHomeBaseballIslandExpanded(!float.classList.contains('is-expanded'));
             } else {
                 window.haptic && window.haptic();
                 window.openNoticeInfo();
@@ -9461,6 +9497,7 @@
             if (!float) return;
             if (!float.hidden) {
                 if (hasPendingNotice && float.dataset.mode === 'baseball') dismissNoticeFloat();
+                else syncHomeBaseballIslandContext();
                 return;
             }
             float.dataset.mode = hasPendingNotice ? 'notice' : 'baseball';
@@ -9473,10 +9510,12 @@
             window.clearTimeout(noticeFloatHideTimer);
             float.hidden = false;
             float.inert = false;
-            float.classList.remove('is-visible', 'is-leaving', 'is-expanded', 'is-baseball-entered');
+            float.classList.remove('is-visible', 'is-leaving', 'is-expanded', 'is-baseball-entered', 'is-minimized');
             void float.offsetWidth;
             float.setAttribute('aria-hidden', 'false');
             float.classList.add('is-visible');
+            homeIslandContextKey = null;
+            syncHomeBaseballIslandContext();
             scheduleHomeIslandDismiss();
         }
 
@@ -9496,7 +9535,7 @@
             const float = document.getElementById('home-notice-float');
             if (!float || !float.hidden || !canJoin()) return null;
             float.dataset.mode = 'baseball';
-            float.classList.remove('is-expanded', 'is-leaving');
+            float.classList.remove('is-expanded', 'is-leaving', 'is-minimized');
             if (!syncNoticeFloatPosition()) return null;
             renderHomeBaseballIsland();
             return {
@@ -9511,6 +9550,8 @@
                     float.hidden = false;
                     float.inert = false;
                     float.setAttribute('aria-hidden', 'false');
+                    homeIslandContextKey = null;
+                    syncHomeBaseballIslandContext();
                     scheduleHomeIslandDismiss();
                     return true;
                 }
@@ -9545,12 +9586,33 @@
             showPendingNoticeFloat();
         }).observe(noticeHeader);
         const noticeHome = document.getElementById('home-screen');
-        if (noticeHome) noticeHome.addEventListener('scroll', showPendingNoticeFloat, { passive: true });
+        if (noticeHome) noticeHome.addEventListener('scroll', function () {
+            syncHomeBaseballIslandContext(true);
+            showPendingNoticeFloat();
+        }, { passive: true });
+        document.addEventListener('scroll', function (event) {
+            if (homeIslandRoot && event.target !== noticeHome && event.target.scrollTop > 0 && !homeIslandRoot.contains(event.target)) {
+                setHomeBaseballIslandMinimized(true);
+            }
+        }, { capture: true, passive: true });
+        // 서비스 화면은 이 스크립트 뒤에도 생성되므로 DOM 완성 후 각각 관찰한다.
+        document.addEventListener('DOMContentLoaded', function () {
+            const observer = new MutationObserver(function () {
+                syncHomeBaseballIslandContext();
+                showPendingNoticeFloat();
+            });
+            document.querySelectorAll('[id$="-screen"], #home-tabs .home-tab').forEach(function (screen) {
+                observer.observe(screen, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'inert', 'aria-hidden', 'aria-selected'] });
+            });
+            syncHomeBaseballIslandContext();
+        });
         document.addEventListener('visibilitychange', function () {
+            syncHomeBaseballIslandContext();
             if (!document.hidden && window.enjoyRefreshHomeBaseballIsland) window.enjoyRefreshHomeBaseballIsland();
             showPendingNoticeFloat();
         });
         window.addEventListener('pageshow', function () {
+            syncHomeBaseballIslandContext();
             if (window.enjoyRefreshHomeBaseballIsland) window.enjoyRefreshHomeBaseballIsland();
         });
         window.addEventListener('resize', syncNoticeFloatPosition);
