@@ -9,23 +9,41 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const scan = new Image();
     const done = new Image();
-    scan.src = 'assets/loading-island/scan.webp?v=20261018-3';
+    scan.src = 'assets/loading-island/scan.webp?v=20261018-4';
     done.src = 'assets/loading-island/done.webp';
     let frame = 0;
     let started = 0;
+    let previousTick = 0;
     let completionStarted = 0;
     let closeStarted = 0;
     let handoffStarted = 0;
     let handoff = null;
     let finishRequested = false;
     let lastDraw = '';
-    let settleFrom = null;
+    let rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    let anchorWidth = 8 * rem;
+    let shape = null;
+    let velocity = null;
+    let previousMotion = null;
+    const EXIT_FRAME = 21;
+    const FACE_START = 30;
+    const FACE_END = 60;
+    const RECOGNITION_MS = 500;
+    const FACE_HOLD_MS = 360;
+    const DISSOLVE_MS = 100;
+    const CHECK_MS = 600;
+    const COMPLETION_MS = RECOGNITION_MS + FACE_HOLD_MS + DISSOLVE_MS + CHECK_MS + 100;
+
+    function smooth(value) {
+        const t = Math.max(0, Math.min(1, value));
+        return t * t * (3 - 2 * t);
+    }
 
     function draw(image, index, nextImage, nextIndex, blend) {
-        if (!context || !image.complete || !image.naturalWidth) return;
+        if (!context || !image.complete || !image.naturalWidth) return false;
         const mixing = nextImage && nextImage.complete && nextImage.naturalWidth && blend > 0;
-        const key = (image === scan ? 'scan' : 'done') + index + (mixing ? ':' + nextIndex + ':' + blend.toFixed(3) : '');
-        if (lastDraw === key) return;
+        const key = (image === scan ? 'scan' : 'done') + index + (mixing ? ':' + (nextImage === scan ? 'scan' : 'done') + nextIndex + ':' + blend.toFixed(3) : '');
+        if (lastDraw === key) return true;
         context.clearRect(0, 0, 256, 256);
         context.globalAlpha = 1;
         context.drawImage(image, (index % 8) * 256, Math.floor(index / 8) * 256, 256, 256, 0, 0, 256, 256);
@@ -35,17 +53,72 @@
             context.globalAlpha = 1;
         }
         lastDraw = key;
+        return true;
     }
 
-    function scanPose(elapsed) {
-        const time = Math.max(0, elapsed - 780);
-        const initialFrame = Math.max(0, (elapsed - 480) * 60 / 1000);
-        const texture = initialFrame < 27 ? Math.min(26, initialFrame) : 9 + ((initialFrame - 27) * .5 % 18);
-        return { x: 47 * Math.sin(time * .0021), y: 53 * Math.sin(time * .0017), z: time * .22, texture: texture };
+    function nativeMotion(elapsed) {
+        // Real iPhone source frames already contain the 3D orbit and motion blur.
+        // Never rotate this recording again with CSS or reverse its playback.
+        const clock = Math.max(0, (elapsed - 350) * 60 / 1000);
+        if (clock < 31) return {position: clock, index: Math.min(30, Math.floor(clock)), cycle: -1, bridge: false};
+        const cycle = Math.floor((clock - 31) / 33);
+        const offset = (clock - 31) % 33;
+        if (offset < 27) return {position: 4 + offset, index: Math.floor(4 + offset), cycle: cycle, bridge: false};
+        return {position: 30, index: 30, cycle: cycle, bridge: true, blend: smooth((offset - 27) / 6)};
     }
 
-    function orient(pose) {
-        canvas.style.transform = 'perspective(8rem) translateY(.125rem) rotateZ(' + pose.z + 'deg) rotateY(' + pose.y + 'deg) rotateX(' + pose.x + 'deg)';
+    function crossedExit(motion) {
+        if (!previousMotion) return motion.position >= EXIT_FRAME && !motion.bridge;
+        return !motion.bridge && motion.position >= EXIT_FRAME &&
+            (previousMotion.cycle !== motion.cycle || previousMotion.position < EXIT_FRAME);
+    }
+
+    function shapeTarget(now) {
+        const state = loader.dataset.state;
+        let width = 6.5 * rem, height = 6.5 * rem, radius = 1.875 * rem, top = 0;
+        if (state === 'handoff' || (state === 'closing' && now - closeStarted < 250) ||
+            (state === 'opening' && now - started >= 190 && now - started < 330)) {
+            width = anchorWidth; height = 2 * rem; radius = rem;
+        } else if ((state === 'opening' && now - started < 190) || state === 'closing') {
+            width = .5 * rem; height = .5 * rem; radius = .25 * rem; top = .75 * rem;
+        }
+        return {width: width, height: height, radius: radius, top: top};
+    }
+
+    function updateSurface(now) {
+        const target = shapeTarget(now);
+        const elapsed = Math.max(0, now - previousTick);
+        previousTick = now;
+        if (reducedMotion.matches || elapsed > 250) {
+            Object.keys(target).forEach(key => {shape[key] = target[key]; velocity[key] = 0;});
+        } else {
+            // A single damped spring keeps its velocity when the target changes (including late baseball data).
+            let remaining = Math.min(elapsed, 64) / 1000;
+            while (remaining > 0) {
+                const dt = Math.min(remaining, 1 / 120);
+                Object.keys(target).forEach(key => {
+                    velocity[key] += (340 * (target[key] - shape[key]) - 30 * velocity[key]) * dt;
+                    shape[key] += velocity[key] * dt;
+                });
+                remaining -= dt;
+            }
+        }
+        card.style.width = Math.max(1, shape.width) + 'px';
+        card.style.height = Math.max(1, shape.height) + 'px';
+        card.style.top = shape.top + 'px';
+        card.style.borderRadius = Math.max(0, shape.radius) + 'px';
+        const state = loader.dataset.state;
+        const age = now - started;
+        card.style.opacity = String(state === 'closing' ? 1 - smooth((now - closeStarted - 400) / 140) : smooth(age / 80));
+        canvas.style.opacity = String(state === 'handoff' ? 1 - smooth((now - handoffStarted) / 140) :
+            state === 'closing' ? 1 - smooth((now - closeStarted) / 120) : smooth((age - 330) / 150));
+        if (handoff) {
+            handoff.content.style.opacity = String(smooth((now - handoffStarted - 210) / 180));
+            const mix = smooth((now - handoffStarted) / 400);
+            card.style.borderColor = 'rgba(255,255,255,' + (.055 + .105 * mix) + ')';
+            card.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,' + (.05 * mix) + '), 0 ' + ((.375 - .25 * mix) * rem) + 'px ' + ((1.25 - .75 * mix) * rem) + 'px rgba(0,0,0,' + (.1333 + .0267 * mix) + ')';
+        }
+        return Math.max(...Object.keys(target).map(key => Math.abs(shape[key] - target[key])));
     }
 
     function hide() {
@@ -57,18 +130,12 @@
         delete loader.dataset.phase;
         loader.style.display = 'none';
         loader.setAttribute('aria-hidden', 'true');
-        canvas.style.transform = '';
     }
 
     function prepareHandoff(now) {
         if (!window.enjoyPrepareLoadingBaseballIsland) return false;
         const next = window.enjoyPrepareLoadingBaseballIsland();
         if (!next) return false;
-        const rect = card.getBoundingClientRect();
-        loader.style.setProperty('--loading-handoff-width', rect.width + 'px');
-        loader.style.setProperty('--loading-handoff-height', rect.height + 'px');
-        loader.style.setProperty('--loading-handoff-top', card.offsetTop + 'px');
-        loader.style.setProperty('--loading-handoff-radius', getComputedStyle(card).borderRadius);
         handoff = next;
         next.content.classList.add('loading-island-baseball');
         card.appendChild(next.content);
@@ -87,74 +154,68 @@
         const state = loader.dataset.state;
         if (state === 'hidden') return;
         if (state === 'handoff') {
-            if (now - handoffStarted >= (reduced ? 0 : 480)) {
-                // The baseball card is already in its entered state before the loader is removed.
+            const error = updateSurface(now);
+            if (reduced || ((now - handoffStarted >= 480 && error < .2) || now - handoffStarted >= 700)) {
+                // Match the final pill geometry exactly before replacing its contents with the live score.
+                const target = shapeTarget(now);
+                Object.assign(shape, target);
+                Object.keys(velocity).forEach(key => {velocity[key] = 0;});
+                updateSurface(now);
                 handoff.commit();
                 hide();
                 return;
             }
         } else if (state === 'closing') {
-            // A game arriving during the beginning of the collapse can still join the same card.
             if (!reduced && now - closeStarted < 180 && prepareHandoff(now)) {
+                updateSurface(now);
                 frame = requestAnimationFrame(tick);
                 return;
             }
-            if (now - closeStarted >= (reduced ? 0 : 540)) { hide(); return; }
+            updateSurface(now);
+            if (now - closeStarted >= (reduced ? 0 : 560)) { hide(); return; }
         } else if (state === 'completing') {
             const progress = now - completionStarted;
             if (reduced) {
-                orient({x: 0, y: 0, z: 0});
-                phase(progress < 360 ? 'face' : 'check');
-                draw(progress < 360 ? scan : done, progress < 360 ? 36 : 66);
-            } else if (progress < 360) {
-                phase('settling');
-                const eased = 1 - Math.pow(1 - progress / 360, 3);
-                orient({x: settleFrom.x * (1 - eased), y: settleFrom.y * (1 - eased), z: settleFrom.z + (Math.ceil(settleFrom.z / 360) * 360 - settleFrom.z) * eased});
-                draw(scan, Math.min(26, Math.floor(settleFrom.texture + (26 - settleFrom.texture) * eased)));
-            } else if (progress < 527) {
+                phase(progress < 320 ? 'face' : 'check');
+                draw(progress < 320 ? scan : done, progress < 320 ? FACE_END : 66);
+            } else if (progress < RECOGNITION_MS) {
+                phase('recognizing');
+                const index = Math.min(FACE_END, FACE_START + Math.floor(progress * 60 / 1000));
+                // Join two real recordings at their matching upright-orbit poses, preserving source motion.
+                draw(scan, index, done, Math.min(30, EXIT_FRAME + Math.floor(progress * 60 / 1000)), 1 - smooth(progress / 90));
+            } else if (progress < RECOGNITION_MS + FACE_HOLD_MS) {
                 phase('face');
-                orient({x: 0, y: 0, z: 0});
-                draw(scan, Math.min(36, 27 + Math.floor((progress - 360) * 60 / 1000)));
-            } else if (progress < 1027) {
-                phase('face');
-                // Reset every held frame, including after a delayed/background animation tick.
-                orient({x: 0, y: 0, z: 0});
-                draw(scan, 36);
-            } else if (progress < 1167) {
-                orient({x: 0, y: 0, z: 0});
+                draw(scan, FACE_END);
+            } else if (progress < RECOGNITION_MS + FACE_HOLD_MS + DISSOLVE_MS) {
                 phase('check');
-                draw(scan, 36, done, 30, (progress - 1027) / 140);
+                draw(scan, FACE_END, done, 30, smooth((progress - RECOGNITION_MS - FACE_HOLD_MS) / DISSOLVE_MS));
             } else {
-                orient({x: 0, y: 0, z: 0});
                 phase('check');
-                draw(done, Math.min(66, 30 + Math.floor((progress - 1167) * 60 / 1000)));
+                draw(done, Math.min(66, 30 + Math.floor((progress - RECOGNITION_MS - FACE_HOLD_MS - DISSOLVE_MS) * 60 / 1000)));
             }
-            if (progress >= (reduced ? 720 : 2007)) {
+            updateSurface(now);
+            if (progress >= (reduced ? 680 : COMPLETION_MS)) {
                 if (!prepareHandoff(now)) {
                     loader.dataset.state = 'closing';
                     closeStarted = now;
                 }
             }
         } else {
-            // Forward source frames and continuous azimuth, with independent horizontal/vertical tilt.
-            // No reversed frame playback: the orbit travels through a full 360 degrees every 1.64 s.
-            const pose = scanPose(elapsed);
-            if (reduced) {
-                orient({x: 0, y: 0, z: 0});
-                draw(scan, 18);
-            } else {
-                orient(pose);
-                const index = Math.floor(pose.texture);
-                const next = index === 26 ? 9 : index + 1;
-                draw(scan, index, scan, next, pose.texture - index);
-            }
+            const motion = nativeMotion(elapsed);
+            if (reduced) draw(done, 30);
+            else if (motion.bridge) draw(done, 30, done, 4, motion.blend);
+            else draw(done, motion.index);
             if (state === 'opening' && elapsed >= (reduced ? 0 : 780)) loader.dataset.state = 'scanning';
-            if (finishRequested && elapsed >= (reduced ? 0 : 1400)) {
+            // Data arriving midway through the orbit finishes at its next matching pose, rather than snapping.
+            if (finishRequested && (reduced || (elapsed >= 900 && crossedExit(motion))) &&
+                scan.complete && scan.naturalWidth && done.complete && done.naturalWidth) {
                 loader.dataset.state = 'completing';
                 label.textContent = '데이터 동기화 완료';
                 completionStarted = now;
-                settleFrom = pose;
+                draw(reduced ? scan : done, reduced ? FACE_END : EXIT_FRAME);
             }
+            previousMotion = motion;
+            updateSurface(now);
         }
         frame = requestAnimationFrame(tick);
     }
@@ -162,6 +223,7 @@
     window.enjoyStartLoadingIsland = function () {
         if (frame) return;
         finishRequested = false;
+        previousMotion = null;
         lastDraw = '';
         loader.style.display = 'block';
         loader.style.opacity = '1';
@@ -169,26 +231,32 @@
         delete loader.dataset.phase;
         loader.removeAttribute('aria-hidden');
         label.textContent = '데이터 동기화 중';
-        started = performance.now();
+        started = previousTick = performance.now();
         window.enjoyPositionLoadingIsland();
+        shape = {width: .25 * rem, height: .25 * rem, radius: .125 * rem, top: .875 * rem};
+        velocity = {width: 0, height: 0, radius: 0, top: 0};
+        card.style.borderColor = '';
+        card.style.boxShadow = '';
+        canvas.style.transform = 'translateY(.125rem)';
+        updateSurface(started);
         frame = requestAnimationFrame(tick);
     };
     window.enjoyFinishLoadingIsland = function () {
         if (loader.dataset.state !== 'hidden') finishRequested = true;
     };
-    // Connection errors and the login form never show a false success check.
     window.enjoyCancelLoadingIsland = hide;
 
     window.enjoyPositionLoadingIsland = function (anchor) {
+        rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
         if (!anchor) {
-            const size = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-            const width = Math.min(innerWidth, 28 * size);
+            const width = Math.min(innerWidth, 28 * rem);
             const left = (innerWidth - width) / 2;
-            const gapLeft = left + 8.1875 * size + 8;
-            const gapRight = left + width - 3.625 * size - 2 * size - 8;
-            const islandWidth = Math.min(8 * size, gapRight - gapLeft);
-            anchor = { left: Math.max(gapLeft, Math.min(left + (width - islandWidth) / 2, gapRight - islandWidth)), top: .25 * size, width: islandWidth };
+            const gapLeft = left + 8.1875 * rem + 8;
+            const gapRight = left + width - 3.625 * rem - 2 * rem - 8;
+            const islandWidth = Math.min(8 * rem, gapRight - gapLeft);
+            anchor = {left: Math.max(gapLeft, Math.min(left + (width - islandWidth) / 2, gapRight - islandWidth)), top: .25 * rem, width: islandWidth};
         }
+        anchorWidth = anchor.width;
         loader.style.setProperty('--loading-island-left', anchor.left + 'px');
         loader.style.setProperty('--loading-island-top', anchor.top + 'px');
         loader.style.setProperty('--loading-island-width', anchor.width + 'px');
