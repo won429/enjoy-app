@@ -9,7 +9,7 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const scan = new Image();
     const done = new Image();
-    scan.src = 'assets/loading-island/scan.webp?v=20261018-2';
+    scan.src = 'assets/loading-island/scan.webp?v=20261018-3';
     done.src = 'assets/loading-island/done.webp';
     let frame = 0;
     let started = 0;
@@ -117,11 +117,15 @@
                 draw(scan, Math.min(36, 27 + Math.floor((progress - 360) * 60 / 1000)));
             } else if (progress < 1027) {
                 phase('face');
+                // Reset every held frame, including after a delayed/background animation tick.
+                orient({x: 0, y: 0, z: 0});
                 draw(scan, 36);
             } else if (progress < 1167) {
+                orient({x: 0, y: 0, z: 0});
                 phase('check');
                 draw(scan, 36, done, 30, (progress - 1027) / 140);
             } else {
+                orient({x: 0, y: 0, z: 0});
                 phase('check');
                 draw(done, Math.min(66, 30 + Math.floor((progress - 1167) * 60 / 1000)));
             }
