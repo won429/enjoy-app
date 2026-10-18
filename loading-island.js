@@ -60,11 +60,26 @@
         // Real iPhone source frames already contain the 3D orbit and motion blur.
         // Never rotate this recording again with CSS or reverse its playback.
         const clock = Math.max(0, (elapsed - 350) * 60 / 1000);
-        if (clock < 31) return {position: clock, index: Math.min(30, Math.floor(clock)), cycle: -1, bridge: false};
-        const cycle = Math.floor((clock - 31) / 33);
-        const offset = (clock - 31) % 33;
-        if (offset < 27) return {position: 4 + offset, index: Math.floor(4 + offset), cycle: cycle, bridge: false};
-        return {position: 30, index: 30, cycle: cycle, bridge: true, blend: smooth((offset - 27) / 6)};
+        // Overlap moving tails/heads before the recording settles into its final circle.
+        // Continue after the frames already played under the blend; never hold or replay the seam.
+        const overlap = 6;
+        const tail = 23;
+        const head = 4;
+        const restart = head + overlap;
+        const length = tail - head;
+        if (clock < tail) return {position: clock, index: Math.floor(clock), cycle: -1, bridge: false};
+        const cycle = Math.floor((clock - tail) / length);
+        const offset = (clock - tail) % length;
+        if (offset < overlap) return {
+            position: tail + offset,
+            index: tail + Math.floor(offset),
+            nextIndex: head + Math.floor(offset),
+            cycle: cycle,
+            bridge: true,
+            blend: offset / overlap
+        };
+        const position = restart + offset - overlap;
+        return {position: position, index: Math.floor(position), cycle: cycle, bridge: false};
     }
 
     function crossedExit(motion) {
@@ -203,7 +218,7 @@
         } else {
             const motion = nativeMotion(elapsed);
             if (reduced) draw(done, 30);
-            else if (motion.bridge) draw(done, 30, done, 4, motion.blend);
+            else if (motion.bridge) draw(done, motion.index, done, motion.nextIndex, motion.blend);
             else draw(done, motion.index);
             if (state === 'opening' && elapsed >= (reduced ? 0 : 780)) loader.dataset.state = 'scanning';
             // Data arriving midway through the orbit finishes at its next matching pose, rather than snapping.
