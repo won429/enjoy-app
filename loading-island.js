@@ -59,7 +59,7 @@
     function nativeMotion(elapsed) {
         // Real iPhone source frames already contain the 3D orbit and motion blur.
         // Never rotate this recording again with CSS or reverse its playback.
-        const clock = Math.max(0, (elapsed - 350) * 60 / 1000);
+        const clock = Math.max(0, (elapsed - 350) * 18 / 1000);
         // Overlap moving tails/heads before the recording settles into its final circle.
         // Continue after the frames already played under the blend; never hold or replay the seam.
         const overlap = 6;
@@ -73,6 +73,7 @@
         if (offset < overlap) return {
             position: tail + offset,
             index: tail + Math.floor(offset),
+            nextPosition: head + offset,
             nextIndex: head + Math.floor(offset),
             cycle: cycle,
             bridge: true,
@@ -80,6 +81,32 @@
         };
         const position = restart + offset - overlap;
         return {position: position, index: Math.floor(position), cycle: cycle, bridge: false};
+    }
+
+    function drawOrbit(motion) {
+        if (!context || !done.complete || !done.naturalWidth) return false;
+        const blend = motion.bridge ? motion.blend : 0;
+        const key = 'orbit:' + motion.position.toFixed(3) + ':' + blend.toFixed(3);
+        if (lastDraw === key) return true;
+        // Interpolate native frames at display refresh rate instead of holding each
+        // source frame while slowing the orbit. Both sides of the seam keep moving.
+        context.clearRect(0, 0, 256, 256);
+        context.globalCompositeOperation = 'lighter';
+        function sample(position, weight) {
+            const index = Math.floor(position);
+            const fraction = position - index;
+            [[index, weight * (1 - fraction)], [index + 1, weight * fraction]].forEach(([tile, alpha]) => {
+                if (alpha <= 0) return;
+                context.globalAlpha = alpha;
+                context.drawImage(done, (tile % 8) * 256, Math.floor(tile / 8) * 256, 256, 256, 0, 0, 256, 256);
+            });
+        }
+        sample(motion.position, 1 - blend);
+        if (blend > 0) sample(motion.nextPosition, blend);
+        context.globalCompositeOperation = 'source-over';
+        context.globalAlpha = 1;
+        lastDraw = key;
+        return true;
     }
 
     function crossedExit(motion) {
@@ -218,8 +245,7 @@
         } else {
             const motion = nativeMotion(elapsed);
             if (reduced) draw(done, 30);
-            else if (motion.bridge) draw(done, motion.index, done, motion.nextIndex, motion.blend);
-            else draw(done, motion.index);
+            else drawOrbit(motion);
             if (state === 'opening' && elapsed >= (reduced ? 0 : 780)) loader.dataset.state = 'scanning';
             // Data arriving midway through the orbit finishes at its next matching pose, rather than snapping.
             if (finishRequested && (reduced || (elapsed >= 900 && crossedExit(motion))) &&
