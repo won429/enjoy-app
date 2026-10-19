@@ -9,6 +9,7 @@
     const wrappers = {};
     let transactionChain = Promise.resolve();
     let identity = null;
+    let vlogTabOriginalNext;
     const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
     const active = () => root.enjoyLocalMode === true && !root.enjoyUser;
     const read = () => {
@@ -164,6 +165,13 @@
         const guest = !root.enjoyUser;
         if (!root.document) return;
         root.document.documentElement.classList.toggle('enjoy-guest', guest);
+        const tabs = root.document.getElementById('home-tabs');
+        const vlog = tabs && tabs.querySelector('[data-home-tab="vlog"]');
+        if (vlog) {
+            if (vlogTabOriginalNext === undefined) vlogTabOriginalNext = vlog.nextElementSibling;
+            const before = guest ? tabs.firstElementChild : vlogTabOriginalNext;
+            if (guest ? tabs.firstElementChild !== vlog : vlog.nextElementSibling !== before) tabs.insertBefore(vlog, before);
+        }
         const home = root.document.getElementById('nav-home');
         if (home && guest) home.setAttribute('aria-label', '홈');
         if (guest && ['shorts', 'attendance'].includes(root.homeActiveTab) && root.switchHomeTab) root.switchHomeTab('home');
@@ -203,6 +211,7 @@
         root.enjoyInstallLocalData();
         root.enjoyRefreshGuestNavigation();
         root.enjoyEnterLocalMode && root.enjoyEnterLocalMode();
+        if (root.selectHomeTab) root.selectHomeTab('vlog');
         root.enjoyLocalMembersStart && root.enjoyLocalMembersStart();
         root.enjoyCommunityOnAuth && root.enjoyCommunityOnAuth(identity);
         root.enjoyDropOnAuth && root.enjoyDropOnAuth(identity);
