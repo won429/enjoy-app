@@ -12,7 +12,7 @@
     const orbit = new Image();
     scan.src = 'assets/loading-island/scan.webp?v=20261018-4';
     done.src = 'assets/loading-island/done.webp';
-    orbit.src = 'assets/loading-island/orbit.webp?v=20261019-8';
+    orbit.src = 'assets/loading-island/orbit.webp?v=20261019-10';
     let frame = 0;
     let started = 0;
     let previousTick = 0;
@@ -27,7 +27,7 @@
     let shape = null;
     let velocity = null;
     let previousMotion = null;
-    const ORBIT_MS = 1500;
+    const ORBIT_MS = 1250;
     const FACE_START = 30;
     const FACE_END = 60;
     const RECOGNITION_MS = 500;
@@ -60,7 +60,7 @@
 
     function orbitMotion(elapsed) {
         // Both volumetric rings were rendered from continuous 3D rotations.
-        // Atlas timing compensates for slow-looking frontal poses. Advance
+        // Each ring has its own continuous axis, direction and speed. Advance
         // its 60fps frames continuously, without braking or reversing.
         const turns = Math.max(0, elapsed - 350) / ORBIT_MS;
         return {angle: turns * Math.PI * 2, position: turns * 90, cycle: Math.floor(turns)};
