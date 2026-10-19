@@ -1,6 +1,6 @@
 (function (root) {
     'use strict';
-    const ADMIN_EMAIL = 'gwanlija180@gmail.com';
+    const QUIZ_VIEWER_UID = 'tdC9Bzxz7JRjpEceOLzpDCMKeBE2';
     function serverMillis(value) {
         if (value && typeof value.toMillis === 'function') return value.toMillis();
         if (value && Number.isInteger(value.seconds) && Number.isInteger(value.nanoseconds)) return value.seconds * 1000 + value.nanoseconds / 1e6;
@@ -16,7 +16,7 @@
             Number.isFinite(attempt.submittedAt) && attempt.submittedAt >= config.startsAt && attempt.submittedAt < config.closesAt
         ).sort((a, b) => b.submittedAt - a.submittedAt || b.id.localeCompare(a.id))[0] || null;
     }
-    function isAdmin(user) { return !!user?.uid && String(user.email || '').trim().toLowerCase() === ADMIN_EMAIL; }
+    function isAdmin(user) { return user?.uid === QUIZ_VIEWER_UID; }
     function createStore(root, config) {
         let state = empty(), epoch = 0, unsubscribers = [], retryTimer = null, active = false, keyRequest = false;
         let profileReady = false, answerReady = false, profileOnline = false, answerOnline = false;
@@ -94,7 +94,7 @@
             const rosterFailed = () => {
                 if (!current(uid, generation)) return;
                 state.rosterLoading = false; state.rosterConnected = false;
-                state.rosterError = '참여 현황을 불러오지 못했어요. 관리자 계정과 연결을 확인해 주세요.'; notify();
+                state.rosterError = '참여 현황을 불러오지 못했어요. 성원제 계정과 연결을 확인해 주세요.'; notify();
             };
             try {
                 unsubscribers.push(root.fsOnSnapshot(root.fsDoc('members', uid), { includeMetadataChanges: true }, snapshot => {
