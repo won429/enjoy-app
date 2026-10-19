@@ -32,7 +32,7 @@
     <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
     <link rel="stylesheet" href="uno.css?v=20261018-wallet1">
     <link rel="stylesheet" href="drop-games.css?v=20261019-quiz1">
-    <link rel="stylesheet" href="drop-quiz.css?v=20261019-quiz2">
+    <link rel="stylesheet" href="drop-quiz.css?v=20261019-quiz4">
     <!-- 스토어 스타일은 별도 파일 누락 시에도 적용되도록 본문에 포함한다. -->
     <style id="enjoy-store-styles">
         #store-screen { --store-bg: #000; --store-text: #fff; --store-muted: #8b95a1; --store-line: rgba(255,255,255,.08); position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%,28rem); z-index: 20; background: var(--store-bg); color: var(--store-text); flex-direction: column; overflow: hidden; }
@@ -23145,10 +23145,16 @@
                 <button id="drop-quiz-submit" type="submit" disabled>답안 제출</button>
             </form>
             <p id="drop-quiz-feedback" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
+            <section id="drop-quiz-admin" hidden aria-labelledby="drop-quiz-admin-heading">
+                <div class="drop-quiz-admin-heading"><h2 id="drop-quiz-admin-heading">퀴즈 참여 현황</h2><button id="drop-quiz-export" type="button">내역 다운로드</button></div>
+                <p id="drop-quiz-admin-summary" role="status"></p>
+                <div class="drop-quiz-admin-table"><table><caption class="sr-only">멤버별 퀴즈 답안과 채점 결과</caption><thead><tr><th scope="col">멤버</th><th scope="col">선택</th><th scope="col">접수 시각</th><th scope="col">결과</th></tr></thead><tbody id="drop-quiz-admin-rows"></tbody></table></div>
+            </section>
         </div>
     </section>
     <script src="drop-games.js?v=20261018-wallet1"></script>
-    <script src="drop-quiz.js?v=20261019-quiz2"></script>
+    <script src="drop-quiz-firebase.js?v=20261019-quiz4"></script>
+    <script src="drop-quiz.js?v=20261019-quiz4"></script>
     <script defer src="drop-games-entry.js?v=20261019-quiz1"></script>
     <section id="war-game-screen" hidden role="dialog" aria-modal="true" aria-label="드롭 전쟁" style="position:fixed;inset:0;z-index:65;background:#071217">
         <iframe id="war-game-frame" title="드롭 전쟁 게임" allow="clipboard-write" style="display:block;width:100%;height:100%;border:0"></iframe>
@@ -23201,7 +23207,7 @@
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, increment, getDoc, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, runTransaction, Timestamp, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, increment, getDoc, getDocFromServer, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, runTransaction, Timestamp, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global functions for firebase interaction
         window.getDoc = getDoc;
@@ -23222,6 +23228,7 @@
         window.fsCol = (...p) => collection(window.meetingDb, ...p);
         window.fsSetDoc = setDoc;
         window.fsGetDocs = getDocs;
+        window.fsGetDocFromServer = getDocFromServer;
         window.fsDeleteDoc = deleteDoc;
         window.fsAddDoc = addDoc;
         window.fsUpdateDoc = updateDoc;
