@@ -25,7 +25,7 @@
     let shape = null;
     let velocity = null;
     let previousMotion = null;
-    const EXIT_FRAME = 21;
+    const ORBIT_MS = 1800;
     const FACE_START = 30;
     const FACE_END = 60;
     const RECOGNITION_MS = 500;
@@ -56,63 +56,40 @@
         return true;
     }
 
-    function nativeMotion(elapsed) {
-        // Real iPhone source frames already contain the 3D orbit and motion blur.
-        // Never rotate this recording again with CSS or reverse its playback.
-        const clock = Math.max(0, (elapsed - 350) * 18 / 1000);
-        // Overlap moving tails/heads before the recording settles into its final circle.
-        // Continue after the frames already played under the blend; never hold or replay the seam.
-        const overlap = 6;
-        const tail = 23;
-        const head = 4;
-        const restart = head + overlap;
-        const length = tail - head;
-        if (clock < tail) return {position: clock, index: Math.floor(clock), cycle: -1, bridge: false};
-        const cycle = Math.floor((clock - tail) / length);
-        const offset = (clock - tail) % length;
-        if (offset < overlap) return {
-            position: tail + offset,
-            index: tail + Math.floor(offset),
-            nextPosition: head + offset,
-            nextIndex: head + Math.floor(offset),
-            cycle: cycle,
-            bridge: true,
-            blend: offset / overlap
-        };
-        const position = restart + offset - overlap;
-        return {position: position, index: Math.floor(position), cycle: cycle, bridge: false};
+    function orbitMotion(elapsed) {
+        // The recording contains a one-shot spin that settles, not a complete loop.
+        // Keep one unbroken angle instead of rewinding or crossfading that clip.
+        const turns = Math.max(0, elapsed - 350) / ORBIT_MS;
+        return {angle: turns * Math.PI * 2, cycle: Math.floor(turns)};
     }
 
     function drawOrbit(motion) {
         if (!context || !done.complete || !done.naturalWidth) return false;
-        const blend = motion.bridge ? motion.blend : 0;
-        const key = 'orbit:' + motion.position.toFixed(3) + ':' + blend.toFixed(3);
+        const key = 'orbit:' + motion.angle;
         if (lastDraw === key) return true;
-        // Interpolate native frames at display refresh rate instead of holding each
-        // source frame while slowing the orbit. Both sides of the seam keep moving.
         context.clearRect(0, 0, 256, 256);
+        context.save();
         context.globalCompositeOperation = 'lighter';
-        function sample(position, weight) {
-            const index = Math.floor(position);
-            const fraction = position - index;
-            [[index, weight * (1 - fraction)], [index + 1, weight * fraction]].forEach(([tile, alpha]) => {
-                if (alpha <= 0) return;
-                context.globalAlpha = alpha;
-                context.drawImage(done, (tile % 8) * 256, Math.floor(tile / 8) * 256, 256, 256, 0, 0, 256, 256);
-            });
+        // Project the recording's clean green circle (frame 30) as two ring
+        // planes. Signed cosine passes through each edge-on pose continuously;
+        // both position and velocity match across every full revolution.
+        function ring(yaw, roll, opacity) {
+            const c = Math.cos(roll), s = Math.sin(roll);
+            const depth = Math.cos(yaw);
+            context.setTransform(c * depth, s * depth, -s, c, 128, 128);
+            context.globalAlpha = opacity;
+            context.drawImage(done, 6 * 256, 3 * 256, 256, 256, -128, -128, 256, 256);
         }
-        sample(motion.position, 1 - blend);
-        if (blend > 0) sample(motion.nextPosition, blend);
-        context.globalCompositeOperation = 'source-over';
-        context.globalAlpha = 1;
+        const angle = motion.angle;
+        ring(angle + 1.65, .05 + .25 * Math.sin(angle), .28);
+        ring(angle + 1.05, .45 + .25 * Math.sin(angle), 1);
+        context.restore();
         lastDraw = key;
         return true;
     }
 
     function crossedExit(motion) {
-        if (!previousMotion) return motion.position >= EXIT_FRAME && !motion.bridge;
-        return !motion.bridge && motion.position >= EXIT_FRAME &&
-            (previousMotion.cycle !== motion.cycle || previousMotion.position < EXIT_FRAME);
+        return previousMotion && motion.cycle > previousMotion.cycle;
     }
 
     function shapeTarget(now) {
@@ -223,8 +200,13 @@
             } else if (progress < RECOGNITION_MS) {
                 phase('recognizing');
                 const index = Math.min(FACE_END, FACE_START + Math.floor(progress * 60 / 1000));
-                // Join two real recordings at their matching upright-orbit poses, preserving source motion.
-                draw(scan, index, done, Math.min(30, EXIT_FRAME + Math.floor(progress * 60 / 1000)), 1 - smooth(progress / 90));
+                // Let the orbit keep moving while the recorded face takes over.
+                if (progress < 90) {
+                    drawOrbit(orbitMotion(elapsed));
+                    context.globalAlpha = smooth(progress / 90);
+                    context.drawImage(scan, (index % 8) * 256, Math.floor(index / 8) * 256, 256, 256, 0, 0, 256, 256);
+                    context.globalAlpha = 1;
+                } else draw(scan, index);
             } else if (progress < RECOGNITION_MS + FACE_HOLD_MS) {
                 phase('face');
                 draw(scan, FACE_END);
@@ -243,17 +225,17 @@
                 }
             }
         } else {
-            const motion = nativeMotion(elapsed);
+            const motion = orbitMotion(elapsed);
             if (reduced) draw(done, 30);
             else drawOrbit(motion);
             if (state === 'opening' && elapsed >= (reduced ? 0 : 780)) loader.dataset.state = 'scanning';
-            // Data arriving midway through the orbit finishes at its next matching pose, rather than snapping.
+            // Finish at the next full revolution so readiness never resets the orbit mid-turn.
             if (finishRequested && (reduced || (elapsed >= 900 && crossedExit(motion))) &&
                 scan.complete && scan.naturalWidth && done.complete && done.naturalWidth) {
                 loader.dataset.state = 'completing';
                 label.textContent = '데이터 동기화 완료';
                 completionStarted = now;
-                draw(reduced ? scan : done, reduced ? FACE_END : EXIT_FRAME);
+                if (reduced) draw(scan, FACE_END);
             }
             previousMotion = motion;
             updateSurface(now);
