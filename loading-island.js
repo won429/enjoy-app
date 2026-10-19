@@ -9,8 +9,10 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const scan = new Image();
     const done = new Image();
+    const orbit = new Image();
     scan.src = 'assets/loading-island/scan.webp?v=20261018-4';
     done.src = 'assets/loading-island/done.webp';
+    orbit.src = 'assets/loading-island/orbit.webp?v=20261019-8';
     let frame = 0;
     let started = 0;
     let previousTick = 0;
@@ -25,7 +27,7 @@
     let shape = null;
     let velocity = null;
     let previousMotion = null;
-    const ORBIT_MS = 1800;
+    const ORBIT_MS = 1500;
     const FACE_START = 30;
     const FACE_END = 60;
     const RECOGNITION_MS = 500;
@@ -57,32 +59,33 @@
     }
 
     function orbitMotion(elapsed) {
-        // The recording contains a one-shot spin that settles, not a complete loop.
-        // Keep one unbroken angle instead of rewinding or crossfading that clip.
+        // Both volumetric rings were rendered from continuous 3D rotations.
+        // Atlas timing compensates for slow-looking frontal poses. Advance
+        // its 60fps frames continuously, without braking or reversing.
         const turns = Math.max(0, elapsed - 350) / ORBIT_MS;
-        return {angle: turns * Math.PI * 2, cycle: Math.floor(turns)};
+        return {angle: turns * Math.PI * 2, position: turns * 90, cycle: Math.floor(turns)};
     }
 
     function drawOrbit(motion) {
-        if (!context || !done.complete || !done.naturalWidth) return false;
-        const key = 'orbit:' + motion.angle;
+        if (!context) return false;
+        if (!orbit.complete || !orbit.naturalWidth) return draw(done, 30);
+        const key = 'orbit:' + motion.position;
         if (lastDraw === key) return true;
         context.clearRect(0, 0, 256, 256);
         context.save();
         context.globalCompositeOperation = 'lighter';
-        // Project the recording's clean green circle (frame 30) as two ring
-        // planes. Signed cosine passes through each edge-on pose continuously;
-        // both position and velocity match across every full revolution.
-        function ring(yaw, roll, opacity) {
-            const c = Math.cos(roll), s = Math.sin(roll);
-            const depth = Math.cos(yaw);
-            context.setTransform(c * depth, s * depth, -s, c, 128, 128);
-            context.globalAlpha = opacity;
-            context.drawImage(done, 6 * 256, 3 * 256, 256, 256, -128, -128, 256, 256);
+        // Unlike a squeezed bitmap, these frames keep tube thickness, depth,
+        // soft volume and a wrapped motion-blur shutter even at edge-on poses.
+        // Interpolate adjacent frames at display refresh rate, including 179→0.
+        const index = Math.floor(motion.position);
+        const fraction = motion.position - index;
+        function sample(frame, weight) {
+            const tile = frame % 180;
+            context.globalAlpha = weight;
+            context.drawImage(orbit, (tile % 8) * 128, Math.floor(tile / 8) * 128, 128, 128, 0, 0, 256, 256);
         }
-        const angle = motion.angle;
-        ring(angle + 1.65, .05 + .25 * Math.sin(angle), .28);
-        ring(angle + 1.05, .45 + .25 * Math.sin(angle), 1);
+        sample(index, 1 - fraction);
+        sample(index + 1, fraction);
         context.restore();
         lastDraw = key;
         return true;
@@ -229,7 +232,7 @@
             if (reduced) draw(done, 30);
             else drawOrbit(motion);
             if (state === 'opening' && elapsed >= (reduced ? 0 : 780)) loader.dataset.state = 'scanning';
-            // Finish at the next full revolution so readiness never resets the orbit mid-turn.
+            // Finish at the next turn boundary so readiness never resets the orbit mid-turn.
             if (finishRequested && (reduced || (elapsed >= 900 && crossedExit(motion))) &&
                 scan.complete && scan.naturalWidth && done.complete && done.naturalWidth) {
                 loader.dataset.state = 'completing';
