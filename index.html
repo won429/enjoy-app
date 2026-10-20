@@ -299,11 +299,11 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
-        #schedule-subnav {
+        :is(#schedule-subnav, #wallet-subnav) {
             max-width: calc(100vw - 1.25rem);
             overflow: visible;
         }
-        #schedule-subnav > .liquid-glass {
+        :is(#schedule-subnav, #wallet-subnav) > .liquid-glass {
             max-width: 100%;
         }
         @media (max-width: 380px) {
@@ -459,7 +459,7 @@
         .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); } 
 
         /* 하단 메뉴 인디케이터 애니메이션 */
-        #nav-indicator, #subnav-indicator { will-change: transform, width; }
+        #nav-indicator, :is(#subnav-indicator, #wallet-subnav-indicator) { will-change: transform, width; }
         .nav-transition { transition: transform 0.42s cubic-bezier(0.2, 1.55, 0.35, 1), width 0.42s cubic-bezier(0.2, 1.55, 0.35, 1); }
 
         /* 하단 메뉴 컨테이너 애니메이션 */
@@ -530,7 +530,7 @@
         }
         .dues-detail-confirm:active { transform: scale(.98); opacity: .9; }
         body.dues-detail-open #bottom-nav,
-        body.dues-detail-open #schedule-subnav {
+        body.dues-detail-open :is(#schedule-subnav, #wallet-subnav) {
             opacity: 0;
             pointer-events: none;
         }
@@ -547,22 +547,22 @@
         }
 
         /* 하단 메뉴 버튼 애니메이션: 다이나믹 아일랜드 */
-        #bottom-nav button, #schedule-subnav button { transition: all 0.56s cubic-bezier(0.18, 1.5, 0.32, 1); transform-origin: center; }
-        #bottom-nav button:active, #schedule-subnav button:active {
+        #bottom-nav button, :is(#schedule-subnav, #wallet-subnav) button { transition: all 0.56s cubic-bezier(0.18, 1.5, 0.32, 1); transform-origin: center; }
+        #bottom-nav button:active, :is(#schedule-subnav, #wallet-subnav) button:active {
             transform: translateY(0.125rem) scaleX(1.08) scaleY(0.84);
             transition-duration: 0.09s;
         }
 
         /* 스크롤 시 하단 메뉴 축소 (가운데 정렬 유지, 라벨 숨김) */
-        #bottom-nav button span, #schedule-subnav button span { transition: max-height 0.46s cubic-bezier(0.18, 1.5, 0.32, 1), opacity 0.26s ease, margin 0.46s cubic-bezier(0.18, 1.5, 0.32, 1); max-height: 1rem; overflow: hidden; }
-        #bottom-nav.nav-compact button, #schedule-subnav.nav-compact button { width: 2.875rem; padding: 0.5rem 0; }
-        #bottom-nav.nav-compact button span, #schedule-subnav.nav-compact button span { max-height: 0; opacity: 0; margin-top: -0.125rem; }
-        #bottom-nav.nav-compact button > div, #schedule-subnav.nav-compact button > div { gap: 0; }
+        #bottom-nav button span, :is(#schedule-subnav, #wallet-subnav) button span { transition: max-height 0.46s cubic-bezier(0.18, 1.5, 0.32, 1), opacity 0.26s ease, margin 0.46s cubic-bezier(0.18, 1.5, 0.32, 1); max-height: 1rem; overflow: hidden; }
+        #bottom-nav.nav-compact button, :is(#schedule-subnav, #wallet-subnav).nav-compact button { width: 2.875rem; padding: 0.5rem 0; }
+        #bottom-nav.nav-compact button span, :is(#schedule-subnav, #wallet-subnav).nav-compact button span { max-height: 0; opacity: 0; margin-top: -0.125rem; }
+        #bottom-nav.nav-compact button > div, :is(#schedule-subnav, #wallet-subnav).nav-compact button > div { gap: 0; }
         /* 탭 전환 시 메뉴 크기를 순간적으로 확정(애니메이션 끔)하여 인디케이터 위치 오차 방지 */
         #bottom-nav.no-nav-anim, #bottom-nav.no-nav-anim button, #bottom-nav.no-nav-anim button span { transition: none !important; }
 
         /* 뒷배경이 밝을 때 하단 메뉴 글자/아이콘을 어둡게 전환 (버튼별 개별 보정) */
-        #bottom-nav button i, #bottom-nav button span, #schedule-subnav button i, #schedule-subnav button span { transition: color 0.12s ease; }
+        #bottom-nav button i, #bottom-nav button span, :is(#schedule-subnav, #wallet-subnav) button i, :is(#schedule-subnav, #wallet-subnav) button span { transition: color 0.12s ease; }
         #bottom-nav button.btn-on-light .text-white { color: #141414 !important; }
         #bottom-nav button.btn-on-light .text-gray-300 { color: rgba(20, 20, 20, 0.82) !important; }
         #bottom-nav.nav-on-light button .text-white { color: #141414 !important; }
@@ -7168,18 +7168,24 @@
             .community-back-fab { animation: none; transition: none; }
         }
 
-        /* 선택한 메뉴가 가운데 모인 뒤 일정 메뉴로 펼쳐지는 전환 */
-        #bottom-nav > .liquid-glass, #schedule-subnav > .liquid-glass {
+        #wallet-subnav > .liquid-glass > button {
+            width: min(4rem, calc((100vw - 6.75rem) / 4));
+            flex-shrink: 0;
+        }
+        #wallet-subnav.nav-compact > .liquid-glass > button { width: 2.875rem; }
+
+        /* 선택한 메뉴가 가운데 모인 뒤 전용 메뉴로 펼쳐지는 전환 */
+        #bottom-nav > .liquid-glass, :is(#schedule-subnav, #wallet-subnav) > .liquid-glass {
             transition: none;
         }
         .liquid-glass.nav-collapsed { visibility: hidden; pointer-events: none; }
-        #bottom-nav:has(> .nav-collapsed), #schedule-subnav:has(> .nav-collapsed) { pointer-events: none; }
-        #schedule-subnav { padding-left: 4rem; }
-        #schedule-subnav > .liquid-glass {
+        #bottom-nav:has(> .nav-collapsed), :is(#schedule-subnav, #wallet-subnav):has(> .nav-collapsed) { pointer-events: none; }
+        :is(#schedule-subnav, #wallet-subnav) { padding-left: 4rem; }
+        :is(#schedule-subnav, #wallet-subnav) > .liquid-glass {
             -webkit-mask-image: -webkit-radial-gradient(white, black);
             clip-path: inset(0 round 62.4375rem);
         }
-        #schedule-subnav #subnav-back {
+        :is(#schedule-subnav, #wallet-subnav) :is(#subnav-back, #wallet-subnav-back) {
             position: absolute;
             left: 0;
             top: 50%;
@@ -7189,8 +7195,8 @@
             border-radius: 50%;
             transform: translateY(-50%);
         }
-        #schedule-subnav.nav-compact #subnav-back { width: 2.875rem; height: 2.875rem; }
-        #schedule-subnav:has(> .nav-collapsed) #subnav-back { visibility: hidden; }
+        :is(#schedule-subnav, #wallet-subnav).nav-compact :is(#subnav-back, #wallet-subnav-back) { width: 2.875rem; height: 2.875rem; }
+        :is(#schedule-subnav, #wallet-subnav):has(> .nav-collapsed) :is(#subnav-back, #wallet-subnav-back) { visibility: hidden; }
         .nav-morph-surface {
             position: fixed;
             z-index: 51;
@@ -7690,14 +7696,14 @@
             /* 보호 ② 하단 메뉴 (JS가 버튼별로 보정 → 기본은 흰색) */
             #bottom-nav button .text-white { color: #FFFFFF !important; }
             #bottom-nav button .text-gray-300 { color: rgba(255, 255, 255, 0.7) !important; }
-            #schedule-subnav > .liquid-glass {
+            :is(#schedule-subnav, #wallet-subnav) > .liquid-glass {
                 background: rgba(255,255,255,.48);
                 border-color: rgba(0,0,0,.10);
                 box-shadow: 0 0.875rem 2.625rem rgba(0,0,0,.16), 0 0.25rem 0.75rem rgba(0,0,0,.10);
             }
-            #schedule-subnav button .text-white { color: #141414 !important; }
-            #schedule-subnav button .text-gray-300 { color: rgba(20, 20, 20, 0.82) !important; }
-            #schedule-subnav #subnav-indicator {
+            :is(#schedule-subnav, #wallet-subnav) button .text-white { color: #141414 !important; }
+            :is(#schedule-subnav, #wallet-subnav) button .text-gray-300 { color: rgba(20, 20, 20, 0.82) !important; }
+            :is(#schedule-subnav, #wallet-subnav) :is(#subnav-indicator, #wallet-subnav-indicator) {
                 background-color: rgba(0, 0, 0, 0.12) !important;
                 box-shadow: inset 0 0.0625rem 0.0625rem rgba(255, 255, 255, 0.45) !important;
                 border-color: rgba(0, 0, 0, 0.06) !important;
@@ -10131,89 +10137,85 @@
 
     <!-- 💰 모임통장 화면 -->
     <div id="meeting-screen" class="hidden fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-30 flex-col overflow-hidden bg-black">
-        <header class="flex-none pt-safe px-5 pb-2 flex justify-between items-center bg-black z-10 sticky top-0">
-            <h2 class="text-[22px] font-bold text-white tracking-tight">모임통장</h2>
+        <header id="wallet-header" class="flex-none pt-safe px-5 pb-2 flex justify-between items-center bg-black z-10 sticky top-0">
+            <h2 id="wallet-title" class="text-[22px] font-bold text-white tracking-tight">모임통장</h2>
         </header>
 
-        <div class="flex flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-3 w-full max-w-md mx-auto">
+        <div id="wallet-scroll" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-3 w-full max-w-md mx-auto">
+            <div id="wallet-panel-wallet">
 
-            <!-- 공용 계좌 잔액 (색 없이 깔끔하게) -->
-            <div class="px-1 pb-6">
-                <div class="flex items-center gap-1.5 mb-2">
-                    <i class="fa-solid fa-piggy-bank text-[#3182F6] text-[13px]"></i>
-                    <span class="text-[13px] font-semibold text-gray-400">엔조이 공용 계좌</span>
-                </div>
-                <h3 id="total-balance" class="text-[36px] font-bold text-white tracking-tight leading-none">448,999<span class="text-[22px] font-bold text-white ml-1">원</span></h3>
-            </div>
-
-            <section id="meeting-my-benefits" class="meeting-my-benefits" aria-label="내 부과금·유예 및 면제권" aria-live="polite"></section>
-            <section id="meeting-my-discounts" class="meeting-my-benefits" aria-label="내 보유 할인권 내역" aria-live="polite"></section>
-
-            <!-- 공지사항 배너 (가로 자동 스크롤) -->
-            <div id="meeting-notice-banner" class="hidden mb-6">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-bullhorn text-[#3182F6] text-[12px] shrink-0"></i>
-                    <div class="flex-1 overflow-hidden whitespace-nowrap">
-                        <span id="meeting-notice-text" class="notice-marquee inline-block text-[13.5px] text-gray-300 font-medium tracking-tight"></span>
+                <!-- 공용 계좌 잔액 (색 없이 깔끔하게) -->
+                <div class="px-1 pb-6">
+                    <div class="flex items-center gap-1.5 mb-2">
+                        <i class="fa-solid fa-piggy-bank text-[#3182F6] text-[13px]"></i>
+                        <span class="text-[13px] font-semibold text-gray-400">엔조이 공용 계좌</span>
                     </div>
-                </div>
-            </div>
-
-            <!-- 전체 내역: 처음에는 접힌 상태 -->
-            <div class="meeting-full-lists">
-                <details class="meeting-full-list">
-                    <summary><span><i class="fa-solid fa-triangle-exclamation text-[#F04452]" aria-hidden="true"></i>부과금·유예 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
-                    <div id="penalty-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full"></div>
-                </details>
-                <details class="meeting-full-list">
-                    <summary><span><i class="fa-solid fa-ticket-simple text-[#3182F6]" aria-hidden="true"></i>면제권 보유 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
-                    <div id="ticket-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full"></div>
-                </details>
-                <details class="meeting-full-list">
-                    <summary><span><i class="fa-solid fa-ticket-simple text-[#3182F6]" aria-hidden="true"></i>할인권 보유 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
-                    <div id="discount-list-mini" class="meeting-discount-members" aria-live="polite"></div>
-                </details>
-            </div>
-
-            <!-- 납부 내역 / 가계부 (탭으로 전환) -->
-            <div class="border-t border-white/5 pt-5">
-                <!-- 광고 (카카오 애드핏) — 납부/사용 내역 탭 바로 위 -->
-                <div id="meeting-ad" class="flex justify-center mb-3 min-h-[50px]"></div>
-
-                <!-- 탭 -->
-                <div class="flex gap-1 bg-white/5 p-1 rounded-2xl mb-4">
-                    <button id="mtab-dues" onclick="window.haptic(); window.switchMeetingTab('dues')" class="meeting-tab mtab-active flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors"><i class="fa-solid fa-coins mr-1.5 text-[11px]"></i>납부 내역</button>
-                    <button id="mtab-expense" onclick="window.haptic(); window.switchMeetingTab('expense')" class="meeting-tab flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors"><i class="fa-solid fa-book-open mr-1.5 text-[11px]"></i>가계부</button>
+                    <h3 id="total-balance" class="text-[36px] font-bold text-white tracking-tight leading-none">448,999<span class="text-[22px] font-bold text-white ml-1">원</span></h3>
                 </div>
 
-                <!-- 납부 내역 패널 -->
-                <div id="mpanel-dues">
-                    <div class="flex justify-center items-center gap-3 mb-3">
-                        <button onclick="window.haptic(); window.changeDuesMonth(-1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>
-                        <span id="dues-month-title" class="text-[15px] font-bold text-white min-w-[92px] text-center tabular-nums">2026년 1월</span>
-                        <button onclick="window.haptic(); window.changeDuesMonth(1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-right text-[14px]"></i></button>
-                    </div>
-                    <div id="dues-list" class="flex flex-col px-1"></div>
-                </div>
+                <section id="meeting-my-benefits" class="meeting-my-benefits" aria-label="내 부과금·유예 및 면제권" aria-live="polite"></section>
+                <section id="meeting-my-discounts" class="meeting-my-benefits" aria-label="내 보유 할인권 내역" aria-live="polite"></section>
 
-                <!-- 가계부 패널 -->
-                <div id="mpanel-expense" class="hidden">
-                    <div class="ledger-surface rounded-[20px] p-4 mb-4">
-                        <label class="text-[10.5px] font-bold text-[#3182F6] block mb-1.5"><i class="fa-regular fa-calendar-check mr-1"></i>모임별 가계부</label>
-                        <div id="ledger-meeting-picker" class="vlog-region-picker ledger-meeting-picker"></div>
-                        <p id="ledger-meeting-period" class="text-[10px] text-gray-500 mt-2"></p>
-                    </div>
-                    <div id="ledger-insights"></div>
-                    <div class="flex items-center justify-between mt-7 mb-2 px-1">
-                        <div>
-                            <h3 class="text-[16px] font-black text-white tracking-tight">수입 · 지출 내역</h3>
+                <!-- 공지사항 배너 (가로 자동 스크롤) -->
+                <div id="meeting-notice-banner" class="hidden mb-6">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-bullhorn text-[#3182F6] text-[12px] shrink-0"></i>
+                        <div class="flex-1 overflow-hidden whitespace-nowrap">
+                            <span id="meeting-notice-text" class="notice-marquee inline-block text-[13.5px] text-gray-300 font-medium tracking-tight"></span>
                         </div>
-                        <i class="fa-solid fa-receipt text-[14px] text-gray-600"></i>
                     </div>
-                    <div id="expense-list" class="flex flex-col px-1"></div>
+                </div>
+
+                <!-- 전체 내역: 처음에는 접힌 상태 -->
+                <div class="meeting-full-lists">
+                    <details class="meeting-full-list">
+                        <summary><span><i class="fa-solid fa-triangle-exclamation text-[#F04452]" aria-hidden="true"></i>부과금·유예 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
+                        <div id="penalty-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full"></div>
+                    </details>
+                    <details class="meeting-full-list">
+                        <summary><span><i class="fa-solid fa-ticket-simple text-[#3182F6]" aria-hidden="true"></i>면제권 보유 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
+                        <div id="ticket-list-mini" class="flex flex-col gap-y-1.5 pb-1 w-full"></div>
+                    </details>
+                    <details class="meeting-full-list">
+                        <summary><span><i class="fa-solid fa-ticket-simple text-[#3182F6]" aria-hidden="true"></i>할인권 보유 전체보기</span><i class="fa-solid fa-chevron-down meeting-fold-chevron" aria-hidden="true"></i></summary>
+                        <div id="discount-list-mini" class="meeting-discount-members" aria-live="polite"></div>
+                    </details>
+                </div>
+
+                <!-- 기존 지갑 광고 -->
+                <div class="border-t border-white/5 pt-5">
+                    <div id="meeting-ad" class="flex justify-center mb-3 min-h-[50px]"></div>
                 </div>
             </div>
-            <div class="app-copyright-slot pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.<br><a class="enjoy-privacy-link" href="privacy.html">개인정보처리방침</a></p></div>
+
+            <!-- 납부 내역 패널 -->
+            <div id="mpanel-dues" class="hidden">
+                <div class="flex justify-center items-center gap-3 mb-3">
+                    <button onclick="window.haptic(); window.changeDuesMonth(-1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-left text-[14px]"></i></button>
+                    <span id="dues-month-title" class="text-[15px] font-bold text-white min-w-[92px] text-center tabular-nums">2026년 1월</span>
+                    <button onclick="window.haptic(); window.changeDuesMonth(1)" class="text-gray-500 hover:text-white active:scale-90 transition-all px-1"><i class="fa-solid fa-chevron-right text-[14px]"></i></button>
+                </div>
+                <div id="dues-list" class="flex flex-col px-1"></div>
+            </div>
+
+            <!-- 가계부 패널 -->
+            <div id="mpanel-expense" class="hidden">
+                <div class="ledger-surface rounded-[20px] p-4 mb-4">
+                    <label class="text-[10.5px] font-bold text-[#3182F6] block mb-1.5"><i class="fa-regular fa-calendar-check mr-1"></i>모임별 가계부</label>
+                    <div id="ledger-meeting-picker" class="vlog-region-picker ledger-meeting-picker"></div>
+                    <p id="ledger-meeting-period" class="text-[10px] text-gray-500 mt-2"></p>
+                </div>
+                <div id="ledger-insights"></div>
+                <div class="flex items-center justify-between mt-7 mb-2 px-1">
+                    <div>
+                        <h3 class="text-[16px] font-black text-white tracking-tight">수입 · 지출 내역</h3>
+                    </div>
+                    <i class="fa-solid fa-receipt text-[14px] text-gray-600"></i>
+                </div>
+                <div id="expense-list" class="flex flex-col px-1"></div>
+            </div>
+            <div id="wallet-panel-investment" class="hidden" aria-label="투자"></div>
+            <div id="wallet-copyright" class="app-copyright-slot pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.<br><a class="enjoy-privacy-link" href="privacy.html">개인정보처리방침</a></p></div>
         </div>
     </div>
 
@@ -10315,6 +10317,40 @@
             </button>
         </div>
         <button id="subnav-back" type="button" aria-label="뒤로" onclick="window.haptic && window.haptic(); window.handleScheduleBack()" class="liquid-glass group z-10">
+            <i class="fa-solid fa-arrow-left text-base text-gray-300 group-hover:text-white"></i>
+        </button>
+    </nav>
+
+    <!-- 지갑 화면 전용 하단 메뉴 -->
+    <nav id="wallet-subnav" inert aria-hidden="true" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-auto select-none pointer-events-none">
+        <div class="liquid-glass nav-collapsed flex items-center rounded-full p-1.5 gap-1 relative">
+            <div id="wallet-subnav-indicator" class="absolute top-1 bottom-1 bg-white/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full backdrop-blur-[2px] border border-white/20 z-0 nav-transition" style="left: 0.375rem; width: 4rem; opacity: 0;"></div>
+            <button id="wallet-subnav-wallet" type="button" onclick="window.haptic && window.haptic(); window.switchWalletSub('wallet')" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
+                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                    <i class="fa-solid fa-wallet text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">지갑</span>
+                </div>
+            </button>
+            <button id="wallet-subnav-dues" type="button" onclick="window.haptic && window.haptic(); window.switchWalletSub('dues')" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
+                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                    <i class="fa-solid fa-coins text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">내역</span>
+                </div>
+            </button>
+            <button id="wallet-subnav-expense" type="button" onclick="window.haptic && window.haptic(); window.switchWalletSub('expense')" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
+                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                    <i class="fa-solid fa-book-open text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">가계부</span>
+                </div>
+            </button>
+            <button id="wallet-subnav-investment" type="button" onclick="window.haptic && window.haptic(); window.switchWalletSub('investment')" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
+                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
+                    <i class="fa-solid fa-chart-line text-base text-gray-300 group-hover:text-white transition-colors"></i>
+                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">투자</span>
+                </div>
+            </button>
+        </div>
+        <button id="wallet-subnav-back" type="button" aria-label="뒤로" onclick="window.haptic && window.haptic(); window.goHome()" class="liquid-glass group z-10">
             <i class="fa-solid fa-arrow-left text-base text-gray-300 group-hover:text-white"></i>
         </button>
     </nav>
@@ -14559,19 +14595,30 @@
             window.renderDues(window.currentDuesMonth, window.currentDuesYear);
         }
 
-        // 모임통장 납부/사용 내역 탭 전환
-        window.switchMeetingTab = function(name) {
+        window.switchWalletSub = function(name) {
+            const panels = { wallet: 'wallet-panel-wallet', dues: 'mpanel-dues', expense: 'mpanel-expense', investment: 'wallet-panel-investment' };
+            if (!panels[name]) name = 'wallet';
+            window._walletSub = name;
             window.meetingTab = name;
-            const dP = document.getElementById('mpanel-dues');
-            const eP = document.getElementById('mpanel-expense');
-            if (dP) dP.classList.toggle('hidden', name !== 'dues');
-            if (eP) eP.classList.toggle('hidden', name !== 'expense');
-            [['mtab-dues', 'dues'], ['mtab-expense', 'expense']].forEach(([id, n]) => {
-                const b = document.getElementById(id);
-                if (b) b.classList.toggle('mtab-active', n === name);
+            if (window.closeDuesDetail) window.closeDuesDetail();
+            Object.entries(panels).forEach(([key, id]) => {
+                const panel = document.getElementById(id);
+                if (panel) panel.classList.toggle('hidden', key !== name);
             });
+            const header = document.getElementById('wallet-header');
+            const title = document.getElementById('wallet-title');
+            const copyright = document.getElementById('wallet-copyright');
+            if (header) header.classList.toggle('hidden', name === 'investment');
+            if (title) title.textContent = { wallet: '모임통장', dues: '납부 내역', expense: '가계부', investment: '' }[name];
+            if (copyright) copyright.classList.toggle('hidden', name === 'investment');
+            const scroll = document.getElementById('wallet-scroll');
+            if (scroll) scroll.scrollTop = 0;
+            if (window.setWalletNavCompact) window.setWalletNavCompact(false);
+            if ((name === 'wallet' || name === 'dues') && window.renderDues) window.renderDues(window.currentDuesMonth, window.currentDuesYear);
             if (name === 'expense' && window.renderExpenses) window.renderExpenses();
+            if (window.updateWalletNavActive) window.updateWalletNavActive(name);
         };
+        window.switchMeetingTab = window.switchWalletSub;
 
         window.updateMeetingUI = function(data) {
             if (data.records) {
@@ -16596,21 +16643,30 @@
             let finish = null;
             return function (which) {
                 const mainNav = document.getElementById('bottom-nav');
-                const subNav = document.getElementById('schedule-subnav');
-                if (!mainNav || !subNav) return;
-                const enteringSub = which === 'sub';
-                const enterNav = enteringSub ? subNav : mainNav;
-                const leaveNav = enteringSub ? mainNav : subNav;
+                const navs = {
+                    main: mainNav,
+                    sub: document.getElementById('schedule-subnav'),
+                    wallet: document.getElementById('wallet-subnav')
+                };
+                if (!navs[which] || !navs[active]) return;
+                const enterNav = navs[which];
+                const leaveNav = navs[active];
                 const enter = enterNav.querySelector('div.liquid-glass');
                 const leave = leaveNav.querySelector('div.liquid-glass');
                 if (window.updateSubnavActive) window.updateSubnavActive(window._schedSub || 'calendar');
+                if (window.updateWalletNavActive) window.updateWalletNavActive(window._walletSub || 'wallet');
                 if (active === which) return;
                 if (finish) finish();
+                const previous = active;
                 active = which;
                 const source = leave.getBoundingClientRect();
                 const target = enter.getBoundingClientRect();
-                const sourceButton = document.getElementById(enteringSub ? 'nav-calendar' : 'subnav-' + (window._schedSub || 'calendar'));
-                const targetButton = document.getElementById(enteringSub ? 'subnav-' + (window._schedSub || 'calendar') : 'nav-calendar');
+                const selectedButton = function (menu, other) {
+                    if (menu === 'main') return document.getElementById(other === 'wallet' ? 'nav-meeting' : 'nav-calendar');
+                    return document.getElementById(menu === 'wallet' ? 'wallet-subnav-' + (window._walletSub || 'wallet') : 'subnav-' + (window._schedSub || 'calendar'));
+                };
+                const sourceButton = selectedButton(previous, which);
+                const targetButton = selectedButton(which, previous);
                 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                 const animations = [];
                 let surface = null;
@@ -16696,8 +16752,8 @@
                 enter.querySelectorAll('button').forEach((button, index) => {
                     play(button, [{ opacity: 0, transform: 'scale(.86)' }, { opacity: 0, transform: 'scale(.86)', offset: .6 + index * .025 }, { opacity: 1, transform: 'scale(1)' }]);
                 });
-                const back = document.getElementById('subnav-back');
-                if (enteringSub && back) play(back, [{ opacity: 0, transform: 'translateY(-50%) scale(.5)' }, { opacity: 0, transform: 'translateY(-50%) scale(.5)', offset: .6 }, { opacity: 1, transform: 'translateY(-50%) scale(1)' }]);
+                const back = enterNav.querySelector('#subnav-back, #wallet-subnav-back');
+                if (which !== 'main' && back) play(back, [{ opacity: 0, transform: 'translateY(-50%) scale(.5)' }, { opacity: 0, transform: 'translateY(-50%) scale(.5)', offset: .6 }, { opacity: 1, transform: 'translateY(-50%) scale(1)' }]);
                 animations[0].finished.then(complete, function () {});
             };
         })();
@@ -16716,6 +16772,24 @@
                 }
             });
             const ind = document.getElementById('subnav-indicator'); const btn = map[tab] ? document.getElementById(map[tab]) : null;
+            if (ind && btn) { ind.style.opacity = '1'; ind.style.width = btn.offsetWidth + 'px'; ind.style.transform = 'translateX(' + (btn.offsetLeft - 6) + 'px)'; }
+            else if (ind) ind.style.opacity = '0';
+        };
+
+        window.updateWalletNavActive = function (tab) {
+            const map = { wallet: 'wallet-subnav-wallet', dues: 'wallet-subnav-dues', expense: 'wallet-subnav-expense', investment: 'wallet-subnav-investment' };
+            Object.keys(map).forEach(key => {
+                const b = document.getElementById(map[key]); if (!b) return;
+                const icon = b.querySelector('i'), label = b.querySelector('span');
+                const active = (key === tab);
+                b.setAttribute('aria-pressed', String(active));
+                if (icon) { icon.classList.toggle('text-white', active); icon.classList.toggle('text-gray-300', !active); }
+                if (label) {
+                    label.classList.toggle('text-white', active); label.classList.toggle('font-bold', active);
+                    label.classList.toggle('text-gray-300', !active); label.classList.toggle('font-medium', !active);
+                }
+            });
+            const ind = document.getElementById('wallet-subnav-indicator'); const btn = map[tab] ? document.getElementById(map[tab]) : null;
             if (ind && btn) { ind.style.opacity = '1'; ind.style.width = btn.offsetWidth + 'px'; ind.style.transform = 'translateX(' + (btn.offsetLeft - 6) + 'px)'; }
             else if (ind) ind.style.opacity = '0';
         };
@@ -19020,13 +19094,12 @@
             else if(index===4) {
                 meet.classList.remove('hidden');
                 meet.classList.add('flex');
-                window.renderDues(window.currentDuesMonth, window.currentDuesYear);
-                try { window.renderExpenses(); } catch (e) {}
+                window.switchWalletSub(window._walletSub || 'wallet');
                 if (window.enjoyScheduleAd) window.enjoyScheduleAd('meeting-ad', 'DAN-Jvtr8N7gGvSbJ9V1');
             }
 
-            // 일정 화면(3)에서만 전용 서브 메뉴를 노출한다.
-            if (window.setActiveNav) window.setActiveNav(index === 3 ? 'sub' : 'main');
+            // 일정과 지갑은 각각 전용 하단 메뉴를 노출한다.
+            if (window.setActiveNav) window.setActiveNav(index === 3 ? 'sub' : index === 4 ? 'wallet' : 'main');
 
             const ind = document.getElementById('nav-indicator');
             const btns = [
@@ -19151,15 +19224,45 @@
             window.animateSubnavIndicator();
         };
 
+        window.walletNavCompact = false;
+        window._walletNavTrackRAF = null;
+        window.animateWalletNavIndicator = function (duration) {
+            duration = duration || 600;
+            const ind = document.getElementById('wallet-subnav-indicator');
+            if (ind) ind.classList.remove('nav-transition');
+            if (window._walletNavTrackRAF) cancelAnimationFrame(window._walletNavTrackRAF);
+            const start = performance.now();
+            const tick = (now) => {
+                if (window.updateWalletNavActive) window.updateWalletNavActive(window._walletSub || 'wallet');
+                if (now - start < duration) window._walletNavTrackRAF = requestAnimationFrame(tick);
+                else { window._walletNavTrackRAF = null; if (ind) ind.classList.add('nav-transition'); }
+            };
+            window._walletNavTrackRAF = requestAnimationFrame(tick);
+        };
+        window.setWalletNavCompact = function (compact) {
+            if (compact === window.walletNavCompact) return;
+            window.walletNavCompact = compact;
+            const nav = document.getElementById('wallet-subnav');
+            if (!nav) return;
+            nav.classList.toggle('nav-compact', compact);
+            window.animateWalletNavIndicator();
+        };
+
         (function initNavShrink() {
-            // 기존 하단 메뉴: 홈/커뮤니티/모임통장 스크롤에 반응
+            // 기존 하단 메뉴: 홈/커뮤니티 스크롤에 반응
             [
                 document.getElementById('home-screen'),
-                document.getElementById('sched-panel-community'),
-                document.querySelector('#meeting-screen > .overflow-y-auto')
+                document.getElementById('sched-panel-community')
             ].filter(Boolean).forEach(c => {
                 c.addEventListener('scroll', () => { window.setNavCompact(c.scrollTop > 24); }, { passive: true });
             });
+            const walletScroll = document.getElementById('wallet-scroll');
+            if (walletScroll) walletScroll.addEventListener('scroll', () => {
+                window.setWalletNavCompact(walletScroll.scrollTop > 24);
+            }, { passive: true });
+            window.addEventListener('resize', () => {
+                if (window.animateWalletNavIndicator) window.animateWalletNavIndicator();
+            }, { passive: true });
             // 일정 화면 서브 메뉴: 일정/스케줄 패널 스크롤에 반응
             ['sched-panel-calendar', 'sched-panel-availability'].forEach(id => {
                 const c = document.getElementById(id); if (!c) return;
