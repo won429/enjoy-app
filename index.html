@@ -4124,9 +4124,9 @@
         .notice-float-expanded-side.is-home .notice-float-expanded-club > span { grid-column: 5; }
         .notice-float-expanded-player { grid-column: 1; grid-row: 3; justify-self: center; width: var(--island-player-width, 100%); max-width: none; min-width: 0; height: 3rem; display: grid; grid-template-columns: minmax(0,1fr); grid-template-rows: 1.25rem .875rem; align-content: center; align-items: center; justify-items: center; gap: .25rem; line-height: 1.3; }
         .notice-float-expanded-side.is-home .notice-float-expanded-player { grid-column: 5; }
-        .notice-float-expanded-player b { display: flex; justify-content: center; align-items: center; gap: .375em; max-width: 100%; min-width: 0; white-space: normal; text-align: center; color: #F5F5F7; font-size: var(--island-player-font-size, .875rem); font-weight: 700; }
+        .notice-float-expanded-player b { display: flex; justify-content: center; align-items: center; gap: .375em; max-width: 100%; min-width: 0; white-space: nowrap; text-align: center; color: #F5F5F7; font-size: var(--island-player-font-size, .875rem); font-weight: 700; }
         .notice-float-expanded-player [data-island-away-player],
-        .notice-float-expanded-player [data-island-home-player] { min-width: 0; overflow: visible; overflow-wrap: anywhere; }
+        .notice-float-expanded-player [data-island-home-player] { flex: none; min-width: 0; overflow: visible; white-space: nowrap; word-break: normal; overflow-wrap: normal; }
         .notice-float-expanded-player small { grid-row: 2; color: #A1A1AA; font-size: .6875rem; white-space: nowrap; }
         .notice-float-expanded-player small:empty,
         .notice-float-expanded-result:empty { display: none; }
@@ -9255,7 +9255,6 @@
                 const line = player.querySelector('b');
                 const name = line.querySelector('[data-island-away-player], [data-island-home-player]');
                 const badge = line.querySelector('.notice-float-expanded-result');
-                name.style.whiteSpace = 'nowrap';
                 const badgeWidth = badge.textContent ? badge.getBoundingClientRect().width + parseFloat(getComputedStyle(line).columnGap) : 0;
                 const naturalWidth = name.scrollWidth + badgeWidth;
                 const available = player.clientWidth - 2;
@@ -9264,7 +9263,6 @@
                     const fitted = Math.max(.625 * fontSize, Math.floor(normalSize * available / naturalWidth * 10) / 10);
                     player.style.setProperty('--island-player-font-size', fitted + 'px');
                 }
-                name.style.removeProperty('white-space');
             });
         }
 
@@ -9275,7 +9273,12 @@
                 fitHomeBaseballIslandPlayerNames();
             });
         }
-        if (homeIslandRoot) new ResizeObserver(scheduleHomeIslandPlayerFit).observe(homeIslandRoot);
+        if (homeIslandRoot) {
+            const playerFitObserver = new ResizeObserver(scheduleHomeIslandPlayerFit);
+            playerFitObserver.observe(homeIslandRoot);
+            // 펼침 모션 중 카드의 실제 크기가 바뀔 때도 이름 폭을 다시 맞춘다.
+            playerFitObserver.observe(homeIslandRoot.querySelector('.notice-float-card'));
+        }
         if (document.fonts) document.fonts.ready.then(scheduleHomeIslandPlayerFit);
 
         function renderHomeBaseballIsland() {
