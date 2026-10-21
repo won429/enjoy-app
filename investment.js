@@ -300,6 +300,8 @@
         canvas.height = Math.round(rect.height * ratio);
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+        const styles = window.getComputedStyle ? window.getComputedStyle(root) : null;
+        const themeColor = (name, fallback) => styles?.getPropertyValue(name).trim() || fallback;
         ctx.scale(ratio, ratio);
         const w = rect.width, h = rect.height;
         const series = feed.histories.get(historyKey());
@@ -308,18 +310,18 @@
         const chartLeft = 6, chartRight = w - 6;
         const intraday = state.period === 'day';
         if (intraday) {
-            ctx.fillStyle = '#909096'; ctx.font = '11px Pretendard, -apple-system, sans-serif';
+            ctx.fillStyle = themeColor('--iv-muted', '#909096'); ctx.font = '11px Pretendard, -apple-system, sans-serif';
             [0,6,12,18,23].forEach(hour => {
                 ctx.textAlign = hour === 0 ? 'left' : hour === 23 ? 'right' : 'center';
                 ctx.fillText(String(hour).padStart(2,'0') + '시', chartLeft + hour / 23 * (chartRight-chartLeft), h*.95);
             });
         }
         if (!history.length) {
-            ctx.fillStyle = '#909096'; ctx.font = '13px Pretendard, -apple-system, sans-serif'; ctx.textAlign = 'center';
+            ctx.fillStyle = themeColor('--iv-muted', '#909096'); ctx.font = '13px Pretendard, -apple-system, sans-serif'; ctx.textAlign = 'center';
             ctx.fillText(intraday ? '오늘의 시세 기록을 기다리고 있어요' : '아직 과거 시세 기록이 없어요', w/2, h*.46);
             canvas.setAttribute('aria-label', intraday ? '당일 시세 기록 없음, 00시부터 23시까지' : '과거 시세 기록 없음'); return;
         }
-        const color = stock.change > 0 ? '#f04452' : stock.change < 0 ? '#3182f6' : '#a6a6b1';
+        const color = stock.change > 0 ? themeColor('--iv-red', '#f04452') : stock.change < 0 ? themeColor('--iv-blue', '#3182f6') : themeColor('--iv-flat', '#a6a6b1');
         const high = Math.max(...history.map(point => point.high)), low = Math.min(...history.map(point => point.low));
         const axisStart = intraday ? series.axisStart : history[0].time;
         const axisEnd = intraday ? series.axisEnd : history[history.length - 1].time;
@@ -341,7 +343,7 @@
         ctx.font = '12px Pretendard, -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(high === low ? '최고·최저 ' + money(high) : '최고 ' + money(high) + ' · 최저 ' + money(low), 0, h * .23 - 18);
-        ctx.strokeStyle = '#4c4c58'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+        ctx.strokeStyle = themeColor('--iv-grid', '#4c4c58'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
         ctx.beginPath(); ctx.moveTo(0,h*.83); ctx.lineTo(w,h*.83); ctx.stroke();
         canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + (stock.kind === 'index' ? ', 관리자 설정' : ', 1시간마다 변동'));
     }
@@ -382,6 +384,12 @@
         if (event.key === 'Escape' && state.selected && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden')) showList(true);
     });
     window.resetInvestmentView = () => showList(false);
+    if (window.matchMedia) {
+        const colorScheme = window.matchMedia('(prefers-color-scheme: light)');
+        const redrawForTheme = () => requestAnimationFrame(drawChart);
+        if (colorScheme.addEventListener) colorScheme.addEventListener('change', redrawForTheme);
+        else if (colorScheme.addListener) colorScheme.addListener(redrawForTheme);
+    }
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => drawChart()).observe($('investment-chart'));
     else window.addEventListener('resize', drawChart);
     window.refreshInvestmentAccount = refreshAccount;
