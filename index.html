@@ -8882,7 +8882,7 @@
         <!-- 브이로그 탭: 최신 배너와 모든 시리즈 -->
         <section id="home-vlog-panel" class="home-vlog-panel hidden" aria-label="엔조이 브이로그">
             <section class="home-content-item home-featured" data-home-category="latest">
-                <div class="home-featured-clean relative overflow-hidden cursor-pointer bg-black group" role="button" tabindex="0" aria-label="최신 브이로그 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                <div class="home-featured-clean relative overflow-hidden cursor-pointer bg-black group" role="button" tabindex="0" aria-label="최신 브이로그 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <img src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" alt="최신 엔조이 브이로그" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/21uUicVMzqg/hqdefault.jpg'">
                     <div class="absolute bottom-5 left-5 right-5 z-10 flex items-end gap-3">
                         <div class="flex-1" aria-hidden="true"></div>
@@ -14324,7 +14324,11 @@
         };
         
         // 내부 브라우저 제어 함수
-        window.openBrowser = function(url) {
+        window.openBrowser = function(url, vlogSource) {
+            const videoId = vlogYoutubeId(url);
+            if (videoId && window.recordEnjoyVlogClick && (vlogSource === 'latest' || Object.values(window.ENJOY_VLOG_PROGRAMS || {}).some(function(program) {
+                return (program.episodes || []).some(function(episode) { return vlogYoutubeId(episode.url) === videoId; });
+            }))) window.recordEnjoyVlogClick(url, vlogSource === 'latest' ? 'latest' : 'episode');
             if (url.includes('youtube.com') || url.includes('youtu.be')) {
                 window.open(url, '_blank');
                 return;
@@ -23274,7 +23278,7 @@
         </div>
     </section>
     <script src="drop-games.js?v=20261018-wallet1"></script>
-    <script src="investment.js?v=20261022-12"></script>
+    <script src="investment.js?v=20261022-13"></script>
     <script src="drop-quiz-firebase.js?v=20261019-quiz5"></script>
     <script src="drop-quiz.js?v=20261019-quiz4"></script>
     <script defer src="drop-games-entry.js?v=20261019-quiz1"></script>

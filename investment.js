@@ -11,6 +11,40 @@
     const pointsPerWon = 100;
     const state = { selected: null, currency: 'POINTS', period: 'day', tab: 'chart' };
     const marketApi = (window.ENJOY_INVESTMENT_API || 'https://enjoy-investment.sungwon4867.workers.dev').replace(/\/$/, '');
+    const vlogClicks = new Map();
+    let vlogClickHour = -1;
+    window.recordEnjoyVlogClick = function (value, source) {
+        let videoId = '';
+        try {
+            const url = new URL(value);
+            if (url.protocol !== 'https:') return;
+            if (url.hostname === 'youtu.be') videoId = url.pathname.split('/')[1];
+            else if (['youtube.com','www.youtube.com','m.youtube.com'].includes(url.hostname)) videoId = url.searchParams.get('v') || /^\/(?:shorts|embed|live)\/([^/]+)/.exec(url.pathname)?.[1];
+        } catch (_) { return; }
+        if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || !['latest','episode'].includes(source) || typeof fetch !== 'function') return;
+        const hour = Math.floor(Date.now()/3_600_000);
+        if (hour !== vlogClickHour) { vlogClicks.clear(); vlogClickHour = hour; }
+        const key = hour + ':' + (window.enjoyUser?.uid || 'guest') + ':' + videoId;
+        if (vlogClicks.has(key)) return vlogClicks.get(key);
+        const pending = (async () => {
+            let success = false, timer;
+            try {
+                const controller = new AbortController();
+                timer = setTimeout(() => controller.abort(), 10000);
+                const token = window.getEnjoyIdToken ? await window.getEnjoyIdToken(false) : null;
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers.Authorization = 'Bearer ' + token;
+                const response = await fetch(marketApi + '/activity/click', { method: 'POST', credentials: 'omit', keepalive: true,
+                    headers, body: JSON.stringify({ videoId, source }), signal: controller.signal });
+                success = response.ok;
+            } catch (_) {} finally {
+                if (timer) clearTimeout(timer);
+                if (!success) vlogClicks.delete(key);
+            }
+        })();
+        vlogClicks.set(key, pending);
+        return pending;
+    };
     const feed = { ready: false, status: 'loading', asOf: 0, revision: -1, validUntil: 0, timer: null, pending: null, histories: new Map(), books: new Map(), loading: new Map() };
     const pointAmount = amount => Math.round(amount).toLocaleString('ko-KR') + ' P';
     const wonAmount = amount => (amount / pointsPerWon).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원';
