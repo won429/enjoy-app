@@ -11,7 +11,7 @@
     const pointsPerWon = 100;
     const state = { selected: null, currency: 'POINTS', period: 'day', tab: 'chart' };
     const marketApi = (window.ENJOY_INVESTMENT_API || 'https://enjoy-investment.sungwon4867.workers.dev').replace(/\/$/, '');
-    const feed = { ready: false, status: 'loading', asOf: 0, revision: -1, validUntil: 0, timer: null, pending: null, histories: new Map(), loading: new Map() };
+    const feed = { ready: false, status: 'loading', asOf: 0, revision: -1, validUntil: 0, timer: null, pending: null, histories: new Map(), books: new Map(), loading: new Map() };
     const pointAmount = amount => Math.round(amount).toLocaleString('ko-KR') + ' P';
     const wonAmount = amount => (amount / pointsPerWon).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원';
     const money = amount => state.currency === 'POINTS' ? pointAmount(amount) : wonAmount(amount);
@@ -36,8 +36,9 @@
             <div class="iv-detail-heading"><h2 id="investment-name" tabindex="-1"></h2><span class="iv-ticker" id="investment-ticker"></span></div>
             <div class="iv-quote"><p class="iv-price"><span id="investment-price"></span><small class="iv-secondary-price" id="investment-secondary-price"></small></p><div id="investment-detail-currency"></div></div>
             <p class="iv-change">직전 시세 대비<span id="investment-change"></span></p>
-            <div class="iv-tabs" role="tablist" aria-label="종목 상세 메뉴"><button type="button" id="investment-chart-tab" role="tab" data-tab="chart" aria-controls="investment-chart-panel" aria-selected="true">차트</button><button type="button" id="investment-orderbook-tab" disabled>호가</button><button type="button" id="investment-holdings-tab" disabled>내 주식</button><button type="button" id="investment-info-tab" role="tab" data-tab="info" aria-controls="investment-info-panel" aria-selected="false">종목정보</button></div>
-            <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} 자세한 차트</p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" aria-label="시세 차트"></canvas></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="오늘" aria-pressed="true">${icon('sun')}</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button></div></div>
+            <div class="iv-tabs" role="tablist" aria-label="종목 상세 메뉴"><button type="button" id="investment-chart-tab" role="tab" data-tab="chart" aria-controls="investment-chart-panel" aria-selected="true">차트</button><button type="button" id="investment-orderbook-tab" role="tab" data-tab="book" aria-controls="investment-orderbook-panel" aria-selected="false">호가</button><button type="button" id="investment-holdings-tab" disabled>내 주식</button><button type="button" id="investment-info-tab" role="tab" data-tab="info" aria-controls="investment-info-panel" aria-selected="false">종목정보</button></div>
+            <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} 자세한 차트</p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" aria-label="시세 차트"></canvas></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="실시간" aria-pressed="true">실시간</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button></div></div>
+            <div id="investment-orderbook-panel" class="iv-orderbook" role="tabpanel" aria-labelledby="investment-orderbook-tab" hidden></div>
             <div id="investment-info-panel" class="iv-info" role="tabpanel" aria-labelledby="investment-info-tab" hidden></div>
             <footer class="iv-trade"><div class="iv-trade-buttons" id="investment-trade-buttons"><button type="button" disabled>판매하기</button><button type="button" disabled>구매하기</button></div><p id="investment-trade-note">현재 거래가 잠겨 있어요</p></footer>
         </section>`;
@@ -80,9 +81,11 @@
         root.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', String(button.dataset.tab === state.tab)));
         $('investment-chart-panel').hidden = state.tab !== 'chart';
         $('investment-info-panel').hidden = state.tab !== 'info';
+        $('investment-orderbook-panel').hidden = state.tab !== 'book';
         root.querySelectorAll('[data-period]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.period === state.period)));
         requestAnimationFrame(drawChart);
         if (state.tab === 'chart') loadHistory();
+        if (state.tab === 'book') renderOrderbook();
     }
     function isActive() {
         return !document.hidden && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden');
@@ -130,7 +133,7 @@
                 // Schedule by server time, so a wrong phone clock cannot trigger rapid polling.
                 const delay = data.stale ? 60_000 : Math.max(1000, Math.min(3_601_500, data.nextUpdateAt - data.serverTime + 1500));
                 feed.validUntil = Date.now() + delay;
-                if (changed) feed.histories.clear();
+                if (changed) { feed.histories.clear(); feed.books.clear(); }
                 renderList(); renderDetail(); updateMarketStatus(); scheduleMarket(delay);
             } catch (_) {
                 feed.status = 'delayed';
@@ -151,11 +154,65 @@
                 if (data.symbol !== symbol || data.period !== period || data.asOf !== asOf || !Array.isArray(data.points) || data.points.length > 130 ||
                     !data.points.every(point => Number.isSafeInteger(point.time) && ['open','high','low','close'].every(field => Number.isSafeInteger(point[field]) && point[field] >= 1))) throw new Error('Invalid chart response');
                 if (asOf !== feed.asOf) return;
-                feed.histories.set(key, data.points);
+                const today = Math.floor((feed.asOf + 9 * 3_600_000) / 86_400_000) * 86_400_000 - 9 * 3_600_000;
+                feed.histories.set(key, { points: data.points, axisStart: Number.isSafeInteger(data.axisStart) ? data.axisStart : today, axisEnd: Number.isSafeInteger(data.axisEnd) ? data.axisEnd : today + 23 * 3_600_000 });
                 if (feed.histories.size > 16) feed.histories.delete(feed.histories.keys().next().value);
                 if (historyKey() === key) requestAnimationFrame(drawChart);
             } catch (_) {
                 if (historyKey() === key) $('investment-chart').setAttribute('aria-label', '차트 연결이 지연되고 있어요');
+            }
+        })();
+        feed.loading.set(key, promise);
+        try { await promise; } finally { feed.loading.delete(key); }
+    }
+    function renderOrderbook() {
+        const panel = $('investment-orderbook-panel');
+        const key = 'book:' + state.selected + ':' + feed.asOf;
+        const book = feed.books.get(key);
+        if (!book) {
+            panel.innerHTML = '<p class="iv-book-notice">' + (feed.ready ? '호가를 불러오는 중이에요' : '시세 연결을 기다리고 있어요') + '</p>';
+            loadOrderbook(key); return;
+        }
+        const alternative = value => state.currency === 'POINTS' ? wonAmount(value) : pointAmount(value);
+        const rate = value => {
+            const percent = (value - book.previous) / book.previous * 100;
+            return (percent > 0 ? '+' : '') + percent.toFixed(1) + '%';
+        };
+        const quoteCell = (value, current = false) => `<div class="iv-book-price ${current ? 'iv-book-current' : ''}"><div><strong class="${value > book.previous ? 'iv-up' : value < book.previous ? 'iv-down' : 'iv-flat'}">${money(value)}</strong><small>${rate(value)}</small></div><span>${alternative(value)}${current ? ' · 현재가' : ''}</span></div>`;
+        const statValue = value => value === null ? '—' : money(value);
+        const stat = (label, value, cls = '') => `<div><dt>${label}</dt><dd class="${cls}">${statValue(value)}</dd></div>`;
+        panel.innerHTML = `<p class="iv-book-notice">기준 호가 <span>거래 잠김 · 대기 주문 없음</span></p>
+            <div class="iv-book-scroll" tabindex="0" aria-label="호가 가격대와 잔량">
+                <div class="iv-book-columns">
+                    <div class="iv-book-left"><div class="iv-book-side-label">매도 잔량</div>${book.asks.map(level => `<div class="iv-book-size iv-down">${level.quantity}</div>`).join('')}<section class="iv-book-executions"><h3>체결 내역</h3><p>아직 체결 내역이 없어요</p></section></div>
+                    <div class="iv-book-prices"><div class="iv-book-side-label">가격</div>${book.asks.map(level => quoteCell(level.price)).join('')}${quoteCell(book.price, true)}${book.bids.map(level => quoteCell(level.price)).join('')}</div>
+                    <div class="iv-book-right"><div class="iv-book-side-label">시세 정보</div><dl class="iv-book-stats">${stat('52주 최고', book.stats.yearHigh)}${stat('52주 최저', book.stats.yearLow)}<div class="iv-book-stat-divider"></div>${stat('시작', book.stats.open)}${stat('최고', book.stats.high, 'iv-up')}${stat('최저', book.stats.low, 'iv-down')}<div class="iv-book-stat-divider"></div><div><dt>거래량</dt><dd>${book.stats.volume}주</dd></div></dl><div class="iv-book-bid-heading">매수 잔량</div>${book.bids.map(level => `<div class="iv-book-size iv-up">${level.quantity}</div>`).join('')}</div>
+                </div>
+            </div><div class="iv-book-total"><span>매도 <strong>${book.totalAsk}주</strong></span><span>매수 <strong>${book.totalBid}주</strong></span></div>`;
+        requestAnimationFrame(() => {
+            const scroll = panel.querySelector('.iv-book-scroll'), current = panel.querySelector('.iv-book-current');
+            if (!scroll?.clientHeight || !current) return;
+            const row = current.getBoundingClientRect();
+            scroll.scrollTop += row.top - scroll.getBoundingClientRect().top - (scroll.clientHeight - row.height) / 2;
+        });
+    }
+    async function loadOrderbook(key) {
+        if (!feed.ready || !isActive() || state.tab !== 'book' || state.selected !== 'en-joy' || feed.loading.has(key) || typeof fetch !== 'function') return;
+        const asOf = feed.asOf;
+        const promise = (async () => {
+            try {
+                const book = await readApi('/orderbook?symbol=en-joy');
+                const validLevels = levels => Array.isArray(levels) && levels.length <= 5 && levels.every(level => Number.isSafeInteger(level.price) && level.price >= 1 && Number.isSafeInteger(level.quantity) && level.quantity >= 0);
+                if (book.symbol !== 'en-joy' || book.asOf !== asOf || !validQuote({ price: book.price, change: 0, percent: 0 }) ||
+                    !Number.isSafeInteger(book.previous) || book.previous < 1 || !validLevels(book.asks) || !validLevels(book.bids) ||
+                    !book.stats || !['open','high','low','yearHigh','yearLow'].every(field => book.stats[field] === null || Number.isSafeInteger(book.stats[field]) && book.stats[field] >= 1) ||
+                    book.indicative !== true || book.tradingEnabled !== false || book.totalAsk !== 0 || book.totalBid !== 0 || book.stats.volume !== 0 ||
+                    book.asks.some(level => level.quantity !== 0) || book.bids.some(level => level.quantity !== 0)) throw new Error('Invalid orderbook');
+                if (asOf !== feed.asOf) return;
+                feed.books.set(key, book);
+                if (state.tab === 'book' && key === 'book:' + state.selected + ':' + feed.asOf) renderOrderbook();
+            } catch (_) {
+                if (state.tab === 'book' && key === 'book:' + state.selected + ':' + feed.asOf) $('investment-orderbook-panel').innerHTML = '<p class="iv-book-notice">호가 연결이 지연되고 있어요</p>';
             }
         })();
         feed.loading.set(key, promise);
@@ -174,19 +231,35 @@
         if (!ctx) return;
         ctx.scale(ratio, ratio);
         const w = rect.width, h = rect.height;
-        const history = feed.histories.get(historyKey());
+        const series = feed.histories.get(historyKey());
+        const history = series && series.points;
         if (!feed.ready || !history) { canvas.setAttribute('aria-label', '차트 불러오는 중'); return; }
-        if (!history.length) { canvas.setAttribute('aria-label', '아직 시세 기록이 없어요'); return; }
+        const chartLeft = 6, chartRight = w - 6;
+        const intraday = state.period === 'day';
+        if (intraday) {
+            ctx.fillStyle = '#909096'; ctx.font = '11px Pretendard, -apple-system, sans-serif';
+            [0,6,12,18,23].forEach(hour => {
+                ctx.textAlign = hour === 0 ? 'left' : hour === 23 ? 'right' : 'center';
+                ctx.fillText(String(hour).padStart(2,'0') + '시', chartLeft + hour / 23 * (chartRight-chartLeft), h*.95);
+            });
+        }
+        if (!history.length) {
+            ctx.fillStyle = '#909096'; ctx.font = '13px Pretendard, -apple-system, sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(intraday ? '오늘의 시세 기록을 기다리고 있어요' : '아직 과거 시세 기록이 없어요', w/2, h*.46);
+            canvas.setAttribute('aria-label', intraday ? '당일 시세 기록 없음, 00시부터 23시까지' : '과거 시세 기록 없음'); return;
+        }
         const color = stock.change > 0 ? '#f04452' : stock.change < 0 ? '#3182f6' : '#a6a6b1';
         const high = Math.max(...history.map(point => point.high)), low = Math.min(...history.map(point => point.low));
-        const chartW = w * .74;
+        const axisStart = intraday ? series.axisStart : history[0].time;
+        const axisEnd = intraday ? series.axisEnd : history[history.length - 1].time;
+        const xFor = time => chartLeft + (axisEnd === axisStart ? 0 : Math.max(0, Math.min(1, (time-axisStart)/(axisEnd-axisStart)))) * (chartRight-chartLeft);
+        const chartW = xFor(history[history.length - 1].time);
         const yFor = value => high === low ? h * .46 : h * .23 + (high - value) / (high - low) * h * .29;
         const chartY = yFor(history[history.length - 1].close);
         ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = color;
         ctx.beginPath();
-        if (history.length === 1) { ctx.moveTo(0, chartY); ctx.lineTo(chartW, chartY); }
-        else history.forEach((point, index) => {
-            const x = chartW * index / (history.length - 1), y = yFor(point.close);
+        history.forEach((point, index) => {
+            const x = xFor(point.time), y = yFor(point.close);
             if (index === 0) ctx.moveTo(x, y);
             else { ctx.lineTo(x, yFor(history[index - 1].close)); ctx.lineTo(x, y); }
         });
@@ -199,7 +272,7 @@
         ctx.fillText(high === low ? '최고·최저 ' + money(high) : '최고 ' + money(high) + ' · 최저 ' + money(low), 0, h * .23 - 18);
         ctx.strokeStyle = '#4c4c58'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
         ctx.beginPath(); ctx.moveTo(0,h*.83); ctx.lineTo(w,h*.83); ctx.stroke();
-        canvas.setAttribute('aria-label', stock.name + ' 차트, 최고 ' + money(high) + ', 최저 ' + money(low) + ', 매시간 갱신');
+        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + ', 매시간 갱신');
     }
     function showList(restoreFocus) {
         const previous = state.selected;
@@ -229,7 +302,10 @@
             container.querySelector('[data-currency="' + state.currency + '"]').focus({ preventScroll: true });
         }
         else if (button.dataset.period) { state.period = button.dataset.period; renderDetail(); }
-        else if (button.dataset.tab) { state.tab = button.dataset.tab; renderDetail(); }
+        else if (button.dataset.tab) {
+            if (button.dataset.tab === 'book' && stocks.find(stock => stock.id === state.selected)?.kind !== 'stock') return;
+            state.tab = button.dataset.tab; renderDetail();
+        }
     });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape' && state.selected && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden')) showList(true);
