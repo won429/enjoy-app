@@ -1,0 +1,101 @@
+/* Investment is a display-only view. All rules stay inside the wallet flow. */
+#meeting-screen:has(#wallet-panel-investment:not(.hidden)) { background: #17171b !important; color: #f7f7f8; }
+#wallet-scroll:has(#wallet-panel-investment:not(.hidden)) { padding-top: max(16px, env(safe-area-inset-top)); }
+#wallet-panel-investment { --iv-muted: #909096; --iv-card: #2a2a32; --iv-red: #f04452; --iv-blue: #3182f6; padding-bottom: calc(112px + env(safe-area-inset-bottom)); color: #f7f7f8; letter-spacing: -.025em; }
+#wallet-panel-investment *, #wallet-panel-investment *::before { box-sizing: border-box; }
+#wallet-panel-investment [hidden] { display: none !important; }
+#wallet-panel-investment button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+#wallet-panel-investment button:focus-visible { outline: 2px solid #a8caff; outline-offset: 4px; }
+#wallet-panel-investment button:disabled { cursor: default; }
+.iv-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 2px 16px; }
+.iv-top h1 { margin: 0; font-size: 23px; font-weight: 750; letter-spacing: -.05em; }
+.iv-example { color: var(--iv-muted); font-size: 12px; }
+.iv-indices { margin: 0 3px 20px; }
+.iv-index { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px 0; border: 0; border-radius: 0; color: #dedee4; background: transparent; text-align: left; }
+.iv-index:hover { opacity: .8; }
+.iv-index:active { opacity: .7; }
+.iv-index-name { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; }
+.iv-index-name small { color: var(--iv-muted); font-size: 11px; }
+.iv-index-name strong { font-size: 13px; font-weight: 550; }
+.iv-index-price { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.iv-index > small { font-size: 11px; white-space: nowrap; }
+.iv-account-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+.iv-account-heading img { width: 28px; height: 28px; object-fit: contain; border-radius: 9px; }
+.iv-account-heading strong { font-size: 18px; font-weight: 650; }
+.iv-account-heading > span { margin-left: auto; color: var(--iv-muted); font-size: 12px; }
+.iv-balances { display: grid; grid-template-columns: 1fr; gap: 9px; }
+.iv-balance { padding: 12px 16px; border-radius: 20px; background: var(--iv-card); }
+.iv-balance span { display: block; margin-bottom: 5px; font-size: 14px; color: #b6b6be; }
+.iv-balance strong { font-size: 18px; font-weight: 650; }
+.iv-balance small { display: block; margin-top: 3px; font-size: 11px; line-height: 1.2; color: var(--iv-muted); }
+.iv-summary { margin: 20px 3px 10px; }
+.iv-summary h2 { font-size: 18px; font-weight: 650; margin: 0 0 6px; }
+.iv-total { margin: 0 0 6px; font-size: 36px; font-weight: 700; line-height: 1.25; letter-spacing: -.05em; }
+.iv-summary small { color: var(--iv-muted); font-size: 14px; }
+.iv-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 3px 14px; }
+.iv-sort { max-width: 48%; min-height: 35px; border: 0; border-radius: 10px; padding: 7px 9px; color: #c9c9d0; background: var(--iv-card); font: inherit; font-size: 12px; }
+.iv-segment { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--iv-card); }
+.iv-segment button { min-width: 30px; min-height: 29px; padding: 3px 8px; border: 0; border-radius: 8px; color: var(--iv-muted); font-weight: 650 !important; }
+.iv-segment button[aria-pressed="true"] { background: #4a4a55; color: #fff; }
+.iv-stocks-heading { display: flex; justify-content: space-between; align-items: center; margin: 0 3px 8px; color: #c5c5ca; font-size: 16px; font-weight: 500; }
+.iv-stocks-heading small { font-size: 12px; color: var(--iv-muted); }
+.iv-stock { display: flex; align-items: center; width: 100%; gap: 14px; padding: 10px 3px 17px; border: 0; background: transparent; text-align: left; color: inherit; border-radius: 12px; }
+.iv-stock:hover { background: rgba(255,255,255,.035); }
+.iv-stock:active { opacity: .7; }
+.iv-stock > img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; flex: none; }
+.iv-stock-name { flex: 1; min-width: 0; }
+.iv-stock-name strong { display: block; font-size: 18px; font-weight: 550; }
+.iv-stock-name small { display: block; margin-top: 5px; color: var(--iv-muted); font-size: 12px; }
+.iv-stock-price { text-align: right; white-space: nowrap; }
+.iv-stock-price strong { display: block; font-size: 19px; font-weight: 650; }
+.iv-stock-price small { display: block; margin-top: 5px; font-size: 13px; }
+#wallet-panel-investment .iv-up { color: var(--iv-red); }
+#wallet-panel-investment .iv-down { color: var(--iv-blue); }
+#wallet-panel-investment .iv-flat { color: #a6a6b1; }
+.iv-detail { min-height: calc(100dvh - max(16px, env(safe-area-inset-top))); display: flex; flex-direction: column; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+#wallet-panel-investment:has(.iv-detail:not([hidden])) { padding-bottom: 0; }
+body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-detail:not([hidden])) #wallet-subnav { display: none; }
+.iv-detail-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.iv-back { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; margin-left: -7px; border: 0; color: #fff; background: transparent; font-size: 22px !important; }
+.iv-detail-heading { display: flex; align-items: center; gap: 8px; }
+.iv-detail-heading h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.iv-ticker { padding: 4px 7px; border-radius: 8px; color: #96969e; background: var(--iv-card); font-size: 11px; }
+.iv-quote { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.iv-price { margin: 0; font-size: 33px; font-weight: 700; letter-spacing: -.05em; }
+.iv-secondary-price { margin-left: 7px; color: var(--iv-muted); font-size: 17px; font-weight: 400; letter-spacing: -.025em; }
+.iv-change { margin: 10px 0 25px; color: var(--iv-muted); font-size: 15px; }
+.iv-change span { margin-left: 5px; }
+.iv-tabs { display: flex; justify-content: space-between; gap: 14px; border-bottom: 1px solid #2a2a31; margin: 0 -20px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; }
+.iv-tabs button { flex: none; position: relative; padding: 0 0 14px; border: 0; color: #89898f; background: transparent; font-size: 15px !important; font-weight: 650 !important; white-space: nowrap; }
+.iv-tabs button[aria-selected="true"] { color: #f7f7f8; }
+.iv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; bottom: 0; height: 2px; left: 0; right: 0; border-radius: 1px; background: #f7f7f8; }
+.iv-tabs button:disabled { color: #62626b; }
+.iv-chart-panel { flex: 1; display: flex; flex-direction: column; min-height: 240px; }
+.iv-chart-caption { display: flex; align-items: center; gap: 6px; margin: 15px 0 0; font-size: 13px; color: #74747e; }
+.iv-chart-caption i { font-size: 19px; }
+.iv-chart-wrap { flex: 1; position: relative; min-height: 160px; }
+.iv-chart-wrap canvas { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
+.iv-periods { display: flex; justify-content: space-between; align-items: center; gap: 4px; padding: 12px 0 17px; }
+.iv-periods button { min-width: 28px; min-height: 34px; padding: 4px 6px; border: 0; border-radius: 10px; background: transparent; color: #8e8e98; font-size: 14px !important; }
+.iv-periods button[aria-pressed="true"] { color: #fff; background: var(--iv-card); }
+.iv-periods button:first-child { color: #ffb529; min-width: 42px; }
+.iv-info { flex: 1; padding: 25px 0; }
+.iv-info dl { margin: 0; }
+.iv-info dl div { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; }
+.iv-info dt { color: var(--iv-muted); }
+.iv-info p { margin-top: 30px; color: var(--iv-muted); font-size: 13px; line-height: 1.7; }
+.iv-trade { border-top: 1px solid #24242b; margin: 0 -20px; padding: 18px 20px 0; }
+.iv-trade-buttons { display: flex; gap: 9px; }
+.iv-trade-buttons button { flex: 1; min-height: 56px; border: 0; border-radius: 19px; background: var(--iv-blue); color: #fff; font-size: 18px !important; font-weight: 650 !important; }
+.iv-trade-buttons button:last-child { background: var(--iv-red); }
+.iv-trade p { margin: 9px 0 0; color: #8e8e98; font-size: 11px; text-align: center; }
+@media (max-width: 350px) {
+    .iv-stock { gap: 9px; }
+    .iv-stock-price strong { font-size: 17px; }
+    .iv-price { font-size: 28px; }
+    .iv-secondary-price { font-size: 14px; margin-left: 4px; }
+    .iv-tabs { gap: 11px; }
+    .iv-tabs button { font-size: 13px !important; }
+    .iv-toolbar { gap: 4px; }
+    .iv-toolbar .iv-segment button { padding-inline: 5px; font-size: 12px; }
+}

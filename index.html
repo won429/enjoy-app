@@ -33,6 +33,7 @@
     <link rel="stylesheet" href="uno.css?v=20261018-wallet1">
     <link rel="stylesheet" href="drop-games.css?v=20261019-quiz1">
     <link rel="stylesheet" href="drop-quiz.css?v=20261019-quiz6">
+    <link rel="stylesheet" href="investment.css?v=20261021-5">
     <!-- 스토어 스타일은 별도 파일 누락 시에도 적용되도록 본문에 포함한다. -->
     <style id="enjoy-store-styles">
         #store-screen { --store-bg: #000; --store-text: #fff; --store-muted: #8b95a1; --store-line: rgba(255,255,255,.08); position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%,28rem); z-index: 20; background: var(--store-bg); color: var(--store-text); flex-direction: column; overflow: hidden; }
@@ -14619,6 +14620,7 @@
             if (window.setWalletNavCompact) window.setWalletNavCompact(false);
             if ((name === 'wallet' || name === 'dues') && window.renderDues) window.renderDues(window.currentDuesMonth, window.currentDuesYear);
             if (name === 'expense' && window.renderExpenses) window.renderExpenses();
+            if (window.resetInvestmentView) window.resetInvestmentView();
             if (window.updateWalletNavActive) window.updateWalletNavActive(name);
         };
         window.switchMeetingTab = window.switchWalletSub;
@@ -21973,6 +21975,7 @@
                         arr.push(v);
                     });
                     lastMembers = arr; renderMembers(); updateProfileCard();
+                    if (window.refreshInvestmentAccount) window.refreshInvestmentAccount();
                     if (window.renderEchoList) window.renderEchoList();
                     const profileMenu = document.getElementById('profile-action-popover');
                     if (profileMenuMemberName && profileMenu && !profileMenu.classList.contains('hidden')) {
@@ -21996,6 +21999,7 @@
             if (membersUnsub) membersUnsub();
             membersUnsub = null;
             lastMembers = [];
+            if (window.refreshInvestmentAccount) window.refreshInvestmentAccount();
         };
 
         window.enjoyStoreMember = function () {
@@ -22011,6 +22015,7 @@
             const member = (lastMembers || []).find(m => m && m.uid === uid);
             if (member) { member.points = points; member.storePurchaseLimits = storePurchaseLimits; updateProfilePointBalance(member.name); }
             updateProfileCard();
+            if (window.refreshInvestmentAccount) window.refreshInvestmentAccount();
         };
 
         // 모임통장용: 기존 멤버 구독에서 할인권 내역만 가져온다.
@@ -23269,6 +23274,7 @@
         </div>
     </section>
     <script src="drop-games.js?v=20261018-wallet1"></script>
+    <script src="investment.js?v=20261021-4"></script>
     <script src="drop-quiz-firebase.js?v=20261019-quiz5"></script>
     <script src="drop-quiz.js?v=20261019-quiz4"></script>
     <script defer src="drop-games-entry.js?v=20261019-quiz1"></script>
