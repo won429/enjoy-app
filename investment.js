@@ -57,7 +57,7 @@
     const currencyControl = () => '<div class="iv-segment" role="group" aria-label="표시 단위"><button type="button" data-currency="KRW" aria-label="원화로 보기" aria-pressed="' + (state.currency === 'KRW') + '">원화</button><button type="button" data-currency="POINTS" aria-label="포인트로 보기" aria-pressed="' + (state.currency === 'POINTS') + '">포인트</button></div>';
     root.innerHTML = `
         <section id="investment-home" aria-label="투자 첫 화면">
-            <header class="iv-top"><h1>엔조이증권</h1><span class="iv-example iv-market-status">시세 연결 중</span></header>
+            <header class="iv-top"><h1>엔조이증권</h1><span class="iv-market-heading"><span>운영시간 00:00~23:00</span><span id="market-home-status" class="iv-market-status">시세 연결 중</span></span></header>
             <div class="iv-account-heading"><img src="assets/enjoy-symbol.png" alt=""><strong id="investment-account-name">멤버 지갑</strong><span id="investment-account-status"></span></div>
             <div class="iv-balances"><div class="iv-balance"><span>보유 포인트</span><div class="iv-point-balance" aria-live="polite"><strong id="investment-account-points">—</strong><span id="investment-account-equivalent" class="iv-balance-equivalent" hidden></span></div><small>100포인트 = 1원</small></div></div>
             <section class="iv-summary" aria-label="내 투자"><h2>내 투자</h2><p class="iv-total" id="investment-total">0 P</p><small>보유한 주식이 없어요</small></section>
@@ -66,11 +66,10 @@
             <div id="investment-stock-list"></div>
         </section>
         <section id="investment-detail" class="iv-detail" aria-label="종목 상세" hidden>
-            <div class="iv-detail-nav"><button class="iv-back" id="investment-back" type="button" aria-label="종목 목록으로 돌아가기">${icon('chevron-left')}</button><span class="iv-example">운영시간 00:00~23:00</span></div>
+            <div class="iv-detail-nav"><button class="iv-back" id="investment-back" type="button" aria-label="종목 목록으로 돌아가기">${icon('chevron-left')}</button><span class="iv-market-heading"><span>운영시간 00:00~23:00</span><span id="market-detail-status" class="iv-market-status">시세 연결 중</span></span></div>
             <div class="iv-detail-heading"><h2 id="investment-name" tabindex="-1"></h2><span class="iv-ticker" id="investment-ticker"></span></div>
             <div class="iv-quote"><p class="iv-price"><span id="investment-price"></span><small class="iv-secondary-price" id="investment-secondary-price"></small></p><div id="investment-detail-currency"></div></div>
             <p class="iv-change"><span id="investment-change-caption" style="margin-left:0">직전 시세 대비</span><span id="investment-change"></span></p>
-            <p id="market-detail-status" class="iv-price-update iv-market-status">시세 연결 중</p>
             <div class="iv-tabs" role="tablist" aria-label="종목 상세 메뉴"><button type="button" id="investment-chart-tab" role="tab" data-tab="chart" aria-controls="investment-chart-panel" aria-selected="true">차트</button><button type="button" id="investment-orderbook-tab" role="tab" data-tab="book" aria-controls="investment-orderbook-panel" aria-selected="false">호가</button><button type="button" id="investment-holdings-tab" disabled>내 주식</button><button type="button" id="investment-info-tab" role="tab" data-tab="info" aria-controls="investment-info-panel" aria-selected="false">종목정보</button></div>
             <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} 자세한 차트</p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" aria-label="시세 차트"></canvas></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="실시간" aria-pressed="true">실시간</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button></div></div>
             <div id="investment-orderbook-panel" class="iv-orderbook" role="tabpanel" aria-labelledby="investment-orderbook-tab" hidden></div>
@@ -128,7 +127,7 @@
         return !document.hidden && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden');
     }
     function updateMarketStatus() {
-        const label = feed.status === 'online' ? '매시간 갱신' : feed.status === 'loading' ? '시세 연결 중' : '시세 연결 지연';
+        const label = feed.status === 'online' ? '1시간마다 변동' : feed.status === 'loading' ? '시세 연결 중' : '시세 연결 지연';
         root.querySelectorAll('.iv-market-status').forEach(element => {
             element.textContent = feed.status === 'online' && element.id === 'market-detail-status'
                 ? (state.selected === 'enjoy' ? '관리자 설정' : '1시간마다 변동') : label;
