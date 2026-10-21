@@ -32,10 +32,10 @@
             <div id="investment-stock-list"></div>
         </section>
         <section id="investment-detail" class="iv-detail" aria-label="종목 상세" hidden>
-            <div class="iv-detail-nav"><button class="iv-back" id="investment-back" type="button" aria-label="종목 목록으로 돌아가기">${icon('chevron-left')}</button><span class="iv-example iv-market-status">시세 연결 중</span></div>
+            <div class="iv-detail-nav"><button class="iv-back" id="investment-back" type="button" aria-label="종목 목록으로 돌아가기">${icon('chevron-left')}</button><span id="market-detail-status" class="iv-example iv-market-status">시세 연결 중</span></div>
             <div class="iv-detail-heading"><h2 id="investment-name" tabindex="-1"></h2><span class="iv-ticker" id="investment-ticker"></span></div>
             <div class="iv-quote"><p class="iv-price"><span id="investment-price"></span><small class="iv-secondary-price" id="investment-secondary-price"></small></p><div id="investment-detail-currency"></div></div>
-            <p class="iv-change">직전 시세 대비<span id="investment-change"></span></p>
+            <p class="iv-change"><span id="investment-change-caption" style="margin-left:0">직전 시세 대비</span><span id="investment-change"></span></p>
             <div class="iv-tabs" role="tablist" aria-label="종목 상세 메뉴"><button type="button" id="investment-chart-tab" role="tab" data-tab="chart" aria-controls="investment-chart-panel" aria-selected="true">차트</button><button type="button" id="investment-orderbook-tab" role="tab" data-tab="book" aria-controls="investment-orderbook-panel" aria-selected="false">호가</button><button type="button" id="investment-holdings-tab" disabled>내 주식</button><button type="button" id="investment-info-tab" role="tab" data-tab="info" aria-controls="investment-info-panel" aria-selected="false">종목정보</button></div>
             <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} 자세한 차트</p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" aria-label="시세 차트"></canvas></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="실시간" aria-pressed="true">실시간</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button></div></div>
             <div id="investment-orderbook-panel" class="iv-orderbook" role="tabpanel" aria-labelledby="investment-orderbook-tab" hidden></div>
@@ -72,12 +72,13 @@
         $('investment-detail-currency').innerHTML = currencyControl();
         $('investment-change').textContent = changeLabel(stock);
         $('investment-change').className = trendClass(stock);
+        $('investment-change-caption').textContent = stock.kind === 'index' ? '전일 대비' : '직전 시세 대비';
         $('investment-info-tab').textContent = stock.kind === 'index' ? '지수정보' : '종목정보';
         $('investment-orderbook-tab').hidden = stock.kind === 'index';
         $('investment-holdings-tab').hidden = stock.kind === 'index';
         $('investment-trade-buttons').hidden = stock.kind === 'index';
         $('investment-trade-note').textContent = stock.kind === 'index' ? '엔조이는 시장 흐름을 나타내는 지수예요' : '현재 거래가 잠겨 있어요';
-        $('investment-info-panel').innerHTML = `<dl><div><dt>${stock.kind === 'index' ? '지수명' : '종목명'}</dt><dd>${stock.name}</dd></div><div><dt>코드</dt><dd>${stock.ticker}</dd></div><div><dt>유형</dt><dd>${stock.kind === 'index' ? '대표 지수' : '주식 · 거래 잠김'}</dd></div><div><dt>현재가</dt><dd>${priceLabel(stock)}</dd></div>${stock.kind === 'stock' ? '<div><dt>보유 주식</dt><dd>0주</dd></div>' : ''}</dl><p>100포인트 = 1원<br>시세는 매시간 정각에 갱신돼요.</p>`;
+        $('investment-info-panel').innerHTML = `<dl><div><dt>${stock.kind === 'index' ? '지수명' : '종목명'}</dt><dd>${stock.name}</dd></div><div><dt>코드</dt><dd>${stock.ticker}</dd></div><div><dt>유형</dt><dd>${stock.kind === 'index' ? '대표 지수' : '주식 · 거래 잠김'}</dd></div><div><dt>현재가</dt><dd>${priceLabel(stock)}</dd></div>${stock.kind === 'stock' ? '<div><dt>보유 주식</dt><dd>0주</dd></div>' : ''}</dl><p>100포인트 = 1원<br>${stock.kind === 'index' ? '관리자가 설정한 지수 값이 유지돼요.' : '시세는 매시간 정각에 갱신돼요.'}</p>`;
         root.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', String(button.dataset.tab === state.tab)));
         $('investment-chart-panel').hidden = state.tab !== 'chart';
         $('investment-info-panel').hidden = state.tab !== 'info';
@@ -86,6 +87,7 @@
         requestAnimationFrame(drawChart);
         if (state.tab === 'chart') loadHistory();
         if (state.tab === 'book') renderOrderbook();
+        updateMarketStatus();
     }
     function isActive() {
         return !document.hidden && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden');
@@ -93,6 +95,7 @@
     function updateMarketStatus() {
         const label = feed.status === 'online' ? '매시간 갱신' : feed.status === 'loading' ? '시세 연결 중' : '시세 연결 지연';
         root.querySelectorAll('.iv-market-status').forEach(element => { element.textContent = label; });
+        if (feed.status === 'online' && state.selected === 'enjoy') $('market-detail-status').textContent = '관리자 설정';
     }
     function scheduleMarket(delay) {
         if (feed.timer) clearTimeout(feed.timer);
@@ -143,17 +146,17 @@
         })();
         try { await feed.pending; } finally { feed.pending = null; }
     }
-    const historyKey = () => state.selected + ':' + state.period + ':' + feed.asOf;
+    const historyKey = () => state.selected + ':' + state.period + ':' + feed.asOf + ':' + feed.revision;
     async function loadHistory() {
         if (!state.selected || state.tab !== 'chart' || !feed.ready || !isActive() || typeof fetch !== 'function') return;
-        const key = historyKey(), symbol = state.selected, period = state.period, asOf = feed.asOf;
+        const key = historyKey(), symbol = state.selected, period = state.period, asOf = feed.asOf, revision = feed.revision;
         if (feed.histories.has(key) || feed.loading.has(key)) return;
         const promise = (async () => {
             try {
                 const data = await readApi('/history?symbol=' + encodeURIComponent(symbol) + '&period=' + encodeURIComponent(period));
                 if (data.symbol !== symbol || data.period !== period || data.asOf !== asOf || !Array.isArray(data.points) || data.points.length > 130 ||
                     !data.points.every(point => Number.isSafeInteger(point.time) && ['open','high','low','close'].every(field => Number.isSafeInteger(point[field]) && point[field] >= 1))) throw new Error('Invalid chart response');
-                if (asOf !== feed.asOf) return;
+                if (asOf !== feed.asOf || revision !== feed.revision) return;
                 const today = Math.floor((feed.asOf + 9 * 3_600_000) / 86_400_000) * 86_400_000 - 9 * 3_600_000;
                 feed.histories.set(key, { points: data.points, axisStart: Number.isSafeInteger(data.axisStart) ? data.axisStart : today, axisEnd: Number.isSafeInteger(data.axisEnd) ? data.axisEnd : today + 23 * 3_600_000 });
                 if (feed.histories.size > 16) feed.histories.delete(feed.histories.keys().next().value);
@@ -272,7 +275,7 @@
         ctx.fillText(high === low ? '최고·최저 ' + money(high) : '최고 ' + money(high) + ' · 최저 ' + money(low), 0, h * .23 - 18);
         ctx.strokeStyle = '#4c4c58'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
         ctx.beginPath(); ctx.moveTo(0,h*.83); ctx.lineTo(w,h*.83); ctx.stroke();
-        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + ', 매시간 갱신');
+        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + (stock.kind === 'index' ? ', 관리자 설정' : ', 매시간 갱신'));
     }
     function showList(restoreFocus) {
         const previous = state.selected;
