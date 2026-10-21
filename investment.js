@@ -6,7 +6,7 @@
     // Trading is closed: this module never writes balances, holdings or orders.
     const stocks = [
         { id: 'enjoy', name: '엔조이', ticker: 'ENJOY', kind: 'index', price: 0, change: 0, percent: 0, image: 'assets/enjoy-symbol-navy.png' },
-        { id: 'en-joy', name: '엔-조이', ticker: 'EN-JOY', kind: 'stock', price: 0, change: 0, percent: 0, image: 'assets/enjoy-symbol-rose.png' }
+        { id: 'en-joy', name: '엔조이스튜디오', ticker: 'enjoy studio', kind: 'stock', price: 0, change: 0, percent: 0, image: 'assets/enjoy-symbol-rose.png' }
     ];
     const pointsPerWon = 100;
     const state = { selected: null, currency: 'POINTS', period: 'day', tab: 'chart' };
