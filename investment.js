@@ -64,6 +64,10 @@
             <div class="iv-toolbar"><div id="investment-list-currency"></div></div>
             <div id="investment-index-list" class="iv-indices" role="region" aria-label="대표 지수"></div>
             <div id="investment-stock-list"></div>
+            <section class="iv-ranking" aria-labelledby="investment-ranking-title">
+                <div class="iv-ranking-heading"><h2 id="investment-ranking-title">투자 순위</h2><small>총 투자금액 순</small></div>
+                <div id="investment-ranking"></div>
+            </section>
         </section>
         <section id="investment-detail" class="iv-detail" aria-label="종목 상세" hidden>
             <div class="iv-detail-nav"><button class="iv-back" id="investment-back" type="button" aria-label="종목 목록으로 돌아가기">${icon('chevron-left')}</button><span class="iv-market-heading"><span>운영시간 00:00~23:00</span><span id="market-detail-status" class="iv-market-status">시세 연결 중</span></span></div>
@@ -88,6 +92,33 @@
         $('investment-account-points').textContent = member ? pointAmount(points) : '—';
         $('investment-account-equivalent').textContent = member ? '(= ' + wonAmount(points) + ')' : '';
         $('investment-account-equivalent').hidden = !member;
+        renderRanking();
+    }
+    function renderRanking() {
+        const panel = $('investment-ranking');
+        const user = window.enjoyUser && !window.isGuest ? window.enjoyUser : null;
+        if (!user) {
+            panel.innerHTML = '<p class="iv-ranking-empty">로그인하면 멤버 투자 순위를 볼 수 있어요.</p>';
+            return;
+        }
+        const members = window.enjoyJoinedMembers ? window.enjoyJoinedMembers() : [];
+        const unique = new Map();
+        for (const member of members) {
+            if (member && typeof member.uid === 'string' && member.uid && typeof member.name === 'string' && member.name.trim()) {
+                unique.set(member.uid, { uid: member.uid, name: member.name.trim() });
+            }
+        }
+        const entries = [...unique.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko-KR') || a.uid.localeCompare(b.uid));
+        if (!entries.length) {
+            panel.innerHTML = '<p class="iv-ranking-empty">멤버 정보를 불러오면 순위가 표시돼요.</p>';
+            return;
+        }
+        const escape = value => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        // No member can hold stock while trading is closed. Wallet points are not invested capital.
+        const rankLabel = entries.length > 1 ? '공동 1위' : '1위';
+        panel.innerHTML = '<table class="iv-ranking-table" aria-label="멤버별 투자 순위"><colgroup><col class="iv-ranking-rank-col"><col><col class="iv-ranking-amount-col"><col class="iv-ranking-rate-col"></colgroup><thead><tr><th scope="col">순위</th><th scope="col">멤버</th><th scope="col">총 투자금액</th><th scope="col">등락률</th></tr></thead><tbody>' +
+            entries.map(member => `<tr${member.uid === user.uid ? ' class="iv-ranking-self"' : ''}><td><span aria-label="${rankLabel}">1</span></td><th scope="row"><span class="iv-ranking-name">${escape(member.name)}</span>${member.uid === user.uid ? '<small class="iv-ranking-me">나</small>' : ''}</th><td>${money(0)}</td><td class="iv-flat">0.0%</td></tr>`).join('') +
+            '</tbody></table><p class="iv-ranking-note">같은 투자금액은 공동 순위로 표시해요.</p>';
     }
     function renderList() {
         $('investment-list-currency').innerHTML = currencyControl();
@@ -95,6 +126,7 @@
         $('investment-index-list').innerHTML = stocks.filter(stock => stock.kind === 'index').map(stock => `<button type="button" class="iv-index" data-stock="${stock.id}" aria-label="${stock.name} 종목 상세 보기"><span class="iv-index-name"><small>지수</small><strong>${stock.name}</strong></span><strong class="iv-index-price">${priceLabel(stock)}</strong><small class="${trendClass(stock)}">${feed.ready ? percentLabel(stock) : '—'}</small></button>`).join('');
         const listedStocks = stocks.filter(stock => stock.kind === 'stock');
         $('investment-stock-list').innerHTML = `<h2 class="iv-stocks-heading"><span>주식</span><small>${listedStocks.length}개 종목</small></h2>` + listedStocks.map(stock => `<button type="button" class="iv-stock" data-stock="${stock.id}" aria-label="${stock.name} 종목 상세 보기"><img src="${stock.image}" alt="" width="46" height="46"><span class="iv-stock-name"><strong>${stock.name}</strong><small>주식 · 거래 잠김</small></span><span class="iv-stock-price"><strong>${priceLabel(stock)}</strong><small class="${trendClass(stock)}">${changeLabel(stock)}</small></span></button>`).join('');
+        renderRanking();
     }
     function renderDetail() {
         const stock = stocks.find(item => item.id === state.selected);
