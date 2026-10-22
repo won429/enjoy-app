@@ -88,6 +88,71 @@
             <footer class="iv-trade"><div class="iv-trade-buttons" id="investment-trade-buttons"><button type="button" disabled>판매하기</button><button type="button" disabled>구매하기</button></div><p id="investment-trade-note">현재 거래가 잠겨 있어요</p></footer>
         </section>`;
     const $ = id => document.getElementById(id);
+    const quotePrices = new Map();
+    function stopQuotePrice(id) {
+        const current = quotePrices.get(id);
+        if (current?.animations) current.animations.forEach(animation => animation.cancel());
+        quotePrices.delete(id);
+    }
+    function quoteDigits(label) {
+        const parts = /^([\d,]+)(?:\.(\d+))?/.exec(label), digits = new Map();
+        if (!parts) return digits;
+        const integer = parts[1].replaceAll(',', '');
+        [...integer].forEach((digit, index) => digits.set(integer.length - index - 1, digit));
+        [...(parts[2] || '')].forEach((digit, index) => digits.set(-index - 1, digit));
+        return digits;
+    }
+    function renderQuotePrice(element, stock) {
+        const label = priceLabel(stock), value = feed.ready ? stock.price : null;
+        const key = stock.id + ':' + state.currency, previous = quotePrices.get(element.id);
+        if (previous?.key === key && previous.label === label && previous.element === element) return;
+        stopQuotePrice(element.id);
+        const current = { key, label, value, element, animations: [] };
+        quotePrices.set(element.id, current);
+        element.textContent = label;
+        if (stock.kind !== 'stock' || previous?.key !== key || previous.value === null || value === null || previous.value === value ||
+            document.hidden || !document.createElement || !element.replaceChildren || !element.getClientRects?.().length ||
+            window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+        const probe = document.createElement('span');
+        if (typeof probe.animate !== 'function') return;
+        const oldDigits = quoteDigits(previous.label), integer = /^([\d,]+)/.exec(label)?.[1].replaceAll(',', '') || '';
+        const fragment = document.createDocumentFragment(), rising = value > previous.value;
+        const ink = window.getComputedStyle(element).color;
+        let integerIndex = 0, fractionIndex = 0, fractional = false;
+        for (const char of label) {
+            if (char === '.') fractional = true;
+            if (!/\d/.test(char)) { fragment.append(document.createTextNode(char)); continue; }
+            const place = fractional ? -1 - fractionIndex++ : integer.length - 1 - integerIndex++;
+            const old = oldDigits.get(place);
+            if (old === char) { fragment.append(document.createTextNode(char)); continue; }
+            const digit = document.createElement('span');
+            digit.className = 'iv-price-digit'; digit.append(document.createTextNode(char));
+            const viewport = document.createElement('span');
+            viewport.className = 'iv-price-window'; viewport.setAttribute('aria-hidden', 'true');
+            viewport.style.setProperty('--iv-price-ink', ink);
+            const strip = document.createElement('span'); strip.className = 'iv-price-strip';
+            const steps = old === undefined ? [' ', char] : [old];
+            if (old !== undefined) {
+                const distance = rising ? (Number(char) - Number(old) + 10) % 10 : (Number(old) - Number(char) + 10) % 10;
+                for (let step = 1; step <= distance; step++) steps.push(String((Number(old) + (rising ? step : -step) + 10) % 10));
+            }
+            const ordered = rising ? steps : [...steps].reverse();
+            ordered.forEach(text => { const step = document.createElement('span'); step.className = 'iv-price-step'; step.textContent = text; strip.append(step); });
+            viewport.append(strip); digit.append(viewport); fragment.append(digit);
+            const end = (steps.length - 1) * 100;
+            const animation = strip.animate([
+                { transform: 'translateY(' + (rising ? 0 : -end) + '%)' },
+                { transform: 'translateY(' + (rising ? -end : 0) + '%)' }
+            ], { duration: 650, easing: 'cubic-bezier(.22,.8,.18,1)', fill: 'both' });
+            animation.id = 'iv-price-roll'; current.animations.push(animation);
+        }
+        element.replaceChildren(fragment);
+        Promise.allSettled(current.animations.map(animation => animation.finished)).then(() => {
+            if (quotePrices.get(element.id) !== current) return;
+            element.textContent = label;
+            current.animations.forEach(animation => animation.cancel()); current.animations = [];
+        });
+    }
     function refreshAccount() {
         const user = window.enjoyUser && !window.isGuest ? window.enjoyUser : null;
         const candidate = user && window.enjoyStoreMember ? window.enjoyStoreMember() : null;
@@ -133,6 +198,7 @@
         $('investment-index-list').innerHTML = stocks.filter(stock => stock.kind === 'index').map(stock => `<button type="button" class="iv-index" data-stock="${stock.id}" aria-label="${stock.name} 종목 상세 보기"><span class="iv-index-name"><small>지수</small><strong>${stock.name}</strong></span><strong class="iv-index-price">${priceLabel(stock)}</strong><small class="${trendClass(stock)}">${feed.ready ? percentLabel(stock) : '—'}</small></button>`).join('');
         const listedStocks = stocks.filter(stock => stock.kind === 'stock');
         $('investment-stock-list').innerHTML = `<h2 class="iv-stocks-heading"><span>주식</span><small>${listedStocks.length}개 종목</small></h2>` + listedStocks.map(serverStock => { const stock = displayQuote(serverStock); return `<button type="button" class="iv-stock" data-stock="${stock.id}" aria-label="${stock.name} 종목 상세 보기"><img src="${stock.image}" alt="" width="46" height="46"><span class="iv-stock-name"><strong>${stock.name}</strong><small>주식 · 거래 잠김</small></span><span class="iv-stock-price"><strong id="investment-list-price-${stock.id}">${priceLabel(stock)}</strong><small id="investment-list-change-${stock.id}" class="${trendClass(stock)}">${changeLabel(stock)}</small></span></button>`; }).join('');
+        listedStocks.forEach(stock => renderQuotePrice($('investment-list-price-' + stock.id), displayQuote(stock)));
         renderRanking();
     }
     function renderDetail() {
@@ -141,7 +207,7 @@
         const stock = displayQuote(serverStock);
         $('investment-name').textContent = stock.name;
         $('investment-ticker').textContent = stock.ticker;
-        $('investment-price').textContent = priceLabel(stock);
+        renderQuotePrice($('investment-price'), stock);
         $('investment-secondary-price').textContent = feed.ready ? (state.currency === 'POINTS' ? wonAmount(stock.price) : pointAmount(stock.price)) : '';
         $('investment-detail-currency').innerHTML = currencyControl();
         $('investment-change').textContent = changeLabel(stock);
@@ -177,11 +243,11 @@
     function renderMotionQuote() {
         const stock = stocks.find(item => item.kind === 'stock');
         const quote = displayQuote(stock);
-        $('investment-list-price-' + stock.id).textContent = priceLabel(quote);
+        renderQuotePrice($('investment-list-price-' + stock.id), quote);
         const change = $('investment-list-change-' + stock.id);
         change.textContent = changeLabel(quote); change.className = trendClass(quote);
         if (state.selected !== stock.id) return;
-        $('investment-price').textContent = priceLabel(quote);
+        renderQuotePrice($('investment-price'), quote);
         $('investment-secondary-price').textContent = state.currency === 'POINTS' ? wonAmount(quote.price) : pointAmount(quote.price);
         $('investment-change').textContent = changeLabel(quote);
         $('investment-change').className = trendClass(quote);
@@ -526,6 +592,7 @@
     }
     function showList(restoreFocus) {
         const previous = state.selected;
+        stopQuotePrice('investment-price');
         state.selected = null;
         refreshAccount();
         $('investment-home').hidden = false;
@@ -540,6 +607,7 @@
         if (!button || button.disabled) return;
         if (window.haptic) window.haptic();
         if (button.dataset.stock) {
+            stopQuotePrice('investment-price');
             state.selected = button.dataset.stock; state.period = 'day'; state.tab = 'chart'; state.quotePeriod = 'daily';
             $('investment-home').hidden = true; $('investment-detail').hidden = false;
             $('wallet-scroll').scrollTop = 0;
