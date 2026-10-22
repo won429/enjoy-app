@@ -2,7 +2,7 @@
     'use strict';
     const root = document.getElementById('wallet-panel-investment');
     if (!root) return;
-    // Shared hourly prices come only from Cloudflare. Member points stay in Firebase.
+    // Shared half-hour prices come only from Cloudflare. Member points stay in Firebase.
     // Trading is closed: this module never writes balances, holdings or orders.
     const stocks = [
         { id: 'enjoy', name: '엔조이', ticker: 'ENJOY', kind: 'index', price: 100, change: 0, percent: 0, image: 'assets/enjoy-symbol-navy.png' },
@@ -22,7 +22,7 @@
             else if (['youtube.com','www.youtube.com','m.youtube.com'].includes(url.hostname)) videoId = url.searchParams.get('v') || /^\/(?:shorts|embed|live)\/([^/]+)/.exec(url.pathname)?.[1];
         } catch (_) { return; }
         if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || !['latest','episode'].includes(source) || typeof fetch !== 'function') return;
-        const hour = Math.floor(Date.now()/3_600_000);
+        const hour = Math.floor(Date.now()/1_800_000);
         if (hour !== vlogClickHour) { vlogClicks.clear(); vlogClickHour = hour; }
         const key = hour + ':' + (window.enjoyUser?.uid || 'guest') + ':' + videoId;
         if (vlogClicks.has(key)) return vlogClicks.get(key);
@@ -45,7 +45,7 @@
         vlogClicks.set(key, pending);
         return pending;
     };
-    const feed = { ready: false, status: 'loading', asOf: 0, revision: -1, validUntil: 0, timer: null, pending: null, histories: new Map(), books: new Map(), loading: new Map() };
+    const feed = { ready: false, status: 'loading', asOf: 0, revision: -1, validUntil: 0, timer: null, pending: null, interval: 1_800_000, histories: new Map(), books: new Map(), loading: new Map() };
     const pointAmount = amount => Math.round(amount).toLocaleString('ko-KR') + ' P';
     const wonAmount = amount => (amount / pointsPerWon).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원';
     const money = amount => state.currency === 'POINTS' ? pointAmount(amount) : wonAmount(amount);
@@ -57,7 +57,7 @@
     const currencyControl = () => '<div class="iv-segment" role="group" aria-label="표시 단위"><button type="button" data-currency="KRW" aria-label="원화로 보기" aria-pressed="' + (state.currency === 'KRW') + '">원화</button><button type="button" data-currency="POINTS" aria-label="포인트로 보기" aria-pressed="' + (state.currency === 'POINTS') + '">포인트</button></div>';
     root.innerHTML = `
         <section id="investment-home" aria-label="투자 첫 화면">
-            <header class="iv-top"><h1>엔조이증권</h1><span class="iv-market-heading"><span>운영시간 00:00~23:00</span><span id="market-home-status" class="iv-market-status">시세 연결 중</span></span></header>
+            <header class="iv-top"><h1>엔조이증권</h1><span class="iv-market-heading"><span>운영시간 00:00~23:30</span><span id="market-home-status" class="iv-market-status">시세 연결 중</span></span></header>
             <div class="iv-account-heading"><img src="assets/enjoy-symbol.png" alt=""><strong id="investment-account-name">멤버 지갑</strong><span id="investment-account-status"></span></div>
             <div class="iv-balances"><div class="iv-balance"><span>보유 포인트</span><div class="iv-point-balance" aria-live="polite"><strong id="investment-account-points">—</strong><span id="investment-account-equivalent" class="iv-balance-equivalent" hidden></span></div><small>100포인트 = 1원</small></div></div>
             <section class="iv-summary" aria-label="내 투자"><h2>내 투자</h2><p class="iv-total" id="investment-total">0 P</p><small>보유한 주식이 없어요</small></section>
@@ -70,7 +70,7 @@
             </section>
         </section>
         <section id="investment-detail" class="iv-detail" aria-label="종목 상세" hidden>
-            <div class="iv-detail-nav"><button class="iv-back" id="investment-back" type="button" aria-label="종목 목록으로 돌아가기">${icon('chevron-left')}</button><span class="iv-market-heading"><span>운영시간 00:00~23:00</span><span id="market-detail-status" class="iv-market-status">시세 연결 중</span></span></div>
+            <div class="iv-detail-nav"><button class="iv-back" id="investment-back" type="button" aria-label="종목 목록으로 돌아가기">${icon('chevron-left')}</button><span class="iv-market-heading"><span>운영시간 00:00~23:30</span><span id="market-detail-status" class="iv-market-status">시세 연결 중</span></span></div>
             <div class="iv-detail-heading"><h2 id="investment-name" tabindex="-1"></h2><span class="iv-ticker" id="investment-ticker"></span></div>
             <div class="iv-quote"><p class="iv-price"><span id="investment-price"></span><small class="iv-secondary-price" id="investment-secondary-price"></small></p><div id="investment-detail-currency"></div></div>
             <p class="iv-change"><span id="investment-change-caption" style="margin-left:0">전일 대비</span><span id="investment-change"></span></p>
@@ -144,7 +144,7 @@
         $('investment-holdings-tab').hidden = stock.kind === 'index';
         $('investment-trade-buttons').hidden = stock.kind === 'index';
         $('investment-trade-note').textContent = stock.kind === 'index' ? '엔조이는 시장 흐름을 나타내는 지수예요' : '현재 거래가 잠겨 있어요';
-        $('investment-info-panel').innerHTML = `<dl><div><dt>${stock.kind === 'index' ? '지수명' : '종목명'}</dt><dd>${stock.name}</dd></div><div><dt>코드</dt><dd>${stock.ticker}</dd></div><div><dt>유형</dt><dd>${stock.kind === 'index' ? '대표 지수' : '주식 · 거래 잠김'}</dd></div><div><dt>현재가</dt><dd>${priceLabel(stock)}</dd></div>${stock.kind === 'stock' ? '<div><dt>보유 주식</dt><dd>0주</dd></div>' : ''}</dl><p>100포인트 = 1원<br>${stock.kind === 'index' ? '관리자가 설정한 지수 값이 유지돼요.' : '시세는 1시간마다 변동돼요.'}</p>`;
+        $('investment-info-panel').innerHTML = `<dl><div><dt>${stock.kind === 'index' ? '지수명' : '종목명'}</dt><dd>${stock.name}</dd></div><div><dt>코드</dt><dd>${stock.ticker}</dd></div><div><dt>유형</dt><dd>${stock.kind === 'index' ? '대표 지수' : '주식 · 거래 잠김'}</dd></div><div><dt>현재가</dt><dd>${priceLabel(stock)}</dd></div>${stock.kind === 'stock' ? '<div><dt>보유 주식</dt><dd>0주</dd></div>' : ''}</dl><p>100포인트 = 1원<br>${stock.kind === 'index' ? '관리자가 설정한 지수 값이 유지돼요.' : '시세는 30분마다 변동돼요.'}</p>`;
         root.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', String(button.dataset.tab === state.tab)));
         $('investment-chart-panel').hidden = state.tab !== 'chart';
         $('investment-info-panel').hidden = state.tab !== 'info';
@@ -159,10 +159,10 @@
         return !document.hidden && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden');
     }
     function updateMarketStatus() {
-        const label = feed.status === 'online' ? '1시간마다 변동' : feed.status === 'loading' ? '시세 연결 중' : '시세 연결 지연';
+        const label = feed.status === 'online' ? '30분마다 변동' : feed.status === 'loading' ? '시세 연결 중' : '시세 연결 지연';
         root.querySelectorAll('.iv-market-status').forEach(element => {
             element.textContent = feed.status === 'online' && element.id === 'market-detail-status'
-                ? (state.selected === 'enjoy' ? '관리자 설정' : '1시간마다 변동') : label;
+                ? (state.selected === 'enjoy' ? '관리자 설정' : '30분마다 변동') : label;
         });
     }
     function scheduleMarket(delay) {
@@ -192,17 +192,17 @@
             try {
                 const data = await readApi('/market');
                 if (!Array.isArray(data.quotes) || !Number.isSafeInteger(data.asOf) || !Number.isSafeInteger(data.revision) || !Number.isFinite(data.serverTime) ||
-                    data.nextUpdateAt !== data.asOf + 3_600_000 || data.asOf < feed.asOf ||
+                    ![1_800_000, 3_600_000].includes(data.updateIntervalMs || 1_800_000) || !Number.isSafeInteger(data.nextUpdateAt) || data.nextUpdateAt < data.asOf + (data.updateIntervalMs || 1_800_000) || data.nextUpdateAt % (data.updateIntervalMs || 1_800_000) !== 0 || data.asOf < feed.asOf ||
                     !stocks.every(stock => validQuote(data.quotes.find(quote => quote.id === stock.id)))) throw new Error('Invalid market response');
                 const changed = !feed.ready || feed.asOf !== data.asOf || feed.revision !== data.revision;
                 stocks.forEach(stock => {
                     const quote = data.quotes.find(item => item.id === stock.id);
                     stock.price = quote.price; stock.change = quote.change; stock.percent = quote.percent;
                 });
-                feed.ready = true; feed.asOf = data.asOf; feed.revision = data.revision;
+                feed.interval = data.updateIntervalMs || 1_800_000; feed.ready = true; feed.asOf = data.asOf; feed.revision = data.revision;
                 feed.status = data.stale ? 'delayed' : 'online';
                 // Schedule by server time, so a wrong phone clock cannot trigger rapid polling.
-                const delay = data.stale ? 60_000 : Math.max(1000, Math.min(3_601_500, data.nextUpdateAt - data.serverTime + 1500));
+                const delay = data.stale ? 60_000 : Math.max(1000, Math.min(feed.interval + 1500, data.nextUpdateAt - data.serverTime + 1500));
                 feed.validUntil = Date.now() + delay;
                 if (changed) { feed.histories.clear(); feed.books.clear(); }
                 renderList(); renderDetail(); updateMarketStatus(); scheduleMarket(delay);
@@ -226,7 +226,7 @@
                     !data.points.every(point => Number.isSafeInteger(point.time) && ['open','high','low','close'].every(field => Number.isSafeInteger(point[field]) && point[field] >= 1))) throw new Error('Invalid chart response');
                 if (asOf !== feed.asOf || revision !== feed.revision) return;
                 const today = Math.floor((feed.asOf + 9 * 3_600_000) / 86_400_000) * 86_400_000 - 9 * 3_600_000;
-                feed.histories.set(key, { points: data.points, axisStart: Number.isSafeInteger(data.axisStart) ? data.axisStart : today, axisEnd: Number.isSafeInteger(data.axisEnd) ? data.axisEnd : today + 23 * 3_600_000 });
+                feed.histories.set(key, { points: data.points, axisStart: Number.isSafeInteger(data.axisStart) ? data.axisStart : today, axisEnd: Number.isSafeInteger(data.axisEnd) ? data.axisEnd : today + 86_400_000 - 1_800_000 });
                 if (feed.histories.size > 16) feed.histories.delete(feed.histories.keys().next().value);
                 if (historyKey() === key) requestAnimationFrame(drawChart);
             } catch (_) {
@@ -311,15 +311,15 @@
         const intraday = state.period === 'day';
         if (intraday) {
             ctx.fillStyle = themeColor('--iv-muted', '#909096'); ctx.font = '11px Pretendard, -apple-system, sans-serif';
-            [0,6,12,18,23].forEach(hour => {
-                ctx.textAlign = hour === 0 ? 'left' : hour === 23 ? 'right' : 'center';
-                ctx.fillText(String(hour).padStart(2,'0') + '시', chartLeft + hour / 23 * (chartRight-chartLeft), h*.95);
+            [0,6,12,18,23.5].forEach(hour => {
+                ctx.textAlign = hour === 0 ? 'left' : hour === 23.5 ? 'right' : 'center';
+                ctx.fillText((hour === 23.5 ? '23:30' : String(hour).padStart(2,'0') + '시'), chartLeft + hour / 23.5 * (chartRight-chartLeft), h*.95);
             });
         }
         if (!history.length) {
             ctx.fillStyle = themeColor('--iv-muted', '#909096'); ctx.font = '13px Pretendard, -apple-system, sans-serif'; ctx.textAlign = 'center';
             ctx.fillText(intraday ? '오늘의 시세 기록을 기다리고 있어요' : '아직 과거 시세 기록이 없어요', w/2, h*.46);
-            canvas.setAttribute('aria-label', intraday ? '당일 시세 기록 없음, 00시부터 23시까지' : '과거 시세 기록 없음'); return;
+            canvas.setAttribute('aria-label', intraday ? '당일 시세 기록 없음, 00시부터 23시 30분까지' : '과거 시세 기록 없음'); return;
         }
         const color = stock.change > 0 ? themeColor('--iv-red', '#f04452') : stock.change < 0 ? themeColor('--iv-blue', '#3182f6') : themeColor('--iv-flat', '#a6a6b1');
         const high = Math.max(...history.map(point => point.high)), low = Math.min(...history.map(point => point.low));
@@ -345,7 +345,7 @@
         ctx.fillText(high === low ? '최고·최저 ' + money(high) : '최고 ' + money(high) + ' · 최저 ' + money(low), 0, h * .23 - 18);
         ctx.strokeStyle = themeColor('--iv-grid', '#4c4c58'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
         ctx.beginPath(); ctx.moveTo(0,h*.83); ctx.lineTo(w,h*.83); ctx.stroke();
-        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + (stock.kind === 'index' ? ', 관리자 설정' : ', 1시간마다 변동'));
+        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시 30분까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + (stock.kind === 'index' ? ', 관리자 설정' : ', 30분마다 변동'));
     }
     function showList(restoreFocus) {
         const previous = state.selected;
