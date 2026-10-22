@@ -75,7 +75,7 @@
             <div class="iv-quote"><p class="iv-price"><span id="investment-price"></span><small class="iv-secondary-price" id="investment-secondary-price"></small></p><div id="investment-detail-currency"></div></div>
             <p class="iv-change"><span id="investment-change-caption" style="margin-left:0">전일 대비</span><span id="investment-change"></span></p>
             <div class="iv-tabs" role="tablist" aria-label="종목 상세 메뉴"><button type="button" id="investment-chart-tab" role="tab" data-tab="chart" aria-controls="investment-chart-panel" aria-selected="true">차트</button><button type="button" id="investment-orderbook-tab" role="tab" data-tab="book" aria-controls="investment-orderbook-panel" aria-selected="false">호가</button><button type="button" id="investment-holdings-tab" disabled>내 주식</button><button type="button" id="investment-info-tab" role="tab" data-tab="info" aria-controls="investment-info-panel" aria-selected="false">종목정보</button></div>
-            <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} 자세한 차트</p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" aria-label="시세 차트"></canvas></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="실시간" aria-pressed="true">실시간</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button></div></div>
+            <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} 자세한 차트</p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" aria-label="시세 차트"></canvas><span id="investment-chart-pulse" class="iv-chart-pulse" aria-hidden="true" hidden></span></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="실시간" aria-pressed="true">실시간</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button></div></div>
             <div id="investment-orderbook-panel" class="iv-orderbook" role="tabpanel" aria-labelledby="investment-orderbook-tab" hidden></div>
             <div id="investment-info-panel" class="iv-info" role="tabpanel" aria-labelledby="investment-info-tab" hidden></div>
             <footer class="iv-trade"><div class="iv-trade-buttons" id="investment-trade-buttons"><button type="button" disabled>판매하기</button><button type="button" disabled>구매하기</button></div><p id="investment-trade-note">현재 거래가 잠겨 있어요</p></footer>
@@ -193,11 +193,16 @@
                 const data = await readApi('/market');
                 if (!Array.isArray(data.quotes) || !Number.isSafeInteger(data.asOf) || !Number.isSafeInteger(data.revision) || !Number.isFinite(data.serverTime) ||
                     ![1_800_000, 3_600_000].includes(data.updateIntervalMs || 1_800_000) || !Number.isSafeInteger(data.nextUpdateAt) || data.nextUpdateAt < data.asOf + (data.updateIntervalMs || 1_800_000) || data.nextUpdateAt % (data.updateIntervalMs || 1_800_000) !== 0 || data.asOf < feed.asOf ||
-                    !stocks.every(stock => validQuote(data.quotes.find(quote => quote.id === stock.id)))) throw new Error('Invalid market response');
+                    !stocks.every(stock => {
+                        const quote = data.quotes.find(quote => quote.id === stock.id);
+                        const previous = quote && (quote.previous ?? quote.price - quote.change);
+                        return validQuote(quote) && Number.isSafeInteger(previous) && previous >= 1;
+                    })) throw new Error('Invalid market response');
                 const changed = !feed.ready || feed.asOf !== data.asOf || feed.revision !== data.revision;
                 stocks.forEach(stock => {
                     const quote = data.quotes.find(item => item.id === stock.id);
-                    stock.price = quote.price; stock.change = quote.change; stock.percent = quote.percent;
+                    const previous = quote.previous ?? quote.price - quote.change;
+                    stock.price = quote.price; stock.previous = previous; stock.change = quote.change; stock.percent = quote.percent;
                 });
                 feed.interval = data.updateIntervalMs || 1_800_000; feed.ready = true; feed.asOf = data.asOf; feed.revision = data.revision;
                 feed.status = data.stale ? 'delayed' : 'online';
@@ -290,6 +295,8 @@
         try { await promise; } finally { feed.loading.delete(key); }
     }
     function drawChart() {
+        const pulse = $('investment-chart-pulse');
+        pulse.hidden = true;
         if (!state.selected || state.tab !== 'chart' || root.classList.contains('hidden')) return;
         const stock = stocks.find(item => item.id === state.selected);
         const canvas = $('investment-chart');
@@ -327,25 +334,32 @@
         const axisEnd = intraday ? series.axisEnd : history[history.length - 1].time;
         const xFor = time => chartLeft + (axisEnd === axisStart ? 0 : Math.max(0, Math.min(1, (time-axisStart)/(axisEnd-axisStart)))) * (chartRight-chartLeft);
         const chartW = xFor(history[history.length - 1].time);
-        const yFor = value => high === low ? h * .46 : h * .23 + (high - value) / (high - low) * h * .29;
+        // The dashed line shares the price scale with the series, including gaps from yesterday's close.
+        const previous = stock.previous;
+        const scaleHigh = Math.max(high, previous), scaleLow = Math.min(low, previous);
+        const yFor = value => scaleHigh === scaleLow ? h * .46 : h * .23 + (scaleHigh - value) / (scaleHigh - scaleLow) * h * .48;
+        const previousY = yFor(previous);
+        ctx.strokeStyle = themeColor('--iv-grid', '#4c4c58'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(0, previousY); ctx.lineTo(w, previousY); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = themeColor('--iv-muted', '#909096'); ctx.font = '11px Pretendard, -apple-system, sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText('전일 종가 ' + money(previous), chartRight, previousY - 9);
         const chartY = yFor(history[history.length - 1].close);
         ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = color;
         ctx.beginPath();
         history.forEach((point, index) => {
             const x = xFor(point.time), y = yFor(point.close);
             if (index === 0) ctx.moveTo(x, y);
-            else { ctx.lineTo(x, yFor(history[index - 1].close)); ctx.lineTo(x, y); }
+            else ctx.lineTo(x, y);
         });
         ctx.stroke();
-        ctx.fillStyle = color; ctx.globalAlpha = .1;
-        ctx.beginPath(); ctx.arc(chartW, chartY, 9, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.fillStyle = color;
         ctx.beginPath(); ctx.arc(chartW, chartY, 4, 0, Math.PI * 2); ctx.fill();
+        pulse.setAttribute('style', 'left:' + chartW + 'px;top:' + chartY + 'px;--iv-pulse-color:' + color);
+        pulse.hidden = !intraday || document.hidden || !isActive();
         ctx.font = '12px Pretendard, -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(high === low ? '최고·최저 ' + money(high) : '최고 ' + money(high) + ' · 최저 ' + money(low), 0, h * .23 - 18);
-        ctx.strokeStyle = themeColor('--iv-grid', '#4c4c58'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
-        ctx.beginPath(); ctx.moveTo(0,h*.83); ctx.lineTo(w,h*.83); ctx.stroke();
-        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시 30분까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + (stock.kind === 'index' ? ', 관리자 설정' : ', 30분마다 변동'));
+        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시 30분까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + ', 전일 종가 ' + money(previous) + (stock.kind === 'index' ? ', 관리자 설정' : ', 30분마다 변동'));
     }
     function showList(restoreFocus) {
         const previous = state.selected;
@@ -395,6 +409,8 @@
     window.refreshInvestmentAccount = refreshAccount;
     window.addEventListener('enjoy-auth-ready', refreshAccount);
     function syncOrPause() {
+        $('investment-chart-pulse').hidden = true;
+        if (isActive()) requestAnimationFrame(drawChart);
         if (isActive()) syncMarket();
         else if (feed.timer) { clearTimeout(feed.timer); feed.timer = null; }
     }
