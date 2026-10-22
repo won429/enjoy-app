@@ -51,7 +51,7 @@
     const wonAmount = amount => (amount / pointsPerWon).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원';
     const money = amount => state.currency === 'POINTS' ? pointAmount(amount) : wonAmount(amount);
     const displayQuote = stock => {
-        if (stock.kind !== 'stock' || motion.price === null) return stock;
+        if (stock.kind !== 'stock' || motion.price === null || marketClosed()) return stock;
         const price = motion.price, change = price - stock.previous;
         return { ...stock, price, change, percent: change / stock.previous * 100 };
     };
@@ -169,9 +169,10 @@
         return !document.hidden && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden');
     }
     function updateMarketStatus() {
-        const label = feed.status === 'online' ? (motionTime() >= feed.nextUpdateAt ? '서버 시세 갱신 중' : '화면 시세 · 1초 변동') : feed.status === 'loading' ? '시세 연결 중' : '시세 연결 지연';
+        const closed = feed.ready && marketClosed();
+        const label = closed ? '운영 종료 · 00:00 재개' : feed.status === 'online' ? (motionTime() >= feed.nextUpdateAt ? '서버 시세 갱신 중' : '화면 시세 · 1초 변동') : feed.status === 'loading' ? '시세 연결 중' : '시세 연결 지연';
         root.querySelectorAll('.iv-market-status').forEach(element => {
-            element.textContent = feed.status === 'online' && element.id === 'market-detail-status'
+            element.textContent = !closed && feed.status === 'online' && element.id === 'market-detail-status'
                 ? (state.selected === 'enjoy' ? '관리자 설정' : label) : label;
         });
     }
@@ -204,15 +205,23 @@
     }
     // Neither animation prices nor samples leave this page or enter server history/balances.
     function motionTime() { return feed.serverTime + (Date.now() - feed.receivedAt); }
+    // Use the server clock and KST, including when the device uses another timezone.
+    function marketClosed() {
+        const kstTime = ((motionTime() + 9 * 3_600_000) % 86_400_000 + 86_400_000) % 86_400_000;
+        return kstTime >= 23.5 * 3_600_000;
+    }
     function scheduleMotion() {
         stopMotion();
+        if (feed.ready && marketClosed()) {
+            resetMotion(); renderMotionQuote(); updateMarketStatus(); return;
+        }
         if (!isActive() || !feed.ready || feed.status !== 'online' || motionTime() >= feed.nextUpdateAt) return;
         motion.timer = setTimeout(tickMotion, 1000);
     }
     function tickMotion() {
         motion.timer = null;
         if (!isActive() || !feed.ready || feed.status !== 'online') return;
-        if (motionTime() >= feed.nextUpdateAt) {
+        if (marketClosed() || motionTime() >= feed.nextUpdateAt) {
             // Stop at the boundary even while the shared snapshot is still in flight.
             resetMotion(); renderMotionQuote(); updateMarketStatus(); return;
         }
@@ -405,7 +414,7 @@
         const axisEnd = intraday ? series.axisEnd : history[history.length - 1].time;
         const xFor = time => chartLeft + (axisEnd === axisStart ? 0 : Math.max(0, Math.min(1, (time-axisStart)/(axisEnd-axisStart)))) * (chartRight-chartLeft);
         const last = history[history.length - 1];
-        const local = intraday && stock.kind === 'stock'
+        const local = intraday && stock.kind === 'stock' && !marketClosed()
             ? motion.samples.filter(point => point.time >= last.time).map(point => ({ ...point, time: Math.min(axisEnd, point.time) })) : [];
         const endpoint = local.length ? local[local.length - 1] : last;
         const chartW = xFor(endpoint.time);
@@ -435,7 +444,7 @@
         ctx.fillStyle = color;
         ctx.beginPath(); ctx.arc(chartW, chartY, 4, 0, Math.PI * 2); ctx.fill();
         pulse.setAttribute('style', 'left:' + chartW + 'px;top:' + chartY + 'px;--iv-pulse-color:' + color);
-        pulse.hidden = !intraday || document.hidden || !isActive();
+        pulse.hidden = !intraday || document.hidden || !isActive() || marketClosed();
         ctx.font = '12px Pretendard, -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(high === low ? '최고·최저 ' + money(high) : '최고 ' + money(high) + ' · 최저 ' + money(low), 0, h * .23 - 18);
