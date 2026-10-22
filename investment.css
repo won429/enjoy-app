@@ -9,7 +9,7 @@
     background: var(--iv-bg) !important; color: var(--iv-text); color-scheme: dark;
 }
 #wallet-scroll:has(#wallet-panel-investment:not(.hidden)) { padding-top: max(16px, env(safe-area-inset-top)); }
-#wallet-panel-investment { padding-bottom: calc(112px + env(safe-area-inset-bottom)); color: var(--iv-text); letter-spacing: -.025em; }
+#wallet-panel-investment { --iv-gutter: 1.25rem; padding-bottom: calc(112px + env(safe-area-inset-bottom)); color: var(--iv-text); letter-spacing: -.025em; }
 #wallet-panel-investment .iv-top { background: transparent !important; }
 #wallet-panel-investment *, #wallet-panel-investment *::before { box-sizing: border-box; }
 #wallet-panel-investment [hidden] { display: none !important; }
@@ -96,7 +96,7 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
 .iv-secondary-price { margin-left: 7px; color: var(--iv-muted); font-size: 17px; font-weight: 400; letter-spacing: -.025em; }
 .iv-change { margin: 10px 0 25px; color: var(--iv-muted); font-size: 15px; }
 .iv-change span { margin-left: 5px; }
-.iv-tabs { display: flex; justify-content: flex-start; gap: 24px; border-bottom: 1px solid var(--iv-line); margin: 0 -20px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; }
+.iv-tabs { display: flex; justify-content: flex-start; gap: 24px; border-bottom: 1px solid var(--iv-line); margin: 0 calc(-1 * var(--iv-gutter)); padding: 0 var(--iv-gutter); overflow-x: auto; scrollbar-width: none; }
 .iv-tabs button { flex: none; position: relative; padding: 0 0 14px; border: 0; color: var(--iv-muted); background: transparent; font-size: 15px !important; font-weight: 650 !important; white-space: nowrap; }
 .iv-tabs button[aria-selected="true"] { color: var(--iv-text); }
 .iv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; bottom: 0; height: 2px; left: 0; right: 0; border-radius: 1px; background: var(--iv-text); }
@@ -117,7 +117,7 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
 .iv-orderbook { display: flex; flex: 1; flex-direction: column; min-height: 260px; }
 .iv-book-notice { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 10px; color: var(--iv-secondary); font-size: 12px; }
 .iv-book-notice span { color: var(--iv-muted); font-size: 10px; }
-.iv-book-scroll { flex: 1; min-height: 160px; max-height: calc(100dvh - 440px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--iv-muted) var(--iv-bg); }
+.iv-book-scroll { flex: 1; min-height: 160px; max-height: calc(100dvh - 472px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--iv-muted) var(--iv-bg); }
 .iv-book-scroll::-webkit-scrollbar { width: 3px; background: var(--iv-bg); }
 .iv-book-scroll::-webkit-scrollbar-thumb { border-radius: 3px; background: var(--iv-muted); }
 .iv-book-columns { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.5fr) minmax(0, 1fr); min-height: 100%; }
@@ -148,11 +148,14 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
 .iv-info dl div { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; }
 .iv-info dt { color: var(--iv-muted); }
 .iv-info p { margin-top: 30px; color: var(--iv-muted); font-size: 13px; line-height: 1.7; }
-.iv-trade { border-top: 1px solid var(--iv-line-soft); margin: 0 -20px; padding: 18px 20px 0; }
+.iv-trade { border-top: 1px solid var(--iv-line-soft); margin: 0 calc(-1 * var(--iv-gutter)); padding: 18px var(--iv-gutter) 0; }
 .iv-trade-buttons { display: flex; gap: 9px; }
 .iv-trade-buttons button { flex: 1; min-height: 56px; border: 0; border-radius: 19px; background: var(--iv-sell-bg); color: #fff; font-size: 18px !important; font-weight: 650 !important; }
 .iv-trade-buttons button:last-child { background: var(--iv-buy-bg); }
 .iv-trade p { margin: 9px 0 0; color: var(--iv-muted); font-size: 11px; text-align: center; }
+@media (max-width: 380px) {
+    #wallet-panel-investment { --iv-gutter: 1rem; }
+}
 @media (max-width: 350px) {
     .iv-stock { gap: 9px; }
     .iv-stock-price strong { font-size: 17px; }
@@ -174,3 +177,8 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
         color-scheme: light;
     }
 }
+
+.iv-live-note, .iv-reference { color: var(--iv-muted); font-size: 11px; line-height: 1.6; word-break: keep-all; }
+.iv-live-note { margin: 0 3px 12px; }
+.iv-reference { margin: -14px 0 20px; }
+.iv-price, .iv-stock-price { font-variant-numeric: tabular-nums; }
