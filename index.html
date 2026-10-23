@@ -5418,7 +5418,7 @@
             .schedule-modal-inner { padding: 1.0625rem; }
             .community-write-scroll { padding-left: 0.8125rem; padding-right: 0.8125rem; }
         }
-        #home-screen:not(.is-menu-transition), #home-screen .fade-in-up {
+        #home-screen:not(.is-menu-transition), #home-screen .fade-in-up:not(.is-menu-transition) {
             animation: none !important;
             transition: none !important;
             opacity: 1 !important;
@@ -12214,13 +12214,19 @@
         window.switchHomeTab = function (tab) {
             if ((tab === 'shorts' || tab === 'attendance') && !window.enjoyUser) tab = 'home';
             if (window.homeActiveTab === tab) return;
-            if (window.homeActiveTab === 'shorts' && typeof window.cleanupEnjoyShorts === 'function') window.cleanupEnjoyShorts();
-            window.haptic && window.haptic();
-            window.selectHomeTab(tab);
-            if (tab === 'baseball') window.loadKboScoreboard();
-            if (tab === 'shorts' && typeof window.prepareEnjoyShorts === 'function') window.prepareEnjoyShorts();
-            if (tab === 'academic' && typeof window.prepareAcademicSchedule === 'function') window.prepareAcademicSchedule();
-            if (tab === 'attendance' && typeof window.prepareEnjoyAttendance === 'function') window.prepareEnjoyAttendance();
+            const panels = { home: 'apple-tv-banner', baseball: 'home-baseball-panel', vlog: 'home-vlog-panel', shorts: 'shorts-screen', academic: 'academic-schedule-screen', attendance: 'home-attendance-panel' };
+            const leaving = document.getElementById(panels[window.homeActiveTab] || panels.home);
+            // Keep the outgoing content below the home tab bar (z-index: 23).
+            const finishTransition = window.beginEnjoyMenuTransition(leaving, document.getElementById(panels[tab] || panels.home), 22, document.getElementById('home-screen'));
+            try {
+                if (window.homeActiveTab === 'shorts' && typeof window.cleanupEnjoyShorts === 'function') window.cleanupEnjoyShorts();
+                window.haptic && window.haptic();
+                window.selectHomeTab(tab);
+                if (tab === 'baseball') window.loadKboScoreboard();
+                if (tab === 'shorts' && typeof window.prepareEnjoyShorts === 'function') window.prepareEnjoyShorts();
+                if (tab === 'academic' && typeof window.prepareAcademicSchedule === 'function') window.prepareAcademicSchedule();
+                if (tab === 'attendance' && typeof window.prepareEnjoyAttendance === 'function') window.prepareEnjoyAttendance();
+            } finally { finishTransition(); }
         };
         let kboScoreboardLoading = null;
         window.loadKboScoreboard = function () {
@@ -14677,12 +14683,13 @@
             document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
             window.addEventListener('resize', stop, { passive: true });
             if (reduceMotion && reduceMotion.addEventListener) reduceMotion.addEventListener('change', stop);
-            return function (from, to) {
+            return function (from, to, layer = 39, viewport = null) {
                 if (nesting) return function () {};
                 stop();
                 if (!from || !to || from === to || document.hidden || (reduceMotion && reduceMotion.matches) ||
                     !from.getClientRects().length || typeof from.animate !== 'function' || typeof to.animate !== 'function') return function () {};
                 const rect = from.getBoundingClientRect();
+                const clip = viewport && viewport.getBoundingClientRect();
                 const oldDisplay = getComputedStyle(from).display;
                 const oldStyle = from.style.cssText;
                 const oldInert = from.inert;
@@ -14723,8 +14730,9 @@
                             display: oldDisplay, position: 'fixed', left: (rect.left - offsetX) + 'px', top: (rect.top - offsetY) + 'px',
                             right: 'auto', bottom: 'auto', width: rect.width + 'px', height: rect.height + 'px',
                             'max-width': 'none', 'max-height': 'none', 'box-sizing': 'border-box', margin: '0',
-                            transform: 'none', translate: 'none', scale: '1', 'pointer-events': 'none', 'z-index': '39'
+                            transform: 'none', translate: 'none', scale: '1', 'pointer-events': 'none', 'z-index': String(layer)
                         };
+                        if (clip) frozen['clip-path'] = 'inset(' + [clip.top - rect.top, rect.left + rect.width - clip.left - clip.width, rect.top + rect.height - clip.top - clip.height, clip.left - rect.left].map(value => value + 'px').join(' ') + ')';
                         Object.entries(frozen).forEach(([name, value]) => from.style.setProperty(name, value, name === 'scale' ? '' : 'important'));
                         from.inert = true;
                         from.scrollTop = scrollTop; from.scrollLeft = scrollLeft;
