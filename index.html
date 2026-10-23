@@ -6995,6 +6995,33 @@
             color: #fff;
             background: rgba(255,255,255,.11);
         }
+        .kbo-skeleton-screen { padding: .875rem 0 1.5rem; }
+        .kbo-skeleton-block {
+            display: block;
+            background: rgba(255,255,255,.1);
+            border-radius: .375rem;
+            animation: kboSkeletonPulse 1.6s ease-in-out infinite;
+        }
+        .kbo-skeleton-link { height: 2.875rem; margin-bottom: 1rem; border-radius: .875rem; }
+        .kbo-skeleton-title { width: 55%; height: 1.25rem; margin-bottom: 1.25rem; }
+        .kbo-skeleton-dates { display: flex; justify-content: space-around; margin-bottom: 1.5rem; }
+        .kbo-skeleton-date { width: 2rem; height: 3rem; border-radius: .75rem; }
+        .kbo-skeleton-game { display: flex; align-items: center; justify-content: space-around; min-height: 8rem; }
+        .kbo-skeleton-logo { width: 3rem; height: 3rem; border-radius: 50%; }
+        .kbo-skeleton-score { width: 28%; height: 1.5rem; }
+        .kbo-skeleton-section { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid rgba(127,127,127,.15); }
+        .kbo-skeleton-control { height: 2.75rem; margin-bottom: 1rem; border-radius: 3rem; }
+        .kbo-skeleton-calendar { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: .375rem; grid-column: 1/-1; }
+        .kbo-skeleton-cell { height: 3.75rem; }
+        .kbo-skeleton-row { height: 2.5rem; margin-bottom: .625rem; }
+        .kbo-skeleton-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+        @keyframes kboSkeletonPulse { 0%,100% { opacity: .45; } 50% { opacity: .9; } }
+        @media (prefers-color-scheme: light) {
+            .kbo-skeleton-block { background: rgba(25,31,40,.09); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .kbo-skeleton-block { animation: none; opacity: .7; }
+        }
         .kbo-more-loading {
             padding: 7.5rem 1.25rem;
             display: flex;
@@ -11224,6 +11251,19 @@
             return '<span class="kbo-original-stamp" style="--stamp-color:' + (won ? '#17B96B' : '#4285F4') + ';">' +
                 (won ? '승' : '패') + '</span>';
         }
+        function enjoyBaseballSkeleton(part) {
+            const block = function (shape) { return '<span class="kbo-skeleton-block kbo-skeleton-' + shape + '"></span>'; };
+            const calendar = '<div class="kbo-skeleton-calendar" aria-hidden="true">' + block('cell').repeat(35) + '</div>';
+            const label = '<span class="kbo-skeleton-label">' + (part === 'calendar' ? '일정을 불러오는 중' : 'KBO 경기 정보를 불러오는 중') + '</span>';
+            const game = '<div class="kbo-skeleton-game" aria-hidden="true">' + block('logo') + block('score') + block('logo') + '</div>';
+            if (part === 'daily') return '<div role="status" aria-busy="true">' + label + game + '</div>';
+            if (part === 'calendar') return '<div class="kbo-skeleton-calendar" role="status" aria-busy="true">' + label + calendar + '</div>';
+            return '<div class="kbo-skeleton-screen" role="status" aria-busy="true">' + label + '<div aria-hidden="true">' +
+                block('link') + block('title') + '<div class="kbo-skeleton-dates">' + block('date').repeat(5) + '</div>' +
+                game +
+                '<div class="kbo-skeleton-section">' + block('title') + block('control') + calendar + '</div>' +
+                '<div class="kbo-skeleton-section">' + block('title') + block('row').repeat(5) + '</div></div></div>';
+        }
         async function renderEnjoyBaseballMoreCalendar() {
             const title = document.getElementById('kbo-more-month-title');
             const grid = document.getElementById('kbo-more-calendar-grid');
@@ -11236,7 +11276,9 @@
             const competitionBadge = document.getElementById('kbo-more-competition');
             if (competitionBadge) competitionBadge.textContent = requestedMonth.getFullYear() + ' KBO' + (postseason ? ' 포스트시즌' : '');
             title.textContent = requestedMonth.getFullYear() + '년 ' + (requestedMonth.getMonth() + 1) + '월';
-            grid.innerHTML = '<div class="kbo-more-loading" style="grid-column:1/-1;padding:2.125rem 0.625rem;"><i class="fa-solid fa-baseball fa-spin"></i><span>일정을 불러오는 중...</span></div>';
+            if (!enjoyBaseballMoreMonthCache.has(enjoyBaseballMonthKey(requestedMonth))) {
+                grid.innerHTML = enjoyBaseballSkeleton('calendar');
+            }
             tabs.forEach(function (tab) {
                 const active = tab.dataset.kboMoreTeam === team;
                 tab.classList.toggle('is-active', active);
@@ -12078,6 +12120,12 @@
             window.haptic && window.haptic();
             enjoyBaseballMoreDailyDate.setDate(enjoyBaseballMoreDailyDate.getDate() + Number(delta || 0));
             renderEnjoyBaseballDailyDial();
+            if (!enjoyBaseballMoreMonthCache.has(enjoyBaseballMonthKey(enjoyBaseballMoreDailyDate))) {
+                const list = document.getElementById('kbo-more-daily-list');
+                const meta = document.getElementById('kbo-more-daily-meta');
+                if (list) list.innerHTML = enjoyBaseballSkeleton('daily');
+                if (meta) meta.textContent = '';
+            }
             enjoyBaseballMoreFetchMonth(enjoyBaseballMoreDailyDate).then(renderEnjoyBaseballMoreDaily);
         };
         window.changeKboMoreMonth = function (delta) {
@@ -12168,7 +12216,7 @@
             if (kboScoreboardLoading) return kboScoreboardLoading;
             const wrap = document.getElementById('baseball-detail-content');
             if (wrap && !wrap.querySelector('.kbo-more-shell')) {
-                wrap.innerHTML = '<div class="kbo-more-loading"><i class="fa-solid fa-baseball fa-spin text-xl"></i><span>KBO 경기 정보를 불러오는 중...</span></div>';
+                wrap.innerHTML = enjoyBaseballSkeleton('screen');
             }
             kboScoreboardLoading = (async function () {
                 try {
