@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="drop-quiz.css?v=20261019-quiz6">
     <link rel="stylesheet" href="investment.css?v=20261024-skeleton1">
     <link rel="stylesheet" href="baseball-game-skeleton.css?v=20261024-1">
+    <link rel="stylesheet" href="wallet-skeleton.css?v=20261024-1">
     <!-- 스토어 스타일은 별도 파일 누락 시에도 적용되도록 본문에 포함한다. -->
     <style id="enjoy-store-styles">
         #store-screen { --store-bg: #000; --store-text: #fff; --store-muted: #8b95a1; --store-line: rgba(255,255,255,.08); position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%,28rem); z-index: 20; background: var(--store-bg); color: var(--store-text); flex-direction: column; overflow: hidden; }
@@ -10258,6 +10259,8 @@
         </div>
     </div>
 
+    <script src="wallet-skeleton.js?v=20261024-1"></script>
+
     <!-- 납부 상세 내역 -->
     <div id="dues-detail-modal" class="fixed inset-0 hidden items-end justify-center bg-black/65 backdrop-blur-sm" aria-hidden="true" onclick="window.closeDuesDetail()">
         <section class="dues-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="dues-detail-title" onclick="event.stopPropagation()">
@@ -19781,6 +19784,7 @@
             window.enjoySync = false;
             window.__enjoyTodayDataReady = true;
             window.enjoyLoadLocalSchedule();
+            if (window.enjoyWalletLoading) window.enjoyWalletLoading.local();
             var ld = document.getElementById('app-loader');
             if (ld) window.enjoyFinishLoadingIsland();
         };
@@ -23707,6 +23711,7 @@
                 let unsubRenovation = null;
 
                 onAuthStateChanged(meetingAuth, async (user) => {
+                    if (window.enjoyWalletLoading) window.enjoyWalletLoading.reset();
                     if (unsubMeeting) { unsubMeeting(); unsubMeeting = null; }
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
                     if (unsubNoticeAlert) { unsubNoticeAlert(); unsubNoticeAlert = null; }
@@ -23818,7 +23823,8 @@
                                 if (typeof window.updateMeetingUI === 'function') { window.updateMeetingUI(docSnap.data()); }
                             }
                             isMeetingLoaded = true; checkHideLoader();
-                        }, (error) => { console.warn("Meeting snapshot error:", error); initialSyncFailed = true; isMeetingLoaded = true; checkHideLoader(); });
+                            if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('meeting');
+                        }, (error) => { console.warn("Meeting snapshot error:", error); initialSyncFailed = true; isMeetingLoaded = true; checkHideLoader(); if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('meeting', true); });
 
                         unsubSchedule = onSnapshot(doc(window.meetingDb, ...window.SCHEDULE_PATH), (docSnap) => {
                             if (docSnap.exists()) {
@@ -23828,7 +23834,8 @@
                             } else { window.dynamicEvents = {}; }
                             try { if (window.meetingTab === 'expense') window.renderExpenses(); } catch (e) {}
                             isScheduleLoaded = true; checkHideLoader();
-                        }, (error) => { console.warn("Schedule snapshot error:", error); initialSyncFailed = true; isScheduleLoaded = true; checkHideLoader(); });
+                            if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('schedule');
+                        }, (error) => { console.warn("Schedule snapshot error:", error); initialSyncFailed = true; isScheduleLoaded = true; checkHideLoader(); if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('schedule', true); });
                     };
 
                     // 멤버/스페셜 판별 후 동기화(멤버) 또는 로컬 로드(스페셜)는 enjoyOnLogin에서 처리
@@ -23848,6 +23855,10 @@
 
             } catch(e) {
                 console.error("Firebase Init Error:", e);
+                if (window.enjoyWalletLoading) {
+                    window.enjoyWalletLoading.settle('meeting', true);
+                    window.enjoyWalletLoading.settle('schedule', true);
+                }
                 if (window.enjoyRenovationReadFailed) window.enjoyRenovationReadFailed();
                 window.enjoyAuthResolved = true;
                 window.enjoyAuthInitFailed = true;
