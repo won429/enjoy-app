@@ -9,7 +9,7 @@
         { id: 'en-joy', name: '엔조이스튜디오', ticker: 'enjoy studio', kind: 'stock', price: 100, change: 0, percent: 0, image: 'assets/enjoy-symbol-rose.png' }
     ];
     const pointsPerWon = 100;
-    const state = { selected: null, currency: 'POINTS', period: 'day', tab: 'chart', quotePeriod: 'daily' };
+    const state = { selected: null, currency: 'POINTS', period: 'day', tab: 'chart', quotePeriod: 'daily', chartType: 'line' };
     const marketApi = (window.ENJOY_INVESTMENT_API || 'https://enjoy-investment.sungwon4867.workers.dev').replace(/\/$/, '');
     const vlogClicks = new Map();
     let vlogClickHour = -1;
@@ -82,7 +82,7 @@
             <div class="iv-quote"><p class="iv-price"><span id="investment-price"></span><small class="iv-secondary-price" id="investment-secondary-price"></small></p><div id="investment-detail-currency"></div></div>
             <p class="iv-change"><span id="investment-change-caption" style="margin-left:0">전일 대비</span><span id="investment-change"></span></p>
             <div class="iv-tabs" role="tablist" aria-label="종목 상세 메뉴"><button type="button" id="investment-chart-tab" role="tab" data-tab="chart" aria-controls="investment-chart-panel" aria-selected="true">차트</button><button type="button" id="investment-orderbook-tab" role="tab" data-tab="book" aria-controls="investment-orderbook-panel" aria-selected="false">호가</button><button type="button" id="investment-closes-tab" role="tab" data-tab="closes" aria-controls="investment-closes-panel" aria-selected="false">시세</button><button type="button" id="investment-holdings-tab" disabled>내 주식</button><button type="button" id="investment-info-tab" role="tab" data-tab="info" aria-controls="investment-info-panel" aria-selected="false">종목정보</button></div>
-            <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} <span id="investment-chart-caption">자세한 차트</span></p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" tabindex="0" aria-description="차트를 누른 채 좌우로 움직이거나 좌우 방향키로 시점별 가격을 확인하세요. Escape 키로 선택을 해제해요." aria-label="시세 차트"></canvas><span id="investment-chart-pulse" class="iv-chart-pulse" aria-hidden="true" hidden></span><output id="investment-chart-inspection" class="iv-chart-inspection" aria-live="off" hidden><span id="investment-chart-time"></span><strong id="investment-chart-value"></strong></output></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="실시간" aria-pressed="true">실시간</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button></div></div>
+            <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} <span id="investment-chart-caption">자세한 차트</span></p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" tabindex="0" aria-description="차트를 누른 채 좌우로 움직이거나 좌우 방향키로 시점별 가격을 확인하세요. Escape 키로 선택을 해제해요." aria-label="시세 차트"></canvas><span id="investment-chart-pulse" class="iv-chart-pulse" aria-hidden="true" hidden></span><output id="investment-chart-inspection" class="iv-chart-inspection" aria-live="off" hidden><span id="investment-chart-time"></span><strong id="investment-chart-value"></strong></output></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="오늘" aria-pressed="true">오늘</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button><button type="button" id="investment-chart-type" class="iv-chart-type" data-chart-type="toggle" aria-label="캔들 차트로 전환" aria-pressed="false"><img src="assets/investment/chart-candle.png" alt="" width="28" height="28"></button></div></div>
             <div id="investment-orderbook-panel" class="iv-orderbook" role="tabpanel" aria-labelledby="investment-orderbook-tab" hidden></div>
             <div id="investment-closes-panel" class="iv-closes" role="tabpanel" aria-labelledby="investment-closes-tab" hidden></div>
             <div id="investment-info-panel" class="iv-info" role="tabpanel" aria-labelledby="investment-info-tab" hidden></div>
@@ -538,6 +538,7 @@
         if (!feed.ready || !history) { canvas.setAttribute('aria-label', '차트 불러오는 중'); return; }
         const chartLeft = 6, chartRight = w - 6;
         const intraday = state.period === 'day';
+        const candlestick = state.chartType === 'candle';
         if (intraday) {
             ctx.fillStyle = themeColor('--iv-muted', '#909096'); ctx.font = '11px Pretendard, -apple-system, sans-serif';
             [0,6,12,18,23.5].forEach(hour => {
@@ -557,7 +558,7 @@
         const axisEnd = intraday ? series.axisEnd : history[history.length - 1].time;
         const xFor = time => chartLeft + (axisEnd === axisStart ? 0 : Math.max(0, Math.min(1, (time-axisStart)/(axisEnd-axisStart)))) * (chartRight-chartLeft);
         const last = history[history.length - 1];
-        const local = intraday && stock.kind === 'stock' && !marketClosed()
+        const local = !candlestick && intraday && stock.kind === 'stock' && !marketClosed()
             ? motion.samples.filter(point => point.time >= last.time).map(point => ({ ...point, time: Math.min(axisEnd, point.time) })) : [];
         const endpoint = local.length ? local[local.length - 1] : last;
         const key = historyKey();
@@ -581,28 +582,47 @@
             ctx.fillText('전일 종가 ' + money(previous), chartRight, previousY - 9);
         }
         const chartY = yFor(endpoint.close);
-        ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = color;
-        ctx.beginPath();
-        history.forEach((point, index) => {
-            const x = xFor(point.time), y = yFor(point.close);
-            if (index === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-        if (local.length) {
-            ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(xFor(last.time), yFor(last.close));
-            local.forEach(point => ctx.lineTo(xFor(point.time), yFor(point.close)));
-            ctx.stroke(); ctx.setLineDash([]);
+        if (candlestick) {
+            const spacing = history.length > 1 ? Math.min(...history.slice(1).map((point, index) => xFor(point.time) - xFor(history[index].time))) : 12;
+            const bodyWidth = Math.max(1, Math.min(6, spacing * .62));
+            history.forEach((point, index) => {
+                // Snapshot-only records span the interval from the previous recorded price.
+                const snapshot = point.open === point.close && point.high === point.close && point.low === point.close;
+                const open = snapshot && index > 0 ? history[index - 1].close : point.open;
+                const x = xFor(point.time), top = yFor(Math.max(open, point.close)), bottom = yFor(Math.min(open, point.close));
+                const candleColor = point.close > open ? themeColor('--iv-red', '#f04452') : point.close < open ? themeColor('--iv-blue', '#3182f6') : themeColor('--iv-muted', '#909096');
+                ctx.strokeStyle = candleColor; ctx.fillStyle = candleColor; ctx.lineWidth = 1; ctx.lineCap = 'butt';
+                ctx.beginPath(); ctx.moveTo(x, yFor(Math.max(point.high, open))); ctx.lineTo(x, yFor(Math.min(point.low, open))); ctx.stroke();
+                if (open === point.close) {
+                    ctx.beginPath(); ctx.moveTo(x - bodyWidth / 2, top); ctx.lineTo(x + bodyWidth / 2, top); ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.roundRect(x - bodyWidth / 2, top, bodyWidth, Math.max(1, bottom - top), Math.min(1.2, bodyWidth / 2, (bottom - top) / 2)); ctx.fill();
+                }
+            });
+        } else {
+            ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = color;
+            ctx.beginPath();
+            history.forEach((point, index) => {
+                const x = xFor(point.time), y = yFor(point.close);
+                if (index === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            if (local.length) {
+                ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(xFor(last.time), yFor(last.close));
+                local.forEach(point => ctx.lineTo(xFor(point.time), yFor(point.close)));
+                ctx.stroke(); ctx.setLineDash([]);
+            }
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.arc(chartW, chartY, 4, 0, Math.PI * 2); ctx.fill();
         }
-        ctx.fillStyle = color;
-        ctx.beginPath(); ctx.arc(chartW, chartY, 4, 0, Math.PI * 2); ctx.fill();
         pulse.setAttribute('style', 'left:' + chartW + 'px;top:' + chartY + 'px;--iv-pulse-color:' + color);
-        pulse.hidden = !intraday || document.hidden || !isActive() || marketClosed();
+        pulse.hidden = candlestick || !intraday || document.hidden || !isActive() || marketClosed();
         const markExtreme = (point, value, label, markerColor, below) => {
             const x = xFor(point.time), y = yFor(value);
             ctx.strokeStyle = markerColor; ctx.fillStyle = markerColor; ctx.lineWidth = 1;
             // Aggregated periods may reach a high/low between their closing samples.
-            if (value !== point.close) {
+            if (!candlestick && value !== point.close) {
                 ctx.beginPath(); ctx.moveTo(x, yFor(point.close)); ctx.lineTo(x, y); ctx.stroke();
             }
             ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
@@ -626,12 +646,13 @@
             ctx.strokeStyle = themeColor('--iv-muted', '#909096'); ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(x, h * .09 + 48); ctx.lineTo(x, h * .9); ctx.stroke();
             selectionLabel = ', 선택 ' + time + ', ' + money(selected.close);
-        } else if (high === low) markExtreme(highPoint, high, '최고·최저', color, false);
+        } else if (high === low) markExtreme(highPoint, high, '최고·최저', candlestick ? themeColor('--iv-muted', '#909096') : color, false);
         else {
-            markExtreme(highPoint, high, '최고', color, false);
-            markExtreme(lowPoint, low, '최저', color, true);
+            const markerColor = candlestick ? themeColor('--iv-muted', '#909096') : color;
+            markExtreme(highPoint, high, '최고', markerColor, false);
+            markExtreme(lowPoint, low, '최저', markerColor, true);
         }
-        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시 30분까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + (showPrevious ? ', 전일 종가 ' + money(previous) : '') + (stock.kind === 'index' ? ', 관리자 설정' : ', 30분 주기 갱신' + (local.length ? ', 기기별 화면 시세 ' + money(quote.price) : '')) + selectionLabel);
+        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시 30분까지, ' : ' 과거 차트, ') + (candlestick ? '캔들 차트, ' : '') + '최고 ' + money(high) + ', 최저 ' + money(low) + (showPrevious ? ', 전일 종가 ' + money(previous) : '') + (stock.kind === 'index' ? ', 관리자 설정' : ', 30분 주기 갱신' + (local.length ? ', 기기별 화면 시세 ' + money(quote.price) : '')) + selectionLabel);
     }
     function clearChartInspection(redraw = true) {
         const canvas = $('investment-chart'), pointer = chartInspection.pointer;
@@ -707,6 +728,15 @@
         else if (button.dataset.quotePeriod) { state.quotePeriod = button.dataset.quotePeriod; renderCloses(); }
         else if (button.dataset.ticks) loadTicks(button.dataset.ticks === 'more');
         else if (button.dataset.closes) loadCloses(button.dataset.closes === 'more');
+        else if (button.dataset.chartType) {
+            clearChartInspection(false);
+            state.chartType = state.chartType === 'line' ? 'candle' : 'line';
+            const control = $('investment-chart-type'), candle = state.chartType === 'candle';
+            control.setAttribute('aria-label', candle ? '선 차트로 전환' : '캔들 차트로 전환');
+            control.setAttribute('aria-pressed', String(candle));
+            control.innerHTML = '<img src="assets/investment/chart-' + (candle ? 'line' : 'candle') + '.png" alt="" width="28" height="28">';
+            requestAnimationFrame(drawChart);
+        }
         else if (button.dataset.period) { clearChartInspection(false); state.period = button.dataset.period; renderDetail(); }
         else if (button.dataset.tab) {
             if (button.dataset.tab === 'book' && stocks.find(stock => stock.id === state.selected)?.kind !== 'stock') return;
