@@ -24,6 +24,7 @@
     let lastDraw = '';
     let rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     let anchorWidth = 8 * rem;
+    let handoffAnchor = null;
     let shape = null;
     let velocity = null;
     let previousMotion = null;
@@ -35,6 +36,8 @@
     const DISSOLVE_MS = 100;
     const CHECK_MS = 600;
     const COMPLETION_MS = RECOGNITION_MS + FACE_HOLD_MS + DISSOLVE_MS + CHECK_MS + 100;
+    const REVEAL_START_MS = 650;
+    const REVEAL_MS = 650;
 
     function smooth(value) {
         const t = Math.max(0, Math.min(1, value));
@@ -97,14 +100,18 @@
 
     function shapeTarget(now) {
         const state = loader.dataset.state;
-        let width = 6.5 * rem, height = 6.5 * rem, radius = 1.875 * rem, top = 0;
+        let width = 6.5 * rem, height = 6.5 * rem, radius = 1.875 * rem, top = 0, left = 0;
         if (state === 'handoff' || (state === 'closing' && now - closeStarted < 250) ||
             (state === 'opening' && now - started >= 190 && now - started < 330)) {
             width = anchorWidth; height = 2 * rem; radius = rem;
         } else if ((state === 'opening' && now - started < 190) || state === 'closing') {
-            width = .5 * rem; height = .5 * rem; radius = .25 * rem; top = .75 * rem;
+            width = .5 * rem; height = .5 * rem; radius = .25 * rem;
         }
-        return {width: width, height: height, radius: radius, top: top};
+        if (state === 'handoff' && handoffAnchor) {
+            left = handoffAnchor.left + anchorWidth / 2 - innerWidth / 2;
+            top = handoffAnchor.top + rem - innerHeight / 2;
+        }
+        return {width: width, height: height, radius: radius, top: top, left: left};
     }
 
     function updateSurface(now) {
@@ -128,10 +135,19 @@
         card.style.width = Math.max(1, shape.width) + 'px';
         card.style.height = Math.max(1, shape.height) + 'px';
         card.style.top = shape.top + 'px';
+        card.style.left = shape.left + 'px';
         card.style.borderRadius = Math.max(0, shape.radius) + 'px';
         const state = loader.dataset.state;
         const age = now - started;
-        card.style.opacity = String(state === 'closing' ? 1 - smooth((now - closeStarted - 400) / 140) : smooth(age / 80));
+        card.style.opacity = String(state === 'closing' ? 1 : smooth(age / 80));
+        if (state === 'closing') {
+            // Open the app from the final dot, keeping the surrounding screen covered.
+            const progress = smooth((now - closeStarted - REVEAL_START_MS) / REVEAL_MS);
+            const radius = progress * (Math.hypot(innerWidth, innerHeight) / 2 + 2);
+            const mask = progress > 0 ? 'radial-gradient(circle at 50% 50%, transparent ' + radius + 'px, #000 ' + (radius + 1) + 'px)' : '';
+            loader.style.maskImage = mask;
+            loader.style.webkitMaskImage = mask;
+        }
         canvas.style.opacity = String(state === 'handoff' ? 1 - smooth((now - handoffStarted) / 140) :
             state === 'closing' ? 1 - smooth((now - closeStarted) / 120) : smooth((age - 330) / 150));
         if (handoff) {
@@ -151,6 +167,8 @@
         loader.dataset.state = 'hidden';
         delete loader.dataset.phase;
         loader.style.display = 'none';
+        loader.style.maskImage = '';
+        loader.style.webkitMaskImage = '';
         loader.setAttribute('aria-hidden', 'true');
     }
 
@@ -194,7 +212,7 @@
                 return;
             }
             updateSurface(now);
-            if (now - closeStarted >= (reduced ? 0 : 560)) { hide(); return; }
+            if (now - closeStarted >= (reduced ? 0 : REVEAL_START_MS + REVEAL_MS)) { hide(); return; }
         } else if (state === 'completing') {
             const progress = now - completionStarted;
             if (reduced) {
@@ -259,8 +277,10 @@
         label.textContent = '데이터 동기화 중';
         started = previousTick = performance.now();
         window.enjoyPositionLoadingIsland();
-        shape = {width: .25 * rem, height: .25 * rem, radius: .125 * rem, top: .875 * rem};
-        velocity = {width: 0, height: 0, radius: 0, top: 0};
+        shape = {width: .25 * rem, height: .25 * rem, radius: .125 * rem, top: 0, left: 0};
+        velocity = {width: 0, height: 0, radius: 0, top: 0, left: 0};
+        loader.style.maskImage = '';
+        loader.style.webkitMaskImage = '';
         card.style.borderColor = '';
         card.style.boxShadow = '';
         canvas.style.transform = 'translateY(.125rem)';
@@ -283,9 +303,8 @@
             anchor = {left: Math.max(gapLeft, Math.min(left + (width - islandWidth) / 2, gapRight - islandWidth)), top: .25 * rem, width: islandWidth};
         }
         anchorWidth = anchor.width;
-        loader.style.setProperty('--loading-island-left', anchor.left + 'px');
-        loader.style.setProperty('--loading-island-top', anchor.top + 'px');
-        loader.style.setProperty('--loading-island-width', anchor.width + 'px');
+        // Header updates only set the eventual baseball destination; loading stays centered.
+        handoffAnchor = anchor;
     };
     window.enjoyStartLoadingIsland();
 })();
