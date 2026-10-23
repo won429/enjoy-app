@@ -5416,7 +5416,7 @@
             .schedule-modal-inner { padding: 1.0625rem; }
             .community-write-scroll { padding-left: 0.8125rem; padding-right: 0.8125rem; }
         }
-        #home-screen, #home-screen .fade-in-up {
+        #home-screen:not(.is-menu-transition), #home-screen .fade-in-up {
             animation: none !important;
             transition: none !important;
             opacity: 1 !important;
@@ -10292,7 +10292,7 @@
             </button>
 
             <!-- 엔조이 비서실장 메뉴 -->
-            <button id="nav-travel" class="relative w-[68px] py-2 rounded-full group z-10 active:scale-95 transition-transform" onclick="window.haptic(); window.openBrowser('travel.html')">
+            <button id="nav-travel" class="relative w-[68px] py-2 rounded-full group z-10 active:scale-95 transition-transform" onclick="window.haptic(); window.openMenuBrowser('travel.html')">
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
                     <i class="fa-solid fa-suitcase-rolling text-base text-gray-300 group-hover:text-white transition-colors"></i>
                     <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">여행기록</span>
@@ -14603,29 +14603,111 @@
             window.renderDues(window.currentDuesMonth, window.currentDuesYear);
         }
 
+        // Keep navigation and data updates synchronous; only the visible layers animate.
+        window.beginEnjoyMenuTransition = (function () {
+            let finishActive = null;
+            let nesting = 0;
+            const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+            function stop() { if (finishActive) finishActive(); }
+            document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
+            window.addEventListener('resize', stop, { passive: true });
+            if (reduceMotion && reduceMotion.addEventListener) reduceMotion.addEventListener('change', stop);
+            return function (from, to) {
+                if (nesting) return function () {};
+                stop();
+                if (!from || !to || from === to || document.hidden || (reduceMotion && reduceMotion.matches) ||
+                    !from.getClientRects().length || typeof from.animate !== 'function' || typeof to.animate !== 'function') return function () {};
+                const rect = from.getBoundingClientRect();
+                const oldDisplay = getComputedStyle(from).display;
+                const oldStyle = from.style.cssText;
+                const oldInert = from.inert;
+                const scrollTop = from.scrollTop, scrollLeft = from.scrollLeft;
+                // A transformed app shell is the containing block of its fixed children.
+                let offsetX = 0, offsetY = 0;
+                for (let parent = from.parentElement; parent && parent !== document.documentElement; parent = parent.parentElement) {
+                    const style = getComputedStyle(parent);
+                    if (style.transform !== 'none' || style.perspective !== 'none' || style.filter !== 'none' ||
+                        /transform|perspective|filter/.test(style.willChange) || /paint|layout|strict|content/.test(style.contain)) {
+                        const bounds = parent.getBoundingClientRect();
+                        offsetX = bounds.left; offsetY = bounds.top; break;
+                    }
+                }
+                nesting++;
+                let committed = false;
+                return function () {
+                    if (committed) return;
+                    committed = true; nesting--;
+                    if (!to.getClientRects().length || document.hidden || (reduceMotion && reduceMotion.matches)) return;
+                    const animations = [];
+                    let cleaned = false;
+                    function finish() {
+                        if (cleaned) return;
+                        cleaned = true;
+                        animations.forEach(animation => animation.cancel());
+                        from.style.cssText = oldStyle;
+                        from.inert = oldInert;
+                        from.classList.remove('is-menu-transition');
+                        to.classList.remove('is-menu-transition');
+                        if (finishActive === finish) finishActive = null;
+                    }
+                    finishActive = finish;
+                    try {
+                        from.classList.add('is-menu-transition');
+                        to.classList.add('is-menu-transition');
+                        const frozen = {
+                            display: oldDisplay, position: 'fixed', left: (rect.left - offsetX) + 'px', top: (rect.top - offsetY) + 'px',
+                            right: 'auto', bottom: 'auto', width: rect.width + 'px', height: rect.height + 'px',
+                            'max-width': 'none', 'max-height': 'none', 'box-sizing': 'border-box', margin: '0',
+                            transform: 'none', translate: 'none', scale: '1', 'pointer-events': 'none', 'z-index': '39'
+                        };
+                        Object.entries(frozen).forEach(([name, value]) => from.style.setProperty(name, value, name === 'scale' ? '' : 'important'));
+                        from.inert = true;
+                        from.scrollTop = scrollTop; from.scrollLeft = scrollLeft;
+                        animations.push(from.animate([
+                            { opacity: 1, scale: '1' }, { opacity: 0, scale: '.985' }
+                        ], { duration: 160, easing: 'cubic-bezier(.4,0,1,1)', fill: 'both' }));
+                        animations.push(to.animate([
+                            { opacity: 0, scale: '.985' }, { opacity: 1, scale: '1' }
+                        ], { duration: 280, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'both' }));
+                        Promise.allSettled(animations.map(animation => animation.finished)).then(finish);
+                    } catch (error) { finish(); }
+                };
+            };
+        })();
+
+        window.openMenuBrowser = function (url) {
+            const leaving = ['home-screen','store-screen','schedule-screen','meeting-screen'].map(id => document.getElementById(id)).find(screen => screen && !screen.classList.contains('hidden'));
+            const finishTransition = window.beginEnjoyMenuTransition(leaving, document.getElementById('browser-screen'));
+            try { window.openBrowser(url); } finally { finishTransition(); }
+        };
+
         window.switchWalletSub = function(name) {
             const panels = { wallet: 'wallet-panel-wallet', dues: 'mpanel-dues', expense: 'mpanel-expense', investment: 'wallet-panel-investment' };
             if (!panels[name]) name = 'wallet';
-            window._walletSub = name;
-            window.meetingTab = name;
-            if (window.closeDuesDetail) window.closeDuesDetail();
-            Object.entries(panels).forEach(([key, id]) => {
-                const panel = document.getElementById(id);
-                if (panel) panel.classList.toggle('hidden', key !== name);
-            });
-            const header = document.getElementById('wallet-header');
-            const title = document.getElementById('wallet-title');
-            const copyright = document.getElementById('wallet-copyright');
-            if (header) header.classList.toggle('hidden', name === 'investment');
-            if (title) title.textContent = { wallet: '모임통장', dues: '납부 내역', expense: '가계부', investment: '' }[name];
-            if (copyright) copyright.classList.toggle('hidden', name === 'investment');
-            const scroll = document.getElementById('wallet-scroll');
-            if (scroll) scroll.scrollTop = 0;
-            if (window.setWalletNavCompact) window.setWalletNavCompact(false);
-            if ((name === 'wallet' || name === 'dues') && window.renderDues) window.renderDues(window.currentDuesMonth, window.currentDuesYear);
-            if (name === 'expense' && window.renderExpenses) window.renderExpenses();
-            if (window.resetInvestmentView) window.resetInvestmentView();
-            if (window.updateWalletNavActive) window.updateWalletNavActive(name);
+            const leaving = Object.values(panels).map(id => document.getElementById(id)).find(panel => panel && !panel.classList.contains('hidden'));
+            const finishTransition = window.beginEnjoyMenuTransition(leaving, document.getElementById(panels[name]));
+            try {
+                window._walletSub = name;
+                window.meetingTab = name;
+                if (window.closeDuesDetail) window.closeDuesDetail();
+                Object.entries(panels).forEach(([key, id]) => {
+                    const panel = document.getElementById(id);
+                    if (panel) panel.classList.toggle('hidden', key !== name);
+                });
+                const header = document.getElementById('wallet-header');
+                const title = document.getElementById('wallet-title');
+                const copyright = document.getElementById('wallet-copyright');
+                if (header) header.classList.toggle('hidden', name === 'investment');
+                if (title) title.textContent = { wallet: '모임통장', dues: '납부 내역', expense: '가계부', investment: '' }[name];
+                if (copyright) copyright.classList.toggle('hidden', name === 'investment');
+                const scroll = document.getElementById('wallet-scroll');
+                if (scroll) scroll.scrollTop = 0;
+                if (window.setWalletNavCompact) window.setWalletNavCompact(false);
+                if ((name === 'wallet' || name === 'dues') && window.renderDues) window.renderDues(window.currentDuesMonth, window.currentDuesYear);
+                if (name === 'expense' && window.renderExpenses) window.renderExpenses();
+                if (window.resetInvestmentView) window.resetInvestmentView();
+                if (window.updateWalletNavActive) window.updateWalletNavActive(name);
+            } finally { finishTransition(); }
         };
         window.switchMeetingTab = window.switchWalletSub;
 
@@ -16607,43 +16689,48 @@
         window._schedSub = 'calendar';
         window.switchScheduleSub = function (tab) {
             if (tab === 'community') { window.goCommunity(); return; }
-            window._schedSub = tab;
             const panels = { calendar: 'sched-panel-calendar', availability: 'sched-panel-availability', community: 'sched-panel-community' };
-            Object.values(panels).forEach(id => { const e = document.getElementById(id); if (e) { e.classList.add('hidden'); e.classList.remove('flex'); } });
-            const cur = document.getElementById(panels[tab]); if (cur) { cur.classList.remove('hidden'); cur.classList.add('flex'); }
+            if (!panels[tab]) tab = 'calendar';
+            const leaving = Object.values(panels).map(id => document.getElementById(id)).find(panel => panel && !panel.classList.contains('hidden'));
+            const finishTransition = window.beginEnjoyMenuTransition(leaving, document.getElementById(panels[tab]));
+            try {
+                window._schedSub = tab;
+                Object.values(panels).forEach(id => { const e = document.getElementById(id); if (e) { e.classList.add('hidden'); e.classList.remove('flex'); } });
+                const cur = document.getElementById(panels[tab]); if (cur) { cur.classList.remove('hidden'); cur.classList.add('flex'); }
 
-            const calH = document.getElementById('sched-cal-header');
-            const genH = document.getElementById('sched-generic-header');
-            const genT = document.getElementById('sched-generic-title');
-            const genS = document.getElementById('sched-generic-sub');
-            const genA = document.getElementById('sched-generic-action');
+                const calH = document.getElementById('sched-cal-header');
+                const genH = document.getElementById('sched-generic-header');
+                const genT = document.getElementById('sched-generic-title');
+                const genS = document.getElementById('sched-generic-sub');
+                const genA = document.getElementById('sched-generic-action');
 
-            if (tab === 'calendar') {
-                if (calH) calH.classList.remove('hidden');
-                if (genH) genH.classList.add('hidden');
-                window.renderCalendar(window.viewYear, window.viewMonth);
-            } else {
-                if (calH) calH.classList.add('hidden');
-                if (genH) genH.classList.remove('hidden');
-                if (tab === 'availability') {
-                    if (genT) genT.textContent = '스케줄';
-                    if (genS) genS.textContent = '가능·불가를 한 번 고르고 날짜를 눌러요.';
-                    if (genA) genA.classList.add('hidden');
-                    try { window.renderAvailability(); } catch (e) {}
-                } else if (tab === 'community') {
-                    if (genT) genT.textContent = '커뮤니티';
-                    if (genS) genS.textContent = '멤버들의 여행 일정을 공유해요.';
-                    if (genA) genA.classList.remove('hidden');
-                    try { window.renderCommunity(); } catch (e) {}
+                if (tab === 'calendar') {
+                    if (calH) calH.classList.remove('hidden');
+                    if (genH) genH.classList.add('hidden');
+                    window.renderCalendar(window.viewYear, window.viewMonth);
+                } else {
+                    if (calH) calH.classList.add('hidden');
+                    if (genH) genH.classList.remove('hidden');
+                    if (tab === 'availability') {
+                        if (genT) genT.textContent = '스케줄';
+                        if (genS) genS.textContent = '가능·불가를 한 번 고르고 날짜를 눌러요.';
+                        if (genA) genA.classList.add('hidden');
+                        try { window.renderAvailability(); } catch (e) {}
+                    } else if (tab === 'community') {
+                        if (genT) genT.textContent = '커뮤니티';
+                        if (genS) genS.textContent = '멤버들의 여행 일정을 공유해요.';
+                        if (genA) genA.classList.remove('hidden');
+                        try { window.renderCommunity(); } catch (e) {}
+                    }
                 }
-            }
 
-            // 일정 서브 패널만 스크롤 위치를 동기화하고, 메인 커뮤니티는 기존 하단 메뉴 상태를 유지한다.
-            if (tab !== 'community' && window.setSubnavCompact) {
-                window.setSubnavCompact((cur && cur.scrollTop > 24) || false);
-            }
-            // 서브 메뉴 활성 표시 (기존 하단 메뉴와 동일한 방식: 인디케이터 이동 + 흰색/볼드)
-            if (window.updateSubnavActive) window.updateSubnavActive(tab);
+                // 일정 서브 패널만 스크롤 위치를 동기화하고, 메인 커뮤니티는 기존 하단 메뉴 상태를 유지한다.
+                if (tab !== 'community' && window.setSubnavCompact) {
+                    window.setSubnavCompact((cur && cur.scrollTop > 24) || false);
+                }
+                // 서브 메뉴 활성 표시 (기존 하단 메뉴와 동일한 방식: 인디케이터 이동 + 흰색/볼드)
+                if (window.updateSubnavActive) window.updateSubnavActive(tab);
+            } finally { finishTransition(); }
         };
 
         // 하나의 유리 패널을 유지하며 선택 메뉴를 가운데 모았다가 새 메뉴로 펼친다.
@@ -19066,102 +19153,107 @@
 
         window.updateTabUI = function(index) {
             if ((index === 1 || index === 4) && !window.enjoyUser) index = 2;
-            if (index !== 1 && window.leaveEnjoyStore) window.leaveEnjoyStore();
-            window.activeTabIndex = index;
-            if (index !== 4 && window.closeDuesDetail) window.closeDuesDetail();
-            const home = document.getElementById('home-screen');
-            const store = document.getElementById('store-screen');
-            if (store) { store.classList.add('hidden'); store.classList.remove('flex'); }
-            const more = document.getElementById('more-screen');
-            const sched = document.getElementById('schedule-screen');
-            const meet = document.getElementById('meeting-screen');
-            const shorts = document.getElementById('shorts-screen');
+            const menuScreens = { 1: 'store-screen', 2: 'home-screen', 3: 'schedule-screen', 4: 'meeting-screen' };
+            const leaving = Object.values(menuScreens).map(id => document.getElementById(id)).find(screen => screen && !screen.classList.contains('hidden'));
+            const finishTransition = window.beginEnjoyMenuTransition(leaving, document.getElementById(menuScreens[index]));
+            try {
+                if (index !== 1 && window.leaveEnjoyStore) window.leaveEnjoyStore();
+                window.activeTabIndex = index;
+                if (index !== 4 && window.closeDuesDetail) window.closeDuesDetail();
+                const home = document.getElementById('home-screen');
+                const store = document.getElementById('store-screen');
+                if (store) { store.classList.add('hidden'); store.classList.remove('flex'); }
+                const more = document.getElementById('more-screen');
+                const sched = document.getElementById('schedule-screen');
+                const meet = document.getElementById('meeting-screen');
+                const shorts = document.getElementById('shorts-screen');
             
-            home.classList.add('hidden'); 
-            if(more) { more.classList.add('hidden'); more.classList.remove('flex'); }
-            sched.classList.add('hidden'); meet.classList.add('hidden');
-            sched.classList.remove('flex'); meet.classList.remove('flex');
-            if(shorts && !shorts.classList.contains('hidden') && window.closeEnjoyShorts) window.closeEnjoyShorts();
+                home.classList.add('hidden');
+                if(more) { more.classList.add('hidden'); more.classList.remove('flex'); }
+                sched.classList.add('hidden'); meet.classList.add('hidden');
+                sched.classList.remove('flex'); meet.classList.remove('flex');
+                if(shorts && !shorts.classList.contains('hidden') && window.closeEnjoyShorts) window.closeEnjoyShorts();
 
-            if(index===1) {
-                if (store) { store.classList.remove('hidden'); store.classList.add('flex'); }
-                if (window.prepareEnjoyStore) window.prepareEnjoyStore();
-            }
-            else if(index===2) {
-                home.classList.remove('hidden');
-                initBannerScrollListener();
-                if (window.enjoyScheduleAd) window.enjoyScheduleAd('home-ad', 'DAN-I5XORHdPd5Vfu6a2');
-                if (window.enjoyScheduleAd) window.enjoyScheduleAd('drop-ad', 'DAN-tNXHwtQXCpmmSlSu', 320, 200);
-            }
-            else if(index===3) {
-                sched.classList.remove('hidden');
-                sched.classList.add('flex');
-                // 일정 화면에서는 기존 하단 메뉴를 접고 전용 서브 메뉴를 띄운다.
-                if (window.switchScheduleSub) window.switchScheduleSub(window._schedSub || 'calendar');
-                else window.renderCalendar(window.viewYear, window.viewMonth);
-            }
-            else if(index===4) {
-                meet.classList.remove('hidden');
-                meet.classList.add('flex');
-                window.switchWalletSub(window._walletSub || 'wallet');
-                if (window.enjoyScheduleAd) window.enjoyScheduleAd('meeting-ad', 'DAN-Jvtr8N7gGvSbJ9V1');
-            }
-
-            // 일정과 지갑은 각각 전용 하단 메뉴를 노출한다.
-            if (window.setActiveNav) window.setActiveNav(index === 3 ? 'sub' : index === 4 ? 'wallet' : 'main');
-
-            const ind = document.getElementById('nav-indicator');
-            const btns = [
-                null, // 음악 메뉴 삭제됨 (인덱스 유지)
-                document.getElementById('nav-store'),
-                document.getElementById('nav-home'),
-                document.getElementById('nav-calendar'),
-                document.getElementById('nav-meeting')
-            ];
-
-            // 탭 전환 시 현재 메뉴 크기(축소/펼침) 상태를 그대로 유지한 채 인디케이터만 정확한 위치로 이동
-            const navEl = document.getElementById('bottom-nav');
-            if (navEl) {
-                if (window._navTrackRAF) { cancelAnimationFrame(window._navTrackRAF); window._navTrackRAF = null; }
-                navEl.classList.add('no-nav-anim');
-                void navEl.offsetWidth; // 레이아웃 강제 반영 (현재 상태 기준)
-            }
-            if(btns[index] && ind) {
-                ind.classList.add('nav-transition');
-                ind.style.width = `${btns[index].offsetWidth}px`;
-                ind.style.transform = `translateX(${btns[index].offsetLeft - 6}px)`;
-            }
-            if (navEl) requestAnimationFrame(() => navEl.classList.remove('no-nav-anim'));
-            if (window.updateNavContrast) requestAnimationFrame(window.updateNavContrast);
-
-            // [수정] 탭 활성화/비활성화 색상 처리 로직 추가 (자동 반전 믹스블렌드 적용)
-            btns.forEach((btn, i) => {
-                if(!btn) return;
-                const icon = btn.querySelector('i');
-                const label = btn.querySelector('span');
-                
-                // mix-blend-difference 효과에 맞추어 흰색/회색을 부여합니다.
-                // (흰색 -> 밝은배경에선 검정, 어두운배경에선 흰색으로 반전)
-                if (i === index) {
-                    if (icon) {
-                        icon.classList.remove('text-gray-300');
-                        icon.classList.add('text-white');
-                    }
-                    if (label) {
-                        label.classList.remove('text-gray-300', 'font-medium');
-                        label.classList.add('text-white', 'font-bold');
-                    }
-                } else {
-                    if (icon) {
-                        icon.classList.remove('text-white');
-                        icon.classList.add('text-gray-300');
-                    }
-                    if (label) {
-                        label.classList.remove('text-white', 'font-bold');
-                        label.classList.add('text-gray-300', 'font-medium');
-                    }
+                if(index===1) {
+                    if (store) { store.classList.remove('hidden'); store.classList.add('flex'); }
+                    if (window.prepareEnjoyStore) window.prepareEnjoyStore();
                 }
-            });
+                else if(index===2) {
+                    home.classList.remove('hidden');
+                    initBannerScrollListener();
+                    if (window.enjoyScheduleAd) window.enjoyScheduleAd('home-ad', 'DAN-I5XORHdPd5Vfu6a2');
+                    if (window.enjoyScheduleAd) window.enjoyScheduleAd('drop-ad', 'DAN-tNXHwtQXCpmmSlSu', 320, 200);
+                }
+                else if(index===3) {
+                    sched.classList.remove('hidden');
+                    sched.classList.add('flex');
+                    // 일정 화면에서는 기존 하단 메뉴를 접고 전용 서브 메뉴를 띄운다.
+                    if (window.switchScheduleSub) window.switchScheduleSub(window._schedSub || 'calendar');
+                    else window.renderCalendar(window.viewYear, window.viewMonth);
+                }
+                else if(index===4) {
+                    meet.classList.remove('hidden');
+                    meet.classList.add('flex');
+                    window.switchWalletSub(window._walletSub || 'wallet');
+                    if (window.enjoyScheduleAd) window.enjoyScheduleAd('meeting-ad', 'DAN-Jvtr8N7gGvSbJ9V1');
+                }
+
+                // 일정과 지갑은 각각 전용 하단 메뉴를 노출한다.
+                if (window.setActiveNav) window.setActiveNav(index === 3 ? 'sub' : index === 4 ? 'wallet' : 'main');
+
+                const ind = document.getElementById('nav-indicator');
+                const btns = [
+                    null, // 음악 메뉴 삭제됨 (인덱스 유지)
+                    document.getElementById('nav-store'),
+                    document.getElementById('nav-home'),
+                    document.getElementById('nav-calendar'),
+                    document.getElementById('nav-meeting')
+                ];
+
+                // 탭 전환 시 현재 메뉴 크기(축소/펼침) 상태를 그대로 유지한 채 인디케이터만 정확한 위치로 이동
+                const navEl = document.getElementById('bottom-nav');
+                if (navEl) {
+                    if (window._navTrackRAF) { cancelAnimationFrame(window._navTrackRAF); window._navTrackRAF = null; }
+                    navEl.classList.add('no-nav-anim');
+                    void navEl.offsetWidth; // 레이아웃 강제 반영 (현재 상태 기준)
+                }
+                if(btns[index] && ind) {
+                    ind.classList.add('nav-transition');
+                    ind.style.width = `${btns[index].offsetWidth}px`;
+                    ind.style.transform = `translateX(${btns[index].offsetLeft - 6}px)`;
+                }
+                if (navEl) requestAnimationFrame(() => navEl.classList.remove('no-nav-anim'));
+                if (window.updateNavContrast) requestAnimationFrame(window.updateNavContrast);
+
+                // [수정] 탭 활성화/비활성화 색상 처리 로직 추가 (자동 반전 믹스블렌드 적용)
+                btns.forEach((btn, i) => {
+                    if(!btn) return;
+                    const icon = btn.querySelector('i');
+                    const label = btn.querySelector('span');
+                
+                    // mix-blend-difference 효과에 맞추어 흰색/회색을 부여합니다.
+                    // (흰색 -> 밝은배경에선 검정, 어두운배경에선 흰색으로 반전)
+                    if (i === index) {
+                        if (icon) {
+                            icon.classList.remove('text-gray-300');
+                            icon.classList.add('text-white');
+                        }
+                        if (label) {
+                            label.classList.remove('text-gray-300', 'font-medium');
+                            label.classList.add('text-white', 'font-bold');
+                        }
+                    } else {
+                        if (icon) {
+                            icon.classList.remove('text-white');
+                            icon.classList.add('text-gray-300');
+                        }
+                        if (label) {
+                            label.classList.remove('text-white', 'font-bold');
+                            label.classList.add('text-gray-300', 'font-medium');
+                        }
+                    }
+                });
+            } finally { finishTransition(); }
         };
 
         // 활성 탭에 맞춰 인디케이터 위치/너비 재계산
