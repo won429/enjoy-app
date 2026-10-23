@@ -558,15 +558,18 @@
             ? motion.samples.filter(point => point.time >= last.time).map(point => ({ ...point, time: Math.min(axisEnd, point.time) })) : [];
         const endpoint = local.length ? local[local.length - 1] : last;
         const chartW = xFor(endpoint.time);
-        // The dashed line shares the price scale with the series, including gaps from yesterday's close.
+        const showPrevious = intraday || state.period === '1d';
+        // Only daily views compare against yesterday; longer views scale to their own prices.
         const previous = stock.previous;
-        const scaleHigh = Math.max(high, previous, ...local.map(point => point.close)), scaleLow = Math.min(low, previous, ...local.map(point => point.close));
+        const scaleHigh = Math.max(high, showPrevious ? previous : high, ...local.map(point => point.close)), scaleLow = Math.min(low, showPrevious ? previous : low, ...local.map(point => point.close));
         const yFor = value => scaleHigh === scaleLow ? h * .46 : h * .23 + (scaleHigh - value) / (scaleHigh - scaleLow) * h * .48;
-        const previousY = yFor(previous);
-        ctx.strokeStyle = themeColor('--iv-grid', '#4c4c58'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
-        ctx.beginPath(); ctx.moveTo(0, previousY); ctx.lineTo(w, previousY); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = themeColor('--iv-muted', '#909096'); ctx.font = '11px Pretendard, -apple-system, sans-serif'; ctx.textAlign = 'right';
-        ctx.fillText('전일 종가 ' + money(previous), chartRight, previousY - 9);
+        if (showPrevious) {
+            const previousY = yFor(previous);
+            ctx.strokeStyle = themeColor('--iv-grid', '#4c4c58'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+            ctx.beginPath(); ctx.moveTo(0, previousY); ctx.lineTo(w, previousY); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = themeColor('--iv-muted', '#909096'); ctx.font = '11px Pretendard, -apple-system, sans-serif'; ctx.textAlign = 'right';
+            ctx.fillText('전일 종가 ' + money(previous), chartRight, previousY - 9);
+        }
         const chartY = yFor(endpoint.close);
         ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = color;
         ctx.beginPath();
@@ -585,10 +588,26 @@
         ctx.beginPath(); ctx.arc(chartW, chartY, 4, 0, Math.PI * 2); ctx.fill();
         pulse.setAttribute('style', 'left:' + chartW + 'px;top:' + chartY + 'px;--iv-pulse-color:' + color);
         pulse.hidden = !intraday || document.hidden || !isActive() || marketClosed();
-        ctx.font = '12px Pretendard, -apple-system, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(high === low ? '최고·최저 ' + money(high) : '최고 ' + money(high) + ' · 최저 ' + money(low), 0, h * .23 - 18);
-        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시 30분까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + ', 전일 종가 ' + money(previous) + (stock.kind === 'index' ? ', 관리자 설정' : ', 30분 주기 갱신' + (local.length ? ', 기기별 화면 시세 ' + money(quote.price) : '')));
+        const markExtreme = (point, value, label, markerColor, below) => {
+            const x = xFor(point.time), y = yFor(value);
+            ctx.strokeStyle = markerColor; ctx.fillStyle = markerColor; ctx.lineWidth = 1;
+            // Aggregated periods may reach a high/low between their closing samples.
+            if (value !== point.close) {
+                ctx.beginPath(); ctx.moveTo(x, yFor(point.close)); ctx.lineTo(x, y); ctx.stroke();
+            }
+            ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
+            ctx.font = '12px Pretendard, -apple-system, sans-serif'; ctx.textAlign = 'left';
+            const text = label + ' ' + money(value), width = ctx.measureText(text).width;
+            const labelX = Math.max(chartLeft, Math.min(x - width / 2, chartRight - width));
+            ctx.fillText(text, labelX, y + (below ? 22 : -13));
+        };
+        const highPoint = history.find(point => point.high === high), lowPoint = history.find(point => point.low === low);
+        if (high === low) markExtreme(highPoint, high, '최고·최저', color, false);
+        else {
+            markExtreme(highPoint, high, '최고', themeColor('--iv-red', '#f04452'), false);
+            markExtreme(lowPoint, low, '최저', themeColor('--iv-blue', '#3182f6'), true);
+        }
+        canvas.setAttribute('aria-label', stock.name + (intraday ? ' 당일 차트, 00시부터 23시 30분까지, ' : ' 과거 차트, ') + '최고 ' + money(high) + ', 최저 ' + money(low) + (showPrevious ? ', 전일 종가 ' + money(previous) : '') + (stock.kind === 'index' ? ', 관리자 설정' : ', 30분 주기 갱신' + (local.length ? ', 기기별 화면 시세 ' + money(quote.price) : '')));
     }
     function showList(restoreFocus) {
         const previous = state.selected;
