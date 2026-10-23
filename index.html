@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="drop-games.css?v=20261019-quiz1">
     <link rel="stylesheet" href="drop-quiz.css?v=20261019-quiz6">
     <link rel="stylesheet" href="investment.css?v=20261024-skeleton1">
+    <link rel="stylesheet" href="baseball-game-skeleton.css?v=20261024-1">
     <!-- 스토어 스타일은 별도 파일 누락 시에도 적용되도록 본문에 포함한다. -->
     <style id="enjoy-store-styles">
         #store-screen { --store-bg: #000; --store-text: #fff; --store-muted: #8b95a1; --store-line: rgba(255,255,255,.08); position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%,28rem); z-index: 20; background: var(--store-bg); color: var(--store-text); flex-direction: column; overflow: hidden; }
@@ -10159,9 +10160,16 @@
     <!-- 엔조이 야구 Firebase 기반 경기 정보 화면 -->
     <section id="baseball-game-screen" class="vlog-detail-screen hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-[70] w-full max-w-md flex-col overflow-hidden">
         <button type="button" onclick="window.closeEnjoyBaseballGame()" class="community-back-fab" aria-label="홈으로 돌아가기"><i class="fa-solid fa-chevron-left text-[16px]"></i></button>
-        <div id="baseball-game-loader" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#F2F2F7] text-[#8B95A1] text-[12px] font-bold">
-            <i class="fa-solid fa-baseball fa-spin text-2xl"></i>
-            <span>경기 정보를 불러오는 중...</span>
+        <div id="baseball-game-loader" class="is-skeleton absolute inset-0 z-10" role="status" aria-busy="true">
+            <span class="baseball-detail-skeleton-label">경기 정보를 불러오는 중</span>
+            <div class="baseball-detail-skeleton" aria-hidden="true">
+                <span class="bds-block bds-heading"></span>
+                <div class="bds-match"><div class="bds-teams"><div class="bds-team"><span class="bds-block bds-logo"></span><span class="bds-block bds-name"></span></div><span class="bds-block bds-score"></span><div class="bds-team"><span class="bds-block bds-logo"></span><span class="bds-block bds-name"></span></div></div><span class="bds-block bds-inning"></span><span class="bds-block bds-inning"></span><span class="bds-block bds-inning"></span></div>
+                <span class="bds-block bds-probability"></span>
+                <div class="bds-comparison"><span class="bds-block bds-record"></span><span class="bds-block bds-record"></span></div>
+                <div class="bds-tabs"><span class="bds-block bds-tab"></span><span class="bds-block bds-tab"></span><span class="bds-block bds-tab"></span></div>
+                <div class="bds-lineups"><div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div></div><div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div><div class="bds-player"><span class="bds-block bds-photo"></span><span class="bds-block bds-player-name"></span></div></div></div>
+            </div>
         </div>
         <iframe id="baseball-game-frame" title="KBO 경기 정보" class="relative z-20 w-full h-full border-0 bg-[#F2F2F7] opacity-0 transition-opacity duration-200" allow="autoplay"></iframe>
     </section>
@@ -13898,7 +13906,10 @@
             const loader = document.getElementById('baseball-game-loader');
             if (!screen || !frame || matchId == null) return;
             window.haptic && window.haptic();
-            if (loader) loader.classList.remove('hidden');
+            if (loader) {
+                loader.classList.remove('hidden');
+                loader.setAttribute('aria-busy', 'true');
+            }
             frame.classList.add('opacity-0');
             const theme = arguments.length > 2 && arguments[2] === '삼성' ? '삼성' : 'KIA';
             const game = enjoyBaseballMoreAllGames().find(function (item) { return String(item.id) === String(matchId); });
@@ -13943,7 +13954,10 @@
             const frame = document.getElementById('baseball-game-frame');
             if (!frame || event.source !== frame.contentWindow || !event.data || event.data.type !== 'enjoy-baseball-detail-ready') return;
             const loader = document.getElementById('baseball-game-loader');
-            if (loader) loader.classList.add('hidden');
+            if (loader) {
+                loader.classList.add('hidden');
+                loader.setAttribute('aria-busy', 'false');
+            }
             frame.classList.remove('opacity-0');
         });
         refreshEnjoyBaseballFeatured();

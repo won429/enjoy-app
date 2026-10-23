@@ -1984,12 +1984,21 @@
             currentPopupMatchId = match.id;
             renderPopupContent(match.id);
             const loader = document.getElementById('detail-loader');
-            if (loader) loader.classList.add('hidden');
+            if (loader) {
+                loader.classList.add('hidden');
+                loader.setAttribute('aria-busy', 'false');
+            }
             window.parent.postMessage({ type: 'enjoy-baseball-detail-ready' }, '*');
         } catch (error) {
             if (showError) {
                 const loader = document.getElementById('detail-loader');
-                if (loader) loader.innerHTML = '<i class="fa-regular fa-circle-xmark text-2xl text-gray-400"></i><span>경기 정보를 불러오지 못했어요.</span>';
+                if (loader) {
+                    loader.classList.remove('is-skeleton');
+                    loader.setAttribute('aria-busy', 'false');
+                    loader.innerHTML = '<i class="fa-regular fa-circle-xmark text-2xl text-gray-400"></i><span>경기 정보를 불러오지 못했어요.</span>';
+                }
+                // Reveal the error in the embedded page instead of leaving the app skeleton visible.
+                window.parent.postMessage({ type: 'enjoy-baseball-detail-ready' }, '*');
             }
             console.warn('경기 상세 정보를 불러오지 못했습니다.', error);
         }
