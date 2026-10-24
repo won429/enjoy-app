@@ -18,13 +18,9 @@
     let previousTick = 0;
     let completionStarted = 0;
     let closeStarted = 0;
-    let handoffStarted = 0;
-    let handoff = null;
     let finishRequested = false;
     let lastDraw = '';
     let rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    let anchorWidth = 8 * rem;
-    let handoffAnchor = null;
     let shape = null;
     let velocity = null;
     let previousMotion = null;
@@ -101,15 +97,11 @@
     function shapeTarget(now) {
         const state = loader.dataset.state;
         let width = 6.5 * rem, height = 6.5 * rem, radius = 1.875 * rem, top = 0, left = 0;
-        if (state === 'handoff' || (state === 'closing' && now - closeStarted < 250) ||
+        if ((state === 'closing' && now - closeStarted < 250) ||
             (state === 'opening' && now - started >= 190 && now - started < 330)) {
-            width = anchorWidth; height = 2 * rem; radius = rem;
+            width = 8 * rem; height = 2 * rem; radius = rem;
         } else if ((state === 'opening' && now - started < 190) || state === 'closing') {
             width = .5 * rem; height = .5 * rem; radius = .25 * rem;
-        }
-        if (state === 'handoff' && handoffAnchor) {
-            left = handoffAnchor.left + anchorWidth / 2 - innerWidth / 2;
-            top = handoffAnchor.top + rem - innerHeight / 2;
         }
         return {width: width, height: height, radius: radius, top: top, left: left};
     }
@@ -121,7 +113,7 @@
         if (reducedMotion.matches || elapsed > 250) {
             Object.keys(target).forEach(key => {shape[key] = target[key]; velocity[key] = 0;});
         } else {
-            // A single damped spring keeps its velocity when the target changes (including late baseball data).
+            // A single damped spring keeps its velocity when the target changes.
             let remaining = Math.min(elapsed, 64) / 1000;
             while (remaining > 0) {
                 const dt = Math.min(remaining, 1 / 120);
@@ -148,40 +140,19 @@
             loader.style.maskImage = mask;
             loader.style.webkitMaskImage = mask;
         }
-        canvas.style.opacity = String(state === 'handoff' ? 1 - smooth((now - handoffStarted) / 140) :
-            state === 'closing' ? 1 - smooth((now - closeStarted) / 120) : smooth((age - 330) / 150));
-        if (handoff) {
-            handoff.content.style.opacity = String(smooth((now - handoffStarted - 210) / 180));
-            const mix = smooth((now - handoffStarted) / 400);
-            card.style.borderColor = 'rgba(255,255,255,' + (.055 + .105 * mix) + ')';
-            card.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,' + (.05 * mix) + '), 0 ' + ((.375 - .25 * mix) * rem) + 'px ' + ((1.25 - .75 * mix) * rem) + 'px rgba(0,0,0,' + (.1333 + .0267 * mix) + ')';
-        }
+        canvas.style.opacity = String(state === 'closing' ? 1 - smooth((now - closeStarted) / 120) : smooth((age - 330) / 150));
         return Math.max(...Object.keys(target).map(key => Math.abs(shape[key] - target[key])));
     }
 
     function hide() {
         cancelAnimationFrame(frame);
         frame = 0;
-        if (handoff && handoff.content) handoff.content.remove();
-        handoff = null;
         loader.dataset.state = 'hidden';
         delete loader.dataset.phase;
         loader.style.display = 'none';
         loader.style.maskImage = '';
         loader.style.webkitMaskImage = '';
         loader.setAttribute('aria-hidden', 'true');
-    }
-
-    function prepareHandoff(now) {
-        if (!window.enjoyPrepareLoadingBaseballIsland) return false;
-        const next = window.enjoyPrepareLoadingBaseballIsland();
-        if (!next) return false;
-        handoff = next;
-        next.content.classList.add('loading-island-baseball');
-        card.appendChild(next.content);
-        loader.dataset.state = 'handoff';
-        handoffStarted = now;
-        return true;
     }
 
     function phase(name) {
@@ -193,24 +164,7 @@
         const reduced = reducedMotion.matches;
         const state = loader.dataset.state;
         if (state === 'hidden') return;
-        if (state === 'handoff') {
-            const error = updateSurface(now);
-            if (reduced || ((now - handoffStarted >= 480 && error < .2) || now - handoffStarted >= 700)) {
-                // Match the final pill geometry exactly before replacing its contents with the live score.
-                const target = shapeTarget(now);
-                Object.assign(shape, target);
-                Object.keys(velocity).forEach(key => {velocity[key] = 0;});
-                updateSurface(now);
-                handoff.commit();
-                hide();
-                return;
-            }
-        } else if (state === 'closing') {
-            if (!reduced && now - closeStarted < 180 && prepareHandoff(now)) {
-                updateSurface(now);
-                frame = requestAnimationFrame(tick);
-                return;
-            }
+        if (state === 'closing') {
             updateSurface(now);
             if (now - closeStarted >= (reduced ? 0 : REVEAL_START_MS + REVEAL_MS)) { hide(); return; }
         } else if (state === 'completing') {
@@ -240,10 +194,8 @@
             }
             updateSurface(now);
             if (progress >= (reduced ? 680 : COMPLETION_MS)) {
-                if (!prepareHandoff(now)) {
-                    loader.dataset.state = 'closing';
-                    closeStarted = now;
-                }
+                loader.dataset.state = 'closing';
+                closeStarted = now;
             }
         } else {
             const motion = orbitMotion(elapsed);
@@ -276,7 +228,7 @@
         loader.removeAttribute('aria-hidden');
         label.textContent = '데이터 동기화 중';
         started = previousTick = performance.now();
-        window.enjoyPositionLoadingIsland();
+        rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
         shape = {width: .25 * rem, height: .25 * rem, radius: .125 * rem, top: 0, left: 0};
         velocity = {width: 0, height: 0, radius: 0, top: 0, left: 0};
         loader.style.maskImage = '';
@@ -292,19 +244,5 @@
     };
     window.enjoyCancelLoadingIsland = hide;
 
-    window.enjoyPositionLoadingIsland = function (anchor) {
-        rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        if (!anchor) {
-            const width = Math.min(innerWidth, 28 * rem);
-            const left = (innerWidth - width) / 2;
-            const gapLeft = left + 8.1875 * rem + 8;
-            const gapRight = left + width - 3.625 * rem - 2 * rem - 8;
-            const islandWidth = Math.min(8 * rem, gapRight - gapLeft);
-            anchor = {left: Math.max(gapLeft, Math.min(left + (width - islandWidth) / 2, gapRight - islandWidth)), top: .25 * rem, width: islandWidth};
-        }
-        anchorWidth = anchor.width;
-        // Header updates only set the eventual baseball destination; loading stays centered.
-        handoffAnchor = anchor;
-    };
     window.enjoyStartLoadingIsland();
 })();

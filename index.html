@@ -24,7 +24,7 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
 
-    <link rel="stylesheet" href="loading-island.css?v=20261024-1">
+    <link rel="stylesheet" href="loading-island.css?v=20261024-2">
     <link rel="preload" as="image" href="assets/loading-island/scan.webp?v=20261018-4">
     <link rel="preload" as="image" href="assets/loading-island/done.webp">
     <link rel="preload" as="image" href="assets/loading-island/orbit.webp?v=20261019-10">
@@ -4079,101 +4079,6 @@
         .notice-float-heart { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 2rem; height: 2rem; color: #FF3B4F; font-size: 15pt; }
         .notice-float.is-visible .notice-float-copy { animation: noticeIslandCopyIn .22s .42s ease-out both; }
         .notice-float.is-leaving .notice-float-copy { animation: noticeIslandCopyOut .22s ease-in both; }
-        .notice-float-baseball { position: absolute; inset: 0 .5rem; display: none; align-items: center; justify-content: space-between; gap: .375rem; }
-        .notice-float[data-mode="baseball"] .notice-float-copy { display: none; }
-        .notice-float[data-mode="baseball"] .notice-float-heart { display: none; }
-        .notice-float[data-mode="baseball"] .notice-float-baseball { display: flex; }
-        .notice-float[data-mode="baseball"] .notice-float-card {
-            right: auto;
-            left: 50%;
-            top: 50%;
-            background: #000;
-            transform: translate(-50%, -50%);
-            transform-origin: center;
-        }
-        .notice-float[data-mode="baseball"].is-visible .notice-float-card { animation: baseballIslandOpen .9s cubic-bezier(.22,1,.36,1) both; }
-        .notice-float[data-mode="baseball"].is-visible.is-baseball-entered .notice-float-card { animation: none; height: 100%; opacity: 1; }
-        .notice-float[data-mode="baseball"].is-leaving .notice-float-card { animation: baseballIslandClose .9s cubic-bezier(.64,0,.78,0) both; }
-        .notice-float-baseball-team { display: flex; align-items: center; gap: .25rem; }
-        .notice-float-baseball-team strong { color: #FFF; font-size: 1.0625rem; font-weight: 850; line-height: 1; font-variant-numeric: tabular-nums; }
-        .notice-float-baseball-logo { flex: none; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; }
-        .notice-float-baseball-logo img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; }
-        .notice-float-baseball-logo span { grid-area: 1 / 1; display: none; color: #FFF; font-size: .5rem; font-weight: 750; white-space: nowrap; }
-        .notice-float-baseball-logo.has-fallback span { display: block; }
-        .notice-float-baseball-team.is-loser .notice-float-baseball-logo { filter: grayscale(1); }
-        .notice-float-baseball-team.is-loser strong,
-        .notice-float-baseball-team.is-loser .notice-float-baseball-logo span { color: #8E8E93; }
-        .notice-float[data-mode="baseball"].is-baseball-entered { transition: width .38s cubic-bezier(.22,1,.36,1), left .38s cubic-bezier(.22,1,.36,1), height .38s cubic-bezier(.22,1,.36,1); }
-        .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-card { transition: width .38s cubic-bezier(.22,1,.36,1), height .38s cubic-bezier(.22,1,.36,1), border-radius .38s cubic-bezier(.22,1,.36,1); }
-        .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-baseball { animation: none; opacity: 1; transition: opacity .15s; }
-        .notice-float[data-mode="baseball"].is-expanded { height: 11rem; }
-        .notice-float[data-mode="baseball"].is-expanded .notice-float-card { border-radius: 2rem; box-shadow: 0 .5rem 1.5rem #0005, inset 0 1px 0 #ffffff0d; }
-        .notice-float[data-mode="baseball"].is-expanded .notice-float-baseball { opacity: 0; visibility: hidden; }
-        .notice-float-expanded { position: absolute; inset: 1.25rem; display: grid; grid-template-columns: minmax(0,1fr) 2.5rem 3.25rem 2.5rem minmax(0,1fr); grid-template-rows: 3rem 1.125rem 3rem; align-content: center; align-items: center; gap: .375rem; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
-        .notice-float[data-mode="baseball"].is-expanded .notice-float-expanded { opacity: 1; visibility: visible; transition-delay: .14s; }
-        .notice-float[data-mode="baseball"].is-minimized { pointer-events: none; }
-        .notice-float[data-mode="baseball"].is-visible.is-minimized .notice-float-card { width: .75rem; height: .75rem; border-radius: 50%; overflow: visible; }
-        .notice-float[data-mode="baseball"].is-minimized .notice-float-card::after { content: ''; position: absolute; inset: -.625rem; border-radius: 50%; }
-        .notice-float[data-mode="baseball"].is-minimized .notice-float-baseball,
-        .notice-float[data-mode="baseball"].is-minimized .notice-float-expanded { opacity: 0; visibility: hidden; animation: none; }
-        /* 첫 행은 로고·점수·베이스, 둘째 행은 팀명·이닝, 셋째 행은 선수 정보로 정렬한다. */
-        .notice-float-expanded-side,
-        .notice-float-expanded-club,
-        .notice-float-expanded-center { display: contents; }
-        .notice-float-expanded-side > strong { grid-column: 2; grid-row: 1; justify-self: center; font-size: 2rem; }
-        .notice-float-expanded-side.is-home > strong { grid-column: 4; }
-        .notice-float-expanded-club .notice-float-baseball-logo { grid-column: 1; grid-row: 1; justify-self: center; width: 2.5rem; height: 2.5rem; }
-        .notice-float-expanded-club > span:last-child { grid-column: 1; grid-row: 2; justify-self: center; color: #F5F5F7; font-size: .75rem; font-weight: 750; line-height: 1.2; white-space: nowrap; }
-        .notice-float-expanded-side.is-home .notice-float-expanded-club > span { grid-column: 5; }
-        .notice-float-expanded-player { grid-column: 1; grid-row: 3; justify-self: center; width: var(--island-player-width, 100%); max-width: none; min-width: 0; height: 3rem; display: grid; grid-template-columns: minmax(0,1fr); grid-template-rows: 1.25rem .875rem; align-content: center; align-items: center; justify-items: center; gap: .25rem; line-height: 1.3; }
-        .notice-float-expanded-side.is-home .notice-float-expanded-player { grid-column: 5; }
-        .notice-float-expanded-player b { display: flex; justify-content: center; align-items: center; gap: .375em; max-width: 100%; min-width: 0; white-space: nowrap; text-align: center; color: #F5F5F7; font-size: var(--island-player-font-size, .875rem); font-weight: 700; }
-        .notice-float-expanded-player [data-island-away-player],
-        .notice-float-expanded-player [data-island-home-player] { flex: none; min-width: 0; overflow: visible; white-space: nowrap; word-break: normal; overflow-wrap: normal; }
-        .notice-float-expanded-player small { grid-row: 2; color: #A1A1AA; font-size: .6875rem; white-space: nowrap; }
-        .notice-float-expanded-player small:empty,
-        .notice-float-expanded-result:empty { display: none; }
-        .notice-float-expanded-player.is-final b { color: #FFF; }
-        .notice-float:not([data-game-state="live"]) .notice-float-expanded-player b { grid-row: 1 / -1; }
-        .notice-float-expanded-result { flex: 0 0 1em; text-align: center; font-weight: 850; }
-        .notice-float-expanded-result.is-win { color: #f87171; }
-        .notice-float-expanded-result.is-loss { color: #60a5fa; }
-        /* 경기정보 스코어보드와 같은 크기·배치·점등 색을 사용한다. */
-        .notice-float-expanded-bases { grid-column: 3; grid-row: 1; justify-self: center; position: relative; display: block; width: 1.75rem; height: 1.125rem; }
-        .notice-float-expanded-base { position: absolute; width: .5rem; height: .5rem; border: 0; border-radius: 0; background: #374151; transform: rotate(45deg); }
-        .notice-float-expanded-base.is-first { top: .5625rem; left: 1.125rem; }
-        .notice-float-expanded-base.is-second { top: .0625rem; left: .625rem; }
-        .notice-float-expanded-base.is-third { top: .5625rem; left: .125rem; }
-        .notice-float-expanded-base.is-on { background: #6ee7b7; box-shadow: 0 0 .3125rem rgba(110,231,183,.6); }
-        .notice-float-expanded-inning { grid-column: 3; grid-row: 2; justify-self: center; color: #F5F5F7; font-size: .75rem; font-weight: 750; line-height: 1.2; white-space: nowrap; }
-        .notice-float-expanded-caption { grid-column: 3; grid-row: 2; justify-self: center; color: #A1A1AA; font-size: .625rem; line-height: 1.2; white-space: nowrap; }
-        .notice-float[data-game-state="live"] .notice-float-expanded-caption,
-        .notice-float:not([data-game-state="live"]) .notice-float-expanded-bases { display: none; }
-        .notice-float:not([data-game-state="live"]) .notice-float-expanded-inning { grid-row: 1; font-size: .8125rem; }
-        .notice-float.is-visible .notice-float-baseball { animation: baseballIslandContentIn .22s .52s ease-out both; }
-        .notice-float.is-leaving .notice-float-baseball { animation: baseballIslandContentOut .22s ease-in both; }
-        @keyframes baseballIslandOpen {
-            0% { width: .75rem; height: .75rem; opacity: 0; transform: translate(-50%, -50%) scale(.35); }
-            20% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-            32% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%) scale(.95); }
-            42% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%); }
-            100% { width: 100%; height: 2rem; opacity: 1; transform: translate(-50%, -50%); }
-        }
-        @keyframes baseballIslandClose {
-            0% { width: 100%; height: 2rem; opacity: 1; transform: translate(-50%, -50%); }
-            58% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%); }
-            68% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%) scale(.95); }
-            80% { width: .75rem; height: .75rem; opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-            100% { width: .75rem; height: .75rem; opacity: 0; transform: translate(-50%, -50%) scale(.35); }
-        }
-        @keyframes baseballIslandContentIn {
-            from { opacity: 0; transform: scale(.92); }
-            to { opacity: 1; transform: none; }
-        }
-        @keyframes baseballIslandContentOut {
-            from { opacity: 1; transform: none; }
-            to { opacity: 0; transform: scale(.92); }
-        }
         @keyframes noticeCardFromHeart {
             0% { width: 2rem; opacity: 0; transform: translateX(var(--notice-origin-x, 0px)) scale(.35); }
             20% { width: 2rem; opacity: 1; transform: scale(1); }
@@ -4199,16 +4104,8 @@
         @media (prefers-reduced-motion: reduce) {
             .notice-float.is-visible .notice-float-card { animation: none; opacity: 1; transform: none; }
             .notice-float.is-leaving .notice-float-card { animation: none; }
-            .notice-float[data-mode="baseball"].is-visible .notice-float-card { animation: none; opacity: 1; transform: translate(-50%, -50%); }
-            .notice-float[data-mode="baseball"].is-leaving .notice-float-card { animation: none; }
-            .notice-float[data-mode="baseball"].is-baseball-entered,
-            .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-card,
-            .notice-float[data-mode="baseball"].is-baseball-entered .notice-float-baseball,
-            .notice-float[data-mode="baseball"] .notice-float-expanded { transition: none; }
             .notice-float.is-visible .notice-float-copy { animation: none; }
             .notice-float.is-leaving .notice-float-copy { animation: none; opacity: 0; }
-            .notice-float.is-visible .notice-float-baseball { animation: none; }
-            .notice-float.is-leaving .notice-float-baseball { animation: none; opacity: 0; }
         }
         .home-account-action--danger { color: #F87171; }
         .home-menu-trigger {
@@ -8138,7 +8035,7 @@
         </div>
         <span class="loading-island-label">데이터 동기화 중</span>
     </div>
-    <script src="loading-island.js?v=20261024-1"></script>
+    <script src="loading-island.js?v=20261024-2"></script>
     <script>
         // 인증과 최초 데이터 동기화가 끝난 경우에만 로더를 닫는다.
         // 인증 확인 전에 홈이 노출되면 프로필이 '미가입'처럼 잠깐 보일 수 있다.
@@ -8364,46 +8261,9 @@
             </div>
             <!-- 하트에서 튀어나와 상단 빈 공간으로 펼쳐지는 공지 아일랜드 -->
             <div id="home-notice-float" class="notice-float" role="status" aria-live="polite" aria-hidden="true" hidden inert>
-                <button type="button" class="notice-float-card" onclick="window.openHomeIsland()" aria-label="새로운 공지 추가! 공지사항 열기">
+                <button type="button" class="notice-float-card" onclick="window.haptic && window.haptic(); window.openNoticeInfo();" aria-label="새로운 공지 추가! 공지사항 열기">
                     <span class="notice-float-copy"><strong>새로운 공지 추가!</strong></span>
                     <span class="notice-float-heart" aria-hidden="true"><i class="fa-solid fa-heart"></i></span>
-                    <span class="notice-float-baseball" aria-hidden="true">
-                        <span class="notice-float-baseball-team">
-                            <span class="notice-float-baseball-logo"><img data-island-away-logo alt=""><span data-island-away-name></span></span>
-                            <strong data-island-away-score></strong>
-                        </span>
-                        <span class="notice-float-baseball-team">
-                            <strong data-island-home-score></strong>
-                            <span class="notice-float-baseball-logo"><img data-island-home-logo alt=""><span data-island-home-name></span></span>
-                        </span>
-                    </span>
-                    <span class="notice-float-expanded" aria-hidden="true">
-                        <span class="notice-float-baseball-team notice-float-expanded-side">
-                            <span class="notice-float-expanded-club">
-                                <span class="notice-float-baseball-logo"><img data-island-away-logo alt=""><span data-island-away-name></span></span>
-                                <span data-island-away-name></span>
-                            </span>
-                            <strong data-island-away-score></strong>
-                            <span class="notice-float-expanded-player"><b><span class="notice-float-expanded-result" data-island-away-result></span><span data-island-away-player></span></b><small data-island-away-stat></small></span>
-                        </span>
-                        <span class="notice-float-expanded-center">
-                            <span class="notice-float-expanded-bases">
-                                <i class="notice-float-expanded-base is-second" data-island-base="2"></i>
-                                <i class="notice-float-expanded-base is-third" data-island-base="3"></i>
-                                <i class="notice-float-expanded-base is-first" data-island-base="1"></i>
-                            </span>
-                            <span class="notice-float-expanded-inning" data-island-inning></span>
-                            <span class="notice-float-expanded-caption" data-island-center-caption></span>
-                        </span>
-                        <span class="notice-float-baseball-team notice-float-expanded-side is-home">
-                            <span class="notice-float-expanded-club">
-                                <span class="notice-float-baseball-logo"><img data-island-home-logo alt=""><span data-island-home-name></span></span>
-                                <span data-island-home-name></span>
-                            </span>
-                            <strong data-island-home-score></strong>
-                            <span class="notice-float-expanded-player"><b><span class="notice-float-expanded-result" data-island-home-result></span><span data-island-home-player></span></b><small data-island-home-stat></small></span>
-                        </span>
-                    </span>
                 </button>
             </div>
         </header>
@@ -9249,8 +9109,7 @@
         };
 
         window.openNoticeInfo = function () {
-            const island = document.getElementById('home-notice-float');
-            if (!island || island.dataset.mode !== 'baseball') dismissNoticeFloat();
+            dismissNoticeFloat();
             window.openNotionInfo('공지사항', noticeNotionUrl, '공지사항을 준비 중이에요.');
         };
 
@@ -9258,201 +9117,10 @@
         let noticeFloatPending = false;
         let noticeFloatTimer = 0;
         let noticeFloatHideTimer = 0;
-        let homeIslandBaseballGames = [];
-        let homeIslandBaseballIndex = 0;
-        let homeIslandAnchor = null;
-        let homeIslandCollapseTimer = 0;
-        let homeIslandPlayerFitFrame = 0;
-        let homeIslandContextKey = null;
+        let noticeFloatAnchor = null;
         // 홈의 스크롤, 숨김, inert 상태를 상속하지 않는 공통 고정 레이어로 옮긴다.
-        const homeIslandRoot = document.getElementById('home-notice-float');
-        if (homeIslandRoot) document.body.appendChild(homeIslandRoot);
-
-        function fitHomeBaseballIslandPlayerNames() {
-            const float = document.getElementById('home-notice-float');
-            if (!float || float.hidden || !float.classList.contains('is-expanded')) return;
-            const card = float.querySelector('.notice-float-card').getBoundingClientRect();
-            const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-            if (card.height < 8 * fontSize) return;
-            float.querySelectorAll('.notice-float-expanded-player').forEach(function (player) {
-                const logo = player.closest('.notice-float-expanded-side').querySelector('.notice-float-baseball-logo').getBoundingClientRect();
-                const center = logo.left + logo.width / 2;
-                // 경기 중과 종료 후 모두 같은 로고 축과 이름 영역을 사용한다.
-                const width = 2 * Math.min(center - card.left - .625 * fontSize, card.right - center - .625 * fontSize);
-                if (width <= 0) return;
-                player.style.setProperty('--island-player-width', width + 'px');
-                player.style.removeProperty('--island-player-font-size');
-                const line = player.querySelector('b');
-                const name = line.querySelector('[data-island-away-player], [data-island-home-player]');
-                const badge = line.querySelector('.notice-float-expanded-result');
-                const badgeWidth = badge.textContent ? badge.getBoundingClientRect().width + parseFloat(getComputedStyle(line).columnGap) : 0;
-                const naturalWidth = name.scrollWidth + badgeWidth;
-                const available = player.clientWidth - 2;
-                const normalSize = parseFloat(getComputedStyle(line).fontSize);
-                if (available > 0 && naturalWidth > available) {
-                    const fitted = Math.max(.625 * fontSize, Math.floor(normalSize * available / naturalWidth * 10) / 10);
-                    player.style.setProperty('--island-player-font-size', fitted + 'px');
-                }
-            });
-        }
-
-        function scheduleHomeIslandPlayerFit() {
-            if (homeIslandPlayerFitFrame) return;
-            homeIslandPlayerFitFrame = window.requestAnimationFrame(function () {
-                homeIslandPlayerFitFrame = 0;
-                fitHomeBaseballIslandPlayerNames();
-            });
-        }
-        if (homeIslandRoot) {
-            const playerFitObserver = new ResizeObserver(scheduleHomeIslandPlayerFit);
-            playerFitObserver.observe(homeIslandRoot);
-            // 펼침 모션 중 카드의 실제 크기가 바뀔 때도 이름 폭을 다시 맞춘다.
-            playerFitObserver.observe(homeIslandRoot.querySelector('.notice-float-card'));
-        }
-        if (document.fonts) document.fonts.ready.then(scheduleHomeIslandPlayerFit);
-
-        function renderHomeBaseballIsland() {
-            const float = document.getElementById('home-notice-float');
-            const game = homeIslandBaseballGames[homeIslandBaseballIndex];
-            if (!float || !game) return;
-            const awayScore = Number(game.awayScore);
-            const homeScore = Number(game.homeScore);
-            const finishedWithScores = game.finished === true && Number.isFinite(awayScore) && Number.isFinite(homeScore);
-            const detail = game.detail || { inning: game.status, bases: [] };
-            const phase = detail.phase || (game.finished ? 'final' : (String(game.status).includes('예정') ? 'pregame' : 'live'));
-            float.dataset.gameState = phase;
-            ['away', 'home'].forEach(function (side) {
-                const lost = finishedWithScores && (side === 'away' ? awayScore < homeScore : homeScore < awayScore);
-                const source = game[side + 'Logo'];
-                float.querySelectorAll('[data-island-' + side + '-logo]').forEach(function (image) {
-                    const logo = image.parentElement;
-                    logo.closest('.notice-float-baseball-team').classList.toggle('is-loser', lost);
-                    if (image.getAttribute('src') !== source) {
-                        image.hidden = false;
-                        logo.classList.remove('has-fallback');
-                        image.onerror = function () {
-                            image.hidden = true;
-                            logo.classList.add('has-fallback');
-                        };
-                        image.src = source;
-                    }
-                });
-                float.querySelectorAll('[data-island-' + side + '-name]').forEach(function (node) { node.textContent = game[side + 'Team']; });
-                float.querySelectorAll('[data-island-' + side + '-score]').forEach(function (node) { node.textContent = game[side + 'Score']; });
-                const player = detail[side] || { name: '—', stat: '' };
-                float.querySelector('[data-island-' + side + '-player]').textContent = player.name;
-                float.querySelector('[data-island-' + side + '-stat]').textContent = player.stat;
-                const result = float.querySelector('[data-island-' + side + '-result]');
-                result.textContent = player.result === 'win' ? '승' : (player.result === 'loss' ? '패' : '');
-                result.classList.toggle('is-win', player.result === 'win');
-                result.classList.toggle('is-loss', player.result === 'loss');
-                result.closest('.notice-float-expanded-player').classList.toggle('is-final', game.finished === true);
-            });
-            float.querySelector('[data-island-inning]').textContent = phase === 'final' ? '종료' : detail.inning;
-            float.querySelector('[data-island-center-caption]').textContent = phase === 'final' ? '경기결과' : (phase === 'pregame' ? '경기 예정' : '');
-            float.querySelectorAll('[data-island-base]').forEach(function (base) {
-                base.classList.toggle('is-on', (detail.bases || []).includes(Number(base.dataset.islandBase)));
-            });
-            const expanded = float.classList.contains('is-expanded');
-            const detailsLabel = expanded ? ', ' + ((detail.bases || []).length ? detail.bases.join('루, ') + '루 주자 있음' : '주자 없음') +
-                ', ' + ['away', 'home'].map(function (side) {
-                    const player = detail[side];
-                    const label = player && (player.result === 'win' ? '승리 투수 ' : (player.result === 'loss' ? '패전 투수 ' : ''));
-                    return player ? game[side + 'Team'] + ' ' + label + player.name + ' ' + player.stat : '';
-                }).filter(Boolean).join(', ') : '';
-            const button = float.querySelector('.notice-float-card');
-            button.setAttribute('aria-expanded', String(expanded));
-            button.setAttribute('aria-label',
-                game.awayTeam + ' ' + game.awayScore + ' 대 ' + game.homeTeam + ' ' + game.homeScore +
-                ', ' + game.status + detailsLabel + (expanded ? '. 야구 아일랜드 접기' : '. 야구 아일랜드 펼치기'));
-            scheduleHomeIslandPlayerFit();
-        }
-
-        function setHomeBaseballIslandExpanded(expanded) {
-            const float = document.getElementById('home-notice-float');
-            if (!float || float.hidden || float.dataset.mode !== 'baseball' || float.classList.contains('is-leaving')) return;
-            // 최초 팝 모션이 끝난 상태로 전환해, 펼치고 접을 때 작은 점부터 다시 재생하지 않는다.
-            float.classList.add('is-baseball-entered');
-            float.classList.remove('is-minimized');
-            float.classList.toggle('is-expanded', expanded);
-            syncNoticeFloatPosition();
-            renderHomeBaseballIsland();
-            scheduleHomeIslandDismiss();
-        }
-
-        function setHomeBaseballIslandMinimized(minimized) {
-            const float = document.getElementById('home-notice-float');
-            if (!float || float.hidden || float.dataset.mode !== 'baseball' || float.classList.contains('is-leaving') ||
-                float.classList.contains('is-minimized') === minimized) return;
-            float.classList.add('is-baseball-entered');
-            float.classList.toggle('is-minimized', minimized);
-            if (minimized) float.classList.remove('is-expanded');
-            syncNoticeFloatPosition();
-            renderHomeBaseballIsland();
-            scheduleHomeIslandDismiss();
-        }
-
-        function syncHomeBaseballIslandContext(force) {
-            const home = document.getElementById('home-screen');
-            if (!home) return;
-            const otherScreens = Array.from(document.querySelectorAll('[id$="-screen"]')).filter(function (screen) {
-                return screen !== home && screen.getClientRects().length && getComputedStyle(screen).visibility !== 'hidden';
-            }).map(function (screen) { return screen.id; });
-            const away = document.hidden || !home.getClientRects().length || home.inert ||
-                home.getAttribute('aria-hidden') === 'true' || (window.homeActiveTab || 'home') !== 'home' || otherScreens.length > 0;
-            const scrolled = home.scrollTop > 0;
-            const key = [document.hidden, Boolean(away), scrolled, window.homeActiveTab || 'home', otherScreens.join(',')].join('|');
-            // 수동으로 펼친 상태는 데이터 갱신으로 접지 않고, 다음 스크롤·화면 전환 때 갱신한다.
-            if (force !== true && homeIslandContextKey === key) return;
-            homeIslandContextKey = key;
-            setHomeBaseballIslandMinimized(Boolean(away || scrolled));
-        }
-
-        window.setHomeBaseballIslandGames = function (games) {
-            const previous = homeIslandBaseballGames[homeIslandBaseballIndex];
-            homeIslandBaseballGames = games;
-            const sameGame = previous ? games.findIndex(function (game) { return game.key === previous.key; }) : -1;
-            homeIslandBaseballIndex = sameGame >= 0 ? sameGame : 0;
-            const float = document.getElementById('home-notice-float');
-            if (float && !float.hidden && float.dataset.mode === 'baseball') {
-                if (!games.length) dismissNoticeFloat();
-                else {
-                    renderHomeBaseballIsland();
-                    // 갱신으로 경기 수가 바뀌면 순환 타이머도 함께 맞춘다.
-                    if (!float.classList.contains('is-leaving')) scheduleHomeIslandDismiss();
-                }
-            }
-            showPendingNoticeFloat();
-        };
-
-        window.openHomeIsland = function () {
-            const float = document.getElementById('home-notice-float');
-            const game = homeIslandBaseballGames[homeIslandBaseballIndex];
-            if (float && float.dataset.mode === 'baseball' && game) {
-                window.haptic && window.haptic();
-                if (float.classList.contains('is-minimized')) setHomeBaseballIslandMinimized(false);
-                else setHomeBaseballIslandExpanded(!float.classList.contains('is-expanded'));
-            } else {
-                window.haptic && window.haptic();
-                window.openNoticeInfo();
-            }
-        };
-
-        function scheduleHomeIslandDismiss() {
-            window.clearTimeout(noticeFloatTimer);
-            noticeFloatTimer = 0;
-            const float = document.getElementById('home-notice-float');
-            if (!float || float.hidden) return;
-            if (float.dataset.mode !== 'baseball') {
-                noticeFloatTimer = window.setTimeout(dismissNoticeFloat, 5200);
-            } else if (homeIslandBaseballGames.length > 1 && !float.classList.contains('is-expanded')) {
-                noticeFloatTimer = window.setTimeout(function () {
-                    homeIslandBaseballIndex = (homeIslandBaseballIndex + 1) % homeIslandBaseballGames.length;
-                    renderHomeBaseballIsland();
-                    scheduleHomeIslandDismiss();
-                }, 8500);
-            }
-        }
+        const noticeFloatRoot = document.getElementById('home-notice-float');
+        if (noticeFloatRoot) document.body.appendChild(noticeFloatRoot);
 
         function syncNoticeFloatPosition() {
             const float = document.getElementById('home-notice-float');
@@ -9467,7 +9135,7 @@
                 const brandRect = brand.getBoundingClientRect();
                 const headerRect = header.getBoundingClientRect();
                 if (heartRect.width && heartRect.height && heartRect.top >= 0 && heartRect.bottom <= window.innerHeight) {
-                    homeIslandAnchor = {
+                    noticeFloatAnchor = {
                         frameLeft: headerRect.left, frameWidth: headerRect.width, viewportWidth: window.innerWidth,
                         top: heartRect.top, fontSize: fontSize,
                         brandOffset: brandRect.right - headerRect.left,
@@ -9475,7 +9143,7 @@
                     };
                 }
             }
-            const anchor = homeIslandAnchor;
+            const anchor = noticeFloatAnchor;
             const scale = anchor ? fontSize / anchor.fontSize : 1;
             const useCachedFrame = anchor && anchor.viewportWidth === window.innerWidth && scale === 1;
             const frameWidth = useCachedFrame ? anchor.frameWidth : Math.min(window.innerWidth, 28 * fontSize);
@@ -9483,24 +9151,9 @@
             const heartWidth = 2 * fontSize;
             const heartRight = frameLeft + frameWidth - (anchor ? anchor.heartInset * scale : 3.625 * fontSize);
             const gapLeft = frameLeft + (anchor ? anchor.brandOffset * scale : 8.1875 * fontSize) + 8;
-            const gapRight = heartRight - heartWidth - 8;
-            // 중앙 로딩이 끝난 뒤 이어질 야구 아일랜드의 상단 목적지를 전달한다.
-            if (window.enjoyPositionLoadingIsland) {
-                const loadingWidth = Math.min(heartWidth * 4, gapRight - gapLeft);
-                window.enjoyPositionLoadingIsland({
-                    left: Math.max(gapLeft, Math.min(frameLeft + (frameWidth - loadingWidth) / 2, gapRight - loadingWidth)),
-                    top: anchor ? anchor.top * scale : .25 * fontSize,
-                    width: loadingWidth
-                });
-            }
-            const baseball = float.dataset.mode === 'baseball';
-            const expanded = baseball && float.classList.contains('is-expanded');
-            const width = expanded ? Math.min(25 * fontSize, frameWidth - 1.5 * fontSize) : Math.min(heartWidth * 4, (baseball ? gapRight : heartRight) - gapLeft);
+            const width = Math.min(heartWidth * 4, heartRight - gapLeft);
             if (width < heartWidth) return false;
-            // 로고·하트를 피하는 범위 안에서 앱 화면의 정중앙에 가장 가까운 위치를 고른다.
-            const left = expanded ? frameLeft + (frameWidth - width) / 2 : baseball
-                ? Math.max(gapLeft, Math.min(frameLeft + (frameWidth - width) / 2, gapRight - width))
-                : heartRight - width;
+            const left = heartRight - width;
             float.style.width = width + 'px';
             float.style.left = left + 'px';
             float.style.top = (anchor ? anchor.top * scale : .25 * fontSize) + 'px';
@@ -9520,21 +9173,11 @@
 
         function dismissNoticeFloat() {
             const float = document.getElementById('home-notice-float');
-            if (homeIslandCollapseTimer) return;
             window.clearTimeout(noticeFloatTimer);
             noticeFloatTimer = 0;
             if (!float || float.hidden || float.classList.contains('is-leaving')) return;
-            if (float.classList.contains('is-expanded')) {
-                setHomeBaseballIslandExpanded(false);
-                const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                homeIslandCollapseTimer = window.setTimeout(function () {
-                    homeIslandCollapseTimer = 0;
-                    dismissNoticeFloat();
-                }, reduced ? 0 : 400);
-                return;
-            }
             window.clearTimeout(noticeFloatHideTimer);
-            float.classList.remove('is-visible', 'is-baseball-entered');
+            float.classList.remove('is-visible');
             float.classList.add('is-leaving');
             float.setAttribute('aria-hidden', 'true');
             if (float.contains(document.activeElement)) {
@@ -9549,8 +9192,7 @@
 
         function showPendingNoticeFloat() {
             if (document.hidden) return;
-            const hasPendingNotice = noticeFloatPending && noticeAlertEnabled;
-            if (!hasPendingNotice && !homeIslandBaseballGames.length) return;
+            if (!noticeFloatPending || !noticeAlertEnabled) return;
             const login = document.getElementById('login-screen');
             const loader = document.getElementById('app-loader');
             const profile = document.getElementById('profile-modal');
@@ -9562,88 +9204,23 @@
                 document.body.classList.contains('renovation-locked')) return;
             const float = document.getElementById('home-notice-float');
             if (!float) return;
-            if (!float.hidden) {
-                if (hasPendingNotice && float.dataset.mode === 'baseball') dismissNoticeFloat();
-                else syncHomeBaseballIslandContext();
-                return;
-            }
-            float.dataset.mode = hasPendingNotice ? 'notice' : 'baseball';
-            if (!syncNoticeFloatPosition()) return;
-            if (hasPendingNotice) {
-                noticeFloatPending = false;
-                float.querySelector('.notice-float-card').setAttribute('aria-label', '새로운 공지 추가! 공지사항 열기');
-                float.querySelector('.notice-float-card').removeAttribute('aria-expanded');
-            } else renderHomeBaseballIsland();
+            if (!float.hidden || !syncNoticeFloatPosition()) return;
+            noticeFloatPending = false;
             window.clearTimeout(noticeFloatHideTimer);
             float.hidden = false;
             float.inert = false;
-            float.classList.remove('is-visible', 'is-leaving', 'is-expanded', 'is-baseball-entered', 'is-minimized');
+            float.classList.remove('is-visible', 'is-leaving');
             void float.offsetWidth;
             float.setAttribute('aria-hidden', 'false');
             float.classList.add('is-visible');
-            homeIslandContextKey = null;
-            syncHomeBaseballIslandContext();
-            scheduleHomeIslandDismiss();
+            window.clearTimeout(noticeFloatTimer);
+            noticeFloatTimer = window.setTimeout(dismissNoticeFloat, 5200);
         }
-
-        // A ready game replaces the loading surface directly, without another dot/open animation.
-        window.enjoyPrepareLoadingBaseballIsland = function () {
-            function canJoin() {
-                const login = document.getElementById('login-screen');
-                const profile = document.getElementById('profile-modal');
-                const prompt = document.getElementById('login-prompt');
-                return !document.hidden && homeIslandBaseballGames.length > 0 &&
-                    !(noticeFloatPending && noticeAlertEnabled) &&
-                    (!login || login.style.display === 'none') &&
-                    (!profile || profile.classList.contains('hidden')) &&
-                    (!prompt || prompt.classList.contains('hidden')) &&
-                    !document.body.classList.contains('renovation-locked');
-            }
-            const float = document.getElementById('home-notice-float');
-            if (!float || !float.hidden || !canJoin()) return null;
-            float.dataset.mode = 'baseball';
-            float.classList.remove('is-expanded', 'is-leaving', 'is-minimized');
-            if (!syncNoticeFloatPosition()) return null;
-            renderHomeBaseballIsland();
-            return {
-                content: float.querySelector('.notice-float-baseball').cloneNode(true),
-                commit: function () {
-                    if (!canJoin()) return false;
-                    window.clearTimeout(noticeFloatHideTimer);
-                    float.classList.remove('is-leaving', 'is-expanded');
-                    float.classList.add('is-visible', 'is-baseball-entered');
-                    syncNoticeFloatPosition();
-                    renderHomeBaseballIsland();
-                    float.hidden = false;
-                    float.inert = false;
-                    float.setAttribute('aria-hidden', 'false');
-                    homeIslandContextKey = null;
-                    syncHomeBaseballIslandContext();
-                    scheduleHomeIslandDismiss();
-                    return true;
-                }
-            };
-        };
 
         window.enjoyShowPendingNoticeFloat = showPendingNoticeFloat;
         const noticeFloatCard = document.querySelector('#home-notice-float .notice-float-card');
         if (noticeFloatCard) noticeFloatCard.addEventListener('animationend', function (event) {
-            const float = document.getElementById('home-notice-float');
-            if (event.target === noticeFloatCard && event.animationName === 'baseballIslandOpen' &&
-                float.dataset.mode === 'baseball' && float.classList.contains('is-visible')) float.classList.add('is-baseball-entered');
-            if (event.target === noticeFloatCard &&
-                (event.animationName === 'noticeCardToHeart' || event.animationName === 'baseballIslandClose')) finishNoticeFloatDismiss();
-        });
-        document.addEventListener('pointerdown', function (event) {
-            const float = document.getElementById('home-notice-float');
-            if (float && float.classList.contains('is-expanded') && !float.contains(event.target)) setHomeBaseballIslandExpanded(false);
-        });
-        document.addEventListener('keydown', function (event) {
-            const float = document.getElementById('home-notice-float');
-            if (event.key === 'Escape' && float && float.classList.contains('is-expanded')) {
-                setHomeBaseballIslandExpanded(false);
-                noticeFloatCard.focus({ preventScroll: true });
-            }
+            if (event.target === noticeFloatCard && event.animationName === 'noticeCardToHeart') finishNoticeFloatDismiss();
         });
         const noticeHeader = document.querySelector('.home-wordmark-bar');
         syncNoticeFloatPosition();
@@ -9653,35 +9230,9 @@
             showPendingNoticeFloat();
         }).observe(noticeHeader);
         const noticeHome = document.getElementById('home-screen');
-        if (noticeHome) noticeHome.addEventListener('scroll', function () {
-            syncHomeBaseballIslandContext(true);
-            showPendingNoticeFloat();
-        }, { passive: true });
-        document.addEventListener('scroll', function (event) {
-            if (homeIslandRoot && event.target !== noticeHome && event.target.scrollTop > 0 && !homeIslandRoot.contains(event.target)) {
-                setHomeBaseballIslandMinimized(true);
-            }
-        }, { capture: true, passive: true });
-        // 서비스 화면은 이 스크립트 뒤에도 생성되므로 DOM 완성 후 각각 관찰한다.
-        document.addEventListener('DOMContentLoaded', function () {
-            const observer = new MutationObserver(function () {
-                syncHomeBaseballIslandContext();
-                showPendingNoticeFloat();
-            });
-            document.querySelectorAll('[id$="-screen"], #home-tabs .home-tab').forEach(function (screen) {
-                observer.observe(screen, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'inert', 'aria-hidden', 'aria-selected'] });
-            });
-            syncHomeBaseballIslandContext();
-        });
-        document.addEventListener('visibilitychange', function () {
-            syncHomeBaseballIslandContext();
-            if (!document.hidden && window.enjoyRefreshHomeBaseballIsland) window.enjoyRefreshHomeBaseballIsland();
-            showPendingNoticeFloat();
-        });
-        window.addEventListener('pageshow', function () {
-            syncHomeBaseballIslandContext();
-            if (window.enjoyRefreshHomeBaseballIsland) window.enjoyRefreshHomeBaseballIsland();
-        });
+        if (noticeHome) noticeHome.addEventListener('scroll', showPendingNoticeFloat, { passive: true });
+        document.addEventListener('visibilitychange', showPendingNoticeFloat);
+        window.addEventListener('pageshow', showPendingNoticeFloat);
         window.addEventListener('resize', syncNoticeFloatPosition);
         const noticeLoader = document.getElementById('app-loader');
         if (noticeLoader) new MutationObserver(showPendingNoticeFloat).observe(noticeLoader, { attributes: true, attributeFilter: ['style'] });
@@ -9707,8 +9258,7 @@
                 showPendingNoticeFloat();
             } else if (!hasNotice) {
                 noticeFloatPending = false;
-                const float = document.getElementById('home-notice-float');
-                if (float && float.dataset.mode !== 'baseball') dismissNoticeFloat();
+                dismissNoticeFloat();
             }
         };
 
@@ -13136,8 +12686,6 @@
         const enjoyBaseballFeaturedRotations = { samsung: [], kia: [] };
         const enjoyBaseballFeaturedRotationIndexes = { samsung: 0, kia: 0 };
         let enjoyBaseballScheduleGames = [];
-        let homeIslandScheduleSourceGames = [];
-        let homeIslandScheduleTimer = 0;
         let enjoyBaseballStarterHistoryGames = [];
         const enjoyBaseballTeamLogos = {
             '삼성': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/samsung_logo.png',
@@ -13729,124 +13277,6 @@
                 card.setAttribute('aria-label', game.team1 + ' 대 ' + game.team2 + ' ' + detail + ' 경기 정보 보기');
             });
         }
-        function enjoyBaseballIslandDetails(game) {
-            const live = game.gameStatus === '경기중';
-            const inning = String(game.inning || '').trim();
-            const half = inning.match(/(\d+)\s*회?\s*(초|말)/);
-            const offense = live && half ? (half[2] === '초' ? 'away' : 'home') : '';
-            const firstName = function (values) {
-                return values.map(enjoyBaseballPlayerName).map(function (value) { return String(value || '').trim(); })
-                    .find(function (name) { return name && name !== '-' && name !== '—'; }) || '—';
-            };
-            const occupied = function (value) {
-                if (typeof value === 'boolean') return value;
-                if (typeof value === 'number') return value > 0;
-                if (value && typeof value === 'object') return firstName([value]) !== '—';
-                return !['', '0', 'false', 'off', '-', '—'].includes(String(value || '').trim().toLowerCase());
-            };
-            const detail = {
-                phase: live ? 'live' : (game.gameStatus === '종료' ? 'final' : 'pregame'),
-                inning: live ? (half ? half[1] + '회' + half[2] : (inning || '경기중')) : (game.gameStatus === '종료' ? '경기 종료' : (game.time || '경기 예정')),
-                bases: live ? [1, 2, 3].filter(function (base) {
-                    if (Object.prototype.hasOwnProperty.call(game, 'base' + base)) return occupied(game['base' + base]);
-                    const runners = game.runners || {};
-                    return occupied(game['base' + base + 'Runner'] || runners['base' + base] || runners[base]);
-                }) : []
-            };
-            ['away', 'home'].forEach(function (side) {
-                if (game.gameStatus === '종료') {
-                    const hasScores = [game.awayScore, game.homeScore].every(function (score) {
-                        return score != null && String(score).trim() !== '' && Number.isFinite(Number(score)) && Number(score) >= 0;
-                    });
-                    if (!hasScores || Number(game.awayScore) === Number(game.homeScore)) {
-                        detail[side] = { name: hasScores ? '무승부' : '—', stat: '' };
-                    } else {
-                        const won = side === 'away' ? Number(game.awayScore) > Number(game.homeScore) : Number(game.homeScore) > Number(game.awayScore);
-                        detail[side] = { name: firstName([game[won ? 'winPitcher' : 'losePitcher']]), stat: '', result: won ? 'win' : 'loss' };
-                    }
-                    return;
-                }
-                if (!offense) {
-                    detail[side] = { name: '—', stat: '' };
-                    return;
-                }
-                if (side === offense) {
-                    const name = firstName([game[side + 'CurrentBatter'], game[side + 'Batter'],
-                        game[side + 'CurrentBatterDetail'], game[side + 'BatterDetail'], game.currentBatter, game.batter, game.batterDetail]);
-                    const rawRecords = game.recordBatters || game.batterRecords || game.hitterRecords || [];
-                    const records = Array.isArray(rawRecords) ? rawRecords : Object.values(rawRecords);
-                    const candidates = records.filter(function (record) {
-                        if (!record || typeof record !== 'object') return false;
-                        const recordSide = String(record.teamSide || record.side || '').toLowerCase();
-                        return enjoyBaseballPlayerName(record) === name && (!recordSide || recordSide === side);
-                    }).sort(function (a, b) {
-                        return Number(b.relayNo ?? b.sequence ?? b.seq ?? 0) - Number(a.relayNo ?? a.sequence ?? a.seq ?? 0);
-                    });
-                    const batter = [game[side + 'CurrentBatterDetail'], game[side + 'BatterDetail'], game.batterDetail, game.currentBatter]
-                        .find(function (item) { return item && typeof item === 'object' && enjoyBaseballPlayerName(item) === name; }) || {};
-                    const record = candidates.find(function (item) { return (item.average ?? item.battingAverage ?? item.avg) != null; }) || {};
-                    const rawAverage = record.average ?? record.battingAverage ?? record.avg ?? batter.average ?? batter.battingAverage ?? batter.avg;
-                    const average = rawAverage != null && String(rawAverage).trim() !== '' ? Number(rawAverage) : NaN;
-                    detail[side] = { name: name, stat: '타율 ' + (Number.isFinite(average) && average >= 0 && average <= 1 ? average.toFixed(3) : '—') };
-                } else {
-                    const pitcher = game[side + 'PitcherDetail'] || {};
-                    const name = firstName([game[side + 'Pitcher'], pitcher, game.currentPitcher]);
-                    const rawCount = game[side + 'PitcherCount'] ?? (enjoyBaseballPlayerName(pitcher) === name ? pitcher.pitchCount : undefined);
-                    const count = rawCount != null && String(rawCount).trim() !== '' ? Number(rawCount) : NaN;
-                    detail[side] = { name: name, stat: '투구수 ' + (Number.isInteger(count) && count >= 0 ? count : '—') };
-                }
-            });
-            return detail;
-        }
-        function updateHomeBaseballIsland(games, currentTime = new Date()) {
-            if (!window.setHomeBaseballIslandGames) return;
-            homeIslandScheduleSourceGames = games;
-            window.clearTimeout(homeIslandScheduleTimer);
-            const now = new Date(currentTime);
-            const nowMs = now.getTime();
-            const today = new Date(nowMs + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
-            const midnight = Date.parse(today + 'T00:00:00+09:00') + 24 * 60 * 60 * 1000;
-            let nextBoundary = midnight;
-            const eligible = games.filter(function (game) {
-                if (game.date !== today || game.id == null || enjoyBaseballIsCanceled(game) ||
-                    !enjoyBaseballTeamLogos[game.team1] || !enjoyBaseballTeamLogos[game.team2]) return false;
-                const status = game.gameStatus || '경기전';
-                if (status === '경기중' || status === '종료') return true;
-                if (status !== '경기전') return false;
-                const time = String(game.time || '').match(/(\d{1,2}):(\d{2})/);
-                if (!time || Number(time[1]) > 23 || Number(time[2]) > 59) return false;
-                const start = Date.parse(today + 'T' + time[1].padStart(2, '0') + ':' + time[2] + ':00+09:00');
-                const visibleFrom = start - 60 * 60 * 1000;
-                if (visibleFrom > nowMs) nextBoundary = Math.min(nextBoundary, visibleFrom);
-                return nowMs >= visibleFrom;
-            }).sort(function (first, second) {
-                return Number(second.gameStatus === '경기중') - Number(first.gameStatus === '경기중') ||
-                    String(first.time || '').localeCompare(String(second.time || ''));
-            });
-            window.setHomeBaseballIslandGames(eligible.map(function (game) {
-                const pregame = !game.gameStatus || game.gameStatus === '경기전';
-                const score = function (value) {
-                    return !pregame && value != null && String(value).trim() !== '' &&
-                        Number.isFinite(Number(value)) && Number(value) >= 0 ? String(Number(value)) : '–';
-                };
-                return {
-                    key: game.date + '_' + game.id, id: game.id, date: game.date,
-                    awayTeam: game.team1, homeTeam: game.team2,
-                    awayLogo: enjoyBaseballTeamLogos[game.team1], homeLogo: enjoyBaseballTeamLogos[game.team2],
-                    awayScore: score(game.awayScore), homeScore: score(game.homeScore),
-                    finished: game.gameStatus === '종료',
-                    detail: enjoyBaseballIslandDetails(game),
-                    status: pregame ? game.time + ' 경기 예정' : (game.gameStatus === '경기중' ? (game.inning || '경기중') : '종료'),
-                    theme: game.team1 === '삼성' || game.team2 === '삼성' ? '삼성' : 'KIA'
-                };
-            }));
-            // 네트워크 갱신과 별개로 시작 1시간 전과 한국 시각 자정에 표시 조건을 다시 계산한다.
-            homeIslandScheduleTimer = window.setTimeout(function () {
-                updateHomeBaseballIsland(homeIslandScheduleSourceGames);
-            }, Math.max(1, nextBoundary - nowMs + 10));
-        }
-        window.enjoyRefreshHomeBaseballIsland = function () { updateHomeBaseballIsland(homeIslandScheduleSourceGames); };
-
         async function refreshEnjoyBaseballFeatured() {
             try {
                 const now = new Date();
@@ -13896,7 +13326,6 @@
                 });
                 const games = Array.from(merged.values());
                 enjoyBaseballScheduleGames = games;
-                updateHomeBaseballIsland(games);
                 enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today, now));
                 enjoyBaseballSetRotation('kia', enjoyBaseballChooseRotation(games, 'KIA', today, now));
                 if (document.getElementById('kbo-more-ranking-body')) {
