@@ -38,7 +38,7 @@
                 console.warn('Guest storage unavailable:', error);
             }
             if (root.enjoyRefreshGuestNavigation) root.enjoyRefreshGuestNavigation();
-            if ((!publicHomeShown || selectedMode !== 'guest') && root.homeActiveTab !== 'vlog' && root.selectHomeTab) root.selectHomeTab('vlog');
+            if ((!publicHomeShown || selectedMode !== 'guest') && root.homeActiveTab !== 'webnovel' && root.selectHomeTab) root.selectHomeTab('webnovel');
             publicHomeShown = true;
             selectedMode = 'guest';
         }

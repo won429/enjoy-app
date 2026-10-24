@@ -227,7 +227,7 @@
         root.enjoyInstallLocalData();
         root.enjoyRefreshGuestNavigation();
         root.enjoyEnterLocalMode && root.enjoyEnterLocalMode();
-        if (root.selectHomeTab) root.selectHomeTab('vlog');
+        if (root.selectHomeTab) root.selectHomeTab('webnovel');
         root.enjoyLocalMembersStart && root.enjoyLocalMembersStart();
         root.enjoyCommunityOnAuth && root.enjoyCommunityOnAuth(identity);
         root.enjoyDropOnAuth && root.enjoyDropOnAuth(identity);
