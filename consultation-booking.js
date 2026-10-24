@@ -61,6 +61,25 @@
     const success = dialog.querySelector('[data-booking-success]');
     const submit = form.querySelector('[type="submit"]');
     const date = form.elements.namedItem('date');
+    function updatePickerLabels() {
+        ['startTime', 'endTime', 'date'].forEach(name => {
+            const input = form.elements.namedItem(name);
+            const display = form.querySelector('[data-booking-display="' + name + '"]');
+            if (!display) return;
+            display.textContent = input.value ? (name === 'date' ? input.value.replaceAll('-', '.') : input.value) : (name === 'date' ? '날짜 선택' : '시간 선택');
+            display.parentElement.classList.toggle('is-empty', !input.value);
+        });
+    }
+    form.querySelectorAll('input[type="date"], input[type="time"]').forEach(input => {
+        input.addEventListener('input', updatePickerLabels);
+        input.addEventListener('change', updatePickerLabels);
+        input.addEventListener('click', () => {
+            // Keep the platform's native picker while rendering a bounded, consistent field.
+            if (typeof input.showPicker === 'function') {
+                try { input.showPicker(); } catch (_) { /* Older Safari uses its normal input action. */ }
+            }
+        });
+    });
     let saving = false, requestId = '', previousFocus = null;
     const newId = () => root.crypto.randomUUID();
     root.openEnjoyConsultation = function () {
@@ -68,8 +87,10 @@
         previousFocus = root.document.activeElement;
         form.reset(); form.hidden = false; success.hidden = true; error.textContent = '';
         requestId = newId(); fields.disabled = false; date.min = koreaNow().slice(0, 10);
+        updatePickerLabels();
         dialog.showModal();
-        dialog.querySelector('[data-booking-title]').focus();
+        dialog.scrollTop = 0;
+        dialog.querySelector('[data-booking-title]').focus({ preventScroll: true });
     };
     const close = () => { if (!saving) dialog.close(); };
     dialog.querySelectorAll('[data-booking-close]').forEach(button => button.addEventListener('click', close));
@@ -91,7 +112,8 @@
             const weekday = new Date(reservation.date + 'T12:00:00+09:00').getUTCDay();
             success.querySelector('[data-booking-summary]').textContent = reservation.date.replaceAll('-', '.') + ' (' + WEEKDAYS[weekday] + ') · ' + reservation.startTime + '–' + reservation.endTime;
             form.hidden = true; success.hidden = false;
-            success.querySelector('h3').focus();
+            dialog.scrollTop = 0;
+            success.querySelector('h3').focus({ preventScroll: true });
         } catch (failure) {
             error.textContent = failure.code === 'permission-denied' || failure.code === 'firestore/permission-denied'
                 ? '예약 접수 권한을 확인하지 못했어요. 로그인 상태를 확인하거나 관리자에게 문의해 주세요.'
