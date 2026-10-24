@@ -24,6 +24,81 @@ function validateWork(work) {
     if (typeof map.src !== 'string' || !/^[\w.-]+\.(png|jpe?g|webp)$/i.test(map.src)) throw new Error('인물관계도 이미지 파일을 확인하세요.');
     if (![map.width, map.height].every(size => Number.isInteger(size) && size > 0)) throw new Error('인물관계도 이미지 크기를 확인하세요.');
   }
+  if (work.episodes !== undefined) {
+    if (!Array.isArray(work.episodes)) throw new Error('회차 목록을 확인하세요.');
+    const numbers = new Set();
+    const sources = new Set();
+    for (const episode of work.episodes) {
+      if (!Number.isInteger(episode.number) || episode.number < 1 || episode.number > work.totalEpisodes || numbers.has(episode.number)) throw new Error('회차 번호를 확인하세요.');
+      if (typeof episode.title !== 'string' || !episode.title.trim()) throw new Error('회차 제목을 확인하세요.');
+      if (typeof episode.source !== 'string' || !/^[a-z0-9-]+\.txt$/.test(episode.source) || sources.has(episode.source)) throw new Error('회차 원고 파일을 확인하세요.');
+      numbers.add(episode.number);
+      sources.add(episode.source);
+    }
+  }
+}
+
+const episodeFile = episode => episode.source.replace(/\.txt$/, '.html');
+
+function renderEpisodeList(work) {
+  if (!work.episodes || !work.episodes.length) return '';
+  const episodes = [...work.episodes].sort((a, b) => a.number - b.number);
+  return `      <section class="novel-chapters" aria-labelledby="novel-chapters-title">
+        <h2 id="novel-chapters-title">회차 목록</h2>
+        <ol>
+${episodes.map(episode => `          <li><a class="novel-episode-link" data-novel-route href="episodes/${episodeFile(episode)}"><span class="novel-episode-number">${episode.number}화</span><span>${escapeHtml(episode.title)}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>`).join('\n')}
+        </ol>
+      </section>
+`;
+}
+
+function renderEpisode(work, episode, manuscript) {
+  validateWork(work);
+  const lines = manuscript.replace(/\r\n?/g, '\n').split('\n');
+  const episodeTitle = `제${episode.number}화. ${episode.title}`;
+  if (lines[1] !== episodeTitle || !lines[0].startsWith(work.title) || !lines[2].startsWith('장르:')) throw new Error(`원고의 작품명·회차 제목·장르를 확인하세요: ${episode.source}`);
+  const body = lines.slice(3).filter(line => line.trim()).map(line => {
+    if (/^(프롤로그\s*\||SCENE\s+\d+\s*\|)/.test(line)) return `        <h2>${escapeHtml(line)}</h2>`;
+    const ending = /^제\d+화 END$/.test(line) ? ' class="novel-reader-end"' : '';
+    return `        <p${ending}>${escapeHtml(line)}</p>`;
+  }).join('\n');
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="${escapeHtml(work.title)} ${escapeHtml(episodeTitle)}. ${escapeHtml(work.tagline)}">
+  <title>${escapeHtml(episodeTitle)} | ${escapeHtml(work.title)}</title>
+  <link rel="icon" href="../../../icon.png">
+  <link rel="stylesheet" href="../../novels.css?v=20261025-episode-5">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
+  <script defer src="../../navigation.js?v=20261025-episode-2"></script>
+</head>
+<body class="novel-page">
+  <header class="novel-toolbar">
+    <div class="novel-toolbar__inner">
+      <a class="novel-back" data-novel-route href="../index.html" aria-label="작품 정보와 회차 목록으로 돌아가기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m14.5 5-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>작품 정보</span>
+      </a>
+    </div>
+  </header>
+  <main class="novel-main novel-reader">
+    <article aria-labelledby="episode-title">
+      <header class="novel-reader-header">
+        <p class="novel-reader-series">${escapeHtml(lines[0])}</p>
+        <h1 id="episode-title">${escapeHtml(lines[1])}</h1>
+        <p class="novel-reader-genres">${escapeHtml(lines[2])}</p>
+      </header>
+      <div class="novel-manuscript">
+${body}
+      </div>
+      <footer class="novel-reader-footer"><a data-novel-route href="../index.html">작품 정보 · 회차 목록</a></footer>
+    </article>
+  </main>
+</body>
+</html>
+`;
 }
 
 function renderWork(work) {
@@ -37,9 +112,9 @@ function renderWork(work) {
   <meta name="description" content="${escapeHtml(work.tagline)} ${escapeHtml(work.genres.join(' · '))}, 총 ${work.totalEpisodes}부작. 작품 소개를 만나보세요.">
   <title>${title} | 엔조이 웹소설</title>
   <link rel="icon" href="../../icon.png">
-  <link rel="stylesheet" href="../novels.css?v=20261025-entry-4">
+  <link rel="stylesheet" href="../novels.css?v=20261025-episode-5">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
-  <script defer src="../navigation.js?v=20261025-1"></script>
+  <script defer src="../navigation.js?v=20261025-episode-2"></script>
 </head>
 <body class="novel-page">
   <header class="novel-toolbar">
@@ -82,7 +157,7 @@ ${work.relationshipMap ? `      <details class="novel-story">
             <img class="novel-relationship-image" src="${escapeHtml(work.relationshipMap.src)}" width="${work.relationshipMap.width}" height="${work.relationshipMap.height}" alt="${title} 등장인물 관계도" loading="lazy">
           </a>
         </div>
-      </details>\n` : ''}    </article>
+      </details>\n` : ''}${renderEpisodeList(work)}    </article>
   </main>
 </body>
 </html>
@@ -120,13 +195,20 @@ function buildNovels() {
       validateWork(work);
       if (!fs.existsSync(path.join(directory, work.cover))) throw new Error(`표지 파일이 없습니다: ${entry.name}`);
       if (work.relationshipMap && !fs.existsSync(path.join(directory, work.relationshipMap.src))) throw new Error(`인물관계도 파일이 없습니다: ${entry.name}`);
-      return { directory, slug: entry.name, work };
+      const episodes = (work.episodes || []).map(episode => ({
+        output: path.join(directory, 'episodes', episodeFile(episode)),
+        html: renderEpisode(work, episode, fs.readFileSync(path.join(directory, 'episodes', episode.source), 'utf8'))
+      }));
+      return { directory, slug: entry.name, work, episodes };
     });
   const catalog = `\n            <div class="novel-catalog">\n${works.map(({ work, slug }) => renderCard(work, slug)).join('\n')}\n            </div>\n            `;
-  for (const { directory, work } of works) fs.writeFileSync(path.join(directory, 'index.html'), renderWork(work));
+  for (const { directory, work, episodes } of works) {
+    fs.writeFileSync(path.join(directory, 'index.html'), renderWork(work));
+    for (const episode of episodes) fs.writeFileSync(episode.output, episode.html);
+  }
   fs.writeFileSync(indexPath, index.slice(0, start + catalogStart.length) + catalog + index.slice(end));
   console.log(`웹소설 ${works.length}개 작품 소개와 목록을 생성했습니다.`);
 }
 
 if (require.main === module) buildNovels();
-module.exports = { validateWork, renderWork, renderCard };
+module.exports = { validateWork, renderWork, renderCard, renderEpisode };
