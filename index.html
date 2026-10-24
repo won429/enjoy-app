@@ -3643,7 +3643,13 @@
             -webkit-backdrop-filter: blur(1rem) saturate(1.45);
             backdrop-filter: blur(1rem) saturate(1.45);
         }
-        /* 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정): 굵은 흰 글씨 + 활성 탭 아래 짧은 흰색 바 */
+        .home-webnovel-panel { padding: 2rem .25rem 1rem; }
+        .home-webnovel-panel h2 { margin: 0; color: #fff; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; }
+        .home-webnovel-panel p { margin: .75rem 0 0; color: #8B95A1; font-size: .875rem; line-height: 1.6; }
+        @media (prefers-color-scheme: light) {
+            .home-webnovel-panel h2 { color: #191F28; }
+        }
+        /* 홈 상단 메뉴: 굵은 흰 글씨 + 활성 탭 아래 짧은 흰색 바 */
         .home-tabs {
             position: relative;
             z-index: 23;
@@ -7992,6 +7998,7 @@
             <button type="button" class="home-tab" data-home-tab="shorts" role="tab" aria-selected="false" aria-controls="shorts-screen" onclick="window.switchHomeTab('shorts')">숏츠</button>
             <button type="button" class="home-tab" data-home-tab="academic" role="tab" aria-selected="false" aria-controls="academic-schedule-screen" onclick="window.switchHomeTab('academic')">학사일정</button>
             <button id="home-attendance-tab" type="button" class="home-tab" data-home-tab="attendance" role="tab" aria-selected="false" aria-controls="home-attendance-panel" onclick="window.switchHomeTab('attendance')">출석</button>
+            <button id="home-webnovel-tab" type="button" class="home-tab" data-home-tab="webnovel" role="tab" aria-selected="false" aria-controls="home-webnovel-panel" onclick="window.switchHomeTab('webnovel')">웹소설</button>
         </nav>
         
         <section id="home-attendance-panel" class="home-attendance-panel hidden" role="tabpanel" aria-labelledby="home-attendance-tab" aria-hidden="true">
@@ -8438,6 +8445,11 @@
         <!-- 야구 탭: 야구 커뮤니티 (홈 화면 안에서 전환) -->
         <section id="home-baseball-panel" class="home-baseball-panel hidden" aria-label="야구 커뮤니티">
             <div id="baseball-detail-content"></div>
+        </section>
+
+        <section id="home-webnovel-panel" class="home-webnovel-panel hidden" role="tabpanel" aria-labelledby="home-webnovel-tab" aria-hidden="true">
+            <h2>웹소설</h2>
+            <p>웹소설을 준비하고 있어요.</p>
         </section>
 
         <!-- 브이로그 탭: 최신 배너와 모든 시리즈 -->
@@ -11384,7 +11396,7 @@
         window.homeActiveTab = 'home';
         window.selectHomeTab = function (tab) {
             if ((tab === 'shorts' || tab === 'attendance') && !window.enjoyUser) tab = 'home';
-            tab = ['baseball', 'vlog', 'shorts', 'academic', 'attendance'].includes(tab) ? tab : 'home';
+            tab = ['baseball', 'vlog', 'shorts', 'academic', 'attendance', 'webnovel'].includes(tab) ? tab : 'home';
             window.homeActiveTab = tab;
             if (tab === 'baseball') window.startKboSeasonBannerAuto();
             else window.stopKboSeasonBannerAuto();
@@ -11401,6 +11413,7 @@
             const shortsPanel = document.getElementById('shorts-screen');
             const academicPanel = document.getElementById('academic-schedule-screen');
             const attendancePanel = document.getElementById('home-attendance-panel');
+            const webnovelPanel = document.getElementById('home-webnovel-panel');
             if (homePanel) homePanel.classList.toggle('hidden', tab !== 'home');
             if (baseballPanel) baseballPanel.classList.toggle('hidden', tab !== 'baseball');
             if (vlogPanel) vlogPanel.classList.toggle('hidden', tab !== 'vlog');
@@ -11420,9 +11433,13 @@
                 attendancePanel.classList.toggle('hidden', tab !== 'attendance');
                 attendancePanel.setAttribute('aria-hidden', tab === 'attendance' ? 'false' : 'true');
             }
-            if (tab === 'attendance') {
+            if (webnovelPanel) {
+                webnovelPanel.classList.toggle('hidden', tab !== 'webnovel');
+                webnovelPanel.setAttribute('aria-hidden', tab === 'webnovel' ? 'false' : 'true');
+            }
+            if (tab === 'attendance' || tab === 'webnovel') {
                 const menu = document.getElementById('home-tabs');
-                const button = document.getElementById('home-attendance-tab');
+                const button = document.getElementById(tab === 'attendance' ? 'home-attendance-tab' : 'home-webnovel-tab');
                 if (menu && button) menu.scrollLeft = button.offsetLeft + button.offsetWidth - menu.clientWidth + 24;
             }
             const home = document.getElementById('home-screen');
@@ -11434,7 +11451,7 @@
         window.switchHomeTab = function (tab) {
             if ((tab === 'shorts' || tab === 'attendance') && !window.enjoyUser) tab = 'home';
             if (window.homeActiveTab === tab) return;
-            const panels = { home: 'apple-tv-banner', baseball: 'home-baseball-panel', vlog: 'home-vlog-panel', shorts: 'shorts-screen', academic: 'academic-schedule-screen', attendance: 'home-attendance-panel' };
+            const panels = { home: 'apple-tv-banner', baseball: 'home-baseball-panel', vlog: 'home-vlog-panel', shorts: 'shorts-screen', academic: 'academic-schedule-screen', attendance: 'home-attendance-panel', webnovel: 'home-webnovel-panel' };
             const leaving = document.getElementById(panels[window.homeActiveTab] || panels.home);
             // Keep the outgoing content below the home tab bar (z-index: 23).
             const finishTransition = window.beginEnjoyMenuTransition(leaving, document.getElementById(panels[tab] || panels.home), 22, document.getElementById('home-screen'));
@@ -18857,7 +18874,7 @@
     })();
     </script>
 
-    <script src="guest-local.js?v=20261025-guest-diary-1"></script>
+    <script src="guest-local.js?v=20261025-webnovel-tab-1"></script>
 
     <!-- [New] 엔조이 멤버: 프로필 이름 + 멤버별 활동상태 트레이 -->
     <script>
