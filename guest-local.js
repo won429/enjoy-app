@@ -227,8 +227,6 @@
     };
     function finishEntry() {
         root.enjoyGuestProfilePending = false;
-        const screen = root.document && root.document.getElementById('login-screen');
-        if (screen) screen.style.display = 'none';
         try {
             root.localStorage.setItem('enjoy_chat_account_v1', 'guest');
             root.localStorage.setItem('enjoy_chat_account_label_v1', root.enjoyProfileName || '게스트');

@@ -4672,30 +4672,7 @@
         html.enjoy-guest #drop-quiz-screen,
         html.enjoy-guest [data-home-tab="shorts"] { display: none !important; }
 
-        /* ===== 로그인 화면 / 로그인 유도 팝업 (기본=다크) ===== */
-        #login-screen { background: #000; }
-        #login-screen .lg-greet { font-size: 1.3125rem; font-weight: 800; color: #3182F6; margin-bottom: 1.5rem; letter-spacing: -0.01em; }
-        #login-screen .lg-greet i { margin-left: 0.25rem; }
-        #login-screen .lg-title { font-size: 1.75rem; font-weight: 800; line-height: 1.32; letter-spacing: -0.02em; color: #fff; }
-        #login-screen .lg-sub { font-size: 0.90625rem; font-weight: 500; line-height: 1.6; margin-top: 0.875rem; color: rgba(255,255,255,0.5); }
-        #login-screen .lg-status { font-size: 0.75rem; margin-top: 0.875rem; min-height: 1rem; color: rgba(255,255,255,0.4); }
-        #login-screen .lg-guest { display: block; width: fit-content; margin: 1rem auto 0; font-size: 0.875rem; font-weight: 600; padding: 0.5625rem 1.125rem; color: rgba(255,255,255,0.55);
-            text-decoration: underline; text-underline-offset: 0.1875rem; background: transparent; transition: opacity .15s, transform .15s; }
-        #login-screen .lg-guest:active { opacity: 0.6; transform: scale(0.97); }
-        /* 안내 카드 */
-        #login-screen .lg-cards { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
-        #login-screen .lg-card { background: #1c1c1e; border-radius: 1.375rem; padding: 1.625rem 1.5rem; text-align: left; }
-        #login-screen .lg-card-ic { font-size: 1.625rem; color: #3182F6; margin-bottom: 1rem; }
-        #login-screen .lg-card h3 { font-size: 1.125rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; line-height: 1.35; }
-        #login-screen .lg-card p { font-size: 0.875rem; font-weight: 500; line-height: 1.62; margin-top: 0.5625rem; color: rgba(255,255,255,0.55); }
-        /* 로그인 화면 광고 (카카오 애드핏) */
-        #login-screen .lg-ad { margin-top: 2rem; display: flex; justify-content: center; min-height: 3.125rem; }
-        /* 로그인 화면 하단 카피라이트 */
-        #login-screen .lg-footer { margin-top: 2.25rem; text-align: center; font-size: 0.8125rem; font-weight: 800;
-            letter-spacing: -0.01em; color: rgba(255,255,255,0.38); }
-        #login-content { min-height: 100dvh; display: flex; flex-direction: column; }
-        #login-content.hidden { display: none; }
-        #login-screen .lg-footer { margin-top: auto; padding-top: 2.25rem; flex-shrink: 0; }
+        /* ===== 로그인 유도 팝업 (기본=다크) ===== */
         .lg-google { width: 100%; margin-top: 2.25rem; background: #fff; color: #141414; font-weight: 700; font-size: 0.9375rem;
             padding: 0.9375rem 0; border-radius: 624.9375rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem;
             border: 0.0625rem solid transparent; box-shadow: 0 0.375rem 1.375rem rgba(0,0,0,0.35); transition: transform .15s; cursor: pointer; }
@@ -7084,14 +7061,7 @@
             .home-service-item { color: #4E4E52; }
             .home-service-item:active { background: rgba(0,0,0,.045); }
 
-            /* 로그인 화면/팝업 라이트 모드 */
-            #login-screen { background: #F2F2F7; }
-            #login-screen .lg-title { color: #1d1d1f; }
-            #login-screen .lg-sub, #login-screen .lg-guest, #login-screen .lg-status { color: #6e6e73; }
-            #login-screen .lg-card { background: #fff; box-shadow: 0 0.25rem 1.25rem rgba(0,0,0,0.05); }
-            #login-screen .lg-card h3 { color: #1d1d1f; }
-            #login-screen .lg-card p { color: #6e6e73; }
-            #login-screen .lg-footer { color: #9b95a8; }
+            /* 로그인 유도 팝업 라이트 모드 */
             .lg-google { background: #fff; color: #141414; border: 0.0625rem solid rgba(0,0,0,0.08); box-shadow: 0 0.375rem 1.375rem rgba(0,0,0,0.10); }
             #login-prompt { background: rgba(0,0,0,0.35); }
             #login-prompt .lp-card { background: #fff; box-shadow: 0 1.25rem 3.75rem rgba(0,0,0,0.18); }
@@ -7859,41 +7829,14 @@
 <body class="w-full h-[100dvh] flex flex-col overflow-hidden bg-black" ontouchstart="">
     <div id="ios-status-bar-background" aria-hidden="true"></div>
 
-    <!-- Firebase 첫 동기화: 중앙의 작은 점 → 로딩 아일랜드 → 체크 → 점에서 화면 열기 -->
-    <div id="app-loader" class="loading-island-overlay" data-state="opening" role="status" aria-live="polite" aria-atomic="true">
+    <!-- 공개 홈은 인증을 기다리지 않는다. 로더는 필요한 작업에서만 사용한다. -->
+    <div id="app-loader" class="loading-island-overlay" data-state="hidden" data-autostart="false" style="display:none" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true">
         <div class="loading-island-anchor" aria-hidden="true">
             <div class="loading-island-card"><canvas width="256" height="256"></canvas></div>
         </div>
         <span class="loading-island-label">데이터 동기화 중</span>
     </div>
-    <script src="loading-island.js?v=20261024-2"></script>
-    <script>
-        // 인증과 최초 데이터 동기화가 끝난 경우에만 로더를 닫는다.
-        // 인증 확인 전에 홈이 노출되면 프로필이 '미가입'처럼 잠깐 보일 수 있다.
-        setTimeout(function () {
-            var l = document.getElementById('app-loader');
-            var ready = window.enjoyAuthResolved === true &&
-                (!window.meetingAuthed || window.__enjoyTodayDataReady === true);
-            if (ready && l && l.style.display !== 'none') {
-                window.enjoyFinishLoadingIsland();
-            }
-        }, 2000);
-        // SDK 자체가 로드되지 않는 경우에는 로그인 폼으로 오인시키지 않고 연결 오류를 안내한다.
-        setTimeout(function () {
-            if (window.enjoyAuthResolved === true) return;
-            window.__enjoyAuthTimeoutShown = true;
-            var lc = document.getElementById('login-checking');
-            var lf = document.getElementById('login-content');
-            var lb = document.getElementById('login-google-btn');
-            var ls = document.getElementById('login-status');
-            var ld = document.getElementById('app-loader');
-            if (lc) lc.style.display = 'none';
-            if (lf) { lf.classList.remove('hidden'); lf.style.display = 'flex'; }
-            if (lb) lb.disabled = true;
-            if (ls) ls.textContent = '연결이 지연되고 있어요. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
-            if (ld) window.enjoyCancelLoadingIsland();
-        }, 12000);
-    </script>
+    <script src="loading-island.js?v=20261025-public-home-1"></script>
 
     <div id="enjoy-dialog" class="hidden fixed inset-0 z-[400] items-center justify-center px-5" aria-hidden="true">
         <div class="ed-card" role="alertdialog" aria-modal="true" aria-labelledby="enjoy-dialog-title" aria-describedby="enjoy-dialog-message" onclick="event.stopPropagation()">
@@ -7985,64 +7928,15 @@
     })();
     </script>
 
-    <!-- [New] 로그인 화면 — 엔조이 계정 로그인 전에는 서비스 이용 불가 (기본 표시) -->
-    <div id="login-screen" class="fixed inset-0 z-[300] overflow-y-auto scrollbar-hide">
-        <!-- 인증 확인 중에는 공통 로딩 아일랜드가 표시된다. -->
-        <div id="login-checking" class="absolute inset-0" aria-label="로그인 상태 확인 중"></div>
-        <!-- 미로그인 시 노출되는 로그인 안내 -->
-        <div id="login-content" class="hidden w-full max-w-md mx-auto px-7 pt-16 pb-16">
-            <!-- 인사말 + 히어로 -->
-            <div class="text-center">
-                <p class="lg-greet">반가워요 <i class="fa-solid fa-hand"></i></p>
-                <h1 class="lg-title">엔조이의 모든 서비스를<br>바로 이용해보세요</h1>
-                <p class="lg-sub">일정과 나의 기록을 한곳에서 관리하고<br>엔조이의 다양한 기능을 즐겨보세요.</p>
-            </div>
-            <!-- 로그인 버튼 -->
-            <button id="login-google-btn" class="lg-google" style="display:none" onclick="window.haptic && window.haptic(); window.enjoyLogin && window.enjoyLogin()">
-                <svg width="20" height="20" style="width:1.25rem;height:1.25rem" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
-                엔조이 계정(구글)으로 로그인
-            </button>
-            <button id="guest-access-btn" class="lg-google" onclick="window.haptic && window.haptic(); window.enjoyGuest && window.enjoyGuest()">접속하기</button>
-
-            <!-- 광고 (카카오 애드핏) -->
-            <div id="login-ad" class="lg-ad"></div>
-
-            <p id="login-status" class="lg-status text-center"></p>
-
-            <!-- 안내 카드 -->
-            <div class="lg-cards">
-                <div class="lg-card">
-                    <div class="lg-card-ic"><i class="fa-solid fa-sliders"></i></div>
-                    <h3>내가 관리하는 나의 기록</h3>
-                    <p>일정, 드롭과 여행 기록을 한곳에서 직접 관리해요.</p>
-                </div>
-                <div class="lg-card">
-                    <div class="lg-card-ic"><i class="fa-solid fa-shield-halved"></i></div>
-                    <h3>비공개로 안전하게</h3>
-                    <p>나만의 일정과 이야기를 편하게 기록하고 관리해요.</p>
-                </div>
-                <div class="lg-card">
-                    <div class="lg-card-ic"><i class="fa-regular fa-comments"></i></div>
-                    <h3>바로 시작할 수 있어요</h3>
-                    <p>접속하기를 누르고 엔조이의 기능을 이용해보세요.</p>
-                </div>
-            </div>
-
-            <!-- 하단 카피라이트 -->
-            <p class="lg-footer">Copyright © 2026 엔조이. All rights reserved.<br><a class="enjoy-privacy-link" href="privacy.html">개인정보처리방침</a></p>
-        </div>
-    </div>
-
-
     <!-- [New] 로그인 유도 팝업 — 둘러보기 중 기능 사용 시 노출 -->
     <div id="login-prompt" class="hidden fixed inset-0 z-[280] flex items-center justify-center px-8" onclick="window.hideLoginPrompt && window.hideLoginPrompt(event)">
         <div class="lp-card w-full max-w-[300px] rounded-[26px] p-7 text-center" onclick="event.stopPropagation()">
             <h3 class="lp-title">로그인이 필요해요</h3>
             <p class="lp-desc">이 기능은 엔조이 계정으로<br>로그인한 뒤에 이용할 수 있어요</p>
-            <button class="lg-google" onclick="window.haptic && window.haptic(); window.hideLoginPrompt && window.hideLoginPrompt(); window.enjoyLogin && window.enjoyLogin();">
+            <a class="lg-google" href="login.html" style="text-decoration:none">
                 <svg width="20" height="20" style="width:1.25rem;height:1.25rem" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
                 엔조이 계정(구글)으로 로그인
-            </button>
+            </a>
             <button class="lp-cancel" onclick="window.haptic && window.haptic(); window.hideLoginPrompt && window.hideLoginPrompt();">다음에 할게요</button>
         </div>
     </div>
@@ -8712,7 +8606,12 @@
                     <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
                 </button>
                 <div class="home-side-menu-account" aria-label="계정 메뉴">
-                    <button type="button" class="home-side-menu-item" onclick="window.haptic && window.haptic(); window.enjoyConfirm('로그아웃 하시겠어요?', { title: '로그아웃', confirmText: '로그아웃' }).then(function (confirmed) { if (confirmed) { window.closeHomeSideMenu(false); window.enjoyLogout && window.enjoyLogout(); } });">
+                    <a id="home-login" class="home-side-menu-item" href="login.html" style="text-decoration:none">
+                        <span class="home-side-menu-item-icon is-logout"><i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i></span>
+                        <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">로그인</span></span>
+                        <i class="home-side-menu-item-chevron fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    </a>
+                    <button id="home-logout" type="button" class="home-side-menu-item hidden" onclick="window.haptic && window.haptic(); window.enjoyConfirm('로그아웃 하시겠어요?', { title: '로그아웃', confirmText: '로그아웃' }).then(function (confirmed) { if (confirmed) { window.closeHomeSideMenu(false); window.enjoyLogout && window.enjoyLogout(); } });">
                         <span class="home-side-menu-item-icon is-logout"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></span>
                         <span class="home-side-menu-item-copy"><span class="home-side-menu-item-title">로그아웃</span></span>
                     </button>
@@ -9060,12 +8959,10 @@
         function showPendingNoticeFloat() {
             if (document.hidden) return;
             if (!noticeFloatPending || !noticeAlertEnabled) return;
-            const login = document.getElementById('login-screen');
             const loader = document.getElementById('app-loader');
             const profile = document.getElementById('profile-modal');
             const loginPrompt = document.getElementById('login-prompt');
-            if ((login && login.style.display !== 'none') ||
-                (loader && loader.style.display !== 'none') ||
+            if ((loader && loader.style.display !== 'none') ||
                 (profile && !profile.classList.contains('hidden')) ||
                 (loginPrompt && !loginPrompt.classList.contains('hidden'))) return;
             const float = document.getElementById('home-notice-float');
@@ -15811,7 +15708,6 @@
             const CLICK_LIMIT = 10;
             const COOLDOWN_MS = 30 * 60 * 1000;
             const placements = {
-                'login-ad': { unit: 'DAN-uEbYtdHZNXbnKtgT', width: 320, height: 50 },
                 'home-ad': { unit: 'DAN-I5XORHdPd5Vfu6a2', width: 320, height: 50 },
                 'drop-ad': { unit: 'DAN-tNXHwtQXCpmmSlSu', width: 320, height: 200 },
                 'community-ad': { unit: 'DAN-Y60v78Z4ID5hsdjF', width: 320, height: 100 },
@@ -15910,8 +15806,6 @@
                     if (refresh() || document.visibilityState === 'hidden') return;
                     const holder = document.getElementById(holderId);
                     if (!holder || holder.querySelector('iframe')) return;
-                    const loginScreen = document.getElementById('login-screen');
-                    if ((holderId === 'home-ad' || holderId === 'drop-ad') && loginScreen && getComputedStyle(loginScreen).display !== 'none') return;
                     const rect = holder.getBoundingClientRect();
                     if (!holder.getClientRects().length || rect.width <= 0 || rect.height <= 0 || holder.dataset.adLoading === 'true') return;
                     const w = width || 320, h = height || 50, currentAttempt = Math.max(0, Number(attempt) || 0);
@@ -15964,7 +15858,6 @@
          */
         (function installAdClickEstimator() {
             const AD_PLACEMENTS = {
-                'login-ad': 'login',
                 'home-ad': 'home',
                 'drop-ad': 'home',
                 'community-ad': 'community',
@@ -15988,7 +15881,7 @@
             function focusedAdPlacement() {
                 const active = document.activeElement;
                 if (!active || String(active.tagName || '').toLowerCase() !== 'iframe') return '';
-                const holder = active.closest && active.closest('#home-ad, #drop-ad, #community-ad, #meeting-ad, #login-ad');
+                const holder = active.closest && active.closest('#home-ad, #drop-ad, #community-ad, #meeting-ad');
                 if (!holder || !holder.id) return '';
                 return AD_PLACEMENTS[holder.id] || '';
             }
@@ -18990,9 +18883,7 @@
                 window.enjoyFinishLoadingIsland();
             }
         }
-        // 홈 구조는 먼저 준비하되 인증 전에는 로더를 유지한다.
-        // 미로그인 확인이 끝난 경우에만 여기서 로더를 닫고,
-        // 로그인 사용자는 프로필·일정·모임통장 최초 동기화가 끝날 때 Firebase 모듈이 닫는다.
+        // 공개 홈은 즉시 표시하고, 회원 인증과 데이터 동기화는 백그라운드에서 진행한다.
         let __enjoyBooted = false;
         function __enjoyBoot() {
             if (!__enjoyBooted) { __enjoyBooted = true; __enjoyInitHome(); }
@@ -19094,7 +18985,7 @@
     })();
     </script>
 
-    <script src="guest-local.js?v=20261020-vlog-first"></script>
+    <script src="guest-local.js?v=20261025-public-home-1"></script>
 
     <!-- [New] 엔조이 멤버: 프로필 이름 + 멤버별 활동상태 트레이 -->
     <script>
@@ -22789,9 +22680,10 @@
         })();
     </script>
 
+    <script src="home-entry.js?v=20261025-1"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, increment, getDoc, getDocFromServer, addDoc, deleteDoc, collection, query, orderBy, limit, getDocs, runTransaction, Timestamp, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global functions for firebase interaction
@@ -22859,42 +22751,7 @@
                     return user.getIdToken(!!forceRefresh);
                 };
 
-                // 로그인 화면 제어 헬퍼
-                const loginScreen   = document.getElementById('login-screen');
-                const loginChecking = document.getElementById('login-checking');
-                const loginContent  = document.getElementById('login-content');
-                const loginButton   = document.getElementById('login-google-btn');
-                const loginStatus   = document.getElementById('login-status');
-                let nativeGoogleLoginTimeoutId = null;
-                // 카카오 애드핏: 로그인 화면(컨테이너)이 보이게 된 뒤 광고를 (재)요청한다.
-                // 숨겨진 상태에서 최초 스캔되면 렌더되지 않을 수 있어, 노출 시점에 새로 그린다.
-                const renderLoginAd = () => {
-                    if (window.enjoyScheduleAd) window.enjoyScheduleAd('login-ad', 'DAN-uEbYtdHZNXbnKtgT', 320, 50);
-                };
-                const showLoginForm = () => {
-                    if (loginScreen)   { loginScreen.style.display = 'block'; }
-                    if (loginChecking) loginChecking.style.display = 'none';
-                    if (loginContent)  { loginContent.classList.remove('hidden'); loginContent.style.display = 'flex'; }
-                    if (loginButton) loginButton.disabled = false;
-                    if (window.__enjoyAuthTimeoutShown && loginStatus) loginStatus.textContent = '';
-                    window.__enjoyAuthTimeoutShown = false;
-                    // 미로그인 확인도 체크 표시를 마친 뒤 로그인 화면을 보여준다.
-                    const ld = document.getElementById('app-loader');
-                    if (ld) window.enjoyFinishLoadingIsland();
-                    setTimeout(renderLoginAd, 150);   // 컨테이너가 표시된 뒤 광고 요청
-                };
-                const showLoginChecking = () => {
-                    if (loginScreen) loginScreen.style.display = 'block';
-                    if (loginChecking) loginChecking.style.display = 'flex';
-                    if (loginContent) {
-                        loginContent.classList.add('hidden');
-                        loginContent.style.display = 'none';
-                    }
-                    const ld = document.getElementById('app-loader');
-                    if (ld) window.enjoyStartLoadingIsland();
-                };
-                const hideLogin = () => {
-                    if (loginScreen) loginScreen.style.display = 'none';
+                const refreshAuthenticatedHome = () => {
                     if (window.enjoyShowPendingNoticeFloat) window.enjoyShowPendingNoticeFloat();
                     if (window.activeTabIndex === 2 && window.enjoyScheduleAd) {
                         window.enjoyScheduleAd('home-ad', 'DAN-I5XORHdPd5Vfu6a2');
@@ -22902,94 +22759,9 @@
                     }
                 };
 
-                // 로그인 지속(브라우저 닫아도 유지) — 실패해도 무시
+                // 로그인 페이지와 같은 브라우저 영구 세션을 복원한다.
                 try { await setPersistence(meetingAuth, browserLocalPersistence); } catch (e) {}
 
-                // 구글 로그인/로그아웃 전역 함수
-                const provider = new GoogleAuthProvider();
-                provider.setCustomParameters({ prompt: 'select_account' });
-
-                window.loginWithNativeGoogle = async function (idToken) {
-                    if (nativeGoogleLoginTimeoutId) {
-                        clearTimeout(nativeGoogleLoginTimeoutId);
-                        nativeGoogleLoginTimeoutId = null;
-                    }
-
-                    try {
-                        const credential = GoogleAuthProvider.credential(idToken);
-                        const result = await signInWithCredential(meetingAuth, credential);
-
-                        console.log('앱 구글 로그인 성공:', result.user);
-
-                        // 로그인 성공 후 화면 갱신
-                        location.reload();
-                    } catch (error) {
-                        console.error('앱 구글 로그인 실패:', error);
-                        window.enjoyAlert('앱 구글 로그인에 실패했어요.');
-                    }
-                };
-
-                window.nativeGoogleLoginFailed = function (message, errorCode) {
-                    if (nativeGoogleLoginTimeoutId) {
-                        clearTimeout(nativeGoogleLoginTimeoutId);
-                        nativeGoogleLoginTimeoutId = null;
-                    }
-
-                    if (loginButton) loginButton.disabled = false;
-                    if (loginStatus) {
-                        loginStatus.textContent = message || '구글 로그인 창을 열지 못했어요.';
-                    }
-
-                    console.error('네이티브 구글 로그인 실패:', errorCode, message);
-                };
-
-                window.addEventListener('native-google-login-failed', function (event) {
-                    const detail = event.detail || {};
-
-                    window.nativeGoogleLoginFailed(detail.message, detail.errorCode);
-                });
-
-                window.enjoyLogin = async function () {
-                    if (loginButton) loginButton.disabled = true;
-                    if (loginStatus) loginStatus.textContent = '로그인 창을 여는 중…';
-
-                    // Android WebView 앱 안이면 앱의 네이티브 구글 로그인 호출
-                    if (window.AndroidLogin && typeof window.AndroidLogin.googleLogin === 'function') {
-                        if (nativeGoogleLoginTimeoutId) {
-                            clearTimeout(nativeGoogleLoginTimeoutId);
-                        }
-
-                        nativeGoogleLoginTimeoutId = setTimeout(function () {
-                            if (loginButton) loginButton.disabled = false;
-                            if (loginStatus) {
-                                loginStatus.textContent = '로그인 창을 열지 못했어요. 다시 시도해 주세요.';
-                            }
-
-                            nativeGoogleLoginTimeoutId = null;
-                        }, 15000);
-
-                        try {
-                            window.AndroidLogin.googleLogin();
-                        } catch (error) {
-                            clearTimeout(nativeGoogleLoginTimeoutId);
-                            nativeGoogleLoginTimeoutId = null;
-
-                            if (loginButton) loginButton.disabled = false;
-                            if (loginStatus) loginStatus.textContent = '구글 로그인을 시작하지 못했어요.';
-                        }
-                        return;
-                    }
-
-                    // 일반 웹브라우저에서는 교차 사이트 저장소 제한을 피하도록
-                    // 기기/브라우저 종류와 관계없이 popup 로그인을 사용한다.
-                    try {
-                        await signInWithPopup(meetingAuth, provider);
-                    } catch (e) {
-                        if (loginButton) loginButton.disabled = false;
-                        if (loginStatus) loginStatus.textContent = '로그인에 실패했어요. 다시 시도해 주세요.';
-                        console.error('Login error:', e);
-                    }
-                };
                 window.enjoyLogout = async function () {
                     try { await signOut(meetingAuth); } catch (e) {}
                     try {
@@ -22998,9 +22770,7 @@
                     } catch (e) {}
                     location.reload();
                 };
-                // 비로그인 접속 — 개인 기록은 본인 기기에 저장한다.
-                window.enjoyGuest = window.enjoyRequestGuestEntry;
-                window.addEventListener('enjoy-guest-entered', hideLogin);
+                window.addEventListener('enjoy-guest-entered', refreshAuthenticatedHome);
 
                 // [수정] Firestore Internal Assertion 에러를 방지하기 위해
                 // 기존 스트림 구독을 정리(unsubscribe)한 후 새로 구독하도록 수정했습니다.
@@ -23020,7 +22790,7 @@
                     window._availSaveVersion += 1;
                     if (window._availSaveTimer) { clearTimeout(window._availSaveTimer); window._availSaveTimer = null; }
 
-                    // 구글 계정으로 로그인하지 않았으면 앱을 막고 로그인 화면을 띄운다.
+                    // 비로그인 방문자는 공개 홈과 본인 기기의 로컬 기능을 바로 이용한다.
                     if (!user || user.isAnonymous) {
                         window.clearAndroidTimetable();
                         window.meetingAuthed = false;
@@ -23029,20 +22799,20 @@
                             localStorage.setItem('enjoy_chat_account_v1', 'guest');
                             localStorage.setItem('enjoy_chat_account_label_v1', '게스트');
                         } catch (e) {}
-                        if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(null);
-                        if (window.enjoyDropOnAuth) window.enjoyDropOnAuth(null);
-                        if (window.enjoyEchoOnAuth) window.enjoyEchoOnAuth(null);
+                        if (!(window.enjoyIsLocalGuest && window.enjoyIsLocalGuest())) {
+                            if (window.enjoyCommunityOnAuth) window.enjoyCommunityOnAuth(null);
+                            if (window.enjoyDropOnAuth) window.enjoyDropOnAuth(null);
+                            if (window.enjoyEchoOnAuth) window.enjoyEchoOnAuth(null);
+                        }
                         window.enjoyAuthResolved = true;
                         window.dispatchEvent(new CustomEvent('enjoy-auth-ready', { detail: { authenticated: false } }));
                         window.enjoyRefreshGuestNavigation && window.enjoyRefreshGuestNavigation();
-                        if (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest()) window.enjoyGuest(true);
-                        else showLoginForm();
+                        window.enjoyShowPublicHome();
                         return;
                     }
                     window.enjoyLeaveLocalGuest && window.enjoyLeaveLocalGuest();
                     window.isGuest = false;
                     window.__enjoyTodayDataReady = false;
-                    showLoginChecking();
                     window.meetingAuthed = true; // 멤버/모임 데이터 동기화 신호
                     // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
@@ -23130,9 +22900,8 @@
                             console.warn('Member profile initialization error:', e);
                         }
                     }
-                    // 저장된 멤버 프로필까지 확인된 뒤 로그인 화면을 닫아
-                    // 이름 없는 홈 화면이 잠깐 노출되지 않도록 한다.
-                    if (profileReady && window.enjoyUser && window.enjoyUser.uid === user.uid) hideLogin();
+                    // 기존 회원 프로필 초기화와 데이터 접근 조건을 유지한다.
+                    if (profileReady && window.enjoyUser && window.enjoyUser.uid === user.uid) refreshAuthenticatedHome();
                 });
 
             } catch(e) {
@@ -23143,19 +22912,7 @@
                 }
                 window.enjoyAuthResolved = true;
                 window.enjoyAuthInitFailed = true;
-                const loginChecking = document.getElementById('login-checking');
-                const loginContent = document.getElementById('login-content');
-                const loginStatus = document.getElementById('login-status');
-                const loginButton = document.getElementById('login-google-btn');
-                const loader = document.getElementById('app-loader');
-                if (loginChecking) loginChecking.style.display = 'none';
-                if (loginContent) {
-                    loginContent.classList.remove('hidden');
-                    loginContent.style.display = 'flex';
-                }
-                if (loginStatus) loginStatus.textContent = '연결에 실패했어요. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
-                if (loginButton) loginButton.disabled = true;
-                if (loader) window.enjoyCancelLoadingIsland();
+                window.enjoyShowPublicHome();
             }
         }
 
