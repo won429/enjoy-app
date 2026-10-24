@@ -4672,18 +4672,6 @@
         html.enjoy-guest #drop-quiz-screen,
         html.enjoy-guest [data-home-tab="shorts"] { display: none !important; }
 
-        /* ===== 로그인 유도 팝업 (기본=다크) ===== */
-        .lg-google { width: 100%; margin-top: 2.25rem; background: #fff; color: #141414; font-weight: 700; font-size: 0.9375rem;
-            padding: 0.9375rem 0; border-radius: 624.9375rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-            border: 0.0625rem solid transparent; box-shadow: 0 0.375rem 1.375rem rgba(0,0,0,0.35); transition: transform .15s; cursor: pointer; }
-        .lg-google:active { transform: scale(0.96); }
-        #login-prompt { background: rgba(0,0,0,0.6); -webkit-backdrop-filter: blur(0.375rem); backdrop-filter: blur(0.375rem); }
-        #login-prompt .lp-card { background: #1c1c1e; box-shadow: 0 1.25rem 3.75rem rgba(0,0,0,0.5); }
-        #login-prompt .lp-title { font-size: 1.1875rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-        #login-prompt .lp-desc { font-size: 0.84375rem; font-weight: 500; line-height: 1.55; margin-top: 0.5rem; color: rgba(255,255,255,0.6); }
-        #login-prompt .lp-cancel { margin-top: 0.625rem; width: 100%; padding: 0.75rem 0; font-size: 0.875rem; font-weight: 600; color: rgba(255,255,255,0.55);
-            background: transparent; transition: opacity .15s; }
-        #login-prompt .lp-cancel:active { opacity: 0.6; }
         /* 프로필 최초 등록: 로그인 화면과 같은 전체 화면 구성 */
         #profile-modal {
             position: fixed;
@@ -7061,12 +7049,6 @@
             .home-service-item { color: #4E4E52; }
             .home-service-item:active { background: rgba(0,0,0,.045); }
 
-            /* 로그인 유도 팝업 라이트 모드 */
-            .lg-google { background: #fff; color: #141414; border: 0.0625rem solid rgba(0,0,0,0.08); box-shadow: 0 0.375rem 1.375rem rgba(0,0,0,0.10); }
-            #login-prompt { background: rgba(0,0,0,0.35); }
-            #login-prompt .lp-card { background: #fff; box-shadow: 0 1.25rem 3.75rem rgba(0,0,0,0.18); }
-            #login-prompt .lp-title { color: #141414; }
-            #login-prompt .lp-desc, #login-prompt .lp-cancel { color: #8B95A1; }
             #profile-modal { background: #F2F2F7; color: #141414; }
             #profile-modal .profile-join-title { color: #141414; }
             #profile-modal .profile-join-desc { color: #6E6E73; }
@@ -7927,19 +7909,6 @@
         });
     })();
     </script>
-
-    <!-- [New] 로그인 유도 팝업 — 둘러보기 중 기능 사용 시 노출 -->
-    <div id="login-prompt" class="hidden fixed inset-0 z-[280] flex items-center justify-center px-8" onclick="window.hideLoginPrompt && window.hideLoginPrompt(event)">
-        <div class="lp-card w-full max-w-[300px] rounded-[26px] p-7 text-center" onclick="event.stopPropagation()">
-            <h3 class="lp-title">로그인이 필요해요</h3>
-            <p class="lp-desc">이 기능은 엔조이 계정으로<br>로그인한 뒤에 이용할 수 있어요</p>
-            <a class="lg-google" href="login.html" style="text-decoration:none">
-                <svg width="20" height="20" style="width:1.25rem;height:1.25rem" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
-                엔조이 계정(구글)으로 로그인
-            </a>
-            <button class="lp-cancel" onclick="window.haptic && window.haptic(); window.hideLoginPrompt && window.hideLoginPrompt();">다음에 할게요</button>
-        </div>
-    </div>
 
     <!-- 프로필 등록 화면 — 로그인 후 필수 1회 -->
     <div id="profile-modal" class="hidden fixed inset-0 z-[310] overflow-y-auto scrollbar-hide" aria-hidden="true">
@@ -8961,10 +8930,8 @@
             if (!noticeFloatPending || !noticeAlertEnabled) return;
             const loader = document.getElementById('app-loader');
             const profile = document.getElementById('profile-modal');
-            const loginPrompt = document.getElementById('login-prompt');
             if ((loader && loader.style.display !== 'none') ||
-                (profile && !profile.classList.contains('hidden')) ||
-                (loginPrompt && !loginPrompt.classList.contains('hidden'))) return;
+                (profile && !profile.classList.contains('hidden'))) return;
             const float = document.getElementById('home-notice-float');
             if (!float) return;
             if (!float.hidden || !syncNoticeFloatPosition()) return;
@@ -9001,8 +8968,6 @@
         if (noticeLoader) new MutationObserver(showPendingNoticeFloat).observe(noticeLoader, { attributes: true, attributeFilter: ['style'] });
         const noticeProfile = document.getElementById('profile-modal');
         if (noticeProfile) new MutationObserver(showPendingNoticeFloat).observe(noticeProfile, { attributes: true, attributeFilter: ['class'] });
-        const noticeLoginPrompt = document.getElementById('login-prompt');
-        if (noticeLoginPrompt) new MutationObserver(showPendingNoticeFloat).observe(noticeLoginPrompt, { attributes: true, attributeFilter: ['class'] });
         new MutationObserver(showPendingNoticeFloat).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
         window.setHomeNoticeAlert = function (enabled) {
@@ -16582,8 +16547,6 @@
         function communityRequireUser() {
             const user = communityUser();
             if (user) return user;
-            if (window.showLoginPrompt) window.showLoginPrompt();
-            else window.enjoyAlert('Google 로그인이 필요합니다.');
             return null;
         }
 
@@ -17136,7 +17099,7 @@
                     '<div class="w-14 h-14 rounded-full bg-[#3182F6]/15 text-[#3182F6] flex items-center justify-center mb-4"><i class="fa-solid fa-users text-[21px]"></i></div>' +
                     '<h3 class="text-[17px] font-bold text-white">로그인하고 여행계획을 나눠보세요.</h3>' +
                     '<p class="text-[12px] text-gray-500 mt-2">게시글 작성, 좋아요, 댓글은 Google 로그인 후 사용할 수 있어요.</p>' +
-                    '<button type="button" onclick="window.showLoginPrompt && window.showLoginPrompt()" class="mt-5 px-5 py-3 rounded-full bg-white text-black text-[13px] font-bold">로그인하기</button></div>';
+                    '<a href="login.html" class="mt-5 px-5 py-3 rounded-full bg-white text-black text-[13px] font-bold">로그인하기</a></div>';
                 return;
             }
             if (!window._communityPostsUnsub && !window._communityLoading && !window._communityError) ensureCommunitySubscription();
@@ -18896,41 +18859,9 @@
 
     </script>
 
-    <!-- [New] 둘러보기(체험) 모드: 로그인 전 기능 사용 차단 + 로그인 유도 -->
     <script>
-    (function () {
-        // [임시·광고심사용] 둘러보기/스페셜 사용자도 모든 기능을 쓸 수 있게 잠금 해제.
-        // (데이터는 파이어베이스가 아닌 본인 기기에 저장 — enjoySync 분기로 처리)
-        function isAuthed() { return true; }
-        function showLoginPrompt() {
-            var el = document.getElementById('login-prompt');
-            if (el) { el.classList.remove('hidden'); el.classList.add('flex'); }
-        }
-        function hideLoginPrompt() {
-            var el = document.getElementById('login-prompt');
-            if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
-        }
-        window.showLoginPrompt = showLoginPrompt;
-        window.hideLoginPrompt = hideLoginPrompt;
-        // 로그인돼 있으면 통과(true), 아니면 로그인 유도 후 차단(false)
-        window.requireLogin = function () { if (isAuthed()) return true; showLoginPrompt(); return false; };
-
-        // 지정한 함수를 감싸서, 미로그인 상태면 실행을 막고 로그인 유도 팝업을 띄운다.
-        function gateFn(obj, name) {
-            var orig = obj[name];
-            if (typeof orig !== 'function' || orig.__gated) return;
-            var wrapped = function () { if (!isAuthed()) { showLoginPrompt(); return; } return orig.apply(this, arguments); };
-            wrapped.__gated = true; obj[name] = wrapped;
-        }
-        function applyGates() {
-            // 외부 서비스(브이로그·여행·지하철·유튜브) / 여행기록 / 비밀기능
-            // + 일정 추가·수정·삭제 (일정/모임통장 화면 자체는 둘러보기로 구경 가능)
-            ['openBrowser', 'goToTravel', 'showSecretModal',
-             'openAddScheduleModal', 'openEditScheduleModal', 'saveScheduleToFirebase', 'deleteSchedule'].forEach(function (n) { gateFn(window, n); });
-        }
-        applyGates();
-        window.addEventListener('load', function () { setTimeout(applyGates, 200); });
-    })();
+        // 기존 공개 기능 호출부와의 호환성을 유지한다. 회원 인증은 각 기능에서 확인한다.
+        window.requireLogin = function () { return true; };
     </script>
 
     <!-- [임시·광고심사용] 로컬(기기 저장) 모드 헬퍼 — 광고 승인 후 이 블록과 관련 분기를 제거하면 원복됩니다. -->
@@ -20286,8 +20217,6 @@
         window.openDropPicker = function (anchor) {
             if (window._dropBusy) return;
             if (!dropUser()) {
-                if (window.showLoginPrompt) window.showLoginPrompt();
-                else window.enjoyAlert('Google 로그인이 필요합니다.');
                 return;
             }
             const backdrop = document.getElementById('drop-upload-sheet-backdrop');
