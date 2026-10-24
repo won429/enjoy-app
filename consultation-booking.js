@@ -196,6 +196,13 @@
         dialog.style.width = ''; dialog.style.height = '';
     }
     root.openEnjoyConsultation = function () {
+        if (!identity()) {
+            root.enjoyAlert('문의사항은 아래 이메일 주소로 보내주세요.\n\nswp4867@gmail.com\nsagana1365@gmail.com', {
+                title: '문의하기',
+                confirmText: '닫기'
+            });
+            return;
+        }
         if (dialog.open) return;
         previousFocus = root.document.activeElement;
         stopOrbit();
