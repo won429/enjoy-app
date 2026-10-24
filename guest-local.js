@@ -159,12 +159,22 @@
         }
     };
     root.enjoyIsLocalGuest = active;
+    root.enjoyDropText = function (text) {
+        if (root.enjoyUser) return text;
+        if (text === '멤버 드롭') return '일기';
+        return String(text).replace(/드롭을/g, '일기를').replace(/드롭과/g, '일기와')
+            .replace(/드롭이/g, '일기가').replace(/드롭은/g, '일기는').replace(/드롭으로/g, '일기로').replace(/드롭/g, '일기');
+    };
     root.enjoyDataUser = () => root.enjoyUser || (active() ? identity : null);
     root.enjoyLocalMember = () => active() && identity ? { uid: identity.uid, ...clone(read()['members/' + identity.uid] || {}) } : null;
     root.enjoyRefreshGuestNavigation = function () {
         const guest = !root.enjoyUser;
         if (!root.document) return;
         root.document.documentElement.classList.toggle('enjoy-guest', guest);
+        for (const item of root.document.querySelectorAll?.('[data-drop-copy], [data-drop-aria]') || []) {
+            if (item.dataset.dropCopy) item.textContent = root.enjoyDropText(item.dataset.dropCopy);
+            if (item.dataset.dropAria) item.setAttribute('aria-label', root.enjoyDropText(item.dataset.dropAria));
+        }
         const tabs = root.document.getElementById('home-tabs');
         const vlog = tabs && tabs.querySelector('[data-home-tab="vlog"]');
         if (vlog) {

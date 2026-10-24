@@ -8031,7 +8031,7 @@
 
         <!-- 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) -->
         <nav id="home-tabs" class="home-tabs" role="tablist" aria-label="상단 메뉴">
-            <button type="button" class="home-tab is-active" data-home-tab="home" role="tab" aria-selected="true" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
+            <button type="button" class="home-tab is-active" data-home-tab="home" data-drop-copy="드롭" role="tab" aria-selected="true" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
             <button type="button" class="home-tab" data-home-tab="baseball" role="tab" aria-selected="false" aria-controls="home-baseball-panel" onclick="window.switchHomeTab('baseball')">야구</button>
             <button type="button" class="home-tab" data-home-tab="vlog" role="tab" aria-selected="false" aria-controls="home-vlog-panel" onclick="window.switchHomeTab('vlog')">브이로그</button>
             <button type="button" class="home-tab" data-home-tab="shorts" role="tab" aria-selected="false" aria-controls="shorts-screen" onclick="window.switchHomeTab('shorts')">숏츠</button>
@@ -8139,7 +8139,7 @@
                     </section>
 
                     <!-- 멤버가 올린 드롭 사진 -->
-                    <section id="drop-feed-section" class="drop-feed-section" aria-label="멤버 드롭">
+                    <section id="drop-feed-section" class="drop-feed-section" aria-label="멤버 드롭" data-drop-aria="멤버 드롭">
                         <div id="drop-feed" aria-live="polite"></div>
                     </section>
 
@@ -9382,7 +9382,7 @@
     <section id="community-write-screen" class="drop-write-shell hidden fixed inset-y-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-md flex-col overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="community-write-heading">
         <header class="drop-write-topbar">
             <button type="button" onclick="window.closeCommunityComposer(false)" class="drop-write-close" aria-label="글쓰기 나가기"><i class="ph ph-x" aria-hidden="true"></i></button>
-            <span>드롭 쓰기</span>
+            <span data-drop-copy="드롭 쓰기">드롭 쓰기</span>
             <button id="community-submit-btn" type="submit" form="community-write-form" class="drop-write-submit">올리기</button>
         </header>
         <div class="drop-write-scroll flex-1 overflow-y-auto scrollbar-hide">
@@ -9775,7 +9775,7 @@
     <div id="drop-upload-sheet-backdrop" class="drop-upload-sheet-backdrop hidden" onclick="window.closeDropPicker()"></div>
     <section id="drop-upload-sheet" class="drop-upload-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="drop-upload-title" aria-hidden="true" tabindex="-1" inert>
         <div class="drop-upload-sheet-head">
-            <strong id="drop-upload-title">드롭 추가</strong>
+            <strong id="drop-upload-title" data-drop-copy="드롭 추가">드롭 추가</strong>
             <button type="button" class="drop-upload-sheet-close" onclick="window.closeDropPicker()" aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
         <div class="drop-upload-options">
@@ -9816,7 +9816,7 @@
         </div>
     </div>
 
-    <div id="drop-viewer-layer" class="drop-viewer-layer hidden" role="dialog" aria-modal="true" aria-label="드롭 크게 보기" aria-hidden="true">
+    <div id="drop-viewer-layer" class="drop-viewer-layer hidden" role="dialog" aria-modal="true" aria-label="드롭 크게 보기" data-drop-aria="드롭 크게 보기" aria-hidden="true">
         <div id="drop-viewer-blur" class="drop-viewer-blur" aria-hidden="true" onclick="window.closeDropViewer()"></div>
         <section id="drop-viewer-card" class="drop-viewer-card"></section>
     </div>
@@ -16943,7 +16943,7 @@
             if (!user) return;
             const post = window._communityPosts.find(function (item) { return item._id === postId; });
             if (!post || post.authorUid !== user.uid) return;
-            if (!await window.enjoyConfirm('이 드롭과 댓글을 삭제할까요?', { title: '드롭 삭제', confirmText: '삭제', danger: true })) return;
+            if (!await window.enjoyConfirm(window.enjoyDropText('이 드롭과 댓글을 삭제할까요?'), { title: window.enjoyDropText('드롭 삭제'), confirmText: '삭제', danger: true })) return;
             try {
                 const comments = await window.fsGetDocs(window.fsCol('community_posts', postId, 'comments'));
                 const deletes = [];
@@ -18985,7 +18985,7 @@
     })();
     </script>
 
-    <script src="guest-local.js?v=20261025-public-home-1"></script>
+    <script src="guest-local.js?v=20261025-guest-diary-1"></script>
 
     <!-- [New] 엔조이 멤버: 프로필 이름 + 멤버별 활동상태 트레이 -->
     <script>
@@ -19305,6 +19305,7 @@
         }
 
         function dropExpiryTime(post) {
+            if (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest()) return Infinity;
             if (post && post._source === 'community_posts' && dropIsSchedule(post)) return Infinity;
             return dropMillis(post && post.expiresAt) || (dropMillis(post && post.createdAt) + DROP_VISIBLE_MS);
         }
@@ -19483,10 +19484,10 @@
             const user = dropUser();
             const photo = String((user && user.photoURL) || '');
             const photoHtml = photo ? '<img class="drop-add-avatar-photo" src="' + dropEsc(photo) + '" alt="" referrerpolicy="no-referrer" onerror="this.remove()">' : '';
-            return '<button type="button" class="drop-add-item' + (uploading ? ' is-uploading' : '') + '" onclick="window.openDropPicker(this)" aria-label="드롭 추가" aria-haspopup="dialog" aria-expanded="false">' +
+            return '<button type="button" class="drop-add-item' + (uploading ? ' is-uploading' : '') + '" onclick="window.openDropPicker(this)" aria-label="' + window.enjoyDropText('드롭 추가') + '" aria-haspopup="dialog" aria-expanded="false">' +
                 '<span class="drop-add-avatar"><i class="fa-solid fa-user" aria-hidden="true"></i>' + photoHtml +
                 '<span class="drop-add-badge"><i class="fa-solid ' + (uploading ? 'fa-spinner' : 'fa-plus') + '" aria-hidden="true"></i></span></span>' +
-                '<span class="drop-add-label">' + (uploading ? '올리는 중' : '드롭 추가') + '</span></button>';
+                '<span class="drop-add-label">' + (uploading ? '올리는 중' : window.enjoyDropText('드롭 추가')) + '</span></button>';
         };
 
         function dropNotePresentation(post) {
@@ -19517,19 +19518,19 @@
                 window.closeDropViewer();
             }
             if (!user) {
-                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-regular fa-images" aria-hidden="true"></i><strong>멤버 드롭</strong><span>로그인하면 멤버들의 사진, 이야기와 일정을 함께 볼 수 있어요.</span></div>';
+                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-regular fa-images" aria-hidden="true"></i><strong>' + window.enjoyDropText('멤버 드롭') + '</strong><span>로그인하면 멤버들의 사진, 이야기와 일정을 함께 볼 수 있어요.</span></div>';
                 return;
             }
             if ((window._dropLoading || window._communityLoading) && !posts.length) {
-                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i><strong>드롭을 불러오는 중</strong></div>';
+                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i><strong>' + window.enjoyDropText('드롭을 불러오는 중') + '</strong></div>';
                 return;
             }
             if ((window._dropError || window._communityError) && !posts.length) {
-                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><strong>드롭을 불러오지 못했어요.</strong><span>' + dropEsc(window._dropError || window._communityError) + '</span></div>';
+                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><strong>' + window.enjoyDropText('드롭을 불러오지 못했어요.') + '</strong><span>' + dropEsc(window._dropError || window._communityError) + '</span></div>';
                 return;
             }
             if (!posts.length) {
-                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-plus" aria-hidden="true"></i><strong>첫 번째 드롭을 남겨보세요.</strong><span>드롭 추가에서 사진, 이야기 또는 일정을 올려보세요.</span></div>';
+                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-plus" aria-hidden="true"></i><strong>' + window.enjoyDropText('첫 번째 드롭을 남겨보세요.') + '</strong><span>' + (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest() ? '사진과 글은 이 기기에 계속 저장돼요.' : '드롭 추가에서 사진, 이야기 또는 일정을 올려보세요.') + '</span></div>';
                 return;
             }
             wrap.innerHTML = ((window._dropError || window._communityError) ? '<div class="drop-feed-state" role="status"><span>' + dropEsc(window._dropError || window._communityError) + '</span></div>' : '') + '<div class="drop-feed-grid">' + posts.map(function (post, index) {
@@ -19543,7 +19544,7 @@
                 const bubbleSide = ['left', 'right', 'left', 'left', 'right', 'right'][index % 6];
                 return '<article class="drop-photo-card is-meta-bottom-left is-actions-top-right' + (isNote ? ' drop-note-card' + (dropIsSchedule(post) ? ' is-schedule' : '') + notePresentation.classes : '') + '" data-drop-card-id="' + postId + '"' + (isNote ? ' style="' + notePresentation.style + '"' : '') + '>' +
                     '<div class="drop-photo-frame"' + (isNote ? '' : ' style="aspect-ratio:' + ratio.toFixed(4) + '"') + '>' +
-                    '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\', this)" aria-label="드롭 크게 보기">' + (isNote ? dropNoteHtml(post) : '<img crossorigin="anonymous" src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" loading="lazy" draggable="false">') + '</button>' +
+                    '<button type="button" class="drop-photo-open" onclick="window.openDropViewer(\'' + postId + '\', this)" aria-label="' + window.enjoyDropText('드롭 크게 보기') + '">' + (isNote ? dropNoteHtml(post) : '<img crossorigin="anonymous" src="' + dropEsc(post.imageUrl || '') + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 ' + window.enjoyDropText('드롭 사진')) + '" loading="lazy" draggable="false">') + '</button>' +
                     '<div class="drop-photo-meta">' + dropAuthorAvatar(post) +
                     '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
                     '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div></div>' +
@@ -19808,7 +19809,7 @@
             card.classList.toggle('is-schedule', isNote && dropIsSchedule(post));
             blur.innerHTML = isNote ? '' : '<img src="' + imageUrl + '" alt="" draggable="false">';
             card.innerHTML = '<button type="button" class="drop-viewer-close" onclick="window.closeDropViewer()" aria-label="크게 보기 닫기"><i class="ph ph-x" aria-hidden="true"></i></button>' +
-                (isNote ? dropNoteHtml(post) : '<div class="drop-viewer-image-shell"><img src="' + imageUrl + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 드롭 사진') + '" draggable="false"></div>') +
+                (isNote ? dropNoteHtml(post) : '<div class="drop-viewer-image-shell"><img src="' + imageUrl + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 ' + window.enjoyDropText('드롭 사진')) + '" draggable="false"></div>') +
                 '<div class="drop-viewer-meta">' + dropAuthorAvatar(post) +
                 '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
                 '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div>' +
@@ -19897,7 +19898,7 @@
                 const postRef = window.fsDoc(dropPostCollection(post), post._id);
                 await window.runTransaction(window.meetingDb, async function (transaction) {
                     const snapshot = await transaction.get(postRef);
-                    if (!snapshot.exists()) throw new Error('드롭을 찾을 수 없어요.');
+                    if (!snapshot.exists()) throw new Error(window.enjoyDropText('드롭을 찾을 수 없어요.'));
                     const current = snapshot.data() || {};
                     const likedBy = Array.isArray(current.likedBy) ? current.likedBy.slice() : [];
                     const likedByProfiles = Object.assign({}, current.likedByProfiles || {});
@@ -19924,7 +19925,7 @@
                 syncDropEngagementUI(postId, true);
                 console.error('drop like', error);
                 window.enjoyAlert && window.enjoyAlert(error && error.code === 'permission-denied'
-                    ? '드롭 좋아요 쓰기 권한 설정이 필요해요.'
+                    ? window.enjoyDropText('드롭 좋아요 쓰기 권한 설정이 필요해요.')
                     : (error && error.message ? error.message : '좋아요를 반영하지 못했어요.'));
             } finally {
                 delete window._dropLikeBusy[postId];
@@ -20024,7 +20025,7 @@
                 photo.onload = null;
                 if (isNote) photo.removeAttribute('src');
                 else photo.src = String(post.imageUrl || '');
-                photo.alt = String((post.authorName || '멤버') + '님의 드롭 사진');
+                photo.alt = String((post.authorName || '멤버') + '님의 ' + window.enjoyDropText('드롭 사진'));
                 sizeDropCommentsPhoto(post);
             }
             if (composeAvatar) {
@@ -20053,7 +20054,7 @@
                 }, function (error) {
                     console.warn('drop comments snapshot', error);
                     renderDropComments(error && error.code === 'permission-denied'
-                        ? '드롭 댓글 읽기 권한 설정이 필요해요.'
+                        ? window.enjoyDropText('드롭 댓글 읽기 권한 설정이 필요해요.')
                         : '댓글을 불러오지 못했어요.');
                 });
             } catch (error) {
@@ -20119,7 +20120,7 @@
                 const commentRef = window.doc(window.fsCol(dropPostCollection(post), post._id, 'comments'));
                 await window.runTransaction(window.meetingDb, async function (transaction) {
                     const postSnapshot = await transaction.get(postRef);
-                    if (!postSnapshot.exists()) throw new Error('드롭을 찾을 수 없어요.');
+                    if (!postSnapshot.exists()) throw new Error(window.enjoyDropText('드롭을 찾을 수 없어요.'));
                     const current = postSnapshot.data() || {};
                     const comment = {
                         authorUid: user.uid,
@@ -20141,7 +20142,7 @@
             } catch (error) {
                 console.error('drop comment', error);
                 window.enjoyAlert && window.enjoyAlert(error && error.code === 'permission-denied'
-                    ? '드롭 댓글 쓰기 권한 설정이 필요해요.'
+                    ? window.enjoyDropText('드롭 댓글 쓰기 권한 설정이 필요해요.')
                     : (error && error.message ? error.message : '댓글을 등록하지 못했어요.'));
             } finally {
                 if (button) { button.disabled = false; button.style.opacity = '1'; }
@@ -20173,7 +20174,7 @@
                 const commentRef = window.fsDoc(dropPostCollection(post), post._id, 'comments', commentId);
                 await window.runTransaction(window.meetingDb, async function (transaction) {
                     const postSnapshot = await transaction.get(postRef);
-                    if (!postSnapshot.exists()) throw new Error('드롭을 찾을 수 없어요.');
+                    if (!postSnapshot.exists()) throw new Error(window.enjoyDropText('드롭을 찾을 수 없어요.'));
                     const current = postSnapshot.data() || {};
                     transaction.delete(commentRef);
                     transaction.set(postRef, {
@@ -20204,7 +20205,7 @@
                 const feedQuery = window.fsQuery(
                     window.fsCol('drop_posts'),
                     window.fsOrderBy('createdAt', 'desc'),
-                    window.fsLimit(40)
+                    ...(window.enjoyIsLocalGuest && window.enjoyIsLocalGuest() ? [] : [window.fsLimit(40)])
                 );
                 window._dropPostsUnsub = window.fsOnSnapshot(feedQuery, function (snapshot) {
                     const next = [];
@@ -20415,10 +20416,10 @@
                     likeCount: 0,
                     commentCount: 0,
                     createdAt: now,
-                    expiresAt: now + DROP_VISIBLE_MS,
+                    expiresAt: window.enjoyIsLocalGuest && window.enjoyIsLocalGuest() ? null : now + DROP_VISIBLE_MS,
                     updatedAt: now
                 });
-                setDropStatus('드롭에 사진을 올렸어요.');
+                setDropStatus(window.enjoyIsLocalGuest && window.enjoyIsLocalGuest() ? '일기에 사진을 저장했어요.' : '드롭에 사진을 올렸어요.');
             } catch (error) {
                 console.error('drop upload', error);
                 setDropStatus(error && error.message ? error.message : '사진을 올리지 못했어요.');
