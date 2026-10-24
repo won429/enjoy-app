@@ -56,12 +56,20 @@ function renderEpisode(work, episode, manuscript) {
   validateWork(work);
   const lines = manuscript.replace(/\r\n?/g, '\n').split('\n');
   const episodeTitle = `제${episode.number}화. ${episode.title}`;
-  if (lines[1] !== episodeTitle || !lines[0].startsWith(work.title) || !lines[2].startsWith('장르:')) throw new Error(`원고의 작품명·회차 제목·장르를 확인하세요: ${episode.source}`);
-  const body = lines.slice(3).filter(line => line.trim()).map(line => {
+  if (lines[1] !== episodeTitle || !lines[0].startsWith(work.title)) throw new Error(`원고의 작품명·회차 제목을 확인하세요: ${episode.source}`);
+  const hasIntro = /^(장르:|["“])/.test(lines[2] || '');
+  const intro = hasIntro ? `        <p class="${lines[2].startsWith('장르:') ? 'novel-reader-genres' : 'novel-reader-tagline'}">${escapeHtml(lines[2])}</p>\n` : '';
+  const body = lines.slice(hasIntro ? 3 : 2).filter(line => line.trim()).map(line => {
     if (/^(프롤로그\s*\||SCENE\s+\d+\s*\|)/.test(line)) return `        <h2>${escapeHtml(line)}</h2>`;
     const ending = /^제\d+화 END$/.test(line) ? ' class="novel-reader-end"' : '';
     return `        <p${ending}>${escapeHtml(line)}</p>`;
   }).join('\n');
+  const episodes = [...(work.episodes || [])].sort((a, b) => a.number - b.number);
+  const current = episodes.findIndex(item => item.number === episode.number);
+  const previous = current > 0 ? episodes[current - 1] : null;
+  const next = current >= 0 ? episodes[current + 1] : null;
+  const pagination = previous || next ? `        <nav class="novel-reader-pagination" aria-label="회차 이동">
+${previous ? `          <a data-novel-route rel="prev" href="${episodeFile(previous)}">이전 화 · 제${previous.number}화</a>\n` : ''}${next ? `          <a data-novel-route rel="next" href="${episodeFile(next)}">다음 화 · 제${next.number}화</a>\n` : ''}        </nav>\n` : '';
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -70,7 +78,7 @@ function renderEpisode(work, episode, manuscript) {
   <meta name="description" content="${escapeHtml(work.title)} ${escapeHtml(episodeTitle)}. ${escapeHtml(work.tagline)}">
   <title>${escapeHtml(episodeTitle)} | ${escapeHtml(work.title)}</title>
   <link rel="icon" href="../../../icon.png">
-  <link rel="stylesheet" href="../../novels.css?v=20261025-episode-5">
+  <link rel="stylesheet" href="../../novels.css?v=20261025-episode2-7">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
   <script defer src="../../navigation.js?v=20261025-episode-2"></script>
 </head>
@@ -88,12 +96,13 @@ function renderEpisode(work, episode, manuscript) {
       <header class="novel-reader-header">
         <p class="novel-reader-series">${escapeHtml(lines[0])}</p>
         <h1 id="episode-title">${escapeHtml(lines[1])}</h1>
-        <p class="novel-reader-genres">${escapeHtml(lines[2])}</p>
-      </header>
+${intro}      </header>
       <div class="novel-manuscript">
 ${body}
       </div>
-      <footer class="novel-reader-footer"><a data-novel-route href="../index.html">작품 정보 · 회차 목록</a></footer>
+      <footer class="novel-reader-footer">
+${pagination}        <a data-novel-route href="../index.html">작품 정보 · 회차 목록</a>
+      </footer>
     </article>
   </main>
 </body>
@@ -112,7 +121,7 @@ function renderWork(work) {
   <meta name="description" content="${escapeHtml(work.tagline)} ${escapeHtml(work.genres.join(' · '))}, 총 ${work.totalEpisodes}부작. 작품 소개를 만나보세요.">
   <title>${title} | 엔조이 웹소설</title>
   <link rel="icon" href="../../icon.png">
-  <link rel="stylesheet" href="../novels.css?v=20261025-episode-5">
+  <link rel="stylesheet" href="../novels.css?v=20261025-episode2-7">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
   <script defer src="../navigation.js?v=20261025-episode-2"></script>
 </head>
