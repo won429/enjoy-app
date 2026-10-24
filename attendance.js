@@ -102,8 +102,8 @@
         const checked = daysForMonth(state, today.monthKey, today.dateKey).includes(today.dateKey);
         const status = byId('attendance-status');
         status.classList.toggle('is-checked', checked);
-        status.textContent = !uid ? '로그인 후 자동 출석' : checked ? '오늘 출석 완료' : syncing ? '출석 기록 중…' : '출석 저장 대기';
-        byId('attendance-status-message').textContent = !uid ? '로그인하면 오늘의 출석이 자동으로 기록됩니다.' :
+        status.textContent = !uid ? '접속 시 자동 출석' : checked ? '오늘 출석 완료' : syncing ? '출석 기록 중…' : '출석 저장 대기';
+        byId('attendance-status-message').textContent = !uid ? '접속하면 오늘의 출석이 자동으로 기록됩니다.' :
             saveError ? '연결되면 접속한 날짜의 출석을 자동으로 저장합니다.' : '매일 한국 시간 0시에 새 날짜가 시작됩니다.';
         byId('attendance-month-title').textContent = month.year + '년 ' + month.month + '월';
         byId('attendance-count').textContent = dates.length + ' / ' + month.daysInMonth + '일';
