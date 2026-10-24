@@ -19,6 +19,11 @@ function validateWork(work) {
   }
   if (!Number.isInteger(work.totalEpisodes) || work.totalEpisodes < 1) throw new Error('총 부작 수를 확인하세요.');
   if (!/^[\w.-]+\.(png|jpe?g|webp)$/i.test(work.cover)) throw new Error('표지는 작품 폴더 안의 이미지 파일로 지정하세요.');
+  if (work.relationshipMap) {
+    const map = work.relationshipMap;
+    if (typeof map.src !== 'string' || !/^[\w.-]+\.(png|jpe?g|webp)$/i.test(map.src)) throw new Error('인물관계도 이미지 파일을 확인하세요.');
+    if (![map.width, map.height].every(size => Number.isInteger(size) && size > 0)) throw new Error('인물관계도 이미지 크기를 확인하세요.');
+  }
 }
 
 function renderWork(work) {
@@ -32,7 +37,7 @@ function renderWork(work) {
   <meta name="description" content="${escapeHtml(work.tagline)} ${escapeHtml(work.genres.join(' · '))}, 총 ${work.totalEpisodes}부작. 작품 소개를 만나보세요.">
   <title>${title} | 엔조이 웹소설</title>
   <link rel="icon" href="../../icon.png">
-  <link rel="stylesheet" href="../novels.css?v=20261025-compact-2">
+  <link rel="stylesheet" href="../novels.css?v=20261025-relationships-3">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
   <script defer src="../navigation.js?v=20261025-1"></script>
 </head>
@@ -67,7 +72,17 @@ ${work.genres.map(genre => `            <li>${escapeHtml(genre)}</li>`).join('\n
 ${work.synopsis.map(paragraph => `          <p>${escapeHtml(paragraph)}</p>`).join('\n')}
         </div>
       </details>
-    </article>
+${work.relationshipMap ? `      <details class="novel-story">
+        <summary>
+          <span>인물관계도</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <div class="novel-story__body">
+          <a href="${escapeHtml(work.relationshipMap.src)}" target="_blank" rel="noopener" aria-label="인물관계도 원본 크게 보기">
+            <img class="novel-relationship-image" src="${escapeHtml(work.relationshipMap.src)}" width="${work.relationshipMap.width}" height="${work.relationshipMap.height}" alt="${title} 등장인물 관계도" loading="lazy">
+          </a>
+        </div>
+      </details>\n` : ''}    </article>
   </main>
 </body>
 </html>
@@ -104,6 +119,7 @@ function buildNovels() {
       const work = JSON.parse(fs.readFileSync(path.join(directory, 'work.json'), 'utf8'));
       validateWork(work);
       if (!fs.existsSync(path.join(directory, work.cover))) throw new Error(`표지 파일이 없습니다: ${entry.name}`);
+      if (work.relationshipMap && !fs.existsSync(path.join(directory, work.relationshipMap.src))) throw new Error(`인물관계도 파일이 없습니다: ${entry.name}`);
       return { directory, slug: entry.name, work };
     });
   const catalog = `\n            <div class="novel-catalog">\n${works.map(({ work, slug }) => renderCard(work, slug)).join('\n')}\n            </div>\n            `;
