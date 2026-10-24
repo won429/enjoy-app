@@ -1,6 +1,13 @@
 (function (root) {
     'use strict';
     let publicHomeShown = false;
+    let selectedMode = null;
+    let authFallbackTimer = null;
+
+    function clearAuthFallback() {
+        if (authFallbackTimer !== null) root.clearTimeout(authFallbackTimer);
+        authFallbackTimer = null;
+    }
 
     function updateAccountMenu() {
         const signedIn = !!root.enjoyUser;
@@ -20,6 +27,7 @@
     };
 
     root.enjoyShowPublicHome = function () {
+        clearAuthFallback();
         if (!root.enjoyUser) {
             try {
                 const name = root.enjoyGuestProfileName ? root.enjoyGuestProfileName() : '';
@@ -30,14 +38,34 @@
                 console.warn('Guest storage unavailable:', error);
             }
             if (root.enjoyRefreshGuestNavigation) root.enjoyRefreshGuestNavigation();
-            if (!publicHomeShown && root.homeActiveTab !== 'vlog' && root.selectHomeTab) root.selectHomeTab('vlog');
+            if ((!publicHomeShown || selectedMode !== 'guest') && root.homeActiveTab !== 'vlog' && root.selectHomeTab) root.selectHomeTab('vlog');
             publicHomeShown = true;
+            selectedMode = 'guest';
         }
         updateAccountMenu();
-        if (root.enjoyCancelLoadingIsland) root.enjoyCancelLoadingIsland();
+        if (root.enjoyFinishLoadingIsland) root.enjoyFinishLoadingIsland();
     };
 
-    root.addEventListener('enjoy-auth-ready', updateAccountMenu);
+    function handleAuthReady() {
+        clearAuthFallback();
+        if (root.enjoyUser && selectedMode !== 'member') {
+            if (root.selectHomeTab) root.selectHomeTab('home');
+            selectedMode = 'member';
+        }
+        updateAccountMenu();
+    }
+
+    root.addEventListener('enjoy-auth-ready', handleAuthReady);
     root.addEventListener('enjoy-guest-entered', updateAccountMenu);
-    root.enjoyShowPublicHome();
+    updateAccountMenu();
+    if (root.enjoyUser || root.enjoyAuthResolved === true) {
+        handleAuthReady();
+        if (!root.enjoyUser) root.enjoyShowPublicHome();
+    } else {
+        // SDK 장애가 있어도 공개 홈에 접근할 수 있도록 하되, 정상 세션 복원을 먼저 기다린다.
+        authFallbackTimer = root.setTimeout(function () {
+            authFallbackTimer = null;
+            if (!root.enjoyUser && root.enjoyAuthResolved !== true) root.enjoyShowPublicHome();
+        }, 12000);
+    }
 })(window);

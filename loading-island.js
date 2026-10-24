@@ -244,5 +244,5 @@
     };
     window.enjoyCancelLoadingIsland = hide;
 
-    if (loader.dataset.autostart !== 'false') window.enjoyStartLoadingIsland();
+    window.enjoyStartLoadingIsland();
 })();
