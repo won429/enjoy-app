@@ -83,7 +83,7 @@
     const mark = dialog.querySelector('.booking-status-mark');
     const progress = dialog.querySelector('[data-booking-progress]');
     const canvas = mark.querySelector('canvas');
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
     const reducedMotion = root.matchMedia('(prefers-reduced-motion: reduce)');
     const done = new root.Image(), orbit = new root.Image();
     // Use the actual loading-island sprites, including its exact 30→66 check frames.
@@ -94,6 +94,22 @@
     const newId = () => root.crypto.randomUUID();
     const rem = () => parseFloat(root.getComputedStyle(root.document.documentElement).fontSize) || 16;
     function stopOrbit() { root.cancelAnimationFrame(orbitFrame); orbitFrame = 0; }
+    function removeSpriteBackground() {
+        // The original island sprites include a black matte. Unmatte it so the
+        // same animation blends into the reservation window in either theme.
+        const frame = context.getImageData(0, 0, 256, 256);
+        const pixels = frame.data;
+        for (let i = 0; i < pixels.length; i += 4) {
+            const peak = Math.max(pixels[i], pixels[i + 1], pixels[i + 2]);
+            if (peak <= 8) { pixels[i + 3] = 0; continue; }
+            const scale = 255 / peak;
+            pixels[i] *= scale;
+            pixels[i + 1] *= scale;
+            pixels[i + 2] *= scale;
+            pixels[i + 3] *= peak / 255;
+        }
+        context.putImageData(frame, 0, 0);
+    }
     function drawCheck(frame) {
         const available = context && done.complete && done.naturalWidth;
         mark.classList.toggle('is-check-fallback', !available);
@@ -101,6 +117,7 @@
         if (!available) return;
         context.clearRect(0, 0, 256, 256);
         context.drawImage(done, (frame % 8) * 256, Math.floor(frame / 8) * 256, 256, 256, 0, 0, 256, 256);
+        removeSpriteBackground();
     }
     function startOrbit() {
         stopOrbit();
@@ -121,6 +138,7 @@
                     context.drawImage(orbit, (tile % 8) * 128, Math.floor(tile / 8) * 128, 128, 128, 0, 0, 256, 256);
                 });
                 context.restore();
+                removeSpriteBackground();
             }
             if (!reducedMotion.matches) orbitFrame = root.requestAnimationFrame(tick);
         }
