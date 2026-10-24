@@ -36,6 +36,7 @@
     <link rel="stylesheet" href="investment.css?v=20261024-skeleton1">
     <link rel="stylesheet" href="baseball-game-skeleton.css?v=20261024-1">
     <link rel="stylesheet" href="wallet-skeleton.css?v=20261024-1">
+    <link rel="stylesheet" href="consultation-booking.css?v=20261024-1">
     <!-- 스토어 스타일은 별도 파일 누락 시에도 적용되도록 본문에 포함한다. -->
     <style id="enjoy-store-styles">
         #store-screen { --store-bg: #000; --store-text: #fff; --store-muted: #8b95a1; --store-line: rgba(255,255,255,.08); position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%,28rem); z-index: 20; background: var(--store-bg); color: var(--store-text); flex-direction: column; overflow: hidden; }
@@ -8240,6 +8241,39 @@
         </div>
     </div>
 
+
+    <dialog id="consultation-dialog" aria-labelledby="consultation-title" aria-describedby="consultation-intro">
+        <div class="booking-body">
+            <div class="booking-header">
+                <div><h2 id="consultation-title" data-booking-title tabindex="-1">전화 상담 예약</h2><p id="consultation-intro" class="booking-intro">전화 가능한 일정을 알려주세요.<br>엔조이 상담실장이 연락드릴게요.</p></div>
+                <button type="button" class="booking-close" data-booking-close aria-label="상담 예약 창 닫기">×</button>
+            </div>
+            <form>
+                <fieldset>
+                    <div class="booking-field"><span class="booking-label">전화 가능한 시간 <small>필수 · 한국 시간</small></span>
+                        <div class="booking-times"><input type="time" name="startTime" aria-label="전화 가능한 시작 시간" required><span aria-hidden="true">–</span><input type="time" name="endTime" aria-label="전화 가능한 종료 시간" required></div>
+                    </div>
+                    <fieldset class="booking-field"><legend>전화 가능한 요일 <small>필수 · 복수 선택 가능</small></legend>
+                        <div class="booking-weekdays"><label><input type="checkbox" name="weekday" value="1" aria-label="월요일"><span>월</span></label><label><input type="checkbox" name="weekday" value="2" aria-label="화요일"><span>화</span></label><label><input type="checkbox" name="weekday" value="3" aria-label="수요일"><span>수</span></label><label><input type="checkbox" name="weekday" value="4" aria-label="목요일"><span>목</span></label><label><input type="checkbox" name="weekday" value="5" aria-label="금요일"><span>금</span></label><label><input type="checkbox" name="weekday" value="6" aria-label="토요일"><span>토</span></label><label><input type="checkbox" name="weekday" value="0" aria-label="일요일"><span>일</span></label></div>
+                    </fieldset>
+                    <div class="booking-field"><label class="booking-label" for="consultation-date">희망 상담 날짜 <small>필수</small></label><input id="consultation-date" type="date" name="date" aria-describedby="consultation-date-hint" required><p id="consultation-date-hint" class="booking-hint">전화 가능한 요일에 해당하는 날짜를 선택해 주세요.</p></div>
+                    <div class="booking-field"><label class="booking-label" for="consultation-purpose">상담 목적 <small>선택</small></label><textarea id="consultation-purpose" name="purpose" maxlength="1000" placeholder="어떤 상담을 원하시나요? 편하게 적어주세요."></textarea></div>
+                    <p class="booking-error" data-booking-error role="alert"></p>
+                    <button type="submit" class="booking-primary">상담 예약하기</button>
+                </fieldset>
+            </form>
+            <div class="booking-success" data-booking-success role="status" hidden>
+                <span class="booking-success-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                <h3 tabindex="-1">예약이 완료되었습니다</h3>
+                <p>선택하신 일정으로 엔조이 상담실장이 연락드릴게요!</p>
+                <div class="booking-summary" data-booking-summary></div>
+                <p class="booking-number">02-****-1157 전화번호입니다.</p>
+                <button type="button" class="booking-primary" data-booking-close>확인</button>
+            </div>
+        </div>
+    </dialog>
+    <script src="consultation-booking.js?v=20261024-1"></script>
+
     <!-- 메인 컨텐츠 (홈 화면) -->
     <main id="home-screen" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pb-24 w-full max-w-md mx-auto relative min-h-full">
         <header class="home-wordmark-bar" aria-label="엔조이">
@@ -8258,6 +8292,7 @@
             </span>
             <div class="home-account-actions">
                 <button id="home-notice-button" type="button" class="home-account-action" aria-label="공지사항" title="공지사항" onclick="window.haptic && window.haptic(); window.openNoticeInfo && window.openNoticeInfo();"><i class="fa-regular fa-heart" aria-hidden="true"></i></button>
+                <button id="home-consultation-button" type="button" class="home-account-action" aria-label="전화 상담 예약" title="전화 상담 예약" aria-haspopup="dialog" aria-controls="consultation-dialog" onclick="window.haptic && window.haptic(); window.openEnjoyConsultation();"><i class="fa-solid fa-phone" aria-hidden="true"></i></button>
             </div>
             <!-- 하트에서 튀어나와 상단 빈 공간으로 펼쳐지는 공지 아일랜드 -->
             <div id="home-notice-float" class="notice-float" role="status" aria-live="polite" aria-hidden="true" hidden inert>
