@@ -17,6 +17,36 @@
 .novel-card__link { display: inline-flex; align-items: center; gap: .35rem; margin-top: .625rem; color: #e8c3c9; font-size: .75rem; font-weight: 650; }
 .novel-card__link svg { width: 14px; height: 14px; }
 
+/* 작품 진입 시에만 공용 브라우저의 스피너를 스켈레톤으로 대체한다. */
+#browser-screen.is-novel-preview { --novel-entry-bg: #0d0d10; --novel-entry-text: #f3f1f2; --novel-entry-line: #29262e; --novel-entry-fill: #ffffff12; background: var(--novel-entry-bg); }
+#browser-screen.is-novel-preview > div:first-child { background: var(--novel-entry-bg); }
+#browser-screen.is-novel-preview #browser-loader { display: none !important; }
+#browser-screen.is-novel-preview #internal-browser-frame { visibility: hidden; }
+#browser-screen.is-novel-ready #internal-browser-frame { visibility: visible; }
+.novel-entry-skeleton { position: absolute; inset: 0; z-index: 20; overflow-y: auto; background: var(--novel-entry-bg); color: var(--novel-entry-text); }
+.novel-entry-skeleton[hidden] { display: none; }
+.novel-entry-skeleton, .novel-entry-skeleton * { box-sizing: border-box; }
+.novel-entry-toolbar { border-bottom: 1px solid var(--novel-entry-line); padding: .625rem max(1.25rem, calc((100% - 408px) / 2)); padding-top: max(.625rem, env(safe-area-inset-top)); }
+.novel-entry-back { display: inline-flex; align-items: center; gap: .5rem; min-height: 32px; margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: .875rem; font-weight: 650; cursor: pointer; }
+.novel-entry-back svg { width: 22px; height: 22px; }
+.novel-entry-back:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.novel-entry-content { width: min(100%, 448px); margin-inline: auto; padding: 1.5rem 1.25rem; }
+.novel-entry-hero { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: center; gap: 1rem; }
+.novel-entry-block { display: block; border-radius: 5px; background: var(--novel-entry-fill); animation: novelEntryPulse 1.6s ease-in-out infinite; }
+.novel-entry-cover { width: 104px; height: 147px; border-radius: 7px; }
+.novel-entry-title { width: 95%; height: 18px; }
+.novel-entry-subtitle { width: 68%; height: 18px; margin-top: 9px; }
+.novel-entry-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 16px; }
+.novel-entry-tags span { width: 34px; height: 23px; }
+.novel-entry-count { width: 60px; height: 12px; margin-top: 12px; }
+.novel-entry-quote { display: grid; gap: 10px; margin: 1.25rem 0 1.5rem; padding: .25rem 0 .25rem .875rem; border-left: 2px solid var(--novel-entry-line); }
+.novel-entry-quote span { width: 96%; height: 13px; }
+.novel-entry-quote span:last-child { width: 65%; }
+.novel-entry-fold { display: flex; align-items: center; height: 57px; border-top: 1px solid var(--novel-entry-line); }
+.novel-entry-fold:last-child { border-bottom: 1px solid var(--novel-entry-line); }
+.novel-entry-fold span { width: 120px; height: 14px; }
+@keyframes novelEntryPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+
 .novel-page {
   --novel-bg: #0d0d10; --novel-surface: #17171c; --novel-text: #f3f1f2;
   --novel-muted: #a5a1ab; --novel-line: #29262e; --novel-accent: #e4a4ad;
@@ -52,6 +82,7 @@
 .novel-story p:last-child { margin-bottom: 0; }
 .novel-relationship-image { display: block; width: 100%; height: auto; border-radius: 6px; }
 @media (prefers-color-scheme: light) {
+  #browser-screen.is-novel-preview { --novel-entry-bg: #fdfbfc; --novel-entry-text: #272129; --novel-entry-line: #e7dfe4; --novel-entry-fill: #27212912; }
   .novel-card { border-color: #e8e5e7; background: #faf8f9; color: #252127; }
   .novel-card:hover { border-color: #bb7c87; background: #f7f1f3; }
   .novel-card__genres { color: #86525c; }
@@ -59,4 +90,7 @@
   .novel-card__link { color: #955060; }
   .novel-page { --novel-bg: #fdfbfc; --novel-surface: #f4eff1; --novel-text: #272129; --novel-muted: #78707d; --novel-line: #e7dfe4; --novel-accent: #9c4256; color-scheme: light; }
 }
-@media (prefers-reduced-motion: reduce) { .novel-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .novel-card { transition: none; }
+  .novel-entry-block { animation: none; }
+}

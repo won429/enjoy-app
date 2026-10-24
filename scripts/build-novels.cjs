@@ -37,7 +37,7 @@ function renderWork(work) {
   <meta name="description" content="${escapeHtml(work.tagline)} ${escapeHtml(work.genres.join(' · '))}, 총 ${work.totalEpisodes}부작. 작품 소개를 만나보세요.">
   <title>${title} | 엔조이 웹소설</title>
   <link rel="icon" href="../../icon.png">
-  <link rel="stylesheet" href="../novels.css?v=20261025-relationships-3">
+  <link rel="stylesheet" href="../novels.css?v=20261025-entry-4">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
   <script defer src="../navigation.js?v=20261025-1"></script>
 </head>
