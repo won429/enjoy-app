@@ -184,6 +184,7 @@ function renderCard(work, slug) {
                         <span class="novel-card__episodes">총 ${work.totalEpisodes}부작</span>
                         <span class="novel-card__link">작품 소개 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     </div>
+                    <p class="novel-card__synopsis">${escapeHtml(work.synopsis.slice(0, 6).join(' '))}</p>
                 </a>`;
 }
 
