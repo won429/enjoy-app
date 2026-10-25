@@ -56,10 +56,13 @@ function renderEpisode(work, episode, manuscript) {
   validateWork(work);
   const lines = manuscript.replace(/\r\n?/g, '\n').split('\n');
   const episodeTitle = `제${episode.number}화. ${episode.title}`;
-  if (lines[1] !== episodeTitle || !lines[0].startsWith(work.title)) throw new Error(`원고의 작품명·회차 제목을 확인하세요: ${episode.source}`);
-  const hasIntro = /^(장르:|["“])/.test(lines[2] || '');
-  const intro = hasIntro ? `        <p class="${lines[2].startsWith('장르:') ? 'novel-reader-genres' : 'novel-reader-tagline'}">${escapeHtml(lines[2])}</p>\n` : '';
-  const body = lines.slice(hasIntro ? 3 : 2).filter(line => line.trim()).map(line => {
+  const titleIndex = lines[0] === episodeTitle ? 0 : 1;
+  if (lines[titleIndex] !== episodeTitle || (titleIndex === 1 && !lines[0].startsWith(work.title))) throw new Error(`원고의 작품명·회차 제목을 확인하세요: ${episode.source}`);
+  const series = titleIndex === 1 ? lines[0] : work.title;
+  const introIndex = titleIndex + 1;
+  const hasIntro = /^(장르:|["“])/.test(lines[introIndex] || '');
+  const intro = hasIntro ? `        <p class="${lines[introIndex].startsWith('장르:') ? 'novel-reader-genres' : 'novel-reader-tagline'}">${escapeHtml(lines[introIndex])}</p>\n` : '';
+  const body = lines.slice(hasIntro ? introIndex + 1 : introIndex).filter(line => line.trim()).map(line => {
     if (/^(프롤로그\s*\||SCENE\s+\d+\s*\|)/.test(line)) return `        <h2>${escapeHtml(line)}</h2>`;
     const ending = /^제\d+화 END$/.test(line) ? ' class="novel-reader-end"' : '';
     return `        <p${ending}>${escapeHtml(line)}</p>`;
@@ -94,8 +97,8 @@ ${previous ? `          <a data-novel-route rel="prev" href="${episodeFile(previ
   <main class="novel-main novel-reader">
     <article aria-labelledby="episode-title">
       <header class="novel-reader-header">
-        <p class="novel-reader-series">${escapeHtml(lines[0])}</p>
-        <h1 id="episode-title">${escapeHtml(lines[1])}</h1>
+        <p class="novel-reader-series">${escapeHtml(series)}</p>
+        <h1 id="episode-title">${escapeHtml(lines[titleIndex])}</h1>
 ${intro}      </header>
       <div class="novel-manuscript">
 ${body}
