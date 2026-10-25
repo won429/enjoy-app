@@ -16,23 +16,33 @@
 .drop-prediction-feedback:empty { display:none; }
 .drop-prediction-result { display:grid; gap:.35rem; margin-top:1rem; padding:.9rem; border-radius:.85rem; background:rgba(49,130,246,.12); font-size:.85rem; line-height:1.6; }
 .drop-prediction-result span { font-size:.75rem; color:#aab6c6; }
-.drop-prediction-overlay { position:fixed; inset:0; z-index:260; display:flex; align-items:center; justify-content:center; padding:1rem; background:rgba(0,0,0,.65); backdrop-filter:blur(8px); }
+.drop-prediction-overlay { position:fixed; inset:0; z-index:260; display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding:max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); background:rgba(0,0,0,.65); backdrop-filter:blur(8px); }
 .drop-prediction-overlay[hidden] { display:none; }
-.drop-prediction-dialog { width:100%; max-width:28rem; max-height:calc(100dvh - 2rem); overflow-y:auto; overscroll-behavior:contain; background:#171c24; color:#f2f4f6; border-radius:1.5rem; padding:1.25rem; box-shadow:0 20px 60px #0005; }
-.drop-prediction-dialog-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem; }
-.drop-prediction-dialog-head h2 { font-size:1.2rem; font-weight:850; }
-.drop-prediction-dialog-head button { width:2.5rem; height:2.5rem; font-size:1.6rem; border-radius:50%; background:#ffffff0d; }
-.drop-prediction-dialog form { display:grid; gap:1rem; }
-.drop-prediction-dialog label { display:flex; flex-direction:column; gap:.4rem; min-width:0; font-size:.8rem; font-weight:700; }
-.drop-prediction-dialog input,.drop-prediction-dialog select { box-sizing:border-box; min-width:0; width:100%; border:1px solid #475467; border-radius:.7rem; padding:.75rem .6rem; background:#242c38; color:#fff; font-family:inherit; font-size:.85rem; color-scheme:dark; }
+.drop-prediction-dialog { box-sizing:border-box; width:100%; min-width:0; max-width:28rem; max-height:calc(100dvh - max(1rem, env(safe-area-inset-top)) - max(1rem, env(safe-area-inset-bottom))); overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; scroll-padding-top:5rem; scrollbar-width:thin; scrollbar-color:#475467 transparent; color-scheme:dark; background:#171c24; color:#f2f4f6; border-radius:1.5rem; padding:1.25rem; box-shadow:0 20px 60px #0005; }
+.drop-prediction-dialog *, .drop-prediction-dialog *::before, .drop-prediction-dialog *::after { box-sizing:border-box; }
+.drop-prediction-dialog-head { position:sticky; top:-1.25rem; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:1rem; margin:-1.25rem -1.25rem 0; padding:1rem 1.25rem; border-bottom:1px solid #ffffff0d; background:#171c24; }
+.drop-prediction-dialog-head h2 { margin:0; font-size:1.2rem; font-weight:850; line-height:1.5; }
+.drop-prediction-dialog-head button { display:grid; place-items:center; flex:0 0 2.25rem; width:2.25rem; height:2.25rem; padding:0; font-size:1.6rem; line-height:1; border:0; border-radius:50%; background:#ffffff0d; color:inherit; }
+.drop-prediction-dialog form { display:grid; grid-template-columns:minmax(0,1fr); gap:1.125rem; min-width:0; margin:0; padding-top:1rem; }
+.drop-prediction-dialog label { display:grid; grid-template-columns:minmax(0,1fr); align-content:start; gap:.5rem; min-width:0; width:100%; font-size:.8125rem; font-weight:700; line-height:1.5; }
+.drop-prediction-dialog input,.drop-prediction-dialog select { display:block; -webkit-appearance:none; appearance:none; box-sizing:border-box; width:100%; min-width:0; max-width:100%; min-inline-size:0; max-inline-size:100%; height:3.125rem; min-height:3.125rem; margin:0; border:1px solid #475467; border-radius:.75rem; padding:0 .875rem; background-color:#242c38; color:#fff; font-family:inherit; font-size:1rem; font-weight:500; line-height:1.5; text-align:left; color-scheme:dark; }
+.drop-prediction-dialog select { padding-right:2.5rem; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2396a2b2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right .875rem center; background-size:1rem; text-overflow:ellipsis; }
+/* iOS date controls otherwise retain an intrinsic width and center their value. */
+.drop-prediction-dialog input[type="date"],.drop-prediction-dialog input[type="datetime-local"] { overflow:hidden; }
+.drop-prediction-dialog input::-webkit-date-and-time-value { min-width:0; min-height:1.5em; text-align:left; }
+.drop-prediction-dialog input::-webkit-datetime-edit { min-width:0; padding:0; }
+.drop-prediction-dialog input::-webkit-datetime-edit-fields-wrapper { padding:0; }
+.drop-prediction-dialog input::-webkit-calendar-picker-indicator { flex-shrink:0; margin:0; opacity:.7; }
 .drop-prediction-dialog input:focus,.drop-prediction-dialog select:focus,.drop-prediction-choices button:focus-visible { outline:2px solid #5ba1ff; outline-offset:2px; }
-.drop-prediction-dialog fieldset { border:1px solid #ffffff1a; border-radius:.85rem; padding:.85rem; min-width:0; }
-.drop-prediction-dialog legend { font-size:.85rem; font-weight:800; padding:0 .25rem; }
-.drop-prediction-fields { display:grid; grid-template-columns:1fr; gap:.75rem; }
-.drop-prediction-dialog small,.drop-prediction-dialog fieldset p,.drop-prediction-hint { font-size:.72rem; color:#aab6c6; line-height:1.65; font-weight:400; }
-.drop-prediction-dialog fieldset p { margin:.25rem 0 .6rem; }
+.drop-prediction-dialog fieldset { width:100%; min-width:0; min-inline-size:0; max-width:100%; margin:0; border:1px solid #ffffff1a; border-radius:1rem; padding:.875rem; }
+.drop-prediction-dialog legend { max-width:100%; font-size:.85rem; font-weight:800; line-height:1.5; padding:0 .375rem; }
+.drop-prediction-fields { display:grid; grid-template-columns:minmax(0,1fr); gap:1rem; min-width:0; width:100%; }
+.drop-prediction-dialog small,.drop-prediction-dialog fieldset p,.drop-prediction-hint { margin:0; font-size:.75rem; color:#aab6c6; line-height:1.7; font-weight:400; overflow-wrap:anywhere; }
+.drop-prediction-dialog fieldset p { margin:0 0 .875rem; }
+.drop-prediction-dialog fieldset .drop-prediction-fields + p { margin:.875rem 0 0; }
 #drop-prediction-form-feedback { font-size:.8rem; line-height:1.6; color:#ffb8a8; }
-.drop-prediction-publish { border-radius:.8rem; padding:.9rem; background:#3182f6; color:#fff; font-weight:800; }
+#drop-prediction-form-feedback:empty { display:none; }
+.drop-prediction-dialog .drop-prediction-publish { width:100%; min-height:3.125rem; margin:0; border:0; border-radius:.8rem; padding:.875rem; background:#3182f6; color:#fff; font-size:1rem; font-weight:800; line-height:1.5; }
 .drop-prediction-publish:disabled { opacity:.5; }
 @media(prefers-color-scheme:light) {
   .drop-prediction-card,.drop-prediction-dialog { background:#fff; color:#191f28; }
@@ -43,7 +53,10 @@
   .drop-prediction-choices button[aria-pressed="true"] { background:#dceaff; color:#174a8a; border-color:#3182f6; }
   .drop-prediction-choices small { color:#2164bd; }
   .drop-prediction-saved,.drop-prediction-feedback { color:#217743; }
-  .drop-prediction-dialog input,.drop-prediction-dialog select { background:#f9fafb; color:#191f28; border-color:#c7d3e3; color-scheme:light; }
+  .drop-prediction-dialog-head { background:#fff; border-bottom-color:#edf0f4; }
+  .drop-prediction-dialog { color-scheme:light; scrollbar-color:#c7d3e3 transparent; }
+  .drop-prediction-dialog-head button { background:#f2f4f6; }
+  .drop-prediction-dialog input,.drop-prediction-dialog select { background-color:#f9fafb; color:#191f28; border-color:#c7d3e3; color-scheme:light; }
   .drop-prediction-dialog fieldset { border-color:#e2e6ec; }
   #drop-prediction-form-feedback { color:#b54725; }
 }
