@@ -3,7 +3,8 @@
     const ADMIN = 'tdC9Bzxz7JRjpEceOLzpDCMKeBE2';
     const API = root.ENJOY_PREDICTION_WORKER_URL || 'https://enjoy-drop-prediction.sungwon4867.workers.dev';
     let epoch = 0, uid = '', timer = null, loading = false, offset = 0, fixtures = [], dateVersion = 0, opener = null;
-    let posting = false, draftId = '';
+    let posting = false, draftId = '', editing = null, returnToManager = false, adminBusy = false;
+    let adminPosts = new Map(), managerOpener = null;
     const saving = new Set();
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const now = () => Date.now() + offset;
@@ -28,11 +29,14 @@
         return data;
     }
     function menu() {
-        const button = document.getElementById('drop-prediction-add');
-        if (button) { button.hidden = identity() !== ADMIN; button.classList.toggle('hidden', identity() !== ADMIN); }
+        ['drop-prediction-add', 'drop-prediction-manage'].forEach(id => {
+            const button = document.getElementById(id);
+            if (button) { button.hidden = identity() !== ADMIN; button.classList.toggle('hidden', identity() !== ADMIN); }
+        });
     }
     function signature(posts) {
-        return JSON.stringify(posts.map(p => [p._id, p.status, p.answer, p.result, phase(p)]));
+        return JSON.stringify(posts.map(p => [p._id, p.status, p.title, p.game, p.publishStart, p.publishEnd,
+            p.startsAt, p.closesAt, p.revealAt, p.reward, p.penalty, p.updatedAt, p.answer, p.result, phase(p)]));
     }
     async function refresh(force = false) {
         menu();
@@ -71,6 +75,7 @@
         }
         return `<article class="drop-prediction-card" data-prediction-id="${esc(p._id)}" aria-label="${esc(p.title)}">
             <div class="drop-prediction-heading"><span><i class="fa-solid fa-baseball" aria-hidden="true"></i> 야구 승리 예측</span><b>${esc(state)}</b></div>
+            ${identity() === ADMIN && p.authorUid === ADMIN ? adminActions(p) : ''}
             <h3>${esc(p.title)}</h3><p class="drop-prediction-fixture">${esc(p.game.date)} ${esc(p.game.time)} · ${esc(p.game.team1)} vs ${esc(p.game.team2)}</p>
             <div class="drop-prediction-choices" role="group" aria-label="승리할 팀 선택">${[p.game.team1, p.game.team2].map(team => `<button type="button" data-prediction-choice="${esc(team)}" data-prediction-id="${esc(p._id)}" aria-pressed="${answer?.choice === team}" ${active ? '' : 'disabled'}>${esc(team)} 승리${answer?.choice === team ? '<small>내 선택</small>' : ''}</button>`).join('')}</div>
             <div class="drop-prediction-points"><span>성공 <b>+${p.reward.toLocaleString('ko-KR')} P</b></span><span>실패 <b>−${p.penalty.toLocaleString('ko-KR')} P</b></span></div>
@@ -87,7 +92,7 @@
         if (!post || phase(post) !== '예측 참여 중') return;
         const cardNode = button.closest('.drop-prediction-card');
         saving.add(id);
-        cardNode.querySelectorAll('button').forEach(node => { node.disabled = true; });
+        cardNode.querySelectorAll('[data-prediction-choice]').forEach(node => { node.disabled = true; });
         try {
             const data = await api('/submit', { id, choice: button.dataset.predictionChoice });
             if (identity() !== uid) return;
@@ -100,9 +105,111 @@
         } finally {
             saving.delete(id);
             document.querySelectorAll('.drop-prediction-card').forEach(node => {
-                if (node.dataset.predictionId === id) node.querySelectorAll('button').forEach(b => { b.disabled = phase(post) !== '예측 참여 중'; });
+                if (node.dataset.predictionId === id) node.querySelectorAll('[data-prediction-choice]').forEach(b => { b.disabled = phase(post) !== '예측 참여 중'; });
             });
         }
+    }
+    function adminActions(post) {
+        return `<div class="drop-prediction-admin-actions"><button type="button" data-prediction-edit="${esc(post._id)}">수정</button><button type="button" class="is-danger" data-prediction-delete="${esc(post._id)}" ${post.status === 'settling' ? 'disabled' : ''}>삭제</button></div>`;
+    }
+    function trapDialog(event, layer, onClose) {
+        // The app's confirmation dialog has its own focus handling above this overlay.
+        if (event.target.closest('#enjoy-dialog')) return;
+        if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
+        if (event.key !== 'Tab') return;
+        const nodes = Array.from(layer.querySelectorAll('button,input,select,[tabindex]')).filter(n => !n.disabled && n.tabIndex >= 0 && !n.hidden);
+        const first = nodes[0], last = nodes[nodes.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
+    function buildManager() {
+        if (document.getElementById('drop-prediction-manager')) return;
+        const layer = document.createElement('div');
+        layer.id = 'drop-prediction-manager'; layer.className = 'drop-prediction-overlay'; layer.hidden = true;
+        layer.innerHTML = `<section class="drop-prediction-dialog" role="dialog" aria-modal="true" aria-labelledby="drop-prediction-manager-title" tabindex="-1"><div class="drop-prediction-dialog-head"><h2 id="drop-prediction-manager-title">예측 관리</h2><button type="button" data-prediction-manager-close aria-label="관리 닫기">×</button></div><div class="drop-prediction-manager-body"><p class="drop-prediction-hint">게시 전·게시 종료된 예측도 여기서 수정하거나 삭제할 수 있어요.</p><button type="button" class="drop-prediction-refresh" data-prediction-manager-refresh>목록 새로고침</button><p id="drop-prediction-manager-feedback" role="status" aria-live="polite"></p><div id="drop-prediction-manager-list"></div></div></section>`;
+        document.body.appendChild(layer);
+        layer.addEventListener('click', event => {
+            if (event.target === layer || event.target.closest('[data-prediction-manager-close]')) closeManager();
+            if (event.target.closest('[data-prediction-manager-refresh]')) refreshManager();
+        });
+        layer.addEventListener('keydown', event => trapDialog(event, layer, closeManager));
+    }
+    function managerFeedback(message) {
+        const node = document.getElementById('drop-prediction-manager-feedback');
+        if (node) node.textContent = message;
+    }
+    function renderManager() {
+        const list = document.getElementById('drop-prediction-manager-list');
+        if (!list) return;
+        list.innerHTML = Array.from(adminPosts.values()).map(post => {
+            const label = post.status === 'settling' ? '정산 중' : post.status === 'settled' ? '정산 완료' : now() < post.publishStart ? '게시 예정' : now() >= post.publishEnd ? '게시 종료' : phase(post);
+            return `<article class="drop-prediction-manager-item"><span class="drop-prediction-manager-state">${esc(label)} · 참여 ${post.management.participants}명</span><h3>${esc(post.title)}</h3><p>${esc(post.game.date + ' ' + post.game.time + ' · ' + post.game.team1 + ' vs ' + post.game.team2)}</p><p>게시 ${format(post.publishStart)} ~ ${format(post.publishEnd)}</p>${adminActions(post)}</article>`;
+        }).join('') || '<p class="drop-prediction-hint">등록한 예측이 없어요.</p>';
+    }
+    async function loadAdminPosts() {
+        const data = await api('/manage');
+        adminPosts = new Map(data.posts.map(post => [post._id, post]));
+        renderManager();
+        return adminPosts;
+    }
+    async function refreshManager() {
+        if (identity() !== ADMIN || adminBusy) return;
+        adminBusy = true; managerFeedback('예측 목록을 불러오고 있어요…');
+        try { await loadAdminPosts(); managerFeedback(''); }
+        catch (error) { if (identity() === ADMIN) managerFeedback(error.message); }
+        finally { adminBusy = false; }
+    }
+    async function openManager() {
+        if (identity() !== ADMIN || posting) return;
+        root.closeDropPicker?.(); buildManager();
+        managerOpener = document.activeElement;
+        const layer = document.getElementById('drop-prediction-manager');
+        layer.hidden = false; layer.querySelector('[role="dialog"]').focus();
+        await refreshManager();
+    }
+    function closeManager() {
+        const layer = document.getElementById('drop-prediction-manager');
+        if (layer) layer.hidden = true;
+        if (managerOpener?.isConnected) managerOpener.focus();
+    }
+    function actionError(error) {
+        const layer = document.getElementById('drop-prediction-manager');
+        if (layer && !layer.hidden) managerFeedback(error.message || '예측을 변경하지 못했어요.');
+        else root.enjoyAlert?.(error.message || '예측을 변경하지 못했어요.');
+    }
+    async function editPrediction(id) {
+        if (identity() !== ADMIN || adminBusy || posting) return;
+        adminBusy = true;
+        try {
+            const posts = await loadAdminPosts(), post = posts.get(id);
+            if (!post) throw new Error('이미 삭제되었거나 찾을 수 없는 예측이에요.');
+            const manager = document.getElementById('drop-prediction-manager');
+            returnToManager = !!manager && !manager.hidden;
+            if (manager) manager.hidden = true;
+            open(post);
+        } catch (error) { if (identity() === ADMIN) actionError(error); }
+        finally { adminBusy = false; }
+    }
+    async function removePrediction(id) {
+        if (identity() !== ADMIN || adminBusy || posting) return;
+        adminBusy = true;
+        try {
+            const posts = await loadAdminPosts(), post = posts.get(id);
+            if (!post) throw new Error('이미 삭제되었거나 찾을 수 없는 예측이에요.');
+            if (post.management.deletingBlocked) throw new Error('포인트 정산 중이에요. 정산이 끝난 뒤 삭제해 주세요.');
+            const message = post.status === 'pending'
+                ? '이 예측을 삭제할까요?\n참여 기록은 보관하고, 포인트 지급·차감 없이 예측을 취소합니다.'
+                : '이 예측을 삭제할까요?\n이미 정산된 포인트와 참여 기록은 유지됩니다.';
+            const confirmed = root.enjoyConfirm ? await root.enjoyConfirm(message, { title: '예측 삭제', confirmText: '삭제', danger: true }) : root.confirm(message);
+            if (!confirmed) return;
+            await api('/delete', { id, revision: post.management.revision });
+            adminPosts.delete(id); renderManager();
+            root._dropPredictions = root._dropPredictions.filter(p => p._id !== id);
+            root.renderDropFeed?.();
+            managerFeedback('예측을 삭제했어요.');
+            await refresh(true);
+        } catch (error) { if (identity() === ADMIN) actionError(error); }
+        finally { adminBusy = false; }
     }
     function buildComposer() {
         if (document.getElementById('drop-prediction-composer')) return;
@@ -111,6 +218,7 @@
         layer.innerHTML = `<section class="drop-prediction-dialog" role="dialog" aria-modal="true" aria-labelledby="drop-prediction-title" tabindex="-1">
             <div class="drop-prediction-dialog-head"><h2 id="drop-prediction-title">야구 예측 추가</h2><button type="button" data-prediction-close aria-label="닫기">×</button></div>
             <form id="drop-prediction-form"><p class="drop-prediction-hint">모든 시간은 한국시간입니다. 무승부·취소 시 포인트가 변동되지 않아요.</p>
+            <p id="drop-prediction-edit-notice" class="drop-prediction-edit-notice" hidden></p>
             <label>제목<input name="title" maxlength="80" placeholder="예: 오늘의 승리 팀을 맞혀보세요"></label>
             <label>경기 날짜<input name="date" type="date" required></label>
             <label>경기 선택<select name="gameKey" required><option value="">경기 날짜를 선택해 주세요</option></select></label>
@@ -125,28 +233,25 @@
         form.elements.gameKey.addEventListener('change', defaultsForGame);
         form.addEventListener('submit', publish);
         layer.addEventListener('click', event => { if (event.target === layer || event.target.closest('[data-prediction-close]')) close(); });
-        layer.addEventListener('keydown', event => {
-            if (event.key === 'Escape') { event.preventDefault(); close(); }
-            if (event.key !== 'Tab') return;
-            const nodes = Array.from(layer.querySelectorAll('button,input,select,[tabindex]')).filter(n => !n.disabled && n.tabIndex >= 0);
-            const first = nodes[0], last = nodes[nodes.length - 1];
-            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-        });
+        layer.addEventListener('keydown', event => trapDialog(event, layer, close));
     }
     function formFeedback(text) { document.getElementById('drop-prediction-form-feedback').textContent = text; }
     async function loadGames() {
+        if (editing && !editing.management.termsEditable) return;
         const form = document.getElementById('drop-prediction-form'), select = form.elements.gameKey, version = ++dateVersion;
         select.disabled = true; select.innerHTML = '<option value="">경기 일정을 불러오는 중…</option>'; fixtures = [];
         try {
             const data = await api('/games?date=' + encodeURIComponent(form.elements.date.value));
             if (version !== dateVersion) return;
             fixtures = data.games;
+            if (editing && form.elements.date.value === editing.game.date && !fixtures.some(g => fixtureKey(g) === fixtureKey(editing.game))) fixtures.push(editing.game);
             select.innerHTML = '<option value="">' + (fixtures.length ? '경기를 선택해 주세요' : '예측 가능한 경기 일정이 없어요') + '</option>' + fixtures.map(g => `<option value="${esc(g.id || [g.date, g.team1, g.team2, g.time].join('_'))}">${esc(g.time + ' · ' + g.team1 + ' vs ' + g.team2)}</option>`).join('');
+            if (editing && form.elements.date.value === editing.game.date) select.value = fixtureKey(editing.game);
             formFeedback('');
         } catch (error) { if (version === dateVersion) { select.innerHTML = '<option value="">일정을 불러오지 못했어요</option>'; formFeedback(error.message); } }
         finally { if (version === dateVersion) select.disabled = false; }
     }
+    const fixtureKey = game => game.id || [game.date, game.team1, game.team2, game.time].join('_');
     function defaultsForGame() {
         const form = document.getElementById('drop-prediction-form');
         const game = fixtures.find(g => (g.id || [g.date, g.team1, g.team2, g.time].join('_')) === form.elements.gameKey.value);
@@ -162,31 +267,78 @@
         const form = event.target, button = form.querySelector('[type="submit"]');
         const input = Object.fromEntries(new FormData(form));
         input.requestId = draftId;
+        if (editing) {
+            input.id = editing._id; input.revision = editing.management.revision;
+            if (!editing.management.termsEditable) {
+                input.date = editing.game.date; input.gameKey = fixtureKey(editing.game);
+                ['startsAt', 'closesAt'].forEach(key => { input[key] = localInput(editing[key]); });
+                ['reward', 'penalty'].forEach(key => { input[key] = editing[key]; });
+            }
+            if (!editing.management.revealEditable) input.revealAt = localInput(editing.revealAt);
+        }
         ['publishStart', 'publishEnd', 'startsAt', 'closesAt', 'revealAt'].forEach(key => { input[key] = parseInput(input[key]); });
         ['reward', 'penalty'].forEach(key => { input[key] = Number(input[key]); });
+        if (editing && !editing.management.termsEditable) ['startsAt', 'closesAt'].forEach(key => { input[key] = editing[key]; });
+        if (editing && !editing.management.revealEditable) input.revealAt = editing.revealAt;
         if (!(input.publishStart <= input.startsAt && input.startsAt < input.closesAt && input.closesAt <= input.revealAt && input.revealAt < input.publishEnd)) {
             formFeedback('게시 시작 ≤ 참여 시작 < 참여 마감 ≤ 결과 공개 < 게시 종료 순서로 설정해 주세요.'); return;
         }
-        posting = true; button.disabled = true; formFeedback('예측을 등록하고 있어요…');
-        try { await api('/create', input); close(true); await refresh(true); root.enjoyAlert?.('예측을 등록했어요. 설정한 게시 시작부터 드롭에 표시됩니다.'); }
+        const isEditing = !!editing;
+        posting = true; button.disabled = true; formFeedback(isEditing ? '변경 내용을 저장하고 있어요…' : '예측을 등록하고 있어요…');
+        try {
+            await api(isEditing ? '/update' : '/create', input);
+            close(true); await refresh(true);
+            if (isEditing) {
+                try { await loadAdminPosts(); managerFeedback('변경 내용을 저장했어요.'); }
+                catch (_) { managerFeedback('변경 내용은 저장했어요. 목록 새로고침으로 다시 확인해 주세요.'); }
+            }
+            else root.enjoyAlert?.('예측을 등록했어요. 설정한 게시 시작부터 드롭에 표시됩니다.');
+        }
         catch (error) { formFeedback(error.message || '예측을 등록하지 못했어요.'); }
         finally { posting = false; button.disabled = false; }
     }
-    function open() {
+    function open(post = null) {
         if (identity() !== ADMIN) return;
         root.closeDropPicker?.(); buildComposer();
         const layer = document.getElementById('drop-prediction-composer'), form = layer.querySelector('form');
         opener = document.activeElement;
         draftId = root.crypto.randomUUID();
+        editing = post;
+        if (!post) returnToManager = false;
         form.reset(); form.elements.date.value = dateKey(now());
+        Array.from(form.elements).forEach(el => { el.disabled = false; });
         form.elements.publishStart.value = form.elements.startsAt.value = localInput(now());
-        formFeedback(''); layer.hidden = false; layer.querySelector('.drop-prediction-dialog').focus(); loadGames();
+        document.getElementById('drop-prediction-title').textContent = post ? '야구 예측 수정' : '야구 예측 추가';
+        form.querySelector('[type="submit"]').textContent = post ? '변경 내용 저장' : '예측 등록';
+        const notice = document.getElementById('drop-prediction-edit-notice');
+        notice.hidden = !post || post.management.termsEditable;
+        notice.textContent = post?.management.revealEditable
+            ? '참여자가 있거나 참여가 마감되어 경기·참여 기간·포인트는 고정됩니다. 제목과 게시 기간, 결과 공개 시각을 수정할 수 있어요.'
+            : '정산이 시작되어 제목과 게시 기간만 수정할 수 있어요. 이미 정산된 포인트는 유지됩니다.';
+        if (post) {
+            form.elements.title.value = post.title; form.elements.date.value = post.game.date;
+            ['publishStart', 'publishEnd', 'startsAt', 'closesAt', 'revealAt'].forEach(key => { form.elements[key].value = localInput(post[key]); });
+            ['reward', 'penalty'].forEach(key => { form.elements[key].value = post[key]; });
+            if (!post.management.termsEditable) {
+                ['date', 'gameKey', 'startsAt', 'closesAt', 'reward', 'penalty'].forEach(key => { form.elements[key].disabled = true; });
+                form.elements.gameKey.innerHTML = `<option value="${esc(fixtureKey(post.game))}">${esc(post.game.time + ' · ' + post.game.team1 + ' vs ' + post.game.team2)}</option>`;
+            }
+            if (!post.management.revealEditable) form.elements.revealAt.disabled = true;
+        }
+        formFeedback(''); layer.hidden = false; layer.querySelector('.drop-prediction-dialog').focus();
+        if (!post || post.management.termsEditable) loadGames();
     }
     function close(force = false) {
         if (posting && !force) return;
         const layer = document.getElementById('drop-prediction-composer');
         if (layer) layer.hidden = true;
         dateVersion++;
+        editing = null;
+        if (returnToManager && identity() === ADMIN) {
+            const manager = document.getElementById('drop-prediction-manager');
+            if (manager) { manager.hidden = false; manager.querySelector('[role="dialog"]').focus(); }
+            returnToManager = false; return;
+        }
         if (opener?.isConnected) opener.focus();
     }
     function connect() {
@@ -194,12 +346,20 @@
         menu();
         if (next === uid) return;
         uid = next; epoch++; loading = false; clearInterval(timer); timer = null;
-        root._dropPredictions = []; root._dropPredictionError = ''; saving.clear(); close(true); root.renderDropFeed?.();
+        root._dropPredictions = []; root._dropPredictionError = ''; saving.clear(); returnToManager = false;
+        adminPosts.clear(); renderManager(); close(true);
+        const manager = document.getElementById('drop-prediction-manager'); if (manager) manager.hidden = true;
+        root.renderDropFeed?.();
         if (uid) { refresh(true); timer = setInterval(() => { if (!document.hidden) refresh(); }, 15000); }
     }
-    root.EnjoyDropPrediction = { now, card, menu, open, refresh, connect };
+    root.EnjoyDropPrediction = { now, card, menu, open, refresh, connect, openManager, editPrediction, removePrediction };
     root.openDropPredictionComposer = open;
-    document.addEventListener('click', event => { const button = event.target.closest('[data-prediction-choice]'); if (button) choose(button); });
+    root.openDropPredictionManager = openManager;
+    document.addEventListener('click', event => {
+        const button = event.target.closest('[data-prediction-choice]'); if (button) choose(button);
+        const edit = event.target.closest('[data-prediction-edit]'); if (edit) editPrediction(edit.dataset.predictionEdit);
+        const remove = event.target.closest('[data-prediction-delete]'); if (remove) removePrediction(remove.dataset.predictionDelete);
+    });
     root.addEventListener('enjoy-auth-ready', connect);
     root.addEventListener('enjoy-guest-entered', connect);
     root.addEventListener('online', () => refresh(true));
