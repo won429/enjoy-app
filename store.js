@@ -10,7 +10,7 @@
     const nameOf = value => value === '지노' ? '이진누' : String(value || '').trim();
     function pointsOf(member) {
         const value = Math.floor(Number(member && member.points) || 0);
-        return Number.isSafeInteger(value) && value >= 0 ? value : 0;
+        return Number.isSafeInteger(value) ? value : 0;
     }
     function koreaDate(now = new Date()) {
         const date = new Date(now.getTime() + 9 * 60 * 60 * 1000);
@@ -58,7 +58,7 @@
     }
     function duesQuote(member, meeting, calculate, now = new Date()) {
         const date = koreaDate(now), monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
-        const points = pointsOf(member), converted = Math.floor(points / RATE);
+        const points = pointsOf(member), converted = Math.floor(Math.max(0, points) / RATE);
         const history = meeting && calculate ? (calculate(normalizedMeeting(meeting), date)[nameOf(member && member.name)] || {})[monthKey] : null;
         const remainingDues = history && !history.isPaymentStopped ? Math.max(0, history.baseDues - history.amount) : 0;
         const amount = Math.min(converted, Math.floor(remainingDues));

@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="drop-quiz.css?v=20261019-quiz6">
     <link rel="stylesheet" href="investment.css?v=20261024-skeleton1">
     <link rel="stylesheet" href="baseball-game-skeleton.css?v=20261024-1">
+    <link rel="stylesheet" href="drop-prediction.css?v=20261026-1">
     <link rel="stylesheet" href="wallet-skeleton.css?v=20261024-1">
     <link rel="stylesheet" href="consultation-booking.css?v=20261024-3">
     <link rel="stylesheet" href="novels/novels.css?v=20261025-loading-fix-9">
@@ -9717,6 +9718,7 @@
             <button type="button" class="drop-upload-option" onclick="window.chooseDropPhoto('camera')"><i class="fa-solid fa-camera" aria-hidden="true"></i><span>사진 찍기</span></button>
             <button type="button" class="drop-upload-option" onclick="window.chooseDropPhoto('gallery')"><i class="fa-regular fa-images" aria-hidden="true"></i><span>갤러리에서 선택</span></button>
             <button type="button" class="drop-upload-option" onclick="window.openDropComposer()"><i class="ph ph-pencil-simple" aria-hidden="true"></i><span>글쓰기</span></button>
+            <button id="drop-prediction-add" type="button" class="drop-upload-option hidden" hidden onclick="window.openDropPredictionComposer()"><i class="fa-solid fa-baseball" aria-hidden="true"></i><span>예측 추가</span></button>
         </div>
     </section>
     <div id="drop-upload-status" class="drop-upload-status hidden" role="status" aria-live="polite"></div>
@@ -19189,7 +19191,7 @@
                 post._source = 'community_posts';
                 return post;
             });
-            return (window._dropPosts || []).concat(notes).sort(function (a, b) {
+            return (window._dropPosts || []).concat(notes, window._dropPredictions || []).sort(function (a, b) {
                 return dropMillis(b.createdAt) - dropMillis(a.createdAt) || dropPostId(a).localeCompare(dropPostId(b));
             });
         }
@@ -19210,6 +19212,7 @@
         }
 
         function dropExpiryTime(post) {
+            if (post && post.postType === 'prediction') return post.publishEnd;
             if (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest()) return Infinity;
             if (post && post._source === 'community_posts' && dropIsSchedule(post)) return Infinity;
             return dropMillis(post && post.expiresAt) || (dropMillis(post && post.createdAt) + DROP_VISIBLE_MS);
@@ -19218,6 +19221,10 @@
         function visibleDropPosts() {
             const now = Date.now();
             return allDropPosts().filter(function (post) {
+                if (post && post.postType === 'prediction') {
+                    const predictionNow = window.EnjoyDropPrediction ? window.EnjoyDropPrediction.now() : now;
+                    return post.publishStart <= predictionNow && predictionNow < post.publishEnd;
+                }
                 return dropMillis(post && post.createdAt) > 0 && dropExpiryTime(post) > now;
             });
         }
@@ -19228,7 +19235,9 @@
             const now = Date.now();
             const nextExpiry = (posts || []).reduce(function (soonest, post) {
                 const expiry = dropExpiryTime(post);
-                const boundaries = post._source === 'community_posts'
+                const boundaries = post.postType === 'prediction'
+                    ? [post.startsAt, post.closesAt, post.revealAt, expiry].map(function (time) { return time - ((window.EnjoyDropPrediction ? window.EnjoyDropPrediction.now() : now) - now); })
+                    : post._source === 'community_posts'
                     ? [expiry - DROP_NOTE_LOOSEN_MS, expiry - DROP_NOTE_FALL_SOON_MS, expiry]
                     : [expiry];
                 return boundaries.reduce(function (next, time) {
@@ -19239,7 +19248,7 @@
             window._dropExpiryTimer = window.setTimeout(function () {
                 window._dropExpiryTimer = null;
                 window.renderDropFeed();
-            }, Math.max(100, nextExpiry - Date.now() + 80));
+            }, Math.min(2147483647, Math.max(100, nextExpiry - Date.now() + 80)));
         }
 
         function dropAuthorAvatar(post) {
@@ -19416,6 +19425,7 @@
             const user = dropUser();
             const posts = visibleDropPosts();
             scheduleDropExpiry(posts);
+            const predictionError = window._dropPredictionError ? '<div class="drop-feed-state" role="status"><span>' + dropEsc(window._dropPredictionError) + '</span></div>' : '';
             if (window._dropCommentsPostId && !posts.some(function (post) { return dropPostId(post) === window._dropCommentsPostId; })) {
                 window.closeDropComments();
             }
@@ -19435,10 +19445,11 @@
                 return;
             }
             if (!posts.length) {
-                wrap.innerHTML = '<div class="drop-feed-state"><i class="fa-solid fa-plus" aria-hidden="true"></i><strong>' + window.enjoyDropText('첫 번째 드롭을 남겨보세요.') + '</strong><span>' + (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest() ? '사진과 글은 이 기기에 계속 저장돼요.' : '드롭 추가에서 사진, 이야기 또는 일정을 올려보세요.') + '</span></div>';
+                wrap.innerHTML = predictionError + '<div class="drop-feed-state"><i class="fa-solid fa-plus" aria-hidden="true"></i><strong>' + window.enjoyDropText('첫 번째 드롭을 남겨보세요.') + '</strong><span>' + (window.enjoyIsLocalGuest && window.enjoyIsLocalGuest() ? '사진과 글은 이 기기에 계속 저장돼요.' : '드롭 추가에서 사진, 이야기 또는 일정을 올려보세요.') + '</span></div>';
                 return;
             }
-            wrap.innerHTML = ((window._dropError || window._communityError) ? '<div class="drop-feed-state" role="status"><span>' + dropEsc(window._dropError || window._communityError) + '</span></div>' : '') + '<div class="drop-feed-grid">' + posts.map(function (post, index) {
+            wrap.innerHTML = predictionError + ((window._dropError || window._communityError) ? '<div class="drop-feed-state" role="status"><span>' + dropEsc(window._dropError || window._communityError) + '</span></div>' : '') + '<div class="drop-feed-grid">' + posts.map(function (post, index) {
+                if (post.postType === 'prediction' && window.EnjoyDropPrediction) return window.EnjoyDropPrediction.card(post);
                 const width = Math.max(1, Number(post.width) || 4);
                 const height = Math.max(1, Number(post.height) || 5);
                 const isNote = post._source === 'community_posts';
@@ -19522,7 +19533,7 @@
         }
 
         function spaceDropNotes(feed) {
-            const cards = Array.from(feed.querySelectorAll('.drop-photo-card'));
+            const cards = Array.from(feed.querySelectorAll('.drop-photo-card, .drop-prediction-card'));
             if (!cards.some(function (card) { return card.classList.contains('drop-note-card'); })) return;
             // Reserve the entire sway envelope, including each note's inline comments.
             cards.forEach(function (card) { card.style.removeProperty('margin-top'); });
@@ -20189,6 +20200,7 @@
         }
 
         window.openDropPicker = function (anchor) {
+            if (window.EnjoyDropPrediction) window.EnjoyDropPrediction.menu();
             if (window._dropBusy) return;
             if (!dropUser()) {
                 return;
@@ -20673,7 +20685,7 @@
             const pointBalance = document.getElementById('profile-point-balance');
             if (!pointBalance) return;
             const profileMember = (lastMembers || []).find(function (item) { return item && item.name === name; });
-            const points = Math.max(0, Math.floor(Number(profileMember && profileMember.points) || 0));
+            const points = Math.floor(Number(profileMember && profileMember.points) || 0);
             pointBalance.textContent = points.toLocaleString('ko-KR') + ' P';
         }
 
@@ -22535,6 +22547,7 @@
     <script src="investment.js?v=20261024-skeleton1"></script>
     <script src="drop-quiz-firebase.js?v=20261019-quiz5"></script>
     <script src="drop-quiz.js?v=20261019-quiz4"></script>
+    <script src="drop-prediction.js?v=20261026-1"></script>
     <script defer src="drop-games-entry.js?v=20261019-quiz1"></script>
     <section id="war-game-screen" hidden role="dialog" aria-modal="true" aria-label="드롭 전쟁" style="position:fixed;inset:0;z-index:65;background:#071217">
         <iframe id="war-game-frame" title="드롭 전쟁 게임" allow="clipboard-write" style="display:block;width:100%;height:100%;border:0"></iframe>
