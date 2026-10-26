@@ -7814,6 +7814,40 @@
         .drop-viewer-card.is-note .drop-viewer-close,
         .drop-note-owner-actions button { color: var(--postit-muted); background: #493b200d; }
     </style>
+    <style id="travel-entry-skeleton-styles">
+        #browser-screen.is-travel-browser { background: #f5f7fa; }
+        #browser-screen.is-travel-browser #internal-browser-frame { transition: opacity .2s ease; }
+        #browser-screen.is-travel-loading #internal-browser-frame { opacity: 0; pointer-events: none; }
+        #browser-screen.is-travel-browser #browser-loader { z-index: 20; background: #f5f7fa; opacity: 1; transition: opacity .2s ease; }
+        #browser-screen.is-travel-browser:not(.is-travel-loading) #browser-loader { opacity: 0; pointer-events: none; }
+        .travel-entry-skeleton { --travel-sk-bg: #f5f7fa; --travel-sk-surface: #fff; --travel-sk-fill: #dfe5eb; --travel-sk-line: #ccd5df; --travel-sk-text: #637083; display: none; position: relative; width: min(100%, 430px); height: 100%; overflow: hidden; color: var(--travel-sk-text); background: var(--travel-sk-bg); }
+        .is-travel-browser .travel-entry-skeleton { display: block; }
+        .is-travel-browser #browser-loader > .fa-circle-notch { display: none; }
+        .travel-entry-skeleton::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(100deg, transparent 30%, #ffffff26 48%, transparent 66%); transform: translateX(-100%); animation: travelSkeletonShimmer 1.65s ease-in-out infinite; }
+        .travel-sk-top { position: absolute; top: calc(env(safe-area-inset-top) + .75rem); left: 1rem; right: 1rem; display: flex; gap: .5rem; }
+        .travel-sk-title, .travel-sk-tools, .travel-sk-nav { background: var(--travel-sk-surface); border: 1px solid var(--travel-sk-line); border-radius: 2rem; }
+        .travel-sk-title { flex: 1; min-width: 0; padding: .85rem 1rem; }
+        .travel-sk-bar { display: block; width: 72%; height: .65rem; border-radius: 1rem; background: var(--travel-sk-fill); }
+        .travel-sk-bar + .travel-sk-bar { width: 85%; height: .45rem; margin-top: .5rem; }
+        .travel-sk-tools { display: flex; align-items: center; gap: .6rem; padding: .8rem; }
+        .travel-sk-dot { display: block; width: 1rem; height: 1rem; border-radius: 50%; background: var(--travel-sk-fill); }
+        .travel-sk-map { position: absolute; left: 12%; top: 21%; width: 76%; height: 51%; fill: var(--travel-sk-fill); stroke: var(--travel-sk-line); stroke-width: 2; stroke-linejoin: round; }
+        .travel-sk-status { position: absolute; left: 1rem; right: 1rem; bottom: 7.25rem; margin: 0; text-align: center; font-size: .75rem; font-weight: 600; }
+        .travel-sk-nav { position: absolute; left: 5%; right: 5%; bottom: 1.5rem; display: flex; justify-content: space-around; padding: .8rem .5rem; }
+        .travel-sk-nav > span { display: flex; width: 16%; flex-direction: column; align-items: center; gap: .5rem; }
+        .travel-sk-nav .travel-sk-bar { width: 1.4rem; height: .35rem; }
+        .travel-sk-back { position: absolute; z-index: 2; left: 50%; bottom: 4.75rem; transform: translateX(-50%); padding: .5rem .75rem; border-radius: 1rem; color: inherit; background: transparent; font-size: .6875rem; }
+        .travel-sk-back:focus-visible { outline: 2px solid #3182f6; outline-offset: 2px; }
+        @keyframes travelSkeletonShimmer { to { transform: translateX(100%); } }
+        @media (prefers-color-scheme: dark) {
+            #browser-screen.is-travel-browser, #browser-screen.is-travel-browser #browser-loader { background: #08090b; }
+            .travel-entry-skeleton { --travel-sk-bg: #111214; --travel-sk-surface: #1c1c1e; --travel-sk-fill: #292c32; --travel-sk-line: #353943; --travel-sk-text: #9ca0a9; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .travel-entry-skeleton::after { animation: none; }
+            #browser-screen.is-travel-browser #internal-browser-frame, #browser-screen.is-travel-browser #browser-loader { transition: none; }
+        }
+    </style>
     <link rel="stylesheet" href="tailwind.css?v=20261018-hover1">
 </head>
 <body class="w-full h-[100dvh] flex flex-col overflow-hidden bg-black" ontouchstart="">
@@ -9546,10 +9580,30 @@
             <!-- 로딩 인디케이터 -->
             <div id="browser-loader" class="absolute inset-0 flex items-center justify-center text-blue-500 z-0 bg-black">
                 <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+                <div class="travel-entry-skeleton" role="status" aria-live="polite" aria-label="여행기록을 불러오고 있어요">
+                    <div class="travel-sk-top" aria-hidden="true">
+                        <div class="travel-sk-title"><span class="travel-sk-bar"></span><span class="travel-sk-bar"></span></div>
+                        <div class="travel-sk-tools"><span class="travel-sk-dot"></span><span class="travel-sk-dot"></span><span class="travel-sk-dot"></span></div>
+                    </div>
+                    <svg class="travel-sk-map" viewBox="0 0 260 420" aria-hidden="true" focusable="false">
+                        <path d="M158 20 190 48 184 82 207 112 195 147 213 179 197 209 210 241 185 270 187 302 160 320 147 351 118 365 94 348 63 356 45 328 58 299 47 274 71 247 64 213 87 190 87 158 111 138 103 103 127 82 132 48Z"/>
+                        <path d="M128 83 166 105 195 147M87 158 137 174 197 209M71 247 126 233 185 270M58 299 108 289 147 351M137 174 126 233 108 289" fill="none"/>
+                        <ellipse cx="57" cy="395" rx="26" ry="12"/>
+                    </svg>
+                    <p class="travel-sk-status">여행기록을 불러오고 있어요</p>
+                    <button type="button" class="travel-sk-back" onclick="window.closeBrowser()">홈으로 돌아가기</button>
+                    <div class="travel-sk-nav" aria-hidden="true">
+                        <span><span class="travel-sk-dot"></span><span class="travel-sk-bar"></span></span>
+                        <span><span class="travel-sk-dot"></span><span class="travel-sk-bar"></span></span>
+                        <span><span class="travel-sk-dot"></span><span class="travel-sk-bar"></span></span>
+                        <span><span class="travel-sk-dot"></span><span class="travel-sk-bar"></span></span>
+                        <span><span class="travel-sk-dot"></span><span class="travel-sk-bar"></span></span>
+                    </div>
+                </div>
             </div>
             
             <!-- iframe -->
-            <iframe id="internal-browser-frame" class="w-full h-full border-0 relative z-10 bg-transparent" allow="autoplay; encrypted-media" onload="document.getElementById('browser-loader').style.display='none'"></iframe>
+            <iframe id="internal-browser-frame" class="w-full h-full border-0 relative z-10 bg-transparent" title="내부 브라우저" allow="autoplay; encrypted-media" onload="window.finishEnjoyBrowserLoad && window.finishEnjoyBrowserLoad()"></iframe>
         </div>
     </div>
 
@@ -13543,6 +13597,42 @@
         };
         
         // 내부 브라우저 제어 함수
+        let enjoyBrowserNavigation = 0;
+        let enjoyBrowserHistoryNavigation = 0;
+        let enjoyBrowserOpenTimer = null;
+        let enjoyBrowserRevealTimer = null;
+
+        window.finishEnjoyBrowserLoad = function() {
+            const screen = document.getElementById('browser-screen');
+            const frame = document.getElementById('internal-browser-frame');
+            const loader = document.getElementById('browser-loader');
+            if (screen.classList.contains('hidden') || !frame.getAttribute('src')) return;
+            const navigation = enjoyBrowserNavigation;
+            const reveal = function() {
+                if (navigation !== enjoyBrowserNavigation || screen.classList.contains('hidden')) return;
+                screen.classList.remove('is-travel-loading');
+                screen.setAttribute('aria-busy', 'false');
+                frame.inert = false;
+                frame.removeAttribute('aria-hidden');
+                if (enjoyBrowserHistoryNavigation !== navigation) {
+                    window.history.pushState({modal: 'browser'}, '', '');
+                    enjoyBrowserHistoryNavigation = navigation;
+                }
+                const delay = screen.classList.contains('is-travel-browser') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 200 : 0;
+                enjoyBrowserRevealTimer = window.setTimeout(function() {
+                    if (navigation === enjoyBrowserNavigation) loader.style.display = 'none';
+                    enjoyBrowserRevealTimer = null;
+                }, delay);
+            };
+            // iframe의 onload(여행 지도 초기화 포함)가 끝난 뒤 첫 화면을 그릴 시간을 준다.
+            if (screen.classList.contains('is-travel-browser')) {
+                try { if (frame.contentWindow.location.pathname !== new URL(frame.src, location.href).pathname) return; } catch (e) {}
+                window.requestAnimationFrame(function() { window.requestAnimationFrame(reveal); });
+            } else {
+                reveal();
+            }
+        };
+
         window.openBrowser = function(url, vlogSource) {
             const videoId = vlogYoutubeId(url);
             if (videoId && window.recordEnjoyVlogClick && (vlogSource === 'latest' || Object.values(window.ENJOY_VLOG_PROGRAMS || {}).some(function(program) {
@@ -13553,29 +13643,47 @@
                 return;
             }
 
-            // 애니메이션 후 화면 전환
-            setTimeout(() => {
+            const target = new URL(url, location.href);
+            const isTravel = target.origin === location.origin && target.pathname.endsWith('/travel.html');
+            const navigation = ++enjoyBrowserNavigation;
+            window.clearTimeout(enjoyBrowserOpenTimer);
+            window.clearTimeout(enjoyBrowserRevealTimer);
+            // 여행기록은 즉시 스켈레톤을 표시하고, 다른 페이지는 기존 전환 시간을 유지한다.
+            const open = function() {
+                if (navigation !== enjoyBrowserNavigation) return;
+                enjoyBrowserOpenTimer = null;
                 const screen = document.getElementById('browser-screen');
                 const frame = document.getElementById('internal-browser-frame');
                 const loader = document.getElementById('browser-loader');
 
-                frame.addEventListener('load', function addBrowserHistory() {
-                    if (!screen.classList.contains('hidden')) {
-                        window.history.pushState({modal: 'browser'}, '', '');
-                    }
-                }, { once: true });
+                screen.classList.toggle('is-travel-browser', isTravel);
+                screen.classList.toggle('is-travel-loading', isTravel);
+                screen.setAttribute('aria-busy', 'true');
+                frame.inert = isTravel;
+                if (isTravel) frame.setAttribute('aria-hidden', 'true');
+                else frame.removeAttribute('aria-hidden');
+                frame.title = isTravel ? '여행기록' : '내부 브라우저';
                 loader.style.display = 'flex';
                 frame.src = url;
                 screen.classList.remove('hidden');
                 screen.classList.add('flex');
-            }, 600);
+            };
+            if (isTravel) open();
+            else enjoyBrowserOpenTimer = window.setTimeout(open, 600);
         };
 
         window.closeBrowser = function() {
+            ++enjoyBrowserNavigation;
+            window.clearTimeout(enjoyBrowserOpenTimer);
+            window.clearTimeout(enjoyBrowserRevealTimer);
             const screen = document.getElementById('browser-screen');
             const frame = document.getElementById('internal-browser-frame');
             screen.classList.add('hidden');
             screen.classList.remove('flex');
+            screen.classList.remove('is-travel-browser', 'is-travel-loading');
+            screen.setAttribute('aria-busy', 'false');
+            frame.inert = false;
+            frame.removeAttribute('aria-hidden');
             frame.src = '';
         };
 
