@@ -7848,6 +7848,39 @@
             #browser-screen.is-travel-browser #internal-browser-frame, #browser-screen.is-travel-browser #browser-loader { transition: none; }
         }
     </style>
+    <!-- 성원제 계정의 라이트 모드 배경색 임시 테스트. 아래 enabled를 false로 바꾸면 복구된다. -->
+    <style id="account-background-test-styles">
+        @media (prefers-color-scheme: light) {
+            html.sungwon-light-background-test body,
+            html.sungwon-light-background-test :is(#home-screen, .enjoy-page-bg, #schedule-screen, #meeting-screen, .community-screen, #community-write-screen.drop-write-shell, #echo-screen, .vlog-detail-screen, .kbo-more-shell, .schedule-date-dial),
+            html.sungwon-light-background-test .schedule-day-sheet::before,
+            html.sungwon-light-background-test #ios-status-bar-background { background-color: #D7FA3D !important; }
+            html.sungwon-light-background-test :is(.home-wordmark-bar, .home-tabs, #schedule-screen > header, #meeting-screen > header) { background-color: rgba(215,250,61,.9) !important; }
+            html.sungwon-light-background-test .community-screen > header { background-color: rgba(215,250,61,.94) !important; }
+            html.sungwon-light-background-test #community-comment-bar { background-color: rgba(215,250,61,.96) !important; }
+            html.sungwon-light-background-test #store-screen { --store-bg: #D7FA3D; }
+            html.sungwon-light-background-test #academic-schedule-screen { --academic-bg: #D7FA3D; }
+        }
+    </style>
+    <script id="account-background-test-script">
+        (function () {
+            const enabled = true;
+            const themeClass = 'sungwon-light-background-test';
+            window.enjoyResetAccountBackgroundTest = function () {
+                document.documentElement.classList.remove(themeClass);
+            };
+            // 현재 로그인 계정의 멤버 문서를 읽거나 저장한 뒤에만 호출한다. 기기 저장 이름은 사용하지 않는다.
+            window.enjoySetAccountBackgroundTest = function (uid, memberName) {
+                const user = window.enjoyUser;
+                const applies = enabled && uid && user && !user.isAnonymous && user.uid === uid && memberName === '성원제';
+                document.documentElement.classList.toggle(themeClass, Boolean(applies));
+            };
+            window.addEventListener('enjoy-guest-entered', window.enjoyResetAccountBackgroundTest);
+            window.addEventListener('enjoy-auth-ready', function () {
+                if (!window.enjoyUser) window.enjoyResetAccountBackgroundTest();
+            });
+        })();
+    </script>
     <link rel="stylesheet" href="tailwind.css?v=20261018-hover1">
 </head>
 <body class="w-full h-[100dvh] flex flex-col overflow-hidden bg-black" ontouchstart="">
@@ -19196,6 +19229,7 @@
                         memberProfile,
                         { merge: true });
                     window.enjoyProfileName = name;
+                    window.enjoySetAccountBackgroundTest(window.enjoyUser.uid, name);
                     notifyAndroidMemberTopic(name);
                     closeProfileModal();
                     startMemberSync();     // 멤버 동기화 시작
@@ -22810,6 +22844,7 @@
                 try { await setPersistence(meetingAuth, browserLocalPersistence); } catch (e) {}
 
                 window.enjoyLogout = async function () {
+                    window.enjoyResetAccountBackgroundTest();
                     try { await signOut(meetingAuth); } catch (e) {}
                     try {
                         localStorage.setItem('enjoy_chat_account_v1', 'guest');
@@ -22826,6 +22861,7 @@
                 let unsubNoticeAlert = null;
 
                 onAuthStateChanged(meetingAuth, async (user) => {
+                    window.enjoyResetAccountBackgroundTest();
                     if (window.enjoyWalletLoading) window.enjoyWalletLoading.reset();
                     if (unsubMeeting) { unsubMeeting(); unsubMeeting = null; }
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
@@ -22878,6 +22914,7 @@
                         const memberSnapshot = await getDoc(doc(window.meetingDb, 'members', user.uid));
                         if (!meetingAuth.currentUser || meetingAuth.currentUser.uid !== user.uid) return;
                         const memberData = memberSnapshot.exists() ? memberSnapshot.data() : null;
+                        window.enjoySetAccountBackgroundTest(user.uid, memberData && memberData.name);
                         const savedTimetable = memberData && memberData.timetable;
                         if (savedTimetable && typeof savedTimetable === 'object' && Array.isArray(savedTimetable.classes)) {
                             window.syncTimetableToAndroid(savedTimetable);
