@@ -2,7 +2,7 @@
     'use strict';
     const ADMIN = 'tdC9Bzxz7JRjpEceOLzpDCMKeBE2';
     const API = root.ENJOY_PREDICTION_WORKER_URL || 'https://enjoy-drop-prediction.sungwon4867.workers.dev';
-    let epoch = 0, uid = '', timer = null, loading = false, offset = 0, fixtures = [], dateVersion = 0, opener = null;
+    let epoch = 0, uid = '', timer = null, countdownTimer = null, loading = false, offset = 0, fixtures = [], dateVersion = 0, opener = null;
     let posting = false, draftId = '', editing = null, returnToManager = false, adminBusy = false;
     let adminPosts = new Map(), managerOpener = null;
     const saving = new Set();
@@ -36,7 +36,7 @@
     }
     function signature(posts) {
         return JSON.stringify(posts.map(p => [p._id, p.status, p.title, p.game, p.publishStart, p.publishEnd,
-            p.startsAt, p.closesAt, p.revealAt, p.reward, p.penalty, p.updatedAt, p.answer, p.result, phase(p)]));
+            p.startsAt, p.closesAt, p.revealAt, p.reward, p.penalty, p.updatedAt, p.answer, p.participants, p.result, phase(p)]));
     }
     async function refresh(force = false) {
         menu();
@@ -64,8 +64,57 @@
         if (!p.result) return '경기 결과 확인 중';
         return p.result.kind === 'void' ? p.result.reason : '결과 공개';
     }
+    const teamLogos = {
+        'KIA': 'baseball-assets/clubs/kia_logoo.png', '삼성': 'baseball-assets/clubs/samsung_logo.png',
+        'KT': 'baseball-assets/clubs/kt_logo.png', '한화': 'baseball-assets/clubs/hanwha_logo.png',
+        'LG': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/lgtwins.png',
+        '두산': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/doosa.png',
+        'SSG': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ssglan.png',
+        '롯데': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/lotteegi.png',
+        'NC': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/ncdin.png',
+        '키움': 'https://cdn.jsdelivr.net/gh/won429/enjoy_ballbase@main/kiwoom.png'
+    };
+    function remainingTime(p) {
+        const time = now(), kickoff = Date.parse(`${p.game.date}T${String(p.game.time).padStart(5, '0')}:00+09:00`);
+        const closesAt = Number.isFinite(kickoff) ? Math.min(p.closesAt, kickoff) : p.closesAt;
+        let deadline, suffix, active = false;
+        if (time < p.startsAt) { deadline = p.startsAt; suffix = '후 시작'; }
+        else if (time < closesAt) { deadline = closesAt; suffix = '후 종료'; active = true; }
+        else if (time < p.revealAt) { deadline = p.revealAt; suffix = '후 결과 공개'; }
+        else if (!p.result) return { label: '경기 결과 대기', active: false };
+        else if (time < p.publishEnd) { deadline = p.publishEnd; suffix = '후 게시 종료'; }
+        else return { label: '게시 종료', active: false };
+        const seconds = Math.max(1, Math.ceil((deadline - time) / 1000));
+        const days = Math.floor(seconds / 86400), hours = Math.floor(seconds / 3600) % 24, minutes = Math.floor(seconds / 60) % 60;
+        const duration = days ? `${days}일 ${hours}시간` : seconds >= 3600 ? `${hours}시간 ${minutes}분` : seconds >= 60 ? `${minutes}분` : `${seconds}초`;
+        return { label: `${duration} ${suffix}`, active };
+    }
+    function updateCountdowns() {
+        const posts = new Map(root._dropPredictions.map(p => [p._id, p]));
+        document.querySelectorAll('[data-prediction-countdown]').forEach(node => {
+            const post = posts.get(node.dataset.predictionCountdown);
+            if (!post) return;
+            const state = remainingTime(post), label = node.querySelector('[data-prediction-countdown-text]');
+            if (label && label.textContent !== state.label) label.textContent = state.label;
+            node.classList.toggle('is-waiting', !state.active);
+        });
+    }
+    function profilePhoto(value) {
+        try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : ''; }
+        catch (_) { return ''; }
+    }
+    function teamParticipants(p, team) {
+        const joined = typeof root.enjoyJoinedMembers === 'function' ? root.enjoyJoinedMembers() : [];
+        return (p.participants || []).filter(person => person.choice === team).map(person => {
+            const profile = joined.find(member => member.uid === person.uid);
+            const photo = profilePhoto(person.photoURL || profile?.photoURL || '');
+            const name = person.name || profile?.name || '멤버';
+            return `<span class="drop-prediction-person${person.uid === identity() ? ' is-me' : ''}" title="${esc(name)}" aria-label="${esc(name)}">${photo ? `<img src="${esc(photo)}" alt="${esc(name)}" referrerpolicy="no-referrer" loading="lazy">` : `<span aria-hidden="true">${esc(Array.from(name)[0])}</span>`}</span>`;
+        }).join('');
+    }
     function card(p) {
         const state = phase(p), answer = p.answer, active = state === '예측 참여 중' && !saving.has(p._id);
+        const countdown = remainingTime(p);
         let result = '';
         if (p.result) {
             const settled = !!answer?.settledAt;
@@ -74,14 +123,12 @@
             result = `<div class="drop-prediction-result" role="status"><strong>${p.result.kind === 'void' ? esc(p.result.reason) + ' · 포인트 변동 없음' : esc(p.result.winner) + ' 승리 · ' + p.result.away + ' : ' + p.result.home}</strong><span>${!answer ? '이번 예측에 참여하지 않았어요.' : settled ? p.result.kind === 'void' ? '지급·차감 없이 마감했어요.' : `${success ? '예측 성공' : '예측 실패'} · ${delta > 0 ? '+' : ''}${Number(delta).toLocaleString('ko-KR')} P ${delta === 0 ? '변동 없음' : delta < 0 ? '차감 완료' : '지급 완료'}` : '포인트를 자동 정산하고 있어요.'}</span></div>`;
         }
         return `<article class="drop-prediction-card" data-prediction-id="${esc(p._id)}" aria-label="${esc(p.title)}">
-            <div class="drop-prediction-heading"><span><i class="fa-solid fa-baseball" aria-hidden="true"></i> 야구 승리 예측</span><b>${esc(state)}</b></div>
-            ${identity() === ADMIN && p.authorUid === ADMIN ? adminActions(p) : ''}
-            <h3>${esc(p.title)}</h3><p class="drop-prediction-fixture">${esc(p.game.date)} ${esc(p.game.time)} · ${esc(p.game.team1)} vs ${esc(p.game.team2)}</p>
-            <div class="drop-prediction-choices" role="group" aria-label="승리할 팀 선택">${[p.game.team1, p.game.team2].map(team => `<button type="button" data-prediction-choice="${esc(team)}" data-prediction-id="${esc(p._id)}" aria-pressed="${answer?.choice === team}" ${active ? '' : 'disabled'}>${esc(team)} 승리${answer?.choice === team ? '<small>내 선택</small>' : ''}</button>`).join('')}</div>
-            <div class="drop-prediction-points"><span>성공 <b>+${p.reward.toLocaleString('ko-KR')} P</b></span><span>실패 <b>−${p.penalty.toLocaleString('ko-KR')} P</b></span></div>
-            ${p.penalty ? '<p class="drop-prediction-schedule">잔액이 부족해도 설정한 포인트가 차감됩니다.</p>' : ''}
-            <p class="drop-prediction-schedule">참여 ${format(p.startsAt)} ~ ${format(p.closesAt)}<br>결과 공개 ${format(p.revealAt)}부터 · 경기 종료 후 확정<br>게시 종료 ${format(p.publishEnd)} · 한국시간</p>
-            ${answer && !p.result ? `<p class="drop-prediction-saved">${esc(answer.choice)} 승리 예측을 저장했어요.${active ? ' 마감 전까지 변경할 수 있어요.' : ''}</p>` : ''}${result}
+            <div class="drop-prediction-card-top"><h3>${esc(p.title)}</h3>${identity() === ADMIN && p.authorUid === ADMIN ? adminActions(p) : ''}</div>
+            <div class="drop-prediction-card-meta"><span>${esc(p.game.date.slice(5).replace('-', '.'))} ${esc(p.game.time)}</span><span>성공 +${p.reward.toLocaleString('ko-KR')} P · 실패 −${p.penalty.toLocaleString('ko-KR')} P</span></div>
+            <div class="drop-prediction-choices${answer ? ' has-choice' : ''}" role="group" aria-label="승리할 팀 선택">${[p.game.team1, p.game.team2].map((team, index) => `<button type="button" class="drop-prediction-team${index ? ' is-home' : ''}" data-prediction-choice="${esc(team)}" data-prediction-id="${esc(p._id)}" aria-label="${esc(team)} 승리 예측${answer?.choice === team ? ', 내 선택' : ''}" aria-pressed="${answer?.choice === team}" ${active ? '' : 'disabled'}><span class="drop-prediction-team-label">${teamLogos[team] ? `<img class="drop-prediction-team-logo" src="${esc(teamLogos[team])}" alt="" loading="eager">` : ''}<span class="drop-prediction-team-copy"><strong>${esc(team)}</strong><span class="drop-prediction-team-people${(p.participants || []).filter(person => person.choice === team).length >= 5 ? ' is-crowded' : ''}" role="group" aria-label="${esc(team)} 승리 예측 멤버">${teamParticipants(p, team)}</span></span></span></button>`).join('')}</div>
+            <div class="drop-prediction-card-footer"><span class="drop-prediction-countdown${countdown.active ? '' : ' is-waiting'}" data-prediction-countdown="${esc(p._id)}" role="timer" aria-live="off"><i class="ph ph-clock" aria-hidden="true"></i><span data-prediction-countdown-text>${esc(countdown.label)}</span></span>${p.game.id && typeof root.openEnjoyBaseballGame === 'function' ? `<button type="button" class="drop-prediction-game-link" data-prediction-game="${esc(p._id)}">경기 더보기<i class="ph ph-caret-right" aria-hidden="true"></i></button>` : ''}</div>
+            ${result}
+            <details class="drop-prediction-info"><summary>예측 안내<i class="ph ph-caret-down" aria-hidden="true"></i></summary><div><p>참여 ${format(p.startsAt)} ~ ${format(p.closesAt)}<br>결과 공개 ${format(p.revealAt)}부터 · 경기 종료 후 확정<br>게시 종료 ${format(p.publishEnd)} · 한국시간</p>${p.penalty ? '<p>잔액이 부족해도 설정한 포인트가 차감됩니다.</p>' : ''}${answer && !p.result ? `<p>${esc(answer.choice)} 승리 예측을 저장했어요.${active ? ' 마감 전까지 변경할 수 있어요.' : ''}</p>` : ''}</div></details>
             <p class="drop-prediction-feedback" role="status" aria-live="polite"></p>
         </article>`;
     }
@@ -97,6 +144,9 @@
             const data = await api('/submit', { id, choice: button.dataset.predictionChoice });
             if (identity() !== uid) return;
             post.answer = data.answer;
+            const profile = typeof root.enjoyJoinedMembers === 'function' ? root.enjoyJoinedMembers().find(member => member.uid === uid) : null;
+            post.participants = (post.participants || []).filter(person => person.uid !== uid).concat({ uid, name: data.answer.name || profile?.name || root.enjoyProfileName || '멤버',
+                choice: data.answer.choice, photoURL: profile?.photoURL || root.enjoyUser?.photoURL || '' });
             root.renderDropFeed?.();
             await refresh(true);
         } catch (error) {
@@ -345,12 +395,15 @@
         const next = identity();
         menu();
         if (next === uid) return;
-        uid = next; epoch++; loading = false; clearInterval(timer); timer = null;
+        uid = next; epoch++; loading = false; clearInterval(timer); timer = null; clearInterval(countdownTimer); countdownTimer = null;
         root._dropPredictions = []; root._dropPredictionError = ''; saving.clear(); returnToManager = false;
         adminPosts.clear(); renderManager(); close(true);
         const manager = document.getElementById('drop-prediction-manager'); if (manager) manager.hidden = true;
         root.renderDropFeed?.();
-        if (uid) { refresh(true); timer = setInterval(() => { if (!document.hidden) refresh(); }, 15000); }
+        if (uid) {
+            refresh(true); timer = setInterval(() => { if (!document.hidden) refresh(); }, 15000);
+            countdownTimer = setInterval(() => { if (!document.hidden) updateCountdowns(); }, 1000);
+        }
     }
     root.EnjoyDropPrediction = { now, card, menu, open, refresh, connect, openManager, editPrediction, removePrediction };
     root.openDropPredictionComposer = open;
@@ -359,6 +412,8 @@
         const button = event.target.closest('[data-prediction-choice]'); if (button) choose(button);
         const edit = event.target.closest('[data-prediction-edit]'); if (edit) editPrediction(edit.dataset.predictionEdit);
         const remove = event.target.closest('[data-prediction-delete]'); if (remove) removePrediction(remove.dataset.predictionDelete);
+        const game = event.target.closest('[data-prediction-game]');
+        if (game) { const post = root._dropPredictions.find(p => p._id === game.dataset.predictionGame); if (post?.game.id) root.openEnjoyBaseballGame?.(String(post.game.id), post.game.date); }
     });
     root.addEventListener('enjoy-auth-ready', connect);
     root.addEventListener('enjoy-guest-entered', connect);
