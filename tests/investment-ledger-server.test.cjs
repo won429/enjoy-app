@@ -87,10 +87,10 @@ test('authenticated investment API crosses the private RPC binding and commits p
     await mf.setOptions(options(false));
     assert.equal((await (await get('/market')).json()).tradingEnabled, false);
     assert.equal((await post({ ...input, requestId: crypto.randomUUID() })).status, 423);
-    assert.equal((await get('/admin/grants')).status, 403);
-    const adminHeaders = { Authorization: 'Bearer ' + token('a', 'gwanlija180@gmail.com') };
-    assert.equal((await get('/admin/grants', { headers: { Authorization: 'Bearer ' + token('a', 'gwanlija180@gmail.com', false) } })).status, 403);
-    assert.equal((await (await get('/account', { headers: adminHeaders })).json()).canGrant, true);
+    assert.equal((await get('/admin/grants', { headers: { Authorization: '' } })).status, 401);
+    const adminHeaders = { Authorization: 'Bearer ' + token('separate-operator', 'operator@example.test') };
+    assert.equal((await get('/admin/grants', { headers: { Authorization: 'Bearer ' + token('separate-operator', 'operator@example.test', false) } })).status, 403);
+    assert.equal((await (await get('/account')).json()).canGrant, undefined);
     const preview = await (await get('/admin/grants', { headers: adminHeaders })).json();
     assert.equal(preview.status, 'pending'); assert.equal(preview.totalQuantity, 4); assert.equal(commits, 1);
     const grantInput = { campaignId: preview.campaignId, expectedPrice: preview.price, expectedRevision: preview.quoteRevision,

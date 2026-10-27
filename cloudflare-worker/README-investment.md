@@ -8,7 +8,7 @@
 
 ## 관리자 전 멤버 2토큰 지급 기능 (2026-10-27)
 
-이 기능의 추가·배포는 실제 토큰 지급을 실행하지 않는다. 투자 첫 화면 하단의 **관리자 지급**에서 기존 관리자 계정으로 지급 대상·현재 기준가를 확인하고, 확인 창에서 명시적으로 실행해야 한다. 관리자 식별은 앱의 기존 관리자 Google 계정(`gwanlija180@gmail.com`)과 일치하는 서명된 `email_verified` 클레임을 서버에서 검증한다. 일반 멤버와 다른 Google 로그인 계정에는 권한이 없다.
+이 기능의 추가·배포는 실제 토큰 지급을 실행하지 않는다. 별도 관리자 페이지 https://won429.github.io/enjoy-club/ 의 **멤버 토큰 지급**에서 지급 대상·현재 기준가를 확인하고, 확인 창에서 명시적으로 실행해야 한다. 기존 관리자 페이지의 Google 로그인 운영 방식을 사용하며, 서버는 서명된 Firebase Google 로그인과 `email_verified` 클레임을 검증한다. 특정 이메일이나 멤버 프로필로 운영자를 제한하지 않는다. 일반 앱에는 지급 UI나 계정별 지급 권한 필드가 없다.
 
 - `GET /admin/grants`: 전 멤버 2토큰 지급 대상, 서버 기준가, 대상 목록 지문, 기존 지급 완료 여부를 읽기만 한다.
 - `POST /admin/grants`: 미리보기의 `campaignId`, `expectedPrice`, `expectedRevision`, `recipientKey`, `expiresAt`로 명시적으로 실행한다. 멤버 목록이나 가격이 변경되면 재확인이 필요하다.
@@ -17,7 +17,7 @@
 - 대상 멤버 문서는 쓰지 않고 버전만 확인한다. 대상 전원의 계좌, 개인별 `side: grant` 지급 영수증과 캠페인 영수증을 Firestore의 한 commit으로 저장한다. 일부 멤버만 지급되는 상태는 만들지 않는다.
 - 캠페인 영수증은 `drop_predictions/investment-ledger-v1/grants/member-two-token-gift-v1`에 저장한다. 개인 영수증은 기존 계좌의 orders 하위에 저장하고 앱에서는 **지급** 및 **기준금액**으로 구분한다.
 - 이 관리자 지급은 서비스 오픈과 별개다. `TRADING_ENABLED="false"` 상태를 유지하며 일반 구매·판매는 계속 차단한다.
-- 테스트: `tests/investment-grants.test.cjs`, `tests/investment-grant-admin.test.cjs`, `tests/investment-ledger-server.test.cjs`. 모두 모의 데이터로 검증하며 실제 멤버의 토큰·포인트를 변경하지 않는다.
+- 테스트: `tests/investment-grants.test.cjs`, `enjoy-club/tests/grants.test.cjs`, `tests/investment-ledger-server.test.cjs`. 모두 모의 데이터로 검증하며 실제 멤버의 토큰·포인트를 변경하지 않는다.
 
 ## 멤버별 투자 연결 (2026-10-27)
 

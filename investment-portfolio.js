@@ -50,7 +50,6 @@
     function render(next) {
         if (next) context = { ...context, ...next };
         switchAccount();
-        window.enjoyInvestmentGrantAdmin?.render(account);
         const panel = $('investment-ranking');
         if (!panel) return;
         if (!uid) panel.innerHTML = '<p class="iv-ranking-empty">로그인하면 멤버 투자 순위를 볼 수 있어요.</p>';
@@ -146,7 +145,6 @@
         }
     }
     function mount() {
-        window.enjoyInvestmentGrantAdmin?.mount();
         const tab = $('investment-holdings-tab');
         if (tab) { tab.disabled = false; tab.dataset.tab = 'holdings'; tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', 'investment-holdings-panel'); }
         root.addEventListener('input', event => { if (event.target.id === 'investment-order-quantity') render(); });

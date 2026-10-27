@@ -5,7 +5,7 @@ const load = async () => ({ ...await import(pathToFileURL(path.join(__dirname, '
   ...await import(pathToFileURL(path.join(__dirname, '../cloudflare-worker/investment-trades.js'))) });
 const time = Date.parse('2026-10-27T03:15:00Z');
 const quote = { price: 123, revision: 12, asOf: time - 900000, nextUpdateAt: time + 900000, stale: false, enabled: false };
-const actor = { sub: 'admin', email: 'gwanlija180@gmail.com', email_verified: true, firebase: { sign_in_provider: 'google.com' } };
+const actor = { sub: 'separate-operator', email: 'operator@example.test', email_verified: true, firebase: { sign_in_provider: 'google.com' } };
 function database() {
   const base = 'projects/test/databases/(default)/documents/', docs = new Map(); let version = 0, commits = 0, fault = '', conflict;
   const seed = (p, data) => docs.set(p, { name: base + p, data: structuredClone(data), updateTime: String(++version) });
@@ -48,14 +48,16 @@ test('preview is read-only and the unopened service can grant exactly two tokens
   assert.equal(db.docs.has(ACCOUNTS + '/outsider'), false);
   assert.deepEqual((await readRanking(db, 'a', quote)).rows.map(r => [r.rank, r.investedPoints]), [[1, 246], [1, 246], [1, 246]]);
 });
-test('only the existing administrator verified Google identity may preview or execute, irrespective of member display name', async () => {
+test('separate administrator follows enjoy-club Google authentication without requiring an app email or member profile', async () => {
   const { previewWelcomeGrant, grantWelcomeTokens } = await load(), db = database();
   const p = await previewWelcomeGrant(db, actor, quote, () => time);
-  for (const claims of [{ ...actor, email: 'other@example.test' }, { ...actor, email_verified: false },
+  for (const claims of [{ ...actor, sub: '' }, { ...actor, email_verified: false },
     { ...actor, firebase: { sign_in_provider: 'password' } }, { sub: 'admin' }]) {
     await assert.rejects(previewWelcomeGrant(db, claims, quote, () => time), e => e.status === 403);
     await assert.rejects(grantWelcomeTokens(db, claims, input(p), quote, () => time), e => e.status === 403);
   }
+  const another = await previewWelcomeGrant(db, { ...actor, email: 'another@example.test' }, quote, () => time);
+  assert.equal(another.recipients.length, 3);
   assert.equal(db.count(), 0);
 });
 test('fixed campaign deduplicates concurrent devices and lost responses even after price/roster changes', async () => {

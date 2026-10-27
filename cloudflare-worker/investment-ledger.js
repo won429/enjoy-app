@@ -2,7 +2,7 @@ import { WorkerEntrypoint } from 'cloudflare:workers';
 import { createDatabase } from './prediction-firestore.js';
 import { verifyToken } from './tekken-auth.js';
 import { readAccount, readRanking, executeOrder, ACCOUNTS } from './investment-trades.js';
-import { isGrantAdmin, previewWelcomeGrant, grantWelcomeTokens } from './investment-grants.js';
+import { previewWelcomeGrant, grantWelcomeTokens } from './investment-grants.js';
 const fail = (message, status, code) => { throw Object.assign(new Error(message), { status, code }); };
 
 // Only a Cloudflare Service binding can call these methods; no public HTTP route
@@ -19,7 +19,7 @@ export class InvestmentLedger extends WorkerEntrypoint {
       if (!claims) fail('로그인을 다시 확인해 주세요.', 401, 'login-required');
       const db = createDatabase(this.env);
       let data;
-      if (operation === 'account') data = { ...await readAccount(db, claims.sub, quote), canGrant: isGrantAdmin(claims) };
+      if (operation === 'account') data = await readAccount(db, claims.sub, quote);
       else if (operation === 'ranking') data = await readRanking(db, claims.sub, quote);
       else if (operation === 'order') data = await executeOrder(db, claims.sub, input, quote);
       else if (operation === 'grant-preview') data = await previewWelcomeGrant(db, claims, quote);
