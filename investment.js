@@ -3,7 +3,7 @@
     const root = document.getElementById('wallet-panel-investment');
     if (!root) return;
     // Shared half-hour reference prices come only from Cloudflare. Per-device animation stays in memory.
-    // Trading is closed: this module never writes balances, holdings or orders.
+    // Trades and member portfolios are executed by the authenticated server ledger.
     const stocks = [
         { id: 'enjoy', name: '엔조이', ticker: 'ENJOY', kind: 'index', price: 100, change: 0, percent: 0, image: 'assets/enjoy-symbol-navy.png' },
         { id: 'en-joy', name: '엔조이스튜디오', ticker: 'enjoy studio', kind: 'stock', price: 100, change: 0, percent: 0, image: 'assets/enjoy-symbol-rose.png' }
@@ -52,7 +52,7 @@
     const wonAmount = amount => (amount / pointsPerWon).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원';
     const money = amount => state.currency === 'POINTS' ? pointAmount(amount) : wonAmount(amount);
     const displayQuote = stock => {
-        if (stock.kind !== 'stock' || motion.price === null || marketClosed()) return stock;
+        if (feed.tradingEnabled || stock.kind !== 'stock' || motion.price === null || marketClosed()) return stock;
         const price = motion.price, change = price - stock.previous;
         return { ...stock, price, change, percent: change / stock.previous * 100 };
     };
@@ -70,7 +70,7 @@
             <header class="iv-top"><h1>엔조이증권</h1><span class="iv-market-heading"><span>운영시간 00:00~23:30</span><span id="market-home-status" class="iv-market-status">시세 연결 중</span></span></header>
             <div class="iv-account-heading"><img src="assets/enjoy-symbol.png" alt=""><strong id="investment-account-name">멤버 지갑</strong><span id="investment-account-status"></span></div>
             <div class="iv-balances"><div class="iv-balance"><span>보유 포인트</span><div class="iv-point-balance" aria-live="polite"><strong id="investment-account-points">—</strong><span id="investment-account-equivalent" class="iv-balance-equivalent" hidden></span></div><small>100포인트 = 1원</small></div></div>
-            <section class="iv-summary" aria-label="내 투자"><h2>내 투자</h2><p class="iv-total" id="investment-total">0 P</p><small>보유한 드롭이 없어요</small></section>
+            <section class="iv-summary" aria-label="내 투자"><h2>내 투자</h2><p class="iv-total" id="investment-total">—</p><small>투자 기록을 불러오는 중이에요</small></section>
             <div class="iv-toolbar"><div id="investment-list-currency"></div></div>
             <div id="investment-index-list" class="iv-indices" role="region" aria-label="대표 지수"></div>
             <div id="investment-stock-list"></div>
@@ -89,7 +89,8 @@
             <div id="investment-orderbook-panel" class="iv-orderbook" role="tabpanel" aria-labelledby="investment-orderbook-tab" hidden></div>
             <div id="investment-closes-panel" class="iv-closes" role="tabpanel" aria-labelledby="investment-closes-tab" hidden></div>
             <div id="investment-info-panel" class="iv-info" role="tabpanel" aria-labelledby="investment-info-tab" hidden></div>
-            <footer class="iv-trade"><div class="iv-trade-buttons" id="investment-trade-buttons"><button type="button" disabled>판매하기</button><button type="button" disabled>구매하기</button></div><p id="investment-trade-note">현재 거래가 잠겨 있어요</p></footer>
+            <div id="investment-holdings-panel" class="iv-holdings" role="tabpanel" aria-labelledby="investment-holdings-tab" hidden></div>
+            <footer class="iv-trade"><div id="investment-order-controls" class="iv-order-controls" hidden><label for="investment-order-quantity">거래 수량</label><div><input id="investment-order-quantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="1" aria-describedby="investment-order-total"><span>토큰</span></div><small id="investment-order-total"></small></div><div class="iv-trade-buttons" id="investment-trade-buttons"><button type="button" id="investment-sell" data-investment-action="sell" disabled>판매하기</button><button type="button" id="investment-buy" data-investment-action="buy" disabled>구매하기</button></div><button type="button" id="investment-order-retry" class="iv-order-retry" data-investment-action="retry" hidden>같은 주문으로 결과 확인</button><p id="investment-trade-note" role="status" aria-live="polite">투자 기록을 불러오는 중이에요</p></footer>
         </section>`;
     const $ = id => document.getElementById(id);
     const quotePrices = new Map();
@@ -177,39 +178,20 @@
         $('investment-account-equivalent').hidden = !member;
         renderRanking();
     }
+    function renderPortfolio() {
+        window.enjoyInvestmentPortfolio?.render({ currency: state.currency, selected: state.selected, tab: state.tab, active: isActive() });
+    }
     function renderRanking() {
-        const panel = $('investment-ranking');
-        const user = window.enjoyUser && !window.isGuest ? window.enjoyUser : null;
-        if (!user) {
-            panel.innerHTML = '<p class="iv-ranking-empty">로그인하면 멤버 투자 순위를 볼 수 있어요.</p>';
-            return;
-        }
-        const members = window.enjoyJoinedMembers ? window.enjoyJoinedMembers() : [];
-        const unique = new Map();
-        for (const member of members) {
-            if (member && typeof member.uid === 'string' && member.uid && typeof member.name === 'string' && member.name.trim()) {
-                unique.set(member.uid, { uid: member.uid, name: member.name.trim() });
-            }
-        }
-        const entries = [...unique.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko-KR') || a.uid.localeCompare(b.uid));
-        if (!entries.length) {
-            panel.innerHTML = '<p class="iv-ranking-empty">멤버 정보를 불러오면 순위가 표시돼요.</p>';
-            return;
-        }
-        const escape = value => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-        // No member can hold stock while trading is closed. Wallet points are not invested capital.
-        const rankLabel = entries.length > 1 ? '공동 1위' : '1위';
-        panel.innerHTML = '<table class="iv-ranking-table" aria-label="멤버별 투자 순위"><colgroup><col class="iv-ranking-rank-col"><col><col class="iv-ranking-amount-col"><col class="iv-ranking-rate-col"></colgroup><thead><tr><th scope="col">순위</th><th scope="col">멤버</th><th scope="col">총 투자금액</th><th scope="col">등락률</th></tr></thead><tbody>' +
-            entries.map(member => `<tr${member.uid === user.uid ? ' class="iv-ranking-self"' : ''}><td><span aria-label="${rankLabel}">1</span></td><th scope="row"><span class="iv-ranking-name">${escape(member.name)}</span>${member.uid === user.uid ? '<small class="iv-ranking-me">나</small>' : ''}</th><td>${money(0)}</td><td class="iv-flat">0.0%</td></tr>`).join('') +
-            '</tbody></table><p class="iv-ranking-note">같은 투자금액은 공동 순위로 표시해요.</p>';
+        if (window.enjoyInvestmentPortfolio) { renderPortfolio(); return; }
+        $('investment-ranking').innerHTML = '<p class="iv-ranking-empty">투자 기록에 연결하지 못했어요. 새로고침해 주세요.</p>';
     }
     function renderList() {
         ['investment-index-list','investment-stock-list'].forEach(id => $(id).setAttribute('aria-busy', String(marketLoading())));
         $('investment-list-currency').innerHTML = currencyControl();
-        $('investment-total').textContent = money(0);
+        $('investment-total').textContent = '—';
         $('investment-index-list').innerHTML = stocks.filter(stock => stock.kind === 'index').map(stock => `<button type="button" class="iv-index" data-stock="${stock.id}" aria-label="${stock.name} 종목 상세 보기"><span class="iv-index-name"><small>지수</small><strong>${stock.name}</strong></span><strong class="iv-index-price">${quoteMarkup(priceLabel(stock), 'price')}</strong><small class="${trendClass(stock)}">${quoteMarkup(feed.ready ? percentLabel(stock) : '—', 'rate')}</small></button>`).join('');
         const listedStocks = stocks.filter(stock => stock.kind === 'stock');
-        $('investment-stock-list').innerHTML = `<h2 class="iv-stocks-heading"><span>드롭</span><small>${listedStocks.length}개 종목</small></h2>` + listedStocks.map(serverStock => { const stock = displayQuote(serverStock); return `<button type="button" class="iv-stock" data-stock="${stock.id}" aria-label="${stock.name} 종목 상세 보기"><img src="${stock.image}" alt="" width="46" height="46"><span class="iv-stock-name"><strong>${stock.name}</strong><small>드롭 · 거래 잠김</small></span><span class="iv-stock-price"><strong id="investment-list-price-${stock.id}">${priceLabel(stock)}</strong><small id="investment-list-change-${stock.id}" class="${trendClass(stock)}">${quoteMarkup(changeLabel(stock), 'change')}</small></span></button>`; }).join('');
+        $('investment-stock-list').innerHTML = `<h2 class="iv-stocks-heading"><span>드롭</span><small>${listedStocks.length}개 종목</small></h2>` + listedStocks.map(serverStock => { const stock = displayQuote(serverStock); return `<button type="button" class="iv-stock" data-stock="${stock.id}" aria-label="${stock.name} 종목 상세 보기"><img src="${stock.image}" alt="" width="46" height="46"><span class="iv-stock-name"><strong>${stock.name}</strong><small>${feed.tradingEnabled ? '드롭' : '드롭 · 거래 잠김'}</small></span><span class="iv-stock-price"><strong id="investment-list-price-${stock.id}">${priceLabel(stock)}</strong><small id="investment-list-change-${stock.id}" class="${trendClass(stock)}">${quoteMarkup(changeLabel(stock), 'change')}</small></span></button>`; }).join('');
         listedStocks.forEach(stock => renderQuotePrice($('investment-list-price-' + stock.id), displayQuote(stock)));
         renderRanking();
     }
@@ -230,13 +212,13 @@
         }
         $('investment-change').setAttribute('aria-busy', String(marketLoading()));
         $('investment-change-caption').textContent = '전일 대비';
-        $('investment-chart-caption').textContent = stock.kind === 'stock' && state.period === 'day' ? '실선 기록 · 점선 화면 시세' : '자세한 차트';
+        $('investment-chart-caption').textContent = !feed.tradingEnabled && stock.kind === 'stock' && state.period === 'day' ? '실선 기록 · 점선 화면 시세' : '자세한 차트';
         $('investment-info-tab').textContent = stock.kind === 'index' ? '지수정보' : '종목정보';
         $('investment-orderbook-tab').hidden = stock.kind === 'index';
         $('investment-holdings-tab').hidden = stock.kind === 'index';
         $('investment-trade-buttons').hidden = stock.kind === 'index';
         $('investment-trade-note').textContent = stock.kind === 'index' ? '엔조이는 시장 흐름을 나타내는 지수예요' : '현재 거래가 잠겨 있어요';
-        $('investment-info-panel').innerHTML = `<dl><div><dt>${stock.kind === 'index' ? '지수명' : '종목명'}</dt><dd>${stock.name}</dd></div><div><dt>코드</dt><dd>${stock.ticker}</dd></div><div><dt>유형</dt><dd>${stock.kind === 'index' ? '대표 지수' : '드롭 · 거래 잠김'}</dd></div>${stock.kind === 'index' ? '<div><dt>현재가</dt><dd>' + (feed.ready ? money(stock.price) : '—') + '</dd></div>' : ''}${stock.kind === 'stock' ? '<div><dt>보유 드롭</dt><dd>0토큰</dd></div>' : ''}</dl><p>100포인트 = 1원<br>${stock.kind === 'index' ? '관리자가 설정한 지수 값이 유지돼요.' : '30분 주기로 갱신돼요.<br>시세 탭에서 갱신 기록을 볼 수 있어요.'}</p>`;
+        $('investment-info-panel').innerHTML = `<dl><div><dt>${stock.kind === 'index' ? '지수명' : '종목명'}</dt><dd>${stock.name}</dd></div><div><dt>코드</dt><dd>${stock.ticker}</dd></div><div><dt>유형</dt><dd>${stock.kind === 'index' ? '대표 지수' : feed.tradingEnabled ? '드롭' : '드롭 · 거래 잠김'}</dd></div>${stock.kind === 'index' ? '<div><dt>현재가</dt><dd>' + (feed.ready ? money(stock.price) : '—') + '</dd></div>' : ''}${stock.kind === 'stock' ? '<div><dt>보유 드롭</dt><dd>' + (window.enjoyInvestmentPortfolio?.snapshot()?.quantity ?? '—') + '토큰</dd></div>' : ''}</dl><p>100포인트 = 1원<br>${stock.kind === 'index' ? '관리자가 설정한 지수 값이 유지돼요.' : '30분 주기로 갱신돼요.<br>시세 탭에서 갱신 기록을 볼 수 있어요.'}</p>`;
         root.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', String(button.dataset.tab === state.tab)));
         $('investment-chart-panel').hidden = state.tab !== 'chart';
         $('investment-info-panel').hidden = state.tab !== 'info';
@@ -248,6 +230,7 @@
         if (state.tab === 'book') renderOrderbook();
         if (state.tab === 'closes') renderCloses();
         updateMarketStatus();
+        renderPortfolio();
     }
     function isActive() {
         return !document.hidden && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden');
@@ -287,6 +270,7 @@
     }
     function scheduleMotion() {
         stopMotion();
+        if (feed.tradingEnabled) { resetMotion(); return; }
         if (feed.ready && marketClosed()) {
             resetMotion(); renderMotionQuote(); updateMarketStatus(); return;
         }
@@ -296,7 +280,7 @@
     }
     function tickMotion() {
         motion.timer = null;
-        if (!isActive() || !feed.ready || feed.status !== 'online') return;
+        if (feed.tradingEnabled || !isActive() || !feed.ready || feed.status !== 'online') return;
         if (marketClosed() || motionTime() >= feed.nextUpdateAt) {
             // Stop at the boundary even while the shared snapshot is still in flight.
             resetMotion(); renderMotionQuote(); updateMarketStatus(); return;
@@ -362,6 +346,8 @@
                     stock.price = quote.price; stock.previous = previous; stock.change = quote.change; stock.percent = quote.percent;
                 });
                 feed.interval = data.updateIntervalMs || 1_800_000; feed.ready = true; feed.asOf = data.asOf; feed.revision = data.revision;
+                feed.tradingEnabled = data.tradingEnabled === true;
+                window.enjoyInvestmentPortfolio?.updateMarket(data);
                 feed.status = data.stale ? 'delayed' : 'online';
                 // Schedule by server time, so a wrong phone clock cannot trigger rapid polling.
                 const delay = data.stale ? 60_000 : Math.max(1000, Math.min(feed.interval + 1500, data.nextUpdateAt - data.serverTime + 1500));
@@ -410,7 +396,7 @@
     function renderCloses() {
         if (state.quotePeriod === 'realtime') { renderTicks(); return; }
         const panel = $('investment-closes-panel'), entry = feed.closes.get(closesKey());
-        const stock = stocks.find(item => item.id === state.selected), isStock = stock.kind === 'stock';
+        const stock = stocks.find(item => item.id === state.selected), isStock = stock.kind === 'stock' && !feed.tradingEnabled;
         const note = '<p class="iv-closes-note">매일 23:30 종가 · 한국시간 기준<br>마감 전에는 전날까지의 종가를 보여드려요.' + (isStock ? '<br>현재 거래가 잠겨 있어 거래량·거래대금은 0이에요.' : '') + '</p>';
         const rows = entry?.rows || [];
         panel.setAttribute('aria-busy', String(!!entry?.loading));
@@ -502,7 +488,7 @@
         const quoteCell = (value, current = false) => `<div class="iv-book-price ${current ? 'iv-book-current' : ''}"><div><strong class="${value > book.previous ? 'iv-up' : value < book.previous ? 'iv-down' : 'iv-flat'}">${money(value)}</strong><small>${rate(value)}</small></div><span>${alternative(value)}</span></div>`;
         const statValue = value => value === null ? '—' : money(value);
         const stat = (label, value, cls = '') => `<div><dt>${label}</dt><dd class="${cls}">${statValue(value)}</dd></div>`;
-        panel.innerHTML = `<p class="iv-book-notice">기준 호가 <span>거래 잠김 · 대기 주문 없음</span></p>
+        panel.innerHTML = `<p class="iv-book-notice">기준 호가 <span>${feed.tradingEnabled ? '공통 시세로 즉시 체결 · 대기 주문 없음' : '거래 잠김 · 대기 주문 없음'}</span></p>
             <div class="iv-book-scroll" tabindex="0" aria-label="호가 가격대와 잔량">
                 <div class="iv-book-columns">
                     <div class="iv-book-left"><div class="iv-book-side-label">매도 잔량</div>${book.asks.map(level => `<div class="iv-book-size iv-down">${level.quantity}</div>`).join('')}<section class="iv-book-executions"><h3>체결 내역</h3><p>아직 체결 내역이 없어요</p></section></div>
@@ -793,9 +779,11 @@
     }
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => drawChart()).observe($('investment-chart'));
     else window.addEventListener('resize', drawChart);
-    window.refreshInvestmentAccount = refreshAccount;
+    window.refreshInvestmentAccount = function () { refreshAccount(); window.enjoyInvestmentPortfolio?.refresh(true); };
+    window.refreshInvestmentMarket = () => syncMarket(true);
     window.addEventListener('enjoy-auth-ready', refreshAccount);
     function syncOrPause() {
+        window.enjoyInvestmentPortfolio?.setActive(isActive());
         if (!isActive()) clearChartInspection(false);
         $('investment-chart-pulse').hidden = true;
         if (isActive()) requestAnimationFrame(drawChart);
@@ -811,6 +799,7 @@
         observer.observe(root, { attributes: true, attributeFilter: ['class'] });
         observer.observe($('meeting-screen'), { attributes: true, attributeFilter: ['class'] });
     }
+    window.enjoyInvestmentPortfolio?.mount();
     refreshAccount();
     renderList();
     syncOrPause();

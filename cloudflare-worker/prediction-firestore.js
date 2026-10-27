@@ -54,6 +54,15 @@ export function createDatabase(env) {
   }
   return {
     get: async path => unpack(await request('/' + path)),
+    async list(path, options = {}) {
+      const parts = path.split('/'), collectionId = parts.pop(), parent = parts.join('/');
+      const data = await request((parent ? '/' + parent : '') + ':runQuery', { structuredQuery: {
+        from: [{ collectionId }],
+        ...(options.field ? { orderBy: [{ field: { fieldPath: options.field }, direction: options.descending ? 'DESCENDING' : 'ASCENDING' }] } : {}),
+        ...(options.limit ? { limit: options.limit } : {})
+      } });
+      return data.filter(row => row.document).map(row => unpack(row.document));
+    },
     async query(collection, field, op, value) {
       const data = await request(':runQuery', { structuredQuery: { from: [{ collectionId: collection }],
         ...(field ? { where: { fieldFilter: { field: { fieldPath: field }, op, value: encode(value) } } } : {}) } });

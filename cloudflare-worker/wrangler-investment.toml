@@ -1,0 +1,29 @@
+name = "enjoy-investment"
+main = "investment-worker.js"
+compatibility_date = "2026-08-19"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://enjoy-app.pages.dev,https://won429.github.io,http://localhost:8765,http://127.0.0.1:8765"
+INITIAL_STOCK_POINTS = "100"
+INITIAL_INDEX_POINTS = "100"
+MAX_HOURLY_BPS = "1000"
+FIREBASE_PROJECT_ID = "enjoy-meeting-account"
+VLOG_CATALOG_URL = "https://raw.githubusercontent.com/won429/enjoy-app/main/index.html"
+TRADING_ENABLED = "true"
+
+[[services]]
+binding = "INVESTMENT_LEDGER"
+service = "enjoy-drop-prediction"
+entrypoint = "InvestmentLedger"
+
+[triggers]
+crons = ["*/30 * * * *"]
+
+[[durable_objects.bindings]]
+name = "INVESTMENT_MARKET"
+class_name = "InvestmentMarket"
+
+[[migrations]]
+tag = "investment-v1"
+new_sqlite_classes = ["InvestmentMarket"]

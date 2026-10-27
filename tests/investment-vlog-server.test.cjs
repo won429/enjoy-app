@@ -1,0 +1,81 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const {Miniflare,convertV4MiniflareOptions}=require('../cloudflare-worker/node_modules/miniflare');
+const esbuild=require('../cloudflare-worker/node_modules/esbuild');
+
+test('server polls published vlog catalog, filters duplicate clicks and applies fresh uploads once across failures and restarts',{timeout:60000},async()=>{
+  const origin='https://won429.github.io',HOUR=1800000;
+  const A='21uUicVMzqg',B='9nvi_15zz9s',C='DhZ4val4eXg',D='MyacH4Epdjg';
+  let ids=[A,B],failSource=false,sourceReads=0,now=Date.parse('2026-10-22T09:15:00Z'),maxCap='300',sample='.5';
+  const persist=fs.mkdtempSync(path.join(os.tmpdir(),'investment-vlog-'));
+  const entry=path.resolve(__dirname,'../cloudflare-worker/investment-worker.js');
+  const bundle=await esbuild.build({stdin:{contents:`import worker,{InvestmentMarket} from ${JSON.stringify(entry)};
+    export class TestMarket extends InvestmentMarket{randomSample(){return Number(this.env.TEST_RANDOM_SAMPLE);}writeState(state){super.writeState(state);if(state.revision===1&&!this.failed){this.failed=true;throw Error('injected failure');}}}
+    export default {...worker,async fetch(request,env,ctx){if(new URL(request.url).pathname==='/__tick'){try{await worker.scheduled({scheduledTime:Date.now()},env,ctx);return Response.json({ok:true});}catch(_){return Response.json({ok:false},{status:503});}}return worker.fetch(request,env,ctx);}};`,resolveDir:path.dirname(entry)},bundle:true,write:false,format:'esm',platform:'browser',external:['cloudflare:workers']});
+  const options=()=>convertV4MiniflareOptions({modules:true,script:`Date.now=()=>${now};\n`+bundle.outputFiles[0].text,compatibilityDate:'2026-08-19',resourcePersistencePath:persist,
+    durableObjects:{INVESTMENT_MARKET:{className:'TestMarket',useSQLite:true}},bindings:{ALLOWED_ORIGINS:origin,MAX_HOURLY_BPS:maxCap,TEST_RANDOM_SAMPLE:sample},
+    outboundService:request=>{assert.equal(new URL(request.url).hostname,'raw.githubusercontent.com');sourceReads++;
+      if(failSource)return new Response('unavailable',{status:503});
+      return new Response('window.ENJOY_VLOG_PROGRAMS={demo:{episodes:['+ids.map(id=>`{url:'https://youtu.be/${id}'}`).join(',')+']}};');}});
+  let mf=new Miniflare(options());
+  const get=(p,opts={})=>mf.dispatchFetch('https://test.invalid'+p,{...opts,headers:{Origin:origin,'CF-Connecting-IP':'1.2.3.4','User-Agent':'test-browser',...opts.headers}});
+  const click=(videoId,source='episode',ip='1.2.3.4')=>get('/activity/click',{method:'POST',headers:{'Content-Type':'application/json','CF-Connecting-IP':ip},body:JSON.stringify({videoId,source,visitor:'spoofed',bucket:0})});
+  const market=async()=> (await get('/market')).json();
+  const status=async()=> (await get('/vlog/status')).json();
+  const restart=async()=>{await mf.dispose();mf=new Miniflare(options());};
+  try{
+    let info=await status();assert.equal(info.initialized,true);assert.equal(info.videoCount,2);assert.equal(info.pendingUploads,0,'baseline videos are not treated as new uploads');
+    assert.equal(sourceReads,1);await status();assert.equal(sourceReads,1,'status does not repeatedly fetch in the same hour');
+    assert.equal((await (await click(A,'latest')).json()).counted,true);
+    assert.equal((await (await click(A,'episode')).json()).counted,false,'banner and episode are the same video');
+    assert.equal((await (await click(B)).json()).counted,true);
+    assert.equal((await (await click(A,'episode','5.6.7.8')).json()).counted,true);
+    assert.equal((await click('ZZZZZZZZZZZ')).status,400);
+    assert.equal((await get('/activity/click',{method:'POST',headers:{Origin:'https://evil.invalid'},body:'{}'})).status,403);
+    assert.equal((await market()).quotes[1].price,100,'clicks never change current price directly');
+    info=await status();assert.equal(info.clicksThisHour,3);assert.equal(info.latestClicks,1);assert.equal(info.episodeClicks,2);
+    ids=[A,B,C];now=Date.parse('2026-10-22T09:30:01Z');await restart();
+    assert.equal((await get('/__tick')).status,503,'injected price transaction failure');
+    assert.equal((await market()).revision,0);
+    info=await status();assert.equal(info.pendingUploads,1,'catalog discovery survives price rollback');
+    assert.equal((await get('/__tick')).status,200);
+    let state=await market();assert.equal(state.revision,1);assert.equal(state.quotes[1].price,102);assert.equal(state.quotes[0].price,100);
+    info=await status();assert.equal(info.pendingUploads,0);assert.equal(info.lastDrivers.uploads,1);assert.equal(info.lastDrivers.clicks,3);assert.equal(info.lastDrivers.components.clicks,13.5);
+    await get('/__tick');assert.equal((await market()).revision,1,'duplicate cron does not reapply the upload');
+    assert.equal(sourceReads,2);
+    now+=5*60000;await restart();assert.equal((await market()).quotes[1].price,102);
+    assert.equal((await (await click(C)).json()).counted,true);
+    assert.equal((await (await click(A)).json()).counted,true,'the same actor/video may count again in the new half-hour window');
+    now=Date.parse('2026-10-22T10:00:01Z');ids=[B,C];await restart();await get('/__tick');
+    info=await status();assert.equal(info.lastDrivers.uploads,0);assert.equal(info.lastDrivers.components.clicks,-4.5,'falling clicks can reduce the stock price');
+    assert.equal((await click(A)).status,400,'removed videos stop accepting clicks');
+    now=Date.parse('2026-10-22T10:30:01Z');ids=[A,B,C];await restart();await get('/__tick');
+    assert.equal((await status()).lastDrivers.uploads,0,'readding a known video is not a fresh upload');
+    now=Date.parse('2026-10-22T11:00:01Z');ids=[A,B,C,D];failSource=true;await restart();await get('/__tick');
+    info=await status();assert.ok(info.error);assert.equal(info.lastDrivers.uploads,0);assert.equal(info.videoCount,3,'failed fetch retains the previous catalog');
+    now=Date.parse('2026-10-22T11:30:01Z');failSource=false;await restart();await get('/__tick');
+    info=await status();assert.equal(info.error,null);assert.equal(info.lastDrivers.uploads,1);assert.equal(info.videoCount,4);
+    state=await market();assert.equal(state.quotes[0].price,100);assert.equal(state.tradingEnabled,false);
+    const E='48tV1_PvY4E',priceBefore=state.quotes[1].price;
+    now+=5*60000;ids=[A,B,C,D,E];await restart();
+    assert.equal((await (await click(E)).json()).counted,true,'a click on a newly published video refreshes a catalog at most once per minute');
+    assert.equal((await status()).pendingUploads,1);assert.equal((await market()).quotes[1].price,priceBefore,'discovery after a tick waits for the next tick');
+    await get('/__tick');assert.equal((await status()).pendingUploads,1);
+    now=Date.parse('2026-10-22T12:00:01Z');await restart();await get('/__tick');
+    assert.equal((await status()).lastDrivers.uploads,1);assert.equal((await status()).pendingUploads,0);
+    const beforeUpgrade=await market();
+    const historyBefore=await (await get('/history?symbol=en-joy&period=day')).json();
+    maxCap='1000';sample='0';await restart();
+    const upgraded=await market();assert.equal(upgraded.maxHourlyBps,1000);assert.equal(upgraded.randomRangeBps,1000);
+    assert.deepEqual(upgraded.quotes,beforeUpgrade.quotes,'increasing cap preserves the current quotes');
+    assert.deepEqual((await (await get('/history?symbol=en-joy&period=day')).json()).points,historyBefore.points,'configuration migration preserves chart history');
+    now+=HOUR;await restart();await get('/__tick');
+    const dropped=await market();assert.equal(dropped.quotes[1].price,Math.ceil(upgraded.quotes[1].price*.9));
+    assert.equal((await status()).lastDrivers.components.random,-1000);
+    sample='.999999999';now+=HOUR;await restart();await get('/__tick');
+    const risen=await market();assert.equal(risen.quotes[1].price,Math.floor(dropped.quotes[1].price*1.1));
+    assert.equal(risen.quotes[0].price,100);assert.equal(risen.tradingEnabled,false);
+    assert.equal((await status()).lastDrivers.components.random,1000);
+  }finally{await mf.dispose();fs.rmSync(persist,{recursive:true,force:true});}
+});
