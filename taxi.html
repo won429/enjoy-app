@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+    <title>택시 미터기 · 엔조이</title>
+    <link rel="icon" href="icon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="taxi.css?v=20261027-1">
+    <script defer src="taxi-meter-engine.js?v=20261027-1"></script>
+    <script defer src="taxi.js?v=20261027-1"></script>
+</head>
+<body>
+    <div class="taxi-app">
+        <header class="taxi-header">
+            <button id="taxi-back" class="taxi-icon-button" type="button" aria-label="홈으로 돌아가기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+            <h1>택시 미터기</h1>
+            <span class="taxi-header-icon" aria-hidden="true"><i class="fa-solid fa-taxi"></i></span>
+        </header>
+        <main>
+            <div class="taxi-intro"><p>이동하는 만큼, 한눈에</p><h2>지금 요금은 얼마일까요?</h2></div>
+            <section class="taxi-meter" aria-label="예상 택시 요금">
+                <div class="taxi-meter-top"><span id="taxi-state" class="taxi-state" data-state="idle"><span></span><b>출발 전</b></span><span id="taxi-plan">서울 중형 · 일반</span></div>
+                <p class="taxi-fare-label">예상 요금</p>
+                <p class="taxi-fare"><strong id="taxi-fare">4,800</strong><span>원</span></p>
+                <p id="taxi-fare-hint" class="taxi-fare-hint">출발하면 기본요금부터 시작해요</p>
+                <div class="taxi-metrics">
+                    <div><span>이동 거리</span><strong id="taxi-distance">0.00 <small>km</small></strong></div>
+                    <div><span>탑승 시간</span><strong id="taxi-duration">00:00</strong></div>
+                    <div><span>현재 속도</span><strong id="taxi-speed">— <small>km/h</small></strong></div>
+                </div>
+            </section>
+            <div id="taxi-gps" class="taxi-gps" role="status" aria-live="polite"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span>시작을 누르면 현재 위치를 확인해요</span></div>
+            <div class="taxi-actions">
+                <button id="taxi-start" class="taxi-primary" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>미터기 시작</span></button>
+                <button id="taxi-finish" class="taxi-secondary" type="button" hidden>종료</button>
+            </div>
+            <p id="taxi-feedback" class="taxi-feedback" role="status" aria-live="polite"></p>
+            <section class="taxi-settings" aria-labelledby="taxi-settings-title">
+                <div class="taxi-section-heading"><h2 id="taxi-settings-title">요금 설정</h2><span id="taxi-settings-hint">출발 전에 선택해 주세요</span></div>
+                <fieldset id="taxi-rate-controls">
+                    <legend class="taxi-sr-only">요금 기준과 할증 선택</legend>
+                    <label class="taxi-select-row">요금 기준<select id="taxi-preset"><option value="seoul">서울 중형택시</option><option value="custom">직접 설정</option></select></label>
+                    <label class="taxi-select-row">할증<select id="taxi-surcharge"><option value="0">일반 · 할증 없음</option><option value="20">심야 · 20%</option><option value="40">심야 · 40%</option></select></label>
+                    <p id="taxi-night-hint" class="taxi-setting-note">심야 20% 22~23시·02~04시 / 40% 23~02시<br>선택한 할증은 이번 탑승 내내 적용돼요.</p>
+                    <div id="taxi-custom" class="taxi-custom" hidden>
+                        <label>기본요금 <span><input id="taxi-base" type="number" inputmode="numeric" min="0" max="100000" step="100" value="4800" required>원</span></label>
+                        <label>기본거리 <span><input id="taxi-base-distance" type="number" inputmode="decimal" min="0" max="50" step="0.1" value="1.6" required>km</span></label>
+                        <label>거리 단위 <span><input id="taxi-distance-unit" type="number" inputmode="numeric" min="1" max="10000" step="1" value="131" required>m</span></label>
+                        <label>시간 단위 <span><input id="taxi-time-unit" type="number" inputmode="numeric" min="1" max="3600" step="1" value="30" required>초</span></label>
+                        <label>단위당 요금 <span><input id="taxi-unit-fare" type="number" inputmode="numeric" min="1" max="10000" step="1" value="100" required>원</span></label>
+                        <label>저속 기준 <span><input id="taxi-slow-speed" type="number" inputmode="decimal" min="1" max="100" step="0.01" value="15.72" required>km/h</span></label>
+                    </div>
+                </fieldset>
+                <dl class="taxi-rate-summary"><div><dt>기본요금</dt><dd id="taxi-rate-base">1.6km · 4,800원</dd></div><div><dt>거리요금</dt><dd id="taxi-rate-distance">131m마다 100원</dd></div><div><dt>저속 시간요금</dt><dd id="taxi-rate-time">30초마다 100원</dd></div></dl>
+            </section>
+            <details class="taxi-guide"><summary>이용 전에 확인해 주세요 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary><div>
+                <p>GPS로 계산한 참고용 예상 요금이에요. 실제 택시 미터기 요금과 차이가 있을 수 있으며, 통행료·호출비·시계외 할증은 포함하지 않아요.</p>
+                <p>기본거리 이후 이동 거리와 저속 시간을 합산해요. 다른 지역이나 차종은 해당 요율을 직접 설정해 주세요.</p>
+                <p>정확한 측정을 위해 위치 권한을 허용하고 화면을 켜 두세요. 화면을 나가거나 GPS 신호가 끊기면 일시정지해요. 일시정지 중 이동은 계산하지 않아요.</p>
+                <p>이동 경로와 위치는 서버에 저장하지 않아요. 설정과 마지막 측정 결과만 이 기기에 보관해요.</p>
+                <a href="https://news.seoul.go.kr/traffic/archives/1659" target="_blank" rel="noopener noreferrer">서울시 택시요금 기준 보기 <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+            </div></details>
+            <p class="taxi-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
+        </main>
+    </div>
+</body>
+</html>

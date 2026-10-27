@@ -1,0 +1,78 @@
+/* 홈과 동일한 글꼴 크기, 화면 폭, 여백과 시스템 테마를 사용한다. */
+html { font-size: clamp(14.4px, 4.2667vw, 16px); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+:root { color-scheme: dark; --page: #000; --surface: #1c1c1e; --text: #fff; --muted: #8b95a1; --line: rgba(255,255,255,.09); --soft: rgba(255,255,255,.06); --blue: #3182f6; }
+@media (prefers-color-scheme: light) { :root { color-scheme: light; --page: #f2f2f7; --surface: #fff; --text: #191f28; --muted: #6b7684; --line: rgba(0,0,0,.07); --soft: rgba(0,0,0,.035); } }
+*, *::before, *::after { box-sizing: border-box; letter-spacing: 0; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+button, input, select { min-width: 0; max-width: 100%; font: inherit; }
+button, select { cursor: pointer; touch-action: manipulation; }
+button { border: 0; }
+button:disabled, fieldset:disabled { cursor: default; opacity: .5; }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+[hidden] { display: none !important; }
+.taxi-app { width: min(100%, 28rem); min-height: 100dvh; margin: 0 auto; padding: 0 1.25rem; }
+.taxi-header { display: flex; align-items: center; gap: .625rem; padding: max(1.25rem, env(safe-area-inset-top)) 0 .75rem; }
+.taxi-header h1 { flex: 1; margin: 0; font-size: 1.375rem; font-weight: 800; line-height: 1.5; }
+.taxi-icon-button { display: grid; place-items: center; width: 2rem; height: 2.5rem; padding: 0; margin-left: -.375rem; border-radius: 50%; background: transparent; color: var(--text); font-size: 1.0625rem; }
+.taxi-header-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: .75rem; color: #f59e0b; background: rgba(245,158,11,.12); }
+.taxi-intro { padding: 1.375rem .25rem 1.25rem; }
+.taxi-intro p { margin: 0 0 .5rem; color: var(--muted); font-size: .8125rem; font-weight: 600; }
+.taxi-intro h2 { margin: 0; font-size: 1.375rem; font-weight: 800; line-height: 1.4; word-break: keep-all; }
+.taxi-meter { padding: 1.25rem; border: 1px solid var(--line); border-radius: 1.5rem; background: var(--surface); }
+.taxi-meter-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .6875rem; color: var(--muted); }
+.taxi-state { display: inline-flex; align-items: center; gap: .375rem; padding: .375rem .5rem; border-radius: 999px; background: var(--soft); color: var(--muted); }
+.taxi-state > span { width: .375rem; height: .375rem; border-radius: 50%; background: currentColor; }
+.taxi-state b { font-weight: 700; }
+.taxi-state[data-state="running"] { color: #22c55e; background: rgba(34,197,94,.1); }
+.taxi-state[data-state="locating"], .taxi-state[data-state="paused"] { color: #f59e0b; background: rgba(245,158,11,.1); }
+.taxi-state[data-state="finished"] { color: var(--blue); background: rgba(49,130,246,.1); }
+.taxi-fare-label { margin: 1.875rem 0 .5rem; color: var(--muted); text-align: center; font-size: .8125rem; font-weight: 600; }
+.taxi-fare { display: flex; align-items: baseline; justify-content: center; gap: .375rem; margin: 0; font-variant-numeric: tabular-nums; }
+.taxi-fare strong { font-size: clamp(2rem, 10vw, 2.875rem); line-height: 1.25; font-weight: 800; overflow-wrap: anywhere; }
+.taxi-fare > span { font-size: 1.25rem; font-weight: 700; }
+.taxi-fare-hint { min-height: 1.125rem; margin: .625rem 0 1.75rem; color: var(--muted); text-align: center; font-size: .6875rem; line-height: 1.6; }
+.taxi-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); padding-top: 1.125rem; border-top: 1px solid var(--line); }
+.taxi-metrics > div { min-width: 0; text-align: center; }
+.taxi-metrics > div + div { border-left: 1px solid var(--line); }
+.taxi-metrics span, .taxi-metrics strong { display: block; }
+.taxi-metrics span { margin-bottom: .5rem; color: var(--muted); font-size: .6875rem; }
+.taxi-metrics strong { font-size: 1.0625rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.taxi-metrics small { color: var(--muted); font-size: .625rem; font-weight: 600; }
+.taxi-gps { display: flex; align-items: flex-start; justify-content: center; gap: .4375rem; margin: 1rem .25rem; color: var(--muted); font-size: .6875rem; line-height: 1.65; }
+.taxi-gps i { margin-top: .1875rem; }
+.taxi-actions { display: flex; gap: .625rem; }
+.taxi-actions button { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 3.25rem; padding: .875rem; border-radius: 1rem; font-size: .9375rem; font-weight: 750; }
+.taxi-primary { flex: 1; background: var(--blue); color: #fff; }
+.taxi-secondary { width: 5.25rem; background: var(--surface); color: var(--text); border: 1px solid var(--line) !important; }
+.taxi-actions button:active { transform: scale(.98); }
+.taxi-feedback { margin: .625rem .25rem 0; color: var(--muted); font-size: .75rem; line-height: 1.65; word-break: keep-all; }
+.taxi-feedback:empty { display: none; }
+.taxi-settings { margin-top: 2rem; }
+.taxi-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin: 0 .25rem .75rem; }
+.taxi-section-heading h2 { margin: 0; font-size: 1rem; font-weight: 750; }
+.taxi-section-heading > span { font-size: .625rem; color: var(--muted); }
+fieldset { border: 0; margin: 0; padding: .25rem 1rem; background: var(--surface); border-radius: 1rem; }
+.taxi-select-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 3.25rem; font-size: .8125rem; font-weight: 600; }
+.taxi-select-row + .taxi-select-row { border-top: 1px solid var(--line); }
+.taxi-select-row select { max-width: 70%; padding: .625rem .125rem; color: var(--text); background: var(--surface); border: 0; font-size: .8125rem; text-align: right; }
+.taxi-setting-note { margin: 0 0 .75rem; color: var(--muted); font-size: .625rem; line-height: 1.75; white-space: pre-line; }
+.taxi-custom { padding-bottom: .5rem; border-top: 1px solid var(--line); }
+.taxi-custom label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 3.25rem; font-size: .75rem; }
+.taxi-custom label > span { display: flex; align-items: center; gap: .375rem; color: var(--muted); }
+.taxi-custom input { width: 6rem; padding: .625rem; border-radius: .5rem; border: 1px solid var(--line); background: var(--soft); color: var(--text); text-align: right; }
+.taxi-rate-summary { margin: .75rem .25rem 0; }
+.taxi-rate-summary div { display: flex; justify-content: space-between; gap: .75rem; padding: .4375rem 0; font-size: .75rem; }
+.taxi-rate-summary dt { color: var(--muted); }
+.taxi-rate-summary dd { margin: 0; font-weight: 600; text-align: right; }
+.taxi-guide { margin-top: 1.5rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.taxi-guide summary { display: flex; align-items: center; justify-content: space-between; padding: 1rem .25rem; color: var(--muted); font-size: .75rem; font-weight: 650; cursor: pointer; list-style: none; }
+.taxi-guide summary::-webkit-details-marker { display: none; }
+.taxi-guide summary i { font-size: .625rem; }
+.taxi-guide[open] summary i { transform: rotate(180deg); }
+.taxi-guide > div { padding: 0 .25rem .875rem; font-size: .6875rem; color: var(--muted); line-height: 1.8; }
+.taxi-guide p { margin: 0 0 .75rem; }
+.taxi-guide a { color: var(--blue); text-decoration: none; }
+.taxi-copyright { margin: 0; padding: 2rem 0 max(1.5rem, env(safe-area-inset-bottom)); color: var(--muted); text-align: center; font-size: .5625rem; }
+.taxi-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+@media (max-width: 380px) { .taxi-app { padding-inline: 1rem; } }
+@media (min-width: 768px) { .taxi-app { width: min(100%, 30rem); } }
