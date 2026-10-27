@@ -6,11 +6,12 @@
     const $ = id => document.getElementById(id);
     const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     let uid = null, epoch = 0, account = null, ranking = null, market = null, pending = null, busy = false, lastRead = 0, error = '', message = '';
-    let context = { currency: 'POINTS', selected: null, tab: 'chart', active: false }, request = null, timer = null, generation = 0;
+    let context = { currency: 'POINTS', selected: null, tab: 'chart', holdingView: 'value', active: false }, request = null, timer = null, generation = 0;
     const currentUid = () => !window.isGuest && window.enjoyUser?.uid || null;
     const cash = value => context.currency === 'KRW'
         ? (value / 100).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원'
         : Math.round(value).toLocaleString('ko-KR') + ' P';
+    const signedCash = value => (value > 0 ? '+' : '') + cash(value);
     const rate = value => (value > 0 ? '+' : '') + value.toFixed(2) + '%';
     const changeClass = value => value > 0 ? 'iv-up' : value < 0 ? 'iv-down' : 'iv-flat';
     const pendingKey = id => 'enjoy_investment_pending_v1:' + id;
@@ -59,8 +60,21 @@
             '</tbody></table><p class="iv-ranking-note">현재 보유한 드롭의 투자금액 기준 · 같은 금액은 공동 순위</p>';
         const total = $('investment-total'), summary = root.querySelector('.iv-summary > small');
         if (total) total.textContent = account ? cash(account.marketValue) : '—';
-        if (summary) summary.textContent = !uid ? '로그인 후 내 투자를 확인할 수 있어요' : !account ? error || '투자 기록을 불러오는 중이에요' :
-            account.quantity ? '투자금액 ' + cash(account.costBasis) + ' · 평가수익 ' + cash(account.profit) + ' (' + rate(account.returnPercent) + ')' : '보유한 드롭이 없어요';
+        if (summary) {
+            summary.textContent = !uid ? '로그인 후 내 투자를 확인할 수 있어요' : !account ? error || '투자 기록을 불러오는 중이에요' :
+                account.quantity ? signedCash(account.profit) + ' (' + rate(account.returnPercent) + ')' : '보유한 드롭이 없어요';
+            summary.className = account?.quantity ? 'iv-portfolio-profit ' + changeClass(account.profit) : '';
+        }
+        const portfolio = $('investment-portfolio-list');
+        if (portfolio) {
+            portfolio.setAttribute('aria-busy', String(!!uid && !account && !error));
+            if (!account || !account.quantity) portfolio.innerHTML = '<p class="iv-ranking-empty">' + escape(!uid ? '로그인 후 보유 토큰을 확인할 수 있어요.' : !account ? error || '보유 토큰을 불러오는 중이에요.' : '아직 보유한 토큰이 없어요.') + '</p>';
+            else {
+                const amount = context.holdingView === 'price' ? price() : account.marketValue;
+                portfolio.innerHTML = '<div class="iv-portfolio-heading"><h2>보유 드롭</h2><span class="' + changeClass(account.profit) + '">' + rate(account.returnPercent) + '</span></div>' +
+                    '<button type="button" class="iv-stock iv-portfolio-stock" data-stock="en-joy" aria-label="엔조이스튜디오 보유 토큰 상세 보기"><img src="assets/enjoy-symbol-rose.png" alt="" width="46" height="46"><span class="iv-stock-name"><strong>엔조이스튜디오</strong><small>' + account.quantity.toLocaleString('ko-KR') + '토큰</small></span><span class="iv-stock-price"><strong>' + (Number.isFinite(amount) ? cash(amount) : '—') + '</strong><small class="' + changeClass(account.profit) + '">' + signedCash(account.profit) + ' (' + rate(account.returnPercent) + ')</small></span></button>';
+            }
+        }
         if (account) {
             $('investment-account-points').textContent = account.points.toLocaleString('ko-KR') + ' P';
             $('investment-account-equivalent').textContent = '(= ' + (account.points / 100).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원)';

@@ -9,7 +9,7 @@
         { id: 'en-joy', name: '엔조이스튜디오', ticker: 'enjoy studio', kind: 'stock', price: 100, change: 0, percent: 0, image: 'assets/enjoy-symbol-rose.png' }
     ];
     const pointsPerWon = 100;
-    const state = { selected: null, currency: 'POINTS', period: 'day', tab: 'chart', quotePeriod: 'daily', chartType: 'line' };
+    const state = { selected: null, currency: 'POINTS', period: 'day', tab: 'chart', homeTab: 'portfolio', holdingView: 'value', quotePeriod: 'daily', chartType: 'line' };
     const marketApi = (window.ENJOY_INVESTMENT_API || 'https://enjoy-investment.sungwon4867.workers.dev').replace(/\/$/, '');
     const vlogClicks = new Map();
     let vlogClickHour = -1;
@@ -70,13 +70,27 @@
             <header class="iv-top"><h1>엔조이증권</h1><span class="iv-market-heading"><span>운영시간 00:00~23:30</span><span id="market-home-status" class="iv-market-status">시세 연결 중</span></span></header>
             <div class="iv-account-heading"><img src="assets/enjoy-symbol.png" alt=""><strong id="investment-account-name">멤버 지갑</strong><span id="investment-account-status"></span></div>
             <div class="iv-balances"><div class="iv-balance"><span>보유 포인트</span><div class="iv-point-balance" aria-live="polite"><strong id="investment-account-points">—</strong><span id="investment-account-equivalent" class="iv-balance-equivalent" hidden></span></div><small>100포인트 = 1원</small></div></div>
-            <section class="iv-summary" aria-label="내 투자"><h2>내 투자</h2><p class="iv-total" id="investment-total">—</p><small>투자 기록을 불러오는 중이에요</small></section>
-            <div class="iv-toolbar"><div id="investment-list-currency"></div></div>
-            <div id="investment-index-list" class="iv-indices" role="region" aria-label="대표 지수"></div>
-            <div id="investment-stock-list"></div>
-            <section class="iv-ranking" aria-labelledby="investment-ranking-title">
-                <div class="iv-ranking-heading"><h2 id="investment-ranking-title">투자 순위</h2><small>총 투자금액 순</small></div>
-                <div id="investment-ranking"></div>
+            <nav class="iv-tabs iv-home-tabs" role="tablist" aria-label="투자 메뉴">
+                <button type="button" id="investment-portfolio-tab" role="tab" data-home-tab="portfolio" aria-controls="investment-portfolio-panel" aria-selected="true">내 투자</button>
+                <button type="button" id="investment-drops-tab" role="tab" data-home-tab="drops" aria-controls="investment-drops-panel" aria-selected="false" tabindex="-1">드롭 종목</button>
+                <button type="button" id="investment-ranking-tab" role="tab" data-home-tab="ranking" aria-controls="investment-ranking-panel" aria-selected="false" tabindex="-1">투자 순위</button>
+            </nav>
+            <section id="investment-portfolio-panel" role="tabpanel" aria-labelledby="investment-portfolio-tab">
+                <section class="iv-summary" aria-label="내 투자"><p class="iv-total" id="investment-total">—</p><small>투자 기록을 불러오는 중이에요</small></section>
+                <div class="iv-toolbar iv-portfolio-toolbar"><div class="iv-segment" role="group" aria-label="보유 토큰 표시 기준"><button type="button" data-holding-view="price" aria-pressed="false">현재가</button><button type="button" data-holding-view="value" aria-pressed="true">평가금</button></div><div id="investment-list-currency"></div></div>
+                <div id="investment-portfolio-list" aria-live="polite"></div>
+            </section>
+            <section id="investment-drops-panel" role="tabpanel" aria-labelledby="investment-drops-tab" hidden>
+                <div class="iv-toolbar"><div id="investment-drops-currency"></div></div>
+                <div id="investment-index-list" class="iv-indices" role="region" aria-label="대표 지수"></div>
+                <div id="investment-stock-list"></div>
+            </section>
+            <section id="investment-ranking-panel" role="tabpanel" aria-labelledby="investment-ranking-tab" hidden>
+                <div class="iv-toolbar"><div id="investment-ranking-currency"></div></div>
+                <section class="iv-ranking" aria-labelledby="investment-ranking-title">
+                    <div class="iv-ranking-heading"><h2 id="investment-ranking-title">투자 순위</h2><small>총 투자금액 순</small></div>
+                    <div id="investment-ranking"></div>
+                </section>
             </section>
         </section>
         <section id="investment-detail" class="iv-detail" aria-label="종목 상세" hidden>
@@ -179,15 +193,26 @@
         renderRanking();
     }
     function renderPortfolio() {
-        window.enjoyInvestmentPortfolio?.render({ currency: state.currency, selected: state.selected, tab: state.tab, active: isActive() });
+        window.enjoyInvestmentPortfolio?.render({ currency: state.currency, selected: state.selected, tab: state.tab, holdingView: state.holdingView, active: isActive() });
     }
     function renderRanking() {
         if (window.enjoyInvestmentPortfolio) { renderPortfolio(); return; }
         $('investment-ranking').innerHTML = '<p class="iv-ranking-empty">투자 기록에 연결하지 못했어요. 새로고침해 주세요.</p>';
+        $('investment-portfolio-list').innerHTML = '<p class="iv-ranking-empty">보유 내역에 연결하지 못했어요. 새로고침해 주세요.</p>';
+    }
+    function renderHomeTabs() {
+        ['portfolio', 'drops', 'ranking'].forEach(name => {
+            const active = state.homeTab === name;
+            $('investment-' + name + '-panel').hidden = !active;
+            const tab = $('investment-' + name + '-tab');
+            tab.setAttribute('aria-selected', String(active));
+            tab.setAttribute('tabindex', active ? '0' : '-1');
+        });
     }
     function renderList() {
         ['investment-index-list','investment-stock-list'].forEach(id => $(id).setAttribute('aria-busy', String(marketLoading())));
-        $('investment-list-currency').innerHTML = currencyControl();
+        ['investment-list-currency', 'investment-drops-currency', 'investment-ranking-currency'].forEach(id => { $(id).innerHTML = currencyControl(); });
+        renderHomeTabs();
         $('investment-total').textContent = '—';
         $('investment-index-list').innerHTML = stocks.filter(stock => stock.kind === 'index').map(stock => `<button type="button" class="iv-index" data-stock="${stock.id}" aria-label="${stock.name} 종목 상세 보기"><span class="iv-index-name"><small>지수</small><strong>${stock.name}</strong></span><strong class="iv-index-price">${quoteMarkup(priceLabel(stock), 'price')}</strong><small class="${trendClass(stock)}">${quoteMarkup(feed.ready ? percentLabel(stock) : '—', 'rate')}</small></button>`).join('');
         const listedStocks = stocks.filter(stock => stock.kind === 'stock');
@@ -727,14 +752,24 @@
         $('investment-detail').hidden = true;
         $('wallet-scroll').scrollTop = 0;
         if (window.setWalletNavCompact) window.setWalletNavCompact(false);
-        if (restoreFocus && previous) root.querySelector('[data-stock="' + previous + '"]')?.focus({ preventScroll: true });
+        if (restoreFocus && previous) {
+            const panel = $('investment-' + state.homeTab + '-panel');
+            (panel.querySelector('[data-stock="' + previous + '"]') || $('investment-' + state.homeTab + '-tab')).focus({ preventScroll: true });
+        }
         syncOrPause();
     }
     root.addEventListener('click', event => {
         const button = event.target.closest('button');
         if (!button || button.disabled) return;
         if (window.haptic) window.haptic();
-        if (button.dataset.stock) {
+        if (button.dataset.homeTab && ['portfolio', 'drops', 'ranking'].includes(button.dataset.homeTab)) {
+            state.homeTab = button.dataset.homeTab;
+            renderHomeTabs();
+        } else if (button.dataset.holdingView) {
+            state.holdingView = button.dataset.holdingView;
+            root.querySelectorAll('[data-holding-view]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.holdingView === state.holdingView)));
+            renderPortfolio();
+        } else if (button.dataset.stock) {
             clearChartInspection(false);
             stopQuotePrice('investment-price');
             state.selected = button.dataset.stock; state.period = 'day'; state.tab = 'chart'; state.quotePeriod = 'daily';
@@ -745,7 +780,7 @@
         else if (button.dataset.currency) {
             state.currency = button.dataset.currency;
             renderList(); renderDetail();
-            const container = state.selected ? $('investment-detail-currency') : $('investment-list-currency');
+            const container = state.selected ? $('investment-detail-currency') : $(state.homeTab === 'portfolio' ? 'investment-list-currency' : 'investment-' + state.homeTab + '-currency');
             container.querySelector('[data-currency="' + state.currency + '"]').focus({ preventScroll: true });
         }
         else if (button.dataset.quotePeriod) { state.quotePeriod = button.dataset.quotePeriod; renderCloses(); }
@@ -766,6 +801,16 @@
             clearChartInspection(false);
             state.tab = button.dataset.tab; renderDetail();
         }
+    });
+    root.addEventListener('keydown', event => {
+        const tab = event.target.closest('[data-home-tab]');
+        if (!tab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const names = ['portfolio', 'drops', 'ranking'], current = names.indexOf(state.homeTab);
+        const index = event.key === 'Home' ? 0 : event.key === 'End' ? names.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + names.length) % names.length;
+        state.homeTab = names[index];
+        renderHomeTabs();
+        $('investment-' + state.homeTab + '-tab').focus({ preventScroll: true });
     });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape' && state.selected && !root.classList.contains('hidden') && !$('meeting-screen').classList.contains('hidden')) showList(true);
