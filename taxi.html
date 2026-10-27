@@ -9,10 +9,10 @@
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="taxi.css?v=20261027-1">
+    <link rel="stylesheet" href="taxi.css?v=20261027-4">
     <script defer src="taxi-fares.js?v=20261027-3"></script>
     <script defer src="taxi-meter-engine.js?v=20261027-3"></script>
-    <script defer src="taxi.js?v=20261027-3"></script>
+    <script defer src="taxi.js?v=20261027-4"></script>
 </head>
 <body>
     <div class="taxi-app">
@@ -23,22 +23,29 @@
         </header>
         <main>
             <div class="taxi-intro"><p>이동하는 만큼, 한눈에</p><h2>지금 요금은 얼마일까요?</h2></div>
-            <section class="taxi-meter" aria-label="예상 택시 요금">
-                <div class="taxi-meter-top"><span id="taxi-state" class="taxi-state" data-state="idle"><span></span><b>출발 전</b></span><span id="taxi-plan">서울 중형 · 일반</span></div>
-                <p class="taxi-fare-label">예상 요금</p>
-                <p class="taxi-fare"><strong id="taxi-fare">4,800</strong><span>원</span></p>
-                <p id="taxi-fare-hint" class="taxi-fare-hint">출발하면 기본요금부터 시작해요</p>
-                <div class="taxi-metrics">
-                    <div><span>이동 거리</span><strong id="taxi-distance">0.00 <small>km</small></strong></div>
-                    <div><span>탑승 시간</span><strong id="taxi-duration">00:00</strong></div>
-                    <div><span>현재 속도</span><strong id="taxi-speed">— <small>km/h</small></strong></div>
+            <section id="taxi-meter" class="taxi-meter" data-state="idle" aria-label="예상 택시 요금">
+                <div class="taxi-hardware-heading"><span class="taxi-hardware-brand">ENJOY <span>TAXIMETER</span></span><span class="taxi-power"><i aria-hidden="true"></i>전원</span></div>
+                <div class="taxi-display">
+                    <div class="taxi-meter-top"><span id="taxi-state" class="taxi-state" data-state="idle"><span></span><b>출발 전</b></span><span id="taxi-plan">서울 중형 · 일반</span></div>
+                    <div class="taxi-fare-heading"><p class="taxi-fare-label">예상 요금</p><span>요금 <b>원</b></span></div>
+                    <div class="taxi-fare"><strong id="taxi-fare" class="taxi-sr-only">4,800</strong><span id="taxi-fare-digits" class="taxi-fare-digits" aria-hidden="true"></span></div>
+                    <div class="taxi-indicators" aria-label="미터기 작동 상태"><span id="taxi-drive-lamp" data-active="false"><i aria-hidden="true"></i>주행</span><span id="taxi-time-lamp" data-active="false"><i aria-hidden="true"></i>시간</span><span id="taxi-surcharge-lamp" data-active="false"><i aria-hidden="true"></i>할증</span></div>
+                    <div class="taxi-metrics">
+                        <div><span>이동 거리</span><strong id="taxi-distance">0.00 <small>km</small></strong></div>
+                        <div><span>탑승 시간</span><strong id="taxi-duration">00:00</strong></div>
+                        <div><span>현재 속도</span><strong id="taxi-speed">— <small>km/h</small></strong></div>
+                    </div>
                 </div>
+                <div class="taxi-control-panel">
+                    <div class="taxi-control-caption"><span>운행 조작</span><span id="taxi-hardware-mode">빈차</span></div>
+                    <div class="taxi-actions">
+                        <button id="taxi-start" class="taxi-primary" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>미터기 시작</span></button>
+                        <button id="taxi-finish" class="taxi-secondary" type="button" hidden>종료</button>
+                    </div>
+                </div>
+                <p id="taxi-fare-hint" class="taxi-fare-hint">출발하면 기본요금부터 시작해요</p>
             </section>
             <div id="taxi-gps" class="taxi-gps" role="status" aria-live="polite"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span>시작을 누르면 현재 위치를 확인해요</span></div>
-            <div class="taxi-actions">
-                <button id="taxi-start" class="taxi-primary" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>미터기 시작</span></button>
-                <button id="taxi-finish" class="taxi-secondary" type="button" hidden>종료</button>
-            </div>
             <p id="taxi-feedback" class="taxi-feedback" role="status" aria-live="polite"></p>
             <section class="taxi-settings" aria-labelledby="taxi-settings-title">
                 <div class="taxi-section-heading"><h2 id="taxi-settings-title">요금 설정</h2><span id="taxi-settings-hint">출발 전에 선택해 주세요</span></div>

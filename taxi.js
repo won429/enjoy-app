@@ -101,11 +101,42 @@
         if (total >= 3600) parts.unshift(Math.floor(total / 3600));
         return parts.map(n => String(n).padStart(2, '0')).join(':');
     }
+    function displayFare(amount) {
+        $('taxi-fare').textContent = format(amount);
+        const digits = String(Math.round(amount));
+        const display = $('taxi-fare-digits');
+        if (display.dataset.value === digits) return;
+        display.dataset.value = digits;
+        // 글꼴을 내려받지 않아도 동일하게 표시되는 7분절 숫자. 읽기용 금액은 별도로 유지한다.
+        const shapes = [
+            '7,2 37,2 41,6 37,10 7,10 3,6',
+            '38,12 42,8 42,35 38,39 34,35 34,16',
+            '38,42 42,46 42,73 38,77 34,73 34,46',
+            '7,74 37,74 41,78 37,82 7,82 3,78',
+            '6,42 10,46 10,73 6,77 2,73 2,46',
+            '6,12 10,16 10,35 6,39 2,35 2,8',
+            '7,38 37,38 41,42 37,46 7,46 3,42'
+        ];
+        const lit = ['012345', '12', '01346', '01236', '1256', '02356', '023456', '012', '0123456', '012356'];
+        const cells = digits.padStart(Math.max(6, digits.length), ' ');
+        const glyphs = [...cells].map((digit, index) => '<g transform="translate(' + index * 52 + ',0)">' + shapes.map((points, segment) => '<polygon class="taxi-segment-' + (digit !== ' ' && lit[Number(digit)].includes(segment) ? 'on' : 'off') + '" points="' + points + '"/>').join('') + '</g>').join('');
+        display.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (cells.length * 52 - 8) + ' 84" aria-hidden="true" focusable="false">' + glyphs + '</svg>';
+    }
     function render() {
         const rate = meter.rates(settings, state === 'finished' ? trip.lastAt : Date.now(), trip.distance, trip.startedAt || Date.now());
         const labels = { idle: '출발 전', locating: '위치 확인 중', running: '측정 중', paused: '일시정지', finished: '측정 완료' };
         $('taxi-state').dataset.state = state;
         $('taxi-state').querySelector('b').textContent = labels[state];
+        $('taxi-meter').dataset.state = state;
+        $('taxi-hardware-mode').textContent = { idle: '빈차', locating: 'GPS 수신', running: '주행', paused: '정지', finished: '지불' }[state];
+        for (const [id, active, label] of [
+            ['taxi-drive-lamp', state === 'running' && speed !== null && speed >= 1.5, '주행'],
+            ['taxi-time-lamp', state === 'running' && speed !== null && speed < rate.slowSpeed, '시간요금'],
+            ['taxi-surcharge-lamp', rate.surcharge > 0, '할증']
+        ]) {
+            $(id).dataset.active = String(active);
+            $(id).ariaLabel = label + (active ? ' 적용 중' : ' 대기');
+        }
         $('taxi-plan').textContent = rate.name + (settings.preset === 'custom' ? '' : ' 중형') + ' · ' + (rate.surcharge ? format(rate.surcharge) + '% 할증' : '일반');
         let shownTrip = trip;
         if (state === 'running' && pendingSlow > 0) {
@@ -113,7 +144,7 @@
             try { meter.advance(shownTrip, settings, { slowSeconds: pendingSlow, from: billedAt, to: Math.max(billedAt, Date.now()) }); }
             catch (_) { shownTrip = trip; }
         }
-        $('taxi-fare').textContent = format(meter.fare(shownTrip, rate, state === 'finished'));
+        displayFare(meter.fare(shownTrip, rate, state === 'finished'));
         $('taxi-distance').innerHTML = (trip.distance / 1000).toFixed(2) + ' <small>km</small>';
         $('taxi-duration').textContent = duration(trip.elapsed);
         $('taxi-speed').innerHTML = (state === 'running' && speed !== null ? Math.round(speed) : '—') + ' <small>km/h</small>';
