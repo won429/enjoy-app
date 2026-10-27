@@ -25,14 +25,15 @@ test('authenticated investment API crosses the private RPC binding and commits p
     if (p === ':commit') {
       const body = await request.json();
       for (const write of body.writes) {
-        const key = write.update.name.slice(base.length), old = docs.get(key);
+        const key = (write.update?.name || write.verify).slice(base.length), old = docs.get(key);
         if (write.currentDocument?.exists === false && old || write.currentDocument?.updateTime && old?.updateTime !== write.currentDocument.updateTime) {
           return Response.json({ error: { status: 'FAILED_PRECONDITION' } }, { status: 409 });
         }
       }
       for (const write of body.writes) {
+        if (write.verify) continue;
         const key = write.update.name.slice(base.length), old = docs.get(key);
-        seed(key, write.updateMask ? { ...old.fields, ...write.update.fields } : write.update.fields);
+        seed(key, write.updateMask ? { ...old?.fields, ...write.update.fields } : write.update.fields);
       }
       commits++; return Response.json({ commitTime: new Date(now).toISOString() });
     }
@@ -51,14 +52,15 @@ test('authenticated investment API crosses the private RPC binding and commits p
   const bundle = await esbuild.build({ stdin: { contents: `export { default, InvestmentMarket } from ${JSON.stringify(path.join(dir, 'investment-worker.js'))}; export { InvestmentLedger } from ${JSON.stringify(path.join(dir, 'investment-ledger.js'))};`, resolveDir: dir },
     bundle: true, write: false, format: 'esm', platform: 'browser', external: ['cloudflare:workers'] });
   const persist = fs.mkdtempSync(path.join(os.tmpdir(), 'investment-ledger-test-'));
-  const mf = new Miniflare(convertV4MiniflareOptions({ name: 'investment', modules: true, script: `Date.now=()=>${now};\n` + bundle.outputFiles[0].text,
+  const options = trading => convertV4MiniflareOptions({ name: 'investment', modules: true, script: `Date.now=()=>${now};\n` + bundle.outputFiles[0].text,
     compatibilityDate: '2026-08-19', resourcePersistencePath: persist,
     durableObjects: { INVESTMENT_MARKET: { className: 'InvestmentMarket', useSQLite: true } },
     serviceBindings: { INVESTMENT_LEDGER: { name: 'investment', entrypoint: 'InvestmentLedger' } },
-    bindings: { ALLOWED_ORIGINS: origin, FIREBASE_PROJECT_ID: project, FIREBASE_SERVICE_ACCOUNT: JSON.stringify(secret), TRADING_ENABLED: 'true' }, outboundService }));
-  const token = (uid = 'a') => {
+    bindings: { ALLOWED_ORIGINS: origin, FIREBASE_PROJECT_ID: project, FIREBASE_SERVICE_ACCOUNT: JSON.stringify(secret), TRADING_ENABLED: String(trading) }, outboundService });
+  const mf = new Miniflare(options(true));
+  const token = (uid = 'a', email = 'member@example.test', email_verified = true) => {
     const header = Buffer.from(JSON.stringify({ alg: 'RS256', kid: jwk.kid })).toString('base64url');
-    const payload = Buffer.from(JSON.stringify({ aud: project, iss: 'https://securetoken.google.com/' + project, sub: uid,
+    const payload = Buffer.from(JSON.stringify({ aud: project, iss: 'https://securetoken.google.com/' + project, sub: uid, email, email_verified,
       iat: now / 1000 - 10, auth_time: now / 1000 - 10, exp: now / 1000 + 3600, firebase: { sign_in_provider: 'google.com' } })).toString('base64url');
     return header + '.' + payload + '.' + crypto.sign('RSA-SHA256', Buffer.from(header + '.' + payload), pair.privateKey).toString('base64url');
   };
@@ -80,5 +82,26 @@ test('authenticated investment API crosses the private RPC binding and commits p
     const rank = await (await get('/ranking')).json(); assert.deepEqual(rank.rows.map(r => [r.uid, r.rank, r.investedPoints]), [['a', 1, 200], ['b', 2, 0]]);
     assert.equal((await post({ ...input, requestId: crypto.randomUUID(), expectedPrice: 1 })).status, 409); assert.equal(commits, 1);
     assert.equal((await get('/orders', { method: 'POST', headers: { Origin: '' }, body: '{}' })).status, 403);
+    // Grants are a separate authenticated administrator action. Keeping the
+    // service locked must not require opening public purchases or sales.
+    await mf.setOptions(options(false));
+    assert.equal((await (await get('/market')).json()).tradingEnabled, false);
+    assert.equal((await post({ ...input, requestId: crypto.randomUUID() })).status, 423);
+    assert.equal((await get('/admin/grants')).status, 403);
+    const adminHeaders = { Authorization: 'Bearer ' + token('a', 'gwanlija180@gmail.com') };
+    assert.equal((await get('/admin/grants', { headers: { Authorization: 'Bearer ' + token('a', 'gwanlija180@gmail.com', false) } })).status, 403);
+    assert.equal((await (await get('/account', { headers: adminHeaders })).json()).canGrant, true);
+    const preview = await (await get('/admin/grants', { headers: adminHeaders })).json();
+    assert.equal(preview.status, 'pending'); assert.equal(preview.totalQuantity, 4); assert.equal(commits, 1);
+    const grantInput = { campaignId: preview.campaignId, expectedPrice: preview.price, expectedRevision: preview.quoteRevision,
+      recipientKey: preview.recipientKey, expiresAt: now + 60000 };
+    const grant = () => get('/admin/grants', { method: 'POST', headers: { ...adminHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify(grantInput) });
+    const granted = await grant(); assert.equal(granted.status, 200); assert.equal((await granted.json()).status, 'completed');
+    assert.equal(commits, 2); assert.equal((await (await grant()).json()).duplicate, true); assert.equal(commits, 2);
+    a = await (await get('/account')).json(); assert.equal(a.quantity, 4); assert.equal(a.points, 800); assert.ok(a.orders.some(order => order.side === 'grant'));
+    const b = await (await get('/account', { headers: { Authorization: 'Bearer ' + token('b') } })).json();
+    assert.equal(b.quantity, 2); assert.equal(b.points, 9000);
+    assert.equal((await post({ ...input, requestId: crypto.randomUUID() })).status, 423);
+    assert.equal((await (await get('/market')).json()).tradingEnabled, false);
   } finally { await mf.dispose(); fs.rmSync(persist, { recursive: true, force: true }); }
 });

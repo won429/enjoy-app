@@ -50,6 +50,7 @@
     function render(next) {
         if (next) context = { ...context, ...next };
         switchAccount();
+        window.enjoyInvestmentGrantAdmin?.render(account);
         const panel = $('investment-ranking');
         if (!panel) return;
         if (!uid) panel.innerHTML = '<p class="iv-ranking-empty">로그인하면 멤버 투자 순위를 볼 수 있어요.</p>';
@@ -71,8 +72,8 @@
             holdings.hidden = context.tab !== 'holdings' || context.selected !== 'en-joy';
             const rows = account?.orders || [];
             holdings.innerHTML = !account ? '<p class="iv-book-notice">' + escape(!uid ? '로그인 후 확인해 주세요.' : error || '보유 내역을 불러오는 중이에요.') + '</p>' :
-                '<dl class="iv-holdings-summary"><div><dt>보유 드롭</dt><dd>' + account.quantity.toLocaleString('ko-KR') + '토큰</dd></div><div><dt>투자금액</dt><dd>' + cash(account.costBasis) + '</dd></div><div><dt>평가금액</dt><dd>' + cash(account.marketValue) + '</dd></div><div><dt>평가수익</dt><dd class="' + changeClass(account.profit) + '">' + cash(account.profit) + ' (' + rate(account.returnPercent) + ')</dd></div><div><dt>누적 실현수익</dt><dd>' + cash(account.realizedProfit) + '</dd></div></dl><h3 class="iv-orders-heading">최근 거래</h3>' +
-                (rows.length ? '<ol class="iv-orders-list">' + rows.map(row => '<li><div><strong class="' + (row.side === 'buy' ? 'iv-up' : 'iv-down') + '">' + (row.side === 'buy' ? '구매' : '판매') + ' ' + row.quantity.toLocaleString('ko-KR') + '토큰</strong><time>' + new Date(row.executedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + '</time></div><strong>' + cash(row.total) + '</strong></li>').join('') + '</ol>' : '<p class="iv-book-notice">아직 거래 내역이 없어요.</p>');
+                '<dl class="iv-holdings-summary"><div><dt>보유 드롭</dt><dd>' + account.quantity.toLocaleString('ko-KR') + '토큰</dd></div><div><dt>투자금액</dt><dd>' + cash(account.costBasis) + '</dd></div><div><dt>평가금액</dt><dd>' + cash(account.marketValue) + '</dd></div><div><dt>평가수익</dt><dd class="' + changeClass(account.profit) + '">' + cash(account.profit) + ' (' + rate(account.returnPercent) + ')</dd></div><div><dt>누적 실현수익</dt><dd>' + cash(account.realizedProfit) + '</dd></div></dl><h3 class="iv-orders-heading">최근 내역</h3>' +
+                (rows.length ? '<ol class="iv-orders-list">' + rows.map(row => '<li><div><strong class="' + (row.side === 'grant' ? 'iv-flat' : row.side === 'buy' ? 'iv-up' : 'iv-down') + '">' + (row.side === 'grant' ? '지급' : row.side === 'buy' ? '구매' : '판매') + ' ' + row.quantity.toLocaleString('ko-KR') + '토큰</strong><time>' + new Date(row.executedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + '</time></div><strong>' + (row.side === 'grant' ? '기준금액 ' + cash(row.total) : cash(row.total)) + '</strong></li>').join('') + '</ol>' : '<p class="iv-book-notice">아직 거래 내역이 없어요.</p>');
         }
         const note = $('investment-trade-note'), controls = $('investment-order-controls'), amount = $('investment-order-total');
         if (!note || !controls) return;
@@ -145,6 +146,7 @@
         }
     }
     function mount() {
+        window.enjoyInvestmentGrantAdmin?.mount();
         const tab = $('investment-holdings-tab');
         if (tab) { tab.disabled = false; tab.dataset.tab = 'holdings'; tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', 'investment-holdings-panel'); }
         root.addEventListener('input', event => { if (event.target.id === 'investment-order-quantity') render(); });
@@ -160,6 +162,7 @@
     }
     window.enjoyInvestmentPortfolio = {
         mount, render, refresh, snapshot: () => account,
+        reload() { generation++; request = null; lastRead = 0; return refresh(true); },
         updateMarket(data) { market = { ...data, receivedAt: Date.now() }; render(); if (context.active) refresh(true); },
         setActive(active) { context.active = active; render(); if (active) refresh(); else { clearTimeout(timer); timer = null; } }
     };

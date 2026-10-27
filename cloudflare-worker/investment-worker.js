@@ -33,12 +33,12 @@ export default {
     if (request.method === 'OPTIONS') {
       response = new Response(null, { status: 204, headers: { 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Max-Age': '86400' } });
     } else if (url.pathname === '/health' && request.method === 'GET') {
-      response = json({ ok: true, service: 'enjoy-investment', version: 9, updateIntervalMs: UPDATE_MS, tradingEnabled: env.TRADING_ENABLED === 'true' && !!env.INVESTMENT_LEDGER, ledgerReady: env.INVESTMENT_LEDGER ? await env.INVESTMENT_LEDGER.ready(url.searchParams.get('check') === 'ledger').catch(() => false) : false, indexMode: 'manual', stockInfluenceWeights: INFLUENCE_WEIGHTS, indexInfluencePeriod: 'kst-day', quoteComparison: QUOTE_COMPARISON,
+      response = json({ ok: true, service: 'enjoy-investment', version: 10, updateIntervalMs: UPDATE_MS, tradingEnabled: env.TRADING_ENABLED === 'true' && !!env.INVESTMENT_LEDGER, ledgerReady: env.INVESTMENT_LEDGER ? await env.INVESTMENT_LEDGER.ready(url.searchParams.get('check') === 'ledger').catch(() => false) : false, indexMode: 'manual', stockInfluenceWeights: INFLUENCE_WEIGHTS, indexInfluencePeriod: 'kst-day', quoteComparison: QUOTE_COMPARISON,
         maxHourlyBps: configuredMaxHourlyBps(env), priceModel: STOCK_PRICE_MODEL, randomRangeBps: configuredMaxHourlyBps(env) });
-    } else if (['/account', '/ranking', '/orders'].includes(url.pathname)) {
+    } else if (['/account', '/ranking', '/orders', '/admin/grants'].includes(url.pathname)) {
       try {
         if (!origin) response = json({ error: '허용된 사이트에서 이용해 주세요.' }, 403);
-        else if (request.method !== (url.pathname === '/orders' ? 'POST' : 'GET')) response = json({ error: 'Method not allowed' }, 405);
+        else if (!(url.pathname === '/admin/grants' ? ['GET', 'POST'].includes(request.method) : request.method === (url.pathname === '/orders' ? 'POST' : 'GET'))) response = json({ error: 'Method not allowed' }, 405);
         else if (!env.INVESTMENT_LEDGER || !env.INVESTMENT_MARKET) response = json({ error: '투자 기록 서버를 준비 중이에요.' }, url.pathname === '/orders' ? 423 : 503);
         else {
           const authorization = request.headers.get('Authorization') || '';
@@ -59,7 +59,8 @@ export default {
             const quote = { price, revision: market.revision, asOf: market.asOf, nextUpdateAt: market.nextUpdateAt,
               stale: market.stale, enabled: env.TRADING_ENABLED === 'true' };
             const result = await env.INVESTMENT_LEDGER.request(token,
-              url.pathname === '/orders' ? 'order' : url.pathname === '/account' ? 'account' : 'ranking', input, quote);
+              url.pathname === '/admin/grants' ? request.method === 'POST' ? 'grant' : 'grant-preview' :
+                url.pathname === '/orders' ? 'order' : url.pathname === '/account' ? 'account' : 'ranking', input, quote);
             response = json(result.ok ? result.data : { error: result.error, code: result.code }, result.ok ? 200 : result.status);
           }
         }

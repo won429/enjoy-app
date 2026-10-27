@@ -111,3 +111,11 @@ test('the unopened service preserves account and ranking reads while blocking bo
   await ui.action('buy'); await ui.action('sell');
   assert.equal(s.count(), 0); assert.equal(ui.confirms(), 0);
 });
+test('a free token grant is labelled as a grant and reference amount rather than a sale', async () => {
+  const s = server(), a = s.accounts.get('a');
+  a.quantity = 2; a.costBasis = 246; a.marketValue = 246;
+  a.orders = [{ side: 'grant', quantity: 2, total: 246, executedAt: at }];
+  const ui = setup(s.fetch); await flush();
+  const html = ui.element('investment-holdings-panel').innerHTML;
+  assert.match(html, /지급 2토큰/); assert.match(html, /기준금액 246 P/); assert.doesNotMatch(html, /판매 2토큰/);
+});

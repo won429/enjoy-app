@@ -3,7 +3,7 @@ import { retryConflict } from './prediction-firestore.js';
 // Reuse the already server-only Firestore namespace. No new client write permission
 // or service-account key is needed, and no prediction parent document is created.
 export const ACCOUNTS = 'drop_predictions/investment-ledger-v1/accounts';
-const MEMBERS = new Set(['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사', '관리자']);
+export const MEMBERS = new Set(['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사', '관리자']);
 const fail = (message, status = 400, code = 'invalid-order') => { throw Object.assign(new Error(message), { status, code }); };
 const safe = value => Number.isSafeInteger(value) && value >= 0;
 const requestId = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
