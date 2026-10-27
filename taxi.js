@@ -23,6 +23,7 @@
     let locatingFrom = 'idle';
     let pendingSlow = 0;
     let billedAt = 0;
+    let noticeTimer = null;
 
     function emptyTrip() { return { distance: 0, elapsed: 0, slowSeconds: 0, startedAt: 0, lastAt: 0, base: 0, amount: 0, baseDone: false, remaining: 0 }; }
     function validSettings(value) {
@@ -66,8 +67,23 @@
             if (state === 'paused') feedback('이전 측정을 불러왔어요. 계속하려면 다시 시작해 주세요.');
         } catch (_) { /* 손상되거나 차단된 저장소는 무시한다. */ }
     }
-    function feedback(message) { $('taxi-feedback').textContent = message; }
-    function gps(message) { $('taxi-gps').querySelector('span').textContent = message; }
+    function feedback(message) {
+        clearTimeout(noticeTimer);
+        $('taxi-feedback').textContent = message.replaceAll('GPS', '위치');
+        $('taxi-feedback').hidden = !message;
+        if (message) noticeTimer = setTimeout(() => { $('taxi-feedback').hidden = true; }, 6000);
+    }
+    function gps(message) {
+        let compact = message.replaceAll('GPS', '위치');
+        if (/연결됨/.test(message)) compact = compact.replace('위치 연결됨 · 위치 오차 약 ', '위치 연결 · 오차 ');
+        else if (/시작을 누르면/.test(message)) compact = '위치 대기';
+        else if (/오차가 커/.test(message)) compact = '위치 오차 큼 · 수신 대기';
+        else if (/권한/.test(message)) compact = '위치 권한 확인 필요';
+        else if (/확인하고/.test(message)) compact = '위치 수신 중';
+        else if (/멈췄|취소|일시정지/.test(message)) compact = '측정 정지';
+        else if (/마쳤|마지막/.test(message)) compact = '측정 완료';
+        $('taxi-gps').querySelector('span').textContent = compact;
+    }
     function syncInputs() {
         $('taxi-preset').value = settings.preset;
         $('taxi-surcharge').value = String(settings.surcharge);
@@ -121,14 +137,18 @@
         const cells = digits.padStart(Math.max(6, digits.length), ' ');
         const glyphs = [...cells].map((digit, index) => '<g transform="translate(' + index * 52 + ',0)">' + shapes.map((points, segment) => '<polygon class="taxi-segment-' + (digit !== ' ' && lit[Number(digit)].includes(segment) ? 'on' : 'off') + '" points="' + points + '"/>').join('') + '</g>').join('');
         display.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (cells.length * 52 - 8) + ' 84" aria-hidden="true" focusable="false">' + glyphs + '</svg>';
+        if (state === 'running' && typeof display.animate === 'function' && !window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+            display.animate([{ opacity: .72 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
+        }
     }
     function render() {
         const rate = meter.rates(settings, state === 'finished' ? trip.lastAt : Date.now(), trip.distance, trip.startedAt || Date.now());
-        const labels = { idle: '출발 전', locating: '위치 확인 중', running: '측정 중', paused: '일시정지', finished: '측정 완료' };
+        const labels = { idle: '빈차', locating: '수신', running: '주행', paused: '정지', finished: '지불' };
         $('taxi-state').dataset.state = state;
         $('taxi-state').querySelector('b').textContent = labels[state];
         $('taxi-meter').dataset.state = state;
-        $('taxi-hardware-mode').textContent = { idle: '빈차', locating: 'GPS 수신', running: '주행', paused: '정지', finished: '지불' }[state];
+        $('taxi-hardware-mode').textContent = labels[state];
+        $('taxi-meter').dataset.motion = state === 'running' && speed !== null && speed >= 1.5 ? 'distance' : 'none';
         for (const [id, active, label] of [
             ['taxi-drive-lamp', state === 'running' && speed !== null && speed >= 1.5, '주행'],
             ['taxi-time-lamp', state === 'running' && speed !== null && speed < rate.slowSpeed, '시간요금'],
@@ -145,13 +165,14 @@
             catch (_) { shownTrip = trip; }
         }
         displayFare(meter.fare(shownTrip, rate, state === 'finished'));
-        $('taxi-distance').innerHTML = (trip.distance / 1000).toFixed(2) + ' <small>km</small>';
+        $('taxi-distance').innerHTML = (trip.distance / 1000).toFixed(2) + ' <small>㎞</small>';
         $('taxi-duration').textContent = duration(trip.elapsed);
-        $('taxi-speed').innerHTML = (state === 'running' && speed !== null ? Math.round(speed) : '—') + ' <small>km/h</small>';
+        $('taxi-speed').innerHTML = (state === 'running' && speed !== null ? Math.round(speed) : '—') + ' <small>㎞/시</small>';
         $('taxi-fare-hint').textContent = state === 'finished' ? '십원 자리에서 반올림한 예상 지불요금이에요' : state === 'paused' ? '일시정지 중에는 요금이 올라가지 않아요' : state === 'idle' ? '출발하면 기본요금부터 시작해요' : !trip.baseDone ? '기본구간도 거리와 저속 시간이 함께 소진돼요' : '이동 거리와 저속 시간을 함께 반영하고 있어요';
-        const action = { idle: ['play', '미터기 시작'], locating: ['xmark', '위치 확인 취소'], running: ['pause', '일시정지'], paused: ['play', '이어서 측정'], finished: ['rotate-right', '새로 측정'] }[state];
-        $('taxi-start').innerHTML = '<i class="fa-solid fa-' + action[0] + '" aria-hidden="true"></i><span>' + action[1] + '</span>';
-        $('taxi-finish').hidden = !['running', 'paused'].includes(state);
+        const action = { idle: ['주행', '운행 시작'], locating: ['취소', '위치 확인 취소'], running: ['정지', '운행 일시정지'], paused: ['계속', '이어서 측정'], finished: ['다시', '새로 측정'] }[state];
+        $('taxi-start').innerHTML = '<span>' + action[0] + '</span>';
+        $('taxi-start').ariaLabel = action[1];
+        $('taxi-finish').disabled = !['running', 'paused'].includes(state);
         $('taxi-rate-controls').disabled = state !== 'idle';
         $('taxi-settings-hint').textContent = state === 'idle' ? '출발 전에 선택해 주세요' : '이번 탑승에 적용한 기준이에요';
         $('taxi-custom').hidden = settings.preset !== 'custom';
@@ -355,6 +376,8 @@
     });
     document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
     window.addEventListener('pagehide', suspend);
+    $('taxi-open-settings').addEventListener('click', () => { $('taxi-settings-dialog').showModal(); });
+    $('taxi-close-settings').addEventListener('click', () => { $('taxi-settings-dialog').close(); });
     restore(); syncInputs(); render();
     if (state === 'paused') gps('이전 측정이 일시정지되어 있어요');
     if (state === 'finished') gps('마지막 측정 결과예요');

@@ -3,52 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#111214">
     <title>택시 미터기 · 엔조이</title>
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="taxi.css?v=20261027-4">
+    <link rel="preload" href="assets/taxi-meter-body-v2.jpg" as="image">
+    <link rel="stylesheet" href="taxi.css?v=20261027-5">
     <script defer src="taxi-fares.js?v=20261027-3"></script>
     <script defer src="taxi-meter-engine.js?v=20261027-3"></script>
-    <script defer src="taxi.js?v=20261027-4"></script>
+    <script defer src="taxi.js?v=20261027-5"></script>
 </head>
 <body>
     <div class="taxi-app">
-        <header class="taxi-header">
-            <button id="taxi-back" class="taxi-icon-button" type="button" aria-label="홈으로 돌아가기"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-            <h1>택시 미터기</h1>
-            <span class="taxi-header-icon" aria-hidden="true"><i class="fa-solid fa-taxi"></i></span>
-        </header>
         <main>
-            <div class="taxi-intro"><p>이동하는 만큼, 한눈에</p><h2>지금 요금은 얼마일까요?</h2></div>
             <section id="taxi-meter" class="taxi-meter" data-state="idle" aria-label="예상 택시 요금">
-                <div class="taxi-hardware-heading"><span class="taxi-hardware-brand">ENJOY <span>TAXIMETER</span></span><span class="taxi-power"><i aria-hidden="true"></i>전원</span></div>
+                <nav class="taxi-device-nav" aria-label="미터기 메뉴">
+                    <button id="taxi-back" class="taxi-icon-button" type="button" aria-label="홈으로 돌아가기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+                    <button id="taxi-open-settings" class="taxi-icon-button" type="button" aria-label="요금 설정 열기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="15" cy="17" r="2.5"/></svg></button>
+                </nav>
                 <div class="taxi-display">
-                    <div class="taxi-meter-top"><span id="taxi-state" class="taxi-state" data-state="idle"><span></span><b>출발 전</b></span><span id="taxi-plan">서울 중형 · 일반</span></div>
-                    <div class="taxi-fare-heading"><p class="taxi-fare-label">예상 요금</p><span>요금 <b>원</b></span></div>
-                    <div class="taxi-fare"><strong id="taxi-fare" class="taxi-sr-only">4,800</strong><span id="taxi-fare-digits" class="taxi-fare-digits" aria-hidden="true"></span></div>
-                    <div class="taxi-indicators" aria-label="미터기 작동 상태"><span id="taxi-drive-lamp" data-active="false"><i aria-hidden="true"></i>주행</span><span id="taxi-time-lamp" data-active="false"><i aria-hidden="true"></i>시간</span><span id="taxi-surcharge-lamp" data-active="false"><i aria-hidden="true"></i>할증</span></div>
-                    <div class="taxi-metrics">
-                        <div><span>이동 거리</span><strong id="taxi-distance">0.00 <small>km</small></strong></div>
-                        <div><span>탑승 시간</span><strong id="taxi-duration">00:00</strong></div>
-                        <div><span>현재 속도</span><strong id="taxi-speed">— <small>km/h</small></strong></div>
+                    <div class="taxi-meter-top"><span id="taxi-state" class="taxi-state" data-state="idle"><span></span><b>빈차</b></span><span id="taxi-plan">서울 · 중형</span></div>
+                    <div class="taxi-fare-window">
+                        <div class="taxi-fare-heading"><span>요금</span><span class="taxi-estimate">예상</span></div>
+                        <div class="taxi-fare"><strong id="taxi-fare" class="taxi-sr-only">4,800</strong><span id="taxi-fare-digits" class="taxi-fare-digits" aria-hidden="true"></span></div>
+                        <div class="taxi-fare-unit">원</div>
                     </div>
+                    <div class="taxi-indicators" aria-label="미터기 작동 상태"><span id="taxi-drive-lamp" data-active="false"><i aria-hidden="true"></i>주행</span><span id="taxi-time-lamp" data-active="false"><i aria-hidden="true"></i>시간</span><span id="taxi-surcharge-lamp" data-active="false"><i aria-hidden="true"></i>할증</span></div>
+                    <div class="taxi-motion-rail" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="taxi-metrics" aria-label="운행 정보">
+                    <div><span>거리</span><strong id="taxi-distance">0.00 <small>㎞</small></strong></div>
+                    <div><span>시간</span><strong id="taxi-duration">00:00</strong></div>
+                    <div><span>속도</span><strong id="taxi-speed">— <small>㎞/시</small></strong></div>
                 </div>
                 <div class="taxi-control-panel">
-                    <div class="taxi-control-caption"><span>운행 조작</span><span id="taxi-hardware-mode">빈차</span></div>
+                    <span id="taxi-hardware-mode" class="taxi-sr-only">빈차</span>
                     <div class="taxi-actions">
-                        <button id="taxi-start" class="taxi-primary" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>미터기 시작</span></button>
-                        <button id="taxi-finish" class="taxi-secondary" type="button" hidden>종료</button>
+                        <button id="taxi-start" class="taxi-primary" type="button" aria-label="운행 시작"><span>주행</span></button>
+                        <button id="taxi-finish" class="taxi-secondary" type="button" aria-label="운행 종료 및 예상요금 확인" disabled>지불</button>
                     </div>
                 </div>
-                <p id="taxi-fare-hint" class="taxi-fare-hint">출발하면 기본요금부터 시작해요</p>
+                <p id="taxi-fare-hint" class="taxi-sr-only">출발하면 기본요금부터 시작해요</p>
+                <div id="taxi-gps" class="taxi-gps" role="status" aria-live="polite"><span>위치 대기</span></div>
+                <p id="taxi-feedback" class="taxi-feedback" role="status" aria-live="polite" hidden></p>
             </section>
-            <div id="taxi-gps" class="taxi-gps" role="status" aria-live="polite"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span>시작을 누르면 현재 위치를 확인해요</span></div>
-            <p id="taxi-feedback" class="taxi-feedback" role="status" aria-live="polite"></p>
+        </main>
+        <dialog id="taxi-settings-dialog" aria-labelledby="taxi-settings-title">
+            <div class="taxi-sheet-heading"><h2 id="taxi-settings-title">요금 설정</h2><button id="taxi-close-settings" type="button" aria-label="요금 설정 닫기">닫기</button></div>
             <section class="taxi-settings" aria-labelledby="taxi-settings-title">
-                <div class="taxi-section-heading"><h2 id="taxi-settings-title">요금 설정</h2><span id="taxi-settings-hint">출발 전에 선택해 주세요</span></div>
+                <p id="taxi-settings-hint" class="taxi-settings-hint">출발 전에 선택해 주세요</p>
                 <fieldset id="taxi-rate-controls">
                     <legend class="taxi-sr-only">요금 기준과 할증 선택</legend>
                     <label class="taxi-select-row">요금 기준<select id="taxi-preset"><option value="seoul">서울 중형택시</option><option value="daegu">대구 중형택시</option><option value="daejeon">대전 중형택시</option><option value="gwangju">광주 중형택시</option><option value="busan">부산 중형택시</option><optgroup label="경북"><option value="gumi">경북 · 구미</option><option value="chilgok">경북 · 칠곡</option><option value="andong">경북 · 안동</option></optgroup><optgroup label="충남"><option value="cheonan">충남 · 천안</option><option value="asan">충남 · 아산</option></optgroup><optgroup label="전남"><option value="naju">전남 · 나주</option><option value="yeosu">전남 · 여수</option><option value="mokpo">전남 · 목포</option></optgroup><optgroup label="경남"><option value="jinju">경남 · 진주</option><option value="changwon">경남 · 창원</option><option value="gimhae">경남 · 김해</option><option value="yangsan">경남 · 양산</option></optgroup><option value="custom">직접 설정</option></select></label>
@@ -58,11 +61,11 @@
                     <p id="taxi-night-hint" class="taxi-setting-note">한국 시간으로 22~23시·02~04시 20%, 23~02시 40%를 자동 적용해요.</p>
                     <div id="taxi-custom" class="taxi-custom" hidden>
                         <label>기본요금 <span><input id="taxi-base" type="number" inputmode="numeric" min="0" max="100000" step="100" value="4800" required>원</span></label>
-                        <label>기본거리 <span><input id="taxi-base-distance" type="number" inputmode="decimal" min="0" max="50" step="0.1" value="1.6" required>km</span></label>
+                        <label>기본거리 <span><input id="taxi-base-distance" type="number" inputmode="decimal" min="0" max="50" step="0.1" value="1.6" required>㎞</span></label>
                         <label>거리 단위 <span><input id="taxi-distance-unit" type="number" inputmode="numeric" min="1" max="10000" step="1" value="131" required>m</span></label>
                         <label>시간 단위 <span><input id="taxi-time-unit" type="number" inputmode="numeric" min="1" max="3600" step="1" value="30" required>초</span></label>
                         <label>단위당 요금 <span><input id="taxi-unit-fare" type="number" inputmode="numeric" min="1" max="10000" step="1" value="100" required>원</span></label>
-                        <label>저속 기준 <span><input id="taxi-slow-speed" type="number" inputmode="decimal" min="1" max="100" step="0.01" value="15.72" required>km/h</span></label>
+                        <label>저속 기준 <span><input id="taxi-slow-speed" type="number" inputmode="decimal" min="1" max="100" step="0.01" value="15.72" required>㎞/시</span></label>
                     </div>
                 </fieldset>
                 <fieldset id="taxi-trip-controls">
@@ -72,18 +75,17 @@
                 </fieldset>
                 <dl class="taxi-rate-summary"><div><dt>기본요금</dt><dd id="taxi-rate-base">1.6km · 4,800원</dd></div><div><dt>거리요금</dt><dd id="taxi-rate-distance">131m마다 100원</dd></div><div><dt>저속 시간요금</dt><dd id="taxi-rate-time">30초마다 100원</dd></div></dl>
             </section>
-            <details class="taxi-guide"><summary>이용 전에 확인해 주세요 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary><div>
-                <p>선택한 지역의 중형택시 요율로 계산해요. 요금표 확인일은 2026.10.27이에요. GPS 오차와 검정된 차량 미터기의 차이로 실제 금액과 다를 수 있으며, 통행료·호출비는 포함하지 않아요.</p>
+            <details class="taxi-guide"><summary>이용 전에 확인해 주세요 <span aria-hidden="true">⌄</span></summary><div>
+                <p>선택한 지역의 중형택시 요율로 계산해요. 요금표 확인일은 2026.10.27이에요. 위치 오차와 검정된 차량 미터기의 차이로 실제 금액과 다를 수 있으며, 통행료·호출비는 포함하지 않아요.</p>
                 <p>구간별 요금·복합할증은 지역 안내를 확인하고 선택해 주세요. 공식 원문에서 중복 계산 방식이 확인되지 않은 조건에서는 자동 측정을 멈춰요. 광주→나주혁신도시의 도착요금 가산과 섬 지역 별도 운임은 지원하지 않아요.</p>
                 <p>출발부터 거리와 저속 시간을 누적해 기본구간을 소진하고, 이후 단위마다 요금을 올려요. 기본구간 안에서도 정차시간을 반영해요. 종료 시 십원 자리에서 반올림해 100원 단위 지불요금을 표시해요.</p>
                 <p>자동 심야 할증은 한국 시간에 맞춰 운행 중에도 바뀌며, 이미 쌓인 요금은 바꾸지 않아요. 시계외 할증은 경계에서 직접 켜고 꺼 주세요. 서울시내 간 운행·귀로영업·공동사업구역 등 면제 조건을 확인해 주세요.</p>
-                <p>정확한 측정을 위해 위치 권한을 허용하고 화면을 켜 두세요. 화면을 나가거나 GPS 신호가 끊기면 일시정지해요. 일시정지 중 이동은 계산하지 않아요.</p>
+                <p>정확한 측정을 위해 위치 권한을 허용하고 화면을 켜 두세요. 화면을 나가거나 위치 신호가 끊기면 일시정지해요. 일시정지 중 이동은 계산하지 않아요.</p>
                 <p>이동 경로와 위치는 서버에 저장하지 않아요. 설정과 마지막 측정 결과만 이 기기에 보관해요.</p>
                 <a id="taxi-source" href="https://news.seoul.go.kr/traffic/archives/1659" target="_blank" rel="noopener noreferrer">지역 요금 기준 보기 ↗</a>
                 <br><a id="taxi-future-source" href="https://www.daejeon.go.kr" target="_blank" rel="noopener noreferrer" hidden>대전 2026.11.1 요금 변경 고시 보기 ↗</a>
             </div></details>
-            <p class="taxi-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
-        </main>
+        </dialog>
     </div>
 </body>
 </html>
