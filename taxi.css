@@ -42,9 +42,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .taxi-metric-digits svg{display:block;width:auto;max-width:100%;height:100%}
 .taxi-control-panel{position:absolute;top:72.1%;left:6.7%;width:87.1%;height:11.3%}
 .taxi-actions{height:100%;display:grid;grid-template-columns:1fr 1fr;gap:6.5%}
-.taxi-actions button{position:relative;display:grid;place-items:center;width:100%;height:100%;padding:.5rem;border:1px solid transparent;border-radius:.9rem;background:transparent;color:#d6d2c5;font-size:1.375rem;font-weight:750;letter-spacing:.18em;text-indent:.18em;text-shadow:0 2px 2px #000;transition:transform 100ms,background 100ms,color 150ms}
+.taxi-actions button{position:relative;isolation:isolate;display:grid;place-items:center;width:100%;height:100%;padding:.5rem;border:1px solid transparent;border-radius:.9rem;background:transparent;color:#d6d2c5;font-size:1.375rem;font-weight:750;letter-spacing:.18em;text-indent:.18em;text-shadow:0 2px 2px #000;transition:transform 100ms,background 100ms,color 150ms,box-shadow 100ms}
 .taxi-primary{color:#f0c487!important}.taxi-actions button:disabled{cursor:default;color:#929287}
-.taxi-actions button:active:not(:disabled){transform:translateY(2px) scale(.98);background:#00000030;box-shadow:inset 0 2px 7px #00000050}
+.taxi-actions button::after{content:'';position:absolute;inset:-1px;z-index:-1;border-radius:inherit;pointer-events:none;opacity:0;background-image:url('assets/taxi-meter-body-v2.jpg');background-size:var(--press-image-width) var(--press-image-height);background-position:var(--press-image-x) var(--press-image-y);filter:brightness(.7);box-shadow:inset 0 4px 9px #000b,inset 0 -1px 1px #ffffff12;transition:opacity 80ms}
+.taxi-actions button[data-pressed="true"]{transform:translateY(3px) scale(.975);background:#00000066;box-shadow:inset 0 5px 12px #000b,0 -1px 2px #0008;text-shadow:0 1px 1px #000}
+.taxi-actions button[data-pressed="true"]::after{opacity:1}
+.taxi-icon-button[data-pressed="true"],.taxi-sheet-heading button[data-pressed="true"]{transform:translateY(2px) scale(.94);background:#00000040;box-shadow:inset 0 2px 5px #0008}
 .taxi-meter[data-state="running"] .taxi-primary::before{content:'';position:absolute;top:17%;left:50%;width:.25rem;height:.25rem;border-radius:50%;background:#b5d992;box-shadow:0 0 7px #b5d992}
 .taxi-secondary:enabled{color:#ffba9f}
 .taxi-gps{position:absolute;top:88.3%;left:9%;width:82%;height:4.4%;display:flex;align-items:center;justify-content:center;margin:0;color:#babba6;font-size:.6875rem;line-height:1.5;text-align:center}

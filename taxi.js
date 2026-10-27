@@ -24,6 +24,67 @@
     let pendingSlow = 0;
     let billedAt = 0;
     let noticeTimer = null;
+    const resetPressers = [];
+
+    function bindPressFeedback(button) {
+        let releaseTimer = null;
+        let pointerHeld = false;
+        const reset = () => { clearTimeout(releaseTimer); pointerHeld = false; button.dataset.pressed = 'false'; };
+        const press = () => {
+            if (button.disabled) return;
+            clearTimeout(releaseTimer);
+            if (button === $('taxi-start') || button === $('taxi-finish')) {
+                const frame = $('taxi-meter').getBoundingClientRect();
+                const origin = button.offsetParent.getBoundingClientRect();
+                // 같은 본체 이미지에서 버튼 면만 겹쳐 그려, 글자와 질감이 함께 눌리게 한다.
+                button.style.setProperty('--press-image-width', frame.width + 'px');
+                button.style.setProperty('--press-image-height', frame.height + 'px');
+                button.style.setProperty('--press-image-x', (frame.left - origin.left - button.offsetLeft) + 'px');
+                button.style.setProperty('--press-image-y', (frame.top - origin.top - button.offsetTop) + 'px');
+            }
+            button.dataset.pressed = 'true';
+        };
+        const release = () => {
+            clearTimeout(releaseTimer);
+            // 짧은 터치도 눌림을 볼 수 있도록 잠깐 유지한 뒤 원래 위치로 복귀한다.
+            releaseTimer = setTimeout(reset, 160);
+        };
+        button.addEventListener('pointerdown', event => { if (event.button === 0) { pointerHeld = true; press(); } });
+        button.addEventListener('pointerup', () => { pointerHeld = false; release(); });
+        button.addEventListener('pointercancel', reset);
+        button.addEventListener('pointerleave', () => { if (pointerHeld) reset(); });
+        button.addEventListener('blur', reset);
+        button.addEventListener('keydown', event => { if ((event.key === ' ' || event.key === 'Enter') && !event.repeat) press(); });
+        button.addEventListener('keyup', event => { if (event.key === ' ' || event.key === 'Enter') release(); });
+        resetPressers.push(reset);
+    }
+    function revealWhenReady() {
+        const skin = $('taxi-body-image');
+        const skeleton = $('taxi-loading');
+        let revealed = false;
+        const reveal = () => {
+            if (revealed) return;
+            revealed = true;
+            clearTimeout(deadline);
+            document.documentElement.dataset.loading = 'false';
+            $('taxi-app').ariaBusy = 'false';
+            const hide = () => { skeleton.hidden = true; };
+            if (typeof skeleton.animate === 'function' && !window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+                const fade = skeleton.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, fill: 'forwards' });
+                Promise.resolve(fade.finished).then(hide, hide);
+            } else hide();
+        };
+        const decoded = () => {
+            if (typeof skin.decode === 'function') Promise.resolve().then(() => skin.decode()).then(reveal, reveal);
+            else reveal();
+        };
+        const deadline = setTimeout(reveal, 6000);
+        if (skin.complete) decoded();
+        else {
+            skin.addEventListener('load', decoded, { once: true });
+            skin.addEventListener('error', reveal, { once: true });
+        }
+    }
 
     function emptyTrip() { return { distance: 0, elapsed: 0, slowSeconds: 0, startedAt: 0, lastAt: 0, base: 0, amount: 0, baseDone: false, remaining: 0 }; }
     function validSettings(value) {
@@ -386,6 +447,7 @@
         save(); render();
     });
     function suspend() {
+        resetPressers.forEach(reset => reset());
         if (state === 'running') pause('화면을 나가 일시정지했어요. 계속하려면 이어서 측정을 눌러 주세요.');
         else if (state === 'locating') { stopSensors(); state = locatingFrom; feedback('위치 확인을 멈췄어요. 다시 시작해 주세요.'); save(); render(); }
     }
@@ -398,7 +460,10 @@
     window.addEventListener('pagehide', suspend);
     $('taxi-open-settings').addEventListener('click', () => { $('taxi-settings-dialog').showModal(); });
     $('taxi-close-settings').addEventListener('click', () => { $('taxi-settings-dialog').close(); });
+    ['taxi-start', 'taxi-finish', 'taxi-back', 'taxi-open-settings', 'taxi-close-settings'].forEach(id => bindPressFeedback($(id)));
+    window.addEventListener('blur', () => { resetPressers.forEach(reset => reset()); });
     restore(); syncInputs(); render();
     if (state === 'paused') gps('이전 측정이 일시정지되어 있어요');
     if (state === 'finished') gps('마지막 측정 결과예요');
+    revealWhenReady();
 })();

@@ -51,10 +51,10 @@ assert.equal(meter.distance({ latitude: 37, longitude: 127 }, { latitude: 37, lo
 assert.ok(Math.abs(meter.distance({ latitude: 0, longitude: 0 }, { latitude: .001, longitude: 0 }) - 111.195) < .01);
 
 // 실제 위치 권한 없이 앱을 실행하고 결정적인 가상 GPS/시계를 주입한다.
-function harness(saved, secure = true) {
+function harness(saved, secure = true, skinReady = true) {
     const ids = [...fs.readFileSync(path.join(__dirname, '../taxi.html'), 'utf8').matchAll(/id="([^"]+)"/g)].map(m => m[1]);
     const elements = Object.fromEntries(ids.map(id => [id, {
-        value: '', textContent: '', innerHTML: '', hidden: false, disabled: false, dataset: {}, listeners: {}, children: {},
+        value: '', textContent: '', innerHTML: '', hidden: false, disabled: false, complete: id === 'taxi-body-image' && skinReady, dataset: {}, listeners: {}, children: {},
         addEventListener(event, fn) { this.listeners[event] = fn; },
         querySelector(selector) { return this.children[selector] ||= { textContent: '' }; },
         checkValidity() { return this.value !== '' && Number.isFinite(Number(this.value)) && Number(this.value) >= 0; },
@@ -63,7 +63,7 @@ function harness(saved, secure = true) {
     let now = 0, timestamp = at, stored = saved ? JSON.stringify(saved) : null;
     let success, failure, interval, cleared = 0;
     const events = {};
-    const document = { hidden: false, getElementById: id => elements[id], addEventListener: (event, fn) => { events[event] = fn; } };
+    const document = { hidden: false, documentElement: { dataset: { loading: 'true' } }, getElementById: id => elements[id], addEventListener: (event, fn) => { events[event] = fn; } };
     const window = { EnjoyTaxiMeter: meter, isSecureContext: secure, addEventListener: (event, fn) => { events[event] = fn; }, location: { origin: 'http://localhost', assign() {} } };
     window.parent = window;
     const context = { window, document, navigator: { geolocation: {
@@ -84,6 +84,16 @@ function harness(saved, secure = true) {
     };
 }
 const app = harness();
+assert.equal(app.document.documentElement.dataset.loading, 'false', '캐시된 본체 이미지는 바로 표시');
+assert.equal(app.elements['taxi-loading'].hidden, true);
+const loadingApp = harness(null, true, false);
+assert.equal(loadingApp.document.documentElement.dataset.loading, 'true', '이미지 준비 전에는 스켈레톤 유지');
+loadingApp.elements['taxi-body-image'].listeners.load();
+assert.equal(loadingApp.document.documentElement.dataset.loading, 'false');
+assert.equal(loadingApp.elements['taxi-app'].ariaBusy, 'false');
+const failedImageApp = harness(null, true, false);
+failedImageApp.elements['taxi-body-image'].listeners.error();
+assert.equal(failedImageApp.elements['taxi-loading'].hidden, true, '이미지 실패로 스켈레톤이 고착되지 않는다');
 app.click('taxi-start'); assert.equal(app.state(), 'locating');
 app.advance(5); app.fix(); assert.equal(app.snapshot().trip.elapsed, 0, '위치 대기 중 과금하지 않는다');
 app.advance(2); app.fix(37.0001, 10); assert.equal(app.state(), 'running');
