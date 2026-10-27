@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="taxi.css?v=20261027-1">
-    <script defer src="taxi-meter-engine.js?v=20261027-1"></script>
-    <script defer src="taxi.js?v=20261027-1"></script>
+    <script defer src="taxi-meter-engine.js?v=20261027-2"></script>
+    <script defer src="taxi.js?v=20261027-2"></script>
 </head>
 <body>
     <div class="taxi-app">
@@ -44,8 +44,8 @@
                 <fieldset id="taxi-rate-controls">
                     <legend class="taxi-sr-only">요금 기준과 할증 선택</legend>
                     <label class="taxi-select-row">요금 기준<select id="taxi-preset"><option value="seoul">서울 중형택시</option><option value="custom">직접 설정</option></select></label>
-                    <label class="taxi-select-row">할증<select id="taxi-surcharge"><option value="0">일반 · 할증 없음</option><option value="20">심야 · 20%</option><option value="40">심야 · 40%</option></select></label>
-                    <p id="taxi-night-hint" class="taxi-setting-note">심야 20% 22~23시·02~04시 / 40% 23~02시<br>선택한 할증은 이번 탑승 내내 적용돼요.</p>
+                    <label class="taxi-select-row">심야 할증<select id="taxi-surcharge"><option value="auto">시간에 따라 자동</option><option value="0">수동 · 할증 없음</option><option value="20">수동 · 20%</option><option value="40">수동 · 40%</option></select></label>
+                    <p id="taxi-night-hint" class="taxi-setting-note">한국 시간으로 22~23시·02~04시 20%, 23~02시 40%를 자동 적용해요.</p>
                     <div id="taxi-custom" class="taxi-custom" hidden>
                         <label>기본요금 <span><input id="taxi-base" type="number" inputmode="numeric" min="0" max="100000" step="100" value="4800" required>원</span></label>
                         <label>기본거리 <span><input id="taxi-base-distance" type="number" inputmode="decimal" min="0" max="50" step="0.1" value="1.6" required>km</span></label>
@@ -55,14 +55,21 @@
                         <label>저속 기준 <span><input id="taxi-slow-speed" type="number" inputmode="decimal" min="1" max="100" step="0.01" value="15.72" required>km/h</span></label>
                     </div>
                 </fieldset>
+                <fieldset id="taxi-trip-controls">
+                    <legend class="taxi-sr-only">운행 구간 할증</legend>
+                    <label class="taxi-select-row">시계외 할증<select id="taxi-outside"><option value="0">미적용</option><option value="20">현재 구간 · 20%</option></select></label>
+                    <p class="taxi-setting-note">사업구역 경계에서 직접 바꿔 주세요. 변경한 시점부터 적용해요. 서울 복귀·광명·공항 등 면제 구간은 미적용으로 두세요.</p>
+                </fieldset>
                 <dl class="taxi-rate-summary"><div><dt>기본요금</dt><dd id="taxi-rate-base">1.6km · 4,800원</dd></div><div><dt>거리요금</dt><dd id="taxi-rate-distance">131m마다 100원</dd></div><div><dt>저속 시간요금</dt><dd id="taxi-rate-time">30초마다 100원</dd></div></dl>
             </section>
             <details class="taxi-guide"><summary>이용 전에 확인해 주세요 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary><div>
-                <p>GPS로 계산한 참고용 예상 요금이에요. 실제 택시 미터기 요금과 차이가 있을 수 있으며, 통행료·호출비·시계외 할증은 포함하지 않아요.</p>
-                <p>기본거리 이후 이동 거리와 저속 시간을 합산해요. 다른 지역이나 차종은 해당 요율을 직접 설정해 주세요.</p>
+                <p>서울 중형택시의 시간·거리 부분 동시병산 요율로 계산해요. GPS 오차와 검정된 차량 미터기의 차이로 실제 금액과 다를 수 있으며, 통행료·호출비는 포함하지 않아요.</p>
+                <p>출발부터 거리와 저속 시간을 누적해 기본구간을 소진하고, 이후 단위마다 요금을 올려요. 기본구간 안에서도 정차시간을 반영해요. 종료 시 십원 자리에서 반올림해 100원 단위 지불요금을 표시해요.</p>
+                <p>자동 심야 할증은 한국 시간에 맞춰 운행 중에도 바뀌며, 이미 쌓인 요금은 바꾸지 않아요. 시계외 할증은 경계에서 직접 켜고 꺼 주세요. 서울시내 간 운행·귀로영업·공동사업구역 등 면제 조건을 확인해 주세요.</p>
                 <p>정확한 측정을 위해 위치 권한을 허용하고 화면을 켜 두세요. 화면을 나가거나 GPS 신호가 끊기면 일시정지해요. 일시정지 중 이동은 계산하지 않아요.</p>
                 <p>이동 경로와 위치는 서버에 저장하지 않아요. 설정과 마지막 측정 결과만 이 기기에 보관해요.</p>
                 <a href="https://news.seoul.go.kr/traffic/archives/1659" target="_blank" rel="noopener noreferrer">서울시 택시요금 기준 보기 <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                <br><a href="https://news.seoul.go.kr/traffic/archives/34700" target="_blank" rel="noopener noreferrer">시계외 할증·면제 기준 보기 <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
             </div></details>
             <p class="taxi-copyright">Copyright © 2026 엔조이. All rights reserved.</p>
         </main>
