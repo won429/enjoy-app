@@ -43,7 +43,7 @@
             selectedMode = 'guest';
         }
         updateAccountMenu();
-        if (root.enjoyFinishLoadingIsland) root.enjoyFinishLoadingIsland();
+        if (root.enjoyFinishAppLoading) root.enjoyFinishAppLoading();
     };
 
     function handleAuthReady() {

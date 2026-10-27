@@ -24,10 +24,7 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
 
-    <link rel="stylesheet" href="loading-island.css?v=20261024-2">
-    <link rel="preload" as="image" href="assets/loading-island/scan.webp?v=20261018-4">
-    <link rel="preload" as="image" href="assets/loading-island/done.webp">
-    <link rel="preload" as="image" href="assets/loading-island/orbit.webp?v=20261019-10">
+    <link rel="stylesheet" href="app-loading.css?v=20261027-1">
     <link rel="stylesheet" href="attendance.css?v=20261005">
     <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
     <link rel="stylesheet" href="uno.css?v=20261018-wallet1">
@@ -7853,14 +7850,29 @@
 <body class="w-full h-[100dvh] flex flex-col overflow-hidden bg-black" ontouchstart="">
     <div id="ios-status-bar-background" aria-hidden="true"></div>
 
-    <!-- 로그인 상태와 초기 데이터를 준비하는 동안 로딩 아일랜드를 표시한다. -->
-    <div id="app-loader" class="loading-island-overlay" data-state="opening" role="status" aria-live="polite" aria-atomic="true">
-        <div class="loading-island-anchor" aria-hidden="true">
-            <div class="loading-island-card"><canvas width="256" height="256"></canvas></div>
+    <!-- 첫 진입은 홈 스켈레톤을 사용한다. 로딩 아일랜드 재사용 안내: LOADING.md -->
+    <div id="app-loader" class="app-loading-skeleton" data-state="loading" role="status" aria-live="polite" aria-atomic="true" aria-busy="true">
+        <div class="app-sk-layout" aria-hidden="true">
+            <div class="app-sk-screen">
+                <div class="app-sk-header">
+                    <span class="app-sk-block app-sk-brand"></span>
+                    <div class="app-sk-actions"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
+                </div>
+                <div class="app-sk-tabs"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
+                <div class="app-sk-content">
+                    <span class="app-sk-block app-sk-heading"></span>
+                    <div class="app-sk-novel">
+                        <span class="app-sk-block app-sk-cover"></span>
+                        <div><span class="app-sk-block app-sk-title"></span><span class="app-sk-block app-sk-genres"></span><span class="app-sk-block app-sk-count"></span><span class="app-sk-block app-sk-link"></span></div>
+                        <div class="app-sk-synopsis"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="app-sk-nav"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
         </div>
-        <span class="loading-island-label">데이터 동기화 중</span>
+        <span class="app-sk-label">화면을 불러오는 중</span>
     </div>
-    <script src="loading-island.js?v=20261025-loading-restore-1"></script>
+    <script src="app-loading.js?v=20261027-1"></script>
 
     <div id="enjoy-dialog" class="hidden fixed inset-0 z-[400] items-center justify-center px-5" aria-hidden="true">
         <div class="ed-card" role="alertdialog" aria-modal="true" aria-labelledby="enjoy-dialog-title" aria-describedby="enjoy-dialog-message" onclick="event.stopPropagation()">
@@ -18942,10 +18954,10 @@
         function __enjoyHideLoader() {
             const loader = document.getElementById('app-loader');
             if (loader && loader.style.display !== 'none') {
-                window.enjoyFinishLoadingIsland();
+                window.enjoyFinishAppLoading();
             }
         }
-        // 홈 구조를 준비하고, 인증과 초기 데이터가 준비되면 로딩 아일랜드를 마무리한다.
+        // 홈 구조를 준비하고, 인증과 초기 데이터가 준비되면 스켈레톤을 숨긴다.
         let __enjoyBooted = false;
         function __enjoyBoot() {
             if (!__enjoyBooted) { __enjoyBooted = true; __enjoyInitHome(); }
@@ -19010,7 +19022,7 @@
             window.enjoyLoadLocalSchedule();
             if (window.enjoyWalletLoading) window.enjoyWalletLoading.local();
             var ld = document.getElementById('app-loader');
-            if (ld) window.enjoyFinishLoadingIsland();
+            if (ld) window.enjoyFinishAppLoading();
         };
     })();
     </script>
@@ -22727,7 +22739,7 @@
         })();
     </script>
 
-    <script src="home-entry.js?v=20261025-guest-webnovel-3"></script>
+    <script src="home-entry.js?v=20261027-skeleton-1"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -22908,8 +22920,8 @@
                             try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
                             const loader = document.getElementById('app-loader');
                             if (loader && loader.style.display !== 'none') {
-                                if (initialSyncFailed) window.enjoyCancelLoadingIsland();
-                                else window.enjoyFinishLoadingIsland();
+                                if (initialSyncFailed) window.enjoyCancelAppLoading();
+                                else window.enjoyFinishAppLoading();
                             }
                         }
                     };
