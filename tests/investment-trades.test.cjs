@@ -8,6 +8,10 @@ const quote = { price: 100, revision: 12, asOf: time - 900000, nextUpdateAt: tim
 const id = n => '00000000-0000-4000-8000-' + String(n).padStart(12, '0');
 const order = (n, extra = {}) => ({ requestId: id(n), symbol: 'en-joy', side: 'buy', quantity: 2,
   expectedRevision: quote.revision, expectedPrice: quote.price, expiresAt: time + 60000, ...extra });
+test('production trading stays disabled until the user explicitly opens the service', () => {
+  const config = require('node:fs').readFileSync(path.join(__dirname, '../cloudflare-worker/wrangler-investment.toml'), 'utf8');
+  assert.match(config, /^TRADING_ENABLED\s*=\s*"false"\s*$/m);
+});
 function database(points = 1000) {
   const docs = new Map(), base = 'projects/test/databases/(default)/documents/';
   let version = 0, commits = 0, uncertain = false;

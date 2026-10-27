@@ -100,3 +100,14 @@ test('server-offline and closed or stale quotes keep trading disabled without ma
   ui.controller.updateMarket({ ...market, serverTime: Date.parse('2026-10-27T14:30:00Z') });
   assert.equal(ui.element('investment-buy').disabled, true); assert.match(ui.element('investment-trade-note').textContent, /운영시간/);
 });
+test('the unopened service preserves account and ranking reads while blocking both purchase and sale', async () => {
+  const s = server(); s.accounts.get('a').quantity = 2;
+  const ui = setup(s.fetch); await flush();
+  ui.controller.updateMarket({ ...market, tradingEnabled: false }); await flush();
+  assert.equal(ui.controller.snapshot().quantity, 2);
+  assert.match(ui.element('investment-ranking').innerHTML, /200 P/);
+  assert.equal(ui.element('investment-buy').disabled, true);
+  assert.equal(ui.element('investment-sell').disabled, true);
+  await ui.action('buy'); await ui.action('sell');
+  assert.equal(s.count(), 0); assert.equal(ui.confirms(), 0);
+});
