@@ -117,12 +117,7 @@
         if (total >= 3600) parts.unshift(Math.floor(total / 3600));
         return parts.map(n => String(n).padStart(2, '0')).join(':');
     }
-    function displayFare(amount) {
-        $('taxi-fare').textContent = format(amount);
-        const digits = String(Math.round(amount));
-        const display = $('taxi-fare-digits');
-        if (display.dataset.value === digits) return;
-        display.dataset.value = digits;
+    function segmentSvg(value, minCells = 0) {
         // 글꼴을 내려받지 않아도 동일하게 표시되는 7분절 숫자. 읽기용 금액은 별도로 유지한다.
         const shapes = [
             '7,2 37,2 41,6 37,10 7,10 3,6',
@@ -134,9 +129,31 @@
             '7,38 37,38 41,42 37,46 7,46 3,42'
         ];
         const lit = ['012345', '12', '01346', '01236', '1256', '02356', '023456', '012', '0123456', '012356'];
-        const cells = digits.padStart(Math.max(6, digits.length), ' ');
-        const glyphs = [...cells].map((digit, index) => '<g transform="translate(' + index * 52 + ',0)">' + shapes.map((points, segment) => '<polygon class="taxi-segment-' + (digit !== ' ' && lit[Number(digit)].includes(segment) ? 'on' : 'off') + '" points="' + points + '"/>').join('') + '</g>').join('');
-        display.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (cells.length * 52 - 8) + ' 84" aria-hidden="true" focusable="false">' + glyphs + '</svg>';
+        const cells = value.padStart(minCells, ' ');
+        let cursor = 0;
+        const glyphs = [...cells].map(digit => {
+            const x = cursor;
+            if (digit === '.') { cursor += 14; return '<circle class="taxi-segment-on" cx="' + (x + 5) + '" cy="77" r="4"/>'; }
+            if (digit === ':') { cursor += 18; return '<g class="taxi-segment-on"><circle cx="' + (x + 7) + '" cy="27" r="4"/><circle cx="' + (x + 7) + '" cy="57" r="4"/></g>'; }
+            cursor += 52;
+            const active = digit === '—' ? '6' : /^\d$/.test(digit) ? lit[Number(digit)] : '';
+            return '<g transform="translate(' + x + ',0)">' + shapes.map((points, segment) => '<polygon class="taxi-segment-' + (active.includes(segment) ? 'on' : 'off') + '" points="' + points + '"/>').join('') + '</g>';
+        }).join('');
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + Math.max(1, cursor - 8) + ' 84" aria-hidden="true" focusable="false">' + glyphs + '</svg>';
+    }
+    function displayMetric(id, value) {
+        const display = $(id);
+        if (display.dataset.value === value) return;
+        display.dataset.value = value;
+        display.innerHTML = segmentSvg(value);
+    }
+    function displayFare(amount) {
+        $('taxi-fare').textContent = format(amount);
+        const digits = String(Math.round(amount));
+        const display = $('taxi-fare-digits');
+        if (display.dataset.value === digits) return;
+        display.dataset.value = digits;
+        display.innerHTML = segmentSvg(digits, 6);
         if (state === 'running' && typeof display.animate === 'function' && !window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
             display.animate([{ opacity: .72 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
         }
@@ -168,6 +185,9 @@
         $('taxi-distance').innerHTML = (trip.distance / 1000).toFixed(2) + ' <small>㎞</small>';
         $('taxi-duration').textContent = duration(trip.elapsed);
         $('taxi-speed').innerHTML = (state === 'running' && speed !== null ? Math.round(speed) : '—') + ' <small>㎞/시</small>';
+        displayMetric('taxi-distance-digits', (trip.distance / 1000).toFixed(2));
+        displayMetric('taxi-duration-digits', duration(trip.elapsed));
+        displayMetric('taxi-speed-digits', String(state === 'running' && speed !== null ? Math.round(speed) : '—'));
         $('taxi-fare-hint').textContent = state === 'finished' ? '십원 자리에서 반올림한 예상 지불요금이에요' : state === 'paused' ? '일시정지 중에는 요금이 올라가지 않아요' : state === 'idle' ? '출발하면 기본요금부터 시작해요' : !trip.baseDone ? '기본구간도 거리와 저속 시간이 함께 소진돼요' : '이동 거리와 저속 시간을 함께 반영하고 있어요';
         const action = { idle: ['주행', '운행 시작'], locating: ['취소', '위치 확인 취소'], running: ['정지', '운행 일시정지'], paused: ['계속', '이어서 측정'], finished: ['다시', '새로 측정'] }[state];
         $('taxi-start').innerHTML = '<span>' + action[0] + '</span>';
