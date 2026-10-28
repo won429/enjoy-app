@@ -7,6 +7,8 @@
     const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     let uid = null, epoch = 0, account = null, ranking = null, market = null, pending = null, busy = false, lastRead = 0, error = '', message = '';
     let context = { currency: 'POINTS', selected: null, tab: 'chart', holdingView: 'value', active: false }, request = null, timer = null, generation = 0;
+    let orderFilter = 'all', includeCancelled = false, calculatorOpen = false, orderSide = null;
+    let calculatorPrice = '', calculatorQuantity = '';
     const currentUid = () => !window.isGuest && window.enjoyUser?.uid || null;
     const cash = value => context.currency === 'KRW'
         ? (value / 100).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원'
@@ -14,6 +16,34 @@
     const signedCash = value => (value > 0 ? '+' : '') + cash(value);
     const rate = value => (value > 0 ? '+' : '') + value.toFixed(2) + '%';
     const changeClass = value => value > 0 ? 'iv-up' : value < 0 ? 'iv-down' : 'iv-flat';
+    const preciseCash = (value, currency = context.currency) => (currency === 'KRW' ? value / 100 : value).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + (currency === 'KRW' ? '원' : ' P');
+    const cancelled = row => ['cancelled', 'canceled'].includes(row.status);
+    function renderCalculation() {
+        const output = $('investment-calculator-result');
+        if (!output || !account) return;
+        const addedQuantity = Number(calculatorQuantity), enteredPrice = Number(calculatorPrice);
+        const addedPrice = context.currency === 'KRW' ? Math.round(enteredPrice * 100) : enteredPrice;
+        const addedCost = addedQuantity * addedPrice;
+        const valid = calculatorPrice.trim() !== '' && enteredPrice > 0 && Math.abs(enteredPrice * (context.currency === 'KRW' ? 100 : 1) - addedPrice) < .000001 && Number.isSafeInteger(addedPrice) && Number.isSafeInteger(addedQuantity) && addedQuantity > 0 && addedQuantity <= 1000000 && Number.isSafeInteger(addedCost) && Number.isSafeInteger(account.costBasis + addedCost) && Number.isSafeInteger(account.quantity + addedQuantity);
+        output.innerHTML = valid ? '<span>구매 후 1토큰 평균<strong>' + preciseCash((account.costBasis + addedCost) / (account.quantity + addedQuantity)) + '</strong></span><span>보유 수량<strong>' + (account.quantity + addedQuantity).toLocaleString('ko-KR') + '토큰</strong></span><span>추가 투자금<strong>' + cash(addedCost) + '</strong></span>' : '<p>구매 가격과 수량을 입력해 주세요.</p>';
+    }
+    function renderHoldings(holdings) {
+        const active = document.activeElement;
+        const focused = holdings.contains?.(active) && (active.id ? '#' + active.id : active.dataset.investmentFilter ? '[data-investment-filter="' + active.dataset.investmentFilter + '"]' : active.dataset.investmentAction ? '[data-investment-action="' + active.dataset.investmentAction + '"]' : null);
+        if (!account) {
+            holdings.innerHTML = '<p class="iv-book-notice">' + escape(!uid ? '로그인 후 확인해 주세요.' : error || '보유 내역을 불러오는 중이에요.') + '</p>';
+            return;
+        }
+        const average = account.quantity ? account.costBasis / account.quantity : null;
+        const rows = (account.orders || []).filter(row => (includeCancelled || !cancelled(row)) && (orderFilter === 'all' || row.side === orderFilter));
+        holdings.innerHTML = '<section class="iv-holding-overview" aria-label="내 드롭 보유 현황"><div class="iv-average"><div><h3>1토큰 평균</h3><strong>' + (average === null ? '—' : preciseCash(average)) + '</strong><small>' + (average === null ? '아직 보유한 드롭이 없어요' : preciseCash(average, context.currency === 'KRW' ? 'POINTS' : 'KRW')) + '</small></div><button type="button" class="iv-calculator-toggle" data-investment-action="calculator" aria-expanded="' + calculatorOpen + '" aria-controls="investment-average-calculator">물타기 계산기</button></div>' +
+            '<section id="investment-average-calculator" class="iv-average-calculator" aria-label="물타기 계산기"' + (calculatorOpen ? '' : ' hidden') + '><div class="iv-calculator-heading"><h4>물타기 계산기</h4><button type="button" data-investment-action="calculator-close" aria-label="계산기 닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div><p>추가 구매 후 평균 가격을 미리 계산해 보세요.</p><div class="iv-calculator-fields"><label>구매 가격 (' + (context.currency === 'KRW' ? '원' : 'P') + ')<input id="investment-calculator-price" type="number" inputmode="decimal" min="' + (context.currency === 'KRW' ? '0.01' : '1') + '" step="' + (context.currency === 'KRW' ? '0.01' : '1') + '" value="' + escape(calculatorPrice) + '"></label><label>구매 수량 (토큰)<input id="investment-calculator-quantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="' + escape(calculatorQuantity) + '"></label></div><output id="investment-calculator-result" aria-live="polite"></output><small>계산 결과는 실제 주문에 반영되지 않아요.</small></section>' +
+            '<dl class="iv-holdings-summary"><div><dt>보유 수량</dt><dd>' + account.quantity.toLocaleString('ko-KR') + '토큰</dd></div><div class="iv-holding-value"><dt>총 금액</dt><dd>' + cash(account.marketValue) + '<small class="' + changeClass(account.profit) + '">' + signedCash(account.profit) + ' (' + rate(account.returnPercent) + ')</small></dd></div><div><dt>투자 원금</dt><dd>' + cash(account.costBasis) + '</dd></div></dl></section>' +
+            '<section class="iv-order-history" aria-labelledby="investment-orders-heading"><div class="iv-orders-toolbar"><h3 id="investment-orders-heading">주문내역</h3><button type="button" class="iv-cancelled-toggle" data-investment-action="cancelled" aria-pressed="' + includeCancelled + '"><i class="fa-' + (includeCancelled ? 'solid' : 'regular') + ' fa-circle-check" aria-hidden="true"></i> 취소 포함</button></div><div class="iv-order-filters" role="group" aria-label="주문내역 필터">' + [['all', '전체'], ['buy', '구매'], ['sell', '판매']].map(([value, label]) => '<button type="button" data-investment-filter="' + value + '" aria-pressed="' + (orderFilter === value) + '">' + label + '</button>').join('') + '</div><div aria-live="polite">' +
+            (rows.length ? '<ol class="iv-orders-list">' + rows.map(row => '<li><div><strong class="' + (row.side === 'grant' ? 'iv-flat' : row.side === 'buy' ? 'iv-up' : 'iv-down') + '">' + (row.side === 'grant' ? '지급' : row.side === 'buy' ? '구매' : '판매') + ' ' + row.quantity.toLocaleString('ko-KR') + '토큰' + (cancelled(row) ? ' · 취소' : '') + '</strong><time datetime="' + new Date(row.executedAt).toISOString() + '">' + new Date(row.executedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + '</time></div><strong>' + (row.side === 'grant' ? '기준금액 ' + cash(row.total) : cash(row.total)) + '</strong></li>').join('') + '</ol>' : '<p class="iv-orders-empty">' + (orderFilter === 'all' ? '아직 주문내역이 없어요.' : (orderFilter === 'buy' ? '구매' : '판매') + ' 내역이 없어요.') + '</p>') + '</div></section>';
+        renderCalculation();
+        if (focused) holdings.querySelector(focused)?.focus({ preventScroll: true });
+    }
     const pendingKey = id => 'enjoy_investment_pending_v1:' + id;
     function savePending() {
         try { if (pending) sessionStorage.setItem(pendingKey(uid), JSON.stringify(pending)); else sessionStorage.removeItem(pendingKey(uid)); return true; } catch (_) { return false; }
@@ -22,6 +52,7 @@
         const next = currentUid();
         if (next === uid) return false;
         uid = next; epoch++; generation++; account = ranking = null; pending = null; error = message = ''; lastRead = 0; busy = false; request = null;
+        orderFilter = 'all'; includeCancelled = calculatorOpen = false; orderSide = null; calculatorPrice = calculatorQuantity = '';
         clearTimeout(timer); timer = null;
         if (uid) {
             try {
@@ -49,7 +80,13 @@
     function estimatedTime() { return market ? market.serverTime + Math.max(0, Date.now() - market.receivedAt) : 0; }
     function open() { const time = estimatedTime(); return !!market && (time + 9 * 3600000) % 86400000 < 23.5 * 3600000; }
     function render(next) {
+        const previous = context;
         if (next) context = { ...context, ...next };
+        if (context.currency !== previous.currency) calculatorPrice = calculatorPrice === '' ? '' : String(Number(calculatorPrice) * (context.currency === 'KRW' ? .01 : 100));
+        if (context.tab !== previous.tab || context.selected !== previous.selected) {
+            orderSide = null; calculatorOpen = false;
+            if ($('investment-order-quantity')) $('investment-order-quantity').value = '1';
+        }
         switchAccount();
         const panel = $('investment-ranking');
         if (!panel) return;
@@ -83,23 +120,28 @@
         const holdings = $('investment-holdings-panel');
         if (holdings) {
             holdings.hidden = context.tab !== 'holdings' || context.selected !== 'en-joy';
-            const rows = account?.orders || [];
-            holdings.innerHTML = !account ? '<p class="iv-book-notice">' + escape(!uid ? '로그인 후 확인해 주세요.' : error || '보유 내역을 불러오는 중이에요.') + '</p>' :
-                '<dl class="iv-holdings-summary"><div><dt>보유 드롭</dt><dd>' + account.quantity.toLocaleString('ko-KR') + '토큰</dd></div><div><dt>투자금액</dt><dd>' + cash(account.costBasis) + '</dd></div><div><dt>평가금액</dt><dd>' + cash(account.marketValue) + '</dd></div><div><dt>평가수익</dt><dd class="' + changeClass(account.profit) + '">' + cash(account.profit) + ' (' + rate(account.returnPercent) + ')</dd></div><div><dt>누적 실현수익</dt><dd>' + cash(account.realizedProfit) + '</dd></div></dl><h3 class="iv-orders-heading">최근 내역</h3>' +
-                (rows.length ? '<ol class="iv-orders-list">' + rows.map(row => '<li><div><strong class="' + (row.side === 'grant' ? 'iv-flat' : row.side === 'buy' ? 'iv-up' : 'iv-down') + '">' + (row.side === 'grant' ? '지급' : row.side === 'buy' ? '구매' : '판매') + ' ' + row.quantity.toLocaleString('ko-KR') + '토큰</strong><time>' + new Date(row.executedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + '</time></div><strong>' + (row.side === 'grant' ? '기준금액 ' + cash(row.total) : cash(row.total)) + '</strong></li>').join('') + '</ol>' : '<p class="iv-book-notice">아직 거래 내역이 없어요.</p>');
+            renderHoldings(holdings);
         }
         const note = $('investment-trade-note'), controls = $('investment-order-controls'), amount = $('investment-order-total');
         if (!note || !controls) return;
         const stock = context.selected === 'en-joy', qty = quantity(), valid = Number.isSafeInteger(qty) && qty >= 1 && qty <= 1000000;
-        controls.hidden = !stock;
+        const holdingsView = context.tab === 'holdings';
+        controls.hidden = !stock || (holdingsView && !orderSide);
+        const ticket = $('investment-order-ticket-heading');
+        if (ticket) ticket.hidden = !stock || !holdingsView || !orderSide;
+        const ticketTitle = $('investment-order-ticket-title');
+        if (ticketTitle) ticketTitle.textContent = orderSide === 'sell' ? '드롭 판매' : '드롭 구매';
         const available = !!uid && !!account && market?.tradingEnabled === true && !market.stale && estimatedTime() < market.nextUpdateAt && open() && !busy && !pending && valid && Number.isSafeInteger(price() * qty);
         const buy = $('investment-buy'), sell = $('investment-sell'), retry = $('investment-order-retry');
+        if (buy) { buy.hidden = holdingsView && orderSide === 'sell'; buy.textContent = holdingsView && orderSide === 'buy' ? '구매 확인' : '구매하기'; }
+        if (sell) { sell.hidden = holdingsView && orderSide === 'buy'; sell.textContent = holdingsView && orderSide === 'sell' ? '판매 확인' : '판매하기'; }
         if (buy) buy.disabled = !available || account.points < price() * qty;
         if (sell) sell.disabled = !available || account.quantity < qty;
         if (retry) { retry.hidden = !pending; retry.disabled = busy; }
         if (amount) amount.textContent = valid && price() ? '예상 거래금액 ' + cash(price() * qty) : '수량을 확인해 주세요';
+        note.className = holdingsView && !busy && !pending && !message && !error ? 'iv-sr-only' : '';
         if (stock) note.textContent = busy ? '주문을 처리하고 있어요' : pending ? '처리 결과를 확인하지 못했어요. 같은 주문으로 다시 확인해 주세요.' : message || error ||
-            (!uid ? '로그인 후 거래할 수 있어요' : !account ? '투자 기록을 불러오는 중이에요' : !open() ? '운영시간 00:00~23:30' : market?.tradingEnabled ? '표시된 공통 시세로 체결돼요 · 수수료 없음' : '현재 거래를 이용할 수 없어요');
+            (!uid ? '로그인 후 거래할 수 있어요' : !account ? '투자 기록을 불러오는 중이에요' : !open() ? '운영시간 00:00~23:30' : market?.tradingEnabled ? '표시된 공통 시세로 체결돼요' : '현재 거래를 이용할 수 없어요');
     }
     function schedule() {
         clearTimeout(timer); timer = null;
@@ -145,6 +187,7 @@
             if (version !== epoch || owner !== currentUid()) return;
             if (result.order?.requestId !== pending.requestId) throw new Error('주문 결과를 확인하지 못했어요.');
             pending = null; savePending();
+            orderSide = null;
             message = (result.order.side === 'buy' ? '구매' : '판매') + '가 완료됐어요. ' + result.order.quantity.toLocaleString('ko-KR') + '토큰 · ' + cash(result.order.total);
             account = null; lastRead = 0;
         } catch (e) {
@@ -161,14 +204,30 @@
     function mount() {
         const tab = $('investment-holdings-tab');
         if (tab) { tab.disabled = false; tab.dataset.tab = 'holdings'; tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', 'investment-holdings-panel'); }
-        root.addEventListener('input', event => { if (event.target.id === 'investment-order-quantity') render(); });
+        root.addEventListener('input', event => {
+            if (event.target.id === 'investment-order-quantity') render();
+            else if (event.target.id === 'investment-calculator-price') { calculatorPrice = event.target.value; renderCalculation(); }
+            else if (event.target.id === 'investment-calculator-quantity') { calculatorQuantity = event.target.value; renderCalculation(); }
+        });
         root.addEventListener('click', event => {
-            const button = event.target.closest('button[data-investment-action]');
+            const button = event.target.closest('button[data-investment-action], button[data-investment-filter]');
             if (!button || button.disabled) return;
+            if (['all', 'buy', 'sell'].includes(button.dataset.investmentFilter)) { orderFilter = button.dataset.investmentFilter; render(); return; }
             const action = button.dataset.investmentAction;
             if (action === 'retry') submit(null, true);
             else if (action === 'reload') refresh(true);
-            else if (action === 'buy' || action === 'sell') submit(action);
+            else if (action === 'calculator' || action === 'calculator-close') {
+                calculatorOpen = action === 'calculator' && !calculatorOpen;
+                if (calculatorOpen && !calculatorPrice && price()) calculatorPrice = String(context.currency === 'KRW' ? price() / 100 : price());
+                render();
+                $(calculatorOpen ? 'investment-calculator-price' : 'investment-average-calculator')?.closest?.('.iv-holdings')?.querySelector(calculatorOpen ? '#investment-calculator-price' : '.iv-calculator-toggle')?.focus();
+            }
+            else if (action === 'cancelled') { includeCancelled = !includeCancelled; render(); }
+            else if (action === 'order-close') { orderSide = null; $('investment-order-quantity').value = '1'; render(); }
+            else if (action === 'buy' || action === 'sell') {
+                if (context.tab === 'holdings' && orderSide !== action) { orderSide = action; render(); $('investment-order-quantity')?.focus?.(); }
+                else submit(action);
+            }
         });
         render();
     }

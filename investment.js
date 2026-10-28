@@ -96,7 +96,7 @@
         <section id="investment-detail" class="iv-detail" aria-label="종목 상세" hidden>
             <div class="iv-detail-nav"><button class="iv-back" id="investment-back" type="button" aria-label="종목 목록으로 돌아가기">${icon('chevron-left')}</button><span class="iv-market-heading"><span>운영시간 00:00~23:30</span><span id="market-detail-status" class="iv-market-status">시세 연결 중</span></span></div>
             <div class="iv-detail-heading"><h2 id="investment-name" tabindex="-1"></h2><span class="iv-ticker" id="investment-ticker"></span></div>
-            <div class="iv-quote"><p class="iv-price"><span id="investment-price"></span><small class="iv-secondary-price" id="investment-secondary-price"></small></p><div id="investment-detail-currency"></div></div>
+            <div class="iv-quote"><p class="iv-price"><span id="investment-price"></span><small class="iv-secondary-price" id="investment-secondary-price"></small><small id="investment-compact-change" class="iv-compact-change" hidden></small></p><div id="investment-detail-currency"></div></div>
             <p class="iv-change"><span id="investment-change-caption" style="margin-left:0">전일 대비</span><span id="investment-change"></span></p>
             <div class="iv-tabs" role="tablist" aria-label="종목 상세 메뉴"><button type="button" id="investment-chart-tab" role="tab" data-tab="chart" aria-controls="investment-chart-panel" aria-selected="true">차트</button><button type="button" id="investment-orderbook-tab" role="tab" data-tab="book" aria-controls="investment-orderbook-panel" aria-selected="false">호가</button><button type="button" id="investment-closes-tab" role="tab" data-tab="closes" aria-controls="investment-closes-panel" aria-selected="false">시세</button><button type="button" id="investment-holdings-tab" disabled>내 드롭</button><button type="button" id="investment-info-tab" role="tab" data-tab="info" aria-controls="investment-info-panel" aria-selected="false">종목정보</button></div>
             <div id="investment-chart-panel" class="iv-chart-panel" role="tabpanel" aria-labelledby="investment-chart-tab"><p class="iv-chart-caption">${icon('circle-check')} <span id="investment-chart-caption">자세한 차트</span></p><div class="iv-chart-wrap"><canvas id="investment-chart" role="img" tabindex="0" aria-description="차트를 누른 채 좌우로 움직이거나 좌우 방향키로 시점별 가격을 확인하세요. Escape 키로 선택을 해제해요." aria-label="시세 차트"></canvas><div id="investment-chart-skeleton" class="iv-chart-skeleton" aria-hidden="true" hidden><span class="iv-skeleton iv-skeleton-chart-title"></span><span class="iv-skeleton iv-skeleton-chart-area"></span><span class="iv-skeleton-chart-axis"><span class="iv-skeleton"></span><span class="iv-skeleton"></span><span class="iv-skeleton"></span></span></div><span id="investment-chart-pulse" class="iv-chart-pulse" aria-hidden="true" hidden></span><output id="investment-chart-inspection" class="iv-chart-inspection" aria-live="off" hidden><span id="investment-chart-time"></span><strong id="investment-chart-value"></strong></output></div><div class="iv-periods" role="group" aria-label="차트 기간"><button type="button" data-period="day" aria-label="오늘" aria-pressed="true">오늘</button><button type="button" data-period="1d" aria-pressed="false">1일</button><button type="button" data-period="1w" aria-pressed="false">1주</button><button type="button" data-period="3m" aria-pressed="false">3달</button><button type="button" data-period="1y" aria-pressed="false">1년</button><button type="button" data-period="5y" aria-pressed="false">5년</button><button type="button" data-period="all" aria-pressed="false">전체</button><button type="button" id="investment-chart-type" class="iv-chart-type" data-chart-type="toggle" aria-label="캔들 차트로 전환" aria-pressed="false"><img src="assets/investment/chart-candle.png" alt="" width="28" height="28"></button></div></div>
@@ -104,7 +104,7 @@
             <div id="investment-closes-panel" class="iv-closes" role="tabpanel" aria-labelledby="investment-closes-tab" hidden></div>
             <div id="investment-info-panel" class="iv-info" role="tabpanel" aria-labelledby="investment-info-tab" hidden></div>
             <div id="investment-holdings-panel" class="iv-holdings" role="tabpanel" aria-labelledby="investment-holdings-tab" hidden></div>
-            <footer class="iv-trade"><div id="investment-order-controls" class="iv-order-controls" hidden><label for="investment-order-quantity">거래 수량</label><div><input id="investment-order-quantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="1" aria-describedby="investment-order-total"><span>토큰</span></div><small id="investment-order-total"></small></div><div class="iv-trade-buttons" id="investment-trade-buttons"><button type="button" id="investment-sell" data-investment-action="sell" disabled>판매하기</button><button type="button" id="investment-buy" data-investment-action="buy" disabled>구매하기</button></div><button type="button" id="investment-order-retry" class="iv-order-retry" data-investment-action="retry" hidden>같은 주문으로 결과 확인</button><p id="investment-trade-note" role="status" aria-live="polite">투자 기록을 불러오는 중이에요</p></footer>
+            <footer class="iv-trade"><div id="investment-order-ticket-heading" class="iv-order-ticket-heading" hidden><strong id="investment-order-ticket-title">드롭 구매</strong><button type="button" data-investment-action="order-close" aria-label="주문 수량 닫기">닫기</button></div><div id="investment-order-controls" class="iv-order-controls" hidden><label for="investment-order-quantity">거래 수량</label><div><input id="investment-order-quantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="1" aria-describedby="investment-order-total"><span>토큰</span></div><small id="investment-order-total"></small></div><div class="iv-trade-buttons" id="investment-trade-buttons"><button type="button" id="investment-sell" data-investment-action="sell" disabled>판매하기</button><button type="button" id="investment-buy" data-investment-action="buy" disabled>구매하기</button></div><button type="button" id="investment-order-retry" class="iv-order-retry" data-investment-action="retry" hidden>같은 주문으로 결과 확인</button><p id="investment-trade-note" role="status" aria-live="polite">투자 기록을 불러오는 중이에요</p></footer>
         </section>`;
     const $ = id => document.getElementById(id);
     const quotePrices = new Map();
@@ -224,9 +224,14 @@
         const serverStock = stocks.find(item => item.id === state.selected);
         if (!serverStock) return;
         const stock = displayQuote(serverStock);
+        $('investment-detail').setAttribute('data-view', state.tab);
+        $('investment-compact-change').hidden = state.tab !== 'holdings';
+        $('investment-compact-change').textContent = feed.ready ? percentLabel(stock) : '';
+        $('investment-compact-change').className = 'iv-compact-change ' + trendClass(stock);
         $('investment-name').textContent = stock.name;
         $('investment-ticker').textContent = stock.ticker;
         renderQuotePrice($('investment-price'), stock);
+        $('investment-price').className = state.tab === 'holdings' ? trendClass(stock) : '';
         $('investment-secondary-price').textContent = feed.ready ? (state.currency === 'POINTS' ? wonAmount(stock.price) : pointAmount(stock.price)) : '';
         $('investment-detail-currency').innerHTML = currencyControl();
         $('investment-change').textContent = changeLabel(stock);
@@ -273,9 +278,12 @@
         change.textContent = changeLabel(quote); change.className = trendClass(quote);
         if (state.selected !== stock.id) return;
         renderQuotePrice($('investment-price'), quote);
+        $('investment-price').className = state.tab === 'holdings' ? trendClass(quote) : '';
         $('investment-secondary-price').textContent = state.currency === 'POINTS' ? wonAmount(quote.price) : pointAmount(quote.price);
         $('investment-change').textContent = changeLabel(quote);
         $('investment-change').className = trendClass(quote);
+        $('investment-compact-change').textContent = percentLabel(quote);
+        $('investment-compact-change').className = 'iv-compact-change ' + trendClass(quote);
         if (state.tab === 'chart' && state.period === 'day') requestAnimationFrame(drawChart);
     }
     function stopMotion() {
