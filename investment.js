@@ -45,7 +45,7 @@
         vlogClicks.set(key, pending);
         return pending;
     };
-    const feed = { ready: false, status: 'loading', asOf: 0, revision: -1, validUntil: 0, timer: null, pending: null, interval: 1_800_000, serverTime: 0, receivedAt: 0, nextUpdateAt: 0, histories: new Map(), historyErrors: new Set(), closes: new Map(), ticks: new Map(), books: new Map(), loading: new Map() };
+    const feed = { ready: false, status: 'loading', asOf: 0, revision: -1, validUntil: 0, timer: null, pending: null, interval: 1_800_000, serverTime: 0, receivedAt: 0, nextUpdateAt: 0, histories: new Map(), historyErrors: new Set(), closes: new Map(), ticks: new Map(), books: new Map(), bookErrors: new Set(), loading: new Map() };
     const motion = { timer: null, price: null, samples: [] };
     const chartInspection = { pointer: null, time: null, key: null, view: null };
     const pointAmount = amount => Math.round(amount).toLocaleString('ko-KR') + ' P';
@@ -60,6 +60,7 @@
     const marketLoading = () => !feed.ready && feed.status === 'loading' && typeof fetch === 'function';
     const skeleton = size => '<span class="iv-skeleton iv-skeleton-' + size + '" aria-hidden="true"></span><span class="iv-sr-only">시세 불러오는 중</span>';
     const quoteMarkup = (value, size) => marketLoading() ? skeleton(size) : value;
+    const dataSkeleton = (label, columns = 3, rows = 6) => '<div class="iv-data-skeleton" role="status"><span class="iv-sr-only">' + label + '</span><div aria-hidden="true" style="--iv-loading-columns:' + columns + '">' + Array.from({ length: rows }, () => '<div>' + '<span class="iv-skeleton iv-skeleton-cell"></span>'.repeat(columns) + '</div>').join('') + '</div></div>';
     const trendClass = stock => stock.change > 0 ? 'iv-up' : stock.change < 0 ? 'iv-down' : 'iv-flat';
     const percentLabel = stock => (stock.percent > 0 ? '+' : '') + stock.percent.toFixed(1) + '%';
     const changeLabel = stock => feed.ready ? (stock.change > 0 ? '+' : stock.change < 0 ? '-' : '') + money(Math.abs(stock.change)) + ' (' + percentLabel(stock) + ')' : '—';
@@ -194,7 +195,7 @@
         renderRanking();
     }
     function renderPortfolio() {
-        window.enjoyInvestmentPortfolio?.render({ currency: state.currency, selected: state.selected, tab: state.tab, holdingView: state.holdingView, active: isActive() });
+        window.enjoyInvestmentPortfolio?.render({ currency: state.currency, selected: state.selected, tab: state.tab, holdingView: state.holdingView, active: isActive(), quoteLoading: marketLoading() });
     }
     function renderRanking() {
         if (window.enjoyInvestmentPortfolio) { renderPortfolio(); return; }
@@ -249,7 +250,7 @@
         $('investment-holdings-tab').hidden = stock.kind === 'index';
         $('investment-trade-buttons').hidden = stock.kind === 'index';
         $('investment-trade-note').textContent = stock.kind === 'index' ? '엔조이는 시장 흐름을 나타내는 지수예요' : '현재 거래가 잠겨 있어요';
-        $('investment-info-panel').innerHTML = `<dl><div><dt>${stock.kind === 'index' ? '지수명' : '종목명'}</dt><dd>${stock.name}</dd></div><div><dt>코드</dt><dd>${stock.ticker}</dd></div><div><dt>유형</dt><dd>${stock.kind === 'index' ? '대표 지수' : feed.tradingEnabled ? '드롭' : '드롭 · 거래 잠김'}</dd></div>${stock.kind === 'index' ? '<div><dt>현재가</dt><dd>' + (feed.ready ? money(stock.price) : '—') + '</dd></div>' : ''}${stock.kind === 'stock' ? '<div><dt>보유 드롭</dt><dd>' + (window.enjoyInvestmentPortfolio?.snapshot()?.quantity ?? '—') + '토큰</dd></div>' : ''}</dl><p>100포인트 = 1원<br>${stock.kind === 'index' ? '관리자가 설정한 지수 값이 유지돼요.' : '30분 주기로 갱신돼요.<br>시세 탭에서 갱신 기록을 볼 수 있어요.'}</p>`;
+        $('investment-info-panel').innerHTML = `<dl><div><dt>${stock.kind === 'index' ? '지수명' : '종목명'}</dt><dd>${stock.name}</dd></div><div><dt>코드</dt><dd>${stock.ticker}</dd></div><div><dt>유형</dt><dd>${stock.kind === 'index' ? '대표 지수' : feed.tradingEnabled ? '드롭' : '드롭 · 거래 잠김'}</dd></div>${stock.kind === 'index' ? '<div><dt>현재가</dt><dd>' + (feed.ready ? money(stock.price) : '—') + '</dd></div>' : ''}${stock.kind === 'stock' ? '<div><dt>보유 드롭</dt><dd id="investment-info-quantity">' + (window.enjoyInvestmentPortfolio?.snapshot()?.quantity ?? '—') + '토큰</dd></div>' : ''}</dl><p>100포인트 = 1원<br>${stock.kind === 'index' ? '관리자가 설정한 지수 값이 유지돼요.' : '30분 주기로 갱신돼요.<br>시세 탭에서 갱신 기록을 볼 수 있어요.'}</p>`;
         root.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', String(button.dataset.tab === state.tab)));
         $('investment-chart-panel').hidden = state.tab !== 'chart';
         $('investment-info-panel').hidden = state.tab !== 'info';
@@ -387,7 +388,7 @@
                 const delay = data.stale ? 60_000 : Math.max(1000, Math.min(feed.interval + 1500, data.nextUpdateAt - data.serverTime + 1500));
                 feed.validUntil = Date.now() + delay;
                 feed.serverTime = data.serverTime; feed.receivedAt = Date.now(); feed.nextUpdateAt = data.nextUpdateAt;
-                if (changed) { resetMotion(); feed.histories.clear(); feed.historyErrors.clear(); feed.closes.clear(); feed.ticks.clear(); feed.books.clear(); }
+                if (changed) { resetMotion(); feed.histories.clear(); feed.historyErrors.clear(); feed.closes.clear(); feed.ticks.clear(); feed.books.clear(); feed.bookErrors.clear(); }
                 renderList(); renderDetail(); updateMarketStatus(); scheduleMarket(delay); scheduleMotion();
             } catch (_) {
                 feed.status = 'delayed';
@@ -433,7 +434,8 @@
         const stock = stocks.find(item => item.id === state.selected), isStock = stock.kind === 'stock' && !feed.tradingEnabled;
         const note = '<p class="iv-closes-note">매일 23:30 종가 · 한국시간 기준<br>마감 전에는 전날까지의 종가를 보여드려요.' + (isStock ? '<br>현재 거래가 잠겨 있어 거래량·거래대금은 0이에요.' : '') + '</p>';
         const rows = entry?.rows || [];
-        panel.setAttribute('aria-busy', String(!!entry?.loading));
+        const loading = !rows.length && (marketLoading() || (feed.ready && !entry?.error && (!entry || entry.loading)));
+        panel.setAttribute('aria-busy', String(loading || !!entry?.loading));
         const table = rows.length ? '<div class="iv-closes-scroll" tabindex="0" role="region" aria-label="날짜별 종가 표"><table class="iv-closes-table' + (isStock ? ' iv-closes-stock' : '') + '"><thead><tr><th scope="col">날짜</th><th scope="col">종가</th><th scope="col">등락률</th>' + (isStock ? '<th scope="col">거래량(토큰)</th><th scope="col">거래대금</th>' : '') + '</tr></thead><tbody>' + rows.map(row => {
             const date = new Date(row.day + 9 * 3_600_000).toISOString().slice(0, 10);
             const percent = (row.change > 0 ? '+' : row.change < 0 ? '-' : '') + Math.abs(row.percent).toFixed(2) + '%';
@@ -441,7 +443,7 @@
         }).join('') + '</tbody></table></div>' : '';
         const status = !feed.ready ? '시세 연결을 기다리고 있어요' : entry?.error ? '종가 기록 연결이 지연되고 있어요' : !entry || entry.loading ? '종가 기록을 불러오는 중이에요' : rows.length ? '' : '아직 마감된 종가 기록이 없어요';
         const action = entry?.error ? '<button type="button" class="iv-closes-more" data-closes="retry">다시 불러오기</button>' : entry?.nextBefore ? '<button type="button" class="iv-closes-more" data-closes="more"' + (entry.loading ? ' disabled' : '') + '>이전 기록 더 보기</button>' : '';
-        panel.innerHTML = quoteTabs() + '<div id="investment-quotes-content" role="tabpanel" aria-labelledby="investment-daily-tab">' + note + table + (status ? '<p class="iv-closes-status" role="status">' + status + '</p>' : '') + action + '</div>';
+        panel.innerHTML = quoteTabs() + '<div id="investment-quotes-content" role="tabpanel" aria-labelledby="investment-daily-tab">' + note + table + (loading ? dataSkeleton('종가 기록을 불러오는 중이에요', isStock ? 5 : 3) : status ? '<p class="iv-closes-status" role="status">' + status + '</p>' : '') + action + '</div>';
         if (!entry && feed.ready) loadCloses();
     }
     async function loadCloses(more = false) {
@@ -472,7 +474,8 @@
     function renderTicks() {
         const panel = $('investment-closes-panel'), entry = feed.ticks.get(ticksKey());
         const rows = entry?.rows || [];
-        panel.setAttribute('aria-busy', String(!!entry?.loading));
+        const loading = !rows.length && (marketLoading() || (feed.ready && !entry?.error && (!entry || entry.loading)));
+        panel.setAttribute('aria-busy', String(loading || !!entry?.loading));
         const table = rows.length ? '<div class="iv-closes-scroll" tabindex="0" role="region" aria-label="30분 시세 기록 표"><table class="iv-closes-table iv-ticks-table"><thead><tr><th scope="col">날짜·시간</th><th scope="col">시세</th><th scope="col">등락률</th></tr></thead><tbody>' + rows.map(row => {
             const kst = new Date(row.time + 9 * 3_600_000).toISOString();
             const percent = (row.change > 0 ? '+' : row.change < 0 ? '-' : '') + Math.abs(row.percent).toFixed(2) + '%';
@@ -480,7 +483,7 @@
         }).join('') + '</tbody></table></div>' : '';
         const status = !feed.ready ? '시세 연결을 기다리고 있어요' : entry?.error ? '시세 기록 연결이 지연되고 있어요' : !entry || entry.loading ? '시세 기록을 불러오는 중이에요' : rows.length ? '' : '아직 시세 기록이 없어요';
         const action = entry?.error ? '<button type="button" class="iv-closes-more" data-ticks="retry">다시 불러오기</button>' : entry?.nextBefore ? '<button type="button" class="iv-closes-more" data-ticks="more"' + (entry.loading ? ' disabled' : '') + '>이전 기록 더 보기</button>' : '';
-        panel.innerHTML = quoteTabs() + '<div id="investment-quotes-content" role="tabpanel" aria-labelledby="investment-realtime-tab"><p class="iv-closes-note">30분 주기 갱신 · 한국시간 기준<br>등락률은 직전 기록 대비예요.</p>' + table + (status ? '<p class="iv-closes-status" role="status">' + status + '</p>' : '') + action + '</div>';
+        panel.innerHTML = quoteTabs() + '<div id="investment-quotes-content" role="tabpanel" aria-labelledby="investment-realtime-tab"><p class="iv-closes-note">30분 주기 갱신 · 한국시간 기준<br>등락률은 직전 기록 대비예요.</p>' + table + (loading ? dataSkeleton('시세 기록을 불러오는 중이에요') : status ? '<p class="iv-closes-status" role="status">' + status + '</p>' : '') + action + '</div>';
         if (!entry && feed.ready) loadTicks();
     }
     async function loadTicks(more = false) {
@@ -511,9 +514,13 @@
         const key = 'book:' + state.selected + ':' + feed.asOf;
         const book = feed.books.get(key);
         if (!book) {
-            panel.innerHTML = '<p class="iv-book-notice">' + (feed.ready ? '호가를 불러오는 중이에요' : '시세 연결을 기다리고 있어요') + '</p>';
+            const failed = feed.bookErrors.has(key), loading = !failed && (feed.ready || marketLoading());
+            panel.setAttribute('aria-busy', String(loading));
+            panel.innerHTML = loading ? dataSkeleton('호가를 불러오는 중이에요', 3, 10) : '<p class="iv-book-notice">' + (failed ? '호가 연결이 지연되고 있어요' : '시세 연결을 기다리고 있어요') + '</p><button type="button" class="iv-closes-more" data-book="retry">다시 불러오기</button>';
+            if (failed) return;
             loadOrderbook(key); return;
         }
+        panel.setAttribute('aria-busy', 'false');
         const alternative = value => state.currency === 'POINTS' ? wonAmount(value) : pointAmount(value);
         const rate = value => {
             const percent = (value - book.previous) / book.previous * 100;
@@ -553,7 +560,8 @@
                 feed.books.set(key, book);
                 if (state.tab === 'book' && key === 'book:' + state.selected + ':' + feed.asOf) renderOrderbook();
             } catch (_) {
-                if (state.tab === 'book' && key === 'book:' + state.selected + ':' + feed.asOf) $('investment-orderbook-panel').innerHTML = '<p class="iv-book-notice">호가 연결이 지연되고 있어요</p>';
+                feed.bookErrors.add(key);
+                if (state.tab === 'book' && key === 'book:' + state.selected + ':' + feed.asOf) renderOrderbook();
             }
         })();
         feed.loading.set(key, promise);
@@ -793,6 +801,7 @@
             container.querySelector('[data-currency="' + state.currency + '"]').focus({ preventScroll: true });
         }
         else if (button.dataset.quotePeriod) { state.quotePeriod = button.dataset.quotePeriod; renderCloses(); }
+        else if (button.dataset.book) { feed.bookErrors.delete('book:' + state.selected + ':' + feed.asOf); renderOrderbook(); }
         else if (button.dataset.ticks) loadTicks(button.dataset.ticks === 'more');
         else if (button.dataset.closes) loadCloses(button.dataset.closes === 'more');
         else if (button.dataset.chartType) {

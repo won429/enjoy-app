@@ -10,6 +10,7 @@
     let orderFilter = 'all', includeCancelled = false, calculatorOpen = false, orderSide = null;
     let calculatorPrice = '', calculatorQuantity = '';
     let selectedOrder = null, receiptExpanded = false;
+    let rankingError = '';
     const currentUid = () => !window.isGuest && window.enjoyUser?.uid || null;
     const cash = value => context.currency === 'KRW'
         ? (value / 100).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원'
@@ -19,6 +20,13 @@
     const changeClass = value => value > 0 ? 'iv-up' : value < 0 ? 'iv-down' : 'iv-flat';
     const preciseCash = (value, currency = context.currency) => (currency === 'KRW' ? value / 100 : value).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + (currency === 'KRW' ? '원' : ' P');
     const cancelled = row => ['cancelled', 'canceled'].includes(row.status);
+    const accountLoading = () => !account && !error && (!!uid || (!window.isGuest && window.enjoyAuthResolved === false));
+    const loadingBlock = shape => '<span class="iv-skeleton iv-skeleton-' + shape + '" aria-hidden="true"></span>';
+    const loadingStatus = (label, content) => '<div class="iv-account-skeleton" role="status"><span class="iv-sr-only">' + label + '</span><div aria-hidden="true">' + content + '</div></div>';
+    const loadingStock = () => '<div class="iv-loading-stock">' + loadingBlock('avatar') + '<div>' + loadingBlock('name') + loadingBlock('caption') + '</div><div>' + loadingBlock('amount') + loadingBlock('caption') + '</div></div>';
+    function holdingsSkeleton() {
+        return loadingStatus('내 드롭과 주문내역을 불러오는 중이에요', '<section class="iv-holding-overview"><div class="iv-average"><div><h3>1토큰 평균</h3><strong>' + loadingBlock('average') + '</strong><small>' + loadingBlock('caption') + '</small></div>' + loadingBlock('calculator') + '</div><dl class="iv-holdings-summary">' + ['보유 수량', '총 금액', '투자 원금'].map(label => '<div><dt>' + label + '</dt><dd>' + loadingBlock('amount') + (label === '총 금액' ? '<small>' + loadingBlock('return') + '</small>' : '') + '</dd></div>').join('') + '</dl></section><section class="iv-order-history"><div class="iv-orders-toolbar"><h3>주문내역</h3>' + loadingBlock('caption') + '</div><div class="iv-order-filters">' + loadingBlock('filter').repeat(3) + '</div>' + loadingBlock('year') + '<div class="iv-loading-order">' + loadingBlock('date') + loadingBlock('name') + loadingBlock('amount') + '</div><div class="iv-loading-order">' + loadingBlock('date') + loadingBlock('name') + loadingBlock('amount') + '</div></section>');
+    }
     const orderLabel = row => row.side === 'grant' ? '지급' : row.side === 'buy' ? '구매' : '판매';
     const orderKey = row => String(row.requestId || [row.side, row.executedAt, row.quantity, row.total].join(':'));
     const orderPrice = row => Number.isFinite(row.price) && row.price > 0 ? row.price : row.quantity > 0 && Number.isFinite(row.total) ? row.total / row.quantity : null;
@@ -95,7 +103,7 @@
         const active = document.activeElement;
         const focused = holdings.contains?.(active) && (active.id ? '#' + active.id : active.dataset.investmentFilter ? '[data-investment-filter="' + active.dataset.investmentFilter + '"]' : active.dataset.investmentAction ? '[data-investment-action="' + active.dataset.investmentAction + '"]' : null);
         if (!account) {
-            holdings.innerHTML = '<p class="iv-book-notice">' + escape(!uid ? '로그인 후 확인해 주세요.' : error || '보유 내역을 불러오는 중이에요.') + '</p>';
+            holdings.innerHTML = accountLoading() ? holdingsSkeleton() : '<p class="iv-book-notice">' + escape(!uid ? '로그인 후 확인해 주세요.' : error || '보유 내역을 불러오지 못했어요.') + '</p>' + (uid && error ? '<button type="button" class="iv-order-retry" data-investment-action="reload">다시 불러오기</button>' : '');
             return;
         }
         const average = account.quantity ? account.costBasis / account.quantity : null;
@@ -118,6 +126,7 @@
         uid = next; epoch++; generation++; account = ranking = null; pending = null; error = message = ''; lastRead = 0; busy = false; request = null;
         orderFilter = 'all'; includeCancelled = calculatorOpen = false; orderSide = null; calculatorPrice = calculatorQuantity = '';
         selectedOrder = null; receiptExpanded = false;
+        rankingError = '';
         clearTimeout(timer); timer = null;
         if (uid) {
             try {
@@ -155,35 +164,56 @@
         switchAccount();
         const panel = $('investment-ranking');
         if (!panel) return;
-        if (!uid) panel.innerHTML = '<p class="iv-ranking-empty">로그인하면 멤버 투자 순위를 볼 수 있어요.</p>';
-        else if (!ranking) panel.innerHTML = '<p class="iv-ranking-empty">' + escape(error || '투자 순위를 불러오는 중이에요.') + '</p>';
+        const loading = accountLoading(), loadingRanking = !ranking && !rankingError && (!!uid || (!window.isGuest && window.enjoyAuthResolved === false));
+        panel.setAttribute('aria-busy', String(loadingRanking));
+        if (loadingRanking) panel.innerHTML = loadingStatus('투자 순위를 불러오는 중이에요', '<div class="iv-loading-ranking">' + Array.from({ length: 5 }, () => '<div>' + loadingBlock('rank') + loadingBlock('name') + loadingBlock('amount') + loadingBlock('rate') + '</div>').join('') + '</div>');
+        else if (!uid) panel.innerHTML = '<p class="iv-ranking-empty">로그인하면 멤버 투자 순위를 볼 수 있어요.</p>';
+        else if (!ranking) panel.innerHTML = '<p class="iv-ranking-empty">' + escape(rankingError || '투자 순위를 불러오지 못했어요.') + '</p><button type="button" class="iv-order-retry" data-investment-action="reload">다시 불러오기</button>';
         else panel.innerHTML = '<table class="iv-ranking-table" aria-label="멤버별 투자 순위"><colgroup><col class="iv-ranking-rank-col"><col><col class="iv-ranking-amount-col"><col class="iv-ranking-rate-col"></colgroup><thead><tr><th scope="col">순위</th><th scope="col">멤버</th><th scope="col">총 투자금액</th><th scope="col">수익률</th></tr></thead><tbody>' +
             ranking.rows.map(row => '<tr' + (row.uid === uid ? ' class="iv-ranking-self"' : '') + '><td>' + row.rank + '</td><th scope="row"><span class="iv-ranking-name">' + escape(row.name) + '</span>' + (row.uid === uid ? '<small class="iv-ranking-me">나</small>' : '') + '</th><td>' + cash(row.investedPoints) + '</td><td class="' + changeClass(row.profit) + '">' + rate(row.returnPercent) + '</td></tr>').join('') +
             '</tbody></table><p class="iv-ranking-note">현재 보유한 드롭의 투자금액 기준 · 같은 금액은 공동 순위</p>';
         const total = $('investment-total'), summary = root.querySelector('.iv-summary > small');
         if (total) total.textContent = account ? cash(account.marketValue) : '—';
+        if (total) { total.setAttribute('aria-busy', String(loading)); if (loading) total.innerHTML = loadingBlock('balance'); }
         if (summary) {
             summary.textContent = !uid ? '로그인 후 내 투자를 확인할 수 있어요' : !account ? error || '투자 기록을 불러오는 중이에요' :
                 account.quantity ? signedCash(account.profit) + ' (' + rate(account.returnPercent) + ')' : '보유한 드롭이 없어요';
             summary.className = account?.quantity ? 'iv-portfolio-profit ' + changeClass(account.profit) : '';
+            if (loading) summary.innerHTML = loadingBlock('return');
         }
         const portfolio = $('investment-portfolio-list');
         if (portfolio) {
-            portfolio.setAttribute('aria-busy', String(!!uid && !account && !error));
-            if (!account || !account.quantity) portfolio.innerHTML = '<p class="iv-ranking-empty">' + escape(!uid ? '로그인 후 보유 토큰을 확인할 수 있어요.' : !account ? error || '보유 토큰을 불러오는 중이에요.' : '아직 보유한 토큰이 없어요.') + '</p>';
+            portfolio.setAttribute('aria-busy', String(loading));
+            if (loading) portfolio.innerHTML = loadingStatus('보유 토큰을 불러오는 중이에요', loadingStock());
+            else if (!account || !account.quantity) portfolio.innerHTML = '<p class="iv-ranking-empty">' + escape(!uid ? '로그인 후 보유 토큰을 확인할 수 있어요.' : !account ? error || '보유 토큰을 불러오지 못했어요.' : '아직 보유한 토큰이 없어요.') + '</p>' + (uid && !account && error ? '<button type="button" class="iv-order-retry" data-investment-action="reload">다시 불러오기</button>' : '');
             else {
                 const amount = context.holdingView === 'price' ? price() : account.marketValue;
                 portfolio.innerHTML = '<div class="iv-portfolio-heading"><h2>보유 드롭</h2><span class="' + changeClass(account.profit) + '">' + rate(account.returnPercent) + '</span></div>' +
                     '<button type="button" class="iv-stock iv-portfolio-stock" data-stock="en-joy" aria-label="엔조이스튜디오 보유 토큰 상세 보기"><img src="assets/enjoy-symbol-rose.png" alt="" width="46" height="46"><span class="iv-stock-name"><strong>엔조이스튜디오</strong><small>' + account.quantity.toLocaleString('ko-KR') + '토큰</small></span><span class="iv-stock-price"><strong>' + (Number.isFinite(amount) ? cash(amount) : '—') + '</strong><small class="' + changeClass(account.profit) + '">' + signedCash(account.profit) + ' (' + rate(account.returnPercent) + ')</small></span></button>';
             }
         }
-        if (account) {
-            $('investment-account-points').textContent = account.points.toLocaleString('ko-KR') + ' P';
-            $('investment-account-equivalent').textContent = '(= ' + (account.points / 100).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원)';
+        const member = window.enjoyStoreMember?.();
+        const balance = account?.points ?? (uid && member?.uid === uid && Number.isSafeInteger(member.points) ? member.points : null);
+        const owner = account || (uid && member?.uid === uid ? member : null);
+        if ($('investment-account-name')) $('investment-account-name').textContent = owner?.name ? owner.name + ' 지갑' : '멤버 지갑';
+        if ($('investment-account-status')) $('investment-account-status').textContent = !uid ? loading ? '불러오는 중' : '로그인 필요' : account ? '연결됨' : error ? '연결 지연' : balance !== null ? '연결됨' : '불러오는 중';
+        const points = $('investment-account-points');
+        points.setAttribute('aria-busy', String(balance === null && loading));
+        if (balance !== null) {
+            points.textContent = balance.toLocaleString('ko-KR') + ' P';
+            $('investment-account-equivalent').textContent = '(= ' + (balance / 100).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + '원)';
             $('investment-account-equivalent').hidden = false;
+        } else {
+            points.textContent = '—';
+            if (loading) points.innerHTML = loadingBlock('amount');
+            $('investment-account-equivalent').textContent = '';
+            $('investment-account-equivalent').hidden = true;
         }
+        const infoQuantity = $('investment-info-quantity');
+        if (infoQuantity) { infoQuantity.textContent = account ? account.quantity.toLocaleString('ko-KR') + '토큰' : '—'; if (loading) infoQuantity.innerHTML = loadingBlock('amount'); }
         const holdings = $('investment-holdings-panel');
         if (holdings) {
+            holdings.setAttribute('aria-busy', String(loading));
             holdings.hidden = context.tab !== 'holdings' || context.selected !== 'en-joy';
             renderHoldings(holdings);
         }
@@ -204,7 +234,11 @@
         if (buy) buy.disabled = !available || account.points < price() * qty;
         if (sell) sell.disabled = !available || account.quantity < qty;
         if (retry) { retry.hidden = !pending; retry.disabled = busy; }
-        if (amount) amount.textContent = valid && price() ? '예상 거래금액 ' + cash(price() * qty) : '수량을 확인해 주세요';
+        if (amount) {
+            amount.setAttribute('aria-busy', String(!!context.quoteLoading));
+            amount.textContent = !valid ? '수량을 확인해 주세요' : price() ? '예상 거래금액 ' + cash(price() * qty) : '시세를 확인할 수 없어요';
+            if (context.quoteLoading && valid) amount.innerHTML = loadingBlock('amount');
+        }
         note.className = holdingsView && !busy && !pending && !message && !error ? 'iv-sr-only' : '';
         if (stock) note.textContent = busy ? '주문을 처리하고 있어요' : pending ? '처리 결과를 확인하지 못했어요. 같은 주문으로 다시 확인해 주세요.' : message || error ||
             (!uid ? '로그인 후 거래할 수 있어요' : !account ? '투자 기록을 불러오는 중이에요' : !open() ? '운영시간 00:00~23:30' : market?.tradingEnabled ? '표시된 공통 시세로 체결돼요' : '현재 거래를 이용할 수 없어요');
@@ -219,15 +253,30 @@
         if (request) return request;
         if (!force && Date.now() - lastRead < 1000) { render(); schedule(); return; }
         const version = epoch, owner = uid, readId = ++generation;
+        if (!account) error = '';
+        if (!ranking) rankingError = '';
+        render();
         request = (async () => {
-            try {
-                const [nextAccount, nextRanking] = await Promise.all([call('/account'), call('/ranking')]);
-                if (version !== epoch || owner !== currentUid() || readId !== generation) return;
-                if (nextAccount.uid !== owner || !Number.isSafeInteger(nextAccount.quantity) || !Array.isArray(nextAccount.orders) || !Array.isArray(nextRanking.rows)) throw new Error('투자 응답을 확인하지 못했어요.');
-                account = nextAccount; ranking = nextRanking; lastRead = Date.now(); error = '';
-            } catch (e) {
-                if (version === epoch && owner === currentUid() && readId === generation) error = e.message || '투자 기록 연결이 지연되고 있어요.';
-            } finally { if (version === epoch && readId === generation) { request = null; render(); schedule(); } }
+            const current = () => version === epoch && owner === currentUid() && readId === generation;
+            const read = async type => {
+                try {
+                    const data = await call('/' + type);
+                    if (!current()) return;
+                    if (type === 'account') {
+                        if (data.uid !== owner || !Number.isSafeInteger(data.quantity) || !Array.isArray(data.orders)) throw new Error('투자 응답을 확인하지 못했어요.');
+                        account = data; error = ''; lastRead = Date.now();
+                    } else {
+                        if (!Array.isArray(data.rows)) throw new Error('투자 순위 응답을 확인하지 못했어요.');
+                        ranking = data; rankingError = '';
+                    }
+                } catch (e) {
+                    if (!current()) return;
+                    if (type === 'account') error = e.name === 'AbortError' ? '투자 기록 연결이 지연되고 있어요. 다시 불러와 주세요.' : e.message || '투자 기록 연결이 지연되고 있어요.';
+                    else rankingError = e.name === 'AbortError' ? '투자 순위 연결이 지연되고 있어요. 다시 불러와 주세요.' : e.message || '투자 순위 연결이 지연되고 있어요.';
+                } finally { if (current()) render(); }
+            };
+            await Promise.all([read('account'), read('ranking')]);
+            if (current()) { request = null; render(); schedule(); }
         })();
         return request;
     }
