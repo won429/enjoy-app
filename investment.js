@@ -105,7 +105,8 @@
             <div id="investment-info-panel" class="iv-info" role="tabpanel" aria-labelledby="investment-info-tab" hidden></div>
             <div id="investment-holdings-panel" class="iv-holdings" role="tabpanel" aria-labelledby="investment-holdings-tab" hidden></div>
             <footer class="iv-trade"><div id="investment-order-ticket-heading" class="iv-order-ticket-heading" hidden><strong id="investment-order-ticket-title">드롭 구매</strong><button type="button" data-investment-action="order-close" aria-label="주문 수량 닫기">닫기</button></div><div id="investment-order-controls" class="iv-order-controls" hidden><label for="investment-order-quantity">거래 수량</label><div><input id="investment-order-quantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="1" aria-describedby="investment-order-total"><span>토큰</span></div><small id="investment-order-total"></small></div><div class="iv-trade-buttons" id="investment-trade-buttons"><button type="button" id="investment-sell" data-investment-action="sell" disabled>판매하기</button><button type="button" id="investment-buy" data-investment-action="buy" disabled>구매하기</button></div><button type="button" id="investment-order-retry" class="iv-order-retry" data-investment-action="retry" hidden>같은 주문으로 결과 확인</button><p id="investment-trade-note" role="status" aria-live="polite">투자 기록을 불러오는 중이에요</p></footer>
-        </section>`;
+        </section>
+        <dialog id="investment-order-detail" class="iv-order-detail" aria-labelledby="investment-order-detail-title" hidden></dialog>`;
     const $ = id => document.getElementById(id);
     const quotePrices = new Map();
     function stopQuotePrice(id) {
