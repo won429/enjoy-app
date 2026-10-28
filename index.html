@@ -24,7 +24,7 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
 
-    <link rel="stylesheet" href="app-loading.css?v=20261027-1">
+    <link rel="stylesheet" href="app-loading.css?v=20261029-server1">
     <link rel="stylesheet" href="attendance.css?v=20261005">
     <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
     <link rel="stylesheet" href="uno.css?v=20261018-wallet1">
@@ -7859,7 +7859,7 @@
                     <div class="app-sk-actions"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
                 </div>
                 <div class="app-sk-tabs"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
-                <div class="app-sk-content">
+                <div class="app-sk-content app-sk-public">
                     <span class="app-sk-block app-sk-heading"></span>
                     <div class="app-sk-novel">
                         <span class="app-sk-block app-sk-cover"></span>
@@ -7867,12 +7867,24 @@
                         <div class="app-sk-synopsis"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
                     </div>
                 </div>
+                <div class="app-sk-member">
+                    <div class="app-sk-members"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
+                    <div class="app-sk-game-buttons"><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
+                    <div class="app-sk-feed-head"><span class="app-sk-block app-sk-member-avatar"></span><span class="app-sk-block app-sk-title"></span></div>
+                    <span class="app-sk-block app-sk-feed-media"></span>
+                    <div class="app-sk-synopsis"><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
+                </div>
             </div>
             <div class="app-sk-nav"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
         </div>
-        <span class="app-sk-label">화면을 불러오는 중</span>
+        <span class="app-sk-label">첫 화면 데이터를 서버에서 불러오는 중</span>
+        <div class="app-loading-error" role="alert" hidden>
+            <h2>연결을 확인해 주세요</h2>
+            <p data-app-loading-message></p>
+            <button type="button" data-app-loading-retry>다시 불러오기</button>
+        </div>
     </div>
-    <script src="app-loading.js?v=20261027-1"></script>
+    <script src="app-loading.js?v=20261029-server1"></script>
 
     <div id="enjoy-dialog" class="hidden fixed inset-0 z-[400] items-center justify-center px-5" aria-hidden="true">
         <div class="ed-card" role="alertdialog" aria-modal="true" aria-labelledby="enjoy-dialog-title" aria-describedby="enjoy-dialog-message" onclick="event.stopPropagation()">
@@ -16766,7 +16778,7 @@
                     // 일반 글이 쌓여도 영구 일정이 목록 제한에 밀려 사라지지 않도록 한다.
                     window.fsOrderBy('createdAt', 'desc')
                 );
-                window._communityPostsUnsub = window.fsOnSnapshot(feedQuery, function (snapshot) {
+                window._communityPostsUnsub = window.enjoyInitialSnapshot('community', feedQuery, function (snapshot) {
                     const next = [];
                     snapshot.forEach(function (entry) {
                         const value = entry.data() || {};
@@ -19022,7 +19034,7 @@
             window.enjoyLoadLocalSchedule();
             if (window.enjoyWalletLoading) window.enjoyWalletLoading.local();
             var ld = document.getElementById('app-loader');
-            if (ld) window.enjoyFinishAppLoading();
+            if (ld) { window.enjoyAppLoading?.local(); window.enjoyFinishAppLoading(); }
         };
     })();
     </script>
@@ -19119,7 +19131,8 @@
         }
 
         async function loadMyName() {
-            const d = await window.getDoc(window.fsDoc('members', window.enjoyUser.uid));
+            const read = window.fsGetDocFromServer || window.getDoc;
+            const d = await read(window.fsDoc('members', window.enjoyUser.uid));
             return d.exists() ? (d.data().name || null) : null;
         }
         async function takenNames() {
@@ -20265,7 +20278,7 @@
                     window.fsOrderBy('createdAt', 'desc'),
                     ...(window.enjoyIsLocalGuest && window.enjoyIsLocalGuest() ? [] : [window.fsLimit(40)])
                 );
-                window._dropPostsUnsub = window.fsOnSnapshot(feedQuery, function (snapshot) {
+                window._dropPostsUnsub = window.enjoyInitialSnapshot('drop', feedQuery, function (snapshot) {
                     const next = [];
                     snapshot.forEach(function (entry) {
                         const value = entry.data() || {};
@@ -21381,7 +21394,7 @@
         function subscribeMembers() {
             if (membersUnsub) return;
             try {
-                membersUnsub = window.fsOnSnapshot(window.fsCol('members'), (snap) => {
+                membersUnsub = window.enjoyInitialSnapshot('members', window.fsCol('members'), (snap) => {
                     const arr = []; snap.forEach(d => {
                         const v = d.data() || {};
                         v.uid = d.id;
@@ -21402,7 +21415,7 @@
                     // 스케줄 탭이 열려 있으면 멤버 가능여부 변경을 즉시 반영
                     try { if (window._schedSub === 'availability' && window.renderAvailability) window.renderAvailability(); } catch (e) {}
                 }, () => {});
-            } catch (e) {}
+            } catch (e) { window.enjoyAppLoading?.fail('members'); }
             // 시간 경과에 따른 마지막 활동 표시를 반영하기 위해 주기적으로 다시 그린다.
             if (!decayTimer) decayTimer = setInterval(() => { if (lastMembers.length) renderMembers(); }, 30000);
         }
@@ -21413,6 +21426,14 @@
             membersUnsub = null;
             lastMembers = [];
             if (window.refreshInvestmentAccount) window.refreshInvestmentAccount();
+        };
+
+        window.enjoyResetMemberSync = function () {
+            window.enjoyLocalMembersStop();
+            started = false;
+            if (beatTimer) clearInterval(beatTimer);
+            if (decayTimer) clearInterval(decayTimer);
+            beatTimer = decayTimer = null;
         };
 
         window.enjoyStoreMember = function () {
@@ -21520,6 +21541,7 @@
                         return true;
                     } catch (e) {
                         // 일시적인 Firestore 오류를 '미가입'으로 오인하지 않고 연결이 회복될 때까지 재시도한다.
+                        window.enjoyAppLoading?.fail('profile');
                         console.warn('Member profile load retry:', e);
                         await new Promise(resolve => setTimeout(resolve, retryDelay));
                         retryDelay = Math.min(5000, retryDelay * 2);
@@ -22740,7 +22762,7 @@
         })();
     </script>
 
-    <script src="home-entry.js?v=20261027-skeleton-1"></script>
+    <script src="home-entry.js?v=20261029-server1"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -22839,6 +22861,8 @@
                 let unsubNoticeAlert = null;
 
                 onAuthStateChanged(meetingAuth, async (user) => {
+                    const loadingVersion = window.enjoyAppLoading?.begin(user);
+                    window.enjoyResetMemberSync?.();
                     if (window.enjoyWalletLoading) window.enjoyWalletLoading.reset();
                     if (unsubMeeting) { unsubMeeting(); unsubMeeting = null; }
                     if (unsubSchedule) { unsubSchedule(); unsubSchedule = null; }
@@ -22877,7 +22901,7 @@
                     // 현재 로그인 사용자 정보 공개
                     window.enjoyUser = { uid: user.uid, email: user.email || '', photoURL: user.photoURL || '', displayName: user.displayName || '' };
                     window.enjoyRefreshGuestNavigation && window.enjoyRefreshGuestNavigation();
-                    unsubNoticeAlert = onSnapshot(doc(window.meetingDb, ...window.NOTICE_ALERT_PATH), (noticeSnapshot) => {
+                    unsubNoticeAlert = window.enjoyInitialSnapshot('notice', doc(window.meetingDb, ...window.NOTICE_ALERT_PATH), (noticeSnapshot) => {
                         const noticeData = noticeSnapshot.exists() ? noticeSnapshot.data() : {};
                         if (window.setHomeNoticeAlert) window.setHomeNoticeAlert(noticeData.enabled === true);
                     }, (error) => {
@@ -22887,6 +22911,7 @@
 
                     // 기존 로그인 세션이 복원된 경우도 현재 사용자의 Firebase 시간표를
                     // 최초 1회 읽어 Android 알림/Live Update 예약에 전달한다.
+                    void (async () => {
                     try {
                         const memberSnapshot = await getDoc(doc(window.meetingDb, 'members', user.uid));
                         if (!meetingAuth.currentUser || meetingAuth.currentUser.uid !== user.uid) return;
@@ -22902,6 +22927,7 @@
                         // 일시적인 조회 실패로 Android의 기존 정상 예약을 지우지는 않는다.
                         console.warn('Android용 Firebase 시간표 최초 로드 실패:', error);
                     }
+                    })();
                     try {
                         localStorage.setItem('enjoy_chat_account_v1', user.uid);
                         localStorage.setItem('enjoy_chat_account_label_v1', user.displayName || user.email || '엔조이 계정');
@@ -22914,15 +22940,13 @@
 
                     let isMeetingLoaded = false;
                     let isScheduleLoaded = false;
-                    let initialSyncFailed = false;
                     const checkHideLoader = () => {
                         if (isMeetingLoaded && isScheduleLoaded) {
                             window.__enjoyTodayDataReady = true;
                             try { window.renderEnjoyToday && window.renderEnjoyToday(); } catch (e) {}
                             const loader = document.getElementById('app-loader');
                             if (loader && loader.style.display !== 'none') {
-                                if (initialSyncFailed) window.enjoyCancelAppLoading();
-                                else window.enjoyFinishAppLoading();
+                                window.enjoyFinishAppLoading();
                             }
                         }
                     };
@@ -22930,24 +22954,26 @@
                     // 일정/모임통장 파이어베이스 동기화 — 정식 멤버 확정 후에만 호출됨
                     window.enjoyEnableSync = function () {
                         if (window.__enjoySyncOn) return; window.__enjoySyncOn = true;
-                        unsubMeeting = onSnapshot(doc(window.meetingDb, ...window.MEETING_PATH), (docSnap) => {
+                        unsubMeeting = window.enjoyInitialSnapshot('meeting', doc(window.meetingDb, ...window.MEETING_PATH), (docSnap) => {
                             if (docSnap.exists()) {
                                 if (typeof window.updateMeetingUI === 'function') { window.updateMeetingUI(docSnap.data()); }
                             }
-                            isMeetingLoaded = true; checkHideLoader();
-                            if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('meeting');
-                        }, (error) => { console.warn("Meeting snapshot error:", error); initialSyncFailed = true; isMeetingLoaded = true; checkHideLoader(); if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('meeting', true); });
+                            if (docSnap.metadata?.fromCache === false && docSnap.metadata?.hasPendingWrites !== true) isMeetingLoaded = true;
+                            checkHideLoader();
+                            if (window.enjoyWalletLoading && isMeetingLoaded) window.enjoyWalletLoading.settle('meeting');
+                        }, (error) => { console.warn("Meeting snapshot error:", error); window.enjoyAppLoading?.fail('meeting'); if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('meeting', true); });
 
-                        unsubSchedule = onSnapshot(doc(window.meetingDb, ...window.SCHEDULE_PATH), (docSnap) => {
+                        unsubSchedule = window.enjoyInitialSnapshot('schedule', doc(window.meetingDb, ...window.SCHEDULE_PATH), (docSnap) => {
                             if (docSnap.exists()) {
                                 window.dynamicEvents = docSnap.data();
                                 if (typeof window.renderCalendar === 'function') { window.renderCalendar(window.viewYear, window.viewMonth); }
                                 try { window.renderEnjoyToday(); } catch (e) {}
                             } else { window.dynamicEvents = {}; }
                             try { if (window.meetingTab === 'expense') window.renderExpenses(); } catch (e) {}
-                            isScheduleLoaded = true; checkHideLoader();
-                            if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('schedule');
-                        }, (error) => { console.warn("Schedule snapshot error:", error); initialSyncFailed = true; isScheduleLoaded = true; checkHideLoader(); if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('schedule', true); });
+                            if (docSnap.metadata?.fromCache === false && docSnap.metadata?.hasPendingWrites !== true) isScheduleLoaded = true;
+                            checkHideLoader();
+                            if (window.enjoyWalletLoading && isScheduleLoaded) window.enjoyWalletLoading.settle('schedule');
+                        }, (error) => { console.warn("Schedule snapshot error:", error); window.enjoyAppLoading?.fail('schedule'); if (window.enjoyWalletLoading) window.enjoyWalletLoading.settle('schedule', true); });
                     };
 
                     // 멤버/스페셜 판별 후 동기화(멤버) 또는 로컬 로드(스페셜)는 enjoyOnLogin에서 처리
@@ -22960,8 +22986,12 @@
                             console.warn('Member profile initialization error:', e);
                         }
                     }
+                    if (loadingVersion !== window.enjoyAppLoading?.snapshot().version) return;
                     // 기존 회원 프로필 초기화와 데이터 접근 조건을 유지한다.
-                    if (profileReady && window.enjoyUser && window.enjoyUser.uid === user.uid) refreshAuthenticatedHome();
+                    if (profileReady && window.enjoyUser && window.enjoyUser.uid === user.uid) {
+                        window.enjoyAppLoading?.ready('profile');
+                        refreshAuthenticatedHome();
+                    } else if (window.enjoyUser?.uid === user.uid) window.enjoyAppLoading?.fail('profile');
                 });
 
             } catch(e) {
@@ -22972,6 +23002,7 @@
                 }
                 window.enjoyAuthResolved = true;
                 window.enjoyAuthInitFailed = true;
+                window.enjoyAppLoading?.fail('auth');
                 window.enjoyShowPublicHome();
             }
         }

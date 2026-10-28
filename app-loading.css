@@ -1,6 +1,6 @@
 /* First-entry placeholder; the reusable loading island lives in loading-island.*. */
 #app-loader.app-loading-skeleton {
-    --app-sk-fill: #ffffff14;
+    --app-sk-fill: #ffffff24;
     position: fixed;
     inset: 0;
     z-index: 2147483647;
@@ -34,10 +34,33 @@
 .app-sk-nav { position: absolute; bottom: max(.75rem, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; justify-content: space-around; align-items: center; width: min(calc(100% - 2.5rem), 22rem); height: 3.75rem; padding: .5rem; border: 1px solid var(--app-sk-fill); border-radius: 3rem; }
 .app-sk-nav span { width: 1.5rem; height: 1.5rem; border-radius: 50%; }
 .app-sk-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@keyframes appSkeletonPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes appSkeletonPulse { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
 @media (prefers-color-scheme: light) {
     #app-loader.app-loading-skeleton { --app-sk-fill: #191f2814; background: #f2f2f7; }
 }
 @media (prefers-reduced-motion: reduce) {
     .app-sk-layout { animation: none; }
 }
+/* A failed initial fetch remains an explicit error, never a completed load. */
+.app-loading-error[hidden] { display: none !important; }
+.app-loading-error { position: absolute; z-index: 2; left: 50%; top: 45%; transform: translate(-50%, -50%); width: min(calc(100% - 48px), 340px); padding: 24px; border: 1px solid var(--app-sk-fill); border-radius: 18px; background: #1c1c1e; color: #f2f4f6; text-align: center; }
+.app-loading-error h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.app-loading-error p { margin: 12px 0 20px; color: #a6abb3; font-size: 14px; line-height: 1.6; word-break: keep-all; }
+.app-loading-error button { min-height: 44px; width: 100%; padding: 10px 16px; border: 0; border-radius: 10px; background: #3182f6; color: #fff; font: inherit; font-size: 15px; font-weight: 650; cursor: pointer; }
+#app-loader[data-state="error"] { cursor: default; touch-action: auto; }
+#app-loader[data-state="error"] .app-sk-layout { animation: none; opacity: .2; }
+@media (prefers-color-scheme: light) {
+    .app-loading-error { background: #fff; color: #191f28; }
+    .app-loading-error p { color: #606b7a; }
+}
+.app-sk-member { display: none; padding: 8px 4px 24px; }
+#app-loader[data-mode="member"] .app-sk-public, #app-loader[data-mode="local"] .app-sk-public { display: none; }
+#app-loader[data-mode="member"] .app-sk-member, #app-loader[data-mode="local"] .app-sk-member { display: block; }
+.app-sk-members { display: flex; gap: 10px; overflow: hidden; margin-bottom: 18px; }
+.app-sk-members span { width: 46px; height: 46px; flex: none; border-radius: 50%; }
+.app-sk-game-buttons { display: flex; gap: 10px; margin-bottom: 28px; }
+.app-sk-game-buttons span { width: 120px; height: 36px; border-radius: 24px; }
+.app-sk-feed-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.app-sk-member-avatar { width: 32px; height: 32px; border-radius: 50%; }
+.app-sk-feed-head .app-sk-title { width: 110px; }
+.app-sk-feed-media { width: 100%; height: min(46vh, 340px); border-radius: 16px; }

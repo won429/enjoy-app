@@ -43,6 +43,7 @@
             selectedMode = 'guest';
         }
         updateAccountMenu();
+        if (root.enjoyAppLoading) { root.enjoyAppLoading.local(); root.enjoyAppLoading.paint(); }
         if (root.enjoyFinishAppLoading) root.enjoyFinishAppLoading();
     };
 
@@ -53,6 +54,7 @@
             selectedMode = 'member';
         }
         updateAccountMenu();
+        if (root.enjoyAppLoading) root.enjoyAppLoading.paint();
     }
 
     root.addEventListener('enjoy-auth-ready', handleAuthReady);
@@ -62,10 +64,13 @@
         handleAuthReady();
         if (!root.enjoyUser) root.enjoyShowPublicHome();
     } else {
-        // SDK 장애가 있어도 공개 홈에 접근할 수 있도록 하되, 정상 세션 복원을 먼저 기다린다.
+        // 인증 확인 전에는 비회원 화면을 완료로 처리하지 않고 연결 오류를 표시한다.
         authFallbackTimer = root.setTimeout(function () {
             authFallbackTimer = null;
-            if (!root.enjoyUser && root.enjoyAuthResolved !== true) root.enjoyShowPublicHome();
+            if (!root.enjoyUser && root.enjoyAuthResolved !== true) {
+                if (root.enjoyAppLoading) root.enjoyAppLoading.fail('auth');
+                else root.enjoyShowPublicHome();
+            }
         }, 12000);
     }
 })(window);
