@@ -173,19 +173,9 @@
 #wallet-panel-investment .iv-down { color: var(--iv-blue); }
 #wallet-panel-investment .iv-flat { color: var(--iv-flat); }
 .iv-detail { min-height: calc(100dvh - max(16px, env(safe-area-inset-top))); display: flex; flex-direction: column; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-.iv-detail[data-view="holdings"] { position: relative; --iv-buy-bg: #f52f42; --iv-sell-bg: #3182f6; }
-#wallet-scroll:has(#investment-detail[data-view="holdings"]:not([hidden])) { padding-top: max(8px, env(safe-area-inset-top)); }
+.iv-detail { position: relative; }
+.iv-detail[data-view="holdings"] { --iv-buy-bg: #f52f42; --iv-sell-bg: #3182f6; }
 .iv-detail-heading h2:focus { outline: none; }
-.iv-detail[data-view="holdings"] .iv-detail-nav { min-height: 40px; margin-bottom: 4px; align-items: flex-start; }
-.iv-detail[data-view="holdings"] .iv-detail-nav .iv-market-heading { display: none; }
-.iv-detail[data-view="holdings"] .iv-detail-heading { position: absolute; top: 0; left: 50%; transform: translateX(-50%); justify-content: center; white-space: nowrap; }
-.iv-detail[data-view="holdings"] .iv-detail-heading h2 { font-size: 12px; color: var(--iv-muted); font-weight: 500; }
-.iv-detail[data-view="holdings"] .iv-ticker { display: none; }
-.iv-detail[data-view="holdings"] .iv-quote { position: absolute; top: 19px; left: 0; right: 0; justify-content: center; margin: 0; }
-.iv-detail[data-view="holdings"] .iv-price { font-size: 15px; line-height: 22px; color: var(--iv-text); letter-spacing: -.025em; }
-.iv-detail[data-view="holdings"] .iv-quote .iv-secondary-price, .iv-detail[data-view="holdings"] .iv-change { display: none; }
-.iv-detail[data-view="holdings"] #investment-detail-currency { position: absolute; top: -16px; right: 0; }
-.iv-detail[data-view="holdings"] #investment-detail-currency button { min-width: 22px; padding: 3px 4px; font-size: 10px !important; }
 .iv-compact-change { margin-left: 5px; font-size: inherit; font-weight: 500; }
 .iv-detail[data-view="holdings"] .iv-trade { position: sticky; bottom: 0; z-index: 3; margin-top: auto; padding-top: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); border-top: 0; background: var(--iv-bg); }
 #wallet-panel-investment:has(.iv-detail:not([hidden])) { padding-bottom: 0; }
@@ -205,6 +195,27 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
 .iv-tabs button[aria-selected="true"] { color: var(--iv-text); }
 .iv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; bottom: 0; height: 2px; left: 0; right: 0; border-radius: 1px; background: var(--iv-text); }
 .iv-tabs button:disabled { color: var(--iv-disabled); }
+/* Detail transitions follow the reference: vertical header fold and a 300ms pane fade. */
+.iv-detail-summary { display: grid; grid-template-rows: 1fr; flex: none; transition: grid-template-rows 320ms cubic-bezier(.32, 0, .18, 1); }
+.iv-detail-summary-inner { overflow: hidden; min-height: 0; }
+.iv-detail-summary-content { display: flex; flex-direction: column; transition: transform 320ms cubic-bezier(.32, 0, .18, 1); }
+.iv-detail[data-compact="true"] .iv-detail-summary-content { transform: translateY(-100%); }
+.iv-detail[data-compact="true"] .iv-detail-summary { grid-template-rows: 0fr; }
+.iv-detail .iv-detail-nav { position: relative; flex: none; min-height: 32px; transition: min-height 320ms cubic-bezier(.32, 0, .18, 1), margin-bottom 320ms cubic-bezier(.32, 0, .18, 1); }
+.iv-detail[data-compact="true"] .iv-detail-nav { min-height: 40px; margin-bottom: 4px; }
+.iv-nav-quote { position: absolute; inset: 0 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; opacity: 0; transform: translateY(4px); pointer-events: none; transition: opacity 120ms ease, transform 160ms ease; }
+.iv-nav-quote > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--iv-muted); font-size: 12px; line-height: 15px; }
+.iv-nav-quote > strong { font-size: 15px; line-height: 22px; letter-spacing: -.025em; }
+.iv-compact-currency { position: absolute; right: 0; top: 0; opacity: 0; visibility: hidden; transition: opacity 120ms ease, visibility 120ms; }
+#investment-compact-currency button { min-width: 22px; padding: 3px 4px; font-size: 10px !important; }
+.iv-detail .iv-market-heading { transition: opacity 100ms ease; }
+.iv-detail[data-compact="true"] .iv-market-heading { opacity: 0; pointer-events: none; }
+.iv-detail[data-compact="true"] .iv-nav-quote { opacity: 1; transform: translateY(0); transition-delay: 180ms; }
+.iv-detail[data-compact="true"] .iv-compact-currency { opacity: 1; visibility: visible; transition-delay: 180ms; }
+.iv-detail[data-compact="true"] .iv-detail-summary { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+    .iv-detail .iv-detail-summary, .iv-detail .iv-detail-summary-content, .iv-detail .iv-detail-nav, .iv-detail .iv-nav-quote, .iv-detail .iv-compact-currency, .iv-detail .iv-market-heading { transition: none; }
+}
 .iv-chart-panel { flex: 1; display: flex; flex-direction: column; min-height: 240px; }
 .iv-chart-caption { display: flex; align-items: center; gap: 6px; margin: 12px 0 0; font-size: 12px; color: var(--iv-muted); }
 .iv-chart-caption i { font-size: 16px; }
