@@ -2,7 +2,7 @@
     'use strict';
     const loader = root.document.getElementById('app-loader');
     if (!loader) return;
-    const memberSources = ['auth', 'profile', 'members', 'meeting', 'schedule', 'drop', 'community', 'notice', 'home'];
+    const memberSources = ['auth', 'profile', 'members', 'meeting', 'schedule', 'drop', 'community', 'prediction', 'notice', 'home'];
     let version = 0, owner = null, mode = 'pending', completed = false, framePending = false, deadline = null;
     let required = ['auth', 'home'], states = new Map(required.map(source => [source, 'pending']));
     const errorBox = loader.querySelector('.app-loading-error');
@@ -41,8 +41,8 @@
             if (errorBox) errorBox.hidden = true;
         });
     }
-    function fail(source) {
-        if (completed || !states.has(source) || states.get(source) === 'ready') return;
+    function fail(source, expected = version) {
+        if (expected !== version || completed || !states.has(source) || states.get(source) === 'ready') return;
         states.set(source, 'error'); render();
     }
     function armDeadline() {
@@ -50,7 +50,7 @@
         const expected = version;
         deadline = root.setTimeout(() => {
             if (expected !== version || completed) return;
-            required.filter(source => states.get(source) !== 'ready').forEach(fail);
+            required.filter(source => states.get(source) !== 'ready').forEach(source => fail(source, expected));
         }, 20000);
     }
     function begin(user) {
@@ -84,7 +84,7 @@
         const current = () => expected === version && uid === owner;
         const failure = error => {
             if (!current()) return;
-            fail(source);
+            fail(source, expected);
             if (onError) onError(error);
         };
         const receive = snapshot => {
@@ -106,7 +106,7 @@
     };
     // Legacy callers may ask to finish; only the readiness gate can dismiss it.
     root.enjoyFinishAppLoading = check;
-    root.enjoyCancelAppLoading = () => required.filter(source => states.get(source) !== 'ready').forEach(fail);
+    root.enjoyCancelAppLoading = () => required.filter(source => states.get(source) !== 'ready').forEach(source => fail(source));
     loader.querySelector('[data-app-loading-retry]')?.addEventListener('click', () => root.location.reload());
     root.enjoyInitialSnapshot = observe;
     render(); armDeadline();

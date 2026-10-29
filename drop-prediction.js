@@ -3,6 +3,7 @@
     const ADMIN = 'tdC9Bzxz7JRjpEceOLzpDCMKeBE2';
     const API = root.ENJOY_PREDICTION_WORKER_URL || 'https://enjoy-drop-prediction.sungwon4867.workers.dev';
     let epoch = 0, uid = '', timer = null, countdownTimer = null, loading = false, offset = 0, fixtures = [], dateVersion = 0, opener = null;
+    let connectedLoadingVersion = null;
     let posting = false, draftId = '', editing = null, returnToManager = false, adminBusy = false;
     let adminPosts = new Map(), managerOpener = null;
     const saving = new Set();
@@ -42,6 +43,8 @@
         menu();
         if (!uid || loading || identity() !== uid) return;
         const generation = epoch;
+        const session = root.enjoyAppLoading?.snapshot();
+        const loadingVersion = session?.mode === 'member' && session.owner === uid ? session.version : null;
         loading = true;
         try {
             const data = await api('/feed');
@@ -50,9 +53,12 @@
             root._dropPredictions = data.posts;
             root._dropPredictionError = '';
             if (changed || force) root.renderDropFeed?.();
+            // Only a completed feed read and render can release the first home screen.
+            if (loadingVersion !== null) root.enjoyAppLoading?.ready('prediction', loadingVersion);
         } catch (error) {
             if (generation !== epoch) return;
             root._dropPredictionError = '야구 예측: ' + (error.message || '연결을 확인해 주세요.');
+            if (loadingVersion !== null) root.enjoyAppLoading?.fail('prediction', loadingVersion);
             root.renderDropFeed?.();
         } finally { if (generation === epoch) loading = false; }
     }
@@ -394,7 +400,10 @@
     function connect() {
         const next = identity();
         menu();
-        if (next === uid) return;
+        const session = root.enjoyAppLoading?.snapshot();
+        const loadingVersion = session?.mode === 'member' && session.owner === next ? session.version : null;
+        if (next === uid && loadingVersion === connectedLoadingVersion) return;
+        connectedLoadingVersion = loadingVersion;
         uid = next; epoch++; loading = false; clearInterval(timer); timer = null; clearInterval(countdownTimer); countdownTimer = null;
         root._dropPredictions = []; root._dropPredictionError = ''; saving.clear(); returnToManager = false;
         adminPosts.clear(); renderManager(); close(true);
