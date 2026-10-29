@@ -50,13 +50,20 @@
         });
         return html + (year ? '</ol></section>' : '');
     }
-    function closeOrderDetail(restoreFocus = true) {
-        const key = selectedOrder;
+    function closeOrderDetail(restoreFocus = true, pointer = false) {
+        const key = selectedOrder, dialog = $('investment-order-detail');
+        const finishTransition = restoreFocus && dialog?.open ? window.beginEnjoyMenuTransition?.(dialog, $('investment-detail'), 39) : null;
         selectedOrder = null; receiptExpanded = false;
-        renderOrderDetail();
+        if (dialog?.open) dialog.close();
+        if (dialog) { dialog.hidden = true; dialog.receiptSignature = ''; }
+        const clear = () => { if (dialog?.hidden) dialog.innerHTML = ''; };
+        if (finishTransition) Promise.resolve(finishTransition()).then(clear);
+        else clear();
         if (restoreFocus) {
             const controls = root.querySelectorAll?.('[data-investment-order]') || [];
-            Array.from(controls).find(button => button.dataset.investmentOrder === key)?.focus({ preventScroll: true });
+            const trigger = Array.from(controls).find(button => button.dataset.investmentOrder === key);
+            if (pointer) trigger?.blur?.();
+            else trigger?.focus({ preventScroll: true });
         }
     }
     function renderOrderDetail() {
@@ -86,8 +93,10 @@
             '<section class="iv-receipt-acceptance"><button type="button" data-investment-action="receipt-expand" aria-expanded="' + receiptExpanded + '" aria-controls="investment-receipt-acceptance"><strong>' + (row.side === 'grant' ? '지급접수 내역' : '주문접수 내역') + '</strong><i class="fa-solid fa-chevron-' + (receiptExpanded ? 'up' : 'down') + '" aria-hidden="true"></i></button><dl id="investment-receipt-acceptance"' + (receiptExpanded ? '' : ' hidden') + '><div><dt>접수 일시</dt><dd>' + date.full + '</dd></div><div><dt>거래 구분</dt><dd>' + label + '</dd></div><div><dt>처리 상태</dt><dd>' + completion + '</dd></div>' + (row.requestId ? '<div><dt>주문 번호</dt><dd>' + escape(row.requestId) + '</dd></div>' : '') + '</dl></section>';
         dialog.hidden = false;
         if (!dialog.open) {
+            const finishTransition = window.beginEnjoyMenuTransition?.($('investment-detail'), dialog, 39, $('wallet-scroll'));
             dialog.showModal?.(); dialog.scrollTop = 0;
             $('investment-order-detail-title')?.focus?.({ preventScroll: true });
+            finishTransition?.();
         }
     }
     function renderCalculation() {
@@ -162,7 +171,7 @@
             if ($('investment-order-quantity')) $('investment-order-quantity').value = '1';
         }
         switchAccount();
-        window.enjoyInvestmentTicket?.update({ context: { ...context }, uid, account, market, busy, pending, error });
+        window.enjoyInvestmentTicket?.update({ context: { ...context }, uid, account, market, busy, pending, error, accountLoading: accountLoading() });
         const panel = $('investment-ranking');
         if (!panel) return;
         const loading = accountLoading(), loadingRanking = !ranking && !rankingError && (!!uid || (!window.isGuest && window.enjoyAuthResolved === false));
@@ -333,7 +342,7 @@
             if (['all', 'buy', 'sell'].includes(button.dataset.investmentFilter)) { orderFilter = button.dataset.investmentFilter; render(); return; }
             const action = button.dataset.investmentAction;
             if (action === 'retry') submit(null, true);
-            else if (action === 'receipt-close') closeOrderDetail();
+            else if (action === 'receipt-close') closeOrderDetail(true, event.detail > 0);
             else if (action === 'receipt-expand') {
                 receiptExpanded = !receiptExpanded; renderOrderDetail();
                 $('investment-order-detail')?.querySelector('[data-investment-action="receipt-expand"]')?.focus?.({ preventScroll: true });

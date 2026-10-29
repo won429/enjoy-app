@@ -4,8 +4,9 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync(require('node:path').join(__dirname, '../investment.js'), 'utf8');
 
-function setup({ user = null, member = null, members = [], fetcher = null, themeColors = null, now = null, random = null } = {}) {
+function setup({ user = null, member = null, members = [], fetcher = null, themeColors = null, now = null, random = null, reducedMotion = false } = {}) {
     const events = {}, handlers = {}, nodes = new Map(), lines = [], timers = new Map(), arcs = [], strokes = [], labels = [], bodies = [];
+    const animations = [], transitions = [];
     let timerId = 0;
     let path = [], dash = [];
     const ctx = new Proxy({ arc: (...args) => arcs.push(args), beginPath: () => { path = []; }, setLineDash: value => { dash = value; },
@@ -21,6 +22,10 @@ function setup({ user = null, member = null, members = [], fetcher = null, theme
             addEventListener(type,fn) { handlers[id + ':' + type] = fn; },
             querySelectorAll(selector) { return selector === '.iv-market-status' ? [element('market-home-status'),element('market-detail-status')] : []; }, querySelector() { return { focus() {} }; },
             getBoundingClientRect() { return { left: 0, top: 0, width: 320, height: 250 }; },
+            animate(frames, options) {
+                const animation = { element: id, frames, options, cancelled: false, cancel() { this.cancelled = true; } };
+                animations.push(animation); return animation;
+            },
             getContext() { return ctx; }, focus() {}
         });
         return nodes.get(id);
@@ -30,6 +35,8 @@ function setup({ user = null, member = null, members = [], fetcher = null, theme
         win.getComputedStyle = () => ({ getPropertyValue: name => themeColors[name] || '' });
         win.matchMedia = () => ({ addEventListener: (name,fn) => { events['theme:' + name] = fn; } });
     }
+    win.beginEnjoyMenuTransition = (from, to) => { const entry = {from:from.id,to:to.id,committed:false}; transitions.push(entry); return () => { entry.committed = true; }; };
+    win.matchMedia ??= () => ({ matches: reducedMotion });
     const doc = { hidden:false, getElementById: element, addEventListener: (name, fn) => { events[name] = fn; } };
     const bindings = { window: win, document: doc, requestAnimationFrame: fn => fn(), ResizeObserver: class { observe() {} }, AbortController, URL, setTimeout: (fn,ms) => { const id=++timerId;timers.set(id,{fn:()=>{timers.delete(id);return fn();},ms});return id; }, clearTimeout: id => timers.delete(id) };
     if (now) bindings.Date = class extends Date { static now() { return now(); } };
@@ -37,7 +44,7 @@ function setup({ user = null, member = null, members = [], fetcher = null, theme
     if (fetcher) bindings.fetch = fetcher;
     vm.runInNewContext(source, bindings);
     const click = dataset => handlers['wallet-panel-investment:click']({target:{closest:()=>({dataset})}});
-    return { win, doc, element, click, lines, arcs, strokes, labels, bodies, events, timers, ctx, chartEvent: (type, values = {}) => handlers['investment-chart:' + type]({ pointerId: 1, button: 0, clientX: 6, isPrimary: true, preventDefault() {}, stopPropagation() {}, ...values }), settle: () => new Promise(setImmediate), setMember(value) { member = value; }, setMembers(value) { members = value; } };
+    return { win, doc, element, click, animations, transitions, back: () => handlers['wallet-panel-investment:click']({target:{closest:()=>({id:'investment-back',dataset:{}})}}), scrollEvent: (type, event) => handlers['wallet-scroll:' + type](event), lines, arcs, strokes, labels, bodies, events, timers, ctx, chartEvent: (type, values = {}) => handlers['investment-chart:' + type]({ pointerId: 1, button: 0, clientX: 6, isPrimary: true, preventDefault() {}, stopPropagation() {}, ...values }), settle: () => new Promise(setImmediate), setMember(value) { member = value; }, setMembers(value) { members = value; } };
 }
 
 test('without a server connection, quotes stay unavailable rather than simulating a price', () => {
@@ -774,4 +781,115 @@ test('a late realtime response cannot overwrite daily history or a different sel
     resolveTicks({ok:true,json:async()=>({...data,symbol:'en-joy',rows:[{time:data.asOf,price:54321,previous:100,change:54221,percent:54221}],nextBefore:null})});
     await ui.settle();assert.match(ui.element('investment-closes-panel').innerHTML,/아직 마감된/);assert.doesNotMatch(ui.element('investment-closes-panel').innerHTML,/54,321/);
     ui.click({quotePeriod:'realtime'});await ui.settle();assert.match(ui.element('investment-closes-panel').innerHTML,/54,321 P/);
+});
+
+
+test('home tabs isolate holdings, drop listings and the existing ranking; returning from details keeps the active tab', () => {
+    const ui = setup();
+    assert.equal(ui.element('investment-portfolio-panel').hidden, false);
+    assert.equal(ui.element('investment-drops-panel').hidden, true);
+    assert.equal(ui.element('investment-ranking-panel').hidden, true);
+    ui.click({homeTab:'drops'});
+    assert.equal(ui.element('investment-portfolio-panel').hidden, true);
+    assert.equal(ui.element('investment-drops-panel').hidden, false);
+    assert.equal(ui.element('investment-drops-tab').attributes['aria-selected'], 'true');
+    ui.click({stock:'en-joy'});
+    assert.equal(ui.element('investment-home').hidden, true);
+    ui.win.resetInvestmentView();
+    assert.equal(ui.element('investment-home').hidden, false);
+    assert.equal(ui.element('investment-drops-panel').hidden, false);
+    ui.click({homeTab:'ranking'});
+    assert.equal(ui.element('investment-ranking-panel').hidden, false);
+    assert.equal(ui.element('investment-drops-panel').hidden, true);
+    ui.click({currency:'KRW'});
+    assert.equal(ui.element('investment-ranking-panel').hidden, false);
+    ui.click({homeTab:'portfolio'});
+    assert.equal(ui.element('investment-portfolio-panel').hidden, false);
+    assert.equal(ui.element('investment-ranking-panel').hidden, true);
+});
+
+test('daily and realtime quote placeholders end on success or failure without covering existing records',async()=>{
+    const data=sampleMarket();let resolveCloses,resolveTicks;
+    const ui=setup({fetcher:url=>{
+        const path=new URL(url).pathname;
+        if(path==='/closes')return new Promise(resolve=>{resolveCloses=resolve;});
+        if(path==='/ticks')return new Promise(resolve=>{resolveTicks=resolve;});
+        return sampleApi(data,[])(url);
+    }});
+    await ui.settle();ui.click({stock:'en-joy'});await ui.settle();ui.click({tab:'closes'});
+    assert.match(ui.element('investment-closes-panel').innerHTML,/iv-data-skeleton/);
+    assert.equal(ui.element('investment-closes-panel').attributes['aria-busy'],'true');
+    resolveCloses({ok:true,json:async()=>({...data,symbol:'en-joy',rows:[],nextBefore:null})});await ui.settle();
+    assert.doesNotMatch(ui.element('investment-closes-panel').innerHTML,/iv-data-skeleton/);
+    assert.equal(ui.element('investment-closes-panel').attributes['aria-busy'],'false');
+    ui.click({quotePeriod:'realtime'});
+    assert.match(ui.element('investment-closes-panel').innerHTML,/iv-data-skeleton/);
+    resolveTicks({ok:false,json:async()=>({error:'offline'})});await ui.settle();
+    assert.doesNotMatch(ui.element('investment-closes-panel').innerHTML,/iv-data-skeleton/);
+    assert.match(ui.element('investment-closes-panel').innerHTML,/다시 불러오기/);
+    assert.equal(ui.element('investment-closes-panel').attributes['aria-busy'],'false');
+});
+
+test('orderbook skeleton ends on failure and explicit retry restores it before loading the actual ladder',async()=>{
+    const data=sampleMarket();let respond;
+    const ui=setup({fetcher:url=>new URL(url).pathname==='/orderbook'?new Promise(resolve=>{respond=resolve;}):sampleApi(data,[])(url)});
+    await ui.settle();ui.click({stock:'en-joy'});await ui.settle();ui.click({tab:'book'});
+    const panel=ui.element('investment-orderbook-panel');
+    assert.match(panel.innerHTML,/iv-data-skeleton/);assert.equal(panel.attributes['aria-busy'],'true');
+    respond({ok:false,json:async()=>({error:'offline'})});await ui.settle();
+    assert.doesNotMatch(panel.innerHTML,/iv-data-skeleton/);assert.equal(panel.attributes['aria-busy'],'false');
+    assert.match(panel.innerHTML,/data-book="retry"/);ui.click({book:'retry'});
+    assert.match(panel.innerHTML,/iv-data-skeleton/);assert.equal(panel.attributes['aria-busy'],'true');
+    respond({ok:true,json:async()=>({symbol:'en-joy',asOf:data.asOf,price:100,previous:100,indicative:true,tradingEnabled:false,totalAsk:0,totalBid:0,
+        asks:[101].map(price=>({price,quantity:0})),bids:[99].map(price=>({price,quantity:0})),stats:{open:100,high:100,low:100,yearHigh:100,yearLow:100,volume:0}})});await ui.settle();
+    assert.doesNotMatch(panel.innerHTML,/iv-data-skeleton/);assert.equal(panel.attributes['aria-busy'],'false');assert.match(panel.innerHTML,/101 P/);
+});
+
+
+test('detail transitions fold once, retain the compact chart and cancel stale pane animations', () => {
+    const ui = setup();
+    ui.click({ stock: 'en-joy' });
+    assert.equal(ui.element('investment-detail').attributes['data-compact'], 'false');
+    ui.click({ tab: 'holdings' });
+    assert.equal(ui.element('investment-detail').attributes['data-compact'], 'true');
+    assert.equal(ui.element('investment-detail-summary').inert, true);
+    const entrance = ui.animations.at(-1);
+    assert.equal(entrance.element, 'investment-holdings-panel');
+    assert.equal(entrance.options.duration, 300);
+    ui.click({ tab: 'chart' });
+    assert.equal(entrance.cancelled, true, 'a fast second tab click cancels the previous fade');
+    assert.equal(ui.element('investment-detail').attributes['data-compact'], 'true', 'returning to chart retains the compact top bar');
+    const count = ui.animations.length;
+    ui.click({ tab: 'chart' }); ui.click({ currency: 'KRW' });
+    assert.equal(ui.animations.length, count, 'same-tab clicks and quote unit changes do not replay the entrance');
+    ui.element('wallet-scroll').scrollTop = 40;
+    ui.scrollEvent('wheel', { deltaY: -20 });
+    assert.equal(ui.element('investment-detail').attributes['data-compact'], 'true', 'scrolling an order list does not unfold the header');
+    ui.element('wallet-scroll').scrollTop = 0;
+    ui.scrollEvent('touchstart', { touches: [{ clientY: 100 }] });
+    ui.scrollEvent('touchmove', { touches: [{ clientY: 130 }] });
+    assert.equal(ui.element('investment-detail').attributes['data-compact'], 'false', 'pulling down at the top unfolds the original header');
+    ui.click({ tab: 'holdings' }); ui.click({ stock: 'enjoy' });
+    assert.equal(ui.element('investment-detail').attributes['data-compact'], 'false', 'a different symbol starts with its original expanded header');
+});
+
+test('detail tabs respect reduced motion without removing the selected content', () => {
+    const ui = setup({ reducedMotion: true });
+    ui.click({ stock: 'en-joy' }); ui.click({ tab: 'book' });
+    assert.equal(ui.animations.length, 0);
+    assert.equal(ui.element('investment-orderbook-panel').hidden, false);
+    assert.equal(ui.element('investment-detail').attributes['data-compact'], 'true');
+});
+
+
+test('investment home tabs, symbol entry and return use the shared menu transition', () => {
+    const ui=setup();
+    ui.click({homeTab:'drops'});ui.click({stock:'en-joy'});
+    // Back uses the same event branch as a real button click.
+    assert.deepEqual(ui.transitions.slice(0,2).map(t=>[t.from,t.to,t.committed]),[
+        ['investment-portfolio-panel','investment-drops-panel',true],['investment-home','investment-detail',true]
+    ]);
+    const count=ui.transitions.length;ui.click({currency:'KRW'});
+    assert.equal(ui.transitions.length,count,'data and unit updates do not replay page entry');
+    ui.back();assert.equal(ui.transitions.at(-1).from,'investment-detail');assert.equal(ui.transitions.at(-1).to,'investment-home');assert.equal(ui.transitions.at(-1).committed,true);
 });

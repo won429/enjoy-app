@@ -812,6 +812,7 @@
     });
     chartCanvas.addEventListener('blur', () => clearChartInspection());
     function showList(restoreFocus) {
+        const finishTransition = restoreFocus && state.selected ? window.beginEnjoyMenuTransition?.($('investment-detail'), $('investment-home'), 39, $('wallet-scroll')) : null;
         clearChartInspection(false);
         const previous = state.selected;
         tabEntrance?.cancel(); setDetailCompact(false);
@@ -827,19 +828,23 @@
             (panel.querySelector('[data-stock="' + previous + '"]') || $('investment-' + state.homeTab + '-tab')).focus({ preventScroll: true });
         }
         syncOrPause();
+        finishTransition?.();
     }
     root.addEventListener('click', event => {
         const button = event.target.closest('button');
         if (!button || button.disabled) return;
         if (window.haptic) window.haptic();
         if (button.dataset.homeTab && ['portfolio', 'drops', 'ranking'].includes(button.dataset.homeTab)) {
+            const finishTransition = window.beginEnjoyMenuTransition?.($('investment-' + state.homeTab + '-panel'), $('investment-' + button.dataset.homeTab + '-panel'), 39, $('wallet-scroll'));
             state.homeTab = button.dataset.homeTab;
             renderHomeTabs();
+            finishTransition?.();
         } else if (button.dataset.holdingView) {
             state.holdingView = button.dataset.holdingView;
             root.querySelectorAll('[data-holding-view]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.holdingView === state.holdingView)));
             renderPortfolio();
         } else if (button.dataset.stock) {
+            const finishTransition = window.beginEnjoyMenuTransition?.($('investment-home'), $('investment-detail'), 39, $('wallet-scroll'));
             clearChartInspection(false);
             stopQuotePrice('investment-price');
             tabEntrance?.cancel(); setDetailCompact(false);
@@ -847,6 +852,7 @@
             $('investment-home').hidden = true; $('investment-detail').hidden = false;
             $('wallet-scroll').scrollTop = 0;
             renderDetail(); $('investment-name').focus({ preventScroll: true });
+            finishTransition?.();
         } else if (button.id === 'investment-back') showList(true);
         else if (button.dataset.currency) {
             state.currency = button.dataset.currency;

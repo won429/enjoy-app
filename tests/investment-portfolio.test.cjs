@@ -8,7 +8,7 @@ const market = { serverTime: at, nextUpdateAt: at + 900000, asOf: at - 900000, r
 const account = uid => ({ uid, name: uid === 'a' ? '성원제' : '홍박사', points: 1000, quantity: 0, costBasis: 0, marketValue: 0, profit: 0, realizedProfit: 0, returnPercent: 0, orders: [], revision: 0 });
 const flush = async () => { for (let i = 0; i < 4; i++) await new Promise(setImmediate); };
 function setup(fetcher, storage = new Map()) {
-  const elements = new Map(), events = {}, listeners = {}, timers = new Map(); let timerId = 0, confirms = 0;
+  const elements = new Map(), events = {}, listeners = {}, timers = new Map(); let timerId = 0, confirms = 0; const transitions = [];
   const element = id => {
     if (!elements.has(id)) elements.set(id, { id, hidden: false, disabled: false, value: '1', dataset: {}, attributes: {}, textContent: '', innerHTML: '',
       addEventListener(type, fn) { (listeners[id + ':' + type] ||= []).push(fn); }, setAttribute(k, v) { this.attributes[k] = v; }, getAttribute(k) { return this.attributes[k]; }, style: { setProperty() {} },
@@ -17,6 +17,7 @@ function setup(fetcher, storage = new Map()) {
   };
   const document = { hidden: false, getElementById: element, addEventListener(type, fn) { (events[type] ||= []).push(fn); } };
   const window = { enjoyUser: { uid: 'a' }, isGuest: false,
+    beginEnjoyMenuTransition(from,to) { const entry={from:from.id,to:to.id,committed:false};transitions.push(entry);return ()=>{entry.committed=true;return Promise.resolve();}; },
     getEnjoyIdToken: async () => 'token-' + window.enjoyUser?.uid,
     enjoyConfirm: async () => { confirms++; return true; },
     addEventListener(type, fn) { (events[type] ||= []).push(fn); } };
@@ -26,7 +27,7 @@ function setup(fetcher, storage = new Map()) {
     sessionStorage: { getItem: k => storage.get(k) || null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k) } });
   const controller = window.enjoyInvestmentPortfolio;
   controller.mount(); controller.render({ selected: 'en-joy', tab: 'holdings', active: true }); controller.updateMarket(market);
-  return { controller, window, element, storage, timers, confirms: () => confirms,
+  return { controller, window, element, storage, timers, transitions, confirms: () => confirms,
     async action(action) { const button = element(action === 'retry' ? 'investment-order-retry' : 'investment-' + action); button.dataset.investmentAction = action;
       for (const fn of listeners['wallet-panel-investment:click'] || []) fn({ target: { closest: () => button } }); await flush(); },
     ticket: window.enjoyInvestmentTicket,
@@ -414,4 +415,42 @@ test('closed hours and expired or stale markets keep final preview submission lo
     await ui.action('buy');ui.input('investment-ticket-quantity','1');await ui.ticketAction('submit');
     assert.match(ui.element('investment-ticket-notice-title').textContent,/잠겨/);assert.equal(s.count(),0);assert.equal(ui.confirms(),0);
   }
+});
+
+
+test('purchase and receipt dialogs use the shared menu motion in both directions',async()=>{
+ const s=server(),ui=setup(s.fetch);await flush();await ui.action('buy');
+ assert.deepEqual(ui.transitions.at(-1),{from:'investment-detail',to:'investment-trade-ticket',committed:true});
+ await ui.ticketAction('close');assert.equal(ui.transitions.at(-1).from,'investment-trade-ticket');assert.equal(ui.transitions.at(-1).to,'investment-detail');
+ s.accounts.get('a').orders=[{side:'grant',quantity:2,total:730,executedAt:at}];await ui.controller.reload();
+ ui.openOrder('grant:'+at+':2:730');
+ assert.equal(ui.element('investment-order-detail').open,true);
+ assert.deepEqual(ui.transitions.at(-1),{from:'investment-detail',to:'investment-order-detail',committed:true});
+ ui.escapeReceipt();await flush();
+ assert.equal(ui.transitions.at(-1).from,'investment-order-detail');assert.equal(ui.transitions.at(-1).to,'investment-detail');
+});
+
+test('order preview keeps account skeletons until the account read settles independently',async()=>{
+ const s=server();let release;
+ const ui=setup((url,opts)=>url.endsWith('/account')?new Promise(resolve=>{release=()=>resolve(s.fetch(url,opts));}):s.fetch(url,opts));await flush();
+ await ui.action('buy');
+ assert.equal(ui.element('investment-ticket-available').attributes['aria-busy'],'true');
+ assert.match(ui.element('investment-ticket-available').innerHTML,/iv-ticket-skeleton-value/);
+ release();await flush();
+ assert.equal(ui.element('investment-ticket-available').attributes['aria-busy'],'false');
+ assert.equal(ui.element('investment-ticket-available').textContent,'1,000 P');
+ ui.controller.render({quoteLoading:true});
+ assert.equal(ui.element('investment-ticket-price').disabled,true);
+ assert.match(ui.element('investment-ticket-quote').innerHTML,/iv-ticket-skeleton-quote/);
+ ui.controller.render({quoteLoading:false});
+ assert.equal(ui.element('investment-ticket-price').disabled,false);
+});
+
+
+test('a preview opened before the first quote fills its initial price when the quote arrives',async()=>{
+ const s=server(),ui=setup(s.fetch);await flush();
+ ui.controller.updateMarket({...market,quotes:[]});ui.controller.render({quoteLoading:true});await ui.action('buy');
+ assert.equal(ui.ticket.snapshot().price,null);
+ ui.controller.updateMarket(market);ui.controller.render({quoteLoading:false});
+ assert.equal(ui.ticket.snapshot().price,100);assert.equal(ui.element('investment-ticket-price').value,'100');
 });

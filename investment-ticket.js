@@ -10,6 +10,7 @@
     const quote = () => data.market?.quotes?.find(item => item.id === 'en-joy');
     const cash = (value, currency = data.context?.currency) => Number.isFinite(value)
         ? (currency === 'KRW' ? value / 100 : value).toLocaleString('ko-KR', { maximumFractionDigits: 2 }) + (currency === 'KRW' ? '원' : ' P') : '—';
+    const loadingValue = shape => '<span class="iv-skeleton iv-ticket-skeleton-' + shape + '" aria-hidden="true"></span><span class="iv-sr-only">불러오는 중</span>';
     const rate = value => Number.isFinite(value) ? (value > 0 ? '+' : '') + value.toFixed(2) + '%' : '—';
     const color = value => value > 0 ? 'iv-up' : value < 0 ? 'iv-down' : 'iv-flat';
     const quantity = () => /^\d+$/.test(qty) && Number.isSafeInteger(Number(qty)) && Number(qty) <= 1000000 ? Number(qty) : 0;
@@ -18,13 +19,20 @@
     const amount = () => validPrice(orderPrice()) && Number.isSafeInteger(orderPrice() * quantity()) ? orderPrice() * quantity() : 0;
     const currentTime = () => data.market ? data.market.serverTime + Math.max(0, Date.now() - data.market.receivedAt) : Date.now();
     const locked = () => data.market?.tradingEnabled !== true || data.market?.stale || !validPrice(quote()?.price) || !Number.isFinite(data.market?.nextUpdateAt) || currentTime() >= data.market.nextUpdateAt || (currentTime() + 9 * 3600000) % 86400000 >= 23.5 * 3600000;
-    function close(restore = true) {
+    function close(restore = true, pointer = false) {
         const dialog = $('investment-trade-ticket');
+        const finishTransition = restore && dialog?.open ? window.beginEnjoyMenuTransition?.(dialog, $('investment-detail'), 39) : null;
         side = null; qty = ''; bookVersion++; bookRequest?.abort(); bookRequest = null;
         dismissNotice();
         if (dialog?.open) dialog.close();
         if (dialog) dialog.hidden = true;
-        if (restore) $('investment-' + origin)?.focus?.({ preventScroll: true });
+        if (finishTransition) Promise.resolve(finishTransition()).then(() => { if (dialog.hidden) dialog.innerHTML = ''; });
+        else if (dialog) dialog.innerHTML = '';
+        if (restore) {
+            const trigger = $('investment-' + origin);
+            if (pointer) trigger?.blur?.();
+            else trigger?.focus?.({ preventScroll: true });
+        }
     }
     function dismissNotice() {
         const dialog = $('investment-ticket-notice');
@@ -46,7 +54,7 @@
         <div class="iv-ticket-body"><aside class="iv-ticket-book" aria-label="주문 호가"><div id="investment-ticket-levels" class="iv-ticket-levels"></div><div class="iv-ticket-strength"><span>체결강도<strong>—</strong></span><button type="button" data-ticket-action="executions" aria-expanded="false" aria-label="체결 내역 보기">${icon('chevron-up')}</button></div><p id="investment-ticket-executions" hidden>아직 체결 내역이 없어요</p></aside>
         <section class="iv-ticket-entry" aria-label="주문 입력"><div class="iv-ticket-side" role="tablist" aria-label="주문 구분"><button type="button" data-ticket-side="buy" role="tab">구매</button><button type="button" data-ticket-side="sell" role="tab">판매</button><button type="button" data-ticket-side="pending" role="tab">대기</button></div>
         <div id="investment-ticket-pending" class="iv-ticket-pending" hidden><strong>대기 주문</strong><p id="investment-ticket-pending-message">대기 중인 주문이 없어요</p></div>
-        <div id="investment-ticket-form" class="iv-ticket-form"><div class="iv-ticket-fields"><section class="iv-ticket-card iv-ticket-price-card"><div class="iv-ticket-card-heading"><label for="investment-ticket-price" id="investment-ticket-price-label">구매할 가격</label><button type="button" data-ticket-method="current">현재가</button><button type="button" data-ticket-method="market">시장가</button></div><div class="iv-ticket-stepper"><div class="iv-ticket-price-input"><input id="investment-ticket-price" inputmode="decimal" type="text" autocomplete="off" aria-label="토큰당 주문 가격"><span id="investment-ticket-price-unit"></span></div><button type="button" data-ticket-action="price-minus" aria-label="가격 낮추기">${icon('minus')}</button><button type="button" data-ticket-action="price-plus" aria-label="가격 높이기">${icon('plus')}</button></div></section>
+        <div id="investment-ticket-form" class="iv-ticket-form"><div class="iv-ticket-fields"><section class="iv-ticket-card iv-ticket-price-card"><div class="iv-ticket-card-heading"><label for="investment-ticket-price" id="investment-ticket-price-label">구매할 가격</label><button type="button" data-ticket-method="current">현재가</button><button type="button" data-ticket-method="market">시장가</button></div><div class="iv-ticket-stepper"><div id="investment-ticket-price-field" class="iv-ticket-price-input"><span id="investment-ticket-price-skeleton" class="iv-skeleton iv-ticket-skeleton-input" aria-hidden="true" hidden></span><input id="investment-ticket-price" inputmode="decimal" type="text" autocomplete="off" aria-label="토큰당 주문 가격"><span id="investment-ticket-price-unit"></span></div><button type="button" data-ticket-action="price-minus" aria-label="가격 낮추기">${icon('minus')}</button><button type="button" data-ticket-action="price-plus" aria-label="가격 높이기">${icon('plus')}</button></div></section>
         <section class="iv-ticket-card iv-ticket-quantity-card"><div class="iv-ticket-card-heading"><label for="investment-ticket-quantity">수량</label><button type="button" data-ticket-action="fractional">소수점</button></div><div class="iv-ticket-stepper"><input id="investment-ticket-quantity" type="text" inputmode="numeric" autocomplete="off" placeholder="수량 입력" aria-label="주문 수량" aria-describedby="investment-ticket-status"><button type="button" data-ticket-action="quantity-minus" aria-label="수량 줄이기">${icon('minus')}</button><button type="button" data-ticket-action="quantity-plus" aria-label="수량 늘리기">${icon('plus')}</button></div><div class="iv-ticket-percentages" role="group" aria-label="주문 가능 수량 비율"><button type="button" data-ticket-percent="10">10%</button><button type="button" data-ticket-percent="25">25%</button><button type="button" data-ticket-percent="50">50%</button><button type="button" data-ticket-percent="100">최대</button></div></section>
         <dl class="iv-ticket-funds"><div><dt id="investment-ticket-available-label">구매가능 금액</dt><dd id="investment-ticket-available"></dd></div><div class="iv-ticket-muted"><dt>포인트</dt><dd id="investment-ticket-points"></dd></div><div class="iv-ticket-muted"><dt>원화</dt><dd id="investment-ticket-won"></dd></div></dl>
         <dl class="iv-ticket-estimates"><div><dt>내 드롭 평균</dt><dd id="investment-ticket-average"></dd></div><div><dt id="investment-ticket-after-average-label">구매 후 예상 평균</dt><dd id="investment-ticket-after-average"></dd></div></dl><dl class="iv-ticket-estimates"><div><dt>현재 수익</dt><dd id="investment-ticket-profit"></dd></div><div><dt id="investment-ticket-after-profit-label">구매 후 예상 수익</dt><dd id="investment-ticket-after-profit"></dd></div></dl><p id="investment-ticket-status" class="iv-ticket-status" role="status" aria-live="polite"></p><button type="button" id="investment-ticket-retry" class="iv-ticket-retry" data-ticket-action="retry" hidden>같은 주문으로 결과 확인</button>
@@ -57,8 +65,9 @@
         const levels = $('investment-ticket-levels');
         if (!levels || !side) return;
         if (!book || book.asOf !== data.market?.asOf) {
-            levels.setAttribute('aria-busy', String(!bookError));
-            levels.innerHTML = bookError ? '<p class="iv-ticket-book-error">호가를 불러오지 못했어요<button type="button" data-ticket-action="book-retry">다시 불러오기</button></p>' : '<div class="iv-ticket-book-loading" role="status"><span class="iv-sr-only">호가를 불러오는 중이에요</span>' + '<span class="iv-skeleton"></span>'.repeat(11) + '</div>';
+            const waiting = !bookError && (!!data.context?.quoteLoading || !!bookRequest || Number.isSafeInteger(data.market?.asOf));
+            levels.setAttribute('aria-busy', String(waiting));
+            levels.innerHTML = !waiting ? '<p class="iv-ticket-book-error">호가를 불러오지 못했어요<button type="button" data-ticket-action="book-retry">다시 불러오기</button></p>' : '<div class="iv-ticket-book-loading" role="status"><span class="iv-sr-only">호가를 불러오는 중이에요</span>' + '<span class="iv-skeleton"></span>'.repeat(11) + '</div>';
             return;
         }
         levels.setAttribute('aria-busy', 'false');
@@ -94,6 +103,14 @@
         const profitRate = Number.isFinite(q?.percent) ? q.percent : book && q ? (q.price - book.previous) / book.previous * 100 : null;
         $('investment-ticket-quote').textContent = cash(q?.price) + (profitRate === null ? '' : ' ' + (profitRate > 0 ? '+' : '') + profitRate.toFixed(1) + '%');
         $('investment-ticket-quote').className = color(profitRate);
+        const quoteLoading = !!data.context?.quoteLoading;
+        $('investment-ticket-quote').setAttribute('aria-busy', String(quoteLoading));
+        if (quoteLoading) $('investment-ticket-quote').innerHTML = loadingValue('quote');
+        $('investment-ticket-price-field').setAttribute('aria-busy', String(quoteLoading));
+        $('investment-ticket-price-skeleton').hidden = !quoteLoading;
+        $('investment-ticket-price').disabled = quoteLoading;
+        root.querySelectorAll?.('[data-ticket-action="price-minus"], [data-ticket-action="price-plus"], [data-ticket-method]').forEach(button => { button.disabled = quoteLoading; });
+        root.querySelectorAll?.('[data-ticket-percent]').forEach(button => { button.disabled = !!data.accountLoading || !account || quoteLoading || !validPrice(orderPrice()); });
         $('investment-ticket-form').hidden = side === 'pending';
         $('investment-ticket-pending').hidden = side !== 'pending';
         $('investment-ticket-pending-message').textContent = data.pending ? '처리 결과를 확인 중인 주문이 있어요. 주문 화면을 닫고 같은 주문으로 결과를 확인해 주세요.' : '대기 중인 주문이 없어요';
@@ -117,6 +134,13 @@
         $('investment-ticket-after-profit').textContent = Number.isFinite(afterProfit) ? (afterProfit > 0 ? '+' : '') + cash(afterProfit) : '—';
         $('investment-ticket-after-profit').className = color(afterProfit);
         $('investment-ticket-total').textContent = cash(amount());
+        for (const id of ['available', 'points', 'won', 'average', 'profit', 'after-average', 'after-profit']) {
+            const field = $('investment-ticket-' + id);
+            field.setAttribute('aria-busy', String(!!data.accountLoading));
+            if (data.accountLoading) field.innerHTML = loadingValue('value');
+        }
+        $('investment-ticket-total').setAttribute('aria-busy', String(quoteLoading && n > 0));
+        if (quoteLoading && n > 0) $('investment-ticket-total').innerHTML = loadingValue('quote');
         $('investment-ticket-submit').textContent = data.busy ? '처리 중' : label + '하기';
         $('investment-ticket-submit').disabled = !!data.busy || !!data.pending;
         $('investment-ticket-price-unit').textContent = data.context?.currency === 'KRW' ? '원' : 'P';
@@ -133,12 +157,14 @@
         if (data.context?.selected !== 'en-joy' || data.busy || data.pending) return;
         origin = sideToOpen; side = sideToOpen; qty = ''; limit = quote()?.price ?? null; method = 'price';
         const dialog = $('investment-trade-ticket');
+        const finishTransition = window.beginEnjoyMenuTransition?.($('investment-detail'), dialog, 39, $('wallet-scroll'));
         dialog.innerHTML = markup(); dialog.setAttribute('data-book-hidden', 'false'); dialog.hidden = false;
         render(); renderLevels();
         if (!dialog.open) dialog.showModal();
         sizeToKeyboard();
         // Keep the mobile keyboard closed until the user explicitly chooses an input.
         dialog.querySelector('#investment-ticket-name')?.focus?.({ preventScroll: true });
+        finishTransition?.();
         loadBook();
     }
     async function submit() {
@@ -173,7 +199,7 @@
             const button = event.target.closest('button[data-ticket-action],button[data-ticket-side],button[data-ticket-method],button[data-ticket-percent],button[data-ticket-price]');
             if (!button || button.disabled) return;
             const action = button.dataset.ticketAction;
-            if (action === 'close') { close(); return; }
+            if (action === 'close') { close(true, event.detail > 0); return; }
             if (action === 'notice-close') { dismissNotice(); return; }
             if (!side) return;
             if (action === 'submit') { submit(); return; }
@@ -188,7 +214,7 @@
             if (action === 'quantity-minus' || action === 'quantity-plus') qty = String(Math.max(0, Math.min(1000000, quantity() + (action === 'quantity-plus' ? 1 : -1))));
             if (action === 'price-minus' || action === 'price-plus') { limit = Math.max(1, (orderPrice() || 1) + (action === 'price-plus' ? 1 : -1)); method = 'price'; }
             if (action === 'fractional') { notice('토큰 단위로 주문해요', '드롭은 소수점 없이 1토큰 단위로 구매하거나 판매할 수 있어요.'); return; }
-            if (action === 'book-retry') loadBook();
+            if (action === 'book-retry') { if (data.market) loadBook(); else window.refreshInvestmentMarket?.(); }
             if (action === 'layout') {
                 const dialog = $('investment-trade-ticket'), hidden = dialog.getAttribute('data-book-hidden') !== 'true';
                 dialog.setAttribute('data-book-hidden', String(hidden)); button.setAttribute('aria-pressed', String(hidden)); button.setAttribute('aria-label', hidden ? '호가 영역 표시하기' : '호가 영역 숨기기');
@@ -203,11 +229,13 @@
         mount, open, close,
         update(next) {
             const ownerChanged = data.uid !== undefined && data.uid !== next.uid;
-            const oldAsOf = data.market?.asOf;
+            const oldAsOf = data.market?.asOf, oldQuoteLoading = data.context?.quoteLoading;
             data = next;
             if (ownerChanged || !data.context?.active || data.context?.selected !== 'en-joy') { close(false); return; }
             if (!side) return;
+            if (limit === null && validPrice(quote()?.price)) limit = quote().price;
             render();
+            if (oldQuoteLoading !== data.context?.quoteLoading) renderLevels();
             if (oldAsOf !== data.market?.asOf) { bookVersion++; bookRequest?.abort(); bookRequest = null; book = null; renderLevels(); loadBook(); }
         },
         complete() { close(); },

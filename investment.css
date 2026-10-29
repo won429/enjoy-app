@@ -353,7 +353,7 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
 /* Full-screen receipt; the native dialog isolates focus and scroll from holdings. */
 #wallet-panel-investment .iv-order-detail { position: fixed; inset: 0; width: min(100%, 448px); height: 100dvh; max-width: 448px; max-height: 100dvh; margin: 0 auto; padding: max(8px, env(safe-area-inset-top)) 0 max(24px, env(safe-area-inset-bottom)); border: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; background: var(--iv-bg); color: var(--iv-text); font: inherit; letter-spacing: -.025em; }
 .iv-order-detail::-webkit-scrollbar { display: none; }
-.iv-order-detail::backdrop { background: var(--iv-bg); }
+.iv-order-detail::backdrop { background: transparent; }
 .iv-receipt-nav { display: flex; align-items: flex-start; justify-content: center; position: relative; min-height: 48px; padding-inline: 24px; }
 .iv-receipt-nav > .iv-back { position: absolute; left: 20px; top: 0; margin: 0; }
 .iv-receipt-nav > div { text-align: center; }
@@ -437,7 +437,7 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
 /* Full-screen order entry: public book on the left, a separate order form on the right. */
 #wallet-panel-investment .iv-trade-ticket { position: fixed; inset: 0; width: min(100%, 448px); max-width: 448px; height: 100dvh; max-height: 100dvh; margin: 0 auto; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); border: 0; background: var(--iv-bg); color: var(--iv-text); font: inherit; letter-spacing: -.025em; overflow: hidden; }
 .iv-trade-ticket[open] { display: flex; flex-direction: column; }
-.iv-trade-ticket::backdrop { background: var(--iv-bg); }
+.iv-trade-ticket::backdrop { background: transparent; }
 .iv-ticket-header { display: flex; flex: none; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 16px; }
 .iv-ticket-header > div { min-width: 0; text-align: center; }
 .iv-ticket-header h2 { margin: 0 0 2px; color: var(--iv-muted); font-size: 11px; font-weight: 400; }
@@ -547,3 +547,12 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
 #investment-trade-ticket .iv-ticket-retry { width: 100%; margin-top: 8px; padding: 10px 5px; border: 1px solid var(--iv-line); border-radius: 8px; background: var(--iv-card); color: var(--iv-text); font-size: 12px; }
 
 .iv-ticket-header h2:focus { outline: none; }
+
+/* Keep the outgoing holdings layer intact while the shared menu transition finishes. */
+#investment-detail.is-menu-transition[data-view="holdings"] #investment-holdings-panel { display: flex !important; }
+
+.iv-ticket-skeleton-value { width: 68px; height: 12px; }
+.iv-ticket-skeleton-quote { width: 96px; height: 17px; }
+.iv-ticket-price-input { position: relative; }
+.iv-ticket-price-input[aria-busy="true"] input, .iv-ticket-price-input[aria-busy="true"] #investment-ticket-price-unit { visibility: hidden; }
+.iv-ticket-skeleton-input { position: absolute; top: 5px; left: 0; width: 80px; height: 22px; }
