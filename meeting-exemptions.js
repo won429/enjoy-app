@@ -2,8 +2,10 @@
     'use strict';
     const COLLECTION = 'meeting_exemption_requests';
     const APPROVER = '전시기';
+    const ALTERNATE = '성원제';
     const members = ['홍박사', '류짱', '오스틴', APPROVER, '이진누', '성원제'];
     const nameOf = value => value === '지노' ? '이진누' : String(value || '').trim();
+    const approverFor = name => nameOf(name) === APPROVER ? ALTERNATE : APPROVER;
     const terminal = request => request && ['approved', 'rejected'].includes(request.status);
     const monthLabel = key => { const [y, m] = String(key).split('-'); return `${y}년 ${m}월`; };
     const failure = message => { throw new Error(message); };
@@ -47,9 +49,9 @@
                     const meeting = await tx.get(meetingRef());
                     const requester = await tx.get(memberRef(requesterUid));
                     guard(actorUid);
-                    identity(actor, APPROVER);
                     if (!saved.exists() || saved.data().attemptId !== attemptId) failure('요청 내역이 변경됐어요. 다시 확인해 주세요.');
                     const request = saved.data();
+                    identity(actor, approverFor(request.name));
                     if (request.status !== 'pending') return { alreadyResolved: true, status: request.status };
                     let plan = null;
                     if (approve) {
@@ -77,7 +79,7 @@
             }
         };
     }
-    if (typeof module === 'object' && module.exports) module.exports = { createService, COLLECTION, APPROVER };
+    if (typeof module === 'object' && module.exports) module.exports = { createService, COLLECTION, APPROVER, approverFor };
     if (!root || !root.document) return;
     const document = root.document;
     let context = '', epoch = 0, unsubs = [], own = null, inbox = [], loaded = false, error = false;
@@ -147,9 +149,10 @@
             <button type="button" data-action="later" class="exemption-popup-later">나중에 확인</button></form>`;
         popup.querySelector('h2').textContent = result ? approved ? '면제권 사용이 승인됐어요' : '면제권 사용이 거부됐어요' : '면제권 사용 승인 요청';
         popup.querySelector('.exemption-popup-summary strong').textContent = `${monthLabel(request.monthKey)} · 10,000원`;
+        const approver = approverFor(request.name);
         popup.querySelector('#exemption-popup-message').textContent = result ? approved ?
-            '전시기님이 승인했어요. 면제권 1개를 사용해 부과금 10,000원을 면제했어요.' :
-            '전시기님이 사용 요청을 거부했어요. 면제권은 차감되지 않았어요.' : `${request.name}님이 면제권 1개 사용을 요청했어요.`;
+            `${approver}님이 승인했어요. 면제권 1개를 사용해 부과금 10,000원을 면제했어요.` :
+            `${approver}님이 사용 요청을 거부했어요. 면제권은 차감되지 않았어요.` : `${request.name}님이 면제권 1개 사용을 요청했어요.`;
         popup.querySelector('.exemption-popup-note').textContent = result ? approved ? '모임통장 내역에도 반영됐어요.' : '보유 면제권은 그대로이며, 다시 요청할 수 있어요.' :
             '승인하면 면제권 1개가 차감돼요. 거부하면 요청자에게 결과를 알려드려요.';
         displayed = { request, result };
@@ -208,10 +211,14 @@
             unsubs.push(root.fsOnSnapshot(root.fsDoc(COLLECTION, uid), { includeMetadataChanges: true }, receive(snapshot => {
                 own = snapshot.exists() ? snapshot.data() : null; loaded = true;
             }), failed));
-            if (nameOf(root.enjoyProfileName) === APPROVER) {
-                unsubs.push(root.fsOnSnapshot(root.fsQuery(root.fsCol(COLLECTION), root.fsWhere('status', '==', 'pending')),
+            const reviewer = nameOf(root.enjoyProfileName);
+            if ([APPROVER, ALTERNATE].includes(reviewer)) {
+                // One indexed name predicate also includes requests made before
+                // reciprocal approval was introduced. Filter resolved items locally.
+                unsubs.push(root.fsOnSnapshot(root.fsQuery(root.fsCol(COLLECTION), root.fsWhere('name', reviewer === APPROVER ? '!=' : '==', APPROVER)),
                     { includeMetadataChanges: true }, receive(snapshot => {
                         inbox = snapshot.docs.map(item => ({ ...item.data(), uid: item.id }))
+                            .filter(item => item.status === 'pending' && approverFor(item.name) === reviewer && item.uid !== uid)
                             .sort((a, b) => (a.requestedAt?.toMillis?.() || 0) - (b.requestedAt?.toMillis?.() || 0));
                     }), failed));
             }
@@ -219,7 +226,8 @@
     }
     root.enjoyExemptions = {
         stop,
-        state: () => ({ busy: submitting, pending: own?.status === 'pending', error, inboxCount: inbox.length }),
+        state: () => ({ busy: submitting, pending: own?.status === 'pending', error, inboxCount: inbox.length,
+            approverName: approverFor(own?.name || root.enjoyProfileName) }),
         retry: () => connect(true),
         review: () => { dismissed.clear(); schedule(); },
         async request() {
@@ -231,12 +239,13 @@
                 return root.enjoyAlert('승인 내역을 연결하고 있어요. 잠시 후 다시 눌러주세요.');
             }
             if (unreadResult()) { dismissed.clear(); schedule(); return; }
-            if (own?.status === 'pending') return root.enjoyAlert('이미 전시기님의 승인을 기다리는 요청이 있어요.');
+            if (own?.status === 'pending') return root.enjoyAlert(`이미 ${approverFor(own.name)}님의 승인을 기다리는 요청이 있어요.`);
             const expectedEpoch = epoch;
+            const expectedName = nameOf(root.enjoyProfileName), approver = approverFor(expectedName);
             submitting = true; render();
             try {
-                await service().request(root.enjoyUser.uid, nameOf(root.enjoyProfileName), root.crypto.randomUUID());
-                if (epoch === expectedEpoch) await root.enjoyAlert('전시기님에게 승인 요청을 보냈어요. 승인되면 면제권이 적용돼요.', { title: '면제권 사용 요청' });
+                await service().request(root.enjoyUser.uid, expectedName, root.crypto.randomUUID());
+                if (epoch === expectedEpoch) await root.enjoyAlert(`${approver}님에게 승인 요청을 보냈어요. 승인되면 면제권이 적용돼요.`, { title: '면제권 사용 요청' });
             } catch (error) {
                 if (epoch === expectedEpoch) await root.enjoyAlert(readableError(error));
             } finally {

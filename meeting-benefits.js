@@ -156,6 +156,7 @@
         const requestState = root.enjoyExemptions?.state() || {};
         const busy = requestState.busy;
         const pending = requestState.pending;
+        const approver = requestState.approverName || (name === '전시기' ? '성원제' : '전시기');
         const state = stateFor(root.meetingData, name, root.calculateMemberHistory, now);
         const history = state.outstanding.filter(item => {
             const h = item.h;
@@ -176,9 +177,9 @@
         panel.innerHTML = `<h3 class="meeting-benefits-heading">${escape(name)}님의 부과금·유예 및 면제권</h3>
             <div class="meeting-benefits-totals"><div><span class="meeting-benefits-label">남은 납부금액</span><strong class="meeting-benefits-amount">${won(state.remaining)}</strong></div><div><span class="meeting-benefits-label">보유 면제권</span><strong class="meeting-benefits-amount meeting-benefits-ticket">${state.count}개</strong></div></div>
             <ul class="meeting-benefits-history">${history.length ? history.join('') : '<li class="meeting-benefits-empty">부과금·유예 내역이 없습니다.</li>'}</ul>
-            <p class="meeting-benefits-empty" style="margin-bottom:10px">${pending ? '전시기님의 승인을 기다리고 있어요. 승인 전에는 면제권이 차감되지 않아요.' : '사용 요청을 보내면 전시기님 승인 후 부과금에 적용돼요.'}</p>
+            <p class="meeting-benefits-empty" style="margin-bottom:10px">${pending ? escape(approver) + '님의 승인을 기다리고 있어요. 승인 전에는 면제권이 차감되지 않아요.' : '사용 요청을 보내면 ' + escape(approver) + '님 승인 후 부과금에 적용돼요.'}</p>
             ${requestState.error ? '<p class="meeting-benefits-empty" role="status">승인 내역 연결이 끊겼어요. <button type="button" onclick="window.enjoyExemptions.retry()">다시 연결</button></p>' : ''}
-            ${name === '전시기' && requestState.inboxCount ? '<button type="button" class="meeting-benefits-review" onclick="window.enjoyExemptions.review()">승인 대기 요청 ' + requestState.inboxCount + '건 보기</button>' : ''}
+            ${requestState.inboxCount ? '<button type="button" class="meeting-benefits-review" onclick="window.enjoyExemptions.review()">승인 대기 요청 ' + requestState.inboxCount + '건 보기</button>' : ''}
             <button type="button" class="meeting-benefits-use ${state.count ? '' : 'is-empty'}" ${busy || pending ? 'disabled' : ''} ${busy ? 'aria-busy="true"' : ''} onclick="window.useMeetingExemption()">${busy ? '사용 요청 중…' : pending ? '승인 대기 중' : '면제권 사용'}</button>`;
     };
 

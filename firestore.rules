@@ -104,15 +104,17 @@ service cloud.firestore {
     match /drop_predictions/{document=**} {
       allow read, write: if false;
     }
-    // Exemption requests are private. Only the member named 전시기 can decide;
+    // 전시기 reviews other members; 성원제 reviews 전시기. No self-approval.
     // approval and the single-ticket deduction must commit together.
     function exemptionMember() {
       return quizMember()
         && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.name != '관리자';
     }
-    function exemptionApprover() {
+    function exemptionApproverFor(name) {
+      let reviewer = get(/databases/$(database)/documents/members/$(request.auth.uid)).data.name;
       return exemptionMember()
-        && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.name == '전시기';
+        && ((reviewer == '전시기' && name != '전시기')
+          || (reviewer == '성원제' && name == '전시기'));
     }
     function exemptionCount(data, name) {
       let tickets = data.get('exemptions', {});
@@ -135,7 +137,7 @@ service cloud.firestore {
     }
     function validExemptionDecision() {
       let next = request.resource.data;
-      return exemptionApprover() && resource.data.status == 'pending'
+      return exemptionApproverFor(resource.data.name) && resource.data.status == 'pending'
         && next.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolvedBy', 'recordIndex'])
         && next.resolvedBy == request.auth.uid && next.resolvedAt == request.time
         && ((next.status == 'rejected' && next.recordIndex == null)
@@ -157,8 +159,8 @@ service cloud.firestore {
         && row.ticketRequestId == next.attemptId;
     }
     match /meeting_exemption_requests/{uid} {
-      allow get: if exemptionMember() && (request.auth.uid == uid || exemptionApprover());
-      allow list: if exemptionApprover();
+      allow get: if exemptionMember() && (request.auth.uid == uid || exemptionApproverFor(resource.data.name));
+      allow list: if exemptionApproverFor(resource.data.name);
       allow create: if validExemptionRequest(uid);
       allow update: if (validExemptionRequest(uid) && resource.data.status in ['approved', 'rejected']
           && resource.data.resultSeenAt != null && request.resource.data.attemptId != resource.data.attemptId)

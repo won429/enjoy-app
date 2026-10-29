@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), vm = require('node:vm'), path = require('node:path');
 const benefits = require('../meeting-benefits.js');
-const { createService, COLLECTION } = require('../meeting-exemptions.js');
+const { createService, COLLECTION, approverFor } = require('../meeting-exemptions.js');
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 const start = html.indexOf('window.calculateMemberHistory = function(');
 const code = html.slice(start, html.indexOf('window.renderMeetingStatus =', start));
@@ -15,7 +15,7 @@ function setup(name = '성원제') {
     for (let year = 2025; year <= 2026; year++) for (let month = year === 2025 ? 10 : 1; month <= (year === 2026 ? 10 : 12); month++)
         meeting.records[`${year}-${month}`] = [{ name, status: 'paid', amount: year === 2025 ? 15000 : 20000, isLeader: false }];
     meeting.records['2026-9'][0] = { name, status: 'unpaid', amount: 0, isLeader: false };
-    const db = new Map([['members/a', { name }], ['members/chair', { name: '전시기' }], ['members/other', { name: '류짱' }], ['meeting_account/dues_status', meeting]]);
+    const db = new Map([['members/a', { name }], ['members/chair', { name: '전시기' }], ['members/alternate', { name: '성원제' }], ['members/other', { name: '류짱' }], ['meeting_account/dues_status', meeting]]);
     let sequence = Promise.resolve(), failNext = false, account = null;
     const tx = fn => {
         const result = sequence.then(async () => {
@@ -48,7 +48,7 @@ test('concurrent repeat requests retain one pending attempt', async () => {
     await Promise.all([h.service.request('a', '성원제', 'one'), h.service.request('a', '성원제', 'two')]);
     assert.equal(h.request().attemptId, 'one'); assert.equal(h.meeting().exemptions['성원제'], 2);
 });
-test('only 전시기 can approve or reject; spoofed requester names are refused', async () => {
+test('only the designated reviewer can approve or reject; spoofed requester names are refused', async () => {
     const h = setup();
     await assert.rejects(h.service.request('a', '류짱', 'fake'), /멤버/);
     await h.service.request('a', '성원제', 'one');
@@ -101,6 +101,25 @@ test('legacy alias voucher balances merge once on approval and unrelated members
     await h.service.request('a', '이진누', 'one'); await h.service.decide('chair', 'a', 'one', true);
     assert.deepEqual(h.meeting().exemptions, { '이진누': 1, '류짱': 3 });
 });
+test('전시기 requests are approved by 성원제 and cannot be self-approved or self-rejected', async () => {
+    assert.equal(approverFor('전시기'), '성원제'); assert.equal(approverFor('류짱'), '전시기');
+    const h = setup('전시기'); await h.service.request('a', '전시기', 'reverse');
+    for (const uid of ['a', 'chair', 'other']) for (const approve of [true, false])
+        await assert.rejects(h.service.decide(uid, 'a', 'reverse', approve), /멤버/);
+    await h.service.decide('alternate', 'a', 'reverse', true);
+    assert.equal(h.request().status, 'approved'); assert.equal(h.request().resolvedBy, 'alternate');
+    assert.equal(h.meeting().exemptions['전시기'], 1);
+});
+test('성원제 may reject 전시기 without deducting a ticket, but may not decide other members requests', async () => {
+    const h = setup('전시기'); await h.service.request('a', '전시기', 'reverse');
+    const before = structuredClone(h.meeting()); await h.service.decide('alternate', 'a', 'reverse', false);
+    assert.equal(h.request().status, 'rejected'); assert.deepEqual(h.meeting(), before);
+    for (const name of ['성원제', '류짱']) {
+        const other = setup(name); await other.service.request('a', name, 'normal');
+        await assert.rejects(other.service.decide('alternate', 'a', 'normal', true), /멤버/);
+        await other.service.decide('chair', 'a', 'normal', true); assert.equal(other.request().status, 'approved');
+    }
+});
 
 // Exercise the actual realtime client with controllable Firestore snapshots.
 // Nothing here writes to Firebase or contacts a real member.
@@ -127,7 +146,7 @@ function client(name = '성원제', uid = 'a') {
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../meeting-exemptions.js'), 'utf8'), { window: root });
     const snapshot = (data, fromCache = false) => ({ exists: () => !!data, data: () => data, metadata: { fromCache, hasPendingWrites: false } });
     return { root, streams, events, dialogs,
-        send(data, cache = false) { streams.at(-1).receive(snapshot(data, cache)); },
+        send(data, cache = false) { streams.filter(s => typeof s.ref === 'string').at(-1).receive(snapshot(data, cache)); },
         own(data, cache = false) { streams[0].receive(snapshot(data, cache)); },
         inbox(requests) { streams[1].receive({ docs: requests.map(r => ({ id: r.uid, data: () => r })), metadata: {} }); },
         pump() { const pending = [...timers.values()]; timers.clear(); pending.forEach(fn => fn()); },
@@ -163,4 +182,20 @@ test('listener failure exposes retry and a new connection replaces the failed su
     h.root.enjoyExemptions.retry(); assert.equal(h.streams[0].stopped, true);
     h.send({ ...example, status: 'approved' }); h.pump(); assert.equal(h.root.enjoyExemptions.state().error, false);
     assert.match(h.dialogs[0].querySelector('h2').textContent, /승인/);
+});
+test('성원제 inbox receives 전시기 requests only; 전시기 inbox excludes its own requests and resolved items', () => {
+    const reverse = { ...example, uid: 'chair', name: '전시기', attemptId: 'reverse' };
+    const alternate = client('성원제', 'a'); alternate.own(null); alternate.inbox([example, reverse]); alternate.pump();
+    assert.equal(alternate.root.enjoyExemptions.state().inboxCount, 1);
+    assert.match(alternate.dialogs[0].querySelector('#exemption-popup-message').textContent, /전시기님이/);
+    const chair = client('전시기', 'chair'); chair.own(null);
+    chair.inbox([example, reverse, { ...example, uid: 'resolved', status: 'rejected' }]); chair.pump();
+    assert.equal(chair.root.enjoyExemptions.state().inboxCount, 1);
+    assert.match(chair.dialogs[0].querySelector('#exemption-popup-message').textContent, /성원제님이/);
+});
+test('전시기 result popup and waiting state identify 성원제 as the reviewer', () => {
+    const h = client('전시기', 'chair'); h.own({ ...example, uid: 'chair', name: '전시기' });
+    assert.equal(h.root.enjoyExemptions.state().approverName, '성원제');
+    h.own({ ...example, uid: 'chair', name: '전시기', status: 'rejected' }); h.pump();
+    assert.match(h.dialogs[0].querySelector('#exemption-popup-message').textContent, /성원제님이 사용 요청을 거부/);
 });
