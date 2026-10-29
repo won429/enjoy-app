@@ -1,9 +1,7 @@
 (function (root) {
     'use strict';
     const members = ['홍박사', '류짱', '오스틴', '전시기', '이진누', '성원제'];
-    const redemptionStartAt = Date.parse('2026-11-01T00:00:00+09:00');
-    const beforeStartMessage = '면제권 사용하기는 2026년 11월 1일부터 가능합니다. 그전에는 단톡이나 회장님께 별도로 연락해 주세요.';
-    const canUseExemption = (now = new Date()) => now.getTime() >= redemptionStartAt;
+    const canUseExemption = () => true;
     const normalizeName = name => name === '지노' ? '이진누' : String(name || '').trim();
     const won = amount => Math.max(0, Number(amount) || 0).toLocaleString('ko-KR') + '원';
     const escape = value => String(value || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -65,15 +63,14 @@
 
     // Try the latest unpaid charge first. Recalculate through today so a previously
     // settled charge can never consume a ticket merely because an old row is unpaid.
-    function prepareRedemption(data, name, uid, calculate, now = new Date()) {
-        if (!canUseExemption(now)) throw new Error(beforeStartMessage);
+    function prepareRedemption(data, name, uid, calculate, now = new Date(), monthKey = '') {
         name = normalizeName(name);
         if (!members.includes(name)) throw new Error('정식 멤버로 로그인한 후 사용할 수 있습니다.');
         const state = stateFor(data, name, calculate, now);
         if (!state.count) throw new Error('면제권이 없으므로 사용할 수 없습니다.');
         const candidates = state.outstanding.slice().reverse().filter(item => {
             const h = item.h;
-            if (h.isPaymentStopped || h.isExempted) return false;
+            if (h.isPaymentStopped || h.isExempted || (monthKey && item.key !== monthKey)) return false;
             const past = item.year < now.getFullYear() || item.month < now.getMonth() + 1;
             return h.penaltyAmount > 0 || (past && h.status !== 'deferred' && !h.currentDuesPaid);
         });
@@ -94,7 +91,7 @@
             const exemptions = { ...(data.exemptions || {}), [name]: state.count - 1 };
             if (name === '이진누') delete exemptions['지노'];
             next.exemptions = exemptions;
-            return { data: next, monthKey: item.key };
+            return { data: next, monthKey: item.key, rowIndex: index };
         }
         throw new Error('사용할 미납 부과금이 없습니다. 면제권은 부과금이 있을 때 사용할 수 있습니다.');
     }
@@ -103,7 +100,6 @@
     if (typeof module === 'object' && module.exports) module.exports = api;
     if (!root || !root.document) return;
     root.enjoyMeetingBenefits = api;
-    let busy = false;
     const myName = () => normalizeName(root.enjoyProfileName);
     const notify = message => root.enjoyAlert ? root.enjoyAlert(message) : root.alert(message);
 
@@ -157,7 +153,9 @@
             return;
         }
         const now = new Date();
-        const available = canUseExemption(now);
+        const requestState = root.enjoyExemptions?.state() || {};
+        const busy = requestState.busy;
+        const pending = requestState.pending;
         const state = stateFor(root.meetingData, name, root.calculateMemberHistory, now);
         const history = state.outstanding.filter(item => {
             const h = item.h;
@@ -178,47 +176,15 @@
         panel.innerHTML = `<h3 class="meeting-benefits-heading">${escape(name)}님의 부과금·유예 및 면제권</h3>
             <div class="meeting-benefits-totals"><div><span class="meeting-benefits-label">남은 납부금액</span><strong class="meeting-benefits-amount">${won(state.remaining)}</strong></div><div><span class="meeting-benefits-label">보유 면제권</span><strong class="meeting-benefits-amount meeting-benefits-ticket">${state.count}개</strong></div></div>
             <ul class="meeting-benefits-history">${history.length ? history.join('') : '<li class="meeting-benefits-empty">부과금·유예 내역이 없습니다.</li>'}</ul>
-            ${available ? '' : '<p class="meeting-benefits-empty" style="margin-bottom:10px">11월 1일부터 사용 가능합니다. 그전에는 단톡이나 회장님께 별도로 연락해 주세요.</p>'}
-            <button type="button" class="meeting-benefits-use ${state.count && available ? '' : 'is-empty'}" ${busy ? 'disabled aria-busy="true"' : ''} onclick="window.useMeetingExemption()">${busy ? '면제권 사용 중…' : '면제권 사용'}</button>`;
+            <p class="meeting-benefits-empty" style="margin-bottom:10px">${pending ? '전시기님의 승인을 기다리고 있어요. 승인 전에는 면제권이 차감되지 않아요.' : '사용 요청을 보내면 전시기님 승인 후 부과금에 적용돼요.'}</p>
+            ${requestState.error ? '<p class="meeting-benefits-empty" role="status">승인 내역 연결이 끊겼어요. <button type="button" onclick="window.enjoyExemptions.retry()">다시 연결</button></p>' : ''}
+            ${name === '전시기' && requestState.inboxCount ? '<button type="button" class="meeting-benefits-review" onclick="window.enjoyExemptions.review()">승인 대기 요청 ' + requestState.inboxCount + '건 보기</button>' : ''}
+            <button type="button" class="meeting-benefits-use ${state.count ? '' : 'is-empty'}" ${busy || pending ? 'disabled' : ''} ${busy ? 'aria-busy="true"' : ''} onclick="window.useMeetingExemption()">${busy ? '사용 요청 중…' : pending ? '승인 대기 중' : '면제권 사용'}</button>`;
     };
 
-    root.useMeetingExemption = async function () {
-        if (busy) return;
-        if (!canUseExemption()) return notify(beforeStartMessage);
-        const name = myName(), user = root.enjoyUser;
-        if (!user || !members.includes(name) || !root.enjoySync) return notify('정식 멤버로 로그인한 후 사용할 수 있습니다.');
-        if (!ticketCount(root.meetingData || {}, name)) return notify('면제권이 없으므로 사용할 수 없습니다.');
-        if (!root.runTransaction || !root.fsDoc || !root.meetingDb) return notify('연결 확인 중입니다. 잠시 후 다시 시도해 주세요.');
-        busy = true;
-        root.renderMeetingBenefits();
-        const usedAt = new Date();
-        try {
-            const memberRef = root.fsDoc('members', user.uid);
-            const meetingRef = root.fsDoc(...root.MEETING_PATH);
-            const result = await root.runTransaction(root.meetingDb, async transaction => {
-                const member = await transaction.get(memberRef);
-                const meeting = await transaction.get(meetingRef);
-                if (!root.enjoyUser || root.enjoyUser.uid !== user.uid || myName() !== name) throw new Error('로그인한 사용자의 멤버 정보가 변경되었습니다. 다시 시도해 주세요.');
-                if (!member.exists() || normalizeName(member.data().name) !== name) throw new Error('로그인한 사용자의 멤버 정보를 확인할 수 없습니다.');
-                if (!meeting.exists()) throw new Error('모임통장 내역을 불러올 수 없습니다.');
-                const plan = prepareRedemption(meeting.data(), name, user.uid, root.calculateMemberHistory, usedAt);
-                transaction.update(meetingRef, { records: plan.data.records, exemptions: plan.data.exemptions });
-                return plan;
-            });
-            if (root.enjoyUser && root.enjoyUser.uid === user.uid) {
-                root.currentDuesYear = Number(result.monthKey.split('-')[0]);
-                root.currentDuesMonth = Number(result.monthKey.split('-')[1]);
-                root.updateMeetingUI(result.data);
-                if (root.renderMeetingStatus) root.renderMeetingStatus();
-                await notify('면제권 1개를 사용하여 부과금 10,000원을 면제했습니다.');
-            }
-        } catch (error) {
-            const known = /면제권|미납 부과금|멤버 정보|모임통장 내역/.test(error.message || '');
-            await notify(known ? error.message : '면제권 사용을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
-        } finally {
-            busy = false;
-            root.renderMeetingBenefits();
-        }
+    root.useMeetingExemption = function () {
+        if (root.enjoyExemptions) return root.enjoyExemptions.request();
+        return notify('연결 확인 중입니다. 잠시 후 다시 시도해 주세요.');
     };
     root.addEventListener('enjoy-auth-ready', root.renderMeetingBenefits);
     root.addEventListener('focus', root.renderMeetingBenefits);

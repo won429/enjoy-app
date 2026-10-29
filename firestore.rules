@@ -1,0 +1,178 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function quizId() { return '2026-10-19-seongwonje-birthplace'; }
+    function quizStarts() { return timestamp.value(1792399702000); }
+    function quizCloses() { return timestamp.value(1792681200000); }
+    function quizMember() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && exists(/databases/$(database)/documents/members/$(request.auth.uid))
+        && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.name
+          in ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사', '관리자'];
+    }
+    function quizAdmin() {
+      return request.auth != null
+        && request.auth.uid == 'tdC9Bzxz7JRjpEceOLzpDCMKeBE2';
+    }
+    function validQuizAttempt(id, uid, previous) {
+      let next = request.resource.data;
+      let oldAttempts = previous.get('attempts', {});
+      let changes = next.attempts.diff(oldAttempts);
+      let attempt = next.attempts[next.latestAttemptId];
+      return id == quizId() && request.auth != null && request.auth.uid == uid
+        && quizMember() && request.time >= quizStarts() && request.time < quizCloses()
+        && next.keys().hasOnly(['quizId', 'uid', 'name', 'attempts', 'latestAttemptId'])
+        && next.quizId == id && next.uid == uid
+        && next.name == get(/databases/$(database)/documents/members/$(uid)).data.name
+        && next.latestAttemptId is string && next.attempts is map
+        && changes.addedKeys().size() == 1 && changes.addedKeys().hasOnly([next.latestAttemptId])
+        && changes.changedKeys().size() == 0 && changes.removedKeys().size() == 0
+        && attempt.keys().hasOnly(['quizId', 'uid', 'name', 'choice', 'submittedAt'])
+        && attempt.quizId == id && attempt.uid == uid && attempt.name == next.name
+        && attempt.choice is int && attempt.choice >= 1 && attempt.choice <= 5
+        && attempt.submittedAt == request.time;
+    }
+    match /drop_quizzes/{id}/answers/{uid} {
+      allow get: if id == quizId() && request.auth != null
+        && (request.auth.uid == uid || quizAdmin());
+      allow list: if id == quizId() && quizAdmin();
+      allow create: if validQuizAttempt(id, uid, {});
+      allow update: if validQuizAttempt(id, uid, resource.data);
+      allow delete: if false;
+    }
+    match /drop_quiz_keys/{id} {
+      allow get: if id == quizId() && request.auth != null && request.time >= quizCloses();
+      allow list, write: if false;
+    }
+    function consultationAdmin() {
+      return request.auth != null
+        && request.auth.uid == 'tdC9Bzxz7JRjpEceOLzpDCMKeBE2';
+    }
+    function consultationUser() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+    function validConsultationTime(data) {
+      let time = data.get('time', '');
+      let start = data.get('startTime', '');
+      let end = data.get('endTime', '');
+      return (data.schemaVersion == 2
+          && !data.keys().hasAny(['startTime', 'endTime'])
+          && time is string && time.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'))
+        || (data.schemaVersion == 1 && !data.keys().hasAny(['time'])
+          && start is string && start.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && end is string && end.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && start < end);
+    }
+    function validConsultation() {
+      let data = request.resource.data;
+      return consultationUser()
+        && data.keys().hasOnly(['uid', 'name', 'email', 'date', 'weekdays',
+          'time', 'startTime', 'endTime', 'purpose', 'timezone', 'status', 'schemaVersion', 'createdAt'])
+        && data.uid == request.auth.uid
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && data.email is string && data.email.size() <= 320
+        && data.date is string && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.weekdays is list && data.weekdays.size() >= 1 && data.weekdays.size() <= 7
+        && data.weekdays.toSet().hasOnly([0, 1, 2, 3, 4, 5, 6])
+        && validConsultationTime(data)
+        && data.purpose is string && data.purpose.size() <= 1000
+        && data.timezone == 'Asia/Seoul' && data.status == 'pending'
+        && data.createdAt == request.time;
+    }
+    match /consultation_reservations/{id} {
+      allow get: if consultationUser() && (
+        !exists(/databases/$(database)/documents/consultation_reservations/$(id))
+        || resource.data.uid == request.auth.uid || consultationAdmin());
+      allow list: if consultationUser()
+        && (resource.data.uid == request.auth.uid || consultationAdmin());
+      allow create: if validConsultation();
+      allow update: if consultationAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status in ['pending', 'contacted', 'completed', 'cancelled']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    // Existing story behavior is preserved.
+    match /stories/{id} {
+      allow read: if true;
+      allow create, delete: if request.auth != null;
+      allow update: if false;
+    }
+    // Predictions and settlements are served by the trusted Worker only.
+    match /drop_predictions/{document=**} {
+      allow read, write: if false;
+    }
+    // Exemption requests are private. Only the member named 전시기 can decide;
+    // approval and the single-ticket deduction must commit together.
+    function exemptionMember() {
+      return quizMember()
+        && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.name != '관리자';
+    }
+    function exemptionApprover() {
+      return exemptionMember()
+        && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.name == '전시기';
+    }
+    function exemptionCount(data, name) {
+      let tickets = data.get('exemptions', {});
+      return tickets.get(name, 0) + (name == '이진누' ? tickets.get('지노', 0) : 0);
+    }
+    function validExemptionRequest(uid) {
+      let next = request.resource.data;
+      return exemptionMember() && request.auth.uid == uid
+        && next.keys().hasOnly(['uid', 'name', 'attemptId', 'status', 'monthKey',
+          'requestedAt', 'resolvedAt', 'resolvedBy', 'resultSeenAt', 'recordIndex'])
+        && next.uid == uid
+        && next.name == get(/databases/$(database)/documents/members/$(uid)).data.name
+        && next.attemptId is string && next.attemptId.size() >= 16 && next.attemptId.size() <= 100
+        && next.status == 'pending'
+        && next.monthKey is string && next.monthKey.matches('^[0-9]{4}-([1-9]|1[0-2])$')
+        && next.requestedAt == request.time
+        && next.resolvedAt == null && next.resolvedBy == null
+        && next.resultSeenAt == null && next.recordIndex == null
+        && exemptionCount(get(/databases/$(database)/documents/meeting_account/dues_status).data, next.name) > 0;
+    }
+    function validExemptionDecision() {
+      let next = request.resource.data;
+      return exemptionApprover() && resource.data.status == 'pending'
+        && next.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolvedBy', 'recordIndex'])
+        && next.resolvedBy == request.auth.uid && next.resolvedAt == request.time
+        && ((next.status == 'rejected' && next.recordIndex == null)
+          || (next.status == 'approved' && validExemptionDeduction()));
+    }
+    function validExemptionDeduction() {
+      let next = request.resource.data;
+      let before = get(/databases/$(database)/documents/meeting_account/dues_status).data;
+      let after = getAfter(/databases/$(database)/documents/meeting_account/dues_status).data;
+      let row = after.records[next.monthKey][next.recordIndex];
+      return next.recordIndex is int && next.recordIndex >= 0
+        && exemptionCount(before, next.name) > 0
+        && exemptionCount(after, next.name) == exemptionCount(before, next.name) - 1
+        && after.diff(before).affectedKeys().hasOnly(['records', 'exemptions'])
+        && after.exemptions.diff(before.get('exemptions', {})).affectedKeys().hasOnly([next.name, '지노'])
+        && after.records.diff(before.records).affectedKeys().hasOnly([next.monthKey])
+        && row.name in [next.name, (next.name == '이진누' ? '지노' : next.name)]
+        && row.ticketUsed == true && row.ticketUsedByUid == next.uid
+        && row.ticketRequestId == next.attemptId;
+    }
+    match /meeting_exemption_requests/{uid} {
+      allow get: if exemptionMember() && (request.auth.uid == uid || exemptionApprover());
+      allow list: if exemptionApprover();
+      allow create: if validExemptionRequest(uid);
+      allow update: if (validExemptionRequest(uid) && resource.data.status in ['approved', 'rejected']
+          && resource.data.resultSeenAt != null && request.resource.data.attemptId != resource.data.attemptId)
+        || validExemptionDecision()
+        || (exemptionMember() && request.auth.uid == uid && resource.data.status in ['approved', 'rejected']
+          && resource.data.resultSeenAt == null
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resultSeenAt'])
+          && request.resource.data.resultSeenAt == request.time);
+      allow delete: if false;
+    }
+    // Keep the existing permissions outside protected collections.
+    match /{collection}/{document=**} {
+      allow read, write: if request.auth != null
+        && !(collection in ['drop_quizzes', 'drop_quiz_keys', 'consultation_reservations', 'drop_predictions', 'meeting_exemption_requests']);
+    }
+  }
+}

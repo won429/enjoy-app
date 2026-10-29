@@ -26,7 +26,7 @@
 
     <link rel="stylesheet" href="app-loading.css?v=20261029-server1">
     <link rel="stylesheet" href="attendance.css?v=20261005">
-    <link rel="stylesheet" href="meeting-benefits.css?v=20261006">
+    <link rel="stylesheet" href="meeting-benefits.css?v=20261029-approval1">
     <link rel="stylesheet" href="uno.css?v=20261018-wallet1">
     <link rel="stylesheet" href="drop-games.css?v=20261019-quiz1">
     <link rel="stylesheet" href="drop-quiz.css?v=20261019-quiz6">
@@ -21430,6 +21430,7 @@
 
         window.enjoyResetMemberSync = function () {
             window.enjoyLocalMembersStop();
+            window.enjoyExemptions?.stop();
             started = false;
             if (beatTimer) clearInterval(beatTimer);
             if (decayTimer) clearInterval(decayTimer);
@@ -21473,6 +21474,7 @@
             window.addEventListener('focus', beat);
             subscribeMembers();
             if (window.enjoyEnableSync) window.enjoyEnableSync();             // 일정/모임통장
+            window.dispatchEvent(new CustomEvent('enjoy-member-sync-ready'));
         }
         window.enjoyStartMemberSync = startMemberSync;
 
@@ -22633,7 +22635,8 @@
 
     <!-- Firebase Module -->
     <script src="attendance.js?v=20261025-attendance-copy-1"></script>
-    <script src="meeting-benefits.js?v=20261006-store"></script>
+    <script src="meeting-benefits.js?v=20261029-approval1"></script>
+    <script src="meeting-exemptions.js?v=20261029-approval1"></script>
     <script src="store.js?v=20261017-monthly-first-come"></script>
     <section id="drop-games-screen" hidden role="dialog" aria-modal="true" aria-labelledby="drop-wallet-heading">
         <header class="drop-wallet-header">
