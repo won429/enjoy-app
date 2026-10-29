@@ -162,6 +162,7 @@
             if ($('investment-order-quantity')) $('investment-order-quantity').value = '1';
         }
         switchAccount();
+        window.enjoyInvestmentTicket?.update({ context: { ...context }, uid, account, market, busy, pending, error });
         const panel = $('investment-ranking');
         if (!panel) return;
         const loading = accountLoading(), loadingRanking = !ranking && !rankingError && (!!uid || (!window.isGuest && window.enjoyAuthResolved === false));
@@ -222,17 +223,15 @@
         if (!note || !controls) return;
         const stock = context.selected === 'en-joy', qty = quantity(), valid = Number.isSafeInteger(qty) && qty >= 1 && qty <= 1000000;
         const holdingsView = context.tab === 'holdings';
-        controls.hidden = !stock || (holdingsView && !orderSide);
+        controls.hidden = true;
         const ticket = $('investment-order-ticket-heading');
-        if (ticket) ticket.hidden = !stock || !holdingsView || !orderSide;
+        if (ticket) ticket.hidden = true;
         const ticketTitle = $('investment-order-ticket-title');
         if (ticketTitle) ticketTitle.textContent = orderSide === 'sell' ? '드롭 판매' : '드롭 구매';
         const available = !!uid && !!account && market?.tradingEnabled === true && !market.stale && estimatedTime() < market.nextUpdateAt && open() && !busy && !pending && valid && Number.isSafeInteger(price() * qty);
         const buy = $('investment-buy'), sell = $('investment-sell'), retry = $('investment-order-retry');
-        if (buy) { buy.hidden = holdingsView && orderSide === 'sell'; buy.textContent = holdingsView && orderSide === 'buy' ? '구매 확인' : '구매하기'; }
-        if (sell) { sell.hidden = holdingsView && orderSide === 'buy'; sell.textContent = holdingsView && orderSide === 'sell' ? '판매 확인' : '판매하기'; }
-        if (buy) buy.disabled = !available || account.points < price() * qty;
-        if (sell) sell.disabled = !available || account.quantity < qty;
+        if (buy) { buy.hidden = false; buy.textContent = '구매하기'; buy.disabled = !stock || busy || !!pending; }
+        if (sell) { sell.hidden = false; sell.textContent = '판매하기'; sell.disabled = !stock || busy || !!pending; }
         if (retry) { retry.hidden = !pending; retry.disabled = busy; }
         if (amount) {
             amount.setAttribute('aria-busy', String(!!context.quoteLoading));
@@ -286,12 +285,12 @@
         const owner = uid, version = epoch;
         if (!retry) {
             const qty = quantity(), quote = price();
-            if (!Number.isSafeInteger(qty) || qty < 1 || qty > 1000000 || !quote || !account || market?.tradingEnabled !== true) return;
+            if (!Number.isSafeInteger(qty) || qty < 1 || qty > 1000000 || !quote || !account || market?.tradingEnabled !== true || market.stale || !open() || estimatedTime() >= market.nextUpdateAt) return;
             const input = { requestId: crypto.randomUUID(), symbol: 'en-joy', side, quantity: qty,
                 expectedRevision: market.revision, expectedPrice: quote, expiresAt: Math.floor(estimatedTime() + 60000) };
             const confirmed = await window.enjoyConfirm?.('엔조이스튜디오 ' + qty.toLocaleString('ko-KR') + '토큰을 ' + cash(qty * quote) + '에 ' + (side === 'buy' ? '구매' : '판매') + '할까요?',
                 { title: side === 'buy' ? '드롭 구매' : '드롭 판매', confirmText: side === 'buy' ? '구매하기' : '판매하기' });
-            if (!confirmed || version !== epoch || owner !== currentUid() || pending) return;
+            if (!confirmed || version !== epoch || owner !== currentUid() || pending || market?.tradingEnabled !== true || market.stale || !open() || estimatedTime() >= market.nextUpdateAt || price() !== input.expectedPrice || market.revision !== input.expectedRevision) return;
             pending = input;
             if (!savePending()) { pending = null; error = '주문 확인 정보를 저장할 수 없어요. 브라우저 저장소 설정을 확인해 주세요.'; render(); return; }
         }
@@ -303,6 +302,7 @@
             if (result.order?.requestId !== pending.requestId) throw new Error('주문 결과를 확인하지 못했어요.');
             pending = null; savePending();
             orderSide = null;
+            window.enjoyInvestmentTicket?.complete();
             message = (result.order.side === 'buy' ? '구매' : '판매') + '가 완료됐어요. ' + result.order.quantity.toLocaleString('ko-KR') + '토큰 · ' + cash(result.order.total);
             account = null; lastRead = 0;
         } catch (e) {
@@ -347,19 +347,23 @@
             }
             else if (action === 'cancelled') { includeCancelled = !includeCancelled; render(); }
             else if (action === 'order-close') { orderSide = null; $('investment-order-quantity').value = '1'; render(); }
-            else if (action === 'buy' || action === 'sell') {
-                if (context.tab === 'holdings' && orderSide !== action) { orderSide = action; render(); $('investment-order-quantity')?.focus?.(); }
-                else submit(action);
-            }
+            else if (action === 'buy' || action === 'sell') window.enjoyInvestmentTicket?.open(action);
         });
         root.addEventListener('keydown', event => {
             if (selectedOrder && event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeOrderDetail(); }
         });
         $('investment-order-detail')?.addEventListener('cancel', event => { event.preventDefault(); closeOrderDetail(); });
+        window.enjoyInvestmentTicket?.mount();
         render();
     }
     window.enjoyInvestmentPortfolio = {
         mount, render, refresh, snapshot: () => account,
+        retryOrder() { return submit(null, true); },
+        placeOrder(side, qty) {
+            if (!['buy', 'sell'].includes(side) || !Number.isSafeInteger(qty) || qty < 1 || qty > 1000000) return;
+            $('investment-order-quantity').value = String(qty);
+            return submit(side);
+        },
         reload() { generation++; request = null; lastRead = 0; return refresh(true); },
         updateMarket(data) { market = { ...data, receivedAt: Date.now() }; render(); if (context.active) refresh(true); },
         setActive(active) { context.active = active; render(); if (active) refresh(); else { clearTimeout(timer); timer = null; } }

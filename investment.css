@@ -433,3 +433,117 @@ body:has(#meeting-screen:not(.hidden) #wallet-panel-investment:not(.hidden) .iv-
 .iv-holdings .iv-skeleton-date { height: 12px; }
 .iv-holdings .iv-skeleton-name { height: 14px; }
 .iv-holdings .iv-loading-order { grid-template-columns: 36px minmax(0, 1fr) minmax(0, 1fr); min-height: 48px; gap: 10px; }
+
+/* Full-screen order entry: public book on the left, a separate order form on the right. */
+#wallet-panel-investment .iv-trade-ticket { position: fixed; inset: 0; width: min(100%, 448px); max-width: 448px; height: 100dvh; max-height: 100dvh; margin: 0 auto; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); border: 0; background: var(--iv-bg); color: var(--iv-text); font: inherit; letter-spacing: -.025em; overflow: hidden; }
+.iv-trade-ticket[open] { display: flex; flex-direction: column; }
+.iv-trade-ticket::backdrop { background: var(--iv-bg); }
+.iv-ticket-header { display: flex; flex: none; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 16px; }
+.iv-ticket-header > div { min-width: 0; text-align: center; }
+.iv-ticket-header h2 { margin: 0 0 2px; color: var(--iv-muted); font-size: 11px; font-weight: 400; }
+.iv-ticket-header strong { font-size: 14px; line-height: 20px; letter-spacing: -.025em; }
+#investment-trade-ticket .iv-ticket-layout { width: 32px; height: 32px; padding: 0; border: 0; background: transparent; color: var(--iv-muted); font-size: 19px; }
+.iv-ticket-method-row { display: flex; flex: none; justify-content: flex-end; align-items: center; min-height: 32px; padding: 0 14px 8px; }
+.iv-ticket-method-row details { position: relative; color: var(--iv-muted); font-size: 12px; }
+.iv-ticket-method-row summary { list-style: none; cursor: pointer; border-bottom: 1px solid var(--iv-line-strong); line-height: 20px; }
+.iv-ticket-method-row summary::-webkit-details-marker { display: none; }
+.iv-ticket-method-row details > div { position: absolute; right: 0; top: 26px; z-index: 3; display: grid; min-width: 128px; padding: 5px; border: 1px solid var(--iv-line); border-radius: 12px; background: var(--iv-bg); box-shadow: 0 6px 24px #0002; }
+#investment-trade-ticket .iv-ticket-method-row details button { border: 0; border-radius: 7px; padding: 10px; background: transparent; color: var(--iv-text); text-align: left; font-size: 12px; }
+.iv-ticket-body { display: grid; grid-template-columns: 38% minmax(0, 1fr); gap: 10px; flex: 1; min-height: 0; padding-right: 10px; }
+.iv-ticket-book { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.iv-ticket-levels { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+#investment-trade-ticket .iv-ticket-level { position: relative; display: flex; flex: 1 0 43px; min-height: 43px; width: 100%; align-items: center; justify-content: space-between; gap: 4px; padding: 5px 4px 5px 26px; background: transparent; border: 1px solid transparent; border-radius: 4px; text-align: left; }
+.iv-ticket-level > span:first-child { flex: 1; min-width: 0; }
+.iv-ticket-level strong { display: block; font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; }
+.iv-ticket-level small { display: block; margin-top: 1px; font-size: 10px; font-weight: 500; line-height: 14px; }
+#investment-trade-ticket .iv-ticket-level-current { border-color: var(--iv-line-strong); }
+.iv-ticket-depth { position: relative; flex: none; display: flex; align-items: center; justify-content: flex-end; min-width: 29px; align-self: stretch; }
+.iv-ticket-depth > span { position: absolute; inset: 0 0 0 auto; border-radius: 3px; background: var(--iv-blue); opacity: .09; }
+.iv-ticket-level-bid .iv-ticket-depth > span { background: var(--iv-red); }
+.iv-ticket-depth > strong { position: relative; font-size: 10px; font-weight: 500; color: var(--iv-blue); }
+.iv-ticket-level-bid .iv-ticket-depth > strong { color: var(--iv-red); }
+.iv-ticket-book-loading { flex: 1; display: grid; grid-template-rows: repeat(11, 1fr); padding: 8px 10px; gap: 20px; }
+.iv-ticket-book-loading .iv-skeleton { width: 100%; height: 16px; }
+.iv-ticket-book-error { padding: 18px 10px; color: var(--iv-muted); font-size: 12px; line-height: 1.5; }
+.iv-ticket-book-error button { display: block; margin-top: 10px; padding: 7px; border: 0; border-radius: 6px; background: var(--iv-card); color: var(--iv-text); }
+.iv-ticket-strength { display: flex; flex: none; align-items: center; justify-content: space-between; min-height: 56px; padding: 8px 12px 8px 23px; border-top: 1px solid var(--iv-line-soft); color: var(--iv-secondary); font-size: 10px; }
+.iv-ticket-strength strong { display: block; margin-top: 4px; font-size: 14px; color: var(--iv-muted); }
+#investment-trade-ticket .iv-ticket-strength button { border: 0; padding: 7px; background: transparent; color: var(--iv-muted); font-size: 11px; }
+#investment-ticket-executions { margin: 0; padding: 10px; color: var(--iv-muted); font-size: 11px; line-height: 1.5; }
+.iv-ticket-entry { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.iv-ticket-side { display: flex; flex: none; padding: 3px; margin-bottom: 12px; min-height: 38px; border-radius: 12px; background: var(--iv-card); }
+#investment-trade-ticket .iv-ticket-side button { flex: 1; padding: 6px 0; border: 0; border-radius: 10px; color: var(--iv-muted); background: transparent; font-size: 13px; font-weight: 600; }
+#investment-trade-ticket .iv-ticket-side button[aria-selected="true"] { background: var(--iv-selected-bg); color: var(--iv-text); box-shadow: 0 1px 4px #0001; }
+.iv-ticket-form { display: flex; flex: 1; flex-direction: column; }
+.iv-ticket-card { flex: none; padding: 12px 15px; border-radius: 16px; background: var(--iv-card); }
+.iv-ticket-price-card { margin-bottom: 8px; }
+.iv-ticket-quantity-card { margin-bottom: 11px; }
+.iv-ticket-card-heading { display: flex; align-items: center; gap: 0; min-height: 17px; font-size: 13px; white-space: nowrap; }
+.iv-ticket-card-heading label { flex: none; font-weight: 650; }
+#investment-trade-ticket .iv-ticket-card-heading button { min-width: 0; margin-left: 10px; padding: 0 0 0 10px; border: 0; border-left: 1px solid var(--iv-line); background: transparent; color: var(--iv-muted); font-size: 12px; line-height: 12px; white-space: nowrap; }
+#investment-trade-ticket .iv-ticket-card-heading button[aria-pressed="true"] { color: var(--iv-text); }
+.iv-ticket-stepper { display: flex; align-items: center; gap: 6px; min-height: 32px; margin-top: 9px; }
+.iv-ticket-price-input { display: flex; flex: 1; min-width: 0; align-items: baseline; gap: 1px; }
+#investment-trade-ticket .iv-ticket-stepper input { min-width: 0; width: 100%; height: 32px; padding: 0; background: transparent; border: 0; outline: 0; color: var(--iv-text); font: inherit; font-size: 17px; font-weight: 650; letter-spacing: -.045em; }
+#investment-trade-ticket .iv-ticket-stepper input:focus-visible { outline: 2px solid var(--iv-focus); outline-offset: 3px; border-radius: 4px; }
+#investment-trade-ticket .iv-ticket-stepper input::placeholder { color: var(--iv-disabled); }
+.iv-ticket-price-input span { flex: none; font-size: 15px; font-weight: 650; }
+#investment-trade-ticket .iv-ticket-stepper > button { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 32px; padding: 0; border: 0; color: var(--iv-muted); background: transparent; font-size: 15px; }
+.iv-ticket-percentages { display: flex; justify-content: space-between; margin-top: 10px; }
+#investment-trade-ticket .iv-ticket-percentages button { flex: 1; min-width: 0; padding: 0 4px; border: 0; color: var(--iv-muted); background: transparent; font-size: 13px; line-height: 13px; }
+#investment-trade-ticket .iv-ticket-percentages button + button { border-left: 1px solid var(--iv-line); }
+.iv-ticket-funds, .iv-ticket-estimates { flex: none; margin: 0; padding: 0 5px; font-size: 13px; line-height: 20px; }
+.iv-ticket-funds > div, .iv-ticket-estimates > div { display: flex; align-items: center; justify-content: space-between; gap: 3px; }
+.iv-ticket-funds dt, .iv-ticket-estimates dt { color: var(--iv-secondary); white-space: nowrap; }
+.iv-ticket-funds dd, .iv-ticket-estimates dd { margin: 0; color: var(--iv-secondary); text-align: right; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+.iv-ticket-funds .iv-ticket-muted dt, .iv-ticket-funds .iv-ticket-muted dd { color: var(--iv-muted); }
+.iv-ticket-estimates { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--iv-line-soft); }
+#investment-trade-ticket .iv-ticket-margin { width: 28px; height: 17px; padding: 3px; border: 0; border-radius: 10px; background: var(--iv-line); }
+.iv-ticket-margin span { display: block; width: 11px; height: 11px; border-radius: 50%; background: var(--iv-bg); }
+.iv-ticket-status { margin: 0; padding: 0 5px; color: var(--iv-muted); font-size: 11px; line-height: 1.4; }
+.iv-ticket-status:empty { display: none; }
+.iv-ticket-submit-area { display: flex; flex: none; flex-direction: column; align-items: flex-end; margin-top: auto; padding: 18px 0 14px; }
+.iv-ticket-submit-area > span { padding-right: 9px; color: var(--iv-secondary); font-size: 13px; font-weight: 550; }
+.iv-ticket-submit-area > strong { margin: 8px 9px 21px 0; font-size: 20px; line-height: 26px; font-weight: 650; letter-spacing: -.04em; }
+#investment-trade-ticket #investment-ticket-submit { flex: none; width: 100%; min-height: 55px; border: 0; border-radius: 16px; background: #f52f42; color: #fff; font-size: 15px; font-weight: 550; }
+#investment-trade-ticket[data-side="sell"] #investment-ticket-submit { background: #3182f6; }
+#investment-trade-ticket #investment-ticket-submit:disabled { opacity: .5; }
+.iv-ticket-market-totals { flex: none; padding-top: 2px; color: var(--iv-muted); }
+.iv-ticket-market-bars { display: flex; gap: 4px; height: 4px; }
+.iv-ticket-market-bars span { flex: 1; border-radius: 3px; background: #3182f6; }
+.iv-ticket-market-bars span:last-child { background: #f52f42; }
+.iv-ticket-market-totals > div:last-child { display: flex; align-items: center; justify-content: space-between; padding: 14px 15px 6px; font-size: 10px; }
+.iv-ticket-market-totals strong { color: var(--iv-blue); font-size: 11px; font-weight: 600; }
+.iv-ticket-market-totals > div > span:last-child strong { color: var(--iv-red); }
+.iv-ticket-market-totals small { font-size: 10px; }
+.iv-ticket-pending { padding: 24px 10px; font-size: 13px; }
+.iv-ticket-pending p { margin-top: 12px; color: var(--iv-muted); line-height: 1.6; font-size: 12px; }
+.iv-trade-ticket[data-book-hidden="true"] .iv-ticket-body { grid-template-columns: minmax(0, 1fr); padding-left: 10px; }
+.iv-trade-ticket[data-book-hidden="true"] .iv-ticket-book { display: none; }
+#wallet-panel-investment .iv-ticket-notice { width: min(320px, calc(100% - 40px)); max-width: 320px; margin: auto; padding: 25px 22px 18px; border: 0; border-radius: 22px; color: var(--iv-text); background: var(--iv-bg); font: inherit; }
+.iv-ticket-notice::backdrop { background: #0006; }
+.iv-ticket-notice h2 { margin: 0 0 12px; font-size: 18px; line-height: 1.4; font-weight: 650; }
+.iv-ticket-notice p { margin: 0 0 22px; color: var(--iv-muted); font-size: 14px; line-height: 1.6; }
+#investment-ticket-notice button { width: 100%; min-height: 45px; border: 0; border-radius: 12px; background: #3182f6; color: #fff; font-size: 15px; font-weight: 600; }
+@media (max-width: 350px) {
+    .iv-ticket-body { grid-template-columns: 35% minmax(0, 1fr); gap: 7px; padding-right: 8px; }
+    .iv-ticket-card { padding-inline: 10px; }
+    .iv-ticket-card-heading label { font-size: 11px; }
+    #investment-trade-ticket .iv-ticket-card-heading button { margin-left: 7px; padding-left: 7px; font-size: 10px; }
+    #investment-trade-ticket .iv-ticket-level { padding-left: 13px; }
+    .iv-ticket-level strong { font-size: 12px; }
+    .iv-ticket-funds, .iv-ticket-estimates { font-size: 10px; }
+    #investment-trade-ticket .iv-ticket-stepper input { font-size: 16px; }
+}
+
+#investment-trade-ticket .iv-ticket-price-input input { flex: none; width: calc(var(--iv-ticket-price-length, 3) * .58em); max-width: calc(100% - 18px); }
+
+/* Keep final confirmation visible while fields scroll on short screens or above the keyboard. */
+#wallet-panel-investment .iv-trade-ticket { top: var(--iv-ticket-top, 0px); bottom: auto; height: var(--iv-ticket-height, 100dvh); max-height: var(--iv-ticket-height, 100dvh); }
+.iv-ticket-entry { overflow: hidden; }
+.iv-ticket-form { min-height: 0; }
+.iv-ticket-fields { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-bottom: 4px; }
+.iv-ticket-submit-area { padding-top: 8px; }
+.iv-ticket-pending { overflow-y: auto; }
+
+#investment-trade-ticket .iv-ticket-retry { width: 100%; margin-top: 8px; padding: 10px 5px; border: 1px solid var(--iv-line); border-radius: 8px; background: var(--iv-card); color: var(--iv-text); font-size: 12px; }
