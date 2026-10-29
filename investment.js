@@ -71,6 +71,7 @@
             <header class="iv-top"><h1>엔조이증권</h1><span class="iv-market-heading"><span>운영시간 00:00~23:30</span><span id="market-home-status" class="iv-market-status">시세 연결 중</span></span></header>
             <div class="iv-account-heading"><img src="assets/enjoy-symbol.png" alt=""><strong id="investment-account-name">멤버 지갑</strong><span id="investment-account-status"></span></div>
             <div class="iv-balances"><div class="iv-balance"><span>보유 포인트</span><div class="iv-point-balance" aria-live="polite"><strong id="investment-account-points">—</strong><span id="investment-account-equivalent" class="iv-balance-equivalent" hidden></span></div><small>100포인트 = 1원</small></div></div>
+            <div id="investment-index-list" class="iv-indices" role="region" aria-label="대표 지수"></div>
             <nav class="iv-tabs iv-home-tabs" role="tablist" aria-label="투자 메뉴">
                 <button type="button" id="investment-portfolio-tab" role="tab" data-home-tab="portfolio" aria-controls="investment-portfolio-panel" aria-selected="true">내 투자</button>
                 <button type="button" id="investment-drops-tab" role="tab" data-home-tab="drops" aria-controls="investment-drops-panel" aria-selected="false" tabindex="-1">드롭 종목</button>
@@ -83,7 +84,6 @@
             </section>
             <section id="investment-drops-panel" role="tabpanel" aria-labelledby="investment-drops-tab" hidden>
                 <div class="iv-toolbar"><div id="investment-drops-currency"></div></div>
-                <div id="investment-index-list" class="iv-indices" role="region" aria-label="대표 지수"></div>
                 <div id="investment-stock-list"></div>
             </section>
             <section id="investment-ranking-panel" role="tabpanel" aria-labelledby="investment-ranking-tab" hidden>
