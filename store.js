@@ -1,5 +1,6 @@
 (function (root) {
     'use strict';
+    const monthRecords = root?.EnjoyMeetingRecords || (typeof require === 'function' ? require('./meeting-records.js') : null);
     const RATE = 100;
     const memberNames = ['홍박사', '류짱', '오스틴', '전시기', '이진누', '성원제'];
     const products = {
@@ -53,8 +54,7 @@
     }
     function monthRows(meeting, date) {
         const year = date.getFullYear(), month = date.getMonth() + 1;
-        const legacy = (year === 2025 && month >= 10) || (year === 2026 && month <= 9);
-        return (meeting.records || {})[`${year}-${month}`] || (legacy && (meeting.records || {})[month]) || [];
+        return monthRecords.rowsAt(meeting, year, month);
     }
     function duesQuote(member, meeting, calculate, now = new Date()) {
         const date = koreaDate(now), monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;

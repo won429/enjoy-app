@@ -7884,6 +7884,7 @@
             <button type="button" data-app-loading-retry>다시 연결</button>
         </div>
     </div>
+    <script src="meeting-records.js?v=20261030-year1"></script>
     <script src="app-loading.js?v=20261029-resilient1"></script>
     <script src="home-loading.js?v=20261029-resilient1"></script>
 
@@ -14363,10 +14364,7 @@
                 return atMidnight(value);
             };
             const recordsForMonth = (year, month) => {
-                const records = window.meetingData && window.meetingData.records ? window.meetingData.records : {};
-                const key = `${year}-${month}`;
-                const legacy = (year === 2025 && month >= 10) || (year === 2026 && month <= 9);
-                return records[key] || (legacy ? records[month] : null) || [];
+                return window.EnjoyMeetingRecords.rowsAt(window.meetingData, year, month);
             };
 
             const now = new Date();
@@ -17408,11 +17406,7 @@
                     let startM = (y === startYear) ? 10 : 1;
                     for (let m = startM; m <= 12; m++) {
                         let key = `${y}-${m}`;
-                        let isL25 = (y === 2025 && m >= 10);
-                        let isL26 = (y === 2026 && m <= 9);
-                        let records = (data && data.records)
-                                        ? (data.records[key] || ((isL25 || isL26) ? data.records[m] : []))
-                                        : [];
+                        let records = window.EnjoyMeetingRecords.rowsAt(data, y, m);
                         let mem = records ? records.find(r => r.name === name) : null;
                         
                         let amount = mem ? (mem.amount || 0) : 0;
@@ -17518,10 +17512,8 @@
                     const endMonth = (y === currentYear) ? currentRealMonth : 12;
                     for (let m = 1; m <= endMonth; m++) {
                         const key = `${y}-${m}`;
-                        const isLegacy2025 = (y === 2025 && m >= 10);
-                        const isLegacy2026 = (y === 2026 && m <= 9);
-                        const records = window.meetingData.records[key] || ((isLegacy2025 || isLegacy2026) ? window.meetingData.records[m] : null) || [];
-                        
+                        const records = window.EnjoyMeetingRecords.rowsAt(window.meetingData, y, m);
+
                         records.forEach(mem => {
                             let h = hist[mem.name] && hist[mem.name][key];
                             if (mem.duesDiscountAmount > 0) {
@@ -17711,8 +17703,7 @@
             const amounts = duesDisplayAmounts(history, year, month);
             const records = window.meetingData.records || {};
             const monthKey = `${year}-${month}`;
-            const isLegacy = (year === 2025 && month >= 10) || (year === 2026 && month <= 9);
-            const monthRecords = records[monthKey] || (isLegacy ? records[month] : null) || [];
+            const monthRecords = window.EnjoyMeetingRecords.rowsAt(window.meetingData, year, month);
             const memberRecord = monthRecords.find(record => record.name === memberName) || {};
             const previousDate = new Date(year, month - 2, 1);
             const previousMonthLabel = `${previousDate.getFullYear()}년 ${previousDate.getMonth() + 1}월`;
@@ -17816,24 +17807,11 @@
             
             const monthKey = `${year}-${month}`;
             
-            if (window.meetingData.records && !window.meetingData.records[monthKey]) {
-                const isLegacy2025 = (year === 2025 && month >= 10);
-                const isLegacy2026 = (year === 2026 && month <= 9);
-                if ((isLegacy2025 || isLegacy2026) && window.meetingData.records[month]) {
-                    // Legacy key exists, do nothing
-                } else {
-                    window.meetingData.records[monthKey] = createEmptyMonthData();
-                }
-            }
-
             if(window.activeTabIndex === 4) window.renderMeetingStatus();
-            let records = []; 
-            if (window.meetingData && window.meetingData.records) { 
-                const isLegacy2025 = (year === 2025 && month >= 10);
-                const isLegacy2026 = (year === 2026 && month <= 9);
-                records = window.meetingData.records[monthKey] || ((isLegacy2025 || isLegacy2026) ? window.meetingData.records[month] : []) || []; 
-            }
-            
+            const selection = window.EnjoyMeetingRecords.read(window.meetingData, year, month);
+            // Rendering a missing month must not add records that a later save can persist.
+            const records = selection.found ? selection.rows : createEmptyMonthData();
+
             let displayRecords = [...records];
             displayRecords.sort((a, b) => {
                 const order = { paid: 0, deferred: 1, stopped: 2, unpaid: 3 };
@@ -22635,9 +22613,9 @@
 
     <!-- Firebase Module -->
     <script src="attendance.js?v=20261025-attendance-copy-1"></script>
-    <script src="meeting-benefits.js?v=20261029-approval2"></script>
+    <script src="meeting-benefits.js?v=20261030-year1"></script>
     <script src="meeting-exemptions.js?v=20261029-approval2"></script>
-    <script src="store.js?v=20261017-monthly-first-come"></script>
+    <script src="store.js?v=20261030-year1"></script>
     <section id="drop-games-screen" hidden role="dialog" aria-modal="true" aria-labelledby="drop-wallet-heading">
         <header class="drop-wallet-header">
             <button id="drop-wallet-back" class="drop-wallet-back" type="button" aria-label="드롭 게임 닫기"><i class="ph ph-caret-left" aria-hidden="true"></i></button>

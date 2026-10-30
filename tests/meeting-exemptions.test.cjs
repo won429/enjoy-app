@@ -6,7 +6,7 @@ const { createService, COLLECTION, approverFor } = require('../meeting-exemption
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 const start = html.indexOf('window.calculateMemberHistory = function(');
 const code = html.slice(start, html.indexOf('window.renderMeetingStatus =', start));
-const window = {};
+const window = { EnjoyMeetingRecords: require('../meeting-records.js') };
 vm.runInNewContext(code, { window, Date, Math });
 const calculate = window.calculateMemberHistory;
 const date = new Date('2026-10-29T12:00:00+09:00');

@@ -1,5 +1,6 @@
 (function (root) {
     'use strict';
+    const monthRecords = root?.EnjoyMeetingRecords || (typeof require === 'function' ? require('./meeting-records.js') : null);
     const members = ['홍박사', '류짱', '오스틴', '전시기', '이진누', '성원제'];
     const canUseExemption = () => true;
     const normalizeName = name => name === '지노' ? '이진누' : String(name || '').trim();
@@ -15,9 +16,7 @@
     }
 
     function rowsAt(data, year, month) {
-        const key = `${year}-${month}`;
-        const legacy = (year === 2025 && month >= 10) || (year === 2026 && month <= 9);
-        return (data.records || {})[key] || (legacy && (data.records || {})[month]) || [];
+        return monthRecords.rowsAt(data, year, month);
     }
 
     function ticketCount(data, name) {
