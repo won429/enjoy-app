@@ -4,6 +4,7 @@
     const API = root.ENJOY_PREDICTION_WORKER_URL || 'https://enjoy-drop-prediction.sungwon4867.workers.dev';
     let epoch = 0, uid = '', timer = null, countdownTimer = null, loading = false, offset = 0, fixtures = [], dateVersion = 0, opener = null;
     let connectedLoadingVersion = null;
+    let retryTimer = null, retryCount = 0, feedController = null, requestSerial = 0, unregisterRetry = null;
     let posting = false, draftId = '', editing = null, returnToManager = false, adminBusy = false;
     let adminPosts = new Map(), managerOpener = null;
     const saving = new Set();
@@ -16,16 +17,29 @@
     const identity = () => root.meetingAuthed && !root.enjoyIsLocalGuest?.() && !root.enjoyUser?.isAnonymous ? root.enjoyUser?.uid || '' : '';
     root._dropPredictions = [];
     root._dropPredictionError = '';
-    async function api(path, body) {
+    function idToken(signal) {
+        if (!signal) return root.getEnjoyIdToken?.();
+        return new Promise((resolve, reject) => {
+            const aborted = () => { signal.removeEventListener('abort', aborted); reject(signal.reason || new Error('예측 연결을 다시 시도해 주세요.')); };
+            if (signal.aborted) return aborted();
+            signal.addEventListener('abort', aborted, { once: true });
+            Promise.resolve().then(() => root.getEnjoyIdToken?.()).then(value => {
+                signal.removeEventListener('abort', aborted); resolve(value);
+            }, error => { signal.removeEventListener('abort', aborted); reject(error); });
+        });
+    }
+    async function api(path, body, signal) {
         const expected = identity(), generation = epoch;
-        const token = await root.getEnjoyIdToken?.();
+        const token = await idToken(signal);
+        if (identity() !== expected || generation !== epoch) throw new Error('계정이 변경되었어요. 다시 열어 주세요.');
+        if (signal?.aborted) throw signal.reason || new Error('예측 연결을 다시 시도해 주세요.');
         if (!expected || !token) throw new Error('멤버 로그인이 필요해요.');
         const response = await fetch(API + path, { method: body ? 'POST' : 'GET', cache: 'no-store',
             headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}) },
-            ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(20000) });
+            ...(body ? { body: JSON.stringify(body) } : {}), signal: signal || AbortSignal.timeout(20000) });
         if (identity() !== expected || generation !== epoch) throw new Error('계정이 변경되었어요. 다시 열어 주세요.');
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || '예측 정보를 불러오지 못했어요.');
+        if (!response.ok) throw Object.assign(new Error(data.error || '예측 정보를 불러오지 못했어요.'), { status: response.status });
         if (Number.isFinite(data.serverNow)) offset = data.serverNow - Date.now();
         return data;
     }
@@ -39,16 +53,24 @@
         return JSON.stringify(posts.map(p => [p._id, p.status, p.title, p.game, p.publishStart, p.publishEnd,
             p.startsAt, p.closesAt, p.revealAt, p.reward, p.penalty, p.updatedAt, p.answer, p.participants, p.result, phase(p)]));
     }
-    async function refresh(force = false) {
+    async function refresh(force = false, manual = false) {
         menu();
+        if (manual) { feedController?.abort(); requestSerial++; loading = false; retryCount = 0; }
         if (!uid || loading || identity() !== uid) return;
         const generation = epoch;
+        const serial = ++requestSerial;
+        root.clearTimeout(retryTimer); retryTimer = null;
+        feedController = new AbortController();
+        const controller = feedController;
+        const requestTimeout = root.setTimeout(() => controller.abort(Object.assign(new Error('예측 서버 응답이 늦어 다시 연결하고 있어요.'), { name: 'TimeoutError' })), 15000);
         const session = root.enjoyAppLoading?.snapshot();
         const loadingVersion = session?.mode === 'member' && session.owner === uid ? session.version : null;
         loading = true;
+        if (loadingVersion !== null && !session.confirmed?.includes('prediction')) root.enjoyAppLoading?.pending?.('prediction', loadingVersion);
         try {
-            const data = await api('/feed');
-            if (generation !== epoch) return;
+            const data = await api('/feed', undefined, feedController.signal);
+            if (generation !== epoch || serial !== requestSerial) return;
+            retryCount = 0;
             const changed = signature(root._dropPredictions) !== signature(data.posts) || !!root._dropPredictionError;
             root._dropPredictions = data.posts;
             root._dropPredictionError = '';
@@ -56,11 +78,19 @@
             // Only a completed feed read and render can release the first home screen.
             if (loadingVersion !== null) root.enjoyAppLoading?.ready('prediction', loadingVersion);
         } catch (error) {
-            if (generation !== epoch) return;
+            if (generation !== epoch || serial !== requestSerial) return;
             root._dropPredictionError = '야구 예측: ' + (error.message || '연결을 확인해 주세요.');
-            if (loadingVersion !== null) root.enjoyAppLoading?.fail('prediction', loadingVersion);
+            const again = (!error.status || error.status >= 500 || error.status === 429) && retryCount < 2;
+            if (again) {
+                retryCount++;
+                if (loadingVersion !== null) root.enjoyAppLoading?.pending?.('prediction', loadingVersion);
+                retryTimer = root.setTimeout(() => { if (generation === epoch) refresh(true); }, retryCount * 1000);
+            } else if (loadingVersion !== null) root.enjoyAppLoading?.fail('prediction', loadingVersion, error);
             root.renderDropFeed?.();
-        } finally { if (generation === epoch) loading = false; }
+        } finally {
+            root.clearTimeout(requestTimeout);
+            if (generation === epoch && serial === requestSerial) loading = false;
+        }
     }
     function phase(p) {
         const time = now();
@@ -404,12 +434,15 @@
         const loadingVersion = session?.mode === 'member' && session.owner === next ? session.version : null;
         if (next === uid && loadingVersion === connectedLoadingVersion) return;
         connectedLoadingVersion = loadingVersion;
+        feedController?.abort(); requestSerial++; root.clearTimeout?.(retryTimer); retryTimer = null; retryCount = 0;
+        unregisterRetry?.(); unregisterRetry = null;
         uid = next; epoch++; loading = false; clearInterval(timer); timer = null; clearInterval(countdownTimer); countdownTimer = null;
         root._dropPredictions = []; root._dropPredictionError = ''; saving.clear(); returnToManager = false;
         adminPosts.clear(); renderManager(); close(true);
         const manager = document.getElementById('drop-prediction-manager'); if (manager) manager.hidden = true;
         root.renderDropFeed?.();
         if (uid) {
+            unregisterRetry = root.enjoyAppLoading?.registerRetry?.('prediction', () => refresh(true, true));
             refresh(true); timer = setInterval(() => { if (!document.hidden) refresh(); }, 15000);
             countdownTimer = setInterval(() => { if (!document.hidden) updateCountdowns(); }, 1000);
         }

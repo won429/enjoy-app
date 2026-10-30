@@ -68,7 +68,7 @@
         authFallbackTimer = root.setTimeout(function () {
             authFallbackTimer = null;
             if (!root.enjoyUser && root.enjoyAuthResolved !== true) {
-                if (root.enjoyAppLoading) root.enjoyAppLoading.fail('auth');
+                if (root.enjoyAppLoading) (root.enjoyAppLoading.slow || root.enjoyAppLoading.fail)('auth');
                 else root.enjoyShowPublicHome();
             }
         }, 12000);

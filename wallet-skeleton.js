@@ -45,11 +45,15 @@
             placeholder.dataset.state = state;
             placeholder.innerHTML = loading
                 ? '<span class="wallet-skeleton-label">' + labels[name] + ' 정보를 불러오는 중</span>' + markup(name)
-                : failed ? '<div class="ws-error">' + labels[name] + ' 정보를 불러오지 못했어요.<br>인터넷 연결을 확인해 주세요.</div>' : '';
+                : failed ? '<div class="ws-error">' + labels[name] + ' 정보를 불러오지 못했어요.<br>인터넷 연결을 확인해 주세요.<br>' + dependencies.filter(source => states[source] === 'error').map(source => '<button type="button" data-home-loading-retry="' + source + '">다시 연결</button>').join('') + '</div>' : '';
         });
     }
 
     window.enjoyWalletLoading = {
+        pending(source) {
+            if (!Object.prototype.hasOwnProperty.call(states, source) || states[source] === 'ready') return;
+            states[source] = 'loading'; render();
+        },
         reset() {
             states.meeting = states.schedule = 'loading';
             render();
