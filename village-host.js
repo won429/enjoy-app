@@ -48,7 +48,7 @@
         document.body.style.overflow = 'hidden';
         historyId = 'village-' + Date.now();
         history.pushState({ ...history.state, modal: 'village', villageViewId: historyId }, '', location.href);
-        if (!loaded) { loaded = true; frame.src = 'village.html?v=20261102-2'; }
+        if (!loaded) { loaded = true; frame.src = 'village.html?v=20261103-6'; }
         else frame.contentWindow?.resumeVillageGame?.();
         frame.focus();
     };

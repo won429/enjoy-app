@@ -36,7 +36,14 @@
         }
         return result;
     }
-    const world = Object.freeze({ buildings: Object.freeze(buildings), spawn, bounds, landmarks, canWalk, move });
+    function relativeInput(x, z, forwardX, forwardZ) {
+        const n = Math.hypot(forwardX, forwardZ);
+        const fx = n > 1e-6 ? forwardX / n : 0;
+        const fz = n > 1e-6 ? forwardZ / n : -1;
+        const inputLength = Math.max(1, Math.hypot(x,z));
+        return { x: (-fz*x - fx*z) / inputLength, z: (fx*x - fz*z) / inputLength };
+    }
+    const world = Object.freeze({ buildings: Object.freeze(buildings), spawn, bounds, landmarks, canWalk, move, relativeInput });
     if (typeof module === 'object' && module.exports) module.exports = world;
     else root.VillageWorld = world;
 })(typeof window === 'object' ? window : globalThis);
