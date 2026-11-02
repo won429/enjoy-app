@@ -14,12 +14,13 @@
         uno: { title: '드롭 우노', description: '같은 색, 같은 숫자. 마지막 한 장까지 짜릿하게.', open: 'openDropGame' },
         cube: { title: '드롭 큐브', description: '숫자를 연결하고, 나만의 조합을 완성해 보세요.', open: 'openDropCube' },
         tekken: { title: '드롭 철권', description: '타이밍을 노려 한 방. 지금 대결을 시작해 보세요.', open: 'openDropTekken' },
-        war: { title: '드롭 전쟁', description: '나만의 전략으로 영토를 넓혀 보세요.', open: 'openDropWar' }
+        war: { title: '드롭 전쟁', description: '나만의 전략으로 영토를 넓혀 보세요.', open: 'openDropWar' },
+        village: { title: '드롭 마을', description: '익숙한 우리 동네에서 느긋한 한 걸음. 아직 만드는 중인 마을이에요.', open: 'openDropVillage' }
     };
     let order = [], selected = 'uno', historyId = '', previousFocus = null, overflow = '';
     let liftTimer = null;
     const available = card => !card.hidden && card.style.display !== 'none';
-    const gameIsOpen = () => ['uno', 'cube', 'tekken', 'war'].some(game => {
+    const gameIsOpen = () => ['uno', 'cube', 'tekken', 'war', 'village'].some(game => {
         const gameScreen = document.getElementById(game + '-game-screen');
         return gameScreen && !gameScreen.hidden;
     });
@@ -113,8 +114,11 @@
             }
         }
     });
-    new MutationObserver(render).observe(document.getElementById('drop-war-button'), {
-        attributes: true, attributeFilter: ['hidden']
+    ['drop-war-button', 'drop-village-button'].forEach(id => {
+        const card = document.getElementById(id);
+        if (card) new MutationObserver(render).observe(card, {
+            attributes: true, attributeFilter: ['hidden']
+        });
     });
     render();
 })();
