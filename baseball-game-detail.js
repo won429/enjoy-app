@@ -41,6 +41,7 @@
 
     let scheduleData = [];
     let starterHistoryGames = [];
+    let winPredictionModel = null;
     let rankingData = [];
     let liveDataStore = {};
     let currentPopupMatchId = null;
@@ -207,111 +208,18 @@
             return false;
         }
 
-        // ── 승리 확률 모델 ─────────────────────────────────────────────────────────
-        function _teamWr(t) { let s = teamStats[t]; return (s && (s.w + s.l) > 0) ? s.w / (s.w + s.l) : 0.5; }
-        function _teamForm(t) { let s = teamStats[t]; if (!s || !s.results.length) return 0.5; let r = s.results.slice(-10); let w = r.filter(x => x === 'W').length, l = r.filter(x => x === 'L').length; return (w + l) === 0 ? 0.5 : w / (w + l); }
-        // 최근 7일(약 1주일) 승패 흐름 — 날짜 기준으로 집계
-        function _teamFormWeek(t) {
-            let s = teamStats[t]; if (!s || !s.results.length || !s.dates) return 0.5;
-            let cutoff = new Date(todayStr); cutoff.setDate(cutoff.getDate() - 7);
-            let cs = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`;
-            let w = 0, l = 0;
-            for (let i = 0; i < s.results.length; i++) { if (s.dates[i] && s.dates[i] >= cs) { if (s.results[i] === 'W') w++; else if (s.results[i] === 'L') l++; } }
-            return (w + l) === 0 ? 0.5 : w / (w + l);
-        }
-        function _teamH2H(home, away) { let s = teamStats[home]; if (s && s.h2h && s.h2h[away]) { let x = s.h2h[away]; return { hw: x.w, aw: x.l, d: x.d || 0, n: x.w + x.l }; } return { hw: 0, aw: 0, d: 0, n: 0 }; }
-        function _normCdf(z) { let t = 1 / (1 + 0.2316419 * Math.abs(z)); let d = 0.3989423 * Math.exp(-z * z / 2); let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
-
-        function _probabilityClamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
-        function _probabilityPitcherName(l, side) {
-            return _pitcherName(l[side + 'StarterDetail'] || l[side + 'Starter'] || l[side + 'PitcherDetail'] || l[side + 'Pitcher']);
-        }
-        function _pitcherProbabilityStrength(l, side, team, opp) {
-            const record = pitcherRecords(_probabilityPitcherName(l, side), team, opp);
-            const seasonGames = record.seasonW + record.seasonL;
-            const vsGames = record.vsW + record.vsL;
-            const seasonRate = seasonGames ? record.seasonW / seasonGames : 0.5;
-            const vsRate = vsGames ? record.vsW / vsGames : 0.5;
-            return (seasonRate - 0.5) * 0.28 + (vsRate - 0.5) * 0.12 * Math.min(1, vsGames / 3);
-        }
-        function _latestRecordedHomeProbability(m, l) {
-            let selected = null, selectedRelay = -1;
-            for (const batter of _recordBatters(l)) {
-                const probability = Number(_recordValue(batter, ['winProbability', 'winningProbability', '승리확률']));
-                const team = String(_recordValue(batter, ['winProbabilityTeam', 'probabilityTeam', '승리확률팀']) || '');
-                if (!Number.isFinite(probability) || probability < 0 || probability > 100 || (team !== m.team1 && team !== m.team2)) continue;
-                const relay = Number(_recordValue(batter, ['relayNo', 'sequence', 'seq']) || 0);
-                if (selected === null || relay > selectedRelay) {
-                    selected = team === m.team2 ? probability / 100 : 1 - probability / 100;
-                    selectedRelay = relay;
-                }
-            }
-            return selected;
-        }
-        function _liveSituationLead(l, lead, isTop) {
-            const number = key => Number(l[key] || 0);
-            const statLead = _probabilityClamp(
-                (number('homeHit') - number('awayHit')) * 0.035 +
-                (number('awayError') - number('homeError')) * 0.07 +
-                (number('homeBase') - number('awayBase')) * 0.025,
-                -0.5, 0.5
-            );
-            const outs = _probabilityClamp(number('out'), 0, 3);
-            const outFactor = [1, 0.68, 0.34, 0][outs];
-            const runnerValue = (l.base1 ? 0.30 : 0) + (l.base2 ? 0.50 : 0) + (l.base3 ? 0.72 : 0);
-            const countValue = _probabilityClamp((number('ball') - number('strike')) * 0.04, -0.08, 0.12);
-            const offenseSide = isTop ? 'away' : 'home';
-            const batterName = _curBatterName(l, offenseSide);
-            const averageRaw = _batterAverageOf(l, offenseSide, batterName);
-            const average = averageRaw === '' ? NaN : Number(averageRaw);
-            const batterValue = Number.isFinite(average) ? _probabilityClamp((average - 0.25) * 0.9, -0.14, 0.16) : 0;
-            const defendingPitchCount = number(isTop ? 'homePitcherCount' : 'awayPitcherCount');
-            const fatigueValue = _probabilityClamp((defendingPitchCount - 75) / 100, 0, 0.35);
-            const offenseThreat = (runnerValue + countValue + batterValue + fatigueValue) * outFactor;
-            return lead + statLead + (isTop ? -offenseThreat : offenseThreat);
-        }
-
-        // 전적·최근 흐름·상대전적·선발 + 실시간 점수/이닝/주자/카운트/타자/투구 기록을 종합한 승리 확률(%)
+        // 경기 이전 기록으로 만든 모델을 모든 경기정보 탭에서 공유한다.
         function winProbability(m, l) {
-            const sig = x => 1 / (1 + Math.exp(-x));
-            const home = m.team2, away = m.team1;
-            let hWr = _teamWr(home), aWr = _teamWr(away);
-            let logit = (hWr - aWr) * 2.4 + 0.16; // 팀 전력차 + 홈 이점
-            let h = _teamH2H(home, away);
-            if (h.n > 0) logit += ((h.hw / h.n) - 0.5) * 0.7 * Math.min(1, h.n / 6); // 시즌 상대전적
-            logit += (_teamForm(home) - _teamForm(away)) * 0.55; // 최근 10경기 흐름
-            logit += (_teamFormWeek(home) - _teamFormWeek(away)) * 0.5; // 최근 1주일(7일) 흐름
-            logit += _pitcherProbabilityStrength(l, 'home', home, away) - _pitcherProbabilityStrength(l, 'away', away, home); // JS 기록의 선발 시즌/상대 승패
-            let pre = Math.max(0.1, Math.min(0.9, sig(logit)));
-
-            let status = l.gameStatus;
-            if (status === '종료') {
-                let a = parseInt(l.awayScore || 0), hh = parseInt(l.homeScore || 0);
-                let hp = a === hh ? 50 : (hh > a ? 100 : 0);
-                return { home: hp, away: 100 - hp, decided: true };
+            const game = Object.assign({}, m, l);
+            if (!winPredictionModel || winPredictionModel.before !== game.date) {
+                winPredictionModel = window.EnjoyBaseballWinPrediction.create(starterHistoryGames, { before: game.date });
             }
-            if (status !== '경기중') {
-                let hp = Math.round(pre * 100);
-                return { home: hp, away: 100 - hp };
-            }
-            // 경기중: 점수차 + 남은 이닝으로 실시간 보정
-            let a = parseInt(l.awayScore || 0), hh = parseInt(l.homeScore || 0), lead = hh - a;
-            let innNum = parseInt((l.inning || '').replace(/[^0-9]/g, '')) || 1;
-            let isTop = (l.inning || '').includes('초');
-            let elapsed = Math.min(9, (innNum - 1) + (isTop ? 0 : 0.5));
-            let remInn = Math.max(0.3, 9 - elapsed);
-            let progress = Math.max(0, Math.min(1, elapsed / 9));
-            if (innNum > 9) { progress = 1; remInn = 0.5; } // 연장
-            let sigma = 1.6 * Math.sqrt(remInn);
-            let situationLead = _liveSituationLead(l, lead, isTop);
-            let inGame = _normCdf(situationLead / sigma);
-            let w = Math.pow(progress, 0.65); // 경기가 진행될수록 현재 점수(흐름)에 더 가중
-            let hp = (1 - w) * pre + w * inGame;
-            const recordedHomeProbability = _latestRecordedHomeProbability(m, l);
-            if (recordedHomeProbability !== null) hp = hp * 0.65 + recordedHomeProbability * 0.35; // 기록 탭의 최신 타석 승리확률 반영
-            hp = Math.max(0.02, Math.min(0.98, hp));
-            let hpI = Math.round(hp * 100);
-            return { home: hpI, away: 100 - hpI };
+            return winPredictionModel.predict(game, {
+                starters: {
+                    away: _starterForLineup(m, l, 'away'),
+                    home: _starterForLineup(m, l, 'home')
+                }
+            });
         }
 
         // 경기정보(스코어보드) 아래에 들어갈 승리 확률 막대
@@ -322,7 +230,7 @@
             if (iC) return '';
             let p = winProbability(m, l);
             let c1 = teamWinHex[m.team1] || '#9AA0A6', c2 = teamWinHex[m.team2] || '#9AA0A6';
-            let note = st === '경기중' ? '실시간 승리 확률' : '예상 승리 확률';
+            let note = st === '경기중' ? '실시간 승리 확률' : '예상 승리 확률' + (p.provisional ? ' · 잠정' : '');
             let live = st === '경기중', atk = live ? ((l.inning || '').includes('말') ? 'home' : 'away') : '';
             let lc = live ? ` wp-live wp-atk-${atk}` : '', front = live ? `<div class="wp-home" style="left:${p.away}%"></div><div class="wp-front" style="left:${p.away}%"></div>` : '';
             return `<div class="w-full mb-6">
@@ -1847,6 +1755,7 @@
                 starterDocuments.flatMap(documentData => (documentData && documentData.games) || []),
                 scheduleData.map(game => Object.assign({}, game, liveDataStore[game.id] || {}))
             );
+            winPredictionModel = window.EnjoyBaseballWinPrediction.create(starterHistoryGames, { before: match.date });
             refreshRankingFromHistory();
             currentPopupMatchId = match.id;
             renderPopupContent(match.id);
