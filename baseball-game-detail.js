@@ -40,6 +40,7 @@
     }
 
     let scheduleData = [];
+    let starterHistoryGames = [];
     let rankingData = [];
     let liveDataStore = {};
     let currentPopupMatchId = null;
@@ -895,166 +896,13 @@
             return { vsW, vsL, seasonW, seasonL };
         }
 
-    function _starterPlayerName(raw) {
-        if (raw && typeof raw === 'object') {
-            return raw.name || raw.playerName || raw.inName || (raw.player && raw.player.name) || '';
-        }
-        return raw || '';
-    }
-    function _starterIsCanceled(game) {
-        const text = [game.gameStatus, game.status, game.inning, game.cancelType, game.cancelReason,
-            game.cancellationType, game.cancellationReason].filter(Boolean).join(' ').toLowerCase();
-        return /취소|우취|우천|그라운드|폭염|cancel|rain|ground|heat/.test(text);
-    }
-    function _starterSameGame(first, second) {
-        if (first.id != null && second.id != null) return String(first.id) === String(second.id);
-        return first.date === second.date && first.team1 === second.team1 && first.team2 === second.team2 && first.time === second.time;
-    }
-
-    // Keep rotation, cancellation and confirmed-start rules aligned with index.html.
-    function _starterOfficial(game, side) {
-        const candidates = [
-            game[side + 'StarterDetail'], game[side + 'Starter']
-        ];
-        for (let index = 0; index < candidates.length; index += 1) {
-            const name = _starterPlayerName(candidates[index]);
-            if (name && name !== '-') return candidates[index];
-        }
-        return '';
-    }
-    function _starterDeclared(game, side) {
-        const candidates = [
-            game[side + 'StarterDetail'], game[side + 'Starter']
-        ];
-        for (let index = 0; index < candidates.length; index += 1) {
-            const name = _starterPlayerName(candidates[index]);
-            if (name && name !== '-') return name;
-        }
-        return '';
-    }
-    function _starterPrediction(game, side, options) {
-        const scheduleGames = options.scheduleGames || [];
-        const historyGames = options.historyGames || [];
-        const today = options.today;
-        const official = _starterOfficial(game, side);
-        if (official) return { raw: official, name: _starterPlayerName(official), predicted: false };
-        const gameDate = String(game.date || '');
-        const dayDistance = Math.round((new Date(gameDate + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86400000);
-        if (!gameDate || dayDistance < 0 || dayDistance > 14 || String(game.gameStatus || '경기전') !== '경기전') {
-            return { raw: null, name: '', predicted: false };
-        }
-
-        const team = side === 'away' ? game.team1 : game.team2;
-        const previousTeamGames = scheduleGames.filter(function (item) {
-            const itemDate = String(item.date || '');
-            const itemTime = String(item.time || '');
-            const beforeTarget = itemDate < gameDate || (itemDate === gameDate && itemTime < String(game.time || ''));
-            return beforeTarget && (item.team1 === team || item.team2 === team);
-        }).sort(function (first, second) {
-            return String(first.date || '').localeCompare(String(second.date || '')) ||
-                String(first.time || '').localeCompare(String(second.time || ''));
-        });
-        const previousTeamGame = previousTeamGames[previousTeamGames.length - 1];
-        const history = historyGames.filter(function (item) {
-            return String(item.date || '') < gameDate &&
-                String(item.gameStatus || '') === '종료' &&
-                !_starterIsCanceled(item) &&
-                (item.team1 === team || item.team2 === team);
-        }).sort(function (first, second) {
-            return String(first.date || '').localeCompare(String(second.date || '')) ||
-                String(first.time || '').localeCompare(String(second.time || ''));
-        });
-        const starts = history.map(function (item) {
-            const itemSide = item.team1 === team ? 'away' : 'home';
-            const name = _starterDeclared(item, itemSide);
-            return { name: name, game: item };
-        }).filter(function (entry) { return entry.name && entry.name !== '-'; });
-        // A single spot start is insufficient evidence of a rotation role.
-        const recentCutoffDate = new Date(today + 'T00:00:00');
-        const lookbackDays = postseasonRound(game) || postseasonGames().some(item => String(item.id) === String(game.id)) ? 90 : 30;
-        recentCutoffDate.setDate(recentCutoffDate.getDate() - lookbackDays);
-        const recentCutoff = recentCutoffDate.getFullYear() + '-' + String(recentCutoffDate.getMonth() + 1).padStart(2, '0') + '-' + String(recentCutoffDate.getDate()).padStart(2, '0');
-        const recentStartCounts = new Map();
-        starts.forEach(function (entry) {
-            if (String(entry.game.date || '') >= recentCutoff) {
-                recentStartCounts.set(entry.name, (recentStartCounts.get(entry.name) || 0) + 1);
-            }
-        });
-        const rotationCandidates = new Set();
-        recentStartCounts.forEach(function (count, name) {
-            if (count >= 2) rotationCandidates.add(name);
-        });
-        // Only established recent starters may be predicted after a cancellation.
-        if (previousTeamGame && _starterIsCanceled(previousTeamGame)) {
-            const canceledSide = previousTeamGame.team1 === team ? 'away' : 'home';
-            const canceledStarter = _starterDeclared(previousTeamGame, canceledSide);
-            if (canceledStarter && rotationCandidates.has(canceledStarter)) {
-                return { raw: canceledStarter, name: canceledStarter, predicted: true, carriedFromCancellation: true };
-            }
-        }
-        const recentUnique = [];
-        for (let index = starts.length - 1; index >= 0 && recentUnique.length < 5; index -= 1) {
-            if (rotationCandidates.has(starts[index].name) && !recentUnique.includes(starts[index].name)) recentUnique.push(starts[index].name);
-        }
-        recentUnique.reverse();
-        if (recentUnique.length < 3) return { raw: null, name: '', predicted: false };
-
-        const latestStart = starts[starts.length - 1];
-        let rotationAnchor = latestStart;
-        const confirmedScheduleStarts = scheduleGames.map(function (item) {
-            const itemDate = String(item.date || '');
-            const itemTime = String(item.time || '');
-            const beforeTarget = itemDate < gameDate || (itemDate === gameDate && itemTime < String(game.time || ''));
-            if (!beforeTarget || _starterIsCanceled(item) || (item.team1 !== team && item.team2 !== team)) return null;
-            const itemSide = item.team1 === team ? 'away' : 'home';
-            const name = _starterPlayerName(_starterOfficial(item, itemSide));
-            return name ? { name: name, game: item } : null;
-        }).filter(Boolean).sort(function (first, second) {
-            return String(first.game.date || '').localeCompare(String(second.game.date || '')) ||
-                String(first.game.time || '').localeCompare(String(second.game.time || ''));
-        });
-        const latestConfirmedScheduleStart = confirmedScheduleStarts[confirmedScheduleStarts.length - 1];
-        if (latestConfirmedScheduleStart) {
-            const historyAnchorKey = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.date) || '') + ' ' +
-                String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.time) || '');
-            const scheduleAnchorKey = String(latestConfirmedScheduleStart.game.date || '') + ' ' +
-                String(latestConfirmedScheduleStart.game.time || '');
-            if (!rotationAnchor || scheduleAnchorKey >= historyAnchorKey) rotationAnchor = latestConfirmedScheduleStart;
-        }
-
-        const anchorDate = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.date) || '');
-        const anchorTime = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.time) || '');
-        const upcoming = scheduleGames.filter(function (item) {
-            const itemDate = String(item.date || '');
-            const itemTime = String(item.time || '');
-            const afterAnchor = itemDate > anchorDate || (itemDate === anchorDate && itemTime > anchorTime);
-            return afterAnchor && itemDate <= gameDate &&
-                (item.team1 === team || item.team2 === team) &&
-                !_starterIsCanceled(item);
-        }).sort(function (first, second) {
-            return String(first.date || '').localeCompare(String(second.date || '')) ||
-                String(first.time || '').localeCompare(String(second.time || ''));
-        });
-        let gameIndex = upcoming.findIndex(function (item) { return _starterSameGame(item, game); });
-        if (gameIndex < 0) gameIndex = Math.max(0, upcoming.length - 1);
-        const anchorRotationIndex = rotationAnchor ? recentUnique.indexOf(rotationAnchor.name) : -1;
-        const predictedRotationIndex = anchorRotationIndex >= 0
-            ? (anchorRotationIndex + gameIndex + 1) % recentUnique.length
-            : gameIndex % recentUnique.length;
-        let predictedName = recentUnique[predictedRotationIndex];
-        if (rotationAnchor && predictedName === rotationAnchor.name && recentUnique.length > 1) {
-            predictedName = recentUnique[(predictedRotationIndex + 1) % recentUnique.length];
-        }
-        return { raw: predictedName, name: predictedName, predicted: true };
-    }
-
-
         function _starterForLineup(m, l, side) {
-            const history = (window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate) || {};
-            return _starterPrediction(Object.assign({}, m, l), side, {
+            const game = Object.assign({}, m, l);
+            return window.EnjoyBaseballStarterPrediction.predict(game, side, {
                 today: todayStr,
-                historyGames: Object.values(history).flat().map(normalizeGame).filter(game => game.date <= todayStr),
-                scheduleGames: scheduleData.map(game => Object.assign({}, game, liveDataStore[game.id] || {}))
+                postseason: Boolean(postseasonRound(game) || postseasonGames().some(item => String(item.id) === String(game.id))),
+                historyGames: starterHistoryGames,
+                scheduleGames: scheduleData.map(item => Object.assign({}, item, liveDataStore[item.id] || {}))
             });
         }
 
@@ -1973,7 +1821,12 @@
                 `schedule/${todayStr.slice(0, 7)}`, `schedule/${nextMonth}`, `schedule/${month}`,
                 `games/${yesterday}`, `games/${todayStr}`, `games/${date}`, 'live/today'
             ])];
-            const results = await Promise.all(paths.map(path => _fsGetDoc(path)));
+            const starterPaths = window.EnjoyBaseballStarterPrediction.historyMonths(todayStr)
+                .map(key => `schedule/${key}`).filter(path => !paths.includes(path));
+            const [results, starterDocuments] = await Promise.all([
+                Promise.all(paths.map(path => _fsGetDoc(path))),
+                Promise.all(starterPaths.map(path => _fsGetDoc(path).catch(() => null)))
+            ]);
             results.forEach(documentData => mergeDocument(documentData, true));
             scheduleData.sort((a, b) => a.date === b.date
                 ? (a.time || '00:00').localeCompare(b.time || '00:00')
@@ -1985,8 +1838,15 @@
                 const parts = month.split('-').map(Number);
                 const previous = new Date(parts[0], parts[1] - 2, 1);
                 const previousMonth = `${previous.getFullYear()}-${String(previous.getMonth() + 1).padStart(2, '0')}`;
-                mergeDocument(await _fsGetDoc(`schedule/${previousMonth}`), true);
+                const previousPath = `schedule/${previousMonth}`;
+                const previousIndex = starterPaths.indexOf(previousPath);
+                mergeDocument(previousIndex >= 0 ? starterDocuments[previousIndex] : await _fsGetDoc(previousPath), true);
             }
+            starterHistoryGames = window.EnjoyBaseballStarterPrediction.mergeGames(
+                Object.values((window.KBO_HISTORY_2026 && window.KBO_HISTORY_2026.gamesByDate) || {}).flat(),
+                starterDocuments.flatMap(documentData => (documentData && documentData.games) || []),
+                scheduleData.map(game => Object.assign({}, game, liveDataStore[game.id] || {}))
+            );
             refreshRankingFromHistory();
             currentPopupMatchId = match.id;
             renderPopupContent(match.id);

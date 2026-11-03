@@ -8692,6 +8692,7 @@
     </section>
 
     <script src="baseball-game-players.js"></script>
+    <script src="baseball-starter-prediction.js?v=20261104-1"></script>
     <script src="national_gyeongguk_univ_academic_calendar_2026.js"></script>
     <script src="woosong_univ_academic_calendar_2026.js"></script>
     <script src="gyeongsang_national_univ_academic_calendar_2026.js"></script>
@@ -12853,138 +12854,13 @@
             const countText = count == null || count === '' ? '' : ' <i class="fa-solid fa-baseball"></i> ' + enjoyBaseballEscape(count);
             return 'P.' + enjoyBaseballEscape(pitcher) + countText;
         }
-        function enjoyBaseballOfficialStarter(game, side) {
-            const candidates = [
-                game[side + 'StarterDetail'], game[side + 'Starter']
-            ];
-            for (let index = 0; index < candidates.length; index += 1) {
-                const name = enjoyBaseballPlayerName(candidates[index]);
-                if (name && name !== '-') return name;
-            }
-            return '';
-        }
-        function enjoyBaseballDeclaredStarter(game, side) {
-            const candidates = [
-                game[side + 'StarterDetail'], game[side + 'Starter']
-            ];
-            for (let index = 0; index < candidates.length; index += 1) {
-                const name = enjoyBaseballPlayerName(candidates[index]);
-                if (name && name !== '-') return name;
-            }
-            return '';
-        }
         function enjoyBaseballStarterInfo(game, side) {
-            const official = enjoyBaseballOfficialStarter(game, side);
-            if (official) return { name: official, predicted: false };
-            const today = enjoyBaseballDateKey(new Date());
-            const gameDate = String(game.date || '');
-            const dayDistance = Math.round((new Date(gameDate + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86400000);
-            if (!gameDate || dayDistance < 0 || dayDistance > 14 || String(game.gameStatus || '경기전') !== '경기전') {
-                return { name: '', predicted: false };
-            }
-
-            const team = side === 'away' ? game.team1 : game.team2;
-            const previousTeamGames = enjoyBaseballScheduleGames.filter(function (item) {
-                const itemDate = String(item.date || '');
-                const itemTime = String(item.time || '');
-                const beforeTarget = itemDate < gameDate || (itemDate === gameDate && itemTime < String(game.time || ''));
-                return beforeTarget && (item.team1 === team || item.team2 === team);
-            }).sort(function (first, second) {
-                return String(first.date || '').localeCompare(String(second.date || '')) ||
-                    String(first.time || '').localeCompare(String(second.time || ''));
+            return window.EnjoyBaseballStarterPrediction.predict(game, side, {
+                today: enjoyBaseballDateKey(new Date()),
+                postseason: Boolean(enjoyBaseballPostseasonRound(game) || enjoyBaseballMoreSeasonGames(enjoyBaseballScheduleGames).postseason.some(item => String(item.id) === String(game.id))),
+                historyGames: enjoyBaseballStarterHistoryGames,
+                scheduleGames: enjoyBaseballScheduleGames
             });
-            const previousTeamGame = previousTeamGames[previousTeamGames.length - 1];
-            const history = enjoyBaseballStarterHistoryGames.filter(function (item) {
-                return String(item.date || '') < gameDate &&
-                    String(item.gameStatus || '') === '종료' &&
-                    !enjoyBaseballIsCanceled(item) &&
-                    (item.team1 === team || item.team2 === team);
-            }).sort(function (first, second) {
-                return String(first.date || '').localeCompare(String(second.date || '')) ||
-                    String(first.time || '').localeCompare(String(second.time || ''));
-            });
-            const starts = history.map(function (item) {
-                const itemSide = item.team1 === team ? 'away' : 'home';
-                const name = enjoyBaseballDeclaredStarter(item, itemSide);
-                return { name: name, game: item };
-            }).filter(function (entry) { return entry.name && entry.name !== '-'; });
-            // A single spot start is insufficient evidence of a rotation role.
-            const recentCutoffDate = new Date(today + 'T00:00:00');
-            const lookbackDays = enjoyBaseballPostseasonRound(game) || enjoyBaseballMoreSeasonGames(enjoyBaseballScheduleGames).postseason.some(item => String(item.id) === String(game.id)) ? 90 : 30;
-            recentCutoffDate.setDate(recentCutoffDate.getDate() - lookbackDays);
-            const recentCutoff = recentCutoffDate.getFullYear() + '-' + String(recentCutoffDate.getMonth() + 1).padStart(2, '0') + '-' + String(recentCutoffDate.getDate()).padStart(2, '0');
-            const recentStartCounts = new Map();
-            starts.forEach(function (entry) {
-                if (String(entry.game.date || '') >= recentCutoff) {
-                    recentStartCounts.set(entry.name, (recentStartCounts.get(entry.name) || 0) + 1);
-                }
-            });
-            const rotationCandidates = new Set();
-            recentStartCounts.forEach(function (count, name) {
-                if (count >= 2) rotationCandidates.add(name);
-            });
-            // Only established recent starters may be predicted after a cancellation.
-            if (previousTeamGame && enjoyBaseballIsCanceled(previousTeamGame)) {
-                const canceledSide = previousTeamGame.team1 === team ? 'away' : 'home';
-                const canceledStarter = enjoyBaseballDeclaredStarter(previousTeamGame, canceledSide);
-                if (canceledStarter && rotationCandidates.has(canceledStarter)) {
-                    return { name: canceledStarter, predicted: true, carriedFromCancellation: true };
-                }
-            }
-            const recentUnique = [];
-            for (let index = starts.length - 1; index >= 0 && recentUnique.length < 5; index -= 1) {
-                if (rotationCandidates.has(starts[index].name) && !recentUnique.includes(starts[index].name)) recentUnique.push(starts[index].name);
-            }
-            recentUnique.reverse();
-            if (recentUnique.length < 3) return { name: '', predicted: false };
-
-            const latestStart = starts[starts.length - 1];
-            let rotationAnchor = latestStart;
-            const confirmedScheduleStarts = enjoyBaseballScheduleGames.map(function (item) {
-                const itemDate = String(item.date || '');
-                const itemTime = String(item.time || '');
-                const beforeTarget = itemDate < gameDate || (itemDate === gameDate && itemTime < String(game.time || ''));
-                if (!beforeTarget || enjoyBaseballIsCanceled(item) || (item.team1 !== team && item.team2 !== team)) return null;
-                const itemSide = item.team1 === team ? 'away' : 'home';
-                const name = enjoyBaseballOfficialStarter(item, itemSide);
-                return name ? { name: name, game: item } : null;
-            }).filter(Boolean).sort(function (first, second) {
-                return String(first.game.date || '').localeCompare(String(second.game.date || '')) ||
-                    String(first.game.time || '').localeCompare(String(second.game.time || ''));
-            });
-            const latestConfirmedScheduleStart = confirmedScheduleStarts[confirmedScheduleStarts.length - 1];
-            if (latestConfirmedScheduleStart) {
-                const historyAnchorKey = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.date) || '') + ' ' +
-                    String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.time) || '');
-                const scheduleAnchorKey = String(latestConfirmedScheduleStart.game.date || '') + ' ' +
-                    String(latestConfirmedScheduleStart.game.time || '');
-                if (!rotationAnchor || scheduleAnchorKey >= historyAnchorKey) rotationAnchor = latestConfirmedScheduleStart;
-            }
-
-            const anchorDate = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.date) || '');
-            const anchorTime = String((rotationAnchor && rotationAnchor.game && rotationAnchor.game.time) || '');
-            const upcoming = enjoyBaseballScheduleGames.filter(function (item) {
-                const itemDate = String(item.date || '');
-                const itemTime = String(item.time || '');
-                const afterAnchor = itemDate > anchorDate || (itemDate === anchorDate && itemTime > anchorTime);
-                return afterAnchor && itemDate <= gameDate &&
-                    (item.team1 === team || item.team2 === team) &&
-                    !enjoyBaseballIsCanceled(item);
-            }).sort(function (first, second) {
-                return String(first.date || '').localeCompare(String(second.date || '')) ||
-                    String(first.time || '').localeCompare(String(second.time || ''));
-            });
-            let gameIndex = upcoming.findIndex(function (item) { return enjoyBaseballSameGame(item, game); });
-            if (gameIndex < 0) gameIndex = Math.max(0, upcoming.length - 1);
-            const anchorRotationIndex = rotationAnchor ? recentUnique.indexOf(rotationAnchor.name) : -1;
-            const predictedRotationIndex = anchorRotationIndex >= 0
-                ? (anchorRotationIndex + gameIndex + 1) % recentUnique.length
-                : gameIndex % recentUnique.length;
-            let predictedName = recentUnique[predictedRotationIndex];
-            if (rotationAnchor && predictedName === rotationAnchor.name && recentUnique.length > 1) {
-                predictedName = recentUnique[(predictedRotationIndex + 1) % recentUnique.length];
-            }
-            return { name: predictedName, predicted: true };
         }
         function enjoyBaseballStarterPersonnel(game, side) {
             const starter = enjoyBaseballStarterInfo(game, side);
@@ -13121,7 +12997,12 @@
                     enjoyBaseballGetDocument('schedule/' + enjoyBaseballMonthKey(nextMonth)),
                     enjoyBaseballGetDocument('games/' + today),
                     enjoyBaseballGetDocument('games/' + yesterday),
-                    enjoyBaseballEnsureFullHistory()
+                    enjoyBaseballEnsureFullHistory(),
+                    Promise.all(window.EnjoyBaseballStarterPrediction.historyMonths(today).filter(function (month) {
+                        return month !== enjoyBaseballMonthKey(now);
+                    }).map(function (month) {
+                        return enjoyBaseballGetDocument('schedule/' + month).catch(function () { return null; });
+                    }))
                 ]);
                 const firebaseGames = [];
                 [results[1], results[2], results[4], results[3], results[0]].forEach(function (documentData) {
@@ -13153,9 +13034,11 @@
                 };
                 fileHistoryGames.forEach(addGame);
                 firebaseGames.forEach(addGame);
-                enjoyBaseballStarterHistoryGames = fileHistoryGames.filter(function (game) {
-                    return String(game.date || '') <= today;
-                });
+                enjoyBaseballStarterHistoryGames = window.EnjoyBaseballStarterPrediction.mergeGames(
+                    fileHistoryGames,
+                    results[6].flatMap(function (documentData) { return (documentData && documentData.games) || []; }),
+                    firebaseGames
+                );
                 const games = Array.from(merged.values());
                 enjoyBaseballScheduleGames = games;
                 enjoyBaseballSetRotation('samsung', enjoyBaseballChooseRotation(games, '삼성', today, now));
