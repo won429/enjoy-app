@@ -18,6 +18,7 @@ function validateWork(work) {
       throw new Error(`작품 정보 누락: ${key}`);
     }
   }
+  if (work.summary !== undefined && typeof work.summary !== 'string') throw new Error('홈 소개글을 확인하세요.');
   if (!Number.isInteger(work.totalEpisodes) || work.totalEpisodes < 1) throw new Error('총 부작 수를 확인하세요.');
   if (!/^[\w.-]+\.(png|jpe?g|webp)$/i.test(work.cover)) throw new Error('표지는 작품 폴더 안의 이미지 파일로 지정하세요.');
   if (work.coverSize && ![work.coverSize.width, work.coverSize.height].every(size => Number.isInteger(size) && size > 0)) throw new Error('표지 이미지 크기를 확인하세요.');
@@ -196,7 +197,7 @@ function renderCard(work, slug) {
                         <span class="novel-card__episodes">총 ${work.totalEpisodes}부작</span>
                         <span class="novel-card__link">작품 소개 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     </div>
-                    <p class="novel-card__synopsis">${escapeHtml(work.synopsis.slice(0, 6).join(' ') || work.tagline || '작품 소개와 첫 회차를 준비하고 있어요.')}</p>
+                    <p class="novel-card__synopsis">${escapeHtml(work.summary || work.synopsis.slice(0, 6).join(' ') || work.tagline || '작품 소개와 첫 회차를 준비하고 있어요.')}</p>
                 </a>`;
 }
 
