@@ -63,8 +63,8 @@ function renderEpisode(work, episode, manuscript) {
   const hasIntro = /^(장르:|["“])/.test(lines[introIndex] || '');
   const intro = hasIntro ? `        <p class="${lines[introIndex].startsWith('장르:') ? 'novel-reader-genres' : 'novel-reader-tagline'}">${escapeHtml(lines[introIndex])}</p>\n` : '';
   const body = lines.slice(hasIntro ? introIndex + 1 : introIndex).filter(line => line.trim()).map(line => {
-    if (/^(프롤로그\s*\||SCENE\s+\d+\s*\|)/.test(line)) return `        <h2>${escapeHtml(line)}</h2>`;
-    const ending = /^제\d+화 END$/.test(line) ? ' class="novel-reader-end"' : '';
+    if (/^(프롤로그\s*\||SCENE\s+\d+\s*\||FINAL\s+SCENE\s*\||쿠키\s*영상\s*\|)/.test(line)) return `        <h2>${escapeHtml(line)}</h2>`;
+    const ending = /^(?:제\d+화 END|시즌\s*\d+\s*完)$/.test(line) ? ' class="novel-reader-end"' : '';
     return `        <p${ending}>${escapeHtml(line)}</p>`;
   }).join('\n');
   const episodes = [...(work.episodes || [])].sort((a, b) => a.number - b.number);
