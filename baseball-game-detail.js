@@ -1430,18 +1430,24 @@
             
             const postseason = postseasonSeriesInfo(m);
             document.body.classList.toggle('is-postseason-game', Boolean(postseason));
-            document.body.classList.toggle('is-postseason-info', Boolean(postseason) && currentGameInfoTab === 'lineup');
             document.body.dataset.postseasonRound = postseason ? postseason.round : '';
             let watermark = document.getElementById('postseason-detail-watermark');
             if (postseason && !watermark) {
                 watermark = document.createElement('img');
                 watermark.id = 'postseason-detail-watermark';
-                watermark.src = 'assets/kbo-postseason-2026-cutout.png';
                 watermark.alt = '';
                 watermark.setAttribute('aria-hidden', 'true');
                 document.getElementById('detail-wrapper').prepend(watermark);
             }
-            if (watermark) watermark.hidden = !postseason;
+            if (watermark) {
+                watermark.hidden = !postseason;
+                if (postseason) {
+                    const watermarkSrc = postseason.round === 'ks'
+                        ? 'assets/kbo-korean-series-2026-cutout.png'
+                        : 'assets/kbo-postseason-2026-cutout.png';
+                    if (watermark.getAttribute('src') !== watermarkSrc) watermark.src = watermarkSrc;
+                }
+            }
             const isAllstarGame = isAllstarDate(m.date);
             let h1 = teamHex[m.team1] || '#888888', h2 = teamHex[m.team2] || '#888888';
             
