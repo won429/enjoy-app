@@ -9,16 +9,18 @@ const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
 })[char]);
 
 function validateWork(work) {
+  const upcoming = work.status === 'upcoming' && !(work.episodes || []).length;
   for (const key of ['title', 'tagline', 'cover']) {
-    if (typeof work[key] !== 'string' || !work[key].trim()) throw new Error(`작품 정보 누락: ${key}`);
+    if (typeof work[key] !== 'string' || (!work[key].trim() && !(upcoming && key === 'tagline'))) throw new Error(`작품 정보 누락: ${key}`);
   }
   for (const key of ['genres', 'synopsis']) {
-    if (!Array.isArray(work[key]) || !work[key].length || work[key].some(text => typeof text !== 'string' || !text.trim())) {
+    if (!Array.isArray(work[key]) || (!work[key].length && !(upcoming && key === 'synopsis')) || work[key].some(text => typeof text !== 'string' || !text.trim())) {
       throw new Error(`작품 정보 누락: ${key}`);
     }
   }
   if (!Number.isInteger(work.totalEpisodes) || work.totalEpisodes < 1) throw new Error('총 부작 수를 확인하세요.');
   if (!/^[\w.-]+\.(png|jpe?g|webp)$/i.test(work.cover)) throw new Error('표지는 작품 폴더 안의 이미지 파일로 지정하세요.');
+  if (work.coverSize && ![work.coverSize.width, work.coverSize.height].every(size => Number.isInteger(size) && size > 0)) throw new Error('표지 이미지 크기를 확인하세요.');
   if (work.relationshipMap) {
     const map = work.relationshipMap;
     if (typeof map.src !== 'string' || !/^[\w.-]+\.(png|jpe?g|webp)$/i.test(map.src)) throw new Error('인물관계도 이미지 파일을 확인하세요.');
@@ -39,6 +41,10 @@ function validateWork(work) {
 }
 
 const episodeFile = episode => episode.source.replace(/\.txt$/, '.html');
+const coverAttributes = work => {
+  const { width, height } = work.coverSize || { width: 1055, height: 1491 };
+  return `width="${width}" height="${height}"`;
+};
 
 function renderEpisodeList(work) {
   if (!work.episodes || !work.episodes.length) return '';
@@ -118,17 +124,18 @@ ${pagination}        <a data-novel-route href="../index.html">작품 정보 · �
 function renderWork(work) {
   validateWork(work);
   const title = escapeHtml(work.title);
+  const upcoming = work.status === 'upcoming' && !(work.episodes || []).length;
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="${escapeHtml(work.tagline)} ${escapeHtml(work.genres.join(' · '))}, 총 ${work.totalEpisodes}부작. 작품 소개를 만나보세요.">
+  <meta name="description" content="${escapeHtml(work.tagline || work.title)} ${escapeHtml(work.genres.join(' · '))}, 총 ${work.totalEpisodes}부작. 작품 소개를 만나보세요.">
   <title>${title} | 엔조이 웹소설</title>
   <link rel="stylesheet" href="../../smart-skeleton.css?v=20261103-1">
   <script src="../../smart-skeleton.js?v=20261103-1" data-skeleton-page="novel"></script>
   <link rel="icon" href="../../icon.png">
-  <link rel="stylesheet" href="../novels.css?v=20261025-episode2-7">
+  <link rel="stylesheet" href="../novels.css?v=${upcoming ? '20261103-new-work1' : '20261025-episode2-7'}">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
   <script defer src="../navigation.js?v=20261025-episode-2"></script>
 </head>
@@ -144,7 +151,7 @@ function renderWork(work) {
   <main class="novel-main">
     <article aria-labelledby="novel-title">
       <header class="novel-hero">
-        <img class="novel-cover" src="${escapeHtml(work.cover)}" width="1055" height="1491" alt="${title} 작품 표지" fetchpriority="high">
+        <img class="novel-cover" src="${escapeHtml(work.cover)}" ${coverAttributes(work)} alt="${title} 작품 표지" fetchpriority="high">
         <div class="novel-summary">
           <h1 class="novel-title" id="novel-title">${title}</h1>
           <ul class="novel-genres" aria-label="장르">
@@ -152,9 +159,8 @@ ${work.genres.map(genre => `            <li>${escapeHtml(genre)}</li>`).join('\n
           </ul>
           <p class="novel-episodes">총 ${work.totalEpisodes}부작</p>
         </div>
-        <blockquote class="novel-tagline">“${escapeHtml(work.tagline)}”</blockquote>
-      </header>
-      <details class="novel-story">
+${work.tagline ? `        <blockquote class="novel-tagline">“${escapeHtml(work.tagline)}”</blockquote>\n` : ''}      </header>
+${work.synopsis.length ? `      <details class="novel-story">
         <summary>
           <span>작품의 핵심 이야기</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -162,8 +168,7 @@ ${work.genres.map(genre => `            <li>${escapeHtml(genre)}</li>`).join('\n
         <div class="novel-story__body">
 ${work.synopsis.map(paragraph => `          <p>${escapeHtml(paragraph)}</p>`).join('\n')}
         </div>
-      </details>
-${work.relationshipMap ? `      <details class="novel-story">
+      </details>\n` : '      <p class="novel-pending" role="status">작품 소개와 첫 회차를 준비하고 있어요.</p>\n'}${work.relationshipMap ? `      <details class="novel-story">
         <summary>
           <span>인물관계도</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -184,14 +189,14 @@ function renderCard(work, slug) {
   validateWork(work);
   const title = escapeHtml(work.title);
   return `                <a class="novel-card" href="novels/${slug}/index.html">
-                    <img class="novel-card__cover" src="novels/${slug}/${escapeHtml(work.cover)}" width="1055" height="1491" alt="${title} 작품 표지" loading="lazy">
+                    <img class="novel-card__cover" src="novels/${slug}/${escapeHtml(work.cover)}" ${coverAttributes(work)} alt="${title} 작품 표지" loading="lazy">
                     <div class="novel-card__info">
                         <h3 class="novel-card__title">${title}</h3>
                         <span class="novel-card__genres">${escapeHtml(work.genres.join(' · '))}</span>
                         <span class="novel-card__episodes">총 ${work.totalEpisodes}부작</span>
                         <span class="novel-card__link">작품 소개 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     </div>
-                    <p class="novel-card__synopsis">${escapeHtml(work.synopsis.slice(0, 6).join(' '))}</p>
+                    <p class="novel-card__synopsis">${escapeHtml(work.synopsis.slice(0, 6).join(' ') || '작품 소개와 첫 회차를 준비하고 있어요.')}</p>
                 </a>`;
 }
 
