@@ -80,6 +80,8 @@ ${previous ? `          <a data-novel-route rel="prev" href="${episodeFile(previ
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="${escapeHtml(work.title)} ${escapeHtml(episodeTitle)}. ${escapeHtml(work.tagline)}">
   <title>${escapeHtml(episodeTitle)} | ${escapeHtml(work.title)}</title>
+  <link rel="stylesheet" href="../../../smart-skeleton.css?v=20261103-1">
+  <script src="../../../smart-skeleton.js?v=20261103-1" data-skeleton-page="reader"></script>
   <link rel="icon" href="../../../icon.png">
   <link rel="stylesheet" href="../../novels.css?v=20261025-episode2-7">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
@@ -123,6 +125,8 @@ function renderWork(work) {
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="${escapeHtml(work.tagline)} ${escapeHtml(work.genres.join(' · '))}, 총 ${work.totalEpisodes}부작. 작품 소개를 만나보세요.">
   <title>${title} | 엔조이 웹소설</title>
+  <link rel="stylesheet" href="../../smart-skeleton.css?v=20261103-1">
+  <script src="../../smart-skeleton.js?v=20261103-1" data-skeleton-page="novel"></script>
   <link rel="icon" href="../../icon.png">
   <link rel="stylesheet" href="../novels.css?v=20261025-episode2-7">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3102739634230903" crossorigin="anonymous"></script>
