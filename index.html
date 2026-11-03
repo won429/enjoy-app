@@ -12910,7 +12910,8 @@
             }).filter(function (entry) { return entry.name && entry.name !== '-'; });
             // A single spot start is insufficient evidence of a rotation role.
             const recentCutoffDate = new Date(today + 'T00:00:00');
-            recentCutoffDate.setDate(recentCutoffDate.getDate() - 30);
+            const lookbackDays = enjoyBaseballPostseasonRound(game) || enjoyBaseballMoreSeasonGames(enjoyBaseballScheduleGames).postseason.some(item => String(item.id) === String(game.id)) ? 90 : 30;
+            recentCutoffDate.setDate(recentCutoffDate.getDate() - lookbackDays);
             const recentCutoff = recentCutoffDate.getFullYear() + '-' + String(recentCutoffDate.getMonth() + 1).padStart(2, '0') + '-' + String(recentCutoffDate.getDate()).padStart(2, '0');
             const recentStartCounts = new Map();
             starts.forEach(function (entry) {
