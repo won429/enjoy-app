@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko" class="enjoy-guest">
 <head>
+    <link rel="stylesheet" href="smart-skeleton.css?v=20261103-1">
+    <script src="smart-skeleton.js?v=20261103-1" data-skeleton-page="app"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <!-- 홈 화면 재등록 시 불투명한 기본 상태 표시줄을 사용한다. -->
@@ -8077,7 +8079,7 @@
             <button id="home-attendance-tab" type="button" class="home-tab" data-home-tab="attendance" role="tab" aria-selected="false" aria-controls="home-attendance-panel" onclick="window.switchHomeTab('attendance')">출석</button>
         </nav>
         
-        <section id="home-attendance-panel" class="home-attendance-panel hidden" role="tabpanel" aria-labelledby="home-attendance-tab" aria-hidden="true">
+        <section id="home-attendance-panel" data-enjoy-sources="members" data-skeleton-shape="rows" class="home-attendance-panel hidden" role="tabpanel" aria-labelledby="home-attendance-tab" aria-hidden="true">
             <div class="attendance-header"><h2>출석</h2><span id="attendance-status" class="attendance-status" role="status">접속 시 자동 출석</span></div>
             <p id="attendance-status-message" class="attendance-status-message">매일 한국 시간 0시에 새 날짜가 시작됩니다.</p>
             <div class="attendance-month-nav"><h3 id="attendance-month-title"></h3><div class="attendance-month-buttons">
@@ -9243,7 +9245,7 @@
         </header>
 
         <!-- 일정(달력) 패널 -->
-        <div id="sched-panel-calendar" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide pt-2 w-full max-w-md mx-auto">
+        <div id="sched-panel-calendar" data-enjoy-sources="schedule members" data-skeleton-shape="calendar" class="flex flex-col flex-1 overflow-y-auto scrollbar-hide pt-2 w-full max-w-md mx-auto">
             <div class="schedule-dial-wrap">
                 <div id="schedule-date-dial" class="kbo-daily-dial schedule-date-dial" role="group" aria-label="일정 날짜 선택"
                     onpointerdown="window.startScheduleDateDial(event)"
@@ -9283,10 +9285,10 @@
         </div>
 
         <!-- 스케줄(가능/불가능) 패널 -->
-        <div id="sched-panel-availability" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
+        <div id="sched-panel-availability" data-enjoy-sources="schedule members" data-skeleton-shape="calendar" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
 
         <!-- 커뮤니티(여행 일정 공유) 패널 -->
-        <div id="sched-panel-community" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
+        <div id="sched-panel-community" data-enjoy-sources="community members" data-skeleton-shape="rows" class="hidden flex-col flex-1 overflow-y-auto scrollbar-hide px-5 pt-2 w-full max-w-md mx-auto"></div>
     </div>
 
     <!-- 멤버 프로필 메뉴 팝오버 -->
@@ -9374,7 +9376,7 @@
             </div>
         </header>
         <div id="member-timetable-scroll" class="et-scroll flex-1 overflow-y-auto scrollbar-hide">
-            <div id="member-timetable-root"></div>
+            <div id="member-timetable-root" data-enjoy-sources="members" data-skeleton-shape="calendar"></div>
         </div>
     </section>
 
@@ -9382,7 +9384,7 @@
     <section id="store-screen" class="hidden" aria-label="스토어">
         <header class="store-header"><h1>스토어</h1></header>
         <div class="store-scroll scrollbar-hide">
-            <div id="store-root" aria-live="polite"></div>
+            <div id="store-root" data-enjoy-sources="meeting members" data-skeleton-shape="cards" aria-live="polite"></div>
         </div>
     </section>
 
@@ -15581,7 +15583,7 @@
             const title = document.getElementById('shorts-comments-title');
             if (input) input.value = '';
             if (title) title.textContent = '댓글 · ' + (item.title || deriveEnjoyShortsTitle(item.key));
-            if (list) list.innerHTML = '<div class="min-h-[180px] flex items-center justify-center text-[12px] text-white/45"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>댓글 불러오는 중…</div>';
+            if (list) list.innerHTML = window.enjoySkeletons ? window.enjoySkeletons.markup('comments', '댓글 불러오는 중') : '<div class="min-h-[180px] flex items-center justify-center text-[12px] text-white/45"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>댓글 불러오는 중…</div>';
             layer.classList.remove('hidden');
             const feed = document.getElementById('shorts-feed');
             const article = feed && feed.querySelector('.shorts-item[data-shorts-index="' + index + '"]');
@@ -17121,7 +17123,7 @@
             const scroll = document.getElementById('community-detail-scroll');
             if (scroll) scroll.scrollTop = 0;
             const wrap = document.getElementById('community-detail-comments-list');
-            if (wrap) wrap.innerHTML = '<div class="py-10 flex items-center justify-center text-[12px] text-gray-500"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>댓글 불러오는 중…</div>';
+            if (wrap) wrap.innerHTML = window.enjoySkeletons ? window.enjoySkeletons.markup('comments', '댓글 불러오는 중') : '<div class="py-10 flex items-center justify-center text-[12px] text-gray-500"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>댓글 불러오는 중…</div>';
             if (window._communityCommentsUnsub) {
                 try { window._communityCommentsUnsub(); } catch (e) {}
                 window._communityCommentsUnsub = null;
@@ -19989,6 +19991,7 @@
             if (!list) return;
             if (count) count.textContent = window._dropComments.length ? String(window._dropComments.length) : '';
             if (message) {
+                if (/불러오는 중/.test(message) && window.enjoySkeletons) { list.innerHTML = window.enjoySkeletons.markup('comments', message); return; }
                 list.innerHTML = '<div class="drop-comments-empty"><i class="ph ph-circle-notch" aria-hidden="true"></i><span>' + dropEsc(message) + '</span></div>';
                 return;
             }
@@ -22618,7 +22621,7 @@
     <script src="attendance.js?v=20261025-attendance-copy-1"></script>
     <script src="meeting-benefits.js?v=20261030-year1"></script>
     <script src="meeting-exemptions.js?v=20261029-approval2"></script>
-    <script src="store.js?v=20261030-year1"></script>
+    <script src="store.js?v=20261103-skeleton1"></script>
     <section id="drop-games-screen" hidden role="dialog" aria-modal="true" aria-labelledby="drop-wallet-heading">
         <header class="drop-wallet-header">
             <button id="drop-wallet-back" class="drop-wallet-back" type="button" aria-label="드롭 게임 닫기"><i class="ph ph-caret-left" aria-hidden="true"></i></button>
@@ -22712,15 +22715,15 @@
     <section id="war-game-screen" hidden role="dialog" aria-modal="true" aria-label="드롭 전쟁" style="position:fixed;inset:0;z-index:65;background:#071217">
         <iframe id="war-game-frame" title="드롭 전쟁 게임" allow="clipboard-write" style="display:block;width:100%;height:100%;border:0"></iframe>
     </section>
-    <script src="war-host.js?v=20261012-4"></script>
+    <script src="war-host.js?v=20261103-skeleton1"></script>
     <section id="cube-game-screen" hidden role="dialog" aria-modal="true" aria-label="드롭 큐브" style="position:fixed;inset:0;z-index:65;background:#071d20">
         <iframe id="cube-game-frame" title="드롭 큐브 게임" allow="clipboard-write; fullscreen" style="display:block;width:100%;height:100%;border:0"></iframe>
     </section>
-    <script src="cube-host.js?v=20261012-lobby7"></script>
+    <script src="cube-host.js?v=20261103-skeleton1"></script>
     <section id="tekken-game-screen" hidden role="dialog" aria-modal="true" aria-label="드롭 철권" style="position:fixed;inset:0;z-index:65;background:#101019">
         <iframe id="tekken-game-frame" title="드롭 철권 게임" allow="fullscreen" style="display:block;width:100%;height:100%;border:0"></iframe>
     </section>
-    <script src="tekken-host.js?v=20261015-motion3"></script>
+    <script src="tekken-host.js?v=20261103-skeleton1"></script>
     <section id="uno-game-screen" hidden role="dialog" aria-modal="true" aria-label="드롭 우노" style="position:fixed;inset:0;z-index:65;background:#090b10">
         <iframe id="uno-game-frame" title="우노 게임" allow="clipboard-write" style="display:block;width:100%;height:100%;border:0"></iframe>
     </section>
@@ -22742,7 +22745,8 @@
                 history.pushState({ ...history.state, modal: 'uno', unoViewId: historyId }, '', location.href);
                 if (!loaded) {
                     loaded = true;
-                    frame.contentWindow.location.replace('uno.html?v=20261014-connect1');
+                    window.enjoySkeletons?.frameLoading(frame, 'uno.html?v=20261103-skeleton1');
+                    frame.contentWindow.location.replace('uno.html?v=20261103-skeleton1');
                 }
                 else frame.contentWindow?.openDropGame?.();
                 frame.focus();

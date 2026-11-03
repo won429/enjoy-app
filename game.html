@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <link rel="stylesheet" href="smart-skeleton.css?v=20261103-1">
+    <script src="smart-skeleton.js?v=20261103-1" data-skeleton-page="game-auth"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>엔조이 복불복</title>
@@ -2485,7 +2487,9 @@
                 if (nextRoundId && nextRoundId !== previousRoundId) setupOpen = false;
                 if (!nextRoundId) setupOpen = true;
                 renderAll();
+                window.enjoySkeletons?.pageReady();
             }, err => {
+                window.enjoySkeletons?.pageError('실시간 연결을 확인해 주세요.');
                 showToast('실시간 연결을 확인해 주세요');
                 console.warn(err);
             });
@@ -2506,12 +2510,14 @@
                 if (!currentUser) {
                     showGate(true);
                     renderAll();
+                    window.enjoySkeletons?.pageReady();
                     return;
                 }
                 await loadProfile(currentUser);
                 if (!profileName) {
                     showGate(true);
                     renderAll();
+                    window.enjoySkeletons?.pageReady();
                     return;
                 }
                 showGate(false);
@@ -2728,7 +2734,7 @@
         };
 
         renderAll();
-        init();
+        init().catch(error => { window.enjoySkeletons?.pageError(); console.warn(error); });
     </script>
 </body>
 </html>

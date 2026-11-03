@@ -20,7 +20,7 @@
     if(!allowedUid||window.enjoyUser?.uid!==allowedUid||!screen.hidden)return;
     previousFocus=document.activeElement;overflow=document.body.style.overflow;screen.hidden=false;document.body.style.overflow='hidden';
     historyId='war-page-'+Date.now();history.pushState({...history.state,modal:'war',warViewId:historyId},'',location.href);
-    if(!loaded){loaded=true;frame.contentWindow.location.replace('war.html?v=20261012-4');}else frame.contentWindow?.resumeWarGame?.();frame.focus();
+    if(!loaded){loaded=true;window.enjoySkeletons?.frameLoading(frame, 'war.html?v=20261103-skeleton1'); frame.contentWindow.location.replace('war.html?v=20261103-skeleton1');}else frame.contentWindow?.resumeWarGame?.();frame.focus();
   };
   window.closeDropWar=()=>{const back=history.state?.warViewId===historyId;hide();if(back)history.back();};
   window.addEventListener('popstate',()=>{if(!screen.hidden&&history.state?.warViewId!==historyId)hide();});
