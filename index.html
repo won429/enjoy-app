@@ -27,6 +27,8 @@
     <link rel="icon" href="icon.png">
 
     <link rel="stylesheet" href="app-loading.css?v=20261029-resilient1">
+    <link rel="stylesheet" href="championship-celebration.css?v=20261108-1">
+    <script defer src="championship-celebration.js?v=20261108-1"></script>
     <link rel="stylesheet" href="attendance.css?v=20261005">
     <link rel="stylesheet" href="meeting-benefits.css?v=20261029-approval2">
     <link rel="stylesheet" href="uno.css?v=20261018-wallet1">
@@ -8070,8 +8072,8 @@
 
         <!-- 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) -->
         <nav id="home-tabs" class="home-tabs" role="tablist" aria-label="상단 메뉴">
-            <button id="home-webnovel-tab" type="button" class="home-tab is-active" data-home-tab="webnovel" role="tab" aria-selected="true" aria-controls="home-webnovel-panel" onclick="window.switchHomeTab('webnovel')">웹소설</button>
-            <button type="button" class="home-tab" data-home-tab="home" data-drop-copy="드롭" role="tab" aria-selected="false" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
+            <button id="home-webnovel-tab" type="button" class="home-tab" data-home-tab="webnovel" role="tab" aria-selected="false" aria-controls="home-webnovel-panel" onclick="window.switchHomeTab('webnovel')">웹소설</button>
+            <button type="button" class="home-tab is-active" data-home-tab="home" data-drop-copy="드롭" role="tab" aria-selected="true" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
             <button type="button" class="home-tab" data-home-tab="baseball" role="tab" aria-selected="false" aria-controls="home-baseball-panel" onclick="window.switchHomeTab('baseball')">야구</button>
             <button type="button" class="home-tab" data-home-tab="vlog" role="tab" aria-selected="false" aria-controls="home-vlog-panel" onclick="window.switchHomeTab('vlog')">브이로그</button>
             <button type="button" class="home-tab" data-home-tab="shorts" role="tab" aria-selected="false" aria-controls="shorts-screen" onclick="window.switchHomeTab('shorts')">숏츠</button>
@@ -8097,7 +8099,7 @@
         </section>
 
         <!-- 카드 나열 (배너/슬라이더 제거, 각 항목을 사진 카드로 세로 나열) -->
-        <div id="apple-tv-banner" class="hidden fade-in-up delay-100 mt-1 mb-6 relative">
+        <div id="apple-tv-banner" class="fade-in-up delay-100 mt-1 mb-6 relative">
             <!-- 기존 JS 수정 없이 Apple TV 스타일 인디케이터를 구현하기 위한 로컬 스타일 -->
             <style>
                 #apple-tv-banner .bg-black\/60 { background-color: #ffffff !important; width: 1.25rem !important; border-radius: 0.25rem !important; }
@@ -8525,7 +8527,7 @@
             <div id="baseball-detail-content"></div>
         </section>
 
-        <section id="home-webnovel-panel" class="home-webnovel-panel" role="tabpanel" aria-labelledby="home-webnovel-tab">
+        <section id="home-webnovel-panel" class="home-webnovel-panel hidden" role="tabpanel" aria-labelledby="home-webnovel-tab" aria-hidden="true">
             <h2>웹소설</h2>
             <!-- NOVEL CATALOG START -->
             <div class="novel-catalog">
@@ -11538,7 +11540,7 @@
             window.openEnjoyBaseballGame(game.id, matchDate || game.date, game.team1 === '삼성' || game.team2 === '삼성' ? '삼성' : 'KIA');
         };
         // 홈 상단 탭 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) — 모두 홈 화면 안에서 전환된다.
-        window.homeActiveTab = 'webnovel';
+        window.homeActiveTab = 'home';
         window.selectHomeTab = function (tab) {
             if ((tab === 'shorts' || tab === 'attendance') && !window.enjoyUser) tab = 'home';
             tab = ['baseball', 'vlog', 'shorts', 'academic', 'attendance', 'webnovel'].includes(tab) ? tab : 'home';
@@ -22655,7 +22657,16 @@
         })();
     </script>
 
-    <script src="home-entry.js?v=20261029-resilient1"></script>
+    <dialog id="lions-championship" aria-labelledby="lions-championship-title" aria-describedby="lions-championship-team">
+        <canvas aria-hidden="true"></canvas>
+        <div class="lions-championship-content">
+            <img class="lions-championship-logo" src="assets/samsung-championship-logo.png" alt="삼성 라이온즈 구단 로고" width="500" height="500" decoding="async">
+            <p id="lions-championship-team" class="lions-championship-team">삼성 라이온즈</p>
+            <h1 id="lions-championship-title">우승</h1>
+        </div>
+        <button type="button" class="lions-championship-close" aria-label="우승 축하 화면 닫기">닫기</button>
+    </dialog>
+    <script src="home-entry.js?v=20261108-drop1"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";

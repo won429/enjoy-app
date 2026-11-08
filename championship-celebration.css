@@ -1,0 +1,94 @@
+#lions-championship {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    background: transparent;
+    color: #fff;
+    overscroll-behavior: contain;
+}
+
+#lions-championship::backdrop {
+    background: rgba(3, 10, 25, .78);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+
+#lions-championship[open] { display: grid; place-items: center; }
+#lions-championship canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+.lions-championship-content {
+    position: relative;
+    width: min(78vw, 340px);
+    padding-bottom: 44px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.lions-championship-logo {
+    display: block;
+    width: min(64vw, 260px);
+    height: auto;
+    margin: 0 auto;
+    opacity: 0;
+    filter: drop-shadow(0 0 28px rgba(45, 132, 255, .45));
+}
+
+.lions-championship-team { margin: 28px 0 8px; font-size: 18px; font-weight: 600; opacity: 0; }
+#lions-championship-title { margin: 0; font-size: clamp(56px, 16vw, 80px); line-height: 1.2; font-weight: 900; color: #fff; opacity: 0; text-shadow: 0 0 36px rgba(76, 153, 255, .7); }
+
+#lions-championship.is-revealing .lions-championship-logo { animation: lions-championship-reveal 2.6s .65s both; }
+#lions-championship.is-revealing .lions-championship-team { animation: lions-championship-reveal 2s 1.35s both; }
+#lions-championship.is-revealing #lions-championship-title { animation: lions-championship-reveal 2.2s 1.65s both; }
+
+.lions-championship-close {
+    position: absolute;
+    bottom: max(36px, calc(env(safe-area-inset-bottom) + 24px));
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 112px;
+    min-height: 48px;
+    padding: 12px 28px;
+    border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: 999px;
+    background: rgba(14, 28, 51, .8);
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.lions-championship-close:hover { background: #164b91; }
+.lions-championship-close:focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
+.lions-championship-close:active { background: #074ca1; }
+
+@keyframes lions-championship-reveal {
+    from { opacity: 0; transform: translateY(14px) scale(.94); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-height: 560px) {
+    .lions-championship-content { padding-bottom: 52px; }
+    .lions-championship-logo { width: min(38vh, 180px); }
+    .lions-championship-team { margin-top: 12px; font-size: 15px; }
+    #lions-championship-title { font-size: 48px; }
+    .lions-championship-close { bottom: max(16px, env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #lions-championship.is-revealing .lions-championship-logo,
+    #lions-championship.is-revealing .lions-championship-team,
+    #lions-championship.is-revealing #lions-championship-title {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
