@@ -179,7 +179,11 @@
         }
         root.renderEnjoyStore();
     };
-    root.refreshEnjoyStore = () => root.activeTabIndex === 1 ? root.prepareEnjoyStore() : root.renderEnjoyStore();
+    const storeOpen = () => {
+        const screen = byId('store-screen');
+        return screen && !screen.classList.contains('hidden');
+    };
+    root.refreshEnjoyStore = () => storeOpen() ? root.prepareEnjoyStore() : root.renderEnjoyStore();
     root.buyEnjoyStoreProduct = async function (productId, expectedAmount) {
         if (busy) return;
         const current = user(), account = member();
@@ -255,7 +259,7 @@
         if (!root.setTimeout) return;
         const now = new Date(), korea = new Date(now.getTime() + 9 * 60 * 60 * 1000);
         const next = Date.UTC(korea.getUTCFullYear(), korea.getUTCMonth(), korea.getUTCDate() + 1) - 9 * 60 * 60 * 1000;
-        root.setTimeout(() => { if (root.activeTabIndex === 1) root.renderEnjoyStore(); scheduleMidnight(); }, Math.max(1, next - now.getTime()));
+        root.setTimeout(() => { if (storeOpen()) root.renderEnjoyStore(); scheduleMidnight(); }, Math.max(1, next - now.getTime()));
     }
     scheduleMidnight();
     root.renderEnjoyStore();
