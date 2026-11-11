@@ -6,6 +6,13 @@
     let account = null;
     let fullHeight = window.innerHeight;
 
+    window.enjoyVeronContext = () => {
+        const user = window.enjoyUser;
+        if (!user) return null;
+        const profileName = window.enjoyProfileName || window.enjoyStoreMember?.()?.name;
+        return { uid: user.uid, name: profileName || user.displayName || '멤버', profileReady: Boolean(profileName), photoURL: user.photoURL || '' };
+    };
+
     function resize() {
         if (screen.classList.contains('hidden')) return;
         const viewport = window.visualViewport;
@@ -28,8 +35,9 @@
         if (!user) return;
         if (account !== user.uid) {
             account = user.uid;
-            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261111-veron1');
+            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261111-veron-v2-1');
         }
+        frame.contentWindow.veronRefreshProfile?.();
         resize();
         requestAnimationFrame(resize);
     };
