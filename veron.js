@@ -370,8 +370,7 @@
             try { const url = new URL(source.url); return url.protocol === 'https:' && !url.username && !url.password; } catch { return false; }
         }).slice(0, 30);
         const links = sources.map((source, i) => `<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${i + 1}. ${esc(source.title)}</a>`).join('');
-        const suggestions = value.searchEntryPoint ? `<iframe class="search-suggestions" title="Google 검색 제안" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" srcdoc="${esc('<meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src https: data:; base-uri \'none\'; form-action \'none\'"><base target="_blank">' + value.searchEntryPoint)}"></iframe>` : '';
-        return `<div class="answer-grounding"><div class="grounding-status">${value.searched ? '웹 검색을 참고한 답변' : '웹 검색 없이 작성한 답변'}</div>${sources.length ? `<details class="answer-sources"><summary>출처 ${sources.length}개</summary><div>${links}</div></details>` : ''}${suggestions}</div>`;
+        return `<div class="answer-grounding"><div class="grounding-status">${value.searched ? '웹 검색을 참고한 답변' : '웹 검색 없이 작성한 답변'}</div>${sources.length ? `<details class="answer-sources"><summary>출처 ${sources.length}개</summary><div>${links}</div></details>` : ''}</div>`;
     }
     function renderChat(force = false) {
         const thread = currentThread();
@@ -642,7 +641,7 @@
     function closeModelMenu() { setMenuExpanded('model-menu', 'model-button', false); }
     function renderWorkerUsage(data, number, time) {
         $('usage-description').textContent = '모든 멤버가 함께 사용하는 베론 서버의 사용량이에요.';
-        $('usage-status').textContent = data.message || '';
+        $('usage-status').textContent = (data.message || '').replace(/Google AI Studio|Google Cloud Monitoring|AI Studio|Google|구글/gi, '베론');
         $('usage-charts').innerHTML = data.models.map(model => {
             const rows = model.metrics.map(metric => {
                 const used = Number.isFinite(metric.used) ? number(metric.used) + ' ' + metric.unit : '토큰 미보고';
@@ -657,8 +656,8 @@
         }).join('');
         const coverage = time(data.coverageStart);
         const reference = time(data.referenceCapturedAt);
-        $('usage-note').textContent = (coverage ? coverage + ' 이후 ' : '') + '이 서버에서 Google로 보낸 요청 중 정상 응답을 받은 건을 집계해요.'
-            + (reference ? ' 한도 참고값은 AI Studio에서 ' + reference + '에 마지막으로 확인한 값이에요.' : '');
+        $('usage-note').textContent = (coverage ? coverage + ' 이후 ' : '') + '이 서버에서 AI로 보낸 요청 중 정상 응답을 받은 건을 집계해요.'
+            + (reference ? ' 한도 참고값은 관리 화면에서 ' + reference + '에 마지막으로 확인한 값이에요.' : '');
         $('usage-reset').textContent = '일일 집계 초기화: ' + time(data.resetAt) + ' (한국 시간)';
         $('usage-updated').textContent = time(data.fetchedAt) + ' 서버 조회';
         $('usage-charts').setAttribute('aria-busy', 'false');
@@ -670,7 +669,7 @@
         const time = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: false }).format(new Date(value)) : '';
         if (data.source === 'veron-worker') return renderWorkerUsage(data, number, time);
         $('usage-description').textContent = '모든 멤버가 함께 사용하는 전체 사용량이에요.';
-        $('usage-status').textContent = data.message || '';
+        $('usage-status').textContent = (data.message || '').replace(/Google AI Studio|Google Cloud Monitoring|AI Studio|Google|구글/gi, '베론');
         $('usage-charts').innerHTML = (data.models || []).map(model => {
             const rows = model.metrics.map(metric => {
                 const known = Number.isFinite(metric.used) && Number.isFinite(metric.limit);
@@ -689,7 +688,7 @@
                 }
                 if (data.status === 'paused') reset = '연결 후 확인할 수 있어요';
                 if (peak) reset = metric.basis === 'quota-day' ? '오늘 사용량 / 한도' : '최근 24시간 최대 사용량 / 한도';
-                const status = peak ? (Number.isFinite(percent) ? (studio ? 'AI Studio 표시값' : 'Google 집계') : '집계 대기') : percent !== null ? Math.round(percent) + '% 남음' : known && metric.limit === 0 ? '사용 불가' : '집계 대기';
+                const status = peak ? (Number.isFinite(percent) ? (studio ? '관리 화면 표시값' : '사용량 집계') : '집계 대기') : percent !== null ? Math.round(percent) + '% 남음' : known && metric.limit === 0 ? '사용 불가' : '집계 대기';
                 const count = peak ? metric.display || '— / —' : number(metric.used) + ' / ' + number(metric.limit);
                 const label = title + ': ' + count + metric.unit + ', ' + (peak ? reset : status);
                 return `<div class="usage-metric"><div class="usage-metric-heading"><h4>${esc(title)}</h4><span class="usage-count">${esc(count)} ${esc(metric.unit)}</span></div><div class="usage-metric-caption"><span>${esc(reset)}</span><strong>${status}</strong></div><div class="usage-track${Number.isFinite(percent) ? '' : ' is-unknown'}" role="img" aria-label="${esc(label)}"><span style="width:${Number.isFinite(percent) ? percent : 0}%"></span></div></div>`;
@@ -697,7 +696,7 @@
             return `<section class="usage-model" aria-label="${esc(model.name)} 사용량"><h3>${esc(model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
         }).join('');
         $('usage-charts').setAttribute('aria-busy', 'false');
-        $('usage-note').textContent = peak ? 'Google 프로젝트의 실제 집계예요. 일일 요청은 오늘 사용량, 분당 지표는 최근 24시간 최대값이며 반영까지 시간이 걸릴 수 있어요.' : data.status === 'paused' ? '실제 사용량과 한도는 연결 후 표시됩니다.' : 'Google 집계 기준이며, 실제 사용 후 반영까지 몇 분 정도 걸릴 수 있어요.';
+        $('usage-note').textContent = peak ? '전체 사용량의 실제 집계예요. 일일 요청은 오늘 사용량, 분당 지표는 최근 24시간 최대값이며 반영까지 시간이 걸릴 수 있어요.' : data.status === 'paused' ? '실제 사용량과 한도는 연결 후 표시됩니다.' : '사용량 집계 기준이며, 실제 사용 후 반영까지 몇 분 정도 걸릴 수 있어요.';
         $('usage-reset').textContent = data.status !== 'paused' && data.resetAt ? '일일 한도 초기화: ' + time(data.resetAt) + ' (한국 시간)' : '';
         $('usage-updated').textContent = studio && data.capturedAt ? time(data.capturedAt) + ' 화면 동기화' : data.observedAt ? time(data.observedAt) + ' 집계' : '';
     }
