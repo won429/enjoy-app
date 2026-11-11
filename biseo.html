@@ -9,9 +9,9 @@
     <title>베론</title>
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="veron.css?v=20261111-compact-header-1">
+    <link rel="stylesheet" href="veron.css?v=20261111-motion-1">
     <script src="veron-local.js?v=20261111-gemma-search-1" defer></script>
-    <script src="veron.js?v=20261111-worker-usage-1" defer></script>
+    <script src="veron.js?v=20261111-motion-1" defer></script>
 </head>
 <body>
     <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -31,7 +31,6 @@
             <symbol id="i-more" viewBox="0 0 448 512"><path d="M8 256a56 56 0 1 1 112 0A56 56 0 1 1 8 256zm160 0a56 56 0 1 1 112 0 56 56 0 1 1 -112 0zm216-56a56 56 0 1 1 0 112 56 56 0 1 1 0-112z"/></symbol>
             <symbol id="i-trash" viewBox="0 0 448 512"><path d="M135.2 17.7C140.6 6.8 151.7 0 163.8 0H284.2c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64S14.3 32 32 32h96l7.2-14.3zM32 128H416V448c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm96 64c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16z"/></symbol>
             <symbol id="i-search" viewBox="0 0 512 512"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></symbol>
-            <symbol id="i-back" viewBox="0 0 320 512"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"/></symbol>
             <symbol id="i-download" viewBox="0 0 384 512"><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></symbol>
             <symbol id="i-chevron-down" viewBox="0 0 512 512"><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></symbol>
             <symbol id="i-check" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></symbol>
@@ -58,7 +57,7 @@
         </header>
         <main id="chat-main" class="chat-main">
             <section id="welcome" class="welcome" aria-label="베론 시작 화면">
-                <h1><span id="greeting-name">안녕하세요,</span><span>무엇을 도와드릴까요?</span></h1>
+                <h1><span id="greeting-name">안녕하세요,</span><span id="greeting-question">무엇을 도와드릴까요?</span></h1>
             </section>
             <div id="messages" class="messages" role="log" aria-label="대화 내용" hidden></div>
         </main>
@@ -87,15 +86,15 @@
         </form>
     </div>
     <dialog id="thread-drawer" class="history-dialog" aria-labelledby="history-heading">
-        <div class="drawer-heading"><div><h2 id="history-heading">대화 기록</h2><p id="sheet-account"></p></div><button type="button" class="icon-button" data-close="thread-drawer" aria-label="대화 기록 닫기"><svg><use href="#i-x"/></svg></button></div>
+        <div class="drawer-heading"><div><h2 id="history-heading" tabindex="-1" autofocus>대화 기록</h2><p id="sheet-account"></p></div><button type="button" class="icon-button" data-close="thread-drawer" aria-label="대화 기록 닫기"><svg><use href="#i-x"/></svg></button></div>
         <button type="button" id="sheet-new-chat-button" class="new-thread-button"><svg><use href="#i-plus"/></svg>새 대화</button>
         <label class="search-field"><svg><use href="#i-search"/></svg><input id="history-search" type="search" placeholder="대화 검색" aria-label="대화 검색"></label>
         <div id="history-state" class="history-state" role="status"></div>
         <div id="thread-list" class="thread-list"></div>
-        <div class="history-footer"><button type="button" id="home-button"><svg><use href="#i-back"/></svg>엔조이로 돌아가기</button><button type="button" id="history-memory-button"><svg><use href="#i-memory"/></svg>메모리</button></div>
+        <div class="history-footer"><button type="button" id="history-memory-button"><svg><use href="#i-memory"/></svg>메모리</button></div>
     </dialog>
     <dialog id="memory-dialog" class="settings-dialog" aria-labelledby="memory-heading">
-        <div class="drawer-heading"><div><h2 id="memory-heading">베론의 메모리</h2><p id="memory-account"></p></div><button type="button" class="icon-button" data-close="memory-dialog" aria-label="메모리 설정 닫기"><svg><use href="#i-x"/></svg></button></div>
+        <div class="drawer-heading"><div><h2 id="memory-heading" tabindex="-1" autofocus>베론의 메모리</h2><p id="memory-account"></p></div><button type="button" class="icon-button" data-close="memory-dialog" aria-label="메모리 설정 닫기"><svg><use href="#i-x"/></svg></button></div>
         <div class="settings-scroll">
             <div class="memory-toggle-row"><div><strong>대화에 메모리 사용</strong><p>새 대화에서도 저장한 내용을 참고해요.</p></div><label class="switch"><input id="memory-enabled" type="checkbox" checked aria-label="메모리 사용"><span></span></label></div>
             <p class="memory-explainer">대화 중 “기억해줘”라고 말하거나 아래에서 직접 추가하세요. 저장한 내용은 언제든 수정하거나 삭제할 수 있어요.</p>
@@ -106,9 +105,9 @@
     </dialog>
     <dialog id="rename-dialog" class="small-dialog" aria-labelledby="rename-heading"><form id="rename-form"><h2 id="rename-heading">대화 이름 변경</h2><label class="sr-only" for="rename-input">대화 이름</label><input id="rename-input" maxlength="80" required><div class="dialog-actions"><button type="button" class="text-button" data-close="rename-dialog">취소</button><button type="submit" class="primary-button">저장</button></div></form></dialog>
     <dialog id="confirm-dialog" class="small-dialog" aria-labelledby="confirm-heading"><h2 id="confirm-heading">삭제할까요?</h2><p id="confirm-description"></p><div class="dialog-actions"><button type="button" class="text-button" id="confirm-cancel">취소</button><button type="button" class="primary-button destructive" id="confirm-delete">삭제</button></div></dialog>
-    <dialog id="model-release-dialog" class="small-dialog model-release-dialog" aria-labelledby="model-release-heading" aria-describedby="model-release-description"><h2 id="model-release-heading">출시 전</h2><p id="model-release-description">VERON 2.1-EXAONE은 준비 중이에요.</p><div class="dialog-actions"><button type="button" class="primary-button" data-close="model-release-dialog" autofocus>확인</button></div></dialog>
+    <dialog id="model-release-dialog" class="small-dialog model-release-dialog" aria-labelledby="model-release-heading" aria-describedby="model-release-description"><h2 id="model-release-heading" tabindex="-1" autofocus>출시 전</h2><p id="model-release-description">VERON 2.1-EXAONE은 준비 중이에요.</p><div class="dialog-actions"><button type="button" class="primary-button" data-close="model-release-dialog">확인</button></div></dialog>
     <dialog id="usage-dialog" class="usage-dialog" aria-labelledby="usage-heading" aria-describedby="usage-description">
-        <div class="drawer-heading"><div><h2 id="usage-heading">사용량 및 한도</h2><p id="usage-description">모든 멤버가 함께 사용하는 전체 사용량이에요.</p></div><button type="button" class="icon-button" data-close="usage-dialog" aria-label="사용량 닫기"><svg aria-hidden="true"><use href="#i-x"/></svg></button></div>
+        <div class="drawer-heading"><div><h2 id="usage-heading" tabindex="-1" autofocus>사용량 및 한도</h2><p id="usage-description">모든 멤버가 함께 사용하는 전체 사용량이에요.</p></div><button type="button" class="icon-button" data-close="usage-dialog" aria-label="사용량 닫기"><svg aria-hidden="true"><use href="#i-x"/></svg></button></div>
         <div class="usage-scroll"><p id="usage-status" class="usage-status" role="status" aria-live="polite">사용량을 불러오는 중이에요.</p><div id="usage-charts" class="usage-charts" aria-busy="true"></div><p id="usage-note" class="usage-note">Google 집계 기준이며, 실제 사용 후 반영까지 몇 분 정도 걸릴 수 있어요.</p><p id="usage-reset" class="usage-note"></p></div>
         <div class="usage-footer"><span id="usage-updated"></span><button type="button" class="text-button" id="usage-refresh"><svg aria-hidden="true"><use href="#i-retry"/></svg>새로고침</button></div>
     </dialog>

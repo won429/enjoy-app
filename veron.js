@@ -82,12 +82,36 @@
         $('retry-button').hidden = !retry;
     }
     function clearError() { $('chat-error').hidden = true; }
+    function renderGreeting(name) {
+        const greeting = $('greeting-name');
+        const text = name ? name + '님,' : '안녕하세요,';
+        if (greeting.dataset.text === text) return;
+        const question = $('greeting-question');
+        greeting.parentElement.setAttribute('aria-label', text + ' ' + question.textContent);
+        const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter('ko', { granularity: 'grapheme' }) : null;
+        let delay = 50;
+        for (const [line, value] of [[greeting, text], [question, question.textContent]]) {
+            const characters = segmenter ? Array.from(segmenter.segment(value), part => part.segment) : Array.from(value);
+            const letters = characters.map(character => {
+                const letter = document.createElement('span');
+                letter.className = 'greeting-letter';
+                letter.textContent = character;
+                letter.style.setProperty('--greeting-delay', delay + 'ms');
+                delay += 48;
+                return letter;
+            });
+            line.setAttribute('aria-hidden', 'true');
+            line.replaceChildren(...letters);
+            delay += 100;
+        }
+        greeting.dataset.text = text;
+    }
     function profile() {
         const parent = parentContext();
         const account = state.profile;
         const current = parent && (!account || parent.uid === account.uid) ? { ...parent, ...account, name: parent.profileReady ? parent.name : account?.name && account.name !== '멤버' ? account.name : parent.name, photoURL: account?.photoURL || parent.photoURL || '' } : account;
         const name = String(current?.name || '').trim();
-        $('greeting-name').textContent = name ? name + '님,' : '안녕하세요,';
+        renderGreeting(name);
         $('profile-initial').textContent = name ? name[0] : '나';
         $('profile-button').setAttribute('aria-label', (name ? name + '님 ' : '') + '프로필 및 메모리 설정');
         $('sheet-account').textContent = name ? name + '님의 대화' : '내 대화';
@@ -704,11 +728,6 @@
         catch { const area = document.createElement('textarea'); area.value = text; document.body.append(area); area.select(); document.execCommand('copy'); area.remove(); toast('복사했어요.'); }
     }
     function closeAttach() { $('attach-menu').hidden = true; $('attach-button').setAttribute('aria-expanded', 'false'); }
-    function returnHome() {
-        saveDraft();
-        if (window.parent !== window) window.parent.postMessage({ type: 'enjoy:navigate-home' }, location.origin);
-        else location.href = 'index.html';
-    }
     function viewport() {
         const vv = window.visualViewport;
         document.documentElement.style.setProperty('--visual-height', Math.round(vv?.height || innerHeight) + 'px');
@@ -757,7 +776,6 @@
     $('thread-list-button').addEventListener('click', () => { renderHistory(); open('thread-drawer'); if (!state.ready) bootstrap(); });
     $('history-search').addEventListener('input', renderHistory);
     $('profile-button').addEventListener('click', memoryDialog); $('memory-shortcut').addEventListener('click', memoryDialog); $('history-memory-button').addEventListener('click', memoryDialog);
-    $('home-button').addEventListener('click', returnHome);
     $('attach-button').addEventListener('click', () => { const show = $('attach-menu').hidden; $('attach-menu').hidden = !show; $('attach-button').setAttribute('aria-expanded', String(show)); });
     $('pick-photo').addEventListener('click', () => { closeAttach(); $('photo-input').click(); }); $('pick-file').addEventListener('click', () => { closeAttach(); $('file-input').click(); });
     for (const id of ['photo-input', 'file-input']) $(id).addEventListener('change', event => { addFiles(event.target.files); event.target.value = ''; });
