@@ -639,7 +639,7 @@
         $('model-button').setAttribute('aria-label', '모델 선택, VERON ' + modelVersions[state.model]);
         for (const button of $('model-menu').querySelectorAll('[data-model]')) button.setAttribute('aria-checked', String(button.dataset.model === state.model));
     }
-    function closeModelMenu() { $('model-menu').hidden = true; $('model-button').setAttribute('aria-expanded', 'false'); }
+    function closeModelMenu() { setMenuExpanded('model-menu', 'model-button', false); }
     function renderWorkerUsage(data, number, time) {
         $('usage-description').textContent = '모든 멤버가 함께 사용하는 베론 서버의 사용량이에요.';
         $('usage-status').textContent = data.message || '';
@@ -719,15 +719,76 @@
             if (serial === usageSerial) { $('usage-refresh').disabled = false; $('usage-charts').setAttribute('aria-busy', 'false'); }
         }
     }
-    function open(id) { closeAttach(); closeModelMenu(); if (!$(id).open) $(id).showModal(); }
-    function close(id) { if ($(id).open) $(id).close(); }
-    function memoryDialog() { close('thread-drawer'); profile(); renderMemories(); open('memory-dialog'); }
+    const animatedDialogs = new Set(['thread-drawer', 'usage-dialog', 'memory-dialog']);
+    const closingPanels = new WeakMap();
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    function cancelPanelExit(panel) {
+        const exit = closingPanels.get(panel);
+        if (!exit) return;
+        closingPanels.delete(panel);
+        delete panel.dataset.closing;
+        exit.animation.cancel();
+    }
+    function animatePanelExit(panel, hide) {
+        const pending = closingPanels.get(panel);
+        if (pending) return pending.done;
+        if (reduceMotion.matches || typeof panel.animate !== 'function') {
+            hide();
+            return;
+        }
+        const { opacity, transform } = getComputedStyle(panel);
+        const isDrawer = panel.id === 'thread-drawer';
+        const animation = panel.animate([
+            { opacity, transform },
+            { opacity: isDrawer ? opacity : 0, transform: isDrawer ? 'translateX(-100%)' : 'translateY(6px)' }
+        ], { duration: isDrawer ? 240 : 180, easing: 'ease-in', fill: 'forwards' });
+        panel.dataset.closing = '';
+        const finish = () => {
+            if (closingPanels.get(panel)?.animation !== animation) return;
+            hide();
+            cancelPanelExit(panel);
+        };
+        const done = animation.finished.then(finish, finish);
+        closingPanels.set(panel, { animation, done });
+        return done;
+    }
+    function setMenuExpanded(id, buttonId, expanded) {
+        const menu = $(id);
+        $(buttonId).setAttribute('aria-expanded', String(expanded));
+        if (expanded) {
+            cancelPanelExit(menu);
+            menu.inert = false;
+            menu.hidden = false;
+        } else if (!menu.hidden) {
+            menu.inert = true;
+            animatePanelExit(menu, () => { menu.hidden = true; });
+        }
+    }
+    function open(id) {
+        closeAttach();
+        closeModelMenu();
+        const dialog = $(id);
+        cancelPanelExit(dialog);
+        if (!dialog.open) dialog.showModal();
+    }
+    function close(id) {
+        const dialog = $(id);
+        if (!dialog.open) return;
+        if (animatedDialogs.has(id)) return animatePanelExit(dialog, () => dialog.close());
+        dialog.close();
+    }
+    async function memoryDialog() {
+        if ($('thread-drawer').open) await close('thread-drawer');
+        profile();
+        renderMemories();
+        open('memory-dialog');
+    }
     function confirmDelete(description, action) { $('confirm-description').textContent = description; confirmAction = action; open('confirm-dialog'); }
     async function copyText(text) {
         try { await navigator.clipboard.writeText(text); toast('복사했어요.'); }
         catch { const area = document.createElement('textarea'); area.value = text; document.body.append(area); area.select(); document.execCommand('copy'); area.remove(); toast('복사했어요.'); }
     }
-    function closeAttach() { $('attach-menu').hidden = true; $('attach-button').setAttribute('aria-expanded', 'false'); }
+    function closeAttach() { setMenuExpanded('attach-menu', 'attach-button', false); }
     function viewport() {
         const vv = window.visualViewport;
         document.documentElement.style.setProperty('--visual-height', Math.round(vv?.height || innerHeight) + 'px');
@@ -743,8 +804,8 @@
     $('usage-refresh').addEventListener('click', loadUsage);
     $('usage-dialog').addEventListener('close', () => { clearInterval(usageTimer); usageTimer = null; ++usageSerial; usageController?.abort(); usageController = null; });
     $('model-button').addEventListener('click', () => {
-        const show = $('model-menu').hidden;
-        closeAttach(); $('model-menu').hidden = !show; $('model-button').setAttribute('aria-expanded', String(show));
+        const show = $('model-button').getAttribute('aria-expanded') !== 'true';
+        closeAttach(); setMenuExpanded('model-menu', 'model-button', show);
         if (show) $('model-menu').querySelector('[aria-checked="true"]').focus();
     });
     $('model-menu').addEventListener('click', event => {
@@ -756,7 +817,7 @@
         renderModel(); $('model-button').focus();
     });
     $('model-button').addEventListener('keydown', event => {
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); if ($('model-menu').hidden) $('model-button').click(); }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); if ($('model-button').getAttribute('aria-expanded') !== 'true') $('model-button').click(); }
     });
     $('model-menu').addEventListener('keydown', event => {
         const buttons = [...$('model-menu').querySelectorAll('[data-model]')];
@@ -776,7 +837,9 @@
     $('thread-list-button').addEventListener('click', () => { renderHistory(); open('thread-drawer'); if (!state.ready) bootstrap(); });
     $('history-search').addEventListener('input', renderHistory);
     $('profile-button').addEventListener('click', memoryDialog); $('memory-shortcut').addEventListener('click', memoryDialog); $('history-memory-button').addEventListener('click', memoryDialog);
-    $('attach-button').addEventListener('click', () => { const show = $('attach-menu').hidden; $('attach-menu').hidden = !show; $('attach-button').setAttribute('aria-expanded', String(show)); });
+    $('attach-button').addEventListener('click', () => {
+        setMenuExpanded('attach-menu', 'attach-button', $('attach-button').getAttribute('aria-expanded') !== 'true');
+    });
     $('pick-photo').addEventListener('click', () => { closeAttach(); $('photo-input').click(); }); $('pick-file').addEventListener('click', () => { closeAttach(); $('file-input').click(); });
     for (const id of ['photo-input', 'file-input']) $(id).addEventListener('change', event => { addFiles(event.target.files); event.target.value = ''; });
     $('attachment-list').addEventListener('click', event => { const target = event.target.closest('[data-remove]'); if (target) removeAttachment(target.dataset.remove); });
@@ -816,7 +879,17 @@
     });
     $('memory-clear').addEventListener('click', () => confirmDelete('저장한 메모리를 모두 삭제합니다. 대화 기록은 유지돼요.', async () => { const data = await api('/memory', { method: 'POST', body: { action: 'clear' } }); state.memories = data.memories; renderMemories(); }));
     $('retry-button').addEventListener('click', () => { if ($('retry-button').dataset.login) { if (window.parent !== window) window.parent.location.href = 'login.html'; else location.href = 'login.html'; } else if (!state.ready) bootstrap(); else if (currentThread()?.messages.some(m => m.role === 'user')) submit(true); else bootstrap(); });
-    for (const dialog of document.querySelectorAll('dialog')) dialog.addEventListener('click', event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
+    for (const dialog of document.querySelectorAll('dialog')) {
+        dialog.addEventListener('click', event => {
+            if (event.target !== dialog) return;
+            const r = dialog.getBoundingClientRect();
+            if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) close(dialog.id);
+        });
+        if (animatedDialogs.has(dialog.id)) dialog.addEventListener('cancel', event => {
+            event.preventDefault();
+            close(dialog.id);
+        });
+    }
     window.visualViewport?.addEventListener('resize', () => { viewport(); clearTimeout(resizeTimer); resizeTimer = setTimeout(viewport, 180); }, { passive: true });
     window.visualViewport?.addEventListener('scroll', viewport, { passive: true });
     window.addEventListener('resize', viewport, { passive: true });
