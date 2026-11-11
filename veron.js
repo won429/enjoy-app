@@ -372,6 +372,20 @@
         const links = sources.map((source, i) => `<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${i + 1}. ${esc(source.title)}</a>`).join('');
         return `<div class="answer-grounding"><div class="grounding-status">${value.searched ? '웹 검색을 참고한 답변' : '웹 검색 없이 작성한 답변'}</div>${sources.length ? `<details class="answer-sources"><summary>출처 ${sources.length}개</summary><div>${links}</div></details>` : ''}</div>`;
     }
+    const progressLabels = { thinking: '생각 중', reading: '자료 읽는 중', searching: '웹 검색 중', 'search-retry': '웹 검색 다시 시도 중', composing: '답변 정리 중', writing: '답변 작성 중', weather: '날씨 확인 중' };
+    function progressHTML(run) {
+        if (!run || run.stopping) return '';
+        return `<div class="response-progress" role="status" aria-live="polite"><div class="typing" aria-hidden="true"><span></span><span></span><span></span></div><span>${esc(progressLabels[run.phase] || progressLabels.thinking)}</span></div>`;
+    }
+    function updateProgress(thread, run, phase) {
+        if (!Object.hasOwn(progressLabels, phase) || run.stopping || state.runs.get(thread.id) !== run) return;
+        run.phase = phase;
+        if (state.active !== thread.id) return;
+        const article = $('messages').querySelector('[data-message="' + run.replyId + '"]');
+        const progress = article?.querySelector('.response-progress');
+        if (progress) progress.querySelector(':scope > span').textContent = progressLabels[phase];
+        $('composer-state').textContent = progressLabels[phase];
+    }
     function renderChat(force = false) {
         const thread = currentThread();
         const messages = thread?.messages || [];
@@ -386,9 +400,9 @@
             if (message.role === 'user') return `<article class="message user" data-message="${esc(message.id)}">${files}${esc(message.text)}</article>`;
             const run = state.runs.get(thread.id);
             const pending = run?.replyId === message.id;
-            const content = message.text ? markdown(message.text) : pending ? '<div class="typing" aria-label="베론이 생각하는 중"><span></span><span></span><span></span></div>' : '';
+            const content = message.text ? markdown(message.text) : '';
             const last = i === messages.length - 1;
-            return `<article class="message assistant" data-message="${esc(message.id)}"><div class="assistant-label"><span>베론</span></div><div class="message-body">${content}</div>${groundingHTML(message.grounding)}${!pending && message.text ? `<div class="message-actions"><button type="button" class="icon-button" data-copy="${esc(message.id)}" aria-label="답변 복사">${icon('copy')}</button>${last ? `<button type="button" class="icon-button" data-action="regenerate" aria-label="다시 답변하기">${icon('retry')}</button>` : ''}<button type="button" class="icon-button" data-remember="${esc(message.id)}" aria-label="답변에서 메모리 추가">${icon('memory')}</button></div>` : ''}${message.status === 'stopped' ? '<div class="message-status">답변을 중지했어요.</div>' : message.status === 'error' ? '<div class="message-status">답변이 중단됐어요. 다시 시도할 수 있어요.</div>' : ''}</article>`;
+            return `<article class="message assistant" data-message="${esc(message.id)}"><div class="assistant-label"><span>베론</span></div>${pending ? progressHTML(run) : ''}<div class="message-body">${content}</div>${groundingHTML(message.grounding)}${!pending && message.text ? `<div class="message-actions"><button type="button" class="icon-button" data-copy="${esc(message.id)}" aria-label="답변 복사">${icon('copy')}</button>${last ? `<button type="button" class="icon-button" data-action="regenerate" aria-label="다시 답변하기">${icon('retry')}</button>` : ''}<button type="button" class="icon-button" data-remember="${esc(message.id)}" aria-label="답변에서 메모리 추가">${icon('memory')}</button></div>` : ''}${message.status === 'stopped' ? '<div class="message-status">답변을 중지했어요.</div>' : message.status === 'error' ? '<div class="message-status">답변이 중단됐어요. 다시 시도할 수 있어요.</div>' : ''}</article>`;
         }).join('');
         if (keepBottom) scrollBottom(true);
         updateInput(); renderHistory(); hydrateImages();
@@ -406,7 +420,7 @@
         $('send-button').setAttribute('aria-label', activeRun ? '답변 중지' : '보내기');
         $('send-button').innerHTML = icon(activeRun ? 'stop' : 'send');
         $('attach-button').disabled = !state.ready || !!activeRun;
-        if (activeRun) $('composer-state').textContent = '답변 중'; else if ($('composer-state').textContent === '답변 중') $('composer-state').textContent = '';
+        if (activeRun) $('composer-state').textContent = progressLabels[activeRun.phase] || progressLabels.thinking; else if (Object.values(progressLabels).includes($('composer-state').textContent)) $('composer-state').textContent = '';
     }
     function summary(thread) {
         const last = thread.messages?.at(-1);
@@ -467,7 +481,7 @@
         const replyId = 'reply-' + message.id;
         const assistant = { id: replyId, role: 'assistant', text: '', at: Date.now(), attachments: [], status: 'complete' };
         thread.messages.push(assistant); thread.updated = Date.now(); summary(thread);
-        const run = { controller: new AbortController(), replyId, messageId: message.id, stopping: false, done: false };
+        const run = { controller: new AbortController(), replyId, messageId: message.id, stopping: false, done: false, phase: message.attachments?.length ? 'reading' : 'thinking' };
         state.runs.set(thread.id, run); renderChat(true);
         const timer = setTimeout(() => run.controller.abort('timeout'), 100000);
         let scheduled = false;
@@ -486,6 +500,7 @@
         try {
             const forecastDay = localWeatherDay(message.text);
             if (forecastDay !== null && !message.attachments?.length) {
+                updateProgress(thread, run, 'weather');
                 const forecast = await localWeather(forecastDay, run.controller.signal);
                 if (!run.controller.signal.aborted) assistant.text = forecast;
                 return;
@@ -509,7 +524,8 @@
                         thread.title = data.thread.title;
                         if (state.profile?.uid === account) summary(thread);
                         if (data.memorySaved && state.profile?.uid === account) { state.memories = [data.memorySaved, ...state.memories]; renderMemories(); toast('메모리에 저장했어요.'); }
-                    } else if (event === 'delta') { assistant.text += data.text || ''; paint(); }
+                    } else if (event === 'status') { updateProgress(thread, run, data.phase); }
+                    else if (event === 'delta') { updateProgress(thread, run, 'writing'); assistant.text += data.text || ''; paint(); }
                     else if (event === 'grounding') { assistant.grounding = data; }
                     else if (event === 'error') { assistant.status = 'error'; if (state.active === thread.id) showError(data.error); }
                     else if (event === 'done') {
