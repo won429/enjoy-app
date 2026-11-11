@@ -28,7 +28,7 @@
         if (!user) return;
         if (account !== user.uid) {
             account = user.uid;
-            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261111-1');
+            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261111-veron1');
         }
         resize();
         requestAnimationFrame(resize);
