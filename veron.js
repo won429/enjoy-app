@@ -8,7 +8,7 @@
     const embedded = window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1';
     document.documentElement.classList.toggle('biseo-embedded', embedded);
     const state = { profile: null, threads: [], loaded: new Map(), active: null, memories: [], settings: { memoryEnabled: true }, attachments: [], runs: new Map(), drafts: new Map(), ready: false, editingMemory: null, rename: null, auth: null };
-    const modelVersions = { 'veron-1': '1-26B', 'veron-2': '2-31B' };
+    const modelVersions = { 'veron-1': '1-26B', 'veron-2': '1.5-31B' };
     state.model = 'veron-1';
     try { const saved = localStorage.getItem('veron-model'); if (Object.hasOwn(modelVersions, saved)) state.model = saved; } catch { /* Model selection also works without browser preferences. */ }
     const Device = window.VeronDeviceStore;
@@ -668,7 +668,7 @@
                     <div class="usage-metric-caption"><span>${period}</span><strong>${esc(limit)}</strong></div>
                 </div>`;
             }).join('');
-            return `<section class="usage-model" aria-label="${esc(model.name)} 사용량"><h3>${esc(model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
+            return `<section class="usage-model" aria-label="${esc(model.id === 'veron-2' ? 'VERON 1.5-31B' : model.name)} 사용량"><h3>${esc(model.id === 'veron-2' ? 'VERON 1.5-31B' : model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
         }).join('');
         const coverage = time(data.coverageStart);
         const reference = time(data.referenceCapturedAt);
@@ -709,7 +709,7 @@
                 const label = title + ': ' + count + metric.unit + ', ' + (peak ? reset : status);
                 return `<div class="usage-metric"><div class="usage-metric-heading"><h4>${esc(title)}</h4><span class="usage-count">${esc(count)} ${esc(metric.unit)}</span></div><div class="usage-metric-caption"><span>${esc(reset)}</span><strong>${status}</strong></div><div class="usage-track${Number.isFinite(percent) ? '' : ' is-unknown'}" role="img" aria-label="${esc(label)}"><span style="width:${Number.isFinite(percent) ? percent : 0}%"></span></div></div>`;
             }).join('');
-            return `<section class="usage-model" aria-label="${esc(model.name)} 사용량"><h3>${esc(model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
+            return `<section class="usage-model" aria-label="${esc(model.id === 'veron-2' ? 'VERON 1.5-31B' : model.name)} 사용량"><h3>${esc(model.id === 'veron-2' ? 'VERON 1.5-31B' : model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
         }).join('');
         $('usage-charts').setAttribute('aria-busy', 'false');
         $('usage-note').textContent = peak ? '전체 사용량의 실제 집계예요. 일일 요청은 오늘 사용량, 분당 지표는 최근 24시간 최대값이며 반영까지 시간이 걸릴 수 있어요.' : data.status === 'paused' ? '실제 사용량과 한도는 연결 후 표시됩니다.' : '사용량 집계 기준이며, 실제 사용 후 반영까지 몇 분 정도 걸릴 수 있어요.';
