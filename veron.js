@@ -8,6 +8,7 @@
     const embedded = window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1';
     document.documentElement.classList.toggle('biseo-embedded', embedded);
     const state = { profile: null, threads: [], loaded: new Map(), active: null, memories: [], settings: { memoryEnabled: true }, attachments: [], runs: new Map(), drafts: new Map(), ready: false, editingMemory: null, rename: null, auth: null };
+    const Device = window.VeronDeviceStore;
     const previews = new Map();
     let toastTimer, resizeTimer, fetchSerial = 0, confirmAction = null, booting = null, scrollPending = false;
 
@@ -56,6 +57,7 @@
     }
     async function api(path, options = {}, refresh = false) {
         const idToken = await token(refresh);
+        if (options.account && (state.profile?.uid !== options.account || parentContext()?.uid && parentContext().uid !== options.account)) throw new DOMException('Account changed', 'AbortError');
         const response = await fetch(API + path, { method: options.method || 'GET', headers: { Authorization: 'Bearer ' + idToken, ...(options.body ? { 'Content-Type': 'application/json' } : {}) }, body: options.body ? JSON.stringify(options.body) : undefined, signal: options.signal, credentials: 'omit' });
         if (response.status === 401 && !refresh) return api(path, options, true);
         if (!response.ok) {
@@ -94,50 +96,114 @@
     }
     window.veronRefreshProfile = profile;
     $('profile-image').addEventListener('error', () => { $('profile-image').hidden = true; });
-    function cacheKey() { return state.profile ? 'veron-v2:' + state.profile.uid : ''; }
-    function cache() {
-        if (!cacheKey()) return;
-        try {
-            localStorage.setItem(cacheKey(), JSON.stringify({ threads: state.threads, loaded: [...state.loaded.entries()].slice(-20), settings: state.settings, memories: state.memories }));
-        } catch { /* Server storage is authoritative; browser caching is optional. */ }
+    async function readLocalHistory() {
+        await Device.ready();
+        state.threads = await Device.list(state.profile.uid);
     }
     async function migrateLegacy() {
         const account = state.profile.uid;
+        if (await Device.marked(account, 'local-legacy')) return;
+        let old = [], cached = [];
         try {
-            if (localStorage.getItem('enjoy_chat_account_v1') !== account || localStorage.getItem('veron-v2-migrated:' + account)) return;
-            const saved = JSON.parse(localStorage.getItem('enjoy-secretary-threads-v2:' + account) || 'null');
-            const threads = (saved?.threads || []).filter(t => t.messages?.some(m => m.role === 'user'));
-            for (let i = 0; i < threads.length; i += 3) {
-                const data = await api('/import', { method: 'POST', body: { threads: threads.slice(i, i + 3) } });
-                state.threads = data.threads;
+            if (localStorage.getItem('enjoy_chat_account_v1') === account) old = JSON.parse(localStorage.getItem('enjoy-secretary-threads-v2:' + account) || 'null')?.threads || [];
+            cached = (JSON.parse(localStorage.getItem('veron-v2:' + account) || 'null')?.loaded || []).map(entry => entry[1]);
+        } catch { /* A malformed browser cache is never used as conversation data. */ }
+        for (const thread of [...cached, ...old]) {
+            if (!thread?.id || !thread.messages?.some(message => message.role === 'user') || await Device.get(account, thread.id)) continue;
+            const messages = thread.messages.slice();
+            while (messages[0]?.role === 'assistant') messages.shift();
+            await Device.save(account, { ...thread, messages });
+        }
+        await Device.mark(account, 'local-legacy');
+    }
+    async function migrateCloudHistory() {
+        const account = state.profile.uid;
+        if (await Device.marked(account, 'cloud-to-device')) return;
+        try {
+            const previous = await api('/bootstrap', { account });
+            let complete = true;
+            for (const item of previous.threads || []) {
+                const { thread } = await api('/threads/' + encodeURIComponent(item.id), { account });
+                const attachments = [], seen = new Set();
+                for (const message of thread.messages) for (const file of message.attachments || []) {
+                    if (seen.has(file.id)) continue; seen.add(file.id);
+                    if (await Device.getFile(account, file.id)) continue;
+                    const response = await api('/attachments/' + encodeURIComponent(file.id), { account });
+                    const bytes = Uint8Array.from(atob(response.file.data), char => char.charCodeAt(0));
+                    attachments.push({ ...file, blob: new Blob([bytes], { type: file.mime }) });
+                }
+                const local = await Device.get(account, thread.id);
+                const merged = new Map(thread.messages.map(message => [message.id, message]));
+                for (const message of local?.messages || []) {
+                    const equivalent = thread.messages.find(remote => remote.id !== message.id && remote.role === message.role && remote.text === message.text && remote.at === message.at);
+                    if (equivalent) continue;
+                    const remote = merged.get(message.id);
+                    if (!remote || message.at > remote.at || message.at === remote.at && message.text.length >= remote.text.length) merged.set(message.id, message);
+                }
+                const combined = { ...thread, ...(local && local.updated >= thread.updated ? { title: local.title, updated: local.updated } : {}), messages: [...merged.values()].sort((a, b) => a.at - b.at) };
+                await Device.save(account, combined, attachments);
+                const verified = await Device.get(account, thread.id);
+                if (!verified || thread.messages.some(message => !verified.messages.some(saved => saved.id === message.id))) throw new Error('기기 저장을 확인하지 못했어요.');
+                try { await api('/threads/' + encodeURIComponent(thread.id), { method: 'DELETE', account }); }
+                catch { complete = false; }
             }
-            localStorage.setItem('veron-v2-migrated:' + account, '1');
-        } catch { toast('이전 대화 가져오기는 다음 연결 때 다시 시도할게요.'); }
+            if (complete) await Device.mark(account, 'cloud-to-device');
+        } catch { toast('이전 기록 중 아직 옮기지 못한 항목은 보존했어요. 다음 연결 때 다시 가져올게요.'); }
     }
     async function bootstrap() {
         if (booting) return booting;
         booting = (async () => {
             $('composer-state').textContent = '연결 중'; clearError();
             try {
-                const data = await api('/bootstrap');
                 const parent = parentContext();
-                if (parent && parent.uid !== data.profile.uid) throw new Error('계정을 다시 확인해 주세요.');
+                if (parent?.uid && !state.profile) {
+                    state.profile = parent;
+                    await readLocalHistory(); profile(); renderHistory();
+                }
+                const data = await api('/device-bootstrap');
+                if (parentContext()?.uid && parentContext().uid !== data.profile.uid) throw new Error('계정을 다시 확인해 주세요.');
                 if (state.profile && state.profile.uid !== data.profile.uid) {
                     for (const run of state.runs.values()) run.controller.abort();
                     state.loaded.clear(); state.active = null; state.attachments = []; state.drafts.clear();
                     for (const url of previews.values()) URL.revokeObjectURL(url); previews.clear();
                 }
-                state.profile = data.profile; state.threads = data.threads; state.memories = data.memories; state.settings = data.settings; state.ready = true;
+                state.profile = data.profile; state.memories = data.memories; state.settings = data.settings;
+                await Device.ready();
                 await migrateLegacy();
-                profile(); renderHistory(); renderMemories(); updateInput(); cache();
+                await migrateCloudHistory();
+                await readLocalHistory();
+                state.ready = true;
+                profile(); renderHistory(); renderMemories(); updateInput();
                 $('history-state').textContent = '';
             } catch (error) {
                 state.ready = false;
                 showError(error.message || '대화를 연결하지 못했어요.', true, error.status);
-                $('history-state').textContent = '대화 기록을 불러오지 못했어요. 다시 연결해 주세요.';
+                $('history-state').textContent = state.threads.length ? '' : '대화 기록을 불러오지 못했어요. 다시 연결해 주세요.';
             } finally { $('composer-state').textContent = ''; updateInput(); booting = null; }
         })();
         return booting;
+    }
+    async function chatPayload(thread, replyId, account) {
+        const source = thread.messages.filter(message => message.id !== replyId).slice(-30);
+        const selected = new Set(); let total = 0;
+        for (const message of [...source].reverse()) for (const file of message.attachments || []) {
+            if (!selected.has(file.id) && total + file.size <= 12 * 1024 * 1024) { selected.add(file.id); total += file.size; }
+        }
+        const encoded = new Map(), messages = [];
+        for (const message of source) {
+            const attachments = [], omitted = [];
+            for (const item of message.attachments || []) {
+                if (!selected.has(item.id)) { omitted.push(item.name); continue; }
+                if (!encoded.has(item.id)) {
+                    const file = await Device.getFile(account, item.id);
+                    if (!file?.blob) throw new Error(item.name + ' 파일을 이 기기에서 찾지 못했어요. 다시 첨부해 주세요.');
+                    encoded.set(item.id, { ...item, data: await base64(file.blob) });
+                }
+                attachments.push(encoded.get(item.id));
+            }
+            messages.push({ id: message.id, role: message.role, text: message.text + (omitted.length ? '\n[이전 첨부 파일은 이번 요청 크기 제한으로 생략됨: ' + omitted.join(', ') + ']' : ''), attachments, at: message.at, status: message.status });
+        }
+        return { threadId: thread.id, title: thread.title, messageId: source.at(-1).id, messages };
     }
     function inline(text) {
         const code = [];
@@ -184,7 +250,7 @@
     function attachmentHTML(file, pending = false) {
         const preview = previews.get(file.id);
         const visual = file.mime?.startsWith('image/') && preview ? `<img src="${esc(preview)}" alt="${esc(file.name)}">` : icon(file.mime?.startsWith('image/') ? 'image' : 'file');
-        const status = file.error ? '다시 첨부해 주세요' : file.uploading ? '업로드 중' : formatSize(file.size);
+        const status = file.error ? '다시 첨부해 주세요' : file.uploading ? '첨부 중' : formatSize(file.size);
         const content = `${visual}<span><strong>${esc(file.name)}</strong><small>${status}</small></span>`;
         return pending ? `<div class="attachment-chip">${content}<button type="button" class="remove-attachment" data-remove="${esc(file.id)}" aria-label="${esc(file.name)} 첨부 취소">${icon('x')}</button></div>` : `<button type="button" class="attachment-chip" data-file="${esc(file.id)}" aria-label="${esc(file.name)} 열기">${content}</button>`;
     }
@@ -194,6 +260,7 @@
         const keepBottom = force || nearBottom();
         const hasMessages = messages.length > 0;
         document.body.classList.toggle('has-conversation', hasMessages);
+        if (embedded) window.parent.postMessage({ type: 'veron:appearance', conversation: hasMessages }, location.origin === 'null' ? '*' : location.origin);
         $('welcome').hidden = hasMessages; $('messages').hidden = !hasMessages;
         $('active-thread-title').textContent = thread?.title || '';
         $('messages').innerHTML = messages.map((message, i) => {
@@ -203,7 +270,7 @@
             const pending = run?.replyId === message.id;
             const content = message.text ? markdown(message.text) : pending ? '<div class="typing" aria-label="베론이 생각하는 중"><span></span><span></span><span></span></div>' : '';
             const last = i === messages.length - 1;
-            return `<article class="message assistant" data-message="${esc(message.id)}"><div class="assistant-label">${icon('veron')}<span>베론</span></div><div class="message-body">${content}</div>${!pending && message.text ? `<div class="message-actions"><button type="button" class="icon-button" data-copy="${esc(message.id)}" aria-label="답변 복사">${icon('copy')}</button>${last ? `<button type="button" class="icon-button" data-action="regenerate" aria-label="다시 답변하기">${icon('retry')}</button>` : ''}<button type="button" class="icon-button" data-remember="${esc(message.id)}" aria-label="답변에서 메모리 추가">${icon('memory')}</button></div>` : ''}${message.status === 'stopped' ? '<div class="message-status">답변을 중지했어요.</div>' : message.status === 'error' ? '<div class="message-status">답변이 중단됐어요. 다시 시도할 수 있어요.</div>' : ''}</article>`;
+            return `<article class="message assistant" data-message="${esc(message.id)}"><div class="assistant-label"><span>베론</span></div><div class="message-body">${content}</div>${!pending && message.text ? `<div class="message-actions"><button type="button" class="icon-button" data-copy="${esc(message.id)}" aria-label="답변 복사">${icon('copy')}</button>${last ? `<button type="button" class="icon-button" data-action="regenerate" aria-label="다시 답변하기">${icon('retry')}</button>` : ''}<button type="button" class="icon-button" data-remember="${esc(message.id)}" aria-label="답변에서 메모리 추가">${icon('memory')}</button></div>` : ''}${message.status === 'stopped' ? '<div class="message-status">답변을 중지했어요.</div>' : message.status === 'error' ? '<div class="message-status">답변이 중단됐어요. 다시 시도할 수 있어요.</div>' : ''}</article>`;
         }).join('');
         if (keepBottom) scrollBottom(true);
         updateInput(); renderHistory(); hydrateImages();
@@ -241,24 +308,28 @@
         $('chat-input').value = text; state.attachments = draft?.attachments || []; renderAttachments();
     }
     function newChat() {
+        ++fetchSerial;
         saveDraft(); state.active = null; clearError(); close('thread-drawer'); restoreDraft(); renderChat(true); profile();
     }
     async function openThread(id) {
         const serial = ++fetchSerial;
+        const account = state.profile.uid;
         saveDraft(); close('thread-drawer'); clearError();
         if (state.loaded.has(id)) { state.active = id; restoreDraft(); renderChat(true); }
         else $('composer-state').textContent = '불러오는 중';
         try {
-            const { thread } = await api('/threads/' + encodeURIComponent(id));
+            const thread = await Device.get(account, id);
+            if (!thread) throw new Error('이 기기에 저장된 대화를 찾지 못했어요.');
+            if (serial !== fetchSerial || state.profile?.uid !== account) return;
             state.loaded.set(id, thread);
-            if (serial !== fetchSerial) return;
-            state.active = id; restoreDraft(); renderChat(true); cache();
+            state.active = id; restoreDraft(); renderChat(true);
         } catch (error) { showError(error.message, true, error.status); }
         finally { if ($('composer-state').textContent === '불러오는 중') $('composer-state').textContent = ''; }
     }
     async function submit(regenerate = false) {
         if (state.runs.has(state.active)) return stop();
         if (!state.ready) return;
+        const account = state.profile.uid;
         let thread = currentThread();
         let message;
         if (regenerate) {
@@ -285,15 +356,18 @@
             if (scheduled) return; scheduled = true;
             requestAnimationFrame(() => {
                 scheduled = false;
-                if (state.active !== thread.id) return;
+                if (state.active !== thread.id || state.profile?.uid !== account) return;
                 const target = $('messages').querySelector('[data-message="' + replyId + '"] .message-body');
                 if (!target) return renderChat();
                 const stick = nearBottom(); target.innerHTML = markdown(assistant.text);
+                if (Date.now() - (run.savedAt || 0) > 750) { run.savedAt = Date.now(); Device.save(account, thread).catch(error => showError(error.message)); }
                 if (stick) scrollBottom(true);
             });
         };
         try {
-            const response = await api('/chat', { method: 'POST', body: { threadId: thread.id, message: { id: message.id, text: message.text, attachments: message.attachments.map(f => f.id) }, regenerate }, signal: run.controller.signal, stream: true });
+            await Device.save(account, thread);
+            const payload = await chatPayload(thread, replyId, account);
+            const response = await api('/device-chat', { method: 'POST', body: payload, signal: run.controller.signal, stream: true, account });
             const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = '';
             for (;;) {
                 const { value, done } = await reader.read();
@@ -307,8 +381,9 @@
                     if (!raw) continue;
                     const data = JSON.parse(raw);
                     if (event === 'meta') {
-                        thread.title = data.thread.title; summary(thread);
-                        if (data.memorySaved) { state.memories = [data.memorySaved, ...state.memories]; renderMemories(); toast('메모리에 저장했어요.'); }
+                        thread.title = data.thread.title;
+                        if (state.profile?.uid === account) summary(thread);
+                        if (data.memorySaved && state.profile?.uid === account) { state.memories = [data.memorySaved, ...state.memories]; renderMemories(); toast('메모리에 저장했어요.'); }
                     } else if (event === 'delta') { assistant.text += data.text || ''; paint(); }
                     else if (event === 'error') { assistant.status = 'error'; if (state.active === thread.id) showError(data.error); }
                     else if (event === 'done') {
@@ -324,22 +399,20 @@
         } finally {
             clearTimeout(timer);
             if (!run.stopping) state.runs.delete(thread.id);
-            const current = state.loaded.get(thread.id); if (current) { current.updated = Date.now(); summary(current); }
-            if (state.active === thread.id) renderChat();
-            renderHistory(); cache();
+            thread.updated = Date.now();
+            try { await Device.save(account, thread); } catch (error) { if (state.profile?.uid === account) showError(error.message); }
+            if (state.profile?.uid === account) { summary(thread); if (state.active === thread.id) renderChat(); renderHistory(); }
         }
     }
     async function stop() {
-        const id = state.active, run = state.runs.get(id);
+        const id = state.active, run = state.runs.get(id), account = state.profile?.uid;
         if (!run || run.stopping) return;
         run.stopping = true; run.controller.abort();
-        const thread = state.loaded.get(id), last = thread?.messages.find(m => m.id === run.replyId);
+        const thread = state.loaded.get(id), last = thread?.messages.find(message => message.id === run.replyId);
         if (last) last.status = 'stopped';
-        try {
-            const saved = await api('/threads/' + id + '/stop', { method: 'POST', body: { messageId: run.messageId, text: last?.text || '' } });
-            if (saved.thread) state.loaded.set(id, saved.thread);
-        } catch (error) { showError(error.message); }
-        finally { state.runs.delete(id); if (state.active === id) renderChat(); cache(); }
+        try { if (thread) await Device.save(account, thread); }
+        catch (error) { showError(error.message); }
+        finally { state.runs.delete(id); if (state.active === id) renderChat(); }
     }
     function formatSize(bytes) { return bytes >= 1024 * 1024 ? (bytes / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB'; }
     async function photo(file) {
@@ -358,6 +431,7 @@
     function base64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]); reader.onerror = () => reject(new Error('파일을 읽을 수 없어요.')); reader.readAsDataURL(file); }); }
     async function addFiles(files) {
         if (!state.ready) return toast('먼저 베론에 연결해 주세요.');
+        const account = state.profile.uid;
         closeAttach();
         for (const original of [...files]) {
             if (state.attachments.length >= 4) { toast('파일은 한 번에 4개까지 첨부할 수 있어요.'); break; }
@@ -367,12 +441,15 @@
             try {
                 if (original.size > 20 * 1024 * 1024) throw new Error('원본 파일은 20MB 이하로 선택해 주세요.');
                 const file = await photo(original);
+                if (state.profile?.uid !== account) break;
                 if (file.size > 6 * 1024 * 1024) throw new Error('파일당 6MB까지 첨부할 수 있어요.');
-                const { file: saved } = await api('/attachments', { method: 'POST', body: { name: file.name, mime: file.type, data: await base64(file) } });
+                if (!file.type.startsWith('image/') && !/^text\//.test(file.type) && !/\.(pdf|docx|xlsx|pptx|txt|md|csv|tsv|json|xml|html?|css|js|jsx|ts|tsx|py|swift|java|c|cpp|h|sql|log|yaml|yml|r|rtf)$/i.test(file.name)) throw new Error('사진, PDF, Office 문서 또는 텍스트 파일을 선택해 주세요.');
+                const saved = { id: uid(), name: file.name, mime: file.type || 'text/plain', size: file.size };
+                await Device.putFile(account, { ...saved, blob: file });
                 // A user may remove the chip or change conversations while an upload is in flight.
                 const target = (state.active || 'new') === draftKey ? state.attachments : state.drafts.get(draftKey)?.attachments;
                 const index = target?.findIndex(item => item.id === placeholder.id) ?? -1;
-                if (index < 0) { api('/attachments/' + saved.id, { method: 'DELETE' }).catch(() => {}); continue; }
+                if (index < 0 || state.profile?.uid !== account) { Device.removeFile(account, saved.id).catch(() => {}); continue; }
                 target[index] = saved;
                 if (saved.mime.startsWith('image/')) previews.set(saved.id, URL.createObjectURL(file));
                 if ((state.active || 'new') === draftKey) renderAttachments();
@@ -389,12 +466,12 @@
         const file = state.attachments.find(item => item.id === id);
         state.attachments = state.attachments.filter(item => item.id !== id); renderAttachments(); saveDraft();
         const url = previews.get(id); if (url) { URL.revokeObjectURL(url); previews.delete(id); }
-        if (file && !file.uploading) try { await api('/attachments/' + id, { method: 'DELETE' }); } catch { /* Unsent server files also expire automatically. */ }
+        if (file && !file.uploading) try { await Device.removeFile(state.profile.uid, id); } catch (error) { toast(error.message); }
     }
     async function loadFile(id) {
-        const { file } = await api('/attachments/' + encodeURIComponent(id));
-        const bytes = Uint8Array.from(atob(file.data), c => c.charCodeAt(0));
-        return { file, blob: new Blob([bytes], { type: file.mime }) };
+        const file = await Device.getFile(state.profile.uid, id);
+        if (!file?.blob) throw new Error('이 기기에서 첨부 파일을 찾을 수 없어요.');
+        return { file, blob: file.blob };
     }
     const loadingImages = new Set();
     async function hydrateImages() {
@@ -482,24 +559,24 @@
         if (button.dataset.thread) openThread(button.dataset.thread);
         else if (button.dataset.options) { const box = button.closest('.thread-row').querySelector('.thread-options'); const show = box.hidden; $('thread-list').querySelectorAll('.thread-options').forEach(el => { el.hidden = true; }); box.hidden = !show; }
         else if (button.dataset.rename) { state.rename = button.dataset.rename; $('rename-input').value = state.threads.find(t => t.id === state.rename)?.title || ''; open('rename-dialog'); }
-        else if (button.dataset.delete) { const id = button.dataset.delete; confirmDelete('이 대화와 첨부 파일을 삭제합니다. 저장한 메모리는 유지돼요.', async () => { if (state.runs.has(id)) throw new Error('답변을 중지한 뒤 삭제해 주세요.'); const data = await api('/threads/' + id, { method: 'DELETE' }); state.threads = data.threads; state.loaded.delete(id); state.drafts.delete(id); if (state.active === id) { state.active = null; restoreDraft(); renderChat(true); } renderHistory(); cache(); toast('대화를 삭제했어요.'); }); }
+        else if (button.dataset.delete) { const id = button.dataset.delete; confirmDelete('이 대화와 첨부 파일을 삭제합니다. 저장한 메모리는 유지돼요.', async () => { if (state.runs.has(id)) throw new Error('답변을 중지한 뒤 삭제해 주세요.'); await Device.remove(state.profile.uid, id); state.threads = await Device.list(state.profile.uid); state.loaded.delete(id); state.drafts.delete(id); if (state.active === id) { state.active = null; restoreDraft(); renderChat(true); } renderHistory(); toast('대화를 삭제했어요.'); }); }
     });
-    $('rename-form').addEventListener('submit', async event => { event.preventDefault(); try { const title = $('rename-input').value.trim(); if (!title) return; const data = await api('/threads/' + state.rename, { method: 'PATCH', body: { title } }); state.threads = data.threads; if (state.loaded.has(state.rename)) state.loaded.get(state.rename).title = title; close('rename-dialog'); renderHistory(); renderChat(); cache(); } catch (error) { toast(error.message); } });
+    $('rename-form').addEventListener('submit', async event => { event.preventDefault(); try { const title = $('rename-input').value.trim(); if (!title) return; const thread = await Device.get(state.profile.uid, state.rename); if (!thread) throw new Error('이 기기에 저장된 대화를 찾지 못했어요.'); thread.title = title; thread.updated = Date.now(); await Device.save(state.profile.uid, thread); state.threads = await Device.list(state.profile.uid); if (state.loaded.has(state.rename)) state.loaded.get(state.rename).title = title; close('rename-dialog'); renderHistory(); renderChat(); } catch (error) { toast(error.message); } });
     $('confirm-cancel').addEventListener('click', () => { confirmAction = null; close('confirm-dialog'); });
     $('confirm-delete').addEventListener('click', async () => { const action = confirmAction; confirmAction = null; close('confirm-dialog'); if (action) try { await action(); } catch (error) { toast(error.message); } });
     $('memory-form').addEventListener('submit', async event => {
         event.preventDefault(); const text = $('memory-text').value.trim(); if (!text) return;
         $('memory-save').disabled = true;
-        try { const data = await api('/memory', { method: 'POST', body: { action: 'save', id: state.editingMemory, text } }); state.memories = data.memories; state.editingMemory = null; $('memory-text').value = ''; $('memory-save').textContent = '추가하기'; $('memory-cancel').hidden = true; renderMemories(); cache(); toast('메모리를 저장했어요.'); } catch (error) { toast(error.message); } finally { $('memory-save').disabled = false; }
+        try { const data = await api('/memory', { method: 'POST', body: { action: 'save', id: state.editingMemory, text } }); state.memories = data.memories; state.editingMemory = null; $('memory-text').value = ''; $('memory-save').textContent = '추가하기'; $('memory-cancel').hidden = true; renderMemories(); toast('메모리를 저장했어요.'); } catch (error) { toast(error.message); } finally { $('memory-save').disabled = false; }
     });
     $('memory-cancel').addEventListener('click', () => { state.editingMemory = null; $('memory-text').value = ''; $('memory-save').textContent = '추가하기'; $('memory-cancel').hidden = true; });
-    $('memory-enabled').addEventListener('change', async event => { const enabled = event.target.checked; event.target.disabled = true; try { const data = await api('/settings', { method: 'PATCH', body: { memoryEnabled: enabled } }); state.settings = data.settings; cache(); } catch (error) { toast(error.message); } finally { event.target.disabled = false; renderMemories(); } });
+    $('memory-enabled').addEventListener('change', async event => { const enabled = event.target.checked; event.target.disabled = true; try { const data = await api('/settings', { method: 'PATCH', body: { memoryEnabled: enabled } }); state.settings = data.settings; } catch (error) { toast(error.message); } finally { event.target.disabled = false; renderMemories(); } });
     $('memory-list').addEventListener('click', event => {
         const button = event.target.closest('button'); if (!button) return;
         if (button.dataset.editMemory) { const memory = state.memories.find(m => m.id === button.dataset.editMemory); if (!memory) return; state.editingMemory = memory.id; $('memory-text').value = memory.text; $('memory-save').textContent = '수정하기'; $('memory-cancel').hidden = false; $('memory-text').focus(); }
-        else if (button.dataset.deleteMemory) confirmDelete('이 메모리를 삭제하면 다음 답변부터 참고하지 않아요.', async () => { const data = await api('/memory', { method: 'POST', body: { action: 'delete', id: button.dataset.deleteMemory } }); state.memories = data.memories; renderMemories(); cache(); });
+        else if (button.dataset.deleteMemory) confirmDelete('이 메모리를 삭제하면 다음 답변부터 참고하지 않아요.', async () => { const data = await api('/memory', { method: 'POST', body: { action: 'delete', id: button.dataset.deleteMemory } }); state.memories = data.memories; renderMemories(); });
     });
-    $('memory-clear').addEventListener('click', () => confirmDelete('저장한 메모리를 모두 삭제합니다. 대화 기록은 유지돼요.', async () => { const data = await api('/memory', { method: 'POST', body: { action: 'clear' } }); state.memories = data.memories; renderMemories(); cache(); }));
+    $('memory-clear').addEventListener('click', () => confirmDelete('저장한 메모리를 모두 삭제합니다. 대화 기록은 유지돼요.', async () => { const data = await api('/memory', { method: 'POST', body: { action: 'clear' } }); state.memories = data.memories; renderMemories(); }));
     $('retry-button').addEventListener('click', () => { if ($('retry-button').dataset.login) { if (window.parent !== window) window.parent.location.href = 'login.html'; else location.href = 'login.html'; } else if (!state.ready) bootstrap(); else if (currentThread()?.messages.some(m => m.role === 'user')) submit(true); else bootstrap(); });
     for (const dialog of document.querySelectorAll('dialog')) dialog.addEventListener('click', event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
     window.visualViewport?.addEventListener('resize', () => { viewport(); clearTimeout(resizeTimer); resizeTimer = setTimeout(viewport, 180); }, { passive: true });

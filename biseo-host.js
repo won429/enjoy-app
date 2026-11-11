@@ -35,7 +35,7 @@
         if (!user) return;
         if (account !== user.uid) {
             account = user.uid;
-            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261111-veron-v2-1');
+            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261111-veron-device-1');
         }
         frame.contentWindow.veronRefreshProfile?.();
         resize();
@@ -53,6 +53,7 @@
     window.addEventListener('message', event => {
         if (event.origin !== location.origin || event.source !== frame.contentWindow) return;
         if (event.data?.type === 'enjoy:navigate-home') window.goHome();
+        if (event.data?.type === 'veron:appearance' && typeof event.data.conversation === 'boolean') screen.classList.toggle('has-conversation', event.data.conversation);
     });
     window.addEventListener('resize', resize, { passive: true });
     window.addEventListener('orientationchange', () => {
