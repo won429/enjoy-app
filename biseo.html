@@ -7,9 +7,9 @@
     <title>베론</title>
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="veron.css?v=20261111-gemma-search-1">
+    <link rel="stylesheet" href="veron.css?v=20261111-model-picker-1">
     <script src="veron-local.js?v=20261111-gemma-search-1" defer></script>
-    <script src="veron.js?v=20261111-gemma-search-1" defer></script>
+    <script src="veron.js?v=20261111-model-picker-1" defer></script>
 </head>
 <body>
     <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -35,7 +35,17 @@
     <div id="enjoy-page" class="veron-page">
         <header class="topbar">
             <button type="button" class="icon-button menu-button" id="thread-list-button" aria-label="대화 기록 열기"><svg><use href="#i-menu"/></svg></button>
-            <div class="brand"><span>베론</span><span id="active-thread-title" class="active-title"></span></div>
+            <div class="brand">
+                <div class="model-picker">
+                    <button type="button" id="model-button" class="model-button" aria-label="모델 선택, VERON 1-26B" aria-haspopup="menu" aria-expanded="false" aria-controls="model-menu"><span class="model-brand">VERON</span><span id="model-version" class="model-version">1-26B</span><svg class="model-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                    <div id="model-menu" class="model-menu" role="menu" aria-label="베론 모델 선택" hidden>
+                        <button type="button" role="menuitemradio" aria-checked="true" data-model="veron-1"><span><strong>VERON</strong> <span>1-26B</span></span><svg class="model-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button>
+                        <button type="button" role="menuitemradio" aria-checked="false" data-model="veron-2"><span><strong>VERON</strong> <span>2-32B</span></span><svg class="model-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button>
+                        <button type="button" role="menuitemradio" aria-checked="false" aria-description="출시 전" data-model="veron-2.1" class="model-unreleased"><span><strong>VERON</strong> <span>2.1-EXAONE</span></span></button>
+                    </div>
+                </div>
+                <span id="active-thread-title" class="active-title"></span>
+            </div>
             <button type="button" class="icon-button" id="new-chat-button" aria-label="새 대화"><svg><use href="#i-new"/></svg></button>
             <button type="button" class="profile-button" id="profile-button" aria-label="프로필 및 메모리 설정"><span id="profile-initial">나</span><img id="profile-image" alt="" hidden></button>
         </header>
@@ -89,6 +99,7 @@
     </dialog>
     <dialog id="rename-dialog" class="small-dialog" aria-labelledby="rename-heading"><form id="rename-form"><h2 id="rename-heading">대화 이름 변경</h2><label class="sr-only" for="rename-input">대화 이름</label><input id="rename-input" maxlength="80" required><div class="dialog-actions"><button type="button" class="text-button" data-close="rename-dialog">취소</button><button type="submit" class="primary-button">저장</button></div></form></dialog>
     <dialog id="confirm-dialog" class="small-dialog" aria-labelledby="confirm-heading"><h2 id="confirm-heading">삭제할까요?</h2><p id="confirm-description"></p><div class="dialog-actions"><button type="button" class="text-button" id="confirm-cancel">취소</button><button type="button" class="primary-button destructive" id="confirm-delete">삭제</button></div></dialog>
+    <dialog id="model-release-dialog" class="small-dialog model-release-dialog" aria-labelledby="model-release-heading" aria-describedby="model-release-description"><h2 id="model-release-heading">출시 전</h2><p id="model-release-description">VERON 2.1-EXAONE은 준비 중이에요.</p><div class="dialog-actions"><button type="button" class="primary-button" data-close="model-release-dialog" autofocus>확인</button></div></dialog>
     <div id="toast" class="toast" role="status" hidden></div>
 </body>
 </html>

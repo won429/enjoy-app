@@ -8,6 +8,9 @@
     const embedded = window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1';
     document.documentElement.classList.toggle('biseo-embedded', embedded);
     const state = { profile: null, threads: [], loaded: new Map(), active: null, memories: [], settings: { memoryEnabled: true }, attachments: [], runs: new Map(), drafts: new Map(), ready: false, editingMemory: null, rename: null, auth: null };
+    const modelVersions = { 'veron-1': '1-26B', 'veron-2': '2-32B' };
+    state.model = 'veron-1';
+    try { const saved = localStorage.getItem('veron-model'); if (Object.hasOwn(modelVersions, saved)) state.model = saved; } catch { /* Model selection also works without browser preferences. */ }
     const Device = window.VeronDeviceStore;
     const previews = new Map();
     let toastTimer, resizeTimer, fetchSerial = 0, confirmAction = null, booting = null, scrollPending = false;
@@ -183,7 +186,7 @@
         })();
         return booting;
     }
-    async function chatPayload(thread, replyId, account) {
+    async function chatPayload(thread, replyId, account, model) {
         const source = thread.messages.filter(message => message.id !== replyId).slice(-30);
         const selected = new Set(); let total = 0;
         for (const message of [...source].reverse()) for (const file of message.attachments || []) {
@@ -203,7 +206,7 @@
             }
             messages.push({ id: message.id, role: message.role, text: message.text + (omitted.length ? '\n[이전 첨부 파일은 이번 요청 크기 제한으로 생략됨: ' + omitted.join(', ') + ']' : ''), attachments, at: message.at, status: message.status });
         }
-        return { threadId: thread.id, title: thread.title, messageId: source.at(-1).id, messages };
+        return { threadId: thread.id, title: thread.title, messageId: source.at(-1).id, messages, model };
     }
     function inline(text) {
         const code = [];
@@ -339,6 +342,7 @@
         if (state.runs.has(state.active)) return stop();
         if (!state.ready) return;
         const account = state.profile.uid;
+        const model = state.model;
         let thread = currentThread();
         let message;
         if (regenerate) {
@@ -375,7 +379,7 @@
         };
         try {
             await Device.save(account, thread);
-            const payload = await chatPayload(thread, replyId, account);
+            const payload = await chatPayload(thread, replyId, account, model);
             const response = await api('/device-chat', { method: 'POST', body: payload, signal: run.controller.signal, stream: true, account });
             const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = '';
             for (;;) {
@@ -517,7 +521,13 @@
         $('memory-clear').hidden = !state.memories.length;
         $('memory-shortcut').setAttribute('aria-label', '메모리 설정, ' + (state.settings.memoryEnabled ? '사용 중' : '꺼짐'));
     }
-    function open(id) { closeAttach(); if (!$(id).open) $(id).showModal(); }
+    function renderModel() {
+        $('model-version').textContent = modelVersions[state.model];
+        $('model-button').setAttribute('aria-label', '모델 선택, VERON ' + modelVersions[state.model]);
+        for (const button of $('model-menu').querySelectorAll('[data-model]')) button.setAttribute('aria-checked', String(button.dataset.model === state.model));
+    }
+    function closeModelMenu() { $('model-menu').hidden = true; $('model-button').setAttribute('aria-expanded', 'false'); }
+    function open(id) { closeAttach(); closeModelMenu(); if (!$(id).open) $(id).showModal(); }
     function close(id) { if ($(id).open) $(id).close(); }
     function memoryDialog() { close('thread-drawer'); profile(); renderMemories(); open('memory-dialog'); }
     function confirmDelete(description, action) { $('confirm-description').textContent = description; confirmAction = action; open('confirm-dialog'); }
@@ -538,6 +548,31 @@
         if (nearBottom()) scrollBottom(true);
     }
     $('chat-form').addEventListener('submit', event => { event.preventDefault(); submit(); });
+    $('model-button').addEventListener('click', () => {
+        const show = $('model-menu').hidden;
+        closeAttach(); $('model-menu').hidden = !show; $('model-button').setAttribute('aria-expanded', String(show));
+        if (show) $('model-menu').querySelector('[aria-checked="true"]').focus();
+    });
+    $('model-menu').addEventListener('click', event => {
+        const button = event.target.closest('[data-model]'); if (!button) return;
+        closeModelMenu();
+        if (button.dataset.model === 'veron-2.1') return open('model-release-dialog');
+        state.model = button.dataset.model;
+        try { localStorage.setItem('veron-model', state.model); } catch { /* Optional browser preference. */ }
+        renderModel(); $('model-button').focus();
+    });
+    $('model-button').addEventListener('keydown', event => {
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); if ($('model-menu').hidden) $('model-button').click(); }
+    });
+    $('model-menu').addEventListener('keydown', event => {
+        const buttons = [...$('model-menu').querySelectorAll('[data-model]')];
+        const index = buttons.indexOf(document.activeElement);
+        if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+            event.preventDefault();
+            buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length].focus();
+        } else if (event.key === 'Escape') { event.preventDefault(); closeModelMenu(); $('model-button').focus(); }
+        else if (event.key === 'Tab') closeModelMenu();
+    });
     $('chat-input').addEventListener('input', () => { updateInput(); saveDraft(); });
     $('chat-input').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && !matchMedia('(pointer: coarse)').matches) { event.preventDefault(); submit(); } });
     $('chat-input').addEventListener('paste', event => { if (event.clipboardData?.files.length) { event.preventDefault(); addFiles(event.clipboardData.files); } });
@@ -552,8 +587,8 @@
     $('pick-photo').addEventListener('click', () => { closeAttach(); $('photo-input').click(); }); $('pick-file').addEventListener('click', () => { closeAttach(); $('file-input').click(); });
     for (const id of ['photo-input', 'file-input']) $(id).addEventListener('change', event => { addFiles(event.target.files); event.target.value = ''; });
     $('attachment-list').addEventListener('click', event => { const target = event.target.closest('[data-remove]'); if (target) removeAttachment(target.dataset.remove); });
-    document.addEventListener('click', event => { if (!event.target.closest('.attach-anchor')) closeAttach(); const control = event.target.closest('[data-close]'); if (control) close(control.dataset.close); });
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeAttach(); });
+    document.addEventListener('click', event => { if (!event.target.closest('.attach-anchor')) closeAttach(); if (!event.target.closest('.model-picker')) closeModelMenu(); const control = event.target.closest('[data-close]'); if (control) close(control.dataset.close); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeAttach(); closeModelMenu(); } });
     document.addEventListener('dragover', event => { if (event.dataTransfer?.types.includes('Files')) event.preventDefault(); });
     document.addEventListener('drop', event => { if (event.dataTransfer?.files.length) { event.preventDefault(); addFiles(event.dataTransfer.files); } });
     $('messages').addEventListener('click', event => {
@@ -594,5 +629,5 @@
     window.addEventListener('resize', viewport, { passive: true });
     window.addEventListener('pagehide', saveDraft);
     window.addEventListener('online', () => { if (!state.ready) bootstrap(); });
-    profile(); viewport(); renderChat(); renderHistory(); bootstrap().then(restoreDraft);
+    renderModel(); profile(); viewport(); renderChat(); renderHistory(); bootstrap().then(restoreDraft);
 })();
