@@ -8,7 +8,7 @@
     const embedded = window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1';
     document.documentElement.classList.toggle('biseo-embedded', embedded);
     const state = { profile: null, threads: [], loaded: new Map(), active: null, memories: [], settings: { memoryEnabled: true }, attachments: [], runs: new Map(), drafts: new Map(), ready: false, editingMemory: null, rename: null, auth: null };
-    const modelVersions = { 'veron-1': '1-26B', 'veron-2': '2-32B' };
+    const modelVersions = { 'veron-1': '1-26B', 'veron-2': '2-31B' };
     state.model = 'veron-1';
     try { const saved = localStorage.getItem('veron-model'); if (Object.hasOwn(modelVersions, saved)) state.model = saved; } catch { /* Model selection also works without browser preferences. */ }
     const Device = window.VeronDeviceStore;
