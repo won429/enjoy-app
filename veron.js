@@ -616,10 +616,35 @@
         for (const button of $('model-menu').querySelectorAll('[data-model]')) button.setAttribute('aria-checked', String(button.dataset.model === state.model));
     }
     function closeModelMenu() { $('model-menu').hidden = true; $('model-button').setAttribute('aria-expanded', 'false'); }
+    function renderWorkerUsage(data, number, time) {
+        $('usage-description').textContent = '모든 멤버가 함께 사용하는 베론 서버의 사용량이에요.';
+        $('usage-status').textContent = data.message || '';
+        $('usage-charts').innerHTML = data.models.map(model => {
+            const rows = model.metrics.map(metric => {
+                const used = Number.isFinite(metric.used) ? number(metric.used) + ' ' + metric.unit : '토큰 미보고';
+                const period = metric.key === 'rpd' ? '태평양 시간 자정부터' : '이번 분 집계';
+                const limit = metric.referenceLimit ? '한도 참고 ' + metric.referenceLimit + ' ' + metric.unit : '한도 확인 필요';
+                return `<div class="usage-metric">
+                    <div class="usage-metric-heading"><h4>${esc(metric.label)}</h4><span class="usage-count">${esc(used)}</span></div>
+                    <div class="usage-metric-caption"><span>${period}</span><strong>${esc(limit)}</strong></div>
+                </div>`;
+            }).join('');
+            return `<section class="usage-model" aria-label="${esc(model.name)} 사용량"><h3>${esc(model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
+        }).join('');
+        const coverage = time(data.coverageStart);
+        const reference = time(data.referenceCapturedAt);
+        $('usage-note').textContent = (coverage ? coverage + ' 이후 ' : '') + '이 서버에서 Google로 보낸 요청 중 정상 응답을 받은 건을 집계해요.'
+            + (reference ? ' 한도 참고값은 AI Studio에서 ' + reference + '에 마지막으로 확인한 값이에요.' : '');
+        $('usage-reset').textContent = '일일 집계 초기화: ' + time(data.resetAt) + ' (한국 시간)';
+        $('usage-updated').textContent = time(data.fetchedAt) + ' 서버 조회';
+        $('usage-charts').setAttribute('aria-busy', 'false');
+    }
     function renderUsage(data) {
         const studio = data.source === 'google-ai-studio-browser';
         const number = value => Number.isFinite(value) && value >= 0 ? value.toLocaleString('ko-KR') : '—';
         const time = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: false }).format(new Date(value)) : '';
+        if (data.source === 'veron-worker') return renderWorkerUsage(data, number, time);
+        $('usage-description').textContent = '모든 멤버가 함께 사용하는 전체 사용량이에요.';
         $('usage-status').textContent = data.message || '';
         $('usage-charts').innerHTML = (data.models || []).map(model => {
             const rows = model.metrics.map(metric => {
