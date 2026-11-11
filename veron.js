@@ -209,6 +209,88 @@
         }
         return { threadId: thread.id, title: thread.title, messageId: source.at(-1).id, messages, model };
     }
+    function localWeatherDay(text) {
+        // Match local questions without treating a named place as the device location.
+        const location = /^(?:(?:내\s*(?:현재\s*)?|현재\s*|지금\s*)위치(?:에서|의|\s*기준(?:으로)?)?|우리\s*동네(?:의)?|여기(?:에서|서|의)?|이\s*근처(?:의)?|밖에)\s*/;
+        const question = text.trim().replace(/[.!?？。！]+$/u, '').replace(/^베론아[,\s]+/, '').replace(location, '');
+        const timePrefix = /^(오늘|내일|모레|지금|현재)\s*/.exec(question);
+        const query = question.slice(timePrefix?.[0].length ?? 0).replace(location, '').trim();
+        const weather = /^날씨(?:가|를|는)?(?:\s*좀)?(?:\s*(?:어때(?:요)?|어떤가요|어떨까(?:요)?|어떻게\s*돼(?:요)?|알려\s*(?:줘|주세요|줄래(?:요)?|줄\s*수\s*있어(?:요)?)|(?:보여|확인해|검색해)\s*(?:줘|주세요)|예보))?$/;
+        const temperature = /^(?:기온(?:은|이)?(?:\s*(?:어때(?:요)?|알려\s*(?:줘|주세요)))?|(?:기온(?:은|이)?\s*)?몇\s*도(?:야|예요|인가요)?)$/;
+        const precipitation = /^(?:(?:비|눈)(?:가|이)?\s*(?:와(?:요)?|오니|오나요|올까(?:요)?|올\s*것\s*같아(?:요)?)|우산\s*(?:챙겨야\s*(?:돼|되나요)|필요해(?:요)?))$/;
+        if (!weather.test(query) && !temperature.test(query) && !precipitation.test(query)) return null;
+        return { 내일: 1, 모레: 2 }[timePrefix?.[1]] ?? 0;
+    }
+    function weatherCoordinates(signal) {
+        return new Promise(resolve => {
+            if (!navigator.geolocation || signal.aborted) return resolve(null);
+            const finish = value => {
+                clearTimeout(timeout);
+                signal.removeEventListener('abort', cancel);
+                resolve(value);
+            };
+            const cancel = () => finish(null);
+            const timeout = setTimeout(cancel, 20000);
+            signal.addEventListener('abort', cancel, { once: true });
+            try {
+                navigator.geolocation.getCurrentPosition(({ coords }) => {
+                    finish({ latitude: coords.latitude.toFixed(2), longitude: coords.longitude.toFixed(2) });
+                }, cancel, { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 });
+            } catch { cancel(); }
+        });
+    }
+    const weatherConditions = {
+        0: '맑음', 1: '대체로 맑음', 2: '구름 조금', 3: '흐림', 45: '안개', 48: '안개',
+        51: '이슬비', 53: '이슬비', 55: '이슬비', 56: '어는 이슬비', 57: '어는 이슬비',
+        61: '약한 비', 63: '비', 65: '강한 비', 66: '어는 비', 67: '어는 비',
+        71: '약한 눈', 73: '눈', 75: '강한 눈', 77: '눈 알갱이',
+        80: '약한 소나기', 81: '소나기', 82: '강한 소나기', 85: '눈 소나기', 86: '강한 눈 소나기',
+        95: '뇌우', 96: '우박을 동반한 뇌우', 97: '강한 뇌우', 99: '우박을 동반한 뇌우'
+    };
+    async function localWeather(day, signal) {
+        const coordinates = await weatherCoordinates(signal);
+        if (signal.aborted) return '';
+        if (!coordinates) return '현재 위치를 확인할 수 없어요. 브라우저에서 위치를 허용하거나, “서울 강남구 날씨”처럼 지역을 알려주세요.';
+        // Send approximate coordinates directly to the weather provider for this lookup.
+        const params = new URLSearchParams({
+            ...coordinates,
+            current: 'temperature_2m,apparent_temperature,weather_code',
+            daily: 'weather_code,temperature_2m_min,temperature_2m_max,precipitation_probability_max',
+            timezone: 'auto',
+            forecast_days: String(day + 1)
+        });
+        const controller = new AbortController();
+        const cancel = () => controller.abort();
+        const timeout = setTimeout(cancel, 7000);
+        signal.addEventListener('abort', cancel, { once: true });
+        try {
+            const response = await fetch('https://api.open-meteo.com/v1/forecast?' + params, {
+                signal: controller.signal, credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer'
+            });
+            if (!response.ok) throw new Error('Weather unavailable');
+            const { current, daily } = await response.json();
+            const date = daily?.time?.[day];
+            const min = daily?.temperature_2m_min?.[day], max = daily?.temperature_2m_max?.[day];
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(min) || !Number.isFinite(max)) throw new Error('Incomplete forecast');
+            const lines = [`**현재 위치 기준 ${['오늘', '내일', '모레'][day]} 날씨** (${date})`];
+            const condition = weatherConditions[daily.weather_code?.[day]];
+            if (day === 0 && Number.isFinite(current?.temperature_2m)) {
+                const time = /^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2})$/.exec(current.time)?.[1];
+                const feelsLike = Number.isFinite(current.apparent_temperature) ? `, 체감 ${Math.round(current.apparent_temperature)}°C` : '';
+                const sky = weatherConditions[current.weather_code];
+                lines.push(`- 현재${time ? ` (현지 ${time})` : ''}: ${sky ? sky + ', ' : ''}${Math.round(current.temperature_2m)}°C${feelsLike}`);
+            }
+            lines.push(`- ${condition ? '예보: ' + condition + ', ' : ''}최저 ${Math.round(min)}°C / 최고 ${Math.round(max)}°C`);
+            const precipitation = daily.precipitation_probability_max?.[day];
+            if (Number.isFinite(precipitation)) lines.push(`- 하루 중 최고 강수 확률: ${Math.round(precipitation)}%`);
+            return lines.join('\n') + '\n\n출처: [Open-Meteo](https://open-meteo.com/)';
+        } catch {
+            return signal.aborted ? '' : '지금은 현재 위치의 날씨를 불러오지 못했어요. 잠시 뒤 다시 시도하거나 지역명을 알려주세요.';
+        } finally {
+            clearTimeout(timeout);
+            signal.removeEventListener('abort', cancel);
+        }
+    }
     function inline(text) {
         const code = [];
         let value = esc(text).replace(/`([^`]+)`/g, (_, c) => { code.push('<code>' + c + '</code>'); return '\u0001' + (code.length - 1) + '\u0001'; });
@@ -379,6 +461,12 @@
             });
         };
         try {
+            const forecastDay = localWeatherDay(message.text);
+            if (forecastDay !== null && !message.attachments?.length) {
+                const forecast = await localWeather(forecastDay, run.controller.signal);
+                if (!run.controller.signal.aborted) assistant.text = forecast;
+                return;
+            }
             await Device.save(account, thread);
             const payload = await chatPayload(thread, replyId, account, model);
             const response = await api('/device-chat', { method: 'POST', body: payload, signal: run.controller.signal, stream: true, account });
