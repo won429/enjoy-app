@@ -665,6 +665,7 @@
     }
     function renderUsage(data) {
         const studio = data.source === 'google-ai-studio-browser';
+        const peak = data.basis === 'period-maximum';
         const number = value => Number.isFinite(value) && value >= 0 ? value.toLocaleString('ko-KR') : '—';
         const time = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: false }).format(new Date(value)) : '';
         if (data.source === 'veron-worker') return renderWorkerUsage(data, number, time);
@@ -674,7 +675,7 @@
             const rows = model.metrics.map(metric => {
                 const known = Number.isFinite(metric.used) && Number.isFinite(metric.limit);
                 const remaining = known ? Math.max(0, metric.limit - metric.used) : null;
-                const percent = studio ? metric.percent : known && metric.limit > 0 ? Math.max(0, Math.min(100, remaining / metric.limit * 100)) : null;
+                const percent = peak ? metric.percent : known && metric.limit > 0 ? Math.max(0, Math.min(100, remaining / metric.limit * 100)) : null;
                 const title = metric.key === 'rpd' ? '일일 요청 한도' : metric.key === 'rpm' ? '분당 요청 한도' : '분당 입력 토큰 한도';
                 let reset = '1분 단위 집계입니다';
                 if (metric.key === 'rpd') {
@@ -687,16 +688,16 @@
                     }
                 }
                 if (data.status === 'paused') reset = '연결 후 확인할 수 있어요';
-                if (studio) reset = '최근 24시간 최대 사용량 / 한도';
-                const status = studio ? (Number.isFinite(percent) ? 'AI Studio 표시값' : '집계 대기') : percent !== null ? Math.round(percent) + '% 남음' : known && metric.limit === 0 ? '사용 불가' : '집계 대기';
-                const count = studio ? metric.display || '— / —' : number(metric.used) + ' / ' + number(metric.limit);
-                const label = title + ': ' + count + metric.unit + ', ' + (studio ? reset : status);
+                if (peak) reset = metric.basis === 'quota-day' ? '오늘 사용량 / 한도' : '최근 24시간 최대 사용량 / 한도';
+                const status = peak ? (Number.isFinite(percent) ? (studio ? 'AI Studio 표시값' : 'Google 집계') : '집계 대기') : percent !== null ? Math.round(percent) + '% 남음' : known && metric.limit === 0 ? '사용 불가' : '집계 대기';
+                const count = peak ? metric.display || '— / —' : number(metric.used) + ' / ' + number(metric.limit);
+                const label = title + ': ' + count + metric.unit + ', ' + (peak ? reset : status);
                 return `<div class="usage-metric"><div class="usage-metric-heading"><h4>${esc(title)}</h4><span class="usage-count">${esc(count)} ${esc(metric.unit)}</span></div><div class="usage-metric-caption"><span>${esc(reset)}</span><strong>${status}</strong></div><div class="usage-track${Number.isFinite(percent) ? '' : ' is-unknown'}" role="img" aria-label="${esc(label)}"><span style="width:${Number.isFinite(percent) ? percent : 0}%"></span></div></div>`;
             }).join('');
             return `<section class="usage-model" aria-label="${esc(model.name)} 사용량"><h3>${esc(model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
         }).join('');
         $('usage-charts').setAttribute('aria-busy', 'false');
-        $('usage-note').textContent = studio ? 'AI Studio의 최근 24시간 최대값이며 현재 남은 양을 뜻하지 않아요. K 등 표시 단위는 원문 그대로이며, 막대는 표시값 기준 사용률이에요. Google 반영은 최대 15분 걸릴 수 있어요.' : data.status === 'paused' ? '실제 사용량과 한도는 연결 후 표시됩니다.' : 'Google 집계 기준이며, 실제 사용 후 반영까지 몇 분 정도 걸릴 수 있어요.';
+        $('usage-note').textContent = peak ? 'Google 프로젝트의 실제 집계예요. 일일 요청은 오늘 사용량, 분당 지표는 최근 24시간 최대값이며 반영까지 시간이 걸릴 수 있어요.' : data.status === 'paused' ? '실제 사용량과 한도는 연결 후 표시됩니다.' : 'Google 집계 기준이며, 실제 사용 후 반영까지 몇 분 정도 걸릴 수 있어요.';
         $('usage-reset').textContent = data.status !== 'paused' && data.resetAt ? '일일 한도 초기화: ' + time(data.resetAt) + ' (한국 시간)' : '';
         $('usage-updated').textContent = studio && data.capturedAt ? time(data.capturedAt) + ' 화면 동기화' : data.observedAt ? time(data.observedAt) + ' 집계' : '';
     }
