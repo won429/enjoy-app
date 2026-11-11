@@ -254,6 +254,15 @@
         const content = `${visual}<span><strong>${esc(file.name)}</strong><small>${status}</small></span>`;
         return pending ? `<div class="attachment-chip">${content}<button type="button" class="remove-attachment" data-remove="${esc(file.id)}" aria-label="${esc(file.name)} 첨부 취소">${icon('x')}</button></div>` : `<button type="button" class="attachment-chip" data-file="${esc(file.id)}" aria-label="${esc(file.name)} 열기">${content}</button>`;
     }
+    function groundingHTML(value) {
+        if (!value) return '';
+        const sources = (value.sources || []).filter(source => {
+            try { const url = new URL(source.url); return url.protocol === 'https:' && !url.username && !url.password; } catch { return false; }
+        }).slice(0, 30);
+        const links = sources.map((source, i) => `<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${i + 1}. ${esc(source.title)}</a>`).join('');
+        const suggestions = value.searchEntryPoint ? `<iframe class="search-suggestions" title="Google 검색 제안" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" srcdoc="${esc('<meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src https: data:; base-uri \'none\'; form-action \'none\'"><base target="_blank">' + value.searchEntryPoint)}"></iframe>` : '';
+        return `<div class="answer-grounding"><div class="grounding-status">${value.searched ? '웹 검색을 참고한 답변' : '웹 검색 없이 작성한 답변'}</div>${sources.length ? `<details class="answer-sources"><summary>출처 ${sources.length}개</summary><div>${links}</div></details>` : ''}${suggestions}</div>`;
+    }
     function renderChat(force = false) {
         const thread = currentThread();
         const messages = thread?.messages || [];
@@ -270,7 +279,7 @@
             const pending = run?.replyId === message.id;
             const content = message.text ? markdown(message.text) : pending ? '<div class="typing" aria-label="베론이 생각하는 중"><span></span><span></span><span></span></div>' : '';
             const last = i === messages.length - 1;
-            return `<article class="message assistant" data-message="${esc(message.id)}"><div class="assistant-label"><span>베론</span></div><div class="message-body">${content}</div>${!pending && message.text ? `<div class="message-actions"><button type="button" class="icon-button" data-copy="${esc(message.id)}" aria-label="답변 복사">${icon('copy')}</button>${last ? `<button type="button" class="icon-button" data-action="regenerate" aria-label="다시 답변하기">${icon('retry')}</button>` : ''}<button type="button" class="icon-button" data-remember="${esc(message.id)}" aria-label="답변에서 메모리 추가">${icon('memory')}</button></div>` : ''}${message.status === 'stopped' ? '<div class="message-status">답변을 중지했어요.</div>' : message.status === 'error' ? '<div class="message-status">답변이 중단됐어요. 다시 시도할 수 있어요.</div>' : ''}</article>`;
+            return `<article class="message assistant" data-message="${esc(message.id)}"><div class="assistant-label"><span>베론</span></div><div class="message-body">${content}</div>${groundingHTML(message.grounding)}${!pending && message.text ? `<div class="message-actions"><button type="button" class="icon-button" data-copy="${esc(message.id)}" aria-label="답변 복사">${icon('copy')}</button>${last ? `<button type="button" class="icon-button" data-action="regenerate" aria-label="다시 답변하기">${icon('retry')}</button>` : ''}<button type="button" class="icon-button" data-remember="${esc(message.id)}" aria-label="답변에서 메모리 추가">${icon('memory')}</button></div>` : ''}${message.status === 'stopped' ? '<div class="message-status">답변을 중지했어요.</div>' : message.status === 'error' ? '<div class="message-status">답변이 중단됐어요. 다시 시도할 수 있어요.</div>' : ''}</article>`;
         }).join('');
         if (keepBottom) scrollBottom(true);
         updateInput(); renderHistory(); hydrateImages();
@@ -385,6 +394,7 @@
                         if (state.profile?.uid === account) summary(thread);
                         if (data.memorySaved && state.profile?.uid === account) { state.memories = [data.memorySaved, ...state.memories]; renderMemories(); toast('메모리에 저장했어요.'); }
                     } else if (event === 'delta') { assistant.text += data.text || ''; paint(); }
+                    else if (event === 'grounding') { assistant.grounding = data; }
                     else if (event === 'error') { assistant.status = 'error'; if (state.active === thread.id) showError(data.error); }
                     else if (event === 'done') {
                         run.done = true;

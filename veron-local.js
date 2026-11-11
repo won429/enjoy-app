@@ -47,6 +47,7 @@
             messages: (thread.messages || []).map(message => ({
                 id: message.id || crypto.randomUUID(), role: message.role === 'user' ? 'user' : 'assistant', text: String(message.text || ''),
                 attachments: (message.attachments || []).map(({ id, name, mime, size }) => ({ id, name, mime, size })), at: Number(message.at) || Date.now(), status: message.status || 'complete',
+                ...(message.grounding ? { grounding: message.grounding } : {}),
             })),
         };
     }
