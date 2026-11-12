@@ -8,7 +8,9 @@
     const embedded = window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1';
     document.documentElement.classList.toggle('biseo-embedded', embedded);
     const state = { profile: null, threads: [], loaded: new Map(), active: null, memories: [], settings: { memoryEnabled: true }, attachments: [], runs: new Map(), drafts: new Map(), ready: false, editingMemory: null, rename: null, auth: null };
-    const modelVersions = { 'veron-1': '1-26B', 'veron-2': '1.5-31B' };
+    const modelVersions = { 'veron-1': '1-26B', 'veron-2': '1.5-31B', 'veron-2.1': '2-EXAONE' };
+    const exaoneAttachmentError = 'VERON 2-EXAONE은 사진과 PDF를 직접 읽을 수 없어요. 텍스트·Office 문서를 첨부하거나 다른 모델을 선택해 주세요.';
+    const unsupportedExaoneFile = file => /^image\//i.test(file.mime || file.type || '') || /\.(pdf|png|jpe?g|webp|gif|heic|heif|bmp|svg|avif)$/i.test(file.name || '') || file.mime === 'application/pdf' || file.type === 'application/pdf';
     state.model = 'veron-1';
     try { const saved = localStorage.getItem('veron-model'); if (Object.hasOwn(modelVersions, saved)) state.model = saved; } catch { /* Model selection also works without browser preferences. */ }
     const Device = window.VeronDeviceStore;
@@ -464,6 +466,8 @@
         const account = state.profile.uid;
         const model = state.model;
         let thread = currentThread();
+        const files = regenerate ? thread?.messages.filter(m => m.role === 'user').at(-1)?.attachments || [] : state.attachments;
+        if (model === 'veron-2.1' && files.some(unsupportedExaoneFile)) return toast(exaoneAttachmentError);
         let message;
         if (regenerate) {
             message = thread?.messages.filter(m => m.role === 'user').at(-1);
@@ -483,7 +487,7 @@
         thread.messages.push(assistant); thread.updated = Date.now(); summary(thread);
         const run = { controller: new AbortController(), replyId, messageId: message.id, stopping: false, done: false, phase: message.attachments?.length ? 'reading' : 'thinking' };
         state.runs.set(thread.id, run); renderChat(true);
-        const timer = setTimeout(() => run.controller.abort('timeout'), 100000);
+        const timer = setTimeout(() => run.controller.abort('timeout'), model === 'veron-2.1' ? 165000 : 100000);
         let scheduled = false;
         const paint = () => {
             if (scheduled) return; scheduled = true;
@@ -576,6 +580,7 @@
         const account = state.profile.uid;
         closeAttach();
         for (const original of [...files]) {
+            if (state.model === 'veron-2.1' && unsupportedExaoneFile(original)) { toast(exaoneAttachmentError); continue; }
             if (state.attachments.length >= 4) { toast('파일은 한 번에 4개까지 첨부할 수 있어요.'); break; }
             const draftKey = state.active || 'new';
             const placeholder = { id: 'upload-' + uid(), name: original.name, mime: original.type, size: original.size, uploading: true };
@@ -653,6 +658,11 @@
         $('model-version').textContent = modelVersions[state.model];
         $('model-button').setAttribute('aria-label', '모델 선택, VERON ' + modelVersions[state.model]);
         for (const button of $('model-menu').querySelectorAll('[data-model]')) button.setAttribute('aria-checked', String(button.dataset.model === state.model));
+        const exaone = state.model === 'veron-2.1';
+        $('pick-photo').hidden = exaone;
+        $('attach-button').setAttribute('aria-label', exaone ? '텍스트 또는 Office 문서 첨부' : '사진 또는 파일 첨부');
+        $('attach-menu').querySelector('p').textContent = exaone ? '텍스트·Office 문서 · 파일당 6MB' : '파일당 6MB · 한 번에 4개';
+        $('file-input').accept = (exaone ? '' : 'image/*,.pdf,') + '.docx,.xlsx,.pptx,.txt,.md,.csv,.tsv,.json,.xml,.html,.css,.js,.ts,.py,.swift,.java,.sql,.log,.yaml,.yml,.rtf';
     }
     function closeModelMenu() { setMenuExpanded('model-menu', 'model-button', false); }
     function renderWorkerUsage(data, number, time) {
@@ -827,7 +837,7 @@
     $('model-menu').addEventListener('click', event => {
         const button = event.target.closest('[data-model]'); if (!button) return;
         closeModelMenu();
-        if (button.dataset.model === 'veron-2.1') return open('model-release-dialog');
+        if (!Object.hasOwn(modelVersions, button.dataset.model)) return;
         state.model = button.dataset.model;
         try { localStorage.setItem('veron-model', state.model); } catch { /* Optional browser preference. */ }
         renderModel(); $('model-button').focus();
