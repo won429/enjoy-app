@@ -503,7 +503,7 @@
         };
         try {
             const forecastDay = localWeatherDay(message.text);
-            if (forecastDay !== null && !message.attachments?.length) {
+            if (model !== 'veron-2.1' && forecastDay !== null && !message.attachments?.length) {
                 updateProgress(thread, run, 'weather');
                 const forecast = await localWeather(forecastDay, run.controller.signal);
                 if (!run.controller.signal.aborted) assistant.text = forecast;
