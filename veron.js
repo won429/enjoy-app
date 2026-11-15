@@ -487,7 +487,7 @@
         thread.messages.push(assistant); thread.updated = Date.now(); summary(thread);
         const run = { controller: new AbortController(), replyId, messageId: message.id, stopping: false, done: false, phase: message.attachments?.length ? 'reading' : 'thinking' };
         state.runs.set(thread.id, run); renderChat(true);
-        const timer = setTimeout(() => run.controller.abort('timeout'), model === 'veron-2.1' ? 165000 : 100000);
+        const timer = setTimeout(() => run.controller.abort('timeout'), 285000);
         let scheduled = false;
         const paint = () => {
             if (scheduled) return; scheduled = true;
