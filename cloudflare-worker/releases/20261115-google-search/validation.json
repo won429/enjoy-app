@@ -1,0 +1,142 @@
+{
+  "date": "2026-11-15",
+  "baselineDeployment": "2814ad9ca77c43189a83222835ba0cc1",
+  "deployment": {
+    "workerDeployed": true,
+    "deploymentId": "0e9ea71d4b0143c185cc95ec98e77be3",
+    "allOtherSettingsPreserved": true,
+    "allowedOriginsUpdated": [
+      "https://won429.github.io",
+      "https://enjoy-app.pages.dev"
+    ],
+    "bindingsPreserved": 20,
+    "deployedCodeVerified": true,
+    "sha256": "c44d13b23e0c6db237d8c1ebd26a30bddde61ff67d29346cd83792e40ae7ef98"
+  },
+  "tests": {
+    "passed": 100,
+    "failed": 0
+  },
+  "liveChecks": {
+    "googleNonStreaming26": {
+      "status": 500,
+      "durationMs": 307
+    },
+    "googleStreaming26": {
+      "status": 200,
+      "durationMs": 14007,
+      "groundingSourcesReturned": true
+    },
+    "gemma26FullFlow": {
+      "verified": true,
+      "durationMs": 61659,
+      "sources": 16
+    },
+    "gemma31FullFlow": {
+      "durationMs": 49845,
+      "model": "gemma-4-31b-it",
+      "phases": [
+        "searching"
+      ],
+      "sourceCount": 9,
+      "queries": [
+        "LG K-EXAONE 2.5 API 특징",
+        "LG EXAONE 2.5 features API",
+        "LG EXAONE 2.5 model capabilities"
+      ],
+      "answer": "K-EXAONE 2.5 API는 스스로 계획을 세우고 도구를 활용해 업무를 완수하는 '에이전틱 AI' 역량 강화에 초점을 맞춘 기술 검증 모델입니다. 개발자, 스타트업, 기업 등 누구나 API 키를 발급받아 별도 비용 없이 무료로 사용할 수 있습니다.\n\n출처: https://docs.exaone.ai (참고 자료 내 플랫폼으로 언급됨)",
+      "verified": true
+    },
+    "exaoneGoogleFullFlow": {
+      "verified": true,
+      "durationMs": 50877,
+      "sources": 15,
+      "note": "Successful actual native EXAONE -> Google grounding -> EXAONE answer before limiting lookups to one per turn."
+    },
+    "twoLookupTimeoutObserved": {
+      "durationMs": 109086,
+      "fix": "One Google grounding request per EXAONE turn; Google itself can generate multiple web queries."
+    }
+  },
+  "unchanged": [
+    "All existing secret values and 19 other bindings",
+    "Account data, memory, files and usage popup",
+    "Selected final answer models"
+  ],
+  "removed": [
+    "Tavily requests",
+    "Temporary diagnostic endpoint"
+  ],
+  "frontendChanges": [
+    "Search/answer-compatible request deadline",
+    "Cache version updates"
+  ],
+  "browserFixture": {
+    "models": [
+      "VERON 1-26B",
+      "VERON 1.5-31B",
+      "VERON 2-EXAONE"
+    ],
+    "completedAnswers": true,
+    "searchBadges": true,
+    "expandedSourceLinks": true,
+    "interruptedMessageAbsent": true
+  },
+  "authChecks": {
+    "deviceWithoutAuth": 401,
+    "usageWithoutAuth": 401,
+    "preflight": 204,
+    "removedDiagnostic": 404
+  },
+  "streamErrorRecovery": {
+    "fixed": "HTTP 200 responses containing Google errors now preserve status and activate the alternate-model path; 429 and RetryInfo remain rate-limited.",
+    "regressionCases": true
+  },
+  "latestProductionLegacyCheck": {
+    "searched": true,
+    "sourceCount": 9,
+    "errorCode": null,
+    "replyPresent": true
+  },
+  "intentionalConfigurationChange": {
+    "name": "ALLOWED_ORIGINS",
+    "addedVerifiedOwnedSite": "https://enjoy-app.pages.dev"
+  },
+  "ownedSiteOriginChecks": {
+    "cloudflarePagesBlockedBefore": 403,
+    "cloudflarePagesPreflightAfter": 204,
+    "cloudflarePagesWithoutAuthAfter": 401,
+    "untrustedOriginAfter": 403,
+    "sameFrontendHashOnBothSites": true
+  },
+  "publishedFrontendCommit": "096e448bbb79122de3db5ea8b0480e5ac6694955",
+  "publishedFrontendFiles": [
+    {
+      "file": "veron.js",
+      "published": true,
+      "sha256": "a165800851686d2ad40e7de9da8087200f0cc28f57165e9c10cd814dcfe7dc28"
+    },
+    {
+      "file": "biseo.html",
+      "published": true,
+      "sha256": "dd4dd6611bff55859502e32428c8369ec3dfeeb80b06e53f3c5149495bd1791f"
+    },
+    {
+      "file": "biseo-host.js",
+      "published": true,
+      "sha256": "4da207337100e3430d612ca46bdc4d25672586770227c7335c8527fed3a6b612"
+    },
+    {
+      "file": "index.html",
+      "published": true,
+      "sha256": "5b427f276058098c2d26c7f8be4cc14f65ff9198eb246653c2172e2d81ab32be"
+    }
+  ],
+  "retryPolicy": {
+    "maximumGoogleAttempts": 5,
+    "totalSearchDeadlineMs": 105000,
+    "noSourceFirstAttempt": "retry small model with explicit Google search instruction",
+    "serverFailure": "alternate between existing Google models",
+    "quota": "honor provider RetryInfo and Retry-After"
+  }
+}
