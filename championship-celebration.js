@@ -10,10 +10,9 @@
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     // Reference: blue/silver radial fireworks, falling glitter and a logo on each rising shell.
     const colors = ['#1766dc', '#287cf0', '#6ab4ff', '#b9cfe8', '#e6edf7', '#ffffff'];
-    let shown = false, running = false, frame = 0, lastTime = 0, nextLaunch = 0;
-    let width = 0, height = 0, launches = 0, previousFocus = null, overflow = '';
+    let running = false, frame = 0, lastTime = 0, nextLaunch = 0;
+    let width = 0, height = 0, launches = 0, overflow = '';
     let rockets = [], particles = [], flashes = [];
-    let unsubscribe = null;
     const random = (min, max) => min + Math.random() * (max - min);
 
     function resize() {
@@ -163,28 +162,20 @@
         frame = window.requestAnimationFrame(tick);
     }
 
-    function cleanup() {
+    function dismiss() {
+        dialog.close();
         pause();
         rockets = []; particles = []; flashes = [];
         ctx?.clearRect(0, 0, width, height);
         dialog.classList.remove('is-revealing');
         document.body.style.overflow = overflow;
         window.removeEventListener('resize', resize);
-        const focusTarget = previousFocus?.isConnected && previousFocus !== document.body
-            ? previousFocus : document.querySelector('#home-tabs [data-home-tab="home"]');
-        focusTarget?.focus({ preventScroll: true });
+        document.querySelector('#home-tabs [data-home-tab="baseball"]')?.focus({ preventScroll: true });
     }
 
-    function tryOpen() {
-        if (shown || document.hidden) return;
-        const home = document.getElementById('home-screen');
-        const loader = document.getElementById('app-loader');
-        if (!home || home.classList.contains('hidden') || window.homeActiveTab !== 'home') return;
-        if (loader && !loader.hidden && getComputedStyle(loader).display !== 'none') return;
-        shown = true;
-        readyObserver.disconnect();
-        unsubscribe?.();
-        previousFocus = document.activeElement;
+    window.showLionsChampionship = function () {
+        if (dialog.open) return;
+        launches = 0;
         overflow = document.body.style.overflow;
         dialog.showModal();
         document.body.style.overflow = 'hidden';
@@ -193,25 +184,14 @@
         closeButton.focus({ preventScroll: true });
         window.addEventListener('resize', resize);
         resume();
-    }
+    };
 
-    closeButton.addEventListener('click', () => dialog.close());
-    dialog.addEventListener('cancel', event => { event.preventDefault(); dialog.close(); });
-    dialog.addEventListener('close', cleanup);
+    closeButton.addEventListener('click', dismiss);
+    dialog.addEventListener('cancel', event => { event.preventDefault(); dismiss(); });
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) pause();
-        else if (dialog.open) resume();
-        else tryOpen();
+        else resume();
     });
     window.addEventListener('pagehide', pause);
     window.addEventListener('pageshow', resume);
-    const readyObserver = new MutationObserver(tryOpen);
-    for (const id of ['app-loader', 'home-screen', 'apple-tv-banner']) {
-        const element = document.getElementById(id);
-        if (element) readyObserver.observe(element, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
-    }
-    if (window.enjoyAppLoading?.subscribe) {
-        unsubscribe = window.enjoyAppLoading.subscribe(() => window.queueMicrotask(tryOpen));
-    }
-    tryOpen();
 })();
