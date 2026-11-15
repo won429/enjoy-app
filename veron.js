@@ -665,6 +665,20 @@
         $('file-input').accept = (exaone ? '' : 'image/*,.pdf,') + '.docx,.xlsx,.pptx,.txt,.md,.csv,.tsv,.json,.xml,.html,.css,.js,.ts,.py,.swift,.java,.sql,.log,.yaml,.yml,.rtf';
     }
     function closeModelMenu() { setMenuExpanded('model-menu', 'model-button', false); }
+    function exaoneUsageHTML(data, number, time) {
+        if (!data) return '';
+        const rows = (data.metrics || []).map(metric => {
+            const known = Number.isFinite(metric.used) && Number.isFinite(metric.remaining);
+            const count = number(metric.used) + ' / ' + number(metric.limit);
+            const caption = known ? '마지막 API 응답 기준' : metric.stale ? '다음 대화 요청 후 갱신돼요' : 'API 사용량 확인 대기';
+            const remaining = known ? number(metric.remaining) + '회 남음' : '남은 횟수 확인 대기';
+            const percent = known && metric.limit > 0 ? Math.min(100, Math.max(0, metric.remaining / metric.limit * 100)) : null;
+            return `<div class="usage-metric"><div class="usage-metric-heading"><h4>${esc(metric.label)}</h4><span class="usage-count">${esc(count)} 회</span></div><div class="usage-metric-caption"><span>${esc(caption)}</span><strong>${esc(remaining)}</strong></div><div class="usage-track${percent === null ? ' is-unknown' : ''}" role="img" aria-label="${esc(metric.label + ': ' + count + '회, ' + remaining)}"><span style="width:${percent === null ? 0 : percent}%"></span></div></div>`;
+        }).join('');
+        const observed = time(data.observedAt);
+        const note = observed ? observed + ' API 응답에서 확인한 한도예요. 대화 요청 후 갱신됩니다.' : 'EXAONE에 대화를 보내면 API가 알려준 사용량과 한도가 표시돼요.';
+        return `<section class="usage-model" aria-label="VERON 2-EXAONE 사용량"><h3>VERON 2-EXAONE</h3><div class="usage-limit-card">${rows}</div><p class="usage-metric-caption">${esc(note)}</p></section>`;
+    }
     function renderWorkerUsage(data, number, time) {
         $('usage-description').textContent = '모든 멤버가 함께 사용하는 베론 서버의 사용량이에요.';
         $('usage-status').textContent = (data.message || '').replace(/Google AI Studio|Google Cloud Monitoring|AI Studio|Google|구글/gi, '베론');
@@ -679,12 +693,12 @@
                 </div>`;
             }).join('');
             return `<section class="usage-model" aria-label="${esc(model.id === 'veron-2' ? 'VERON 1.5-31B' : model.name)} 사용량"><h3>${esc(model.id === 'veron-2' ? 'VERON 1.5-31B' : model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
-        }).join('');
+        }).join('') + exaoneUsageHTML(data.exaone, number, time);
         const coverage = time(data.coverageStart);
         const reference = time(data.referenceCapturedAt);
-        $('usage-note').textContent = (coverage ? coverage + ' 이후 ' : '') + '이 서버에서 AI로 보낸 요청 중 정상 응답을 받은 건을 집계해요.'
+        $('usage-note').textContent = (data.exaone ? 'VERON 1·1.5 기준: ' : '') + (coverage ? coverage + ' 이후 ' : '') + '이 서버에서 AI로 보낸 요청 중 정상 응답을 받은 건을 집계해요.'
             + (reference ? ' 한도 참고값은 관리 화면에서 ' + reference + '에 마지막으로 확인한 값이에요.' : '');
-        $('usage-reset').textContent = '일일 집계 초기화: ' + time(data.resetAt) + ' (한국 시간)';
+        $('usage-reset').textContent = (data.exaone ? 'VERON 1·1.5 일일 집계 초기화: ' : '일일 집계 초기화: ') + time(data.resetAt) + ' (한국 시간)';
         $('usage-updated').textContent = time(data.fetchedAt) + ' 서버 조회';
         $('usage-charts').setAttribute('aria-busy', 'false');
     }
@@ -720,10 +734,10 @@
                 return `<div class="usage-metric"><div class="usage-metric-heading"><h4>${esc(title)}</h4><span class="usage-count">${esc(count)} ${esc(metric.unit)}</span></div><div class="usage-metric-caption"><span>${esc(reset)}</span><strong>${status}</strong></div><div class="usage-track${Number.isFinite(percent) ? '' : ' is-unknown'}" role="img" aria-label="${esc(label)}"><span style="width:${Number.isFinite(percent) ? percent : 0}%"></span></div></div>`;
             }).join('');
             return `<section class="usage-model" aria-label="${esc(model.id === 'veron-2' ? 'VERON 1.5-31B' : model.name)} 사용량"><h3>${esc(model.id === 'veron-2' ? 'VERON 1.5-31B' : model.name)}</h3><div class="usage-limit-card">${rows}</div></section>`;
-        }).join('');
+        }).join('') + exaoneUsageHTML(data.exaone, number, time);
         $('usage-charts').setAttribute('aria-busy', 'false');
-        $('usage-note').textContent = peak ? '전체 사용량의 실제 집계예요. 일일 요청은 오늘 사용량, 분당 지표는 최근 24시간 최대값이며 반영까지 시간이 걸릴 수 있어요.' : data.status === 'paused' ? '실제 사용량과 한도는 연결 후 표시됩니다.' : '사용량 집계 기준이며, 실제 사용 후 반영까지 몇 분 정도 걸릴 수 있어요.';
-        $('usage-reset').textContent = data.status !== 'paused' && data.resetAt ? '일일 한도 초기화: ' + time(data.resetAt) + ' (한국 시간)' : '';
+        $('usage-note').textContent = (data.exaone ? 'VERON 1·1.5 기준: ' : '') + (peak ? '전체 사용량의 실제 집계예요. 일일 요청은 오늘 사용량, 분당 지표는 최근 24시간 최대값이며 반영까지 시간이 걸릴 수 있어요.' : data.status === 'paused' ? '실제 사용량과 한도는 연결 후 표시됩니다.' : '사용량 집계 기준이며, 실제 사용 후 반영까지 몇 분 정도 걸릴 수 있어요.');
+        $('usage-reset').textContent = data.status !== 'paused' && data.resetAt ? (data.exaone ? 'VERON 1·1.5 일일 한도 초기화: ' : '일일 한도 초기화: ') + time(data.resetAt) + ' (한국 시간)' : '';
         $('usage-updated').textContent = studio && data.capturedAt ? time(data.capturedAt) + ' 화면 동기화' : data.observedAt ? time(data.observedAt) + ' 집계' : '';
     }
     async function loadUsage() {
