@@ -19243,7 +19243,8 @@
 
         function dropScheduleRowsHtml(body) {
             const clock = String.raw`(?:(?:오전|오후)\s*)?(?:[01]?\d|2[0-3])(?:\s*:\s*[0-5]\d|\s*시(?:\s*[0-5]?\d\s*분)?)`;
-            const timed = new RegExp(String.raw`^(${clock}(?:\s*[~–—-]\s*${clock})?)(?=\s|[·:–—-]|$)\s*[·:–—-]?\s*(.*)$`);
+            const boundary = String.raw`[\s·:–—-]|$`;
+            const timed = new RegExp(String.raw`^(?<start>${clock})(?:(?<range>\s*[~∼〜～–—-]\s*${clock})(?=${boundary})|\s*(?<openEnd>[~∼〜～])|(?=${boundary}))\s*[·:–—-]?\s*(?<description>.*)$`);
             const sections = [];
             let entries = [];
             function appendTrack() {
@@ -19255,10 +19256,14 @@
             body.split(/\r?\n/).forEach(function (value) {
                 const line = value.trim();
                 const entry = line.replace(/^[-*•]\s+/, '');
-                const match = entry.match(timed);
-                if (match && match[2]) {
-                    entries.push('<span class="drop-itinerary-time"><span class="drop-itinerary-clock">' + dropEsc(match[1]) +
-                        '</span><span class="drop-itinerary-event">' + dropEsc(match[2]) + '</span></span>');
+                const time = entry.match(timed)?.groups;
+                if (time && (time.description || time.range || time.openEnd)) {
+                    const label = time.start + (time.range || time.openEnd || '');
+                    const description = time.description
+                        ? '<span class="drop-itinerary-event">' + dropEsc(time.description) + '</span>'
+                        : '';
+                    entries.push('<span class="drop-itinerary-time"><span class="drop-itinerary-clock">' +
+                        dropEsc(label) + '</span>' + description + '</span>');
                     return;
                 }
 

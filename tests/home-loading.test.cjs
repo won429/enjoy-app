@@ -67,15 +67,33 @@ test('the loading feed uses the same post rows and author column as the actual f
     assert.match(markup, /home-sk-choices/);
 });
 
-test('schedule formatting separates time ranges and Korean times while preserving unstructured lines', () => {
+function scheduleMarkup(text) {
     const start = html.indexOf('function dropScheduleRowsHtml');
     const end = html.indexOf('function dropNoteHtml', start);
     const context = vm.createContext({ dropEsc: text => text.replaceAll('<', '&lt;') });
     vm.runInContext(html.slice(start, end), context);
-    const schedule = context.dropScheduleRowsHtml('1일차 · 잠실\r\n- 10:00~10:30 집결\n오후 2시 30분 단체 사진\n메모 <입장권>');
+    return context.dropScheduleRowsHtml(text);
+}
+
+test('schedule formatting separates time ranges and Korean times while preserving unstructured lines', () => {
+    const schedule = scheduleMarkup('1일차 · 잠실\r\n- 10:00~10:30 집결\n오후 2시 30분 단체 사진\n메모 <입장권>');
     assert.match(schedule, /drop-itinerary-day">1일차 · 잠실/);
     assert.ok(schedule.includes('drop-itinerary-clock">10:00~10:30</span><span class="drop-itinerary-event">집결'));
     assert.ok(schedule.includes('drop-itinerary-clock">오후 2시 30분</span><span class="drop-itinerary-event">단체 사진'));
     assert.equal((schedule.match(/class="drop-itinerary-track"/g) || []).length, 1);
     assert.ok(schedule.includes('drop-itinerary-line">메모 &lt;입장권>'));
+});
+
+test('open-ended times keep their wave mark with the clock', () => {
+    const markup = scheduleMarkup([
+        '10:00~ 집결',
+        '오후 2시 30분 ~ 사진 촬영',
+        '15:00～자유 일정',
+        '16:00~',
+        '17:00 ~ 18:00 식사'
+    ].join('\n'));
+    const clockLabels = Array.from(markup.matchAll(/class="drop-itinerary-clock">([^<]+)<\/span>/g), m => m[1]);
+    const events = Array.from(markup.matchAll(/class="drop-itinerary-event">([^<]+)<\/span>/g), m => m[1]);
+    assert.deepEqual(clockLabels, ['10:00~', '오후 2시 30분~', '15:00～', '16:00~', '17:00 ~ 18:00']);
+    assert.deepEqual(events, ['집결', '사진 촬영', '자유 일정', '식사']);
 });
