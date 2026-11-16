@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
-const a=html.indexOf('window.renderDropFeed = function () {'),b=html.indexOf('function prepareDropPhotoVisuals',a);
+const a=html.indexOf('window.renderDropFeed = function () {'),b=html.indexOf('function findDropPost',a);
 const renderer=html.slice(a,b),source=name=>fs.readFileSync(require('node:path').join(__dirname,'..',name),'utf8');
 function setup(){
  const nodes=new Map(),events={},frames=[],timers=new Map();let next=0,reloads=0;
@@ -16,8 +16,7 @@ function setup(){
   addEventListener(){},EnjoyDropPrediction:{card:post=>'<article class="drop-prediction-card">'+post.title+'</article>'}};
  const context=vm.createContext({window,document,Date,
   dropUser:()=>window.enjoyUser,visibleDropPosts:()=>[...window._dropPosts,...window._dropPredictions].sort((a,b)=>b.createdAt-a.createdAt),scheduleDropExpiry(){},
-  dropEsc:s=>String(s||''),dropMillis:s=>Number(s)||0,dropPostId:p=>p._id,dropDateTime:()=>'',dropAuthorAvatar:()=>'',dropActionButtonsHtml:()=>'',dropCommentBubblesHtml:()=>'',
-  prepareDropPhotoVisuals(){},positionDropCardControls(){}});
+  dropEsc:s=>String(s||''),dropMillis:s=>Number(s)||0,dropPostId:p=>p._id,dropDateTime:()=>'',dropAuthorAvatar:()=>'',dropActionButtonsHtml:()=>'',dropFeedCommentsHtml:()=>''});
  vm.runInContext(source('app-loading.js'),context);vm.runInContext(renderer,context);vm.runInContext(source('home-loading.js'),context);
  const gate=window.enjoyAppLoading;gate.begin(window.enjoyUser);gate.ready('profile');gate.paint();
  function paint(){for(let n=0;frames.length&&n<10;n++)frames.splice(0).forEach(fn=>fn());}paint();
