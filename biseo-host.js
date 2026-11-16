@@ -35,7 +35,7 @@
         if (!user) return;
         if (account !== user.uid) {
             account = user.uid;
-            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261115-google-search-stream-1');
+            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261116-exaone-tools-1');
         }
         frame.contentWindow.veronRefreshProfile?.();
         resize();

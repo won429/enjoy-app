@@ -11,7 +11,11 @@
     const modelVersions = { 'veron-1': '1-26B', 'veron-2': '1.5-31B', 'veron-2.1': '2-EXAONE' };
     const exaoneAttachmentError = 'VERON 2-EXAONE은 사진과 PDF를 직접 읽을 수 없어요. 텍스트·Office 문서를 첨부하거나 다른 모델을 선택해 주세요.';
     const unsupportedExaoneFile = file => /^image\//i.test(file.mime || file.type || '') || /\.(pdf|png|jpe?g|webp|gif|heic|heif|bmp|svg|avif)$/i.test(file.name || '') || file.mime === 'application/pdf' || file.type === 'application/pdf';
+    const reasoningLabels = { low: 'Low', high: 'High', max: 'Max' };
     state.model = 'veron-1';
+    state.reasoningEffort = 'low';
+    state.compareDocuments = false;
+    try { const saved = localStorage.getItem('veron-reasoning-effort'); if (Object.hasOwn(reasoningLabels, saved)) state.reasoningEffort = saved; } catch { /* Optional browser preference. */ }
     try { const saved = localStorage.getItem('veron-model'); if (Object.hasOwn(modelVersions, saved)) state.model = saved; } catch { /* Model selection also works without browser preferences. */ }
     const Device = window.VeronDeviceStore;
     const previews = new Map();
@@ -36,7 +40,7 @@
                 if (initial) { initial = false; return; }
                 if (state.profile && state.profile.uid !== user?.uid) {
                     for (const run of state.runs.values()) run.controller.abort();
-                    state.runs.clear(); state.loaded.clear(); state.drafts.clear(); state.threads = []; state.memories = []; state.profile = null; state.active = null; state.attachments = []; state.ready = false;
+                    state.runs.clear(); state.loaded.clear(); state.drafts.clear(); state.threads = []; state.memories = []; state.profile = null; state.active = null; state.attachments = []; state.compareDocuments = false; state.ready = false;
                     for (const url of previews.values()) URL.revokeObjectURL(url); previews.clear();
                     $('chat-input').value = ''; renderAttachments(); profile(); renderChat(true); renderHistory(); renderMemories();
                     for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
@@ -213,7 +217,7 @@
         })();
         return booting;
     }
-    async function chatPayload(thread, replyId, account, model) {
+    async function chatPayload(thread, replyId, account, model, effort) {
         const source = thread.messages.filter(message => message.id !== replyId).slice(-30);
         const selected = new Set(); let total = 0;
         for (const message of [...source].reverse()) for (const file of message.attachments || []) {
@@ -233,7 +237,7 @@
             }
             messages.push({ id: message.id, role: message.role, text: message.text + (omitted.length ? '\n[이전 첨부 파일은 이번 요청 크기 제한으로 생략됨: ' + omitted.join(', ') + ']' : ''), attachments, at: message.at, status: message.status });
         }
-        return { threadId: thread.id, title: thread.title, messageId: source.at(-1).id, messages, model };
+        return { threadId: thread.id, title: thread.title, messageId: source.at(-1).id, messages, model, ...(model === 'veron-2.1' ? { reasoningEffort: effort, compareDocuments: source.at(-1).compareDocuments === true } : {}) };
     }
     function localWeatherDay(text) {
         // Match local questions without treating a named place as the device location.
@@ -374,7 +378,7 @@
         const links = sources.map((source, i) => `<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${i + 1}. ${esc(source.title)}</a>`).join('');
         return `<div class="answer-grounding"><div class="grounding-status">${value.searched ? '웹 검색을 참고한 답변' : '웹 검색 없이 작성한 답변'}</div>${sources.length ? `<details class="answer-sources"><summary>출처 ${sources.length}개</summary><div>${links}</div></details>` : ''}</div>`;
     }
-    const progressLabels = { thinking: '생각 중', reading: '자료 읽는 중', searching: '웹 검색 중', 'search-retry': '웹 검색 다시 시도 중', composing: '답변 정리 중', writing: '답변 작성 중', weather: '날씨 확인 중' };
+    const progressLabels = { comparing: '문서 비교 중', schedule: '일정 조회 중', drafting: '할 일 초안 작성 중', thinking: '생각 중', reading: '자료 읽는 중', searching: '웹 검색 중', 'search-retry': '웹 검색 다시 시도 중', composing: '답변 정리 중', writing: '답변 작성 중', weather: '날씨 확인 중' };
     function progressHTML(run) {
         if (!run || run.stopping) return '';
         return `<div class="response-progress" role="status" aria-live="polite"><div class="typing" aria-hidden="true"><span></span><span></span><span></span></div><span>${esc(progressLabels[run.phase] || progressLabels.thinking)}</span></div>`;
@@ -418,7 +422,10 @@
         const input = $('chat-input');
         const activeRun = state.runs.get(state.active);
         input.style.height = '26px'; input.style.height = Math.min(146, input.scrollHeight) + 'px'; input.style.overflowY = input.scrollHeight > 146 ? 'auto' : 'hidden';
-        $('send-button').disabled = !activeRun && (!state.ready || !input.value.trim() && !state.attachments.length || state.attachments.some(f => f.uploading || f.error));
+        const comparing = state.model === 'veron-2.1' && state.compareDocuments;
+        $('compare-mode').hidden = !comparing;
+        input.placeholder = comparing ? '비교 기준을 입력하세요 (선택)' : '베론에게 물어보세요';
+        $('send-button').disabled = !activeRun && (!state.ready || comparing && state.attachments.length < 2 || !input.value.trim() && !state.attachments.length || state.attachments.some(f => f.uploading || f.error));
         $('send-button').setAttribute('aria-label', activeRun ? '답변 중지' : '보내기');
         $('send-button').innerHTML = icon(activeRun ? 'stop' : 'send');
         $('attach-button').disabled = !state.ready || !!activeRun;
@@ -431,7 +438,7 @@
     }
     function saveDraft() {
         const key = state.active || 'new';
-        state.drafts.set(key, { text: $('chat-input').value, attachments: state.attachments });
+        state.drafts.set(key, { text: $('chat-input').value, attachments: state.attachments, compareDocuments: state.compareDocuments });
         if (state.profile) try { localStorage.setItem('veron-draft:' + state.profile.uid + ':' + key, $('chat-input').value); } catch { /* optional local draft */ }
     }
     function restoreDraft() {
@@ -439,7 +446,7 @@
         const draft = state.drafts.get(key);
         let text = draft?.text || '';
         if (!draft && state.profile) try { text = localStorage.getItem('veron-draft:' + state.profile.uid + ':' + key) || ''; } catch { /* optional local draft */ }
-        $('chat-input').value = text; state.attachments = draft?.attachments || []; renderAttachments();
+        $('chat-input').value = text; state.attachments = draft?.attachments || []; state.compareDocuments = Boolean(draft?.compareDocuments); renderAttachments();
     }
     function newChat() {
         ++fetchSerial;
@@ -464,9 +471,12 @@
         if (state.runs.has(state.active)) return stop();
         if (!state.ready) return;
         const account = state.profile.uid;
-        const model = state.model;
+        const model = state.model, effort = state.reasoningEffort;
         let thread = currentThread();
         const files = regenerate ? thread?.messages.filter(m => m.role === 'user').at(-1)?.attachments || [] : state.attachments;
+        const comparing = regenerate ? thread?.messages.filter(m => m.role === 'user').at(-1)?.compareDocuments === true : model === 'veron-2.1' && state.compareDocuments;
+        if (comparing && model !== 'veron-2.1') return toast('긴 문서 비교는 VERON 2-EXAONE을 선택해 주세요.');
+        if (comparing && files.length < 2) return toast('비교할 문서를 2개 이상 첨부해 주세요.');
         if (model === 'veron-2.1' && files.some(unsupportedExaoneFile)) return toast(exaoneAttachmentError);
         let message;
         if (regenerate) {
@@ -474,12 +484,12 @@
             if (!message) return;
             thread.messages = thread.messages.slice(0, thread.messages.findIndex(m => m.id === message.id) + 1);
         } else {
-            const text = $('chat-input').value.trim();
+            const text = $('chat-input').value.trim() || (comparing ? '첨부한 문서들의 공통점과 차이점, 변경 사항을 비교해줘.' : '');
             if ((!text && !state.attachments.length) || state.attachments.some(f => f.uploading || f.error)) return;
             if (state.attachments.reduce((sum, f) => sum + f.size, 0) > 12 * 1024 * 1024) return toast('첨부 파일의 합계는 12MB까지 가능해요.');
             if (!thread) { thread = { id: uid(), title: (text || state.attachments[0].name).slice(0, 40), created: Date.now(), updated: Date.now(), messages: [] }; state.active = thread.id; state.loaded.set(thread.id, thread); state.drafts.delete('new'); if (state.profile) try { localStorage.removeItem('veron-draft:' + state.profile.uid + ':new'); } catch {} }
-            message = { id: uid(), role: 'user', text, attachments: state.attachments.map(({ id, name, mime, size }) => ({ id, name, mime, size })), at: Date.now(), status: 'complete' };
-            thread.messages.push(message); $('chat-input').value = ''; state.attachments = []; saveDraft(); renderAttachments();
+            message = { id: uid(), role: 'user', text, attachments: state.attachments.map(({ id, name, mime, size }) => ({ id, name, mime, size })), at: Date.now(), status: 'complete', ...(comparing ? { compareDocuments: true } : {}) };
+            thread.messages.push(message); $('chat-input').value = ''; state.attachments = []; state.compareDocuments = false; saveDraft(); renderAttachments();
         }
         clearError();
         const replyId = 'reply-' + message.id;
@@ -510,7 +520,7 @@
                 return;
             }
             await Device.save(account, thread);
-            const payload = await chatPayload(thread, replyId, account, model);
+            const payload = await chatPayload(thread, replyId, account, model, effort);
             const response = await api('/device-chat', { method: 'POST', body: payload, signal: run.controller.signal, stream: true, account });
             const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = '';
             for (;;) {
@@ -660,10 +670,20 @@
         for (const button of $('model-menu').querySelectorAll('[data-model]')) button.setAttribute('aria-checked', String(button.dataset.model === state.model));
         const exaone = state.model === 'veron-2.1';
         $('pick-photo').hidden = exaone;
+        $('reasoning-picker').hidden = !exaone;
+        for (const id of ['pick-compare', 'ask-schedule', 'ask-todos']) $(id).hidden = !exaone;
+        closeReasoning(); renderReasoning(); updateInput();
         $('attach-button').setAttribute('aria-label', exaone ? '텍스트 또는 Office 문서 첨부' : '사진 또는 파일 첨부');
         $('attach-menu').querySelector('p').textContent = exaone ? '텍스트·Office 문서 · 파일당 6MB' : '파일당 6MB · 한 번에 4개';
         $('file-input').accept = (exaone ? '' : 'image/*,.pdf,') + '.docx,.xlsx,.pptx,.txt,.md,.csv,.tsv,.json,.xml,.html,.css,.js,.ts,.py,.swift,.java,.sql,.log,.yaml,.yml,.rtf';
     }
+    function renderReasoning() {
+        const value = state.reasoningEffort;
+        $('reasoning-button').dataset.effort = value;
+        $('reasoning-button').setAttribute('aria-label', '추론 강도, ' + reasoningLabels[value]);
+        for (const button of $('reasoning-menu').querySelectorAll('[data-effort]')) button.setAttribute('aria-checked', String(button.dataset.effort === value));
+    }
+    function closeReasoning() { setMenuExpanded('reasoning-menu', 'reasoning-button', false); }
     function closeModelMenu() { setMenuExpanded('model-menu', 'model-button', false); }
     function exaoneUsageHTML(data, number, time) {
         if (!data) return '';
@@ -845,7 +865,7 @@
     $('usage-dialog').addEventListener('close', () => { clearInterval(usageTimer); usageTimer = null; ++usageSerial; usageController?.abort(); usageController = null; });
     $('model-button').addEventListener('click', () => {
         const show = $('model-button').getAttribute('aria-expanded') !== 'true';
-        closeAttach(); setMenuExpanded('model-menu', 'model-button', show);
+        closeAttach(); closeReasoning(); setMenuExpanded('model-menu', 'model-button', show);
         if (show) $('model-menu').querySelector('[aria-checked="true"]').focus();
     });
     $('model-menu').addEventListener('click', event => {
@@ -868,6 +888,32 @@
         } else if (event.key === 'Escape') { event.preventDefault(); closeModelMenu(); $('model-button').focus(); }
         else if (event.key === 'Tab') closeModelMenu();
     });
+    $('reasoning-button').addEventListener('click', () => {
+        const show = $('reasoning-menu').hidden;
+        closeAttach(); closeModelMenu();
+        setMenuExpanded('reasoning-menu', 'reasoning-button', show);
+        if (show) $('reasoning-menu').querySelector('[aria-checked="true"]').focus();
+    });
+    $('reasoning-button').addEventListener('keydown', event => {
+        if (['ArrowDown', 'ArrowUp'].includes(event.key) && $('reasoning-menu').hidden) { event.preventDefault(); $('reasoning-button').click(); }
+    });
+    $('reasoning-menu').addEventListener('click', event => {
+        const value = event.target.closest('button')?.dataset.effort;
+        if (!Object.hasOwn(reasoningLabels, value)) return;
+        state.reasoningEffort = value;
+        try { localStorage.setItem('veron-reasoning-effort', value); } catch { /* Optional browser preference. */ }
+        closeReasoning(); renderReasoning(); $('reasoning-button').focus();
+    });
+    $('reasoning-menu').addEventListener('keydown', event => {
+        const buttons = [...$('reasoning-menu').querySelectorAll('button')];
+        if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+            event.preventDefault();
+            const index = buttons.indexOf(document.activeElement);
+            const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+            buttons[next].focus();
+        } else if (event.key === 'Escape') { event.preventDefault(); closeReasoning(); $('reasoning-button').focus(); }
+        else if (event.key === 'Tab') closeReasoning();
+    });
     $('chat-input').addEventListener('input', () => { updateInput(); saveDraft(); });
     $('chat-input').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && !matchMedia('(pointer: coarse)').matches) { event.preventDefault(); submit(); } });
     $('chat-input').addEventListener('paste', event => { if (event.clipboardData?.files.length) { event.preventDefault(); addFiles(event.clipboardData.files); } });
@@ -878,13 +924,29 @@
     $('history-search').addEventListener('input', renderHistory);
     $('profile-button').addEventListener('click', memoryDialog); $('memory-shortcut').addEventListener('click', memoryDialog); $('history-memory-button').addEventListener('click', memoryDialog);
     $('attach-button').addEventListener('click', () => {
+        closeReasoning();
         setMenuExpanded('attach-menu', 'attach-button', $('attach-button').getAttribute('aria-expanded') !== 'true');
     });
     $('pick-photo').addEventListener('click', () => { closeAttach(); $('photo-input').click(); }); $('pick-file').addEventListener('click', () => { closeAttach(); $('file-input').click(); });
+    $('pick-compare').addEventListener('click', () => {
+        closeAttach(); state.compareDocuments = true; updateInput(); saveDraft();
+        if (state.attachments.length < 2) $('file-input').click();
+        else $('chat-input').focus();
+    });
+    $('compare-mode').addEventListener('click', () => { state.compareDocuments = false; updateInput(); saveDraft(); $('chat-input').focus(); });
+    for (const [id, prompt] of [['ask-schedule', '이번 주 엔조이 일정 조회해줘.'], ['ask-todos', '할 일 초안 만들어줘: ']]) {
+        $(id).addEventListener('click', () => {
+            closeAttach(); state.compareDocuments = false;
+            const input = $('chat-input');
+            if (id === 'ask-todos' && input.value.trim()) input.value = prompt + input.value;
+            else if (!input.value.trim()) input.value = prompt;
+            input.focus(); updateInput(); saveDraft();
+        });
+    }
     for (const id of ['photo-input', 'file-input']) $(id).addEventListener('change', event => { addFiles(event.target.files); event.target.value = ''; });
     $('attachment-list').addEventListener('click', event => { const target = event.target.closest('[data-remove]'); if (target) removeAttachment(target.dataset.remove); });
-    document.addEventListener('click', event => { if (!event.target.closest('.attach-anchor')) closeAttach(); if (!event.target.closest('.model-picker')) closeModelMenu(); const control = event.target.closest('[data-close]'); if (control) close(control.dataset.close); });
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeAttach(); closeModelMenu(); } });
+    document.addEventListener('click', event => { if (!event.target.closest('.attach-anchor')) closeAttach(); if (!event.target.closest('.model-picker')) closeModelMenu(); if (!event.target.closest('.reasoning-picker')) closeReasoning(); const control = event.target.closest('[data-close]'); if (control) close(control.dataset.close); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeAttach(); closeModelMenu(); closeReasoning(); } });
     document.addEventListener('dragover', event => { if (event.dataTransfer?.types.includes('Files')) event.preventDefault(); });
     document.addEventListener('drop', event => { if (event.dataTransfer?.files.length) { event.preventDefault(); addFiles(event.dataTransfer.files); } });
     $('messages').addEventListener('click', event => {

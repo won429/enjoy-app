@@ -9,9 +9,9 @@
     <title>베론</title>
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="veron.css?v=20261112-search-status-1">
-    <script src="veron-local.js?v=20261111-gemma-search-1" defer></script>
-    <script src="veron.js?v=20261115-google-search-stream-1" defer></script>
+    <link rel="stylesheet" href="veron.css?v=20261116-exaone-tools-1">
+    <script src="veron-local.js?v=20261116-exaone-tools-1" defer></script>
+    <script src="veron.js?v=20261116-exaone-tools-1" defer></script>
 </head>
 <body>
     <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -66,6 +66,7 @@
         <form id="chat-form" class="composer-wrap">
             <div class="composer" id="composer">
                 <div id="attachment-list" class="attachment-list" aria-label="첨부할 파일" hidden></div>
+                <button id="compare-mode" type="button" class="compare-mode" hidden>긴 문서 비교 <span aria-hidden="true">×</span></button>
                 <textarea id="chat-input" rows="1" maxlength="12000" placeholder="베론에게 물어보세요" aria-label="메시지 입력"></textarea>
                 <div class="composer-toolbar">
                     <div class="attach-anchor">
@@ -73,10 +74,23 @@
                         <div id="attach-menu" class="attach-menu" hidden>
                             <button type="button" id="pick-photo"><svg><use href="#i-image"/></svg>사진 첨부</button>
                             <button type="button" id="pick-file"><svg><use href="#i-file"/></svg>파일 첨부</button>
+                            <button type="button" id="pick-compare" hidden><svg aria-hidden="true"><use href="#i-file"/></svg>긴 문서 비교</button>
+                            <button type="button" id="ask-schedule" hidden>엔조이 일정 조회</button>
+                            <button type="button" id="ask-todos" hidden>할 일 초안</button>
                             <p>파일당 6MB · 한 번에 4개</p>
                         </div>
                     </div>
                     <button type="button" class="memory-shortcut" id="memory-shortcut"><svg><use href="#i-memory"/></svg><span>메모리</span></button>
+                    <div class="reasoning-picker" id="reasoning-picker" hidden>
+                        <button id="reasoning-button" type="button" class="icon-button reasoning-button" data-effort="low" aria-label="추론 강도, Low" aria-haspopup="menu" aria-expanded="false" aria-controls="reasoning-menu">
+                            <span class="reasoning-icon" aria-hidden="true"><span class="reasoning-arc"></span><span class="reasoning-needle"></span></span>
+                        </button>
+                        <div id="reasoning-menu" role="menu" class="reasoning-menu" aria-label="추론 강도" hidden>
+                            <button type="button" role="menuitemradio" data-effort="low" aria-checked="true"><span>Low <small>빠르게</small></span><svg class="model-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+                            <button type="button" role="menuitemradio" data-effort="high" aria-checked="false"><span>High <small>깊게</small></span><svg class="model-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+                            <button type="button" role="menuitemradio" data-effort="max" aria-checked="false"><span>Max <small>가장 깊게</small></span><svg class="model-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+                        </div>
+                    </div>
                     <span id="composer-state" class="composer-state" aria-live="polite"></span>
                     <button id="send-button" class="send-button" type="submit" aria-label="보내기" disabled><svg><use href="#i-send"/></svg></button>
                 </div>
