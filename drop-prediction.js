@@ -148,7 +148,7 @@
             return `<span class="drop-prediction-person${person.uid === identity() ? ' is-me' : ''}" title="${esc(name)}" aria-label="${esc(name)}">${photo ? `<img src="${esc(photo)}" alt="${esc(name)}" referrerpolicy="no-referrer" loading="lazy">` : `<span aria-hidden="true">${esc(Array.from(name)[0])}</span>`}</span>`;
         }).join('');
     }
-    function card(p) {
+    function card(p, openDetails = false) {
         const state = phase(p), answer = p.answer, active = state === '예측 참여 중' && !saving.has(p._id);
         const countdown = remainingTime(p);
         let result = '';
@@ -159,7 +159,7 @@
             result = `<div class="drop-prediction-result" role="status"><strong>${p.result.kind === 'void' ? esc(p.result.reason) + ' · 포인트 변동 없음' : esc(p.result.winner) + ' 승리 · ' + p.result.away + ' : ' + p.result.home}</strong><span>${!answer ? '이번 예측에 참여하지 않았어요.' : settled ? p.result.kind === 'void' ? '지급·차감 없이 마감했어요.' : `${success ? '예측 성공' : '예측 실패'} · ${delta > 0 ? '+' : ''}${Number(delta).toLocaleString('ko-KR')} P ${delta === 0 ? '변동 없음' : delta < 0 ? '차감 완료' : '지급 완료'}` : '포인트를 자동 정산하고 있어요.'}</span></div>`;
         }
         return `<article class="drop-prediction-card" data-prediction-id="${esc(p._id)}" aria-label="${esc(p.title)}">
-            <div class="drop-prediction-card-top"><h3>${esc(p.title)}</h3>${identity() === ADMIN && p.authorUid === ADMIN ? adminActions(p) : ''}</div>
+            <div class="drop-prediction-card-top"><h3>${openDetails ? `<button type="button" class="drop-feed-prediction-open" data-drop-post-id="${esc(p._id)}" onclick="window.openDropPost(this.dataset.dropPostId, this)">${esc(p.title)}</button>` : esc(p.title)}</h3>${identity() === ADMIN && p.authorUid === ADMIN ? adminActions(p) : ''}</div>
             <div class="drop-prediction-card-meta"><span>${esc(p.game.date.slice(5).replace('-', '.'))} ${esc(p.game.time)}</span><span>성공 +${p.reward.toLocaleString('ko-KR')} P · 실패 −${p.penalty.toLocaleString('ko-KR')} P</span></div>
             <div class="drop-prediction-choices${answer ? ' has-choice' : ''}" role="group" aria-label="승리할 팀 선택">${[p.game.team1, p.game.team2].map((team, index) => `<button type="button" class="drop-prediction-team${index ? ' is-home' : ''}" data-prediction-choice="${esc(team)}" data-prediction-id="${esc(p._id)}" aria-label="${esc(team)} 승리 예측${answer?.choice === team ? ', 내 선택' : ''}" aria-pressed="${answer?.choice === team}" ${active ? '' : 'disabled'}><span class="drop-prediction-team-label">${teamLogos[team] ? `<img class="drop-prediction-team-logo" src="${esc(teamLogos[team])}" alt="" loading="eager">` : ''}<span class="drop-prediction-team-copy"><strong>${esc(team)}</strong><span class="drop-prediction-team-people${(p.participants || []).filter(person => person.choice === team).length >= 5 ? ' is-crowded' : ''}" role="group" aria-label="${esc(team)} 승리 예측 멤버">${teamParticipants(p, team)}</span></span></span></button>`).join('')}</div>
             <div class="drop-prediction-card-footer"><span class="drop-prediction-countdown${countdown.active ? '' : ' is-waiting'}" data-prediction-countdown="${esc(p._id)}" role="timer" aria-live="off"><i class="ph ph-clock" aria-hidden="true"></i><span data-prediction-countdown-text>${esc(countdown.label)}</span></span>${p.game.id && typeof root.openEnjoyBaseballGame === 'function' ? `<button type="button" class="drop-prediction-game-link" data-prediction-game="${esc(p._id)}">경기 더보기<i class="ph ph-caret-right" aria-hidden="true"></i></button>` : ''}</div>
@@ -455,7 +455,12 @@
         const edit = event.target.closest('[data-prediction-edit]'); if (edit) editPrediction(edit.dataset.predictionEdit);
         const remove = event.target.closest('[data-prediction-delete]'); if (remove) removePrediction(remove.dataset.predictionDelete);
         const game = event.target.closest('[data-prediction-game]');
-        if (game) { const post = root._dropPredictions.find(p => p._id === game.dataset.predictionGame); if (post?.game.id) root.openEnjoyBaseballGame?.(String(post.game.id), post.game.date); }
+        if (game) {
+            const post = root._dropPredictions.find(p => p._id === game.dataset.predictionGame);
+            if (!post?.game.id || typeof root.openEnjoyBaseballGame !== 'function') return;
+            if (game.closest('#drop-detail-post')) root.closeDropComments?.(false);
+            root.openEnjoyBaseballGame(String(post.game.id), post.game.date);
+        }
     });
     root.addEventListener('enjoy-auth-ready', connect);
     root.addEventListener('enjoy-guest-entered', connect);
