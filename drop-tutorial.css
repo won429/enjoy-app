@@ -1,0 +1,94 @@
+.drop-entry-actions { display: flex; align-items: flex-end; gap: .25rem; }
+#drop-tutorial-button {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    min-height: 36px;
+    padding: .375rem .5rem;
+    border-radius: 1.5rem;
+    color: #aab2bd;
+    font-size: .75rem;
+}
+#drop-tutorial-button i { font-size: 1rem; }
+#drop-tutorial-button:hover { color: #c2afff; }
+.drop-tutorial {
+    --tour-surface: #1b1b20;
+    --tour-text: #f5f5f5;
+    --tour-muted: #aab2bd;
+    --tour-line: #ffffff24;
+    --tour-blue: #7fb8ff;
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    overflow: hidden;
+    background: transparent;
+    color: var(--tour-text);
+}
+.drop-tutorial::backdrop { background: transparent; }
+.drop-tutorial-spotlight {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: var(--spot-x, 0px) var(--spot-width, 0px) minmax(0, 1fr);
+    grid-template-rows: var(--spot-y, 0px) var(--spot-height, 0px) minmax(0, 1fr);
+    pointer-events: none;
+}
+.drop-tutorial-shade { background: #080b1380; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.drop-tutorial-top { grid-area: 1 / 1 / 2 / 4; }
+.drop-tutorial-left { grid-area: 2 / 1 / 3 / 2; }
+.drop-tutorial-right { grid-area: 2 / 3 / 3 / 4; }
+.drop-tutorial-bottom { grid-area: 3 / 1 / 4 / 4; }
+.drop-tutorial-ring { grid-area: 2 / 2 / 3 / 3; border: 2px solid var(--tour-blue); border-radius: .75rem; }
+.drop-tutorial-card {
+    position: absolute;
+    width: min(344px, calc(100% - 24px));
+    padding: .75rem 1rem;
+    border: 1px solid var(--tour-line);
+    border-radius: 1.125rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--tour-surface);
+    box-shadow: 0 1rem 3rem #0005;
+}
+.drop-tutorial-card header, .drop-tutorial-card footer, .drop-tutorial-progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+.drop-tutorial-card h2 { margin: 0; font-size: .875rem; font-weight: 650; }
+.drop-tutorial-card header button { display: grid; place-items: center; width: 34px; height: 34px; font-size: 1rem; }
+.drop-tutorial-progress { margin: .125rem 0 .875rem; color: var(--tour-muted); font-size: .6875rem; }
+.drop-tutorial-progress progress { flex: 1; height: 4px; border: 0; border-radius: 4px; overflow: hidden; background: var(--tour-line); accent-color: var(--tour-blue); }
+.drop-tutorial-progress progress::-webkit-progress-bar { background: var(--tour-line); }
+.drop-tutorial-progress progress::-webkit-progress-value { background: var(--tour-blue); }
+.drop-tutorial-progress progress::-moz-progress-bar { background: var(--tour-blue); }
+.drop-tutorial-card h3 { margin: 0 0 .375rem; font-size: 1.1875rem; font-weight: 750; line-height: 1.4; }
+.drop-tutorial-card h3:focus { outline: none; }
+.drop-tutorial-card p { margin: 0; color: var(--tour-muted); font-size: .8125rem; line-height: 1.65; word-break: keep-all; overflow-wrap: anywhere; }
+.drop-tutorial-card footer { margin-top: .75rem; }
+.drop-tutorial-card footer button { min-height: 44px; padding: .5rem .75rem; border-radius: .75rem; color: var(--tour-muted); font-size: .8125rem; font-weight: 650; }
+.drop-tutorial-card [hidden] { display: none; }
+#drop-tutorial-next { margin-left: auto; color: #081e39; background: var(--tour-blue); }
+.drop-tutorial-card button:focus-visible, #drop-tutorial-button:focus-visible { outline: 2px solid var(--tour-blue, #7fb8ff); outline-offset: 2px; }
+@media (prefers-color-scheme: light) {
+    #drop-tutorial-button { color: #626b78; }
+    .drop-tutorial { --tour-surface: #fff; --tour-text: #191919; --tour-muted: #626b78; --tour-line: #00000020; --tour-blue: #2475d6; }
+    #drop-tutorial-next { color: #fff; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .drop-tutorial[open] .drop-tutorial-card { animation: dropScreenEnter .2s ease-out both; }
+}
+
+@media (max-width: 360px) {
+    #drop-tutorial-button { min-width: 36px; padding-inline: .375rem; }
+    #drop-tutorial-button span { display: none; }
+}
