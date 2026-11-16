@@ -791,34 +791,79 @@
         }
         .drop-feed-schedule i { margin-right: .25rem; }
         .drop-feed-note-body.drop-feed-itinerary {
-            margin-top: .375rem;
+            --drop-itinerary-ink: #c2afff;
+            --drop-itinerary-rail: #baa1ff38;
+            margin-top: .625rem;
             white-space: normal;
         }
-        .drop-itinerary-line { display: block; padding: .2rem 0; white-space: pre-wrap; }
         .drop-itinerary-day {
             display: block;
-            padding: .45rem 0 .25rem;
-            border-top: 1px solid var(--drop-feed-line);
-            font-weight: 750;
+            margin-bottom: .375rem;
+            font-size: .8125rem;
+            font-weight: 800;
+        }
+        .drop-itinerary-day:not(:first-child) { margin-top: .875rem; }
+        .drop-itinerary-line {
+            display: block;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .drop-itinerary-track {
+            position: relative;
+            display: block;
+            padding-inline-start: 1.125rem;
+        }
+        .drop-itinerary-track + .drop-itinerary-line,
+        .drop-itinerary-line + .drop-itinerary-track { margin-top: .625rem; }
+        .drop-itinerary-track::before {
+            content: "";
+            position: absolute;
+            inset-block: .6rem .6rem;
+            inset-inline-start: .1875rem;
+            width: 1px;
+            background: var(--drop-itinerary-rail);
         }
         .drop-itinerary-time {
-            display: grid;
-            grid-template-columns: minmax(0, 6rem) minmax(0, 1fr);
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
             align-items: baseline;
-            gap: .625rem;
-            padding: .25rem 0;
+            gap: .125rem .5rem;
+            min-width: 0;
+            line-height: 1.5;
+        }
+        .drop-itinerary-time + .drop-itinerary-time { margin-top: .375rem; }
+        .drop-itinerary-time::before {
+            content: "";
+            position: absolute;
+            inset-block-start: .5rem;
+            inset-inline-start: -1.125rem;
+            width: .4375rem;
+            height: .4375rem;
+            border-radius: 50%;
+            background: var(--drop-itinerary-ink);
         }
         .drop-itinerary-clock {
-            min-width: 0;
+            color: var(--drop-itinerary-ink);
+            font-size: .8125rem;
+            font-weight: 650;
+            font-variant-numeric: tabular-nums;
             overflow-wrap: normal;
             word-break: keep-all;
-            color: var(--drop-feed-muted);
-            font-size: .8125rem;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
         }
-        .drop-detail-post .drop-itinerary-time + .drop-itinerary-time {
-            border-top: 1px solid var(--drop-feed-line);
+        .drop-itinerary-event { min-width: min(100%, 6rem); flex: 1; }
+        .drop-detail-post .drop-feed-itinerary { margin-top: .875rem; }
+        .drop-detail-post .drop-itinerary-track + .drop-itinerary-line,
+        .drop-detail-post .drop-itinerary-day:not(:first-child) { margin-top: 1rem; }
+        .drop-detail-post .drop-itinerary-time { display: grid; gap: .125rem; }
+        .drop-detail-post .drop-itinerary-time + .drop-itinerary-time { margin-top: .75rem; }
+        .drop-detail-post .drop-itinerary-event { font-size: 1rem; }
+        .drop-detail-post .drop-itinerary-track::before { inset-block-end: 2rem; }
+        @media (prefers-color-scheme: light) {
+            .drop-feed-note-body.drop-feed-itinerary {
+                --drop-itinerary-ink: #6444ad;
+                --drop-itinerary-rail: #795cb852;
+            }
         }
         .drop-feed-content .drop-photo-actions {
             justify-content: flex-start;
@@ -19199,18 +19244,31 @@
         function dropScheduleRowsHtml(body) {
             const clock = String.raw`(?:(?:오전|오후)\s*)?(?:[01]?\d|2[0-3])(?:\s*:\s*[0-5]\d|\s*시(?:\s*[0-5]?\d\s*분)?)`;
             const timed = new RegExp(String.raw`^(${clock}(?:\s*[~–—-]\s*${clock})?)(?=\s|[·:–—-]|$)\s*[·:–—-]?\s*(.*)$`);
-            return body.split(/\r?\n/).map(function (value) {
+            const sections = [];
+            let entries = [];
+            function appendTrack() {
+                if (!entries.length) return;
+                sections.push('<span class="drop-itinerary-track">' + entries.join('') + '</span>');
+                entries = [];
+            }
+
+            body.split(/\r?\n/).forEach(function (value) {
                 const line = value.trim();
-                if (!line) return '';
                 const entry = line.replace(/^[-*•]\s+/, '');
                 const match = entry.match(timed);
                 if (match && match[2]) {
-                    return '<span class="drop-itinerary-time"><span class="drop-itinerary-clock">' + dropEsc(match[1]) +
-                        '</span><span>' + dropEsc(match[2]) + '</span></span>';
+                    entries.push('<span class="drop-itinerary-time"><span class="drop-itinerary-clock">' + dropEsc(match[1]) +
+                        '</span><span class="drop-itinerary-event">' + dropEsc(match[2]) + '</span></span>');
+                    return;
                 }
+
+                appendTrack();
+                if (!line) return;
                 const day = /^\d+\s*일차(?:\s|[·:–—-]|$)/.test(entry);
-                return '<span class="' + (day ? 'drop-itinerary-day' : 'drop-itinerary-line') + '">' + dropEsc(line) + '</span>';
-            }).join('');
+                sections.push('<span class="' + (day ? 'drop-itinerary-day' : 'drop-itinerary-line') + '">' + dropEsc(line) + '</span>');
+            });
+            appendTrack();
+            return sections.join('');
         }
 
         function dropNoteHtml(post, layout) {

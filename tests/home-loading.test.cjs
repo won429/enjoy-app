@@ -74,7 +74,8 @@ test('schedule formatting separates time ranges and Korean times while preservin
     vm.runInContext(html.slice(start, end), context);
     const schedule = context.dropScheduleRowsHtml('1일차 · 잠실\r\n- 10:00~10:30 집결\n오후 2시 30분 단체 사진\n메모 <입장권>');
     assert.match(schedule, /drop-itinerary-day">1일차 · 잠실/);
-    assert.ok(schedule.includes('drop-itinerary-clock">10:00~10:30</span><span>집결'));
-    assert.ok(schedule.includes('drop-itinerary-clock">오후 2시 30분</span><span>단체 사진'));
+    assert.ok(schedule.includes('drop-itinerary-clock">10:00~10:30</span><span class="drop-itinerary-event">집결'));
+    assert.ok(schedule.includes('drop-itinerary-clock">오후 2시 30분</span><span class="drop-itinerary-event">단체 사진'));
+    assert.equal((schedule.match(/class="drop-itinerary-track"/g) || []).length, 1);
     assert.ok(schedule.includes('drop-itinerary-line">메모 &lt;입장권>'));
 });
