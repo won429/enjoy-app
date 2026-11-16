@@ -779,7 +779,6 @@
             if (serial === usageSerial) { $('usage-refresh').disabled = false; $('usage-charts').setAttribute('aria-busy', 'false'); }
         }
     }
-    const animatedDialogs = new Set(['thread-drawer', 'usage-dialog', 'memory-dialog']);
     const closingPanels = new WeakMap();
     const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
     function cancelPanelExit(panel) {
@@ -827,15 +826,14 @@
     function open(id) {
         closeAttach();
         closeModelMenu();
+        closeReasoning();
         const dialog = $(id);
         cancelPanelExit(dialog);
         if (!dialog.open) dialog.showModal();
     }
     function close(id) {
         const dialog = $(id);
-        if (!dialog.open) return;
-        if (animatedDialogs.has(id)) return animatePanelExit(dialog, () => dialog.close());
-        dialog.close();
+        if (dialog.open) return animatePanelExit(dialog, () => dialog.close());
     }
     async function memoryDialog() {
         if ($('thread-drawer').open) await close('thread-drawer');
@@ -889,13 +887,13 @@
         else if (event.key === 'Tab') closeModelMenu();
     });
     $('reasoning-button').addEventListener('click', () => {
-        const show = $('reasoning-menu').hidden;
+        const show = $('reasoning-button').getAttribute('aria-expanded') !== 'true';
         closeAttach(); closeModelMenu();
         setMenuExpanded('reasoning-menu', 'reasoning-button', show);
         if (show) $('reasoning-menu').querySelector('[aria-checked="true"]').focus();
     });
     $('reasoning-button').addEventListener('keydown', event => {
-        if (['ArrowDown', 'ArrowUp'].includes(event.key) && $('reasoning-menu').hidden) { event.preventDefault(); $('reasoning-button').click(); }
+        if (['ArrowDown', 'ArrowUp'].includes(event.key) && $('reasoning-button').getAttribute('aria-expanded') !== 'true') { event.preventDefault(); $('reasoning-button').click(); }
     });
     $('reasoning-menu').addEventListener('click', event => {
         const value = event.target.closest('button')?.dataset.effort;
@@ -987,7 +985,7 @@
             const r = dialog.getBoundingClientRect();
             if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) close(dialog.id);
         });
-        if (animatedDialogs.has(dialog.id)) dialog.addEventListener('cancel', event => {
+        dialog.addEventListener('cancel', event => {
             event.preventDefault();
             close(dialog.id);
         });
