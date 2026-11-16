@@ -76,8 +76,8 @@ dialog h2[autofocus]:focus { outline: none; }
 .reasoning-arc,.reasoning-needle{position:absolute;inset:0;mask-size:contain;mask-repeat:no-repeat;mask-position:center}
 .reasoning-arc{background:#3566ef;mask-image:url("veron-reasoning-arc.png")}
 .reasoning-needle{background:#0d0d0d;mask-image:url("veron-reasoning-needle.png");transform:rotate(var(--needle-angle,0deg))}
-.reasoning-button[data-effort=low]{--needle-angle:-270deg}
-.reasoning-button[data-effort=high]{--needle-angle:-135deg}
+:is(.reasoning-button,.reasoning-icon)[data-effort=low]{--needle-angle:-270deg}
+:is(.reasoning-button,.reasoning-icon)[data-effort=high]{--needle-angle:-135deg}
 .reasoning-menu{position:absolute;bottom:calc(100% + 9px);left:-3px;width:174px;max-width:calc(100vw - 142px);padding:6px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow);z-index:31}
 .reasoning-menu button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:40px;padding:8px 10px;border-radius:10px;text-align:left;font-weight:650;font-size:13px}
 .reasoning-menu button:hover,.reasoning-menu button:focus-visible{background:var(--hover)}
@@ -86,3 +86,62 @@ dialog h2[autofocus]:focus { outline: none; }
 .compare-mode{display:inline-flex;align-items:center;gap:7px;margin:0 5px 8px;padding:5px 9px;border-radius:9px;background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:650}
 .compare-mode span{font-size:14px;line-height:1}
 @media(prefers-color-scheme:dark){.reasoning-arc{background:var(--blue)}.reasoning-needle{background:var(--text)}}
+
+.tutorial-dialog {
+    position:fixed;
+    inset:0;
+    margin:auto;
+    width:min(420px, calc(100% - 28px));
+    max-height:calc(var(--visual-height) - 24px);
+    border:1px solid var(--line);
+    border-radius:24px;
+    padding:18px 20px 16px;
+    overflow:auto;
+    overscroll-behavior:contain;
+}
+.tutorial-header,.tutorial-progress,.tutorial-actions {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+.tutorial-header h2 { margin:0;font-size:14px;font-weight:650; }
+.tutorial-header .icon-button { width:34px;height:34px;padding:9px;color:var(--muted); }
+.tutorial-header svg { width:14px;height:14px; }
+.tutorial-progress { margin:8px 0 22px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums; }
+.tutorial-progress progress {
+    appearance:none;
+    flex:1;
+    height:4px;
+    border:0;
+    border-radius:4px;
+    overflow:hidden;
+    background:var(--hover);
+    accent-color:var(--blue);
+}
+.tutorial-progress progress::-webkit-progress-bar { background:var(--hover); }
+.tutorial-progress progress::-webkit-progress-value { background:var(--blue); }
+.tutorial-progress progress::-moz-progress-bar { background:var(--blue); }
+.tutorial-content { min-height:170px; }
+.tutorial-content h3 { margin:0 0 9px;font-size:clamp(18px, 6vw, 23px);letter-spacing:-.04em; }
+.tutorial-content h3:focus { outline:0; }
+.tutorial-content p { margin:0 0 15px;color:var(--muted);font-size:13px;line-height:1.65;word-break:keep-all;overflow-wrap:anywhere; }
+.tutorial-content strong { color:var(--text);font-weight:650; }
+.tutorial-example {
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:11px 12px;
+    border-radius:12px;
+    background:var(--hover);
+    font-size:12px;
+    line-height:1.5;
+}
+.tutorial-example svg { width:15px;height:15px;color:var(--blue); }
+.tutorial-tools { flex-wrap:wrap; }
+.tutorial-tools span { border-radius:7px;background:var(--surface);padding:4px 6px;font-size:11px; }
+.tutorial-efforts { justify-content:space-around;gap:6px; }
+.tutorial-efforts > span { display:flex;align-items:center;gap:5px; }
+.tutorial-efforts .reasoning-icon { width:19px;height:19px;flex:none; }
+.tutorial-actions { margin-top:12px; }
+.tutorial-actions button { min-height:38px; }

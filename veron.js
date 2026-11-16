@@ -128,7 +128,7 @@
             image.hidden = false;
         } else { image.hidden = true; image.removeAttribute('src'); }
     }
-    window.veronRefreshProfile = profile;
+    window.veronRefreshProfile = () => { profile(); maybeOpenTutorial(); };
     $('profile-image').addEventListener('error', () => { $('profile-image').hidden = true; });
     async function readLocalHistory() {
         await Device.ready();
@@ -209,6 +209,7 @@
                 state.ready = true;
                 profile(); renderHistory(); renderMemories(); updateInput();
                 $('history-state').textContent = '';
+                maybeOpenTutorial();
             } catch (error) {
                 state.ready = false;
                 showError(error.message || '대화를 연결하지 못했어요.', true, error.status);
@@ -835,6 +836,55 @@
         const dialog = $(id);
         if (dialog.open) return animatePanelExit(dialog, () => dialog.close());
     }
+    const tutorialDialog = $('tutorial-dialog');
+    const tutorialSteps = [...tutorialDialog.querySelectorAll('[data-tutorial-step]')];
+    const seenTutorials = new Set();
+    const tutorialKey = account => 'veron-tutorial-v1:' + account;
+    let tutorialStep = 0;
+    let tutorialAccount = null;
+
+    function renderTutorial(step) {
+        tutorialStep = step;
+        tutorialSteps.forEach((panel, index) => { panel.hidden = index !== step; });
+        $('tutorial-progress').value = step + 1;
+        $('tutorial-step-number').textContent = (step + 1) + ' / ' + tutorialSteps.length;
+        $('tutorial-skip').hidden = step > 0;
+        $('tutorial-previous').hidden = step === 0;
+        $('tutorial-next').textContent = step === tutorialSteps.length - 1 ? '시작하기' : '다음';
+        if (tutorialDialog.open) tutorialSteps[step].querySelector('h3').focus();
+    }
+    function openTutorial() {
+        if (tutorialDialog.open) return;
+        tutorialAccount = state.profile?.uid;
+        renderTutorial(0);
+        open('tutorial-dialog');
+    }
+    function maybeOpenTutorial() {
+        const account = state.profile?.uid;
+        const input = $('chat-input');
+        if (!state.ready || !account || seenTutorials.has(account) || state.active || state.attachments.length ||
+            document.querySelector('dialog[open]') || input.value.trim() || document.activeElement === input ||
+            (embedded && window.frameElement?.closest('.hidden, [inert]'))) return;
+        try {
+            if (localStorage.getItem(tutorialKey(account)) || localStorage.getItem('veron-draft:' + account + ':new')?.trim()) return;
+        } catch { /* The guide also works when storage is unavailable. */ }
+        openTutorial();
+    }
+    tutorialDialog.addEventListener('close', () => {
+        if (!tutorialAccount || tutorialAccount !== state.profile?.uid) return;
+        seenTutorials.add(tutorialAccount);
+        try { localStorage.setItem(tutorialKey(tutorialAccount), '1'); } catch { /* Remember it for this page. */ }
+    });
+    $('tutorial-previous').addEventListener('click', () => renderTutorial(tutorialStep - 1));
+    $('tutorial-next').addEventListener('click', () => {
+        if (tutorialStep === tutorialSteps.length - 1) close('tutorial-dialog');
+        else renderTutorial(tutorialStep + 1);
+    });
+    $('history-tutorial-button').addEventListener('click', async () => {
+        await close('thread-drawer');
+        if (!$('thread-drawer').open) openTutorial();
+    });
+
     async function memoryDialog() {
         if ($('thread-drawer').open) await close('thread-drawer');
         profile();

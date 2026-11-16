@@ -65,7 +65,7 @@
         if (account !== user.uid) {
             account = user.uid;
             frame.dataset.loading = '';
-            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261116-veron-gauge-1');
+            frame.contentWindow.location.replace('biseo.html?embedded=1&v=20261116-veron-tutorial-1');
         }
         if (!isOpen) {
             isOpen = true;
