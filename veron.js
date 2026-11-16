@@ -798,9 +798,10 @@
         }
         const { opacity, transform } = getComputedStyle(panel);
         const isDrawer = panel.id === 'thread-drawer';
+        const exitTransform = isDrawer ? 'translateX(-100%)' : panel === tutorialDialog ? 'none' : 'translateY(6px)';
         const animation = panel.animate([
             { opacity, transform },
-            { opacity: isDrawer ? opacity : 0, transform: isDrawer ? 'translateX(-100%)' : 'translateY(6px)' }
+            { opacity: isDrawer ? opacity : 0, transform: exitTransform }
         ], { duration: isDrawer ? 240 : 180, easing: 'ease-in', fill: 'forwards' });
         panel.dataset.closing = '';
         const finish = () => {
@@ -837,12 +838,40 @@
         if (dialog.open) return animatePanelExit(dialog, () => dialog.close());
     }
     const tutorialDialog = $('tutorial-dialog');
-    const tutorialSteps = [...tutorialDialog.querySelectorAll('[data-tutorial-step]')];
+    const tutorialCard = $('tutorial-card');
+    const tutorialSteps = [...tutorialDialog.querySelectorAll('[data-tutorial-target]')];
     const seenTutorials = new Set();
-    const tutorialKey = account => 'veron-tutorial-v1:' + account;
+    const tutorialKey = account => 'veron-tutorial-v2:' + account;
     let tutorialStep = 0;
     let tutorialAccount = null;
 
+    function positionTutorial() {
+        if (!tutorialDialog.open) return;
+        const target = $(tutorialSteps[tutorialStep].dataset.tutorialTarget).getBoundingClientRect();
+        const frame = tutorialDialog.getBoundingClientRect();
+        const padding = 6, margin = 12, gap = 12;
+        const left = Math.max(0, target.left - frame.left - padding);
+        const top = Math.max(0, target.top - frame.top - padding);
+        const right = Math.min(frame.width, target.right - frame.left + padding);
+        const bottom = Math.min(frame.height, target.bottom - frame.top + padding);
+        tutorialDialog.style.setProperty('--spot-x', left + 'px');
+        tutorialDialog.style.setProperty('--spot-y', top + 'px');
+        tutorialDialog.style.setProperty('--spot-width', Math.max(0, right - left) + 'px');
+        tutorialDialog.style.setProperty('--spot-height', Math.max(0, bottom - top) + 'px');
+
+        const above = top - margin - gap;
+        const below = frame.height - bottom - margin - gap;
+        const placeBelow = below >= above;
+        tutorialCard.dataset.side = placeBelow ? 'below' : 'above';
+        tutorialCard.style.setProperty('--card-room', Math.max(0, placeBelow ? below : above) + 'px');
+        const center = (left + right) / 2;
+        const cardWidth = tutorialCard.offsetWidth;
+        const cardX = Math.max(margin, Math.min(center - cardWidth / 2, frame.width - cardWidth - margin));
+        const cardY = placeBelow ? bottom + gap : top - gap - tutorialCard.offsetHeight;
+        tutorialCard.style.setProperty('--card-x', cardX + 'px');
+        tutorialCard.style.setProperty('--card-y', cardY + 'px');
+        tutorialCard.style.setProperty('--card-arrow', Math.max(14, Math.min(center - cardX, cardWidth - 14)) + 'px');
+    }
     function renderTutorial(step) {
         tutorialStep = step;
         tutorialSteps.forEach((panel, index) => { panel.hidden = index !== step; });
@@ -851,13 +880,18 @@
         $('tutorial-skip').hidden = step > 0;
         $('tutorial-previous').hidden = step === 0;
         $('tutorial-next').textContent = step === tutorialSteps.length - 1 ? '시작하기' : '다음';
-        if (tutorialDialog.open) tutorialSteps[step].querySelector('h3').focus();
+        document.body.classList.toggle('tutorial-show-reasoning', tutorialSteps[step].dataset.tutorialTarget === 'reasoning-button');
+        if (tutorialDialog.open) {
+            positionTutorial();
+            tutorialSteps[step].querySelector('h3').focus({ preventScroll: true });
+        }
     }
     function openTutorial() {
         if (tutorialDialog.open) return;
         tutorialAccount = state.profile?.uid;
         renderTutorial(0);
         open('tutorial-dialog');
+        positionTutorial();
     }
     function maybeOpenTutorial() {
         const account = state.profile?.uid;
@@ -871,6 +905,7 @@
         openTutorial();
     }
     tutorialDialog.addEventListener('close', () => {
+        document.body.classList.remove('tutorial-show-reasoning');
         if (!tutorialAccount || tutorialAccount !== state.profile?.uid) return;
         seenTutorials.add(tutorialAccount);
         try { localStorage.setItem(tutorialKey(tutorialAccount), '1'); } catch { /* Remember it for this page. */ }
@@ -884,6 +919,11 @@
         await close('thread-drawer');
         if (!$('thread-drawer').open) openTutorial();
     });
+    if (window.ResizeObserver) {
+        const tutorialResize = new ResizeObserver(positionTutorial);
+        tutorialResize.observe($('composer'));
+        tutorialResize.observe($('model-button'));
+    }
 
     async function memoryDialog() {
         if ($('thread-drawer').open) await close('thread-drawer');
@@ -902,6 +942,7 @@
         document.documentElement.style.setProperty('--visual-height', Math.round(vv?.height || innerHeight) + 'px');
         document.documentElement.style.setProperty('--visual-top', Math.round(vv?.offsetTop || 0) + 'px');
         if (nearBottom()) scrollBottom(true);
+        positionTutorial();
     }
     $('chat-form').addEventListener('submit', event => { event.preventDefault(); submit(); });
     $('usage-button').addEventListener('click', () => {
