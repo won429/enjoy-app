@@ -9429,6 +9429,13 @@
                     <input id="drop-post-schedule" type="checkbox" onchange="window.toggleDropSchedule()" aria-controls="drop-schedule-fields" aria-expanded="false">
                 </label>
                 <div id="drop-schedule-fields" class="drop-schedule-fields hidden">
+                    <div id="drop-schedule-author-field" class="drop-schedule-section" hidden>
+                        <label class="community-label" for="drop-schedule-author">작성자</label>
+                        <select id="drop-schedule-author" class="community-control" disabled>
+                            <option value="self">성원제</option>
+                            <option value="assistant">비서실장 AI</option>
+                        </select>
+                    </div>
                     <div class="drop-schedule-section"><h3><i class="ph ph-map-pin" aria-hidden="true"></i> 어디서 만날까요?</h3>
                         <div class="community-place-grid min-w-0">
                             <div class="community-field"><label class="community-label" for="community-post-region">시·도</label><select id="community-post-region" onchange="window.updateCommunityDistricts()" class="community-control"><option value="">시·도 선택</option></select></div>
@@ -16588,6 +16595,18 @@
             return email.indexOf('@') > 0 ? email.split('@')[0] : '여행자';
         }
 
+        function canChooseScheduleAuthor(user) {
+            return !!(user && user.uid === 'tdC9Bzxz7JRjpEceOLzpDCMKeBE2' &&
+                !(window.enjoyIsLocalGuest && window.enjoyIsLocalGuest()));
+        }
+
+        function scheduleAuthorProfile(user, isSchedule, choice) {
+            if (!canChooseScheduleAuthor(user)) return null;
+            return isSchedule && choice === 'assistant'
+                ? { authorName: '비서실장 AI', authorPhoto: '' }
+                : { authorName: '성원제', authorPhoto: user.photoURL || '' };
+        }
+
         function communityRelativeTime(value) {
             const time = Number(value || 0);
             if (!time) return '방금';
@@ -16751,6 +16770,7 @@
             if (window.closeDropViewer) window.closeDropViewer();
             const scheduleToggle = document.getElementById('drop-post-schedule');
             if (scheduleToggle) scheduleToggle.checked = !!(post && (post.postType === 'schedule' || (!post.postType && post.startDate)));
+            document.getElementById('drop-schedule-author').value = post && post.authorName === '비서실장 AI' ? 'assistant' : 'self';
             window.toggleDropSchedule();
             window._communitySelectedPlaces = post ? communityPostPlaces(post) : [];
             if (post) {
@@ -16856,16 +16876,20 @@
                     itinerary: isSchedule ? itinerary : [],
                     updatedAt: Date.now()
                 };
+                const original = editingId ? window._communityPosts.find(function (item) { return item._id === editingId; }) : null;
+                const author = isSchedule || original?.authorName === '비서실장 AI'
+                    ? scheduleAuthorProfile(user, isSchedule, document.getElementById('drop-schedule-author').value)
+                    : null;
+                if (author) Object.assign(postData, author);
                 if (editingId) {
-                    const original = window._communityPosts.find(function (item) { return item._id === editingId; });
                     if (!original || original.authorUid !== user.uid) throw new Error('permission-denied');
                     await window.fsUpdateDoc(window.fsDoc('community_posts', editingId), postData);
                     Object.assign(original, postData);
                     if (window.renderDropFeed) window.renderDropFeed();
                 } else {
                     postData.authorUid = user.uid;
-                    postData.authorName = communityAuthorName(user);
-                    postData.authorPhoto = user.photoURL || '';
+                    postData.authorName = author ? author.authorName : communityAuthorName(user);
+                    postData.authorPhoto = author ? author.authorPhoto : user.photoURL || '';
                     postData.likedBy = [];
                     postData.commentCount = 0;
                     postData.createdAt = Date.now();
@@ -16895,6 +16919,9 @@
             const checked = !!(toggle && toggle.checked);
             if (fields) fields.classList.toggle('hidden', !checked);
             if (toggle) toggle.setAttribute('aria-expanded', String(checked));
+            const authorAllowed = checked && canChooseScheduleAuthor(communityUser());
+            document.getElementById('drop-schedule-author-field').hidden = !authorAllowed;
+            document.getElementById('drop-schedule-author').disabled = !authorAllowed;
             const body = document.getElementById('community-post-days');
             const label = document.getElementById('drop-write-body-label');
             if (body) body.placeholder = checked ? '1일차\n10:00 정류장 집결\n11:00 팀별 장보기\n오후 2시 30분 숙소 도착' : '함께 나누고 싶은 이야기를 적어보세요.';
@@ -19342,7 +19369,9 @@
             if (photo) {
                 return '<span class="drop-photo-author-avatar"><img src="' + dropEsc(photo) + '" alt="" referrerpolicy="no-referrer"></span>';
             }
-            return '<span class="drop-photo-author-avatar">' + dropEsc(name.slice(0, 1)) + '</span>';
+            return '<span class="drop-photo-author-avatar">' + (name === '비서실장 AI'
+                ? '<i class="ph ph-user" aria-hidden="true"></i>'
+                : dropEsc(name.slice(0, 1))) + '</span>';
         }
 
         function dropActionButtonsHtml(post, user) {
@@ -19569,12 +19598,18 @@
             const createdAt = dropMillis(post.createdAt);
             return '<div class="drop-feed-author"><strong>' + dropEsc(author.authorName) + '</strong>' +
                 (createdAt ? '<time datetime="' + new Date(createdAt).toISOString() + '" title="' + dropEsc(dropDateTime(createdAt)) + '">' +
-                    dropEsc(dropFeedTime(createdAt)) + '</time>' : '') + '</div>';
+                    dropEsc(dropPostDate(createdAt)) + '</time>' : '') + '</div>';
         }
 
         function dropPostImage(post) {
             return '<img src="' + dropEsc(post.imageUrl || '') + '" alt="' +
                 dropEsc((post.authorName || '멤버') + '님의 ' + window.enjoyDropText('드롭 사진')) + '" loading="lazy" draggable="false">';
+        }
+
+        function dropPostDate(createdAt) {
+            return new Intl.DateTimeFormat('ko-KR', {
+                timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit'
+            }).format(new Date(createdAt));
         }
 
         function dropFeedTime(createdAt) {
@@ -19605,7 +19640,7 @@
                 (isNote ? dropNoteHtml(post) : '<div class="drop-viewer-image-shell"><img src="' + imageUrl + '" alt="' + dropEsc((post.authorName || '멤버') + '님의 ' + window.enjoyDropText('드롭 사진')) + '" draggable="false"></div>') +
                 '<div class="drop-viewer-meta">' + dropAuthorAvatar(post) +
                 '<div class="drop-photo-meta-copy"><strong>' + dropEsc(post.authorName || '멤버') + '</strong>' +
-                '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + dropEsc(dropDateTime(post.createdAt)) + '</time></div>' +
+                '<time datetime="' + dropEsc(createdAt ? new Date(createdAt).toISOString() : '') + '">' + (createdAt ? dropEsc(dropPostDate(createdAt)) : '') + '</time></div>' +
                 dropActionButtonsHtml(post, user) + '</div>' +
                 '<div id="drop-viewer-likers" class="drop-viewer-likers">' + dropLikeProfilesHtml(post) + '</div>' +
                 (isNote && post.authorUid === user.uid ? '<div class="drop-note-owner-actions"><button type="button" onclick="window.openDropComposer(\'' + dropEsc(post._id) + '\')">수정</button><button type="button" onclick="window.deleteCommunityPost(\'' + dropEsc(post._id) + '\')">삭제</button></div>' : '');
