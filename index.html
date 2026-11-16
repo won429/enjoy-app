@@ -18988,11 +18988,13 @@
         let beatTimer = null, membersUnsub = null, started = false, lastMembers = [], decayTimer = null;
 
         function memberActivityText(lastActive, now) {
+            const canViewActivityTime = window.enjoyUser?.uid === 'tdC9Bzxz7JRjpEceOLzpDCMKeBE2';
             const time = Number(lastActive || 0);
-            if (!time) return '활동 기록 없음';
+            if (!time) return canViewActivityTime ? '활동 기록 없음' : '활동 전';
 
             const elapsed = Math.max(0, now - time);
             if (elapsed < ACTIVE_MS) return '활동 중';
+            if (!canViewActivityTime) return '활동 전';
 
             const minutes = Math.max(1, Math.floor(elapsed / 60000));
             if (minutes < 60) return minutes + '분 전';
