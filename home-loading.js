@@ -14,8 +14,10 @@
     function skeleton(shape) {
         if (shape === 'members') return '<div class="home-sk-members" aria-hidden="true">' + block('member').repeat(7) + '</div>';
         if (shape === 'summary') return '<div class="home-sk-summary" aria-hidden="true">' + block('title') + block('line') + block('line') + '</div>';
-        return '<div class="home-sk-feed" aria-hidden="true"><div class="home-sk-prediction">' + block('title') + block('line') + block('choices') + block('line') + '</div>' +
-            '<div class="home-sk-photo">' + block('avatar') + block('media') + '</div></div>';
+        const post = content => '<div class="drop-feed-row">' + block('avatar') + '<div class="home-sk-post">' +
+            block('byline') + content + '<div class="home-sk-reactions">' + block('reaction').repeat(2) + '</div></div></div>';
+        return '<div class="drop-feed-grid home-sk-feed" aria-hidden="true">' + post(block('line').repeat(2)) + post(block('media')) +
+            post(block('line') + block('choices')) + '</div>';
     }
     function notice(status, sources) {
         const failed = status.failed, slow = status.slow;

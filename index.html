@@ -26,7 +26,7 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" href="icon.png">
 
-    <link rel="stylesheet" href="app-loading.css?v=20261029-resilient1">
+    <link rel="stylesheet" href="app-loading.css?v=20261116-feed-rows">
     <link rel="stylesheet" href="championship-celebration.css?v=20261108-1">
     <script defer src="championship-celebration.js?v=20261116-1"></script>
     <link rel="stylesheet" href="attendance.css?v=20261005">
@@ -790,6 +790,36 @@
             overflow-wrap: anywhere;
         }
         .drop-feed-schedule i { margin-right: .25rem; }
+        .drop-feed-note-body.drop-feed-itinerary {
+            margin-top: .375rem;
+            white-space: normal;
+        }
+        .drop-itinerary-line { display: block; padding: .2rem 0; white-space: pre-wrap; }
+        .drop-itinerary-day {
+            display: block;
+            padding: .45rem 0 .25rem;
+            border-top: 1px solid var(--drop-feed-line);
+            font-weight: 750;
+        }
+        .drop-itinerary-time {
+            display: grid;
+            grid-template-columns: minmax(0, 6rem) minmax(0, 1fr);
+            align-items: baseline;
+            gap: .625rem;
+            padding: .25rem 0;
+        }
+        .drop-itinerary-clock {
+            min-width: 0;
+            overflow-wrap: normal;
+            word-break: keep-all;
+            color: var(--drop-feed-muted);
+            font-size: .8125rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .drop-detail-post .drop-itinerary-time + .drop-itinerary-time {
+            border-top: 1px solid var(--drop-feed-line);
+        }
         .drop-feed-content .drop-photo-actions {
             justify-content: flex-start;
             gap: .625rem;
@@ -1052,22 +1082,26 @@
             position: fixed;
             inset: 0;
             z-index: 259;
-            display: grid;
-            place-items: center;
+            display: flex;
+            justify-content: center;
             overflow: hidden;
             background: rgba(0,0,0,.55);
             color: var(--drop-feed-ink);
         }
         .drop-comments-layer.hidden { display: none; }
         .drop-detail-screen {
-            display: grid;
-            grid-template-rows: auto minmax(0, 1fr) auto;
+            display: flex;
+            flex-direction: column;
             width: min(100%, 30rem);
             height: 100%;
+            height: 100dvh;
+            max-height: 100%;
+            min-height: 0;
             min-width: 0;
             background: var(--drop-detail-bg);
         }
         .drop-detail-bar {
+            flex: none;
             display: grid;
             grid-template-columns: 5.5rem minmax(0, 1fr) 5.5rem;
             align-items: center;
@@ -1086,7 +1120,18 @@
         }
         .drop-detail-tools { display: flex; justify-content: flex-end; gap: .25rem; }
         .drop-detail-tools button { padding: .25rem; min-height: 2.75rem; color: var(--drop-feed-muted); font-size: .8125rem; }
-        .drop-detail-scroll { position: relative; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+        .drop-detail-scroll {
+            position: relative;
+            flex: 1 1 0;
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior-y: contain;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: var(--drop-feed-line) transparent;
+        }
+        .drop-detail-scroll:focus-visible { outline: 2px solid #3182f6; outline-offset: -2px; }
         .drop-detail-post { padding: 1rem .875rem .5rem; }
         .drop-detail-author {
             display: flex;
@@ -1169,6 +1214,7 @@
         .drop-detail-screen .drop-comment-avatar,
         .drop-detail-screen .drop-comment-compose-avatar { width: 1.75rem; height: 1.75rem; color: var(--drop-feed-ink); background: var(--drop-feed-surface); }
         .drop-detail-screen .drop-comment-form {
+            flex: none;
             background: var(--drop-detail-bg);
             border-color: var(--drop-feed-line);
             padding-bottom: max(.75rem, env(safe-area-inset-bottom));
@@ -1184,6 +1230,17 @@
                 --drop-feed-line: #00000024;
                 --drop-feed-surface: #f0f0f0;
                 --drop-detail-bg: #fff;
+            }
+        }
+        @keyframes dropScreenEnter {
+            from { opacity: 0; translate: 0 .875rem; }
+            to { opacity: 1; translate: 0 0; }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            #community-write-screen:not(.hidden),
+            #drop-prediction-composer:not([hidden]) .drop-prediction-dialog,
+            #drop-comments-layer:not(.hidden) .drop-detail-screen {
+                animation: dropScreenEnter .26s cubic-bezier(.2,.75,.25,1) both;
             }
         }
         .drop-feed-state {
@@ -7764,9 +7821,16 @@
                 <div class="app-sk-member">
                     <div class="app-sk-members"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
                     <div class="app-sk-game-buttons"><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
-                    <div class="app-sk-feed-head"><span class="app-sk-block app-sk-member-avatar"></span><span class="app-sk-block app-sk-title"></span></div>
-                    <span class="app-sk-block app-sk-feed-media"></span>
-                    <div class="app-sk-synopsis"><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
+                    <div class="drop-feed-grid home-sk-feed">
+                        <div class="drop-feed-row"><span class="home-sk-block home-sk-avatar"></span><div class="home-sk-post">
+                            <span class="home-sk-block home-sk-byline"></span><span class="home-sk-block home-sk-line"></span><span class="home-sk-block home-sk-line"></span>
+                            <div class="home-sk-reactions"><span class="home-sk-block"></span><span class="home-sk-block"></span></div>
+                        </div></div>
+                        <div class="drop-feed-row"><span class="home-sk-block home-sk-avatar"></span><div class="home-sk-post">
+                            <span class="home-sk-block home-sk-byline"></span><span class="home-sk-block home-sk-media"></span>
+                            <div class="home-sk-reactions"><span class="home-sk-block"></span><span class="home-sk-block"></span></div>
+                        </div></div>
+                    </div>
                 </div>
             </div>
             <div class="app-sk-nav"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
@@ -7780,7 +7844,7 @@
     </div>
     <script src="meeting-records.js?v=20261030-year1"></script>
     <script src="app-loading.js?v=20261029-resilient1"></script>
-    <script src="home-loading.js?v=20261029-resilient1"></script>
+    <script src="home-loading.js?v=20261116-feed-rows"></script>
 
     <div id="enjoy-dialog" class="hidden fixed inset-0 z-[400] items-center justify-center px-5" aria-hidden="true">
         <div class="ed-card" role="alertdialog" aria-modal="true" aria-labelledby="enjoy-dialog-title" aria-describedby="enjoy-dialog-message" onclick="event.stopPropagation()">
@@ -9311,6 +9375,7 @@
                     <input id="community-post-title" maxlength="80" placeholder="어떤 이야기인가요?" class="drop-write-title">
                     <label id="drop-write-body-label" class="sr-only" for="community-post-days">내용</label>
                     <textarea id="community-post-days" maxlength="2000" rows="5" placeholder="함께 나누고 싶은 이야기를 적어보세요." class="drop-write-body"></textarea>
+                    <p id="drop-itinerary-help" class="drop-write-help" hidden>한 줄에 한 일정씩 적으면 시간과 내용을 나눠 보여줘요.</p>
                     <span class="drop-write-paper-mark">최대 2,000자</span>
                 </div>
                 <label class="drop-schedule-toggle" for="drop-post-schedule">
@@ -9733,7 +9798,7 @@
                 <h2 id="drop-detail-title">게시물</h2>
                 <div id="drop-detail-tools" class="drop-detail-tools"></div>
             </header>
-            <div id="drop-detail-scroll" class="drop-detail-scroll">
+            <div id="drop-detail-scroll" class="drop-detail-scroll" tabindex="0" role="region" aria-label="게시물 본문과 댓글">
                 <article id="drop-detail-post" class="drop-detail-post drop-feed-content"></article>
                 <section id="drop-detail-replies" class="drop-detail-replies" aria-labelledby="drop-comments-title">
                     <header class="drop-comments-header">
@@ -16665,8 +16730,8 @@
             if (window.setCommunityFocusedNav) window.setCommunityFocusedNav(true);
             setTimeout(function () {
                 const title = document.getElementById('community-post-title');
-                if (title) title.focus();
-            }, 120);
+                if (title && window._communityView === 'write') title.focus({ preventScroll: true });
+            }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260);
         };
 
         window.closeCommunityComposer = async function (force) {
@@ -16787,7 +16852,9 @@
             if (toggle) toggle.setAttribute('aria-expanded', String(checked));
             const body = document.getElementById('community-post-days');
             const label = document.getElementById('drop-write-body-label');
-            if (body) body.placeholder = checked ? '세부 일정을 적어주세요.\n1일차 · 만나기 → 함께 점심\n2일차 · 산책 → 돌아오기' : '함께 나누고 싶은 이야기를 적어보세요.';
+            if (body) body.placeholder = checked ? '1일차\n10:00 정류장 집결\n11:00 팀별 장보기\n오후 2시 30분 숙소 도착' : '함께 나누고 싶은 이야기를 적어보세요.';
+            const help = document.getElementById('drop-itinerary-help');
+            if (help) help.hidden = !checked;
             if (label) label.textContent = checked ? '내용 및 세부 일정' : '내용';
         };
         window.openDropComposer = function (postId) {
@@ -19129,6 +19196,23 @@
             return !!(post && (post.postType === 'schedule' || (!post.postType && post.startDate)));
         }
 
+        function dropScheduleRowsHtml(body) {
+            const clock = String.raw`(?:(?:오전|오후)\s*)?(?:[01]?\d|2[0-3])(?:\s*:\s*[0-5]\d|\s*시(?:\s*[0-5]?\d\s*분)?)`;
+            const timed = new RegExp(String.raw`^(${clock}(?:\s*[~–—-]\s*${clock})?)(?=\s|[·:–—-]|$)\s*[·:–—-]?\s*(.*)$`);
+            return body.split(/\r?\n/).map(function (value) {
+                const line = value.trim();
+                if (!line) return '';
+                const entry = line.replace(/^[-*•]\s+/, '');
+                const match = entry.match(timed);
+                if (match && match[2]) {
+                    return '<span class="drop-itinerary-time"><span class="drop-itinerary-clock">' + dropEsc(match[1]) +
+                        '</span><span>' + dropEsc(match[2]) + '</span></span>';
+                }
+                const day = /^\d+\s*일차(?:\s|[·:–—-]|$)/.test(entry);
+                return '<span class="' + (day ? 'drop-itinerary-day' : 'drop-itinerary-line') + '">' + dropEsc(line) + '</span>';
+            }).join('');
+        }
+
         function dropNoteHtml(post, layout) {
             const schedule = dropIsSchedule(post);
             const body = typeof post.body === 'string' ? post.body : (Array.isArray(post.itinerary) ? post.itinerary.join('\n') : '');
@@ -19136,13 +19220,14 @@
             const dates = post.startDate === post.endDate ? post.startDate : (post.startDate || '') + ' — ' + (post.endDate || '');
             if (layout) {
                 const titleTag = layout === 'detail' ? 'h3' : 'span';
-                const bodyTag = layout === 'detail' ? 'p' : 'span';
+                const bodyTag = layout === 'detail' ? (schedule ? 'div' : 'p') : 'span';
                 const scheduleDetails = schedule
                     ? '<span class="drop-feed-schedule"><span><i class="ph ph-calendar-blank" aria-hidden="true"></i>' + dropEsc(dates) + '</span>' +
                         (place ? '<span><i class="ph ph-map-pin" aria-hidden="true"></i>' + dropEsc(place) + '</span>' : '') + '</span>'
                     : '';
                 return (post.title ? '<' + titleTag + ' class="drop-feed-note-title">' + dropEsc(post.title) + '</' + titleTag + '>' : '') +
-                    scheduleDetails + (body ? '<' + bodyTag + ' class="drop-feed-note-body">' + dropEsc(body) + '</' + bodyTag + '>' : '');
+                    scheduleDetails + (body ? '<' + bodyTag + ' class="drop-feed-note-body' + (schedule ? ' drop-feed-itinerary' : '') + '">' +
+                        (schedule ? dropScheduleRowsHtml(body) : dropEsc(body)) + '</' + bodyTag + '>' : '');
             }
             return '<div class="drop-note-paper"><span class="drop-note-kind"><i class="ph ' + (schedule ? 'ph-calendar-blank' : 'ph-pencil-simple') + '" aria-hidden="true"></i>' + (schedule ? '일정' : '글') + '</span>' +
                 '<h3>' + dropEsc(post.title || '') + '</h3>' +
@@ -20113,7 +20198,7 @@
                     return;
                 }
                 if (event.key === 'Tab') {
-                    const focusable = Array.from(comments.querySelectorAll('button, input, summary')).filter(function (el) {
+                    const focusable = Array.from(comments.querySelectorAll('button, input, summary, [tabindex="0"]')).filter(function (el) {
                         return !el.disabled && el.getClientRects().length;
                     });
                     const edge = event.shiftKey ? focusable[0] : focusable[focusable.length - 1];

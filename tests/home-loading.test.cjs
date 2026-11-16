@@ -57,3 +57,24 @@ test('member list and briefing own independent placeholders and never show cache
  ui.gate.ready('meeting');ui.gate.slow('schedule');assert.match(ui.nodes.get('enjoy-assistant-loading-region').innerHTML,/일정 연결이 평소보다/);
  ui.gate.ready('schedule');assert.equal(ui.summary.dataset.sourcePending,'false');assert.equal(ui.nodes.get('enjoy-assistant-loading-region').hidden,true);
 });
+
+test('the loading feed uses the same post rows and author column as the actual feed', () => {
+    const { skeleton } = require('../home-loading.js');
+    const markup = skeleton('feed');
+    assert.equal((markup.match(/class="drop-feed-row"/g) || []).length, 3);
+    assert.equal((markup.match(/home-sk-avatar"><\/span><div class="home-sk-post">/g) || []).length, 3);
+    assert.match(markup, /home-sk-media/);
+    assert.match(markup, /home-sk-choices/);
+});
+
+test('schedule formatting separates time ranges and Korean times while preserving unstructured lines', () => {
+    const start = html.indexOf('function dropScheduleRowsHtml');
+    const end = html.indexOf('function dropNoteHtml', start);
+    const context = vm.createContext({ dropEsc: text => text.replaceAll('<', '&lt;') });
+    vm.runInContext(html.slice(start, end), context);
+    const schedule = context.dropScheduleRowsHtml('1일차 · 잠실\r\n- 10:00~10:30 집결\n오후 2시 30분 단체 사진\n메모 <입장권>');
+    assert.match(schedule, /drop-itinerary-day">1일차 · 잠실/);
+    assert.ok(schedule.includes('drop-itinerary-clock">10:00~10:30</span><span>집결'));
+    assert.ok(schedule.includes('drop-itinerary-clock">오후 2시 30분</span><span>단체 사진'));
+    assert.ok(schedule.includes('drop-itinerary-line">메모 &lt;입장권>'));
+});
