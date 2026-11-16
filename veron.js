@@ -840,8 +840,10 @@
     const tutorialDialog = $('tutorial-dialog');
     const tutorialCard = $('tutorial-card');
     const tutorialSteps = [...tutorialDialog.querySelectorAll('[data-tutorial-target]')];
+    const tutorialProgress = $('tutorial-progress');
+    tutorialProgress.max = tutorialSteps.length;
     const seenTutorials = new Set();
-    const tutorialKey = account => 'veron-tutorial-v2:' + account;
+    const tutorialKey = account => 'veron-tutorial-v3:' + account;
     let tutorialStep = 0;
     let tutorialAccount = null;
 
@@ -875,7 +877,7 @@
     function renderTutorial(step) {
         tutorialStep = step;
         tutorialSteps.forEach((panel, index) => { panel.hidden = index !== step; });
-        $('tutorial-progress').value = step + 1;
+        tutorialProgress.value = step + 1;
         $('tutorial-step-number').textContent = (step + 1) + ' / ' + tutorialSteps.length;
         $('tutorial-skip').hidden = step > 0;
         $('tutorial-previous').hidden = step === 0;
