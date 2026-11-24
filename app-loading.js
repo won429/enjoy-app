@@ -2,8 +2,8 @@
     'use strict';
     const loader = root.document.getElementById('app-loader');
     if (!loader) return;
-    const memberSources = ['auth', 'profile', 'members', 'meeting', 'schedule', 'drop', 'community', 'prediction', 'notice', 'home'];
-    const labels = { auth: '로그인 상태', profile: '회원 정보', members: '멤버 목록', meeting: '모임통장', schedule: '일정', drop: '사진', community: '글·일정', prediction: '예측', notice: '공지', home: '홈 화면' };
+    const memberSources = ['auth', 'profile', 'members', 'meeting', 'schedule', 'drop', 'community', 'notice', 'home'];
+    const labels = { auth: '로그인 상태', profile: '회원 정보', members: '멤버 목록', meeting: '모임통장', schedule: '일정', drop: '사진', community: '글·일정', notice: '공지', home: '홈 화면' };
     const hardError = error => /permission-denied|unauthenticated|invalid-argument|failed-precondition/.test(String(error?.code || ''));
     let version = 0, owner = null, mode = 'pending', completed = false, framePending = false, deadline = null;
     let required = ['auth', 'home'], states = new Map(required.map(source => [source, 'pending']));

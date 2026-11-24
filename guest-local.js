@@ -208,7 +208,7 @@
         root._availMine = null;
         if (!root.meetingDb) root.meetingDb = { localOnly: true };
         const records = read(), key = 'members/' + uid;
-        if (!records[key]) records[key] = { name: identity.displayName, photoURL: '', points: 0, avail: {} };
+        if (!records[key]) records[key] = { name: identity.displayName, photoURL: '', avail: {} };
         records[key].name = name;
         for (const value of Object.values(records)) {
             if (value.authorUid === uid) value.authorName = name;

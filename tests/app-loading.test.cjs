@@ -23,16 +23,16 @@ test('home opens only after verified identity and a painted frame; optional serv
  const ui=setup();ui.window.enjoyFinishAppLoading();ui.paint();assert.notEqual(ui.loader.style.display,'none');
  ui.begin();ui.watch();ui.paint();assert.notEqual(ui.loader.style.display,'none');
  ui.gate.ready('profile');assert.notEqual(ui.loader.style.display,'none');ui.paint();assert.equal(ui.loader.style.display,'none');
- assert.equal(ui.gate.snapshot().states.drop,'pending');assert.equal(ui.gate.snapshot().states.prediction,'pending');
- assert.equal(view(ui.gate.snapshot(),['drop','community','prediction']).ready,false);
- ui.gate.fail('prediction');ui.paint();assert.equal(ui.loader.style.display,'none');
+ assert.equal(ui.gate.snapshot().states.drop,'pending');assert.equal(ui.gate.snapshot().states.community,'pending');
+ assert.equal(view(ui.gate.snapshot(),['drop','community']).ready,false);
+ ui.gate.fail('community');ui.paint();assert.equal(ui.loader.style.display,'none');
 });
 test('cached and optimistic snapshots cannot release the local feed placeholder; server metadata confirms even empty data',()=>{
  const ui=setup();ui.begin();ui.watch();ui.gate.ready('profile');ui.paint();
  sources.forEach(key=>{assert.equal(ui.subs.get(key).options.includeMetadataChanges,true);ui.send(key,true);});
- assert.equal(ui.applied.length,6);assert.equal(view(ui.gate.snapshot(),['drop','community','prediction']).ready,false);
- sources.forEach(key=>ui.send(key,false,true));ui.gate.ready('prediction');assert.equal(view(ui.gate.snapshot(),['drop','community','prediction']).ready,false);
- sources.forEach(key=>ui.send(key));assert.equal(view(ui.gate.snapshot(),['drop','community','prediction']).ready,true);
+ assert.equal(ui.applied.length,6);assert.equal(view(ui.gate.snapshot(),['drop','community']).ready,false);
+ sources.forEach(key=>ui.send(key,false,true));assert.equal(view(ui.gate.snapshot(),['drop','community']).ready,false);
+ sources.forEach(key=>ui.send(key));assert.equal(view(ui.gate.snapshot(),['drop','community']).ready,true);
 });
 test('transient snapshot failures retry just the failed source, retain session, and recover without a page reload',()=>{
  const ui=setup();ui.begin();ui.watch();ui.gate.ready('profile');ui.paint();const untouched=ui.subs.get('community');
@@ -58,7 +58,7 @@ test('automatic retry is bounded; online recovery and explicit retry recover an 
 });
 test('20 seconds means slow identity verification, not fabricated failure or an anonymous fallback',()=>{
  const ui=setup();ui.begin();ui.tick(20000);assert.equal(ui.loader.dataset.state,'slow');assert.match(ui.message.textContent,/회원 정보/);
- assert.equal(ui.gate.snapshot().states.profile,'slow');assert.equal(ui.gate.snapshot().states.prediction,'pending');
+ assert.equal(ui.gate.snapshot().states.profile,'slow');assert.equal(ui.gate.snapshot().states.drop,'pending');
  let wakes=0;ui.window.enjoyRetryMemberProfile=()=>wakes++;ui.retry.click();assert.equal(wakes,1);assert.equal(ui.reloads(),0);
  ui.gate.ready('profile');ui.paint();assert.equal(ui.loader.style.display,'none');
 });
@@ -72,20 +72,20 @@ test('essential permission failures are explicit, named and recover only after a
 test('old accounts, aborted listeners, pending paints and scheduled retries cannot overwrite the new session',()=>{
  const ui=setup();ui.begin('a');ui.watch();const old=ui.subs.get('drop'),generation=ui.gate.snapshot().version;
  old.error(Error('offline'));ui.gate.ready('profile');ui.begin('b');ui.watch();
- assert.equal(old.stopped,true);const count=ui.applied.length;old.receive({metadata:{fromCache:false}});ui.gate.ready('profile',generation);ui.gate.fail('prediction',generation);ui.paint();
- assert.equal(ui.applied.length,count);assert.equal(ui.gate.snapshot().states.profile,'pending');assert.equal(ui.gate.snapshot().states.prediction,'pending');
+ assert.equal(old.stopped,true);const count=ui.applied.length;old.receive({metadata:{fromCache:false}});ui.gate.ready('profile',generation);ui.gate.fail('community',generation);ui.paint();
+ assert.equal(ui.applied.length,count);assert.equal(ui.gate.snapshot().states.profile,'pending');assert.equal(ui.gate.snapshot().states.community,'pending');
  assert.equal([...ui.timers.values()].some(t=>t.ms===1000),false);ui.gate.ready('profile');ui.paint();assert.equal(ui.loader.style.display,'none');
 });
 test('guests and classified local profiles never wait on member-only regions or invent server confirmations',()=>{
  const ui=setup();ui.gate.local();ui.paint();assert.notEqual(ui.loader.style.display,'none');
- ui.begin(null);ui.gate.local();ui.paint();assert.equal(ui.loader.style.display,'none');assert.equal(view(ui.gate.snapshot(),['prediction']).ready,true);
+ ui.begin(null);ui.gate.local();ui.paint();assert.equal(ui.loader.style.display,'none');assert.equal(view(ui.gate.snapshot(),['drop']).ready,true);
  ui.begin('special');ui.gate.local();ui.paint();assert.equal(ui.gate.snapshot().mode,'local');assert.equal(ui.loader.style.display,'none');
  ui.window.enjoyIsLocalGuest=()=>true;ui.window.enjoyInitialSnapshot('members','local',()=>{});assert.equal(ui.subs.get('local').options,null);
 });
 test('a later refresh failure preserves confirmed content and never resurrects the full screen loader',()=>{
- const ui=setup();ui.begin();ui.watch();ui.gate.ready('profile');sources.forEach(k=>ui.send(k));ui.gate.ready('prediction');ui.paint();
+ const ui=setup();ui.begin();ui.watch();ui.gate.ready('profile');sources.forEach(k=>ui.send(k));ui.paint();
  ui.subs.get('drop').error({code:'permission-denied',message:'lost permission'});
- assert.equal(ui.loader.style.display,'none');assert.equal(view(ui.gate.snapshot(),['drop','community','prediction']).ready,true);
+ assert.equal(ui.loader.style.display,'none');assert.equal(view(ui.gate.snapshot(),['drop','community']).ready,true);
  assert.deepEqual(view(ui.gate.snapshot(),['drop']).failed,['drop']);
 });
 test('entry fallback waits for auth, shows slow status and never switches unresolved sessions to guests',()=>{
@@ -123,15 +123,12 @@ test('the actual Firebase startup opens after verified profile while slow feeds 
   Object.assign(sdk,{getApps:()=>[],initializeApp:()=>({}),getAuth:()=>({currentUser:{uid:'a',getIdToken:async()=> 'fixture-token'}}),getFirestore:()=>({}),
     setPersistence:async()=>{},onAuthStateChanged(auth,fn){authCallback=fn;},doc:(db,...parts)=>parts.join('/'),collection:(db,...parts)=>parts.join('/'),
     getDoc:async()=>({exists:()=>false}),onSnapshot(reference,options,receive,error){assert.equal(options.includeMetadataChanges,true);streams.set(reference,{receive,error});return()=>{};}});
-  let resolvePredictions;
   ui.window.getEnjoyIdToken=async()=> 'fixture-token';
   ui.window.document.addEventListener=()=>{};
   ui.window.document.querySelectorAll=()=>[];
-  const predictionFetch=()=>new Promise(resolve=>{resolvePredictions=()=>resolve({ok:true,json:async()=>({posts:[],serverNow:Date.now()})});});
   const CustomEvent=class{constructor(type){this.type=type;}};
-  const context=vm.createContext({window:ui.window,document:ui.window.document,localStorage:ui.window.localStorage,CustomEvent,console:{warn(){},error(){}},fetch:predictionFetch,AbortSignal,AbortController,URL,setInterval:()=>1,clearInterval(){},...sdk});
+  const context=vm.createContext({window:ui.window,document:ui.window.document,localStorage:ui.window.localStorage,CustomEvent,console:{warn(){},error(){}},AbortSignal,AbortController,URL,setInterval:()=>1,clearInterval(){},...sdk});
   vm.runInContext(fs.readFileSync(path.join(__dirname,'../home-entry.js'),'utf8'),context);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'../drop-prediction.js'),'utf8'),context);
   vm.runInContext(raw.replace(/^\s*import[^\n]+\n/gm,''),context);
   await new Promise(setImmediate);await authCallback({uid:'a',displayName:'테스트'});
   assert.deepEqual(selected,['home']);
@@ -142,10 +139,8 @@ test('the actual Firebase startup opens after verified profile while slow feeds 
   ui.paint();assert.equal(ui.loader.style.display,'none','feeds do not block authenticated home entry');
   assert.equal(ui.window.__enjoyTodayDataReady,true);assert.deepEqual(settled,['meeting','schedule']);
   pending.receive({metadata:{fromCache:false,hasPendingWrites:false}});ui.paint();
-  assert.equal(ui.loader.style.display,'none','prediction remains local to its feed region');
-  assert.equal(ui.gate.snapshot().states.prediction,'retrying');
-  await new Promise(setImmediate);assert.equal(typeof resolvePredictions,'function');resolvePredictions();await new Promise(setImmediate);ui.paint();assert.equal(ui.loader.style.display,'none');
-  assert.equal(ui.gate.snapshot().states.prediction,'ready');
+  assert.equal(ui.loader.style.display,'none','a late feed stays local to its feed region');
+  assert.equal(ui.gate.snapshot().states.drop,'ready');
 });
 
 test('profile classification uses the server document rather than a possibly stale cached membership',async()=>{

@@ -11,44 +11,44 @@ function setup(){
  members.dataset={homeLoading:'members',homeLoadingShape:'members'};summary.dataset={homeLoading:'meeting schedule',homeLoadingShape:'summary'};
  const document={hidden:false,getElementById:id=>nodes.get(id)||null,querySelectorAll:s=>s==='[data-home-loading]'?[members,summary]:[],createElement:()=>element(),
   addEventListener(name,fn){(events[name]||=[]).push(fn);},querySelector:()=>null};
- const window={document,enjoyUser:{uid:'a'},enjoyDropText:s=>s,location:{reload(){reloads++;}},_dropPosts:[],_communityPosts:[],_dropPredictions:[],
+ const window={document,enjoyUser:{uid:'a'},enjoyDropText:s=>s,location:{reload(){reloads++;}},_dropPosts:[],_communityPosts:[],
   requestAnimationFrame:fn=>frames.push(fn),setTimeout(fn,ms){const id=++next;timers.set(id,{fn,ms});return id;},clearTimeout(id){timers.delete(id);},
-  addEventListener(){},EnjoyDropPrediction:{card:post=>'<article class="drop-prediction-card">'+post.title+'</article>'}};
+  addEventListener(){}};
  const context=vm.createContext({window,document,Date,
-  dropUser:()=>window.enjoyUser,visibleDropPosts:()=>[...window._dropPosts,...window._dropPredictions].sort((a,b)=>b.createdAt-a.createdAt),scheduleDropExpiry(){},
+  dropUser:()=>window.enjoyUser,visibleDropPosts:()=>[...window._dropPosts].sort((a,b)=>b.createdAt-a.createdAt),scheduleDropExpiry(){},
   dropEsc:s=>String(s||''),dropMillis:s=>Number(s)||0,dropPostId:p=>p._id,dropDateTime:()=>'',dropAuthorAvatar:()=>'',dropActionButtonsHtml:()=>'',dropFeedCommentsHtml:()=>''});
  vm.runInContext(source('app-loading.js'),context);vm.runInContext(renderer,context);vm.runInContext(source('home-loading.js'),context);
  const gate=window.enjoyAppLoading;gate.begin(window.enjoyUser);gate.ready('profile');gate.paint();
  function paint(){for(let n=0;frames.length&&n<10;n++)frames.splice(0).forEach(fn=>fn());}paint();
- function readyFeed(){for(const key of ['drop','community','prediction'])gate.ready(key);}
+ function readyFeed(){for(const key of ['drop','community'])gate.ready(key);}
  const photo={_id:'photo',imageUrl:'https://example.invalid/local-fixture.jpg',width:4,height:5,createdAt:100};
- const prediction={_id:'prediction',postType:'prediction',title:'예측 테스트',createdAt:200};
- return{gate,window,feed,members,summary,loader,nodes,events,paint,readyFeed,photo,prediction,reloads:()=>reloads};
+ const newer={_id:'newer',imageUrl:'https://example.invalid/newer-fixture.jpg',width:4,height:5,createdAt:200};
+ return{gate,window,feed,members,summary,loader,nodes,events,paint,readyFeed,photo,newer,reloads:()=>reloads};
 }
 test('actual feed renderer keeps a local skeleton until every mixed feed source is confirmed, while home is usable',()=>{
- const ui=setup();ui.window._dropPosts=[ui.photo];ui.window._dropPredictions=[ui.prediction];ui.window.renderDropFeed();
+ const ui=setup();ui.window._dropPosts=[ui.photo,ui.newer];ui.window.renderDropFeed();
  assert.equal(ui.loader.style.display,'none');assert.equal(ui.feed.attributes['aria-busy'],'true');assert.match(ui.feed.innerHTML,/home-sk-feed/);
- assert.doesNotMatch(ui.feed.innerHTML,/첫 번째|예측 테스트|drop-photo-card/);
- ui.gate.ready('drop');ui.gate.ready('community');assert.match(ui.feed.innerHTML,/home-sk-feed/);
- ui.gate.ready('prediction');assert.equal(ui.feed.attributes['aria-busy'],'false');assert.doesNotMatch(ui.feed.innerHTML,/home-sk-feed/);
- assert.ok(ui.feed.innerHTML.indexOf('예측 테스트')<ui.feed.innerHTML.indexOf('data-drop-card-id="photo"'),'preserve existing chronological ordering');
+ assert.doesNotMatch(ui.feed.innerHTML,/첫 번째|drop-photo-card/);
+ ui.gate.ready('drop');assert.match(ui.feed.innerHTML,/home-sk-feed/);
+ ui.gate.ready('community');assert.equal(ui.feed.attributes['aria-busy'],'false');assert.doesNotMatch(ui.feed.innerHTML,/home-sk-feed/);
+ assert.ok(ui.feed.innerHTML.indexOf('data-drop-card-id="newer"')<ui.feed.innerHTML.indexOf('data-drop-card-id="photo"'),'preserve existing chronological ordering');
 });
 test('a feed failure exposes only a local retry; successful retry replaces the placeholder without a page reload',()=>{
- const ui=setup();ui.gate.ready('drop');ui.gate.ready('community');ui.gate.fail('prediction',ui.gate.snapshot().version,{message:'offline'});
- assert.equal(ui.loader.style.display,'none');assert.match(ui.feed.innerHTML,/예측 정보를 불러오지 못했어요/);assert.match(ui.feed.innerHTML,/data-home-loading-retry="prediction"/);
- let called=0;ui.gate.registerRetry('prediction',()=>{called++;ui.gate.pending('prediction');});
- for(const handler of ui.events.click)handler({target:{closest:()=>({dataset:{homeLoadingRetry:'prediction'}})}});
+ const ui=setup();ui.gate.ready('drop');ui.gate.fail('community',ui.gate.snapshot().version,{message:'offline'});
+ assert.equal(ui.loader.style.display,'none');assert.match(ui.feed.innerHTML,/글·일정 정보를 불러오지 못했어요/);assert.match(ui.feed.innerHTML,/data-home-loading-retry="community"/);
+ let called=0;ui.gate.registerRetry('community',()=>{called++;ui.gate.pending('community');});
+ for(const handler of ui.events.click)handler({target:{closest:()=>({dataset:{homeLoadingRetry:'community'}})}});
  assert.equal(called,1);assert.equal(ui.reloads(),0);assert.match(ui.feed.innerHTML,/home-sk-feed/);assert.doesNotMatch(ui.feed.innerHTML,/불러오지 못/);
- ui.window._dropPredictions=[ui.prediction];ui.gate.ready('prediction');assert.match(ui.feed.innerHTML,/예측 테스트/);assert.doesNotMatch(ui.feed.innerHTML,/home-sk-feed|다시 연결/);
+ ui.window._dropPosts=[ui.newer];ui.gate.ready('community');assert.match(ui.feed.innerHTML,/data-drop-card-id="newer"/);assert.doesNotMatch(ui.feed.innerHTML,/home-sk-feed|다시 연결/);
 });
 test('empty state appears only after confirmed empty responses, never while a service is pending',()=>{
  const ui=setup();assert.doesNotMatch(ui.feed.innerHTML,/첫 번째 드롭/);ui.readyFeed();assert.match(ui.feed.innerHTML,/첫 번째 드롭/);
 });
 test('confirmed content remains visible after a later refresh failure and local error offers retry',()=>{
- const ui=setup();ui.window._dropPosts=[ui.photo];ui.window._dropPredictions=[ui.prediction];ui.readyFeed();
- ui.gate.fail('prediction',ui.gate.snapshot().version,{message:'offline'});
- assert.match(ui.feed.innerHTML,/예측 테스트/);assert.match(ui.feed.innerHTML,/data-drop-card-id="photo"/);assert.doesNotMatch(ui.feed.innerHTML,/home-sk-feed/);
- assert.match(ui.feed.innerHTML,/예측 다시 연결/);assert.equal(ui.loader.style.display,'none');
+ const ui=setup();ui.window._dropPosts=[ui.photo,ui.newer];ui.readyFeed();
+ ui.gate.fail('community',ui.gate.snapshot().version,{message:'offline'});
+ assert.match(ui.feed.innerHTML,/data-drop-card-id="newer"/);assert.match(ui.feed.innerHTML,/data-drop-card-id="photo"/);assert.doesNotMatch(ui.feed.innerHTML,/home-sk-feed/);
+ assert.match(ui.feed.innerHTML,/글·일정 다시 연결/);assert.equal(ui.loader.style.display,'none');
 });
 test('member list and briefing own independent placeholders and never show cached values as server-confirmed data',()=>{
  const ui=setup();assert.equal(ui.members.dataset.sourcePending,'true');assert.equal(ui.summary.dataset.sourcePending,'true');

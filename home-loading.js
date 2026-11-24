@@ -1,7 +1,7 @@
 (function (root) {
     'use strict';
-    const groups = ['drop', 'community', 'prediction'];
-    const names = { drop: '사진', community: '글·일정', prediction: '예측', members: '멤버 목록', meeting: '모임통장', schedule: '일정' };
+    const groups = ['drop', 'community'];
+    const names = { drop: '사진', community: '글·일정', members: '멤버 목록', meeting: '모임통장', schedule: '일정' };
     function view(snapshot, sources) {
         const member = snapshot.mode === 'member';
         const confirmed = snapshot.confirmed || [];
@@ -37,7 +37,7 @@
             wrap.setAttribute('aria-busy', String(!current.ready));
             wrap.dataset.loadingState = current.ready ? 'ready' : current.failed.length ? 'error' : 'loading';
             if (current.ready) return false;
-            wrap.innerHTML = '<div class="home-source-placeholder" role="status"><span class="home-sk-label">사진·글·예측을 불러오는 중</span>' + notice(current, groups) + skeleton('feed') + '</div>';
+            wrap.innerHTML = '<div class="home-source-placeholder" role="status"><span class="home-sk-label">사진·글을 불러오는 중</span>' + notice(current, groups) + skeleton('feed') + '</div>';
             return true;
         },
         feedNotice: () => notice(status(groups), groups)

@@ -15,7 +15,7 @@
 검증:
 
 ```sh
-TZ=Asia/Seoul node --test tests/meeting-exemptions.test.cjs tests/app-loading.test.cjs tests/drop-prediction-loading.test.cjs
+TZ=Asia/Seoul node --test tests/meeting-exemptions.test.cjs tests/app-loading.test.cjs
 ```
 
 중복 요청·중복 승인, 승인자·자기 승인 차단·역방향 승인·담당 요청 필터 검증, 거부 후 재요청, 저장 실패, 납부 후 승인 방지, 별칭 수량, 실시간 결과 팝업, 구독 실패 복구, 계정 전환을 확인합니다. 모바일 브라우저 검증은 `.local-preview/exemptions.html`의 로컬 테스트 데이터로 수행했으며 실제 멤버에게 요청하거나 실제 면제권을 차감하지 않았습니다.

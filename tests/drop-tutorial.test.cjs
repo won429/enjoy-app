@@ -9,9 +9,9 @@ const source = fs.readFileSync(path.join(__dirname, '../drop-tutorial.js'), 'utf
 test('member and local tutorials describe only available features', () => {
     const member = stepsFor(false, false);
     const local = stepsFor(true, false);
-    assert.equal(member.length, 6);
+    assert.equal(member.length, 5);
     assert.equal(local.length, 5);
-    assert.ok(member.some(step => step.title.includes('예측')));
+    assert.ok(!member.some(step => step.title.includes('예측')));
     assert.ok(!local.some(step => step.title.includes('예측')));
     assert.match(local.map(step => step.text).join(' '), /이 기기에 저장/);
     assert.match(member.map(step => step.text).join(' '), /24시간/);
@@ -88,11 +88,11 @@ test('first use waits for loading, supports navigation and remembers dismissal p
     assert.equal(app.dialog.open, false);
     app.ready();
     assert.equal(app.dialog.open, true);
-    assert.equal(app.controls.get('.drop-tutorial-progress span').textContent, '1 / 6');
+    assert.equal(app.controls.get('.drop-tutorial-progress span').textContent, '1 / 5');
     app.controls.get('#drop-tutorial-next').events.click();
-    assert.equal(app.controls.get('.drop-tutorial-progress span').textContent, '2 / 6');
+    assert.equal(app.controls.get('.drop-tutorial-progress span').textContent, '2 / 5');
     app.controls.get('#drop-tutorial-previous').events.click();
-    assert.equal(app.controls.get('.drop-tutorial-progress span').textContent, '1 / 6');
+    assert.equal(app.controls.get('.drop-tutorial-progress span').textContent, '1 / 5');
     app.closeControls[0].events.click();
     assert.equal(app.storage.get('enjoy-drop-tutorial-v1:member-a'), '1');
     assert.equal(app.nodes.get('home-screen').scrollTop, 42);

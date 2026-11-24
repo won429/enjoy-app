@@ -27,13 +27,6 @@
                     (local ? ' 내가 남긴 글과 사진은 이 기기에 저장돼요.' : ' 일반 글과 사진은 24시간 동안, 일정은 계속 볼 수 있어요.')
             }
         ];
-        if (!local) {
-            steps.push({
-                target: '#drop-feed .drop-prediction-card, #drop-feed-section',
-                title: '야구 예측 참여하기',
-                text: '공개된 예측에서 이길 팀을 누르세요. 마감 전까지 선택을 바꿀 수 있고, 남은 시간과 성공·실패 포인트를 확인할 수 있어요. 무승부나 취소는 포인트가 변하지 않아요.'
-            });
-        }
         steps.push({
             target: '.drop-entry-actions',
             title: '게임과 사용법 다시 보기',
