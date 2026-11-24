@@ -4512,6 +4512,9 @@
         html.enjoy-guest .member-status-active-dot,
         html.enjoy-guest .member-status-study-badge,
         html.enjoy-guest [data-home-tab="shorts"] { display: none !important; }
+        /* 브이로그는 정식 멤버(파이어베이스 동기화)에게만 보인다. */
+        html:not(.enjoy-vlog-member) [data-home-tab="vlog"],
+        html:not(.enjoy-vlog-member) #home-vlog-panel { display: none !important; }
 
         /* 프로필 최초 등록: 로그인 화면과 같은 전체 화면 구성 */
         #profile-modal {
@@ -7824,15 +7827,15 @@
 
         <!-- 홈 상단 메뉴 (브이로그 / 드롭 / 숏츠 / 학사일정 / 야구) -->
         <nav id="home-tabs" class="home-tabs" role="tablist" aria-label="상단 메뉴">
-            <button type="button" class="home-tab is-active" data-home-tab="vlog" role="tab" aria-selected="true" aria-controls="home-vlog-panel" onclick="window.switchHomeTab('vlog')">브이로그</button>
-            <button type="button" class="home-tab" data-home-tab="home" data-drop-copy="드롭" role="tab" aria-selected="false" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
+            <button type="button" class="home-tab" data-home-tab="vlog" role="tab" aria-selected="false" aria-controls="home-vlog-panel" onclick="window.switchHomeTab('vlog')">브이로그</button>
+            <button type="button" class="home-tab is-active" data-home-tab="home" data-drop-copy="드롭" role="tab" aria-selected="true" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
             <button type="button" class="home-tab" data-home-tab="shorts" role="tab" aria-selected="false" aria-controls="shorts-screen" onclick="window.switchHomeTab('shorts')">숏츠</button>
             <button type="button" class="home-tab" data-home-tab="academic" role="tab" aria-selected="false" aria-controls="academic-schedule-screen" onclick="window.switchHomeTab('academic')">학사일정</button>
             <button type="button" class="home-tab" data-home-tab="baseball" role="tab" aria-selected="false" aria-controls="home-baseball-panel" onclick="window.switchHomeTab('baseball')">야구</button>
         </nav>
         
         <!-- 카드 나열 (배너/슬라이더 제거, 각 항목을 사진 카드로 세로 나열) -->
-        <div id="apple-tv-banner" class="fade-in-up delay-100 mt-1 mb-6 relative hidden">
+        <div id="apple-tv-banner" class="fade-in-up delay-100 mt-1 mb-6 relative">
             <!-- 기존 JS 수정 없이 Apple TV 스타일 인디케이터를 구현하기 위한 로컬 스타일 -->
             <style>
                 #apple-tv-banner .bg-black\/60 { background-color: #ffffff !important; width: 1.25rem !important; border-radius: 0.25rem !important; }
@@ -8261,7 +8264,7 @@
         </section>
 
         <!-- 브이로그 탭: 최신 배너와 모든 시리즈 -->
-        <section id="home-vlog-panel" class="home-vlog-panel" aria-label="엔조이 브이로그">
+        <section id="home-vlog-panel" class="home-vlog-panel hidden" aria-label="엔조이 브이로그">
             <section class="home-content-item home-featured" data-home-category="latest">
                 <div class="home-featured-clean relative overflow-hidden cursor-pointer bg-black group" role="button" tabindex="0" aria-label="최신 브이로그 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <img src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" alt="최신 엔조이 브이로그" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/21uUicVMzqg/hqdefault.jpg'">
@@ -8877,7 +8880,7 @@
 
         window.closeAcademicSchedule = function () {
             closeAcademicSchoolMenu(false);
-            if (typeof window.switchHomeTab === 'function') window.switchHomeTab(window.homeDefaultTab);
+            if (typeof window.switchHomeTab === 'function') window.switchHomeTab(window.enjoyHomeDefaultTab());
         };
 
         window.changeAcademicMonth = function (delta) {
@@ -11151,12 +11154,26 @@
             window.openEnjoyBaseballGame(game.id, matchDate || game.date, game.team1 === '삼성' || game.team2 === '삼성' ? '삼성' : 'KIA');
         };
         // 홈 상단 탭 (브이로그 / 드롭 / 숏츠 / 학사일정 / 야구) — 모두 홈 화면 안에서 전환된다.
-        // 기본 탭은 브이로그. 'home'은 드롭 탭을 뜻한다.
-        window.homeDefaultTab = 'vlog';
-        window.homeActiveTab = window.homeDefaultTab;
+        // 'home'은 드롭 탭을 뜻한다. 브이로그는 정식 멤버에게만 있고, 멤버의 기본 탭이다.
+        window.enjoyCanSeeVlog = function () { return !!(window.enjoyUser && window.enjoySync); };
+        window.enjoyHomeDefaultTab = function () { return window.enjoyCanSeeVlog() ? 'vlog' : 'home'; };
+        window.homeActiveTab = 'home';
+        let vlogDefaultApplied = false;
+        window.enjoyRefreshVlogAccess = function () {
+            const member = window.enjoyCanSeeVlog();
+            document.documentElement.classList.toggle('enjoy-vlog-member', member);
+            if (!member) {
+                vlogDefaultApplied = false;
+                if (window.homeActiveTab === 'vlog') window.selectHomeTab('home');
+                return;
+            }
+            if (!vlogDefaultApplied && window.homeActiveTab === 'home') window.selectHomeTab('vlog');
+            vlogDefaultApplied = true;
+        };
         window.selectHomeTab = function (tab) {
-            if (tab === 'shorts' && !window.enjoyUser) tab = window.homeDefaultTab;
-            tab = ['home', 'baseball', 'vlog', 'shorts', 'academic'].includes(tab) ? tab : window.homeDefaultTab;
+            if (tab === 'shorts' && !window.enjoyUser) tab = window.enjoyHomeDefaultTab();
+            tab = ['home', 'baseball', 'vlog', 'shorts', 'academic'].includes(tab) ? tab : window.enjoyHomeDefaultTab();
+            if (tab === 'vlog' && !window.enjoyCanSeeVlog()) tab = 'home';
             const enteringBaseball = tab === 'baseball' && window.homeActiveTab !== tab;
             window.homeActiveTab = tab;
             if (tab === 'baseball') window.startKboSeasonBannerAuto();
@@ -11196,7 +11213,8 @@
             if (enteringBaseball) window.showLionsChampionship?.();
         };
         window.switchHomeTab = function (tab) {
-            if (tab === 'shorts' && !window.enjoyUser) tab = window.homeDefaultTab;
+            if (tab === 'shorts' && !window.enjoyUser) tab = window.enjoyHomeDefaultTab();
+            if (tab === 'vlog' && !window.enjoyCanSeeVlog()) tab = 'home';
             if (window.homeActiveTab === tab) return;
             const panels = { home: 'apple-tv-banner', baseball: 'home-baseball-panel', vlog: 'home-vlog-panel', shorts: 'shorts-screen', academic: 'academic-schedule-screen' };
             const leaving = document.getElementById(panels[window.homeActiveTab] || panels.home);
@@ -11243,7 +11261,7 @@
             await window.loadKboScoreboard();
         };
         window.closeKboScoreboard = function () {
-            window.switchHomeTab(window.homeDefaultTab);
+            window.switchHomeTab(window.enjoyHomeDefaultTab());
         };
 
         // 홈 스크래치 — 둥근 사각형 버튼은 입구로만 사용하고, 실제 긁기는 별도 화면에서 진행한다.
@@ -15246,7 +15264,7 @@
         window.closeEnjoyShorts = function () {
             window.cleanupEnjoyShorts();
             if (window.homeActiveTab === 'shorts' && typeof window.selectHomeTab === 'function') {
-                window.selectHomeTab(window.homeDefaultTab);
+                window.selectHomeTab(window.enjoyHomeDefaultTab());
             } else {
                 const screen = document.getElementById('shorts-screen');
                 if (screen) screen.classList.add('hidden');
@@ -18527,6 +18545,7 @@
         // 게스트/스페셜 공통: 로컬 데이터 로드 + 로더 숨김
         window.enjoyEnterLocalMode = function () {
             window.enjoySync = false;
+            window.enjoyRefreshVlogAccess && window.enjoyRefreshVlogAccess();
             window.__enjoyTodayDataReady = true;
             window.enjoyLoadLocalSchedule();
             if (window.enjoyWalletLoading) window.enjoyWalletLoading.local();
@@ -18536,7 +18555,7 @@
     })();
     </script>
 
-    <script src="guest-local.js?v=20261124-vlog-default1"></script>
+    <script src="guest-local.js?v=20261124-vlog-members1"></script>
 
     <!-- [New] 엔조이 멤버: 프로필 이름 + 멤버별 활동상태 트레이 -->
     <script>
@@ -20055,6 +20074,7 @@
             window.addEventListener('focus', beat);
             subscribeMembers();
             if (window.enjoyEnableSync) window.enjoyEnableSync();             // 일정/모임통장
+            window.enjoyRefreshVlogAccess && window.enjoyRefreshVlogAccess();
             window.dispatchEvent(new CustomEvent('enjoy-member-sync-ready'));
         }
         window.enjoyStartMemberSync = startMemberSync;
@@ -21337,7 +21357,7 @@
         </div>
         <button type="button" class="lions-championship-close" aria-label="우승 축하 화면 닫기">닫기</button>
     </dialog>
-    <script src="home-entry.js?v=20261124-vlog-default1"></script>
+    <script src="home-entry.js?v=20261124-vlog-members1"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -21444,6 +21464,7 @@
                     if (unsubNoticeAlert) { unsubNoticeAlert(); unsubNoticeAlert = null; }
                     if (window.setHomeNoticeAlert) window.setHomeNoticeAlert(false);
                     window.enjoySync = false;        // 멤버 확정 전까지는 로컬 모드 기본
+                    window.enjoyRefreshVlogAccess && window.enjoyRefreshVlogAccess();
                     window.__enjoySyncOn = false;
                     window._availMine = null;
                     window._availSaveVersion += 1;
