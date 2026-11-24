@@ -34,7 +34,6 @@
     <link rel="stylesheet" href="uno.css?v=20261018-wallet1">
     <link rel="stylesheet" href="drop-games.css?v=20261102-village1">
     <link rel="stylesheet" href="drop-quiz.css?v=20261019-quiz6">
-    <link rel="stylesheet" href="investment.css?v=20261029-inner-motion1">
     <link rel="stylesheet" href="baseball-game-skeleton.css?v=20261024-1">
     <link rel="stylesheet" href="drop-prediction.css?v=20261116-feed">
     <link rel="stylesheet" href="drop-tutorial.css?v=20261116-1">
@@ -9577,7 +9576,6 @@
                 </div>
                 <div id="expense-list" class="flex flex-col px-1"></div>
             </div>
-            <div id="wallet-panel-investment" class="hidden" aria-label="투자"></div>
             <div id="wallet-copyright" class="app-copyright-slot pt-8 pb-28"><p class="app-copyright">Copyright © 2026 엔조이. All rights reserved.<br><a class="enjoy-privacy-link" href="privacy.html">개인정보처리방침</a></p></div>
         </div>
     </div>
@@ -9726,12 +9724,6 @@
                 <div class="flex flex-col items-center gap-0.5 pointer-events-none">
                     <i class="fa-solid fa-book-open text-base text-gray-300 group-hover:text-white transition-colors"></i>
                     <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">가계부</span>
-                </div>
-            </button>
-            <button id="wallet-subnav-investment" type="button" onclick="window.haptic && window.haptic(); window.switchWalletSub('investment')" class="relative w-[64px] py-2 rounded-full group z-10 active:scale-95 transition-transform">
-                <div class="flex flex-col items-center gap-0.5 pointer-events-none">
-                    <i class="fa-solid fa-chart-line text-base text-gray-300 group-hover:text-white transition-colors"></i>
-                    <span class="text-[10px] font-medium text-gray-300 group-hover:text-white whitespace-nowrap transition-colors">투자</span>
                 </div>
             </button>
         </div>
@@ -13926,7 +13918,7 @@
         };
 
         window.switchWalletSub = function(name) {
-            const panels = { wallet: 'wallet-panel-wallet', dues: 'mpanel-dues', expense: 'mpanel-expense', investment: 'wallet-panel-investment' };
+            const panels = { wallet: 'wallet-panel-wallet', dues: 'mpanel-dues', expense: 'mpanel-expense' };
             if (!panels[name]) name = 'wallet';
             const leaving = Object.values(panels).map(id => document.getElementById(id)).find(panel => panel && !panel.classList.contains('hidden'));
             const finishTransition = window.beginEnjoyMenuTransition(leaving, document.getElementById(panels[name]));
@@ -13941,15 +13933,14 @@
                 const header = document.getElementById('wallet-header');
                 const title = document.getElementById('wallet-title');
                 const copyright = document.getElementById('wallet-copyright');
-                if (header) header.classList.toggle('hidden', name === 'investment');
-                if (title) title.textContent = { wallet: '모임통장', dues: '납부 내역', expense: '가계부', investment: '' }[name];
-                if (copyright) copyright.classList.toggle('hidden', name === 'investment');
+                if (header) header.classList.remove('hidden');
+                if (title) title.textContent = { wallet: '모임통장', dues: '납부 내역', expense: '가계부' }[name];
+                if (copyright) copyright.classList.remove('hidden');
                 const scroll = document.getElementById('wallet-scroll');
                 if (scroll) scroll.scrollTop = 0;
                 if (window.setWalletNavCompact) window.setWalletNavCompact(false);
                 if ((name === 'wallet' || name === 'dues') && window.renderDues) window.renderDues(window.currentDuesMonth, window.currentDuesYear);
                 if (name === 'expense' && window.renderExpenses) window.renderExpenses();
-                if (window.resetInvestmentView) window.resetInvestmentView();
                 if (window.updateWalletNavActive) window.updateWalletNavActive(name);
             } finally { finishTransition(); }
         };
@@ -16110,7 +16101,7 @@
         };
 
         window.updateWalletNavActive = function (tab) {
-            const map = { wallet: 'wallet-subnav-wallet', dues: 'wallet-subnav-dues', expense: 'wallet-subnav-expense', investment: 'wallet-subnav-investment' };
+            const map = { wallet: 'wallet-subnav-wallet', dues: 'wallet-subnav-dues', expense: 'wallet-subnav-expense' };
             Object.keys(map).forEach(key => {
                 const b = document.getElementById(map[key]); if (!b) return;
                 const icon = b.querySelector('i'), label = b.querySelector('span');
@@ -21143,7 +21134,6 @@
                         arr.push(v);
                     });
                     lastMembers = arr; renderMembers(); updateProfileCard();
-                    if (window.refreshInvestmentAccount) window.refreshInvestmentAccount();
                     if (window.renderEchoList) window.renderEchoList();
                     const profileMenu = document.getElementById('profile-action-popover');
                     if (profileMenuMemberName && profileMenu && !profileMenu.classList.contains('hidden')) {
@@ -21167,7 +21157,6 @@
             if (membersUnsub) membersUnsub();
             membersUnsub = null;
             lastMembers = [];
-            if (window.refreshInvestmentAccount) window.refreshInvestmentAccount();
         };
 
         window.enjoyResetMemberSync = function () {
@@ -21192,7 +21181,6 @@
             const member = (lastMembers || []).find(m => m && m.uid === uid);
             if (member) { member.points = points; member.storePurchaseLimits = storePurchaseLimits; updateProfilePointBalance(member.name); }
             updateProfileCard();
-            if (window.refreshInvestmentAccount) window.refreshInvestmentAccount();
         };
 
         // 모임통장용: 기존 멤버 구독에서 할인권 내역만 가져온다.
@@ -22466,9 +22454,6 @@
         </div>
     </section>
     <script src="drop-games.js?v=20261102-village1"></script>
-    <script src="investment-ticket.js?v=20261029-inner-motion1"></script>
-    <script src="investment-portfolio.js?v=20261029-inner-motion1"></script>
-    <script src="investment.js?v=20261029-inner-motion1"></script>
     <script src="drop-quiz-firebase.js?v=20261019-quiz5"></script>
     <script src="drop-quiz.js?v=20261019-quiz4"></script>
     <script src="drop-prediction.js?v=20261116-detail"></script>

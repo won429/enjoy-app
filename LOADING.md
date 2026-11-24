@@ -36,7 +36,7 @@
 ## 검증
 
 ```sh
-node --test tests/app-loading.test.cjs tests/home-loading.test.cjs tests/drop-prediction-loading.test.cjs tests/drop-prediction-card.test.cjs tests/public-entry.test.cjs tests/guest-local.test.cjs tests/meeting-exemptions.test.cjs tests/investment-portfolio.test.cjs tests/investment-motion.test.cjs
+node --test tests/app-loading.test.cjs tests/home-loading.test.cjs tests/drop-prediction-loading.test.cjs tests/drop-prediction-card.test.cjs tests/public-entry.test.cjs tests/guest-local.test.cjs tests/meeting-exemptions.test.cjs tests/investment-motion.test.cjs
 ```
 
 101개 테스트 통과. 실제 Firebase 시작 코드와 피드 렌더 함수를 실행해 필수 정보 확인, 느린 응답, 소스별 자동·수동 복구, 캐시, 빈 피드, 기존 카드 유지, 계정 전환과 이전 응답 취소를 검증합니다. `.local-preview/resilient-loading.html`은 실제 멤버 데이터에 접근하지 않는 수동 확인용 화면입니다. 이번 실행에서는 Work 설정에서 로컬 브라우저 사용이 비활성화되어 브라우저 직접 조작 검증은 수행하지 못했습니다.
