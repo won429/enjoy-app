@@ -51,13 +51,13 @@ function runtime({ user, storage = new Map(), unavailable = false, resolve = tru
         finishes: () => finishes, cancellations: () => cancellations };
 }
 
-test('a first-time visitor gets Webnovel without a name prompt or cloud write', async () => {
+test('a first-time visitor gets Drop without a name prompt or cloud write', async () => {
     const app = runtime();
     assert.equal(app.prompts(), 0);
     assert.equal(app.window.enjoyUser, null);
     assert.equal(app.window.enjoyDataUser().localOnly, true);
     assert.equal(app.window.enjoyDataUser().displayName, '게스트');
-    assert.deepEqual(app.selectedTabs, ['webnovel']);
+    assert.deepEqual(app.selectedTabs, ['home']);
     assert.equal(app.menu['home-login'].classList.contains('hidden'), false);
     assert.equal(app.menu['home-logout'].classList.contains('hidden'), true);
     await app.window.fsSetDoc(app.window.fsDoc('members', app.window.enjoyDataUser().uid), { name: '게스트' });
@@ -76,7 +76,7 @@ test('returning guest identity and local records are retained', () => {
     assert.equal(app.window.enjoyDataUser().uid, 'device-original');
     assert.equal(app.window.enjoyDataUser().displayName, '기존 방문자');
     assert.equal(JSON.parse(storage.get('enjoy_guest_records_v1'))['community_posts/old'].title, '기존 기록');
-    assert.deepEqual(app.selectedTabs, ['webnovel']);
+    assert.deepEqual(app.selectedTabs, ['home']);
 });
 
 test('background authentication completion does not reset the public tab or guest identity', () => {
@@ -86,7 +86,7 @@ test('background authentication completion does not reset the public tab or gues
     app.window.enjoyShowPublicHome();
     assert.equal(app.window.homeActiveTab, 'academic');
     assert.equal(app.window.enjoyDataUser(), identity);
-    assert.deepEqual(app.selectedTabs, ['webnovel']);
+    assert.deepEqual(app.selectedTabs, ['home']);
 });
 
 test('restoring a member session leaves the member identity intact and updates the account menu', () => {
@@ -115,7 +115,7 @@ test('auth state changes update the menu and all login entry points use the sepa
 
 test('blocked browser storage still permits viewing the public home', () => {
     const app = runtime({ unavailable: true });
-    assert.deepEqual(app.selectedTabs, ['webnovel']);
+    assert.deepEqual(app.selectedTabs, ['home']);
     assert.equal(app.prompts(), 0);
     assert.equal(app.menu['home-login'].classList.contains('hidden'), false);
     assert.equal(app.cloudCalls(), 0);
@@ -139,11 +139,11 @@ test('initial loading waits for restored membership before choosing the default 
 test('a late restored session switches a guest fallback back to the member Drop default', () => {
     const app = runtime({ resolve: false });
     [...app.timers.values()][0]();
-    assert.deepEqual(app.selectedTabs, ['webnovel']);
+    assert.deepEqual(app.selectedTabs, ['home']);
     assert.equal(app.finishes(), 1);
     assert.equal(app.cancellations(), 0);
     app.resolveAuth({ uid: 'late-member' });
-    assert.deepEqual(app.selectedTabs, ['webnovel', 'home']);
+    assert.deepEqual(app.selectedTabs, ['home', 'home']);
     assert.equal(app.window.enjoyIsLocalGuest(), false);
 });
 

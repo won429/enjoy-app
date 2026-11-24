@@ -182,15 +182,9 @@
             const before = guest ? tabs.firstElementChild : vlogTabOriginalNext;
             if (guest ? tabs.firstElementChild !== vlog : vlog.nextElementSibling !== before) tabs.insertBefore(vlog, before);
         }
-        const webnovel = tabs && tabs.querySelector('[data-home-tab="webnovel"]');
-        const attendance = tabs && tabs.querySelector('[data-home-tab="attendance"]');
-        if (webnovel) {
-            if (guest && vlog && webnovel.nextElementSibling !== vlog) tabs.insertBefore(webnovel, vlog);
-            if (!guest && attendance && attendance.nextElementSibling !== webnovel) tabs.insertBefore(webnovel, attendance.nextElementSibling);
-        }
         const home = root.document.getElementById('nav-home');
         if (home && guest) home.setAttribute('aria-label', '홈');
-        if (guest && ['shorts', 'attendance'].includes(root.homeActiveTab) && root.switchHomeTab) root.switchHomeTab('home');
+        if (guest && root.homeActiveTab === 'shorts' && root.switchHomeTab) root.switchHomeTab('home');
         if (guest && (root.activeTabIndex === 1 || root.activeTabIndex === 4) && root.goHome) root.goHome();
         if (root.updateNavIndicator) root.requestAnimationFrame(root.updateNavIndicator);
     };
@@ -227,12 +221,11 @@
         root.enjoyInstallLocalData();
         root.enjoyRefreshGuestNavigation();
         root.enjoyEnterLocalMode && root.enjoyEnterLocalMode();
-        if (root.selectHomeTab) root.selectHomeTab('webnovel');
+        if (root.selectHomeTab) root.selectHomeTab('home');
         root.enjoyLocalMembersStart && root.enjoyLocalMembersStart();
         root.enjoyCommunityOnAuth && root.enjoyCommunityOnAuth(identity);
         root.enjoyDropOnAuth && root.enjoyDropOnAuth(identity);
         root.enjoyEchoOnAuth && root.enjoyEchoOnAuth(identity);
-        root.prepareEnjoyAttendance && root.prepareEnjoyAttendance();
         root.dispatchEvent && root.dispatchEvent(new root.CustomEvent('enjoy-local-ready'));
         return true;
     };

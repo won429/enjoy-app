@@ -29,7 +29,6 @@
     <link rel="stylesheet" href="app-loading.css?v=20261116-feed-rows">
     <link rel="stylesheet" href="championship-celebration.css?v=20261108-1">
     <script defer src="championship-celebration.js?v=20261116-1"></script>
-    <link rel="stylesheet" href="attendance.css?v=20261005">
     <link rel="stylesheet" href="meeting-benefits.css?v=20261029-approval2">
     <link rel="stylesheet" href="uno.css?v=20261018-wallet1">
     <link rel="stylesheet" href="drop-games.css?v=20261102-village1">
@@ -39,9 +38,7 @@
     <link rel="stylesheet" href="drop-tutorial.css?v=20261116-1">
     <link rel="stylesheet" href="wallet-skeleton.css?v=20261024-1">
     <link rel="stylesheet" href="consultation-booking.css?v=20261024-3">
-    <link rel="stylesheet" href="novels/novels.css?v=20261025-loading-fix-9">
     <noscript><style>#app-loader { display: none !important; }</style></noscript>
-    <script defer src="novels/catalog.js?v=20261025-loading-fix-5"></script>
     <link rel="stylesheet" href="biseo-host.css?v=20261116-veron-motion-1">
     <!-- 스토어 스타일은 별도 파일 누락 시에도 적용되도록 본문에 포함한다. -->
     <style id="enjoy-store-styles">
@@ -3734,12 +3731,6 @@
             -webkit-backdrop-filter: blur(1rem) saturate(1.45);
             backdrop-filter: blur(1rem) saturate(1.45);
         }
-        .home-webnovel-panel { padding: 2rem .25rem 1rem; }
-        .home-webnovel-panel h2 { margin: 0; color: #fff; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; }
-        .home-webnovel-panel p { margin: .75rem 0 0; color: #8B95A1; font-size: .875rem; line-height: 1.6; }
-        @media (prefers-color-scheme: light) {
-            .home-webnovel-panel h2 { color: #191F28; }
-        }
         /* 홈 상단 메뉴: 굵은 흰 글씨 + 활성 탭 아래 짧은 흰색 바 */
         .home-tabs {
             position: relative;
@@ -4745,8 +4736,6 @@
         html.enjoy-guest #profile-activity-status,
         html.enjoy-guest .member-status-active-dot,
         html.enjoy-guest .member-status-study-badge,
-        html.enjoy-guest #home-attendance-tab,
-        html.enjoy-guest #home-attendance-panel,
         html.enjoy-guest #drop-quiz-button,
         html.enjoy-guest #drop-quiz-screen,
         html.enjoy-guest [data-home-tab="shorts"] { display: none !important; }
@@ -7854,14 +7843,6 @@
                     <div class="app-sk-actions"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
                 </div>
                 <div class="app-sk-tabs"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
-                <div class="app-sk-content app-sk-public">
-                    <span class="app-sk-block app-sk-heading"></span>
-                    <div class="app-sk-novel">
-                        <span class="app-sk-block app-sk-cover"></span>
-                        <div><span class="app-sk-block app-sk-title"></span><span class="app-sk-block app-sk-genres"></span><span class="app-sk-block app-sk-count"></span><span class="app-sk-block app-sk-link"></span></div>
-                        <div class="app-sk-synopsis"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
-                    </div>
-                </div>
                 <div class="app-sk-member">
                     <div class="app-sk-members"><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
                     <div class="app-sk-game-buttons"><span class="app-sk-block"></span><span class="app-sk-block"></span></div>
@@ -8070,32 +8051,13 @@
 
         <!-- 홈 상단 메뉴 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) -->
         <nav id="home-tabs" class="home-tabs" role="tablist" aria-label="상단 메뉴">
-            <button id="home-webnovel-tab" type="button" class="home-tab" data-home-tab="webnovel" role="tab" aria-selected="false" aria-controls="home-webnovel-panel" onclick="window.switchHomeTab('webnovel')">웹소설</button>
             <button type="button" class="home-tab is-active" data-home-tab="home" data-drop-copy="드롭" role="tab" aria-selected="true" aria-controls="apple-tv-banner" onclick="window.switchHomeTab('home')">드롭</button>
             <button type="button" class="home-tab" data-home-tab="baseball" role="tab" aria-selected="false" aria-controls="home-baseball-panel" onclick="window.switchHomeTab('baseball')">야구</button>
             <button type="button" class="home-tab" data-home-tab="vlog" role="tab" aria-selected="false" aria-controls="home-vlog-panel" onclick="window.switchHomeTab('vlog')">브이로그</button>
             <button type="button" class="home-tab" data-home-tab="shorts" role="tab" aria-selected="false" aria-controls="shorts-screen" onclick="window.switchHomeTab('shorts')">숏츠</button>
             <button type="button" class="home-tab" data-home-tab="academic" role="tab" aria-selected="false" aria-controls="academic-schedule-screen" onclick="window.switchHomeTab('academic')">학사일정</button>
-            <button id="home-attendance-tab" type="button" class="home-tab" data-home-tab="attendance" role="tab" aria-selected="false" aria-controls="home-attendance-panel" onclick="window.switchHomeTab('attendance')">출석</button>
         </nav>
         
-        <section id="home-attendance-panel" data-enjoy-sources="members" data-skeleton-shape="rows" class="home-attendance-panel hidden" role="tabpanel" aria-labelledby="home-attendance-tab" aria-hidden="true">
-            <div class="attendance-header"><h2>출석</h2><span id="attendance-status" class="attendance-status" role="status">접속 시 자동 출석</span></div>
-            <p id="attendance-status-message" class="attendance-status-message">매일 한국 시간 0시에 새 날짜가 시작됩니다.</p>
-            <div class="attendance-month-nav"><h3 id="attendance-month-title"></h3><div class="attendance-month-buttons">
-                <button type="button" onclick="window.changeEnjoyAttendanceMonth(-1)" aria-label="이전 달 출석 기록"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
-                <button id="attendance-next-month" type="button" onclick="window.changeEnjoyAttendanceMonth(1)" aria-label="다음 달 출석 기록"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
-            </div></div>
-            <div class="attendance-summary"><span>출석 일수</span><strong id="attendance-count">0일</strong></div>
-            <progress id="attendance-progress" class="attendance-progress" value="0" max="31" aria-label="월간 출석 일수"></progress>
-            <div id="attendance-calendar" class="attendance-calendar" aria-label="월간 출석 기록">
-                <div class="attendance-weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
-                <ol id="attendance-days" class="attendance-days"></ol>
-            </div>
-            <div class="attendance-reward"><i class="fa-solid fa-ticket-simple" aria-hidden="true"></i><div><small>월간 개근 혜택</small><strong>부과금 1천원 할인권</strong><p id="attendance-reward-status">1일부터 마지막 날까지 모두 출석하면 자동 지급</p></div></div>
-            <section class="attendance-wallet" aria-labelledby="attendance-wallet-title"><h3 id="attendance-wallet-title">보유 할인권 <span id="attendance-coupon-count">0개</span></h3><ul id="attendance-coupons" class="attendance-coupons"></ul></section>
-        </section>
-
         <!-- 카드 나열 (배너/슬라이더 제거, 각 항목을 사진 카드로 세로 나열) -->
         <div id="apple-tv-banner" class="fade-in-up delay-100 mt-1 mb-6 relative">
             <!-- 기존 JS 수정 없이 Apple TV 스타일 인디케이터를 구현하기 위한 로컬 스타일 -->
@@ -8523,34 +8485,6 @@
         <!-- 야구 탭: 야구 커뮤니티 (홈 화면 안에서 전환) -->
         <section id="home-baseball-panel" class="home-baseball-panel hidden" aria-label="야구 커뮤니티">
             <div id="baseball-detail-content"></div>
-        </section>
-
-        <section id="home-webnovel-panel" class="home-webnovel-panel hidden" role="tabpanel" aria-labelledby="home-webnovel-tab" aria-hidden="true">
-            <h2>웹소설</h2>
-            <!-- NOVEL CATALOG START -->
-            <div class="novel-catalog">
-                <a class="novel-card" href="novels/death-records/index.html">
-                    <img class="novel-card__cover" src="novels/death-records/cover.png" width="1086" height="1448" alt="사망처리: 죽은 자들의 도시 작품 표지" loading="lazy">
-                    <div class="novel-card__info">
-                        <h3 class="novel-card__title">사망처리: 죽은 자들의 도시</h3>
-                        <span class="novel-card__genres">범죄 · 스릴러 · 미스터리 · 느와르 · 수사 · 복수극</span>
-                        <span class="novel-card__episodes">총 12부작</span>
-                        <span class="novel-card__link">작품 소개 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    </div>
-                    <p class="novel-card__synopsis">15년 전 사망 처리된 남자가 시신으로 발견된다. 형사 윤서진은 연쇄살인 뒤에 숨은 신분 조작과 거대한 권력의 비밀을 추적한다.</p>
-                </a>
-                <a class="novel-card" href="novels/people-who-smiled-at-my-funeral/index.html">
-                    <img class="novel-card__cover" src="novels/people-who-smiled-at-my-funeral/cover.png" width="1055" height="1491" alt="내 장례식에 웃던 사람들 작품 표지" loading="lazy">
-                    <div class="novel-card__info">
-                        <h3 class="novel-card__title">내 장례식에 웃던 사람들</h3>
-                        <span class="novel-card__genres">막장 · 복수 · 재벌가 · 미스터리</span>
-                        <span class="novel-card__episodes">총 16부작</span>
-                        <span class="novel-card__link">작품 소개 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    </div>
-                    <p class="novel-card__synopsis">대한민국 굴지의 재벌, 태성그룹. 그 집안의 며느리 윤해인은 결혼 7주년 기념 파티에서 남편의 불륜을 알게 된다. 상대는 무려 20년 지기 절친. 그런데 불륜보다 더 충격적인 사실이 밝혀진다. 5년 전 죽었다고 들었던 자신의 아들이 살아 있다는 것. 그 아이는 지금 남편의 내연녀를 엄마라고 부르고 있다.</p>
-                </a>
-            </div>
-            <!-- NOVEL CATALOG END -->
         </section>
 
         <!-- 브이로그 탭: 최신 배너와 모든 시리즈 -->
@@ -11520,8 +11454,8 @@
         // 홈 상단 탭 (드롭 / 야구 / 브이로그 / 숏츠 / 학사일정) — 모두 홈 화면 안에서 전환된다.
         window.homeActiveTab = 'home';
         window.selectHomeTab = function (tab) {
-            if ((tab === 'shorts' || tab === 'attendance') && !window.enjoyUser) tab = 'home';
-            tab = ['baseball', 'vlog', 'shorts', 'academic', 'attendance', 'webnovel'].includes(tab) ? tab : 'home';
+            if (tab === 'shorts' && !window.enjoyUser) tab = 'home';
+            tab = ['baseball', 'vlog', 'shorts', 'academic'].includes(tab) ? tab : 'home';
             const enteringBaseball = tab === 'baseball' && window.homeActiveTab !== tab;
             window.homeActiveTab = tab;
             if (tab === 'baseball') window.startKboSeasonBannerAuto();
@@ -11538,8 +11472,6 @@
             const baseballCopyright = document.getElementById('home-baseball-copyright');
             const shortsPanel = document.getElementById('shorts-screen');
             const academicPanel = document.getElementById('academic-schedule-screen');
-            const attendancePanel = document.getElementById('home-attendance-panel');
-            const webnovelPanel = document.getElementById('home-webnovel-panel');
             if (homePanel) homePanel.classList.toggle('hidden', tab !== 'home');
             if (baseballPanel) baseballPanel.classList.toggle('hidden', tab !== 'baseball');
             if (vlogPanel) vlogPanel.classList.toggle('hidden', tab !== 'vlog');
@@ -11555,19 +11487,6 @@
                 academicPanel.classList.toggle('hidden', tab !== 'academic');
                 academicPanel.setAttribute('aria-hidden', tab === 'academic' ? 'false' : 'true');
             }
-            if (attendancePanel) {
-                attendancePanel.classList.toggle('hidden', tab !== 'attendance');
-                attendancePanel.setAttribute('aria-hidden', tab === 'attendance' ? 'false' : 'true');
-            }
-            if (webnovelPanel) {
-                webnovelPanel.classList.toggle('hidden', tab !== 'webnovel');
-                webnovelPanel.setAttribute('aria-hidden', tab === 'webnovel' ? 'false' : 'true');
-            }
-            if (tab === 'attendance' || tab === 'webnovel') {
-                const menu = document.getElementById('home-tabs');
-                const button = document.getElementById(tab === 'attendance' ? 'home-attendance-tab' : 'home-webnovel-tab');
-                if (menu && button) menu.scrollLeft = button.offsetLeft + button.offsetWidth - menu.clientWidth + 24;
-            }
             const home = document.getElementById('home-screen');
             if (home) {
                 home.classList.toggle('is-shorts-tab', tab === 'shorts');
@@ -11576,9 +11495,9 @@
             if (enteringBaseball) window.showLionsChampionship?.();
         };
         window.switchHomeTab = function (tab) {
-            if ((tab === 'shorts' || tab === 'attendance') && !window.enjoyUser) tab = 'home';
+            if (tab === 'shorts' && !window.enjoyUser) tab = 'home';
             if (window.homeActiveTab === tab) return;
-            const panels = { home: 'apple-tv-banner', baseball: 'home-baseball-panel', vlog: 'home-vlog-panel', shorts: 'shorts-screen', academic: 'academic-schedule-screen', attendance: 'home-attendance-panel', webnovel: 'home-webnovel-panel' };
+            const panels = { home: 'apple-tv-banner', baseball: 'home-baseball-panel', vlog: 'home-vlog-panel', shorts: 'shorts-screen', academic: 'academic-schedule-screen' };
             const leaving = document.getElementById(panels[window.homeActiveTab] || panels.home);
             // Keep the outgoing content below the home tab bar (z-index: 23).
             const finishTransition = window.beginEnjoyMenuTransition(leaving, document.getElementById(panels[tab] || panels.home), 22, document.getElementById('home-screen'));
@@ -11589,7 +11508,6 @@
                 if (tab === 'baseball') window.loadKboScoreboard();
                 if (tab === 'shorts' && typeof window.prepareEnjoyShorts === 'function') window.prepareEnjoyShorts();
                 if (tab === 'academic' && typeof window.prepareAcademicSchedule === 'function') window.prepareAcademicSchedule();
-                if (tab === 'attendance' && typeof window.prepareEnjoyAttendance === 'function') window.prepareEnjoyAttendance();
             } finally { finishTransition(); }
         };
         let kboScoreboardLoading = null;
@@ -18926,7 +18844,7 @@
     })();
     </script>
 
-    <script src="guest-local.js?v=20261025-guest-webnovel-2"></script>
+    <script src="guest-local.js?v=20261124-no-webnovel-1"></script>
 
     <!-- [New] 엔조이 멤버: 프로필 이름 + 멤버별 활동상태 트레이 -->
     <script>
@@ -22370,7 +22288,6 @@
     </script>
 
     <!-- Firebase Module -->
-    <script src="attendance.js?v=20261025-attendance-copy-1"></script>
     <script src="meeting-benefits.js?v=20261030-year1"></script>
     <script src="meeting-exemptions.js?v=20261029-approval2"></script>
     <script src="biseo-host.js?v=20261116-veron-spotlight-2"></script>

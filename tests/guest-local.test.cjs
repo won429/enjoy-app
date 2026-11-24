@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../guest-local.js'), 'utf8');
-const attendance = require('../attendance.js');
 const plain = value => JSON.parse(JSON.stringify(value));
 
 function runtime(storage = new Map(), cloud = {}) {
@@ -139,25 +138,6 @@ test('logged-in operations retain the real Firebase route and never read guest r
     assert.equal(calls.length, 1);
     assert.equal(app.enjoyDataUser().uid, 'real-member');
     assert.equal(app.enjoyLocalMember(), null);
-});
-
-test('guest attendance is deduplicated across reloads and remains in the guest member record', async () => {
-    const { window: app, storage } = runtime();
-    const uid = app.enjoyDataUser().uid;
-    const today = attendance.dateParts(Date.parse('2026-10-13T12:00:00+09:00'));
-    async function record(target) {
-        const reference = target.fsDoc('members', uid);
-        return target.runTransaction(target.meetingDb, async transaction => {
-            const snapshot = await transaction.get(reference);
-            const result = attendance.applyVisits(snapshot.data().attendance, [today.dateKey], today, target.fsServerTimestamp());
-            if (result.changed) transaction.set(reference, { attendance: result.state }, { merge: true });
-            return result;
-        });
-    }
-    assert.equal((await record(app)).changed, true);
-    const restored = runtime(storage).window;
-    assert.equal((await record(restored)).changed, false);
-    assert.deepEqual(plain(restored.enjoyLocalMember().attendance.months['2026-10'].days), ['2026-10-13']);
 });
 
 test('storage failures report failure and do not publish unsaved data', async () => {
