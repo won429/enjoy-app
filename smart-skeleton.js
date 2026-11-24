@@ -239,11 +239,11 @@
                 begin(browserLoader, { shape: /jiha|study|travel/.test(url) ? 'map' : /novels/.test(url) ? 'reader' : 'rows', height: browser.clientHeight });
             } else end(browserLoader, { cancel: !visible(browserLoader) });
         }
-        for (const id of ['notion-info-loader', 'member-delivery-map-fallback', 'village-status']) {
+        for (const id of ['notion-info-loader', 'village-status']) {
             const target = doc.getElementById(id);
             if (!target) continue;
             const busy = visible(target) && (id === 'notion-info-loader' || /불러오는 중|준비하고/.test(target.textContent)) && !/못했|실패/.test(target.textContent);
-            if (busy) begin(target, { shape: id === 'village-status' ? 'game' : id === 'member-delivery-map-fallback' ? 'map' : 'rows' });
+            if (busy) begin(target, { shape: id === 'village-status' ? 'game' : 'rows' });
             else end(target, { cancel: true });
         }
     }

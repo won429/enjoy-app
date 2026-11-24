@@ -18,7 +18,7 @@ function setup(user) {
     });
     for (const [start, end] of [
         ['        function memberActivityText(', '        function memberIsInClass('],
-        ['        function updateProfileActivityStatus(', '        function normalizeDeliveryStatus(']
+        ['        function updateProfileActivityStatus(', '        window.openMemberProfileMenu = function (']
     ]) {
         const offset = html.indexOf(start);
         vm.runInContext(html.slice(offset, html.indexOf(end, offset)), context);

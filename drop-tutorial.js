@@ -37,7 +37,7 @@
         steps.push({
             target: '.drop-entry-actions',
             title: '게임과 사용법 다시 보기',
-            text: '드롭 게임과 퀴즈는 여기서 시작하세요. 이 안내가 다시 필요하면 옆의 사용법을 누르면 돼요.'
+            text: '드롭 게임은 여기서 시작하세요. 이 안내가 다시 필요하면 옆의 사용법을 누르면 돼요.'
         });
         return steps;
     }
