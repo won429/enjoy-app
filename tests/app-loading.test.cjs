@@ -93,7 +93,7 @@ test('entry fallback waits for auth, shows slow status and never switches unreso
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../home-entry.js'),'utf8'),{window:ui.window,console});
  ui.tick(12000);ui.paint();assert.equal(ui.loader.dataset.state,'slow');assert.equal(selected.length,0);
  ui.begin();ui.window.enjoyAuthResolved=true;ui.handlers['enjoy-auth-ready']();ui.gate.ready('profile');ui.paint();
- assert.deepEqual(selected,['home']);assert.equal(ui.loader.style.display,'none');
+ assert.deepEqual(selected,['vlog']);assert.equal(ui.loader.style.display,'none');
 });
 test('fatal module load failures are real auth errors; only a missing SDK uses the reload fallback',()=>{
  const ui=setup();ui.handlers.error({target:{tagName:'SCRIPT',type:'module'}});assert.equal(ui.loader.dataset.state,'error');
@@ -131,7 +131,7 @@ test('the actual Firebase startup opens after verified profile while slow feeds 
   vm.runInContext(fs.readFileSync(path.join(__dirname,'../home-entry.js'),'utf8'),context);
   vm.runInContext(raw.replace(/^\s*import[^\n]+\n/gm,''),context);
   await new Promise(setImmediate);await authCallback({uid:'a',displayName:'테스트'});
-  assert.deepEqual(selected,['home']);
+  assert.deepEqual(selected,['vlog']);
   for(const stream of streams.values())stream.receive({exists:()=>true,data:()=>({}),metadata:{fromCache:true,hasPendingWrites:false}});
   ui.paint();assert.equal(ui.loader.style.display,'none');assert.equal(ui.window.__enjoyTodayDataReady,false);assert.equal(settled.length,0);
   const pending=streams.get('drop_posts');

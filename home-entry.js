@@ -38,7 +38,7 @@
                 console.warn('Guest storage unavailable:', error);
             }
             if (root.enjoyRefreshGuestNavigation) root.enjoyRefreshGuestNavigation();
-            if ((!publicHomeShown || selectedMode !== 'guest') && root.homeActiveTab !== 'home' && root.selectHomeTab) root.selectHomeTab('home');
+            if ((!publicHomeShown || selectedMode !== 'guest') && root.homeActiveTab !== (root.homeDefaultTab || 'vlog') && root.selectHomeTab) root.selectHomeTab(root.homeDefaultTab || 'vlog');
             publicHomeShown = true;
             selectedMode = 'guest';
         }
@@ -50,7 +50,7 @@
     function handleAuthReady() {
         clearAuthFallback();
         if (root.enjoyUser && selectedMode !== 'member') {
-            if (root.selectHomeTab) root.selectHomeTab('home');
+            if (root.selectHomeTab) root.selectHomeTab(root.homeDefaultTab || 'vlog');
             selectedMode = 'member';
         }
         updateAccountMenu();

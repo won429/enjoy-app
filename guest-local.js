@@ -184,7 +184,7 @@
         }
         const home = root.document.getElementById('nav-home');
         if (home && guest) home.setAttribute('aria-label', '홈');
-        if (guest && root.homeActiveTab === 'shorts' && root.switchHomeTab) root.switchHomeTab('home');
+        if (guest && root.homeActiveTab === 'shorts' && root.switchHomeTab) root.switchHomeTab(root.homeDefaultTab || 'vlog');
         if (guest && (root.activeTabIndex === 1 || root.activeTabIndex === 4) && root.goHome) root.goHome();
         if (root.updateNavIndicator) root.requestAnimationFrame(root.updateNavIndicator);
     };
@@ -221,7 +221,7 @@
         root.enjoyInstallLocalData();
         root.enjoyRefreshGuestNavigation();
         root.enjoyEnterLocalMode && root.enjoyEnterLocalMode();
-        if (root.selectHomeTab) root.selectHomeTab('home');
+        if (root.selectHomeTab) root.selectHomeTab(root.homeDefaultTab || 'vlog');
         root.enjoyLocalMembersStart && root.enjoyLocalMembersStart();
         root.enjoyCommunityOnAuth && root.enjoyCommunityOnAuth(identity);
         root.enjoyDropOnAuth && root.enjoyDropOnAuth(identity);
