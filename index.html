@@ -3590,6 +3590,55 @@
             width: 100%;
             height: auto;
         }
+        .home-vlog-banner {
+            width: calc(100% + 2.5rem);
+            margin-left: -1.25rem;
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+        .home-vlog-banner-track {
+            display: flex;
+            transition: transform .45s cubic-bezier(.25, 1, .5, 1);
+            will-change: transform;
+        }
+        .home-vlog-banner-track.is-dragging { transition: none; }
+        .home-vlog-banner-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.375rem;
+            padding-top: 0.625rem;
+        }
+        .home-vlog-banner-dot {
+            width: 0.375rem;
+            height: 0.375rem;
+            padding: 0;
+            border: 0;
+            border-radius: 62.4375rem;
+            background: rgba(255,255,255,.3);
+            transition: width .3s cubic-bezier(.25, 1, .5, 1), background-color .3s;
+        }
+        .home-vlog-banner-dot.is-active { width: 1.125rem; background: #FFFFFF; }
+        @media (prefers-color-scheme: light) {
+            .home-vlog-banner-dot { background: rgba(25,31,40,.2); }
+            .home-vlog-banner-dot.is-active { background: #191F28; }
+        }
+        .home-vlog-panel .home-vlog-banner .home-vlog-banner-slide {
+            flex: 0 0 100%;
+            width: 100%;
+            margin-left: 0;
+            aspect-ratio: 16 / 9;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .home-vlog-panel .home-vlog-banner .home-vlog-banner-slide img {
+            height: 100%;
+            object-fit: cover;
+            -webkit-user-drag: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .home-vlog-banner-track { transition: none; }
+        }
         .home-baseball-panel .kbo-more-shell {
             min-height: 0;
             padding: 0.875rem 0 1.5rem;
@@ -8163,7 +8212,7 @@
                 <section class="home-content-item" data-home-category="entertainment" data-home-card="transfer-trip" role="button" tabindex="0" onclick="window.haptic(); window.openBrowser('https://youtu.be/n9rhdR9jwaI')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <div class="px-1 mb-2.5">
                         <p class="text-[11px] font-bold text-purple-400 tracking-widest uppercase">SPECIAL</p>
-                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">환승여행</h3>
+                        <h3 class="text-[20px] font-bold text-white tracking-tight leading-tight">환승여행 IN 충남 청양</h3>
                         <p class="home-compact-summary">익숙함과 새로움 사이, 당신의 마음은 어디로 향할까요?</p>
                     </div>
                     <div class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[28px] h-[420px] shadow-[0_10px_30px_rgba(0,0,0,0.45)]" onclick="window.haptic(); window.openBrowser('https://youtu.be/n9rhdR9jwaI')">
@@ -8173,7 +8222,7 @@
                         </div>
                         <div class="absolute top-6 left-6 right-6 z-10">
                             <p class="text-[11px] font-bold text-white/75 tracking-wide drop-shadow mb-1.5">가장 솔직한 감정들이 교차하는 곳</p>
-                            <h2 class="text-[27px] font-bold text-white tracking-tight drop-shadow-lg leading-tight">환승여행.</h2>
+                            <h2 class="text-[27px] font-bold text-white tracking-tight drop-shadow-lg leading-tight">환승여행 IN 충남 청양.</h2>
                         </div>
                         <div class="absolute bottom-5 left-5 right-5 z-10 flex items-end gap-3">
                             <p class="flex-1 text-[12.5px] text-white/85 font-medium leading-snug drop-shadow break-keep">익숙함과 새로움 사이. 당신의 마음은 어디로 향할까요?</p>
@@ -8242,7 +8291,7 @@
                         </div>
                         <!-- 전남광주 브이로그 -->
                         <div data-home-card="gwangju-2027" class="w-full relative overflow-hidden cursor-pointer bg-black rounded-[22px] h-[200px] shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-transform" onclick="window.openVlogProgram('gwangju')">
-                            <h3 class="hidden">환승여행 IN 광주</h3>
+                            <h3 class="hidden">환승여행 IN 전남광주</h3>
                             <div class="absolute inset-0">
                                 <img src="banner_3.jpg" class="w-full h-full object-cover opacity-80" onerror="this.style.display='none'">
                             </div>
@@ -8265,12 +8314,25 @@
         <!-- 브이로그 탭: 최신 배너와 모든 시리즈 -->
         <section id="home-vlog-panel" class="home-vlog-panel hidden" aria-label="엔조이 브이로그">
             <section class="home-content-item home-featured" data-home-category="latest">
-                <div class="home-featured-clean relative overflow-hidden cursor-pointer bg-black group" role="button" tabindex="0" aria-label="최신 브이로그 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-                    <img src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" alt="최신 엔조이 브이로그" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/21uUicVMzqg/hqdefault.jpg'">
-                    <div class="absolute bottom-5 left-5 right-5 z-10 flex items-end gap-3">
-                        <div class="flex-1" aria-hidden="true"></div>
-                        <div class="home-featured-play shrink-0 active:scale-95 transition-transform"><i class="fa-solid fa-play text-[10px]"></i><span>재생</span></div>
+                <!-- 상단 대형 배너: 3초마다 다음 배너로 넘어가고 좌우로 밀어 넘길 수 있다. -->
+                <div class="home-vlog-banner" data-vlog-banner aria-roledescription="carousel" aria-label="최신 브이로그">
+                    <div class="home-vlog-banner-track">
+                        <div class="home-featured-clean home-vlog-banner-slide relative overflow-hidden cursor-pointer bg-black group" role="button" tabindex="0" aria-label="환승여행 IN 충남 청양 티저2 - 미리보기 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/g9G8U1q9eWc','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                            <img src="https://i.ytimg.com/vi/g9G8U1q9eWc/maxresdefault.jpg" alt="환승여행 IN 충남 청양 티저2 - 미리보기" draggable="false" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/g9G8U1q9eWc/hqdefault.jpg'">
+                            <div class="absolute bottom-5 left-5 right-5 z-10 flex items-end gap-3">
+                                <div class="flex-1" aria-hidden="true"></div>
+                                <div class="home-featured-play shrink-0 active:scale-95 transition-transform"><i class="fa-solid fa-play text-[10px]"></i><span>재생</span></div>
+                            </div>
+                        </div>
+                        <div class="home-featured-clean home-vlog-banner-slide relative overflow-hidden cursor-pointer bg-black group" role="button" tabindex="0" aria-label="최신 브이로그 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                            <img src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" alt="최신 엔조이 브이로그" draggable="false" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/21uUicVMzqg/hqdefault.jpg'">
+                            <div class="absolute bottom-5 left-5 right-5 z-10 flex items-end gap-3">
+                                <div class="flex-1" aria-hidden="true"></div>
+                                <div class="home-featured-play shrink-0 active:scale-95 transition-transform"><i class="fa-solid fa-play text-[10px]"></i><span>재생</span></div>
+                            </div>
+                        </div>
                     </div>
+                    <div class="home-vlog-banner-dots"></div>
                 </div>
                 <button type="button" class="home-vlog-playlist-button" onclick="window.haptic(); window.openBrowser('https://m.youtube.com/playlist?list=PLfVenQYYskJE&amp;ra=m')" aria-label="엔조이 브이로그 전편 몰아보기">
                     <span>전편 몰아보기</span><i class="fa-solid fa-chevron-right text-[7px]"></i>
@@ -9737,6 +9799,132 @@
             startAutoAdvance();
         })();
 
+        // 브이로그 상단 대형 배너 — 3초마다 다음(오른쪽) 배너로 넘기고, 좌우로 끌어 넘길 수 있다.
+        (function () {
+            const banner = document.querySelector('[data-vlog-banner]');
+            const track = banner && banner.querySelector('.home-vlog-banner-track');
+            if (!track) return;
+            const slides = Array.from(track.children);
+            if (slides.length < 2) return;
+            const INTERVAL_MS = 3000;
+            const count = slides.length;
+            // 끝에서 처음으로 이어질 때도 같은 방향으로 넘어가도록 양 끝에 복제 배너를 둔다.
+            const makeClone = function (slide) {
+                const clone = slide.cloneNode(true);
+                clone.setAttribute('aria-hidden', 'true');
+                clone.setAttribute('tabindex', '-1');
+                return clone;
+            };
+            track.insertBefore(makeClone(slides[count - 1]), slides[0]);
+            track.appendChild(makeClone(slides[0]));
+            const dotsWrap = banner.querySelector('.home-vlog-banner-dots');
+            const dots = slides.map(function (slide, index) {
+                const dot = document.createElement('button');
+                dot.type = 'button';
+                dot.className = 'home-vlog-banner-dot';
+                dot.setAttribute('aria-label', (index + 1) + '번째 배너 보기');
+                dot.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    go(index + 1);
+                    start();
+                });
+                if (dotsWrap) dotsWrap.appendChild(dot);
+                return dot;
+            });
+            let position = 1, timer = null, pointerId = null, startX = 0, startY = 0, deltaX = 0, dragging = false, suppressClick = false;
+            const place = function (animate, offsetPx) {
+                track.classList.toggle('is-dragging', !animate);
+                track.style.transform = 'translateX(calc(' + (-position * 100) + '% + ' + (offsetPx || 0) + 'px))';
+            };
+            const syncSlides = function () {
+                const active = ((position - 1) % count + count) % count;
+                slides.forEach(function (slide, index) {
+                    slide.setAttribute('aria-hidden', index === active ? 'false' : 'true');
+                    slide.setAttribute('tabindex', index === active ? '0' : '-1');
+                    dots[index].classList.toggle('is-active', index === active);
+                    dots[index].setAttribute('aria-current', index === active ? 'true' : 'false');
+                });
+            };
+            const fixLoop = function () {
+                if (position === 0) position = count;
+                else if (position === count + 1) position = 1;
+                else return;
+                place(false);
+                void track.offsetWidth;
+                track.classList.remove('is-dragging');
+            };
+            const go = function (next) {
+                position = next;
+                place(true);
+                syncSlides();
+                if (window.getComputedStyle(track).transitionDuration === '0s') fixLoop();
+            };
+            const visible = function () {
+                return !document.hidden && banner.getClientRects().length > 0;
+            };
+            const stop = function () { if (timer) { window.clearInterval(timer); timer = null; } };
+            const start = function () {
+                stop();
+                timer = window.setInterval(function () {
+                    if (visible() && !dragging && pointerId === null) go(position + 1);
+                }, INTERVAL_MS);
+            };
+            track.addEventListener('transitionend', function (event) {
+                if (event.target === track) fixLoop();
+            });
+            banner.addEventListener('pointerdown', function (event) {
+                if (event.pointerType === 'mouse' && event.button !== 0) return;
+                fixLoop();
+                pointerId = event.pointerId;
+                startX = event.clientX;
+                startY = event.clientY;
+                deltaX = 0;
+                dragging = false;
+            });
+            banner.addEventListener('pointermove', function (event) {
+                if (event.pointerId !== pointerId) return;
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+                if (!dragging) {
+                    if (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(dy)) return;
+                    dragging = true;
+                    stop();
+                    try { banner.setPointerCapture(pointerId); } catch (e) {}
+                }
+                deltaX = dx;
+                place(false, deltaX);
+            });
+            const release = function (event) {
+                if (event.pointerId !== pointerId) return;
+                pointerId = null;
+                if (!dragging) return;
+                dragging = false;
+                suppressClick = true;
+                window.setTimeout(function () { suppressClick = false; }, 0);
+                const threshold = Math.min(80, banner.clientWidth * 0.15);
+                if (event.type !== 'pointercancel' && Math.abs(deltaX) > threshold) go(position + (deltaX < 0 ? 1 : -1));
+                else go(position);
+                start();
+            };
+            banner.addEventListener('pointerup', release);
+            banner.addEventListener('pointercancel', release);
+            // 끌어서 넘긴 직후의 클릭은 영상 열기로 이어지지 않게 막는다.
+            banner.addEventListener('click', function (event) {
+                if (!suppressClick) return;
+                suppressClick = false;
+                event.preventDefault();
+                event.stopPropagation();
+            }, true);
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) stop(); else start();
+            });
+            place(false);
+            syncSlides();
+            void track.offsetWidth;
+            track.classList.remove('is-dragging');
+            start();
+        })();
+
         const vlogMemberNames = ['전시기', '성원제', '오스틴', '이진누', '류짱', '홍박사'];
         const gwangjuVlogCast = ['전시기', '성원제', '이진누', '류짱'];
         const jinjuVlogCast = ['전시기', '성원제', '오스틴', '이진누', '홍박사'];
@@ -9818,20 +10006,25 @@
                 )
             },
             transfer: {
-                title: '환승여행',
+                title: '환승여행 IN 충남 청양',
                 category: 'SPECIAL',
                 image: 'banner_3.jpg',
                 description: '익숙함과 새로움 사이에서 엔조이 멤버들의 솔직한 선택이 교차하는 특별편.',
                 cast: vlogMemberNames,
                 series: 'transfer-trip',
                 regionLabel: '충남 청양',
-                episodes: makeVlogEpisodes(['티저'], 'banner_3.jpg', ['https://youtu.be/n9rhdR9jwaI?si=np-Xph3u75czc26s'])
+                episodes: makeVlogEpisodes(
+                    ['티저', '티저2'],
+                    'banner_3.jpg',
+                    ['https://youtu.be/n9rhdR9jwaI?si=np-Xph3u75czc26s', 'https://youtu.be/g9G8U1q9eWc'],
+                    ['티저', '티저2 - 미리보기']
+                )
             },
             gwangju: {
-                title: '환승여행 IN 광주',
+                title: '환승여행 IN 전남광주',
                 category: 'SPECIAL',
                 image: 'banner_3.jpg',
-                description: '환승여행 IN 광주의 새로운 이야기를 티저로 만나보세요.',
+                description: '환승여행 IN 전남광주의 새로운 이야기를 티저로 만나보세요.',
                 cast: gwangjuVlogCast,
                 series: 'transfer-trip',
                 regionLabel: '전남광주',
@@ -12964,10 +13157,10 @@
             });
 
             const collections = [
+                { title: '대전충남 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['transfer-trip', 'first-trip'] },
                 { title: '전남광주 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['enjoy-setlog', 'gwangju-2027'] },
                 { title: '부산울산경남 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['enjoy-vlog', 'music-2'] },
                 { title: '대구경북 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['throwback', 'music-1'] },
-                { title: '대전충남 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['first-trip', 'transfer-trip'] },
                 { title: '제주 브이로그', hint: '옆으로 밀어보기', icon: 'fa-chevron-right', cards: ['jeju-story', 'business-trip'] },
             ];
             const fragment = document.createDocumentFragment();
