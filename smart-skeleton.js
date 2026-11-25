@@ -59,7 +59,7 @@
     const enhanced = new Set();
     let skullet = null, scanFrame = 0, booted = false, subscribed = false, pageFinished = false, earlyRecord = null;
     const motion = root.matchMedia('(prefers-reduced-motion: reduce)');
-    const legacy = '.app-sk-block,.home-sk-block,.kbo-skeleton-block,.bds-block,.wallet-skeleton-block,.iv-skeleton,.iv-loading-block,.novel-entry-block,.taxi-skeleton-bar,.taxi-skeleton-digits i,.taxi-skeleton-metrics i,.taxi-skeleton-buttons i,.travel-sk-bar,.travel-sk-dot';
+    const legacy = '.app-sk-block,.home-sk-block,.kbo-skeleton-block,.bds-block,.wallet-skeleton-block,.iv-skeleton,.iv-loading-block,.novel-entry-block,.travel-sk-bar,.travel-sk-dot';
     const names = { members: '멤버 목록', meeting: '모임통장', schedule: '일정', community: '글·일정' };
     const library = import(new URL('vendor/skullet-0.0.3/index.mjs', base).href).then(value => {
         skullet = value;
@@ -331,7 +331,7 @@
         if (pageFinished) return;
         pageFinished = true;
         doc.documentElement.dataset.enjoyPageReady = 'true';
-        if (!['app', 'baseball', 'taxi'].includes(page)) end(doc.body);
+        if (!['app', 'baseball'].includes(page)) end(doc.body);
         if (root.parent !== root) root.parent.postMessage({ type: 'enjoy:page-ready', href: root.location.href }, root.location.origin);
         scheduleScan();
     }
@@ -349,7 +349,7 @@
         booted = true;
         const immediate = earlyRecord?.layer.classList.contains('is-visible');
         if (earlyRecord) { cleanup(earlyRecord); earlyRecord = null; }
-        if (!['app', 'baseball', 'taxi'].includes(page)) {
+        if (!['app', 'baseball'].includes(page)) {
             const record = begin(doc.body, { page: true, shape: page, immediate });
             record.slowTimer = root.setTimeout(() => { if (!pageFinished) notice(record, '화면을 준비하는 데 시간이 걸리고 있어요.', () => root.location.reload()); }, 20000);
         }
