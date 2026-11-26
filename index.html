@@ -3538,6 +3538,32 @@
         .home-vlog-panel .home-content-item.home-featured { margin-top: 0 !important; }
         /* 브이로그 상단 배너 — 넷플릭스식: 배너 아래가 배경색으로 이어지고, 그 아래 제목·정보·버튼 */
         .home-vlog-panel { --vlog-bg: #000000; --vlog-title: #FFFFFF; --vlog-sub: #B3B3B3; }
+        .home-vlog-hero { position: relative; isolation: isolate; }
+        /* 보이는 썸네일을 흐리게 번져 제목 뒤에 깐다 — 자막을 덮지 않고 배너가 아래로 자연스럽게 이어진다. */
+        .home-vlog-hero-ambient {
+            position: absolute;
+            z-index: -1;
+            top: 0;
+            left: -1.25rem;
+            right: -1.25rem;
+            /* 배너(16:9)보다 조금 더 길게 — 제목 줄까지 번진 배경이 내려온다. */
+            aspect-ratio: 16 / 14;
+            overflow: hidden;
+            pointer-events: none;
+            -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
+        }
+        .home-vlog-hero-ambient::before {
+            content: "";
+            position: absolute;
+            inset: -2.5rem;
+            background-image: var(--hero-ambient, none);
+            background-size: cover;
+            background-position: center bottom;
+            filter: blur(2rem) saturate(1.25);
+            opacity: .55;
+            transition: background-image .4s ease;
+        }
         .home-vlog-banner {
             position: relative;
             width: calc(100% + 2.5rem);
@@ -3545,18 +3571,9 @@
             overflow: hidden;
             touch-action: pan-y;
         }
-        .home-vlog-banner::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            /* 썸네일 속 자막을 가리지 않도록 맨 아래 가장자리만 배경색으로 녹인다. */
-            background: linear-gradient(to bottom, transparent 88%, var(--vlog-bg) 100%);
-        }
         .home-vlog-banner-track {
             display: flex;
             transition: transform .45s cubic-bezier(.25, 1, .5, 1);
-            will-change: transform;
         }
         .home-vlog-banner-track.is-dragging { transition: none; }
         .home-vlog-banner-slide {
@@ -3566,7 +3583,11 @@
             aspect-ratio: 16 / 9;
             overflow: hidden;
             cursor: pointer;
-            background: #000;
+            /* 고화질 썸네일이 늦거나 없어도 검은 화면 대신 저화질 썸네일이 먼저 보인다. */
+            background: #1C1C1E center / cover no-repeat;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            transform: translateZ(0);
             user-select: none;
             -webkit-user-select: none;
         }
@@ -3576,6 +3597,9 @@
             height: 100%;
             object-fit: cover;
             -webkit-user-drag: none;
+            /* 이미지 아래 가장자리만 투명하게 녹여 뒤의 번진 배경으로 이어지게 한다. */
+            -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
         }
         .home-vlog-hero-info {
             position: relative;
@@ -3664,6 +3688,7 @@
         .home-vlog-playlist-link:active { opacity: .6; }
         @media (prefers-color-scheme: light) {
             .home-vlog-panel { --vlog-bg: #F2F2F7; --vlog-title: #191F28; --vlog-sub: #6B7684; }
+            .home-vlog-hero-ambient::before { opacity: .5; }
             .home-vlog-hero-button.is-play { color: #FFFFFF; background: #191F28; }
             .home-vlog-hero-button.is-info { color: #191F28; background: rgba(25,31,40,.1); }
             .home-vlog-banner-dot { background: rgba(25,31,40,.2); }
@@ -8383,13 +8408,14 @@
             <section class="home-content-item home-featured" data-home-category="latest">
                 <!-- 상단 대형 배너: 3초마다 다음 배너로 넘어가고 좌우로 밀어 넘길 수 있다. 아래 제목·버튼은 보이는 배너를 따라 바뀐다. -->
                 <div class="home-vlog-hero">
+                    <div class="home-vlog-hero-ambient" aria-hidden="true"></div>
                     <div class="home-vlog-banner" data-vlog-banner aria-roledescription="carousel" aria-label="최신 브이로그">
                         <div class="home-vlog-banner-track">
-                        <div class="home-vlog-banner-slide" role="button" tabindex="0" data-title="환승여행 IN 충남 청양" data-meta="티저2 - 미리보기|엔조이 오리지널|전체" data-new="true" data-program="transfer" data-url="https://youtu.be/A0sabFLWvx4" aria-label="환승여행 IN 충남 청양 티저2 - 미리보기 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/A0sabFLWvx4','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-                            <img src="https://i.ytimg.com/vi/A0sabFLWvx4/maxresdefault.jpg" alt="환승여행 IN 충남 청양 티저2 - 미리보기" draggable="false" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/A0sabFLWvx4/hqdefault.jpg'">
+                        <div class="home-vlog-banner-slide" role="button" tabindex="0" data-title="환승여행 IN 충남 청양" data-meta="티저2 - 미리보기|엔조이 오리지널|전체" data-new="true" data-program="transfer" data-url="https://youtu.be/A0sabFLWvx4" style="background-image:url('https://i.ytimg.com/vi/A0sabFLWvx4/hqdefault.jpg')" aria-label="환승여행 IN 충남 청양 티저2 - 미리보기 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/A0sabFLWvx4','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                            <img src="https://i.ytimg.com/vi/A0sabFLWvx4/maxresdefault.jpg" alt="환승여행 IN 충남 청양 티저2 - 미리보기" draggable="false" decoding="async" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/A0sabFLWvx4/hqdefault.jpg'">
                         </div>
-                        <div class="home-vlog-banner-slide" role="button" tabindex="0" data-title="환승여행 IN 경남 진주" data-meta="1화|엔조이 오리지널|전체" data-new="false" data-program="jinju" data-url="https://youtu.be/21uUicVMzqg" aria-label="환승여행 IN 경남 진주 1화 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-                            <img src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" alt="환승여행 IN 경남 진주 1화" draggable="false" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/21uUicVMzqg/hqdefault.jpg'">
+                        <div class="home-vlog-banner-slide" role="button" tabindex="0" data-title="환승여행 IN 경남 진주" data-meta="1화|엔조이 오리지널|전체" data-new="false" data-program="jinju" data-url="https://youtu.be/21uUicVMzqg" style="background-image:url('https://i.ytimg.com/vi/21uUicVMzqg/hqdefault.jpg')" aria-label="환승여행 IN 경남 진주 1화 재생" onclick="window.haptic(); window.openBrowser('https://youtu.be/21uUicVMzqg','latest')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                            <img src="https://i.ytimg.com/vi/21uUicVMzqg/maxresdefault.jpg" alt="환승여행 IN 경남 진주 1화" draggable="false" decoding="async" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/21uUicVMzqg/hqdefault.jpg'">
                         </div>
                         </div>
                     </div>
@@ -9895,6 +9921,7 @@
             const activeSlide = function () { return slides[((position - 1) % count + count) % count]; };
             const renderHeroInfo = function (slide) {
                 if (heroTitle) heroTitle.textContent = slide.dataset.title || '';
+                if (slide.style.backgroundImage) hero.style.setProperty('--hero-ambient', slide.style.backgroundImage);
                 if (!heroMeta) return;
                 heroMeta.textContent = '';
                 // 정보 줄: [새 회차] • 회차명 • 나머지 정보
@@ -9942,7 +9969,7 @@
             let position = 1, timer = null, pointerId = null, startX = 0, startY = 0, deltaX = 0, dragging = false, suppressClick = false;
             const place = function (animate, offsetPx) {
                 track.classList.toggle('is-dragging', !animate);
-                track.style.transform = 'translateX(calc(' + (-position * 100) + '% + ' + (offsetPx || 0) + 'px))';
+                track.style.transform = 'translate3d(calc(' + (-position * 100) + '% + ' + (offsetPx || 0) + 'px), 0, 0)';
             };
             const syncSlides = function () {
                 const active = ((position - 1) % count + count) % count;
